@@ -85,9 +85,7 @@ class TargetResolver:
         self.generator = P2PKHAddressGenerator()
 
         # 解析缓存
-        self.cache = (
-            AddressCache(lru_size=cache_max_size, enable_stats=True) if enable_cache else None
-        )
+        self.cache = AddressCache(lru_size=cache_max_size, enable_stats=True) if enable_cache else None
 
         # 文件加载配置
         self._max_file_size_bytes = max_file_size_bytes
@@ -319,7 +317,8 @@ class TargetResolver:
 
             private_key, compressed = WIF.decode(input_str)
             public_key = self.generator.private_key_to_public_key(
-                private_key, compressed=compressed,
+                private_key,
+                compressed=compressed,
             )
             address = self.generator.public_key_to_address(public_key)
             if self.cache:
@@ -531,7 +530,10 @@ class TargetResolver:
                 batch_inputs.append(line)
                 if len(batch_inputs) >= self._batch_size:
                     valid_count, invalid_count = self._process_batch(
-                        batch_inputs, addresses, valid_count, invalid_count,
+                        batch_inputs,
+                        addresses,
+                        valid_count,
+                        invalid_count,
                     )
                     batch_inputs.clear()
                     if len(addresses) > 0 and len(addresses) % 10000 == 0:
@@ -539,7 +541,10 @@ class TargetResolver:
 
             if batch_inputs:
                 valid_count, invalid_count = self._process_batch(
-                    batch_inputs, addresses, valid_count, invalid_count,
+                    batch_inputs,
+                    addresses,
+                    valid_count,
+                    invalid_count,
                 )
 
             logger.info(

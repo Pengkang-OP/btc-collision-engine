@@ -24,6 +24,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+
 def cmd_list_devices(args):
     """列出所有GPU设备"""
     from src.gpu.selector import get_gpu_selector
@@ -180,13 +181,13 @@ def main():
 示例:
   # 列出所有GPU
   python gpu_cli.py list
-  
+
   # 自动选择最佳GPU
   python gpu_cli.py auto
-  
+
   # 测试多GPU模式
   python gpu_cli.py test-multi --gpu-count 2
-  
+
   # 生成多GPU配置
   python gpu_cli.py generate-config --mode multi --output config.multi.json
         """,

@@ -6,13 +6,11 @@
 """
 
 import argparse
-import unittest
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from src.cli.optimization_cli import OptimizationCLI
-
 
 # ============================================================================
 # OptimizationCLI.add_arguments

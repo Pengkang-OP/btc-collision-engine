@@ -39,11 +39,14 @@ def run_cleanup_loop_safely(
             if on_memory_error == "raise":
                 raise
             logger.warning(
-                "%s: memory error during cleanup, continuing", name,
+                "%s: memory error during cleanup, continuing",
+                name,
             )
         except Exception as e:
             logger.error(
-                "%s: cleanup error: %s", name, e,
+                "%s: cleanup error: %s",
+                name,
+                e,
             )
         time.sleep(interval)
 

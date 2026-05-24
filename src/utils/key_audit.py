@@ -1,6 +1,5 @@
 """Key auditing utilities for security compliance."""
 
-
 from ..utils import get_configured_logger
 
 logger = get_configured_logger("KeyAudit")
@@ -13,7 +12,8 @@ class KeyAuditor:
         self._audit_log: list[dict] = []
 
     def record_generation(
-        self, key_hash: str,
+        self,
+        key_hash: str,
     ) -> None:
         """Record a key generation event.
 

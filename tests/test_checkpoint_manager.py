@@ -66,7 +66,8 @@ class TestCheckpointSensitiveInfoCleaning(unittest.TestCase):
         import uuid
 
         self.tmp_path = os.path.join(
-            tempfile.gettempdir(), f"test_ckpt_sens_{uuid.uuid4().hex[:8]}.json",
+            tempfile.gettempdir(),
+            f"test_ckpt_sens_{uuid.uuid4().hex[:8]}.json",
         )
         self.mgr = CheckpointManager(filepath=self.tmp_path)
 
@@ -320,7 +321,8 @@ class TestCheckpointLoadEdgeCases(unittest.TestCase):
         import uuid
 
         self.tmp_path = os.path.join(
-            tempfile.gettempdir(), f"test_ckpt_load_{uuid.uuid4().hex[:8]}.json",
+            tempfile.gettempdir(),
+            f"test_ckpt_load_{uuid.uuid4().hex[:8]}.json",
         )
         self.mgr = CheckpointManager(filepath=self.tmp_path)
 

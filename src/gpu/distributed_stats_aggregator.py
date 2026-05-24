@@ -34,9 +34,14 @@ class DistributedStatsAggregator:
     """
 
     __slots__ = (
-        "_stop_event", "_workers", "_workers_lock",
-        "_aggregated_stats", "_cache_valid", "_cache_lock",
-        "_aggregation_interval", "_aggregation_thread",
+        "_stop_event",
+        "_workers",
+        "_workers_lock",
+        "_aggregated_stats",
+        "_cache_valid",
+        "_cache_lock",
+        "_aggregation_interval",
+        "_aggregation_thread",
     )
 
     def __init__(self) -> None:
@@ -184,9 +189,7 @@ class DistributedStatsAggregator:
             return {"balanced": True, "devices": []}
 
         avg_keys = (
-            combined["total_keys_checked"] / len(per_device)
-            if combined["total_keys_checked"] > 0
-            else 0
+            combined["total_keys_checked"] / len(per_device) if combined["total_keys_checked"] > 0 else 0
         )
         max_deviation = 0
 

@@ -27,8 +27,7 @@ class DataAnalysisModule:
         self.analysis_cache: dict = {}
 
     def analyze(self, target_path: str | None = None) -> AnalysisReport:
-        """执行完整的数据分析
-        """
+        """执行完整的数据分析"""
         report_id = self._generate_report_id()
 
         # 收集数据

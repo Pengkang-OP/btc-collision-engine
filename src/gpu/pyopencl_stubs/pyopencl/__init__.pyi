@@ -120,7 +120,6 @@ def enqueue_copy(
     src: Buffer | Any,
     **kwargs: Any,
 ) -> Any: ...
-
 def enqueue_fill_buffer(
     queue: CommandQueue,
     buf: Buffer,
@@ -129,7 +128,6 @@ def enqueue_fill_buffer(
     size: int,
     wait_for: Sequence[Any] | None = ...,
 ) -> Any: ...
-
 def enqueue_nd_range_kernel(
     queue: CommandQueue,
     kernel: Kernel,
@@ -139,7 +137,6 @@ def enqueue_nd_range_kernel(
     wait_for: Sequence[Any] | None = ...,
     g_times_l: bool = ...,
 ) -> Any: ...
-
 def enqueue_migrate_mem_objects(
     queue: CommandQueue,
     mem_objects: Sequence[Buffer],
@@ -220,4 +217,5 @@ class LocalMemory:
 
 class Error(Exception):
     """Base pyopencl error."""
+
     ...

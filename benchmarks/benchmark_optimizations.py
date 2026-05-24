@@ -7,7 +7,6 @@ import io
 import secrets
 import sys
 import time
-from pathlib import Path
 
 from src.core.memory_pool import get_pool_manager
 from src.core.precomputed_table import get_precomputed_table
@@ -48,7 +47,6 @@ def benchmark_precomputed_table(iterations=100):
     print(f"  内存占用: {table.get_memory_usage() / 1024:.1f}KB")
 
     return speedup
-
 
 
 def benchmark_simd_hash(iterations=100000):
@@ -267,7 +265,6 @@ def main():
     except Exception as e:  # noqa: BLE001 (基准测试容错)
         print(f"  ❌ 测试失败: {e}")
         results["precomputed_table"] = 0
-
 
     try:
         results["simd_hash"] = benchmark_simd_hash(100000)

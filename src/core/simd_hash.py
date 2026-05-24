@@ -20,10 +20,7 @@ def batch_sha256(data_batch: list[bytes]) -> list[bytes]:
         List of SHA-256 hash results
 
     """
-    return [
-        hashlib.sha256(data).digest()
-        for data in data_batch
-    ]
+    return [hashlib.sha256(data).digest() for data in data_batch]
 
 
 def batch_hash160(data_batch: list[bytes]) -> list[bytes]:

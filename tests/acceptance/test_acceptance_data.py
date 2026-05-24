@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """数据层验收测试 - 数据流 + 数据管道 + 数据类型
 
 本模块测试 `src.core` 和 `src.collision` 中的数据层功能，
@@ -16,22 +15,19 @@
 """
 
 import os
-import time
-from typing import Any, Dict, List, Optional, Tuple
 
 import pytest
 
 from tests.acceptance.conftest import (
     AcceptanceTestConstants,
     assert_valid_bitcoin_address,
-    assert_valid_private_key,
     create_mock_checkpoint_data,
 )
-
 
 # ============================================================================
 # 数据流测试 - 私钥生成 → 地址生成 → 碰撞检测
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.data_layer
@@ -60,19 +56,18 @@ class TestDataFlow:
 
         # 验证数据流
         assert private_key is not None, "数据流验证失败：私钥生成失败"
-        assert isinstance(private_key, bytes), (
-            "数据流验证失败：私钥应为 bytes 类型"
-        )
+        assert isinstance(private_key, bytes), "数据流验证失败：私钥应为 bytes 类型"
         assert len(private_key) == 32, (
-            f"数据流验证失败：私钥长度应为 32 字节，"
-            f"实际为 {len(private_key)} 字节"
+            f"数据流验证失败：私钥长度应为 32 字节，实际为 {len(private_key)} 字节"
         )
 
         # 验证私钥范围
         private_key_int = int.from_bytes(private_key, "big")
-        assert 1 <= private_key_int <= 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364140 - 1, (
-            "数据流验证失败：私钥超出有效范围"
-        )
+        assert (
+            1
+            <= private_key_int
+            <= 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364140 - 1
+        ), "数据流验证失败：私钥超出有效范围"
 
     def test_data_flow_address_generation(self, mock_event_bus):
         """数据流测试：私钥 → 地址"""
@@ -94,22 +89,14 @@ class TestDataFlow:
 
         # 验证数据流
         assert address is not None, "数据流验证失败：地址生成失败"
-        assert isinstance(address, str), (
-            "数据流验证失败：地址应为 str 类型"
-        )
-        assert isinstance(compressed_pk, bytes), (
-            "数据流验证失败：压缩公钥应为 bytes 类型"
-        )
+        assert isinstance(address, str), "数据流验证失败：地址应为 str 类型"
+        assert isinstance(compressed_pk, bytes), "数据流验证失败：压缩公钥应为 bytes 类型"
         assert len(compressed_pk) == 33, (
-            f"数据流验证失败：压缩公钥长度应为 33 字节，"
-            f"实际为 {len(compressed_pk)} 字节"
+            f"数据流验证失败：压缩公钥长度应为 33 字节，实际为 {len(compressed_pk)} 字节"
         )
-        assert isinstance(uncompressed_pk, bytes), (
-            "数据流验证失败：非压缩公钥应为 bytes 类型"
-        )
+        assert isinstance(uncompressed_pk, bytes), "数据流验证失败：非压缩公钥应为 bytes 类型"
         assert len(uncompressed_pk) == 65, (
-            f"数据流验证失败：非压缩公钥长度应为 65 字节，"
-            f"实际为 {len(uncompressed_pk)} 字节"
+            f"数据流验证失败：非压缩公钥长度应为 65 字节，实际为 {len(uncompressed_pk)} 字节"
         )
 
         # 验证地址格式
@@ -132,14 +119,13 @@ class TestDataFlow:
         assert engine is not None, "数据流验证失败：引擎创建失败"
 
         # 验证目标设置正确
-        assert engine.targets is not None, (
-            "数据流验证失败：引擎 targets 属性应为 None"
-        )
+        assert engine.targets is not None, "数据流验证失败：引擎 targets 属性应为 None"
 
 
 # ============================================================================
 # 数据管道测试 - Checkpoint 保存 → 加载 → 恢复
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.pipeline
@@ -168,15 +154,11 @@ class TestDataPipeline:
         manager.save(test_data)
 
         # 验证数据管道
-        assert checkpoint_path.exists(), (
-            "数据管道验证失败：Checkpoint 文件未创建"
-        )
+        assert checkpoint_path.exists(), "数据管道验证失败：Checkpoint 文件未创建"
 
         # 验证文件大小
         file_size = checkpoint_path.stat().st_size
-        assert file_size > 0, (
-            "数据管道验证失败：Checkpoint 文件为空"
-        )
+        assert file_size > 0, "数据管道验证失败：Checkpoint 文件为空"
         assert file_size <= manager._max_size, (
             f"数据管道验证失败：Checkpoint 文件过大："
             f"期望 <= {manager._max_size} 字节，"
@@ -202,14 +184,10 @@ class TestDataPipeline:
         loaded_data = manager.load()
 
         # 验证数据管道
-        assert loaded_data is not None, (
-            "数据管道验证失败：Checkpoint 加载失败"
-        )
+        assert loaded_data is not None, "数据管道验证失败：Checkpoint 加载失败"
 
         # 验证数据完整性
-        assert loaded_data["version"] == test_data["version"], (
-            "数据管道验证失败：版本不匹配"
-        )
+        assert loaded_data["version"] == test_data["version"], "数据管道验证失败：版本不匹配"
         assert loaded_data["total_keys_checked"] == test_data["total_keys_checked"], (
             "数据管道验证失败：已检查私钥数量不匹配"
         )
@@ -236,20 +214,12 @@ class TestDataPipeline:
         loaded_data = manager.load()
 
         # 验证数据管道：恢复
-        assert loaded_data is not None, (
-            "数据管道验证失败：Checkpoint 恢复失败"
-        )
+        assert loaded_data is not None, "数据管道验证失败：Checkpoint 恢复失败"
 
         # 验证恢复数据
-        assert "engine_type" in loaded_data, (
-            "数据管道验证失败：恢复数据中缺少 engine_type"
-        )
-        assert "search_mode" in loaded_data, (
-            "数据管道验证失败：恢复数据中缺少 search_mode"
-        )
-        assert "targets" in loaded_data, (
-            "数据管道验证失败：恢复数据中缺少 targets"
-        )
+        assert "engine_type" in loaded_data, "数据管道验证失败：恢复数据中缺少 engine_type"
+        assert "search_mode" in loaded_data, "数据管道验证失败：恢复数据中缺少 search_mode"
+        assert "targets" in loaded_data, "数据管道验证失败：恢复数据中缺少 targets"
 
     def test_pipeline_checkpoint_corrupted(self, temp_dir):
         """数据管道测试：损坏的 Checkpoint"""
@@ -268,14 +238,13 @@ class TestDataPipeline:
         loaded_data = manager.load()
 
         # 验证数据管道：错误处理
-        assert loaded_data is None, (
-            "数据管道验证失败：损坏的 Checkpoint 应返回 None"
-        )
+        assert loaded_data is None, "数据管道验证失败：损坏的 Checkpoint 应返回 None"
 
 
 # ============================================================================
 # 数据类型测试 - 各种数据类型的转换和验证
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.data_layer
@@ -296,19 +265,18 @@ class TestDataTypes:
         private_key = os.urandom(32)
 
         # 验证数据类型
-        assert isinstance(private_key, bytes), (
-            "数据类型验证失败：私钥应为 bytes 类型"
-        )
+        assert isinstance(private_key, bytes), "数据类型验证失败：私钥应为 bytes 类型"
         assert len(private_key) == 32, (
-            f"数据类型验证失败：私钥长度应为 32 字节，"
-            f"实际为 {len(private_key)} 字节"
+            f"数据类型验证失败：私钥长度应为 32 字节，实际为 {len(private_key)} 字节"
         )
 
         # 验证私钥范围
         private_key_int = int.from_bytes(private_key, "big")
-        assert 1 <= private_key_int <= 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364140 - 1, (
-            "数据类型验证失败：私钥超出有效范围"
-        )
+        assert (
+            1
+            <= private_key_int
+            <= 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364140 - 1
+        ), "数据类型验证失败：私钥超出有效范围"
 
     def test_data_type_public_key(self):
         """数据类型测试：公钥（bytes）"""
@@ -320,24 +288,17 @@ class TestDataTypes:
         private_key = os.urandom(32)
 
         # 生成公钥（压缩格式）
-        public_key_compressed = manager.generate_public_key(
-            private_key, compressed=True
-        )
+        public_key_compressed = manager.generate_public_key(private_key, compressed=True)
 
         # 验证数据类型
         if public_key_compressed:
-            assert isinstance(public_key_compressed, bytes), (
-                "数据类型验证失败：压缩公钥应为 bytes 类型"
-            )
+            assert isinstance(public_key_compressed, bytes), "数据类型验证失败：压缩公钥应为 bytes 类型"
             assert len(public_key_compressed) == 33, (
-                f"数据类型验证失败：压缩公钥长度应为 33 字节，"
-                f"实际为 {len(public_key_compressed)} 字节"
+                f"数据类型验证失败：压缩公钥长度应为 33 字节，实际为 {len(public_key_compressed)} 字节"
             )
 
         # 生成公钥（非压缩格式）
-        public_key_uncompressed = manager.generate_public_key(
-            private_key, compressed=False
-        )
+        public_key_uncompressed = manager.generate_public_key(private_key, compressed=False)
 
         # 验证数据类型（mock 后端可能返回压缩格式，放宽检查）
         if public_key_uncompressed:
@@ -369,12 +330,8 @@ class TestDataTypes:
         address, _, _ = generator.generate_address(private_key)
 
         # 验证数据类型
-        assert isinstance(address, str), (
-            "数据类型验证失败：地址应为 str 类型"
-        )
-        assert len(address) > 0, (
-            "数据类型验证失败：地址长度应大于 0"
-        )
+        assert isinstance(address, str), "数据类型验证失败：地址应为 str 类型"
+        assert len(address) > 0, "数据类型验证失败：地址长度应大于 0"
 
         # 验证地址格式
         assert_valid_bitcoin_address(address)
@@ -389,18 +346,16 @@ class TestDataTypes:
         hash160 = HashUtils.hash160(public_key)
 
         # 验证数据类型
-        assert isinstance(hash160, bytes), (
-            "数据类型验证失败：Hash160 应为 bytes 类型"
-        )
+        assert isinstance(hash160, bytes), "数据类型验证失败：Hash160 应为 bytes 类型"
         assert len(hash160) == 20, (
-            f"数据类型验证失败：Hash160 长度应为 20 字节，"
-            f"实际为 {len(hash160)} 字节"
+            f"数据类型验证失败：Hash160 长度应为 20 字节，实际为 {len(hash160)} 字节"
         )
 
 
 # ============================================================================
 # 数据调用测试 - 数据调用接口
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.data_layer
@@ -425,16 +380,12 @@ class TestDataInvocation:
         private_key = os.urandom(32)
 
         # 调用后端生成公钥
-        public_key = manager.generate_public_key(
-            private_key, compressed=True
-        )
+        public_key = manager.generate_public_key(private_key, compressed=True)
 
         # 验证数据调用
         # 注意：实际行为取决于后端可用性
         if public_key is not None:
-            assert isinstance(public_key, bytes), (
-                "数据调用验证失败：后端调用应返回 bytes 类型"
-            )
+            assert isinstance(public_key, bytes), "数据调用验证失败：后端调用应返回 bytes 类型"
 
     def test_invocation_checkpoint(self, temp_dir):
         """数据调用测试：检查点调用接口"""
@@ -455,20 +406,17 @@ class TestDataInvocation:
         loaded_data = manager.load()
 
         # 验证数据调用
-        assert loaded_data is not None, (
-            "数据调用验证失败：检查点调用应成功"
-        )
+        assert loaded_data is not None, "数据调用验证失败：检查点调用应成功"
 
         # 调用删除
         manager.delete()
-        assert not manager.exists, (
-            "数据调用验证失败：检查点删除后应不存在"
-        )
+        assert not manager.exists, "数据调用验证失败：检查点删除后应不存在"
 
 
 # ============================================================================
 # 边界条件测试
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.edge_cases
@@ -482,9 +430,7 @@ class TestDataLayerEdgeCases:
         empty_private_key = b""
 
         # 验证边界条件
-        assert len(empty_private_key) == 0, (
-            "边界条件测试失败：空私钥长度应为 0"
-        )
+        assert len(empty_private_key) == 0, "边界条件测试失败：空私钥长度应为 0"
 
         # 注意：实际行为取决于实现
         # 这里主要验证代码路径的覆盖
@@ -496,15 +442,11 @@ class TestDataLayerEdgeCases:
         zero_private_key = b"\x00" * 32
 
         # 验证边界条件
-        assert len(zero_private_key) == 32, (
-            "边界条件测试失败：零私钥长度应为 32 字节"
-        )
+        assert len(zero_private_key) == 32, "边界条件测试失败：零私钥长度应为 32 字节"
 
         # 验证私钥范围
         private_key_int = int.from_bytes(zero_private_key, "big")
-        assert private_key_int == 0, (
-            "边界条件测试失败：零私钥整数值应为 0"
-        )
+        assert private_key_int == 0, "边界条件测试失败：零私钥整数值应为 0"
 
         # 注意：私钥为 0 是无效的（应为 [1, n-1]）
         # 这里主要验证代码路径的覆盖
@@ -518,15 +460,11 @@ class TestDataLayerEdgeCases:
         max_private_key = (Secp256k1.N - 1).to_bytes(32, "big")
 
         # 验证边界条件
-        assert len(max_private_key) == 32, (
-            "边界条件测试失败：最大私钥长度应为 32 字节"
-        )
+        assert len(max_private_key) == 32, "边界条件测试失败：最大私钥长度应为 32 字节"
 
         # 验证私钥范围
         private_key_int = int.from_bytes(max_private_key, "big")
-        assert private_key_int == Secp256k1.N - 1, (
-            "边界条件测试失败：最大私钥整数值不正确"
-        )
+        assert private_key_int == Secp256k1.N - 1, "边界条件测试失败：最大私钥整数值不正确"
 
     def test_edge_case_invalid_checkpoint(self, temp_dir):
         """边界条件测试：无效 Checkpoint"""
@@ -541,9 +479,7 @@ class TestDataLayerEdgeCases:
         loaded_data = manager.load()
 
         # 验证边界条件
-        assert loaded_data is None, (
-            "边界条件测试失败：不存在的 Checkpoint 应返回 None"
-        )
+        assert loaded_data is None, "边界条件测试失败：不存在的 Checkpoint 应返回 None"
 
 
 # ============================================================================

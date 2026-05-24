@@ -31,7 +31,7 @@ class TestEventBusConcurrency:
     def test_concurrent_publish_no_data_race(self):
         """多线程并发发布不应有数据竞争"""
         from src.collision.event_bus import EventBus, reset_event_bus
-        from src.collision.events import EngineProgressEvent, EventType
+        from src.collision.events import EngineProgressEvent
 
         reset_event_bus()
 
@@ -72,7 +72,9 @@ class TestEventBusConcurrency:
         # v5.2.1: published_count removed from EventBus, verify via received
         assert len(received) == thread_count * events_per_thread
 
-    @pytest.mark.skip(reason="v5.2.1: EventBus subscribe/unsubscribe API changed, concurrent test needs rewrite")
+    @pytest.mark.skip(
+        reason="v5.2.1: EventBus subscribe/unsubscribe API changed, concurrent test needs rewrite"
+    )
     def test_concurrent_subscribe_unsubscribe(self):
         pass
 
@@ -223,7 +225,7 @@ class TestStressTests:
     def test_high_volume_events(self):
         """高容量事件处理压力测试"""
         from src.collision.event_bus import EventBus, reset_event_bus
-        from src.collision.events import EngineProgressEvent, EventType
+        from src.collision.events import EngineProgressEvent
 
         reset_event_bus()
 
@@ -278,7 +280,7 @@ class TestStressTests:
     def test_sustained_load(self):
         """持续负载测试 - 模拟长时间运行"""
         from src.collision.event_bus import EventBus, reset_event_bus
-        from src.collision.events import EngineProgressEvent, EventType
+        from src.collision.events import EngineProgressEvent
 
         reset_event_bus()
 

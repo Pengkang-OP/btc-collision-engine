@@ -50,22 +50,16 @@ class WIF:
         """
         if not isinstance(private_key, bytes):
             raise ValueError(
-                f"Private key must be bytes, "
-                f"got {type(private_key).__name__}",
+                f"Private key must be bytes, got {type(private_key).__name__}",
             )
 
         if len(private_key) != 32:
             raise ValueError(
-                f"Private key must be 32 bytes, "
-                f"got {len(private_key)}",
+                f"Private key must be 32 bytes, got {len(private_key)}",
             )
 
         # Build payload
-        version_byte = (
-            WIF.TESTNET_VERSION
-            if testnet
-            else WIF.MAINNET_VERSION
-        )
+        version_byte = WIF.TESTNET_VERSION if testnet else WIF.MAINNET_VERSION
         payload = bytes([version_byte]) + private_key
 
         if compressed:
@@ -93,8 +87,7 @@ class WIF:
         """
         if not isinstance(wif, str):
             raise ValueError(
-                f"WIF must be a string, "
-                f"got {type(wif).__name__}",
+                f"WIF must be a string, got {type(wif).__name__}",
             )
 
         data = Base58.decode(wif)
@@ -103,8 +96,7 @@ class WIF:
         # = 37, or 38 with compressed flag
         if len(data) < 37:
             raise ValueError(
-                f"WIF data too short: "
-                f"{len(data)} bytes",
+                f"WIF data too short: {len(data)} bytes",
             )
 
         # Validate version byte
@@ -135,6 +127,5 @@ class WIF:
         if len(key_data) == 32:
             return key_data, False  # Uncompressed
         raise ValueError(
-            f"Invalid WIF payload length: "
-            f"{len(key_data)}",
+            f"Invalid WIF payload length: {len(key_data)}",
         )

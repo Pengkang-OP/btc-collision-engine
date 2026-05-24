@@ -69,6 +69,7 @@ class TestGPUCompatibility:
             with patch("src.gpu.device.PYOPENCL_AVAILABLE", True):
                 # 清除已经可能已导入的模块，强制重新导入
                 import sys
+
                 for mod in list(sys.modules.keys()):
                     if mod.startswith("src.gpu"):
                         del sys.modules[mod]

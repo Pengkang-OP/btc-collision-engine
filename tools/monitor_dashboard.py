@@ -2,10 +2,10 @@
 """GPU碰撞引擎监控面板 - 显示实时状态"""
 
 import os
-import sys
 import time
 from datetime import datetime
 from pathlib import Path
+
 
 def clear_screen():
     """清屏"""

@@ -30,9 +30,9 @@ class PipelineMetrics:
 
     batch_num: int
     batch_size: int
-    submit_time_ms: float = 0.0      # CPU 提交耗时
-    exec_time_ms: float = 0.0        # GPU 执行耗时（从 submit 到 collect）
-    queue_occupancy: float = 0.0     # 提交时 _prefetch_events 占用率 (0-1)
+    submit_time_ms: float = 0.0  # CPU 提交耗时
+    exec_time_ms: float = 0.0  # GPU 执行耗时（从 submit 到 collect）
+    queue_occupancy: float = 0.0  # 提交时 _prefetch_events 占用率 (0-1)
     seed_queue_occupancy: float = 0.0  # 提交时 seed_queue 占用率 (0-1)
     timestamp: float = field(default_factory=time.time)
 
@@ -67,11 +67,11 @@ class AdaptivePipelineController:
     )
 
     # ── 控制参数 ────────────────────────────────────────────────────
-    EVAL_INTERVAL_BATCHES = 8          # 每 N 批次评估一次
-    COOLDOWN_BATCHES = 4               # 调整后冷却期（避免震荡）
+    EVAL_INTERVAL_BATCHES = 8  # 每 N 批次评估一次
+    COOLDOWN_BATCHES = 4  # 调整后冷却期（避免震荡）
 
     # Queue depth 目标范围
-    TARGET_QUEUE_OCCUPANCY_LOW = 0.55   # 低于此值 → 增加 depth
+    TARGET_QUEUE_OCCUPANCY_LOW = 0.55  # 低于此值 → 增加 depth
     TARGET_QUEUE_OCCUPANCY_HIGH = 0.85  # 高于此值 → 减少 depth
     QUEUE_DEPTH_MIN = 4
     QUEUE_DEPTH_MAX = 48
@@ -144,8 +144,11 @@ class AdaptivePipelineController:
     # ------------------------------------------------------------------
 
     def record_batch_submit(
-        self, batch_num: int, batch_size: int,
-        queue_occupancy: float, seed_queue_occupancy: float = 0.0,
+        self,
+        batch_num: int,
+        batch_size: int,
+        queue_occupancy: float,
+        seed_queue_occupancy: float = 0.0,
     ) -> None:
         """记录批次提交事件（主循环调用）"""
         with self._metrics_lock:
@@ -169,7 +172,9 @@ class AdaptivePipelineController:
             self._trim_window()
 
     def record_batch_collect(
-        self, batch_num: int, exec_time_ms: float,
+        self,
+        batch_num: int,
+        exec_time_ms: float,
     ) -> None:
         """记录批次收集事件（结果收集器调用）"""
         with self._metrics_lock:
@@ -197,14 +202,16 @@ class AdaptivePipelineController:
             else:
                 self._metrics_window.append(
                     PipelineMetrics(
-                        batch_num=0, batch_size=0, seed_queue_occupancy=occupancy,
+                        batch_num=0,
+                        batch_size=0,
+                        seed_queue_occupancy=occupancy,
                     ),
                 )
             self._trim_window()
 
     def _trim_window(self) -> None:
         if len(self._metrics_window) > self._window_size:
-            self._metrics_window = self._metrics_window[-self._window_size:]
+            self._metrics_window = self._metrics_window[-self._window_size :]
 
     # ------------------------------------------------------------------
     # 自适应评估与调整（每 N 批次调用一次）
@@ -224,7 +231,7 @@ class AdaptivePipelineController:
             if len(self._metrics_window) < self.EVAL_INTERVAL_BATCHES:
                 return {}  # 数据不足
 
-            recent = self._metrics_window[-self.EVAL_INTERVAL_BATCHES:]
+            recent = self._metrics_window[-self.EVAL_INTERVAL_BATCHES :]
 
         adjustments: dict[str, Any] = {}
 
@@ -346,17 +353,19 @@ class AdaptivePipelineController:
 
     def get_stats(self) -> dict[str, Any]:
         with self._metrics_lock:
-            recent = self._metrics_window[-self.EVAL_INTERVAL_BATCHES:]
+            recent = self._metrics_window[-self.EVAL_INTERVAL_BATCHES :]
             avg_queue = sum(m.queue_occupancy for m in recent) / len(recent) if recent else 0
             avg_exec = (
                 sum(m.exec_time_ms for m in recent if m.exec_time_ms > 0)
                 / len([m for m in recent if m.exec_time_ms > 0])
-                if recent else 0
+                if recent
+                else 0
             )
             avg_seed = (
                 sum(m.seed_queue_occupancy for m in recent if m.seed_queue_occupancy > 0)
                 / len([m for m in recent if m.seed_queue_occupancy > 0])
-                if recent else 0
+                if recent
+                else 0
             )
 
         return {

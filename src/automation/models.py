@@ -1,5 +1,4 @@
-"""数据模型定义
-"""
+"""数据模型定义"""
 
 import json
 import pathlib

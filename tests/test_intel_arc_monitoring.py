@@ -154,7 +154,9 @@ def test_performance_monitor():
     print("\n记录性能数据...")
     for i in range(5):
         monitor.record_kernel_metrics(
-            batch_size=100000, execution_time_ms=50.0 + i * 10, memory_allocated_mb=256.0,
+            batch_size=100000,
+            execution_time_ms=50.0 + i * 10,
+            memory_allocated_mb=256.0,
         )
         print(f"  批次 {i + 1}: 执行时间 {50.0 + i * 10:.0f}ms, 显存 256MB")
 
@@ -200,7 +202,9 @@ def test_data_monitor():
     print("\n模拟数据报告...")
     for i in range(5):
         monitor.report_keys_generated(
-            device_idx=0, count=100000, key_range=(i * 100000, (i + 1) * 100000),
+            device_idx=0,
+            count=100000,
+            key_range=(i * 100000, (i + 1) * 100000),
         )
         print(f"  GPU 0: 生成 {100000:,} 个密钥 (批次 {i + 1})")
         time.sleep(0.1)

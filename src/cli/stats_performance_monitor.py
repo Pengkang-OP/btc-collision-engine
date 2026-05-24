@@ -1,4 +1,5 @@
 """Statistics and performance monitor CLI integration."""
+
 import logging
 import time
 
@@ -14,7 +15,8 @@ class StatsPerformanceMonitor:
         self._total_keys = 0
 
     def record_keys(
-        self, count: int,
+        self,
+        count: int,
     ) -> None:
         """Record key processing.
 
@@ -32,11 +34,8 @@ class StatsPerformanceMonitor:
 
         """
         elapsed = max(
-            time.time() - self._start_time, 0.001,
+            time.time() - self._start_time,
+            0.001,
         )
         throughput = self._total_keys / elapsed
-        return (
-            f"Keys: {self._total_keys:,} | "
-            f"Rate: {throughput:.0f} keys/s | "
-            f"Time: {elapsed:.1f}s"
-        )
+        return f"Keys: {self._total_keys:,} | Rate: {throughput:.0f} keys/s | Time: {elapsed:.1f}s"

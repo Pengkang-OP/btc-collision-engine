@@ -1,4 +1,5 @@
 """Language detection utilities."""
+
 import locale
 import os
 

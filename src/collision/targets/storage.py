@@ -29,11 +29,13 @@ from ...utils.encoding_utils import EncodingUtils
 logger = get_configured_logger("AddressStorage")
 
 # 比特币地址验证正则表达式（不可变）
-ADDRESS_PATTERNS = types.MappingProxyType({
-    "P2PKH": re.compile(r"^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$"),  # 1或3开头
-    "P2SH": re.compile(r"^3[a-km-zA-HJ-NP-Z1-9]{25,34}$"),  # 3开头
-    "BECH32": re.compile(r"^(bc1|tb1|bc1p)[a-zA-HJ-NP-Z0-9]{25,62}$"),  # bc1开头
-})
+ADDRESS_PATTERNS = types.MappingProxyType(
+    {
+        "P2PKH": re.compile(r"^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$"),  # 1或3开头
+        "P2SH": re.compile(r"^3[a-km-zA-HJ-NP-Z1-9]{25,34}$"),  # 3开头
+        "BECH32": re.compile(r"^(bc1|tb1|bc1p)[a-zA-HJ-NP-Z0-9]{25,62}$"),  # bc1开头
+    }
+)
 
 
 def validate_bitcoin_address(address: str) -> bool:
@@ -83,9 +85,9 @@ class AddressStorage:
 
         # 确保目录存在
         if storage_type in ("json", "csv") or storage_type == "sqlite":
-            pathlib.Path(
-                os.path.dirname(path) if os.path.dirname(path) else "."
-            ).mkdir(exist_ok=True, parents=True)
+            pathlib.Path(os.path.dirname(path) if os.path.dirname(path) else ".").mkdir(
+                exist_ok=True, parents=True
+            )
 
         logger.info("AddressStorage 初始化: 类型=%s, 路径=%s", storage_type, path)
 
@@ -347,7 +349,9 @@ class AddressStorage:
             metadata_path = self.path.replace(".csv", "_metadata.json")
             if pathlib.Path(metadata_path).exists():
                 metadata_content = EncodingUtils.read_file(
-                    metadata_path, encoding="utf-8", try_multiple=True,
+                    metadata_path,
+                    encoding="utf-8",
+                    try_multiple=True,
                 )
                 metadata = json.loads(metadata_content)
 
@@ -425,8 +429,11 @@ class AddressStorage:
         ]
         # 使用 normcase 处理 Windows 大小写不敏感的文件系统
         storage_dir_norm = os.path.normcase(storage_dir)
-        if not any(storage_dir_norm.startswith(os.path.normcase(d) + os.sep)
-                   or storage_dir_norm == os.path.normcase(d) for d in allowed_dirs):
+        if not any(
+            storage_dir_norm.startswith(os.path.normcase(d) + os.sep)
+            or storage_dir_norm == os.path.normcase(d)
+            for d in allowed_dirs
+        ):
             raise ValueError(f"存储目录必须在允许的路径范围内: {storage_dir}")
         pathlib.Path(storage_dir).mkdir(exist_ok=True, parents=True)
         return storage_dir
@@ -447,7 +454,8 @@ class AddressStorage:
         if storage_type not in ext_map:
             raise ValueError(f"不支持的存储类型: {storage_type}")
         return os.path.join(
-            storage_dir, f"imported_addresses_{timestamp}_{unique_id}{ext_map[storage_type]}",
+            storage_dir,
+            f"imported_addresses_{timestamp}_{unique_id}{ext_map[storage_type]}",
         )
 
     def _read_source_addresses(self, real_source_path: str) -> list[str]:
@@ -468,7 +476,8 @@ class AddressStorage:
 
     @staticmethod
     def _batch_validate_addresses(
-        source_addresses: list[str], progress_callback: Callable | None,
+        source_addresses: list[str],
+        progress_callback: Callable | None,
     ) -> tuple[set, list]:
         """分批验证源地址，返回 (valid_addresses, invalid_addresses)。"""
         from .validator import AddressBatchValidator
@@ -534,7 +543,8 @@ class AddressStorage:
 
             if validate:
                 valid_addresses, invalid_addresses = self._batch_validate_addresses(
-                    source_addresses, progress_callback,
+                    source_addresses,
+                    progress_callback,
                 )
             else:
                 valid_addresses = set(source_addresses)
@@ -593,9 +603,7 @@ class AddressStorage:
                 addresses = [str(addr).strip() for addr in data if str(addr).strip()]
             elif isinstance(data, dict):
                 if "addresses" in data:
-                    addresses = [
-                        str(addr).strip() for addr in data["addresses"] if str(addr).strip()
-                    ]
+                    addresses = [str(addr).strip() for addr in data["addresses"] if str(addr).strip()]
                 elif "targets" in data:
                     addresses = [str(addr).strip() for addr in data["targets"] if str(addr).strip()]
                 else:

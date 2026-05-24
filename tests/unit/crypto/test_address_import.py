@@ -145,7 +145,8 @@ class TestAddressImport:
         storage = AddressStorage()
 
         result = storage.import_addresses(
-            source_path="/nonexistent/file.txt", storage_dir=tempfile.mkdtemp(),
+            source_path="/nonexistent/file.txt",
+            storage_dir=tempfile.mkdtemp(),
         )
 
         assert result["success"] is False

@@ -48,9 +48,14 @@ class TestExceptionBasics(unittest.TestCase):
     def test_all_subclasses_exist(self):
         """验证所有异常子类可实例化"""
         for cls in [
-            AddressGenerationError, CheckpointError, ConfigError,
-            CryptoBackendError, DeduplicationError, GPUError,
-            TargetResolutionError, ValidationError,
+            AddressGenerationError,
+            CheckpointError,
+            ConfigError,
+            CryptoBackendError,
+            DeduplicationError,
+            GPUError,
+            TargetResolutionError,
+            ValidationError,
         ]:
             err = cls("test")
             self.assertIsInstance(err, CollisionEngineError)

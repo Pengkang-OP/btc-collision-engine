@@ -200,7 +200,8 @@ class DriverManager:
                     if result.returncode == 0 and result.stdout.strip():
                         parser_type: str = str(method["parser"])
                         version = DriverManager._parse_nvidia_output(
-                            result.stdout.strip(), parser_type,
+                            result.stdout.strip(),
+                            parser_type,
                         )
                         if version:
                             logger.info(f"检测到NVIDIA驱动版本({method['name']}): {version}")
@@ -617,7 +618,8 @@ class DriverManager:
             recommended_driver = profile.get("recommended_driver_version")
 
             if min_driver and not DriverVersionParser.is_version_compatible(
-                driver_version, min_driver,
+                driver_version,
+                min_driver,
             ):
                 result["status"] = "critical"
                 result["message"] = f"驱动版本过低: {driver_version}, 最低要求: {min_driver}"
@@ -625,13 +627,12 @@ class DriverManager:
                 return result
 
             if recommended_driver and not DriverVersionParser.is_version_compatible(
-                driver_version, recommended_driver,
+                driver_version,
+                recommended_driver,
             ):
                 if result["status"] == "good":
                     result["status"] = "warning"
-                result["message"] = (
-                    f"驱动版本较旧: {driver_version}, 推荐版本: {recommended_driver}"
-                )
+                result["message"] = f"驱动版本较旧: {driver_version}, 推荐版本: {recommended_driver}"
                 result["recommendations"].append(
                     f"建议更新驱动到 {recommended_driver} 以获得最佳性能",
                 )
@@ -645,7 +646,9 @@ class DriverManager:
 
     @staticmethod
     def get_driver_optimization_flags(
-        vendor: str, driver_version: str, profile: dict | None = None,
+        vendor: str,
+        driver_version: str,
+        profile: dict | None = None,
     ) -> dict[str, bool]:
         """根据驱动版本获取优化标志
 

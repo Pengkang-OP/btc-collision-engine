@@ -22,14 +22,10 @@ class DataCleaner:
         retention_days: int = 7,
         target_dirs: list[str] | None = None,
     ):
-        self._retention_seconds = (
-            retention_days * 86400
-        )
+        self._retention_seconds = retention_days * 86400
         if target_dirs is None:
             # 默认目录解析为项目根下的绝对路径，确保 CWD 无关
-            self._target_dirs: list[Path] = [
-                _PROJECT_ROOT / d for d in ("data_logs", "logs", "temp")
-            ]
+            self._target_dirs: list[Path] = [_PROJECT_ROOT / d for d in ("data_logs", "logs", "temp")]
         else:
             # 调用者提供的路径按原样使用（保持相对/绝对语义）
             self._target_dirs = [Path(d) for d in target_dirs]
@@ -54,13 +50,17 @@ class DataCleaner:
                             f.unlink()
                             total += 1
                             logger.debug(
-                                "Cleaned: %s", f,
+                                "Cleaned: %s",
+                                f,
                             )
                         except OSError as e:
                             logger.warning(
-                                "Failed to clean %s: %s", f, e,
+                                "Failed to clean %s: %s",
+                                f,
+                                e,
                             )
         logger.info(
-            "Data cleanup complete: %s files removed", total,
+            "Data cleanup complete: %s files removed",
+            total,
         )
         return total

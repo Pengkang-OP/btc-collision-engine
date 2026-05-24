@@ -11,7 +11,6 @@ GPU碰撞引擎性能对比测试
 
 import json
 import os
-import sys
 import time
 
 # 添加项目根目录到路径

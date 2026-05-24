@@ -606,7 +606,10 @@ class ConfigManager:
                 return True
 
             atomic_json_write(
-                self.config_file, config_copy, ensure_ascii=False, indent=2,
+                self.config_file,
+                config_copy,
+                ensure_ascii=False,
+                indent=2,
             )
             success = True
             if success:
@@ -799,12 +802,16 @@ class ConfigManager:
             return None
         if value >= _gpu_max_batch_size:
             errors[key] = _t(
-                "config.validation.batch_size_max_gpu", value=value, max=_gpu_max_batch_size,
+                "config.validation.batch_size_max_gpu",
+                value=value,
+                max=_gpu_max_batch_size,
             )
             return None
         if value > _schema_max_batch_size:
             errors[key] = _t(
-                "config.validation.batch_size_max_schema", value=value, max=_schema_max_batch_size,
+                "config.validation.batch_size_max_schema",
+                value=value,
+                max=_schema_max_batch_size,
             )
             return None
         return value
@@ -832,7 +839,10 @@ class ConfigManager:
             return None
         if not isinstance(value, int) or value < min_val:
             errors[name] = _t(
-                "config.validation.batch_size_min", name=name, min_val=min_val, value=value,
+                "config.validation.batch_size_min",
+                name=name,
+                min_val=min_val,
+                value=value,
             )
             return None
         if max_val is not None and value > max_val:
@@ -847,7 +857,11 @@ class ConfigManager:
         return value
 
     def _validate_positive_float(
-        self, name: str, value: float, errors: dict[str, str], min_val: float = 0.0,
+        self,
+        name: str,
+        value: float,
+        errors: dict[str, str],
+        min_val: float = 0.0,
     ) -> float | None:
         """验证正浮点数配置"""
         if not isinstance(value, (int, float)) or value < min_val:
@@ -865,13 +879,18 @@ class ConfigManager:
                 if value.lower() in ("false", "0", "no", "off"):
                     return False
             errors[name] = _t(
-                "config.validation.bool_expected", value=value, type_name=type(value).__name__,
+                "config.validation.bool_expected",
+                value=value,
+                type_name=type(value).__name__,
             )
             return False
         return value
 
     def _validate_checkpoint_interval(
-        self, value: int, errors: dict[str, str], prefix: str = "",
+        self,
+        value: int,
+        errors: dict[str, str],
+        prefix: str = "",
     ) -> int | None:
         """验证检查点间隔
 
@@ -895,7 +914,9 @@ class ConfigManager:
         key = prefix + "level"
         if value.upper() not in valid_levels:
             errors[key] = _t(
-                "config.validation.invalid_log_level", value=value, valid_values=valid_levels,
+                "config.validation.invalid_log_level",
+                value=value,
+                valid_values=valid_levels,
             )
             return None
         return value.upper()
@@ -956,11 +977,15 @@ class ConfigManager:
             )
         if "progress_interval" in collision:
             self._validate_positive_int(
-                "collision.progress_interval", collision["progress_interval"], errors,
+                "collision.progress_interval",
+                collision["progress_interval"],
+                errors,
             )
         if "checkpoint_interval" in collision:
             self._validate_checkpoint_interval(
-                collision["checkpoint_interval"], errors, prefix="collision.",
+                collision["checkpoint_interval"],
+                errors,
+                prefix="collision.",
             )
         if "dedup_max_size" in collision:
             self._validate_positive_int("collision.dedup_max_size", collision["dedup_max_size"], errors)
@@ -1025,11 +1050,16 @@ class ConfigManager:
             self._validate_positive_int("engine.max_threads", engine_cfg["max_threads"], errors)
         if "checkpoint_interval" in engine_cfg:
             self._validate_checkpoint_interval(
-                engine_cfg["checkpoint_interval"], errors, prefix="engine.",
+                engine_cfg["checkpoint_interval"],
+                errors,
+                prefix="engine.",
             )
 
     def _validate_gpu_section(
-        self, gpu_top: Any, gpu_cfg: dict[str, Any], errors: dict[str, str],
+        self,
+        gpu_top: Any,
+        gpu_cfg: dict[str, Any],
+        errors: dict[str, str],
     ) -> None:
         """验证 gpu 配置节"""
         if gpu_top is not None and not isinstance(gpu_top, dict):
@@ -1045,7 +1075,8 @@ class ConfigManager:
             ratio = gpu_cfg["memory_usage_ratio"]
             if not isinstance(ratio, (int, float)) or not (0 < ratio <= 1):
                 errors["gpu.memory_usage_ratio"] = _t(
-                    "config.validation.memory_ratio_range", value=ratio,
+                    "config.validation.memory_ratio_range",
+                    value=ratio,
                 )
         if "mode" in gpu_cfg and gpu_cfg["mode"] not in ("auto", "single", "multi"):
             errors["gpu.mode"] = _t("config.validation.gpu_mode_invalid", value=gpu_cfg["mode"])
@@ -1054,7 +1085,8 @@ class ConfigManager:
             "equal",
         ):
             errors["gpu.load_balancing"] = _t(
-                "config.validation.load_balancing_invalid", value=gpu_cfg["load_balancing"],
+                "config.validation.load_balancing_invalid",
+                value=gpu_cfg["load_balancing"],
             )
         for key in ("use_gpu", "auto_detect", "enable_vendor_optimizations"):
             if key in gpu_cfg:
@@ -1105,7 +1137,9 @@ class ConfigManager:
             )
         if "max_records" in perf_cfg:
             self._validate_positive_int(
-                "performance_monitoring.max_records", perf_cfg["max_records"], errors,
+                "performance_monitoring.max_records",
+                perf_cfg["max_records"],
+                errors,
             )
         if "log_level" in perf_cfg:
             self._validate_log_level(perf_cfg["log_level"], errors, prefix="performance_monitoring.log_")

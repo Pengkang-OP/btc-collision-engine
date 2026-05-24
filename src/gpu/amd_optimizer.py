@@ -71,7 +71,8 @@ class AmdDriverDetector:
         }
 
         version_str = self._device_info.get("driver_version") or self._device_info.get(
-            "version", "",
+            "version",
+            "",
         )
         if not version_str:
             result["recommendation"] = (
@@ -593,7 +594,10 @@ class AmdMemoryOptimizer:
     _GDDR5_ARCHS = {"GCN1.0", "GCN3.0"}
 
     def __init__(
-        self, device_info: dict, arch_info: dict, engine_logger: Any | None = None,
+        self,
+        device_info: dict,
+        arch_info: dict,
+        engine_logger: Any | None = None,
     ) -> None:
         self._device_info = device_info
         self._arch_info = arch_info
@@ -692,12 +696,20 @@ class AmdGPUOptimizer:
     """
 
     __slots__ = (
-        "_device_info", "_config", "_logger",
-        "_driver_info", "_arch_info", "_wavefront_result", "_memory_config",
+        "_device_info",
+        "_config",
+        "_logger",
+        "_driver_info",
+        "_arch_info",
+        "_wavefront_result",
+        "_memory_config",
     )
 
     def __init__(
-        self, device_info: dict, config: dict | None = None, engine_logger: Any | None = None,
+        self,
+        device_info: dict,
+        config: dict | None = None,
+        engine_logger: Any | None = None,
     ) -> None:
         self._device_info = device_info if isinstance(device_info, dict) else {}
         self._config = config or {}
@@ -831,8 +843,7 @@ class AmdGPUOptimizer:
 
         except (ValueError, TypeError) as e:
             self._logger.warning(
-                "[WARN] AMD Wavefront 验证参数异常（非致命）: %s\n"
-                "   Wavefront 对齐将跳过",
+                "[WARN] AMD Wavefront 验证参数异常（非致命）: %s\n   Wavefront 对齐将跳过",
                 type(e).__name__,
                 exc_info=True,
             )
@@ -872,8 +883,7 @@ class AmdGPUOptimizer:
 
         except (ValueError, KeyError, TypeError) as e:
             self._logger.warning(
-                "[WARN] AMD 显存优化配置数据异常（非致命）: %s\n"
-                "   显存配置将使用保守默认值",
+                "[WARN] AMD 显存优化配置数据异常（非致命）: %s\n   显存配置将使用保守默认值",
                 type(e).__name__,
                 exc_info=True,
             )
@@ -887,8 +897,7 @@ class AmdGPUOptimizer:
             result["memory"] = self._memory_config
         except Exception as e:
             self._logger.warning(
-                "[WARN] AMD 显存优化配置失败（非致命）: %s\n"
-                "   显存配置将使用保守默认值",
+                "[WARN] AMD 显存优化配置失败（非致命）: %s\n   显存配置将使用保守默认值",
                 type(e).__name__,
                 exc_info=True,
             )
@@ -912,9 +921,7 @@ class AmdGPUOptimizer:
         result["recommended_wavefront_size"] = (
             self._arch_info.get("wavefront_size", 64) if self._arch_info else 64
         )
-        result["arch_name"] = (
-            self._arch_info.get("arch", "Unknown") if self._arch_info else "Unknown"
-        )
+        result["arch_name"] = self._arch_info.get("arch", "Unknown") if self._arch_info else "Unknown"
 
         self._logger.info("=" * 60)
         self._logger.info("[OK] AMD GPU 特殊优化应用完成")

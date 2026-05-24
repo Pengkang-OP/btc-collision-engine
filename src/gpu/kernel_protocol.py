@@ -163,7 +163,10 @@ class GPUKernelFactory:
 
     @classmethod
     def create(
-        cls, device: Any, max_batch_size: int | None = None, program: Any = None,
+        cls,
+        device: Any,
+        max_batch_size: int | None = None,
+        program: Any = None,
     ) -> GPUKernelProtocol:
         """创建GPU内核实例
 
@@ -184,7 +187,9 @@ class GPUKernelFactory:
         if cls._kernel_class is None:  # mypy: narrow from None check above
             raise RuntimeError("GPUKernelFactory.create(): cls._kernel_class is None after check")
         return cls._kernel_class(
-            device, max_batch_size=max_batch_size, program=program,
+            device,
+            max_batch_size=max_batch_size,
+            program=program,
         )
 
     @classmethod

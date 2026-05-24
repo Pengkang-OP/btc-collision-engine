@@ -239,7 +239,9 @@ class TestExecuteGPUBatch:
         assert matches[0]["key_index"] == 0
         assert matches[1]["key_index"] == 50
 
-    @pytest.mark.skip(reason="Phase 6: _execute_gpu_batch 委托到 _scheduler.execute_batch()，日志行为在 _scheduler 模块中。此测试需要重构为测试 _scheduler 级别的日志频率控制")
+    @pytest.mark.skip(
+        reason="Phase 6: _execute_gpu_batch 委托到 _scheduler.execute_batch()，日志行为在 _scheduler 模块中。此测试需要重构为测试 _scheduler 级别的日志频率控制"
+    )
     def test_execute_gpu_batch_logging_frequency(self):
         """测试日志记录频率控制 (Phase 6: 路径更新)"""
         engine = self._create_mock_engine()

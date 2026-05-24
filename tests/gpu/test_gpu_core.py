@@ -7,7 +7,6 @@
     pytest tests/test_gpu_core.py -v --tb=short
 """
 
-
 import pytest
 
 # ============================================================================
@@ -23,6 +22,7 @@ class TestGPUAvailability:
         """测试：GPU 引擎条件导入"""
         try:
             from src.collision.gpu.engine import GPUCollisionEngine
+
             assert GPUCollisionEngine is not None
         except ImportError:
             pass  # 无 GPU 依赖时允许导入失败
@@ -40,6 +40,7 @@ class TestGPUAvailability:
 # ============================================================================
 # 测试：GPU 事件脱敏（无 GPU 依赖）
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestGPUMasking:
@@ -76,6 +77,7 @@ class TestGPUMasking:
 # 测试：GPU 常量（无 GPU 依赖）
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestGPUConstants:
     """GPU 常量和配置测试"""
@@ -85,8 +87,11 @@ class TestGPUConstants:
         from src.collision.gpu import engine as gpu_engine
 
         expected = {
-            "PYOPENCL_AVAILABLE", "UINT32_MAX", "GPU_MAX_BATCH_SIZE",
-            "INITIAL_BATCH_SIZE", "THREAD_JOIN_TIMEOUT",
+            "PYOPENCL_AVAILABLE",
+            "UINT32_MAX",
+            "GPU_MAX_BATCH_SIZE",
+            "INITIAL_BATCH_SIZE",
+            "THREAD_JOIN_TIMEOUT",
         }
         for const in expected:
             assert hasattr(gpu_engine, const), f"缺失常量: {const}"
@@ -98,6 +103,7 @@ class TestGPUConstants:
             INITIAL_BATCH_SIZE,
             UINT32_MAX,
         )
+
         assert GPU_MAX_BATCH_SIZE > 0
         assert INITIAL_BATCH_SIZE > 0
         assert UINT32_MAX > 0

@@ -247,7 +247,9 @@ class LoggingConfig:
                     root_logger.addHandler(file_handler)
 
     def _create_file_handler(  # noqa: C901
-        self, log_file: str, format_str: str,
+        self,
+        log_file: str,
+        format_str: str,
     ) -> logging.Handler | None:
         """创建文件处理器"""
         if self._config is None:
@@ -362,7 +364,8 @@ class LoggingConfig:
                                 handler = SafeRotatingFileHandler(
                                     self._log_file,
                                     maxBytes=(self._config_snapshot or {}).get(
-                                        "max_bytes", 10 * 1024 * 1024,
+                                        "max_bytes",
+                                        10 * 1024 * 1024,
                                     ),
                                     backupCount=(self._config_snapshot or {}).get("backup_count", 5),
                                     encoding="utf-8-sig",
@@ -451,7 +454,10 @@ def _setup_security_filter() -> None:
     try:
         # 创建安全过滤器
         security_filter = SecurityLogFilter(
-            name="security_filter", mask_private_keys=True, mask_wif=True, mask_addresses=True,
+            name="security_filter",
+            mask_private_keys=True,
+            mask_wif=True,
+            mask_addresses=True,
         )
 
         # 添加到根日志记录器

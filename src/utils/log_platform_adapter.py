@@ -74,7 +74,11 @@ class PlatformAdapter:
             return os.path.join(os.path.expanduser("~"), "Library", "Logs", "btc-collision-engine")
         # Linux: 使用 ~/.local/share 目录
         return os.path.join(
-            os.path.expanduser("~"), ".local", "share", "btc-collision-engine", "logs",
+            os.path.expanduser("~"),
+            ".local",
+            "share",
+            "btc-collision-engine",
+            "logs",
         )
 
     def ensure_directory(self, directory: str) -> bool:
@@ -161,7 +165,8 @@ class PlatformAdapter:
 
                 kernel32 = ctypes.windll.kernel32
                 return cast(
-                    "int", kernel32.GetPriorityClass(kernel32.GetCurrentProcess()),
+                    "int",
+                    kernel32.GetPriorityClass(kernel32.GetCurrentProcess()),
                 )  # Windows ctypes API
             except (OSError, AttributeError):
                 return 0
@@ -191,7 +196,8 @@ class PlatformAdapter:
 
                 kernel32 = ctypes.windll.kernel32
                 return cast(
-                    "bool", kernel32.SetPriorityClass(kernel32.GetCurrentProcess(), priority) != 0,
+                    "bool",
+                    kernel32.SetPriorityClass(kernel32.GetCurrentProcess(), priority) != 0,
                 )  # Windows ctypes API
             except (OSError, AttributeError):
                 return False
@@ -245,7 +251,10 @@ class PlatformAdapter:
         return cast(
             "logging.Handler",
             SafeRotatingFileHandler(
-                filename, maxBytes=10 * 1024 * 1024, backupCount=5, encoding="utf-8",
+                filename,
+                maxBytes=10 * 1024 * 1024,
+                backupCount=5,
+                encoding="utf-8",
             ),
         )
 

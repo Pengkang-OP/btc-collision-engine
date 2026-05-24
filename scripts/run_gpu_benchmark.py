@@ -1,13 +1,15 @@
 """GPU 性能基准测试 - 在本地 GPU 上运行"""
-import time
-import sys
-import os
+
 import json
+import os
+import sys
+import time
 
 # 设置 stdout 编码，避免 GBK 编码问题
-if sys.stdout.encoding.lower() in ('gbk', 'gb2312', 'cp936'):
+if sys.stdout.encoding.lower() in ("gbk", "gb2312", "cp936"):
     import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
 try:
     from src.collision.gpu.engine import GPUCollisionEngine, list_gpu_devices
@@ -30,6 +32,7 @@ def main():
     # 检测 GPU 设备
     try:
         import pyopencl as cl
+
         devices = []
         for plat in cl.get_platforms():
             for dev in plat.get_devices():
@@ -57,6 +60,7 @@ def main():
 
     try:
         import warnings
+
         warnings.filterwarnings("ignore")
 
         engine = GPUCollisionEngine(
@@ -72,20 +76,22 @@ def main():
             time.sleep(min(30, remaining))
             try:
                 s = engine.stats
-                if s and hasattr(s, 'speed') and s.speed:
-                    print(f"    剩余 {remaining}s - 当前速度: {s.speed:,.0f} keys/s, 已检测: {s.total_checked:,}")
+                if s and hasattr(s, "speed") and s.speed:
+                    print(
+                        f"    剩余 {remaining}s - 当前速度: {s.speed:,.0f} keys/s, 已检测: {s.total_checked:,}"
+                    )
             except Exception:
                 pass
 
         engine.stop()
         time.sleep(2)  # 等待引擎完全停止
 
-        stats = getattr(engine, 'stats', None)
+        stats = getattr(engine, "stats", None)
         if stats:
-            total = getattr(stats, 'total_checked', 0)
-            speed = getattr(stats, 'speed', 0)
-            matches = len(getattr(stats, 'matches', []) or [])
-            elapsed = getattr(stats, 'elapsed', test_duration)
+            total = getattr(stats, "total_checked", 0)
+            speed = getattr(stats, "speed", 0)
+            matches = len(getattr(stats, "matches", []) or [])
+            elapsed = getattr(stats, "elapsed", test_duration)
 
             print(f"\n{'=' * 60}")
             print("GPU 性能测试结果")
@@ -116,6 +122,7 @@ def main():
     except Exception as e:
         print(f"GPU 基准测试失败: {e}")
         import traceback
+
         traceback.print_exc()
 
 

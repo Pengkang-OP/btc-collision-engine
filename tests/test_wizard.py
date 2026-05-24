@@ -1626,7 +1626,10 @@ class TestWizardEngine:
         mock_mq = MagicMock(spec=WizardMessageQueue)
 
         config = WizardConfig(
-            mode=WizardMode.COMPACT, show_intro=False, show_summary=False, auto_continue=True,
+            mode=WizardMode.COMPACT,
+            show_intro=False,
+            show_summary=False,
+            auto_continue=True,
         )
         engine = we.WizardEngine(config=config, message_queue=mock_mq)
         result = engine.run()
@@ -1674,7 +1677,10 @@ class TestWizardEngine:
         mock_mq = MagicMock(spec=WizardMessageQueue)
 
         config = WizardConfig(
-            mode=WizardMode.COMPACT, show_intro=False, show_summary=False, auto_continue=True,
+            mode=WizardMode.COMPACT,
+            show_intro=False,
+            show_summary=False,
+            auto_continue=True,
         )
 
         engine = we.WizardEngine(config=config, message_queue=mock_mq)
@@ -1772,7 +1778,10 @@ class TestWizardEngine:
         mock_mq = MagicMock(spec=WizardMessageQueue)
 
         config = WizardConfig(
-            mode=WizardMode.COMPACT, show_intro=False, show_summary=False, auto_continue=True,
+            mode=WizardMode.COMPACT,
+            show_intro=False,
+            show_summary=False,
+            auto_continue=True,
         )
         engine = we.WizardEngine(config=config, message_queue=mock_mq)
         result = engine.run()
@@ -1868,7 +1877,10 @@ class TestWizardEngine:
 
         mock_mq = MagicMock(spec=WizardMessageQueue)
         config = WizardConfig(
-            mode=WizardMode.COMPACT, show_intro=False, show_summary=True, auto_continue=True,
+            mode=WizardMode.COMPACT,
+            show_intro=False,
+            show_summary=True,
+            auto_continue=True,
         )
         monkeypatch.setattr("subprocess.run", MagicMock())
         engine = WizardEngine(config=config, message_queue=mock_mq)

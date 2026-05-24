@@ -12,9 +12,9 @@ Intel Arc ULLS优化效果验证工具
 """
 
 import json
-import sys
 from datetime import datetime
 from pathlib import Path
+
 
 def run_ulls_verification_test(duration=60):
     """运行ULLS优化验证测试

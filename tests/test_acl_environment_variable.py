@@ -146,7 +146,9 @@ class TestACLEnvironmentVariable(unittest.TestCase):
                             import subprocess
 
                             subprocess.run(
-                                ["icacls", test_file, "/reset"], capture_output=True, timeout=2,
+                                ["icacls", test_file, "/reset"],
+                                capture_output=True,
+                                timeout=2,
                             )
                         pathlib.Path(test_file).unlink()
                     except (OSError, PermissionError):
@@ -161,7 +163,8 @@ class TestACLEnvironmentVariable(unittest.TestCase):
 
         # 创建引擎
         engine = KeyCollisionEngine(
-            targets={"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}, checkpoint_enabled=True,
+            targets={"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"},
+            checkpoint_enabled=True,
         )
 
         # 替换断点文件路径

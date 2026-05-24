@@ -77,14 +77,14 @@ class TestAdaptiveTimeoutManager:
     def test_timeout_adjustment_logging(self):
         """测试超时调整日志"""
         # 记录足够数据触发调整
-        for i in range(20):
+        for _i in range(20):
             self.timeout_mgr.record_execution_time(200.0)
 
         # 再次获取应该触发调整日志
         timeout1 = self.timeout_mgr.get_timeout()
 
         # 记录不同的数据
-        for i in range(10):
+        for _i in range(10):
             self.timeout_mgr.record_execution_time(500.0)
 
         timeout2 = self.timeout_mgr.get_timeout()
@@ -122,7 +122,7 @@ class TestAdaptiveTimeoutManager:
 
     def test_should_warn(self):
         """测试警告判断"""
-        for i in range(10):
+        for _i in range(10):
             self.timeout_mgr.record_execution_time(100.0)
 
         # 80ms 应该不警告（80% 阈值）
@@ -270,7 +270,7 @@ class TestIntelMemoryMonitor:
     def test_memory_leak_detection(self):
         """测试显存泄漏检测"""
         # 分配不释放
-        for i in range(25):
+        for _i in range(25):
             self.monitor.track_allocation(1024 * 1024)  # 1MB
 
         # 应该检测到可能的泄漏
@@ -278,7 +278,7 @@ class TestIntelMemoryMonitor:
 
         # 正常分配释放
         monitor2 = IntelMemoryMonitor(total_memory_bytes=self.total_memory)
-        for i in range(25):
+        for _i in range(25):
             monitor2.track_allocation(1024 * 1024)
             monitor2.track_deallocation(1024 * 1024)
 

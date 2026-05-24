@@ -7,7 +7,6 @@ GPU碰撞引擎实际性能测试
 import os
 import sys
 import time
-from pathlib import Path
 
 from src.collision.collision_stats import CollisionStats
 from src.collision.gpu.engine import GPUCollisionEngine

@@ -16,7 +16,6 @@
 import re
 import sys
 from pathlib import Path
-from typing import List, Tuple
 
 # 修复Windows控制台编码问题 - 使用共享模块
 from tools.utf8_helper import setup_windows_utf8
@@ -128,7 +127,7 @@ def detect_language_v2(code_content: str, context_before: str, context_after: st
     return "text"
 
 
-def find_unlabeled_code_blocks(content: str) -> List[Tuple[int, str]]:
+def find_unlabeled_code_blocks(content: str) -> list[tuple[int, str]]:
     """查找所有未标注语言类型的代码块
 
     Returns:
@@ -157,7 +156,7 @@ def find_unlabeled_code_blocks(content: str) -> List[Tuple[int, str]]:
     return unlabeled
 
 
-def fix_code_blocks_v2(content: str) -> Tuple[str, int]:
+def fix_code_blocks_v2(content: str) -> tuple[str, int]:
     """修复未标注的代码块
 
     Returns:
@@ -173,7 +172,7 @@ def fix_code_blocks_v2(content: str) -> Tuple[str, int]:
         return content, 0
 
     # 从后向前修复，避免行号变化
-    for line_num, opening_line in reversed(unlabeled):
+    for line_num, _opening_line in reversed(unlabeled):
         line_idx = line_num - 1
 
         # 提取代码块内容

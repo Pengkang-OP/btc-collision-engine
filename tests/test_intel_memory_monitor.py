@@ -365,7 +365,7 @@ class TestDetectMemoryLeak:
 
         monitor = IntelMemoryMonitor(8 * 1024**3)
         # < 10 allocations, should not detect leak
-        for i in range(5):
+        for _i in range(5):
             monitor.track_allocation(1024)
         warnings = monitor.check_warnings()
         leak_warnings = [w for w in warnings if "泄漏" in w or "leak" in w.lower()]
@@ -376,7 +376,7 @@ class TestDetectMemoryLeak:
 
         monitor = IntelMemoryMonitor(8 * 1024**3, safe_usage_ratio=0.9)
         # Many allocations, no deallocations
-        for i in range(30):
+        for _i in range(30):
             monitor.track_allocation(1024 * 1024)
         warnings = monitor.check_warnings()
         leak_warnings = [w for w in warnings if "泄漏" in w or "leak" in w.lower()]
@@ -386,7 +386,7 @@ class TestDetectMemoryLeak:
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
 
         monitor = IntelMemoryMonitor(8 * 1024**3, safe_usage_ratio=0.9)
-        for i in range(30):
+        for _i in range(30):
             monitor.track_allocation(1024 * 1024)
             monitor.track_deallocation(1024 * 1024)  # balanced
         warnings = monitor.check_warnings()
@@ -408,7 +408,7 @@ class TestHistoryAndReset:
 
         monitor = IntelMemoryMonitor(8 * 1024**3)
         # Add more than max_history (100) records
-        for i in range(150):
+        for _i in range(150):
             monitor.track_allocation(1024 * 1024)
         history = monitor.get_history(200)
         assert len(history) <= monitor._max_history
@@ -449,7 +449,7 @@ class TestHistoryAndReset:
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
 
         monitor = IntelMemoryMonitor(8 * 1024**3)
-        for i in range(20):
+        for _i in range(20):
             monitor.track_allocation(1024 * 1024)
         history = monitor.get_history()  # default last_n=10
         assert len(history) <= 10
@@ -459,7 +459,7 @@ class TestHistoryAndReset:
 
         monitor = IntelMemoryMonitor(8 * 1024**3)
         # Add more records than the leak detection window
-        for i in range(60):
+        for _i in range(60):
             monitor.track_allocation(1024 * 1024)
         # Should be capped at _leak_detection_window (50)
         assert len(monitor._allocation_sizes) <= 50

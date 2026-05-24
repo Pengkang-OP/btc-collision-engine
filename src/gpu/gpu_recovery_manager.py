@@ -82,15 +82,27 @@ class GPURecoveryManager:
     """
 
     __slots__ = (
-        "max_retry_count", "retry_delay_seconds", "batch_size_reduction_factor",
-        "auto_redistribute", "max_failed_gpus_before_fallback",
+        "max_retry_count",
+        "retry_delay_seconds",
+        "batch_size_reduction_factor",
+        "auto_redistribute",
+        "max_failed_gpus_before_fallback",
         "_max_failure_history_per_gpu",
-        "_failed_gpus", "_failed_gpus_lock",
-        "_fallback_lock", "_fallback_to_cpu", "_fallback_callback", "_recovery_callback",
-        "_failure_history", "_history_lock",
+        "_failed_gpus",
+        "_failed_gpus_lock",
+        "_fallback_lock",
+        "_fallback_to_cpu",
+        "_fallback_callback",
+        "_recovery_callback",
+        "_failure_history",
+        "_history_lock",
         "_recovery_callbacks",
-        "_total_failures", "_successful_recoveries", "_failed_recoveries", "_stats_lock",
-        "health_check_timeout", "_health_check_executor",
+        "_total_failures",
+        "_successful_recoveries",
+        "_failed_recoveries",
+        "_stats_lock",
+        "health_check_timeout",
+        "_health_check_executor",
     )
 
     def __init__(
@@ -179,7 +191,9 @@ class GPURecoveryManager:
 
         # 2. 记录失败
         failure_record = GPUFailureRecord(
-            gpu_id=gpu_id, failure_type=failure_type, error_message=str(error),
+            gpu_id=gpu_id,
+            failure_type=failure_type,
+            error_message=str(error),
         )
         self._record_failure(gpu_id, failure_record)
 
@@ -425,7 +439,10 @@ class GPURecoveryManager:
         return RecoveryStrategy.DISABLE_GPU
 
     def _execute_recovery(
-        self, gpu_id: int, failure_type: GPUFailureType, strategy: RecoveryStrategy,
+        self,
+        gpu_id: int,
+        failure_type: GPUFailureType,
+        strategy: RecoveryStrategy,
     ) -> bool:
         """执行恢复策略
 
@@ -539,11 +556,14 @@ class GPURecoveryManager:
                     if cancelled:
                         logger.warning(
                             "GPU %s 健康检查超时（%s秒），已取消未执行的任务",
-                            gpu_id, timeout,
+                            gpu_id,
+                            timeout,
                         )
                     else:
                         logger.warning(
-                            "GPU %s 健康检查超时（%s秒），任务已在运行，无法取消", gpu_id, timeout,
+                            "GPU %s 健康检查超时（%s秒），任务已在运行，无法取消",
+                            gpu_id,
+                            timeout,
                         )
                     return False
 

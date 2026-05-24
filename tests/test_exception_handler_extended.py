@@ -13,7 +13,6 @@ OpenCL 资源错误、GPU 清理错误、配置错误和文件错误处理方法
 - 边界场景: 空 context、空 resource_type、空 mode、空 filepath
 """
 
-
 import pytest
 
 from src.utils.exception_handler import ExceptionHandler
@@ -32,21 +31,24 @@ class TestGPUAsyncError:
     def test_runtime_error_should_fallback(self):
         """RuntimeError 应回退"""
         result = ExceptionHandler.handle_gpu_async_error(
-            RuntimeError("OpenCL kernel execution failed"), "内核执行",
+            RuntimeError("OpenCL kernel execution failed"),
+            "内核执行",
         )
         assert result is True
 
     def test_memory_error_should_fallback(self):
         """MemoryError 应回退"""
         result = ExceptionHandler.handle_gpu_async_error(
-            MemoryError("OpenCL out of host memory"), "缓冲分配",
+            MemoryError("OpenCL out of host memory"),
+            "缓冲分配",
         )
         assert result is True
 
     def test_value_error_should_fallback(self):
         """ValueError 应回退"""
         result = ExceptionHandler.handle_gpu_async_error(
-            ValueError("invalid work group size"), "内核执行",
+            ValueError("invalid work group size"),
+            "内核执行",
         )
         assert result is True
 
@@ -58,14 +60,16 @@ class TestGPUAsyncError:
     def test_index_error_should_fallback(self):
         """IndexError 应回退"""
         result = ExceptionHandler.handle_gpu_async_error(
-            IndexError("buffer index out of range"), "缓冲清理",
+            IndexError("buffer index out of range"),
+            "缓冲清理",
         )
         assert result is True
 
     def test_attribute_error_should_fallback(self):
         """AttributeError 应回退"""
         result = ExceptionHandler.handle_gpu_async_error(
-            AttributeError("'NoneType' object has no attribute 'enqueue'"), "种子写入",
+            AttributeError("'NoneType' object has no attribute 'enqueue'"),
+            "种子写入",
         )
         assert result is True
 
@@ -91,7 +95,8 @@ class TestGPUAsyncError:
     def test_unknown_error_with_corruption_keyword_should_not_fallback(self):
         """未知错误含 'corruption' 关键字 → 不应回退"""
         result = ExceptionHandler.handle_gpu_async_error(
-            Exception("data corruption detected"), "结果回读",
+            Exception("data corruption detected"),
+            "结果回读",
         )
         assert result is False
 
@@ -103,14 +108,16 @@ class TestGPUAsyncError:
     def test_unknown_error_with_access_violation_keyword_should_not_fallback(self):
         """未知错误含 'access violation' 关键字 → 不应回退"""
         result = ExceptionHandler.handle_gpu_async_error(
-            Exception("memory access violation"), "缓冲分配",
+            Exception("memory access violation"),
+            "缓冲分配",
         )
         assert result is False
 
     def test_unknown_error_without_critical_keyword_should_fallback(self):
         """未知错误不含严重关键字 → 应回退"""
         result = ExceptionHandler.handle_gpu_async_error(
-            Exception("some weird unexpected thing happened"), "种子写入",
+            Exception("some weird unexpected thing happened"),
+            "种子写入",
         )
         assert result is True
 
@@ -124,7 +131,8 @@ class TestGPUAsyncError:
     def test_case_insensitive_keywords(self):
         """严重关键字不区分大小写"""
         result = ExceptionHandler.handle_gpu_async_error(
-            Exception("ACCESS VIOLATION in module"), "内核执行",
+            Exception("ACCESS VIOLATION in module"),
+            "内核执行",
         )
         assert result is False
 
@@ -146,31 +154,36 @@ class TestCLResourceError:
 
     def test_out_of_memory(self):
         result = ExceptionHandler.handle_cl_resource_error(
-            RuntimeError("device out of memory"), "kernel",
+            RuntimeError("device out of memory"),
+            "kernel",
         )
         assert result is True
 
     def test_allocation_failed(self):
         result = ExceptionHandler.handle_cl_resource_error(
-            RuntimeError("buffer allocation failed"), "queue",
+            RuntimeError("buffer allocation failed"),
+            "queue",
         )
         assert result is True
 
     def test_insufficient_resources(self):
         result = ExceptionHandler.handle_cl_resource_error(
-            RuntimeError("insufficient device memory"), "event",
+            RuntimeError("insufficient device memory"),
+            "event",
         )
         assert result is True
 
     def test_cl_out_of_host_memory(self):
         result = ExceptionHandler.handle_cl_resource_error(
-            RuntimeError("CL_OUT_OF_HOST_MEMORY"), "buffer",
+            RuntimeError("CL_OUT_OF_HOST_MEMORY"),
+            "buffer",
         )
         assert result is True
 
     def test_invalid_buffer_size(self):
         result = ExceptionHandler.handle_cl_resource_error(
-            RuntimeError("invalid buffer size requested"), "buffer",
+            RuntimeError("invalid buffer size requested"),
+            "buffer",
         )
         assert result is True
 
@@ -182,13 +195,15 @@ class TestCLResourceError:
 
     def test_compile_error(self):
         result = ExceptionHandler.handle_cl_resource_error(
-            RuntimeError("kernel compile error"), "kernel",
+            RuntimeError("kernel compile error"),
+            "kernel",
         )
         assert result is False
 
     def test_invalid_work_group_size(self):
         result = ExceptionHandler.handle_cl_resource_error(
-            RuntimeError("invalid work group size"), "queue",
+            RuntimeError("invalid work group size"),
+            "queue",
         )
         assert result is False
 
@@ -200,7 +215,8 @@ class TestCLResourceError:
 
     def test_case_insensitive_match(self):
         result = ExceptionHandler.handle_cl_resource_error(
-            RuntimeError("CL_MEM_OBJECT_ALLOCATION_FAILURE"), "buffer",
+            RuntimeError("CL_MEM_OBJECT_ALLOCATION_FAILURE"),
+            "buffer",
         )
         assert result is True
 
@@ -254,7 +270,9 @@ class TestFileError:
     def test_file_not_found(self):
         """FileNotFoundError"""
         ExceptionHandler.handle_file_error(
-            FileNotFoundError("config.json not found"), "读取", "config.json",
+            FileNotFoundError("config.json not found"),
+            "读取",
+            "config.json",
         )
 
     def test_permission_error(self):
@@ -346,7 +364,9 @@ class TestEngineErrorEdge:
         """ImportError 被正确分类 (P3-6)"""
         # 不应抛出异常
         ExceptionHandler.handle_engine_error(
-            "CPU", ImportError("no module named pyopencl"), context="GPU初始化",
+            "CPU",
+            ImportError("no module named pyopencl"),
+            context="GPU初始化",
         )
 
     def test_os_error_classified(self):
@@ -406,7 +426,8 @@ class TestGPUErrorEdge:
     def test_resource_error_detection_by_message(self):
         """资源耗尽通过错误消息检测"""
         result = ExceptionHandler.handle_gpu_error(
-            "随机碰撞", RuntimeError("CL_OUT_OF_RESOURCES: device memory exhausted"),
+            "随机碰撞",
+            RuntimeError("CL_OUT_OF_RESOURCES: device memory exhausted"),
         )
         assert result is True
 

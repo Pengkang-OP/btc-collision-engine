@@ -370,7 +370,11 @@ class ErrorRecoveryManager:
             return self._fallbacks.get(category)
 
     def record_retry(
-        self, category: RecoverableErrorCategory, error: Exception, attempt: int, success: bool,
+        self,
+        category: RecoverableErrorCategory,
+        error: Exception,
+        attempt: int,
+        success: bool,
     ) -> None:
         record = RetryRecord(
             error_type=type(error).__name__,
@@ -529,7 +533,10 @@ class ErrorRecoveryManager:
                             if last_exception is None:
                                 raise RuntimeError("last_exception not set for retry recording")
                             manager.record_retry(
-                                resolved_category, last_exception, attempt, True,
+                                resolved_category,
+                                last_exception,
+                                attempt,
+                                True,
                             )
                         return result
                     except Exception as e:
@@ -569,7 +576,10 @@ class ErrorRecoveryManager:
                 if last_exception is None:
                     raise RuntimeError("error_recovery: last_exception is None after retry loop")
                 manager.record_retry(
-                    resolved_category, last_exception, max_retries, False,
+                    resolved_category,
+                    last_exception,
+                    max_retries,
+                    False,
                 )
 
                 if resolved_category is not None:

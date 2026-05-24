@@ -36,9 +36,7 @@ def _reconstruct_from_dict(d: dict) -> GPUEngineConfig:
                 try:
                     converted["key_generation_strategy"] = KeyGenerationStrategy[raw]
                 except KeyError:
-                    raise ValueError(
-                        f"Invalid KeyGenerationStrategy: {raw!r}"
-                    )
+                    raise ValueError(f"Invalid KeyGenerationStrategy: {raw!r}")
     return GPUEngineConfig(**converted)
 
 

@@ -28,7 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # setuptools_scm 需要完整历史
+          fetch-depth: 0 # setuptools_scm 需要完整历史
 
       - name: 设置 Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5

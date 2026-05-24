@@ -120,7 +120,9 @@ class TestGPUKernelArithmetic(unittest.TestCase):
         x_val = _uint256_to_int(result_x)
 
         self.assertEqual(
-            x_val, TWO_GX_HEX, f"2*G X 坐标不匹配: GPU={hex(x_val)}, 预期={hex(TWO_GX_HEX)}",
+            x_val,
+            TWO_GX_HEX,
+            f"2*G X 坐标不匹配: GPU={hex(x_val)}, 预期={hex(TWO_GX_HEX)}",
         )
 
     @skip_if_no_gpu
@@ -140,7 +142,9 @@ class TestGPUKernelArithmetic(unittest.TestCase):
         y_val = _uint256_to_int(result_y)
 
         self.assertEqual(
-            y_val, TWO_GY_HEX, f"2*G Y 坐标不匹配: GPU={hex(y_val)}, 预期={hex(TWO_GY_HEX)}",
+            y_val,
+            TWO_GY_HEX,
+            f"2*G Y 坐标不匹配: GPU={hex(y_val)}, 预期={hex(TWO_GY_HEX)}",
         )
 
     # ── 基点 G 恒等式 ──────────────────────────

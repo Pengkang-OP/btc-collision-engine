@@ -35,8 +35,15 @@ class AdaptiveTimeoutManager:
     """
 
     __slots__ = (
-        "base_timeout", "history_size", "safety_factor", "min_timeout", "max_timeout",
-        "_execution_times", "_total_records", "_timeout_adjustments", "_last_timeout",
+        "base_timeout",
+        "history_size",
+        "safety_factor",
+        "min_timeout",
+        "max_timeout",
+        "_execution_times",
+        "_total_records",
+        "_timeout_adjustments",
+        "_last_timeout",
     )
 
     def __init__(
@@ -72,10 +79,12 @@ class AdaptiveTimeoutManager:
         self._last_timeout = base_timeout
 
         logger.info(
-            "自适应超时管理器已初始化: base=%ss, history=%s, "
-            "safety=%sx, range=[%ss, %ss]",
-            base_timeout, history_size, safety_factor,
-            min_timeout, max_timeout,
+            "自适应超时管理器已初始化: base=%ss, history=%s, safety=%sx, range=[%ss, %ss]",
+            base_timeout,
+            history_size,
+            safety_factor,
+            min_timeout,
+            max_timeout,
         )
 
     def record_execution_time(self, time_ms: float) -> None:

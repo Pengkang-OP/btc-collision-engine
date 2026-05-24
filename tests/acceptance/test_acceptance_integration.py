@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """集成验收测试 - 端到端多模式验证
 
 本模块测试完整的集成场景，确保：
@@ -14,28 +13,21 @@
 - 高可读性：结构化测试代码，清晰的测试用例命名，详细的文档字符串
 """
 
-import os
-import threading
 import time
-from typing import Any, Dict, List, Optional, Tuple
 
 import pytest
 
 from tests.acceptance.conftest import (
     AcceptanceTestConstants,
-    assert_engine_state,
     assert_pipeline_stage_complete,
     assert_valid_bitcoin_address,
     assert_valid_private_key,
-    create_mock_checkpoint_data,
-    create_mock_gpu_device,
-    create_mock_gpu_kernel,
 )
-
 
 # ============================================================================
 # 多模式集成测试 - 三种搜索模式集成
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.integration
@@ -72,12 +64,8 @@ class TestMultiModeIntegration:
             engine._range_start = 1
             engine._range_end = 1000
 
-        assert engine is not None, (
-            f"搜索模式 {search_mode} 下引擎应成功初始化"
-        )
-        assert engine._current_mode == search_mode, (
-            f"搜索模式 {search_mode} 应被正确设置"
-        )
+        assert engine is not None, f"搜索模式 {search_mode} 下引擎应成功初始化"
+        assert engine._current_mode == search_mode, f"搜索模式 {search_mode} 应被正确设置"
 
     def test_multi_mode_engine_start_stop(self, mock_event_bus, search_mode):
         """多模式集成测试：引擎启动和停止"""
@@ -103,16 +91,12 @@ class TestMultiModeIntegration:
                 break
             time.sleep(0.1)
 
-        assert engine.is_running() is True, (
-            f"搜索模式 {search_mode} 下启动后 is_running() 应返回 True"
-        )
+        assert engine.is_running() is True, f"搜索模式 {search_mode} 下启动后 is_running() 应返回 True"
 
         # 停止引擎
         engine.stop(timeout=2.0)
 
-        assert engine.is_running() is False, (
-            f"搜索模式 {search_mode} 下停止后 is_running() 应返回 False"
-        )
+        assert engine.is_running() is False, f"搜索模式 {search_mode} 下停止后 is_running() 应返回 False"
 
     def test_multi_mode_callback_invocation(self, mock_event_bus, search_mode):
         """多模式集成测试：回调函数调用"""
@@ -138,14 +122,13 @@ class TestMultiModeIntegration:
             engine._range_start = 1
             engine._range_end = 1000
 
-        assert engine.on_match is not None, (
-            f"搜索模式 {search_mode} 下回调函数应被正确设置"
-        )
+        assert engine.on_match is not None, f"搜索模式 {search_mode} 下回调函数应被正确设置"
 
 
 # ============================================================================
 # 多组件集成测试 - 多个组件协同工作
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.integration
@@ -161,7 +144,6 @@ class TestMultiComponentIntegration:
 
     def test_engine_checkpoint_integration(self, mock_event_bus, temp_dir):
         """多组件集成测试：引擎 + 检查点"""
-        from src.collision.checkpoint_manager import CheckpointManager
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         targets = {AcceptanceTestConstants.VALID_P2PKH_ADDRESS}
@@ -172,9 +154,7 @@ class TestMultiComponentIntegration:
             checkpoint_interval=1,
         )
 
-        assert engine.checkpoint_mgr is not None, (
-            "引擎 + 检查点集成测试失败：checkpoint_mgr 不应为 None"
-        )
+        assert engine.checkpoint_mgr is not None, "引擎 + 检查点集成测试失败：checkpoint_mgr 不应为 None"
 
     def test_engine_dedup_integration(self, mock_event_bus):
         """多组件集成测试：引擎 + 去重过滤器"""
@@ -187,9 +167,7 @@ class TestMultiComponentIntegration:
             dedup_enabled=True,
         )
 
-        assert engine.dedup_filter is not None, (
-            "引擎 + 去重过滤器集成测试失败：dedup_filter 不应为 None"
-        )
+        assert engine.dedup_filter is not None, "引擎 + 去重过滤器集成测试失败：dedup_filter 不应为 None"
 
         assert engine.dedup_filter.enabled is True, (
             "引擎 + 去重过滤器集成测试失败：dedup_filter 应被启用"
@@ -205,13 +183,9 @@ class TestMultiComponentIntegration:
             event_bus=mock_event_bus,
         )
 
-        assert engine.event_bus is not None, (
-            "引擎 + 事件总线集成测试失败：event_bus 不应为 None"
-        )
+        assert engine.event_bus is not None, "引擎 + 事件总线集成测试失败：event_bus 不应为 None"
 
-        assert engine.event_bus is mock_event_bus, (
-            "引擎 + 事件总线集成测试失败：event_bus 应被正确设置"
-        )
+        assert engine.event_bus is mock_event_bus, "引擎 + 事件总线集成测试失败：event_bus 应被正确设置"
 
     def test_crypto_backend_engine_integration(self, mock_event_bus):
         """多组件集成测试：加密后端 + 引擎"""
@@ -223,14 +197,13 @@ class TestMultiComponentIntegration:
             event_bus=mock_event_bus,
         )
 
-        assert engine is not None, (
-            "加密后端 + 引擎集成测试失败：引擎实例不应为 None"
-        )
+        assert engine is not None, "加密后端 + 引擎集成测试失败：引擎实例不应为 None"
 
 
 # ============================================================================
 # 数据流集成测试 - 完整数据流
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.integration
@@ -249,15 +222,17 @@ class TestDataFlowIntegration:
         mock_event_bus,
     ):
         """数据流集成测试：私钥生成 → 地址生成 → 碰撞检测"""
-        from src.core.optimized_address_generator import OptimizedP2PKHAddressGenerator
         from src.core.key_generator import SecureKeyGenerator
+        from src.core.optimized_address_generator import OptimizedP2PKHAddressGenerator
 
         generator = SecureKeyGenerator(config={"batch_size": 1})
         private_key = generator.generate_single_key()
 
         assert_valid_private_key(private_key)
         assert_pipeline_stage_complete(
-            "key_generation", private_key, bytes,
+            "key_generation",
+            private_key,
+            bytes,
         )
 
         addr_generator = OptimizedP2PKHAddressGenerator(
@@ -270,25 +245,23 @@ class TestDataFlowIntegration:
 
         assert_valid_bitcoin_address(address)
         assert_pipeline_stage_complete(
-            "address_generation", address, str,
+            "address_generation",
+            address,
+            str,
         )
 
-        assert compressed_pk is not None, (
-            "数据流集成测试失败：压缩公钥不应为 None"
-        )
-        assert isinstance(compressed_pk, bytes), (
-            "数据流集成测试失败：压缩公钥应为 bytes 类型"
-        )
+        assert compressed_pk is not None, "数据流集成测试失败：压缩公钥不应为 None"
+        assert isinstance(compressed_pk, bytes), "数据流集成测试失败：压缩公钥应为 bytes 类型"
         assert len(compressed_pk) == 33, (
-            f"数据流集成测试失败：压缩公钥长度应为 33 字节，"
-            f"实际为 {len(compressed_pk)} 字节"
+            f"数据流集成测试失败：压缩公钥长度应为 33 字节，实际为 {len(compressed_pk)} 字节"
         )
 
     def test_data_flow_checkpoint_save_to_restore(
-        self, mock_event_bus, temp_dir,
+        self,
+        mock_event_bus,
+        temp_dir,
     ):
         """数据流集成测试：检查点保存 → 加载 → 恢复"""
-        from src.collision.checkpoint_manager import CheckpointManager
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         targets = {AcceptanceTestConstants.VALID_P2PKH_ADDRESS}
@@ -299,12 +272,8 @@ class TestDataFlowIntegration:
             checkpoint_interval=1,
         )
 
-        assert engine is not None, (
-            "数据流集成测试失败：引擎初始化失败"
-        )
-        assert engine.checkpoint_mgr is not None, (
-            "数据流集成测试失败：checkpoint_mgr 不应为 None"
-        )
+        assert engine is not None, "数据流集成测试失败：引擎初始化失败"
+        assert engine.checkpoint_mgr is not None, "数据流集成测试失败：checkpoint_mgr 不应为 None"
 
     def test_data_flow_event_publication_to_processing(
         self,
@@ -322,9 +291,7 @@ class TestDataFlowIntegration:
 
         event_bus.subscribe(EngineStartEvent, event_handler)
 
-        assert len(received_events) == 0, (
-            "数据流集成测试失败：订阅后 received_events 长度应为 0"
-        )
+        assert len(received_events) == 0, "数据流集成测试失败：订阅后 received_events 长度应为 0"
 
         test_event = EngineStartEvent(
             target_count=1,
@@ -332,9 +299,7 @@ class TestDataFlowIntegration:
         )
         event_bus.publish(test_event)
 
-        assert len(received_events) == 1, (
-            "数据流集成测试失败：发布后 received_events 长度应为 1"
-        )
+        assert len(received_events) == 1, "数据流集成测试失败：发布后 received_events 长度应为 1"
         assert isinstance(received_events[0], EngineStartEvent), (
             "数据流集成测试失败：收到的事件类型应为 EngineStartEvent"
         )
@@ -343,6 +308,7 @@ class TestDataFlowIntegration:
 # ============================================================================
 # 错误处理集成测试 - 错误检测和恢复
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.integration
@@ -368,9 +334,7 @@ class TestErrorHandlingIntegration:
 
         engine._engine_stop_reason = "error"
 
-        assert engine._engine_stop_reason == "error", (
-            "错误处理集成测试失败：错误状态检测失败"
-        )
+        assert engine._engine_stop_reason == "error", "错误处理集成测试失败：错误状态检测失败"
 
     def test_checkpoint_error_handling(self, mock_event_bus, temp_dir):
         """错误处理集成测试：检查点错误处理"""
@@ -384,9 +348,7 @@ class TestErrorHandlingIntegration:
 
         loaded_data = manager.load()
 
-        assert loaded_data is None, (
-            "错误处理集成测试失败：损坏的检查点文件应返回 None"
-        )
+        assert loaded_data is None, "错误处理集成测试失败：损坏的检查点文件应返回 None"
 
     def test_crypto_backend_error_handling(self, mock_event_bus):
         """错误处理集成测试：加密后端错误处理"""
@@ -394,14 +356,13 @@ class TestErrorHandlingIntegration:
 
         manager = CryptoBackendManager()
 
-        assert manager is not None, (
-            "错误处理集成测试失败：CryptoBackendManager 实例不应为 None"
-        )
+        assert manager is not None, "错误处理集成测试失败：CryptoBackendManager 实例不应为 None"
 
 
 # ============================================================================
 # 性能集成测试 - 性能指标
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.integration
@@ -461,21 +422,18 @@ class TestPerformanceIntegration:
         start_time = time.perf_counter()
         for _ in range(100):
             private_key = generator.generate_single_key()
-            assert private_key is not None, (
-                "性能集成测试失败：私钥生成失败"
-            )
+            assert private_key is not None, "性能集成测试失败：私钥生成失败"
         end_time = time.perf_counter()
         duration = end_time - start_time
 
         keys_per_second = 100 / duration
-        assert keys_per_second > 0, (
-            f"性能集成测试失败：私钥生成速度 {keys_per_second:.1f} 个/秒应大于 0"
-        )
+        assert keys_per_second > 0, f"性能集成测试失败：私钥生成速度 {keys_per_second:.1f} 个/秒应大于 0"
 
 
 # ============================================================================
 # 边界条件集成测试
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.integration
@@ -491,9 +449,7 @@ class TestIntegrationEdgeCases:
             targets=set(),
             event_bus=mock_event_bus,
         )
-        assert len(engine.targets) == 0, (
-            "边界条件集成测试失败：空目标集合时 targets 长度应为 0"
-        )
+        assert len(engine.targets) == 0, "边界条件集成测试失败：空目标集合时 targets 长度应为 0"
 
     def test_edge_case_single_target(self, mock_event_bus):
         """边界条件测试：单个目标地址"""
@@ -505,9 +461,7 @@ class TestIntegrationEdgeCases:
             event_bus=mock_event_bus,
         )
         # mock 环境下地址可能无法解码，放宽断言
-        assert isinstance(engine.targets, set), (
-            "边界条件集成测试失败：targets 应为 set 类型"
-        )
+        assert isinstance(engine.targets, set), "边界条件集成测试失败：targets 应为 set 类型"
 
 
 # ============================================================================
@@ -517,4 +471,5 @@ class TestIntegrationEdgeCases:
 if __name__ == "__main__":
     """主程序入口 - 用于独立运行测试"""
     import pytest
+
     pytest.main([__file__, "-v", "--tb=short", "-x"])

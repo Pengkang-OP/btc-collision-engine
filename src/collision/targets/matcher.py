@@ -81,7 +81,6 @@ class AddressMatcher:
     def _init_bloom_filter(self, capacity: int, error_rate: float):
         """初始化布隆过滤器策略"""
         try:
-
             self._bloom = BloomFilter(capacity=capacity, error_rate=error_rate)
             for addr in self.targets:
                 self._bloom.add(addr)

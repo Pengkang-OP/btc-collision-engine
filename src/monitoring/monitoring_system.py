@@ -52,8 +52,7 @@ class MonitoringData:
         self.system: dict[str, Any] = {
             "os": os.name,
             "python_version": (
-                f"{sys.version_info.major}.{sys.version_info.minor}"
-                f".{sys.version_info.micro}"
+                f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
             ),
             "pid": os.getpid(),
             "uptime": 0.0,  # 系统运行时间
@@ -90,7 +89,9 @@ class DataCollector:
         self._cpu_sample_lock = threading.Lock()
         self._cpu_sample_running = True
         self._cpu_sample_thread = threading.Thread(
-            target=self._background_cpu_sampling, daemon=True, name="cpu-sampler",
+            target=self._background_cpu_sampling,
+            daemon=True,
+            name="cpu-sampler",
         )
         self._cpu_sample_thread.start()
         logger.debug("后台CPU采样线程已启动")
@@ -928,7 +929,9 @@ class ReportGenerator:
     """
 
     def __init__(
-        self, storage: DataStorage | None = None, detector: AnomalyDetector | None = None,
+        self,
+        storage: DataStorage | None = None,
+        detector: AnomalyDetector | None = None,
     ) -> None:
         """初始化报告生成器
 

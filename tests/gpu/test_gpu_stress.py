@@ -190,7 +190,7 @@ class TestLongRunning:
                 allocated_buffers.remove(buf)
 
         # 模拟 100 轮：每轮分配→处理→释放
-        for round_idx in range(ROUNDS):
+        for _round_idx in range(ROUNDS):
             buf = alloc_buffer(BATCH_SIZE * 32)
             seed = os.urandom(32)
             mock_kernel.run_batch(seed, BATCH_SIZE)
@@ -466,7 +466,8 @@ class TestErrorRecoveryStress:
         # 注册让恢复总失败的回调
         for gpu_id in [0, 1]:
             recovery_manager.register_recovery_callback(
-                gpu_id=gpu_id, callback=lambda action, *args: False,
+                gpu_id=gpu_id,
+                callback=lambda action, *args: False,
             )
 
         # 让 GPU 0 和 GPU 1 都超过最大重试次数
@@ -501,11 +502,11 @@ class TestErrorRecoveryStress:
         recovery_manager = self._make_recovery_manager()
 
         # GPU 0 失败 3 次，GPU 1 失败 2 次，GPU 2 失败 1 次
-        for i in range(3):
+        for _i in range(3):
             recovery_manager.handle_gpu_failure(gpu_id=0, error=RuntimeError("err"))
-        for i in range(2):
+        for _i in range(2):
             recovery_manager.handle_gpu_failure(gpu_id=1, error=RuntimeError("err"))
-        for i in range(1):
+        for _i in range(1):
             recovery_manager.handle_gpu_failure(gpu_id=2, error=RuntimeError("err"))
 
         stats = recovery_manager.get_recovery_stats()

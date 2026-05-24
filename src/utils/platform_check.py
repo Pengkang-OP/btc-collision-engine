@@ -33,7 +33,7 @@ class PlatformChecker:
         # Python version
         py_ver = sys.version_info
         py_ok = py_ver >= (3, 9)
-        label = 'OK' if py_ok else '需要 >=3.9'
+        label = "OK" if py_ok else "需要 >=3.9"
         self._add(py_ok, f"Python 版本: {py_ver.major}.{py_ver.minor}.{py_ver.micro} {label}")
 
         # Path separators
@@ -45,9 +45,9 @@ class PlatformChecker:
         # Disk space (project directory)
         try:
             usage = shutil.disk_usage(Path.cwd())
-            free_gb = usage.free / (1024 ** 3)
+            free_gb = usage.free / (1024**3)
             space_ok = free_gb >= 1.0
-            label = 'OK' if space_ok else '不足(建议>=1GB)'
+            label = "OK" if space_ok else "不足(建议>=1GB)"
             self._add(space_ok, f"磁盘可用空间: {free_gb:.1f}GB {label}")
         except OSError:
             self._add(False, "磁盘空间: 无法检测")
@@ -61,16 +61,16 @@ class PlatformChecker:
 
     def print_report(self):
         """Print platform check report."""
-        print(f"\n{'='*60}")  # noqa: T201
+        print(f"\n{'=' * 60}")  # noqa: T201
         print("  跨平台兼容性检查")  # noqa: T201
-        print(f"{'='*60}")  # noqa: T201
+        print(f"{'=' * 60}")  # noqa: T201
         for passed, msg in self._results:
             status = "[OK]" if passed else "[WARN]"
             print(f"  {status}  {msg}")  # noqa: T201
         all_passed = all(p for p, _ in self._results)
-        print(f"{'='*60}")  # noqa: T201
+        print(f"{'=' * 60}")  # noqa: T201
         print(f"  结果: {'全部通过' if all_passed else '存在警告'}")  # noqa: T201
-        print(f"{'='*60}\n")  # noqa: T201
+        print(f"{'=' * 60}\n")  # noqa: T201
 
     def generate_report(self) -> dict:
         """Generate a structured report dict."""

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""Callback type aliases for collision detection.
-"""
+"""Callback type aliases for collision detection."""
 
 from typing import Callable
 

@@ -82,8 +82,7 @@ KERNEL_VERSION_HISTORY: list[dict[str, str]] = [
         "version": "4.2.1",
         "date": "2026-05",
         "changes": (
-            "Audit fixes: mod_inverse input validation, "
-            "PRECOMP_TABLE constants, SCALAR_WINDOW constants"
+            "Audit fixes: mod_inverse input validation, PRECOMP_TABLE constants, SCALAR_WINDOW constants"
         ),
     },
     {
@@ -179,7 +178,8 @@ def get_version_changelog(version: str | None = None) -> list[dict[str, str]]:
 
 
 def get_latest_compatible_version(
-    current_version: str, available_versions: list[str],
+    current_version: str,
+    available_versions: list[str],
 ) -> str | None:
     """查找最新兼容版本（用于回滚场景）
 

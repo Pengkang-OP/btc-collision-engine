@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""Event bus for decoupled communication between components.
-"""
+"""Event bus for decoupled communication between components."""
 
 import logging
 import threading
@@ -25,7 +24,8 @@ class EventBus:
     def __init__(self):
         self._lock = threading.Lock()
         self._subscribers: dict[
-            type, list[Callable],
+            type,
+            list[Callable],
         ] = {}
 
     def subscribe(
@@ -41,19 +41,11 @@ class EventBus:
 
         """
         with self._lock:
-            if (
-                event_type
-                not in self._subscribers
-            ):
-                self._subscribers[
-                    event_type
-                ] = []
-            self._subscribers[
-                event_type
-            ].append(handler)
+            if event_type not in self._subscribers:
+                self._subscribers[event_type] = []
+            self._subscribers[event_type].append(handler)
             logger.debug(
-                f"Subscribed {handler.__name__} "
-                f"to {event_type.__name__}",
+                f"Subscribed {handler.__name__} to {event_type.__name__}",
             )
 
     def unsubscribe(
@@ -70,10 +62,8 @@ class EventBus:
         """
         with self._lock:
             if event_type in self._subscribers:
-                    with suppress(ValueError):
-                        self._subscribers[
-                            event_type
-                        ].remove(handler)
+                with suppress(ValueError):
+                    self._subscribers[event_type].remove(handler)
 
     def publish(self, event: Any) -> None:
         """Publish an event to all subscribers.
@@ -86,7 +76,8 @@ class EventBus:
         with self._lock:
             handlers = list(
                 self._subscribers.get(
-                    type(event), [],
+                    type(event),
+                    [],
                 ),
             )
         for handler in handlers:
@@ -94,9 +85,7 @@ class EventBus:
                 handler(event)
             except Exception as e:
                 logger.error(
-                    f"Event handler "
-                    f"{handler.__name__} "
-                    f"failed: {e}",
+                    f"Event handler {handler.__name__} failed: {e}",
                 )
 
     def clear(self) -> None:

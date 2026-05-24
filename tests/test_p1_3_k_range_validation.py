@@ -24,12 +24,16 @@ class TestP1_3_KeyRangeValidation(unittest.TestCase):
 
         # 检查包含 uint256_cmp 与 N 的比较
         self.assertIn(
-            "uint256_cmp(&k, &n_val) >= 0", source, "batch_check 应使用 uint256_cmp 检查 k >= N",
+            "uint256_cmp(&k, &n_val) >= 0",
+            source,
+            "batch_check 应使用 uint256_cmp 检查 k >= N",
         )
 
         # 检查 uint256_is_zero 和 k>=N 在同一条件中
         self.assertIn(
-            "uint256_is_zero(&k) || uint256_cmp(&k, &n_val) >= 0", source, "应组合检查 k==0 和 k>=N",
+            "uint256_is_zero(&k) || uint256_cmp(&k, &n_val) >= 0",
+            source,
+            "应组合检查 k==0 和 k>=N",
         )
 
         print("\n[P1-3-A ✓] batch_check: k>=N 验证代码存在")

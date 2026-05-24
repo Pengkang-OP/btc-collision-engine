@@ -38,8 +38,8 @@ class KeyValidationConstants:
 class AddressType(Enum):
     """Bitcoin address type"""
 
-    P2PKH = "p2pkh"   # '1' prefix
-    P2SH = "p2sh"     # '3' prefix
+    P2PKH = "p2pkh"  # '1' prefix
+    P2SH = "p2sh"  # '3' prefix
     BECH32 = "bech32"  # 'bc1' prefix
     UNKNOWN = "unknown"
 
@@ -190,7 +190,9 @@ class BitcoinKeyValidator:
         return result
 
     def generate_public_key(
-        self, private_key: bytes, compressed: bool = True,
+        self,
+        private_key: bytes,
+        compressed: bool = True,
     ) -> tuple[KeyValidationResult, bytes]:
         """Generate public key from private key using secp256k1 elliptic curve.
 
@@ -213,7 +215,8 @@ class BitcoinKeyValidator:
         try:
             # v4.2.2 R1 fix: use constant-time implementation, avoid RuntimeError
             public_key_point = self.curve.scalar_multiply_const_time(
-                k, ECPoint(Secp256k1.Gx, Secp256k1.Gy),
+                k,
+                ECPoint(Secp256k1.Gx, Secp256k1.Gy),
             )
 
             # 3. Verify public key is not infinity
@@ -240,7 +243,8 @@ class BitcoinKeyValidator:
                 public_key_bytes = prefix + public_key_point.x.to_bytes(32, "big")
                 result.add_detail("public_key_format", "compressed")
                 result.add_detail(
-                    "public_key_length", KeyValidationConstants.COMPRESSED_PUBLIC_KEY_LENGTH,
+                    "public_key_length",
+                    KeyValidationConstants.COMPRESSED_PUBLIC_KEY_LENGTH,
                 )
             else:
                 # Uncompressed format: 65 bytes, 04 prefix
@@ -251,7 +255,8 @@ class BitcoinKeyValidator:
                 )
                 result.add_detail("public_key_format", "uncompressed")
                 result.add_detail(
-                    "public_key_length", KeyValidationConstants.UNCOMPRESSED_PUBLIC_KEY_LENGTH,
+                    "public_key_length",
+                    KeyValidationConstants.UNCOMPRESSED_PUBLIC_KEY_LENGTH,
                 )
 
             result.add_detail("public_key_hex", public_key_bytes.hex())
@@ -299,7 +304,7 @@ class BitcoinKeyValidator:
 
                 # Determine y based on prefix: 0x02 = even, 0x03 = odd
                 # pow() may return either parity; flip if mismatch
-                expect_even = (public_key[0] == 0x02)
+                expect_even = public_key[0] == 0x02
                 if (y % 2 == 0) != expect_even:
                     y = Secp256k1.P - y
 
@@ -343,7 +348,9 @@ class BitcoinKeyValidator:
 
     @staticmethod
     def _verify_base58_checksum(
-        address: str, expected_version: int, result: KeyValidationResult,
+        address: str,
+        expected_version: int,
+        result: KeyValidationResult,
     ) -> None:
         """Verify Base58Check checksum and version byte."""
         try:
@@ -403,7 +410,9 @@ class BitcoinKeyValidator:
         return address
 
     def generate_address(
-        self, public_key: bytes, address_type: AddressType = AddressType.P2PKH,
+        self,
+        public_key: bytes,
+        address_type: AddressType = AddressType.P2PKH,
     ) -> tuple[KeyValidationResult, str]:
         """Generate Bitcoin address from public key. Supports P2PKH / P2SH / Bech32 types."""
         result = KeyValidationResult()
@@ -446,7 +455,9 @@ class BitcoinKeyValidator:
 
     @staticmethod
     def _validate_legacy_address(
-        address: str, addr_type: AddressType, result: KeyValidationResult,
+        address: str,
+        addr_type: AddressType,
+        result: KeyValidationResult,
     ) -> None:
         """Validate P2PKH / P2SH legacy address format."""
         if (
@@ -539,7 +550,9 @@ class BitcoinKeyValidator:
         return result
 
     def private_key_to_wif(
-        self, private_key: bytes, compressed: bool = True,
+        self,
+        private_key: bytes,
+        compressed: bool = True,
     ) -> tuple[KeyValidationResult, str]:
         """Convert private key to WIF format.
 
@@ -574,25 +587,21 @@ class BitcoinKeyValidator:
                 if len(wif) != KeyValidationConstants.COMPRESSED_WIF_LENGTH:
                     _expected_wif = KeyValidationConstants.COMPRESSED_WIF_LENGTH
                     result.add_warning(
-                        f"Compressed WIF length should be {_expected_wif} chars, "
-                        f"current: {len(wif)}",
+                        f"Compressed WIF length should be {_expected_wif} chars, current: {len(wif)}",
                     )
                 if not wif.startswith(("K", "L")):
                     result.add_warning(
-                        f"Compressed WIF should start with 'K' or 'L', "
-                        f"current: {wif[0]}",
+                        f"Compressed WIF should start with 'K' or 'L', current: {wif[0]}",
                     )
             else:
                 if len(wif) != KeyValidationConstants.UNCOMPRESSED_WIF_LENGTH:
                     _expected_uwif = KeyValidationConstants.UNCOMPRESSED_WIF_LENGTH
                     result.add_warning(
-                        f"Uncompressed WIF length should be {_expected_uwif} chars, "
-                        f"current: {len(wif)}",
+                        f"Uncompressed WIF length should be {_expected_uwif} chars, current: {len(wif)}",
                     )
                 if not wif.startswith("5"):
                     result.add_warning(
-                        f"Uncompressed WIF should start with '5', "
-                        f"current: {wif[0]}",
+                        f"Uncompressed WIF should start with '5', current: {wif[0]}",
                     )
 
             # 4. Validate Base58Check
@@ -611,7 +620,8 @@ class BitcoinKeyValidator:
             return result, ""
 
     def wif_to_private_key(
-        self, wif: str,
+        self,
+        wif: str,
     ) -> tuple[KeyValidationResult, bytes, bool]:
         """Decode private key from WIF format.
 
@@ -668,7 +678,9 @@ class BitcoinKeyValidator:
             return result, b"", False
 
     def verify_address_match(
-        self, address: str, target_addresses: set,
+        self,
+        address: str,
+        target_addresses: set,
     ) -> KeyValidationResult:
         """Verify if address matches target address list.
 
@@ -712,7 +724,9 @@ class BitcoinKeyValidator:
         return result
 
     def full_validation_chain(
-        self, private_key: bytes, target_addresses: set,
+        self,
+        private_key: bytes,
+        target_addresses: set,
     ) -> dict[str, Any]:
         """Full validation chain: private key -> public key -> address -> WIF -> match verify.
 
@@ -738,7 +752,8 @@ class BitcoinKeyValidator:
 
         # Step2: Generate compressed public key
         pub_comp_result, public_key_compressed = self.generate_public_key(
-            private_key, compressed=True,
+            private_key,
+            compressed=True,
         )
         report["steps"]["public_key_compressed"] = pub_comp_result.to_dict()
         if not pub_comp_result.success:
@@ -748,7 +763,8 @@ class BitcoinKeyValidator:
 
         # Step3: Generate uncompressed public key
         pub_uncomp_result, public_key_uncompressed = self.generate_public_key(
-            private_key, compressed=False,
+            private_key,
+            compressed=False,
         )
         report["steps"]["public_key_uncompressed"] = pub_uncomp_result.to_dict()
         if not pub_uncomp_result.success:
@@ -758,7 +774,8 @@ class BitcoinKeyValidator:
 
         # Step4: Generate P2PKH address
         addr_result, address = self.generate_address(
-            public_key_compressed, AddressType.P2PKH,
+            public_key_compressed,
+            AddressType.P2PKH,
         )
         report["steps"]["address_generation"] = addr_result.to_dict()
         if not addr_result.success:
@@ -768,7 +785,8 @@ class BitcoinKeyValidator:
 
         # Step5: Generate compressed WIF
         wif_comp_result, wif_compressed = self.private_key_to_wif(
-            private_key, compressed=True,
+            private_key,
+            compressed=True,
         )
         report["steps"]["wif_compressed"] = wif_comp_result.to_dict()
         if not wif_comp_result.success:
@@ -778,7 +796,8 @@ class BitcoinKeyValidator:
 
         # Step6: Generate uncompressed WIF
         wif_uncomp_result, wif_uncompressed = self.private_key_to_wif(
-            private_key, compressed=False,
+            private_key,
+            compressed=False,
         )
         report["steps"]["wif_uncompressed"] = wif_uncomp_result.to_dict()
         if not wif_uncomp_result.success:
@@ -811,9 +830,7 @@ class BitcoinKeyValidator:
         if self.secure_mode:
             pk_hash = HashUtils.key_fingerprint(private_key)
             wif_comp_safe = (
-                wif_compressed[:8] + "..." + wif_compressed[-4:]
-                if len(wif_compressed) > 12
-                else "***"
+                wif_compressed[:8] + "..." + wif_compressed[-4:] if len(wif_compressed) > 12 else "***"
             )
             wif_uncomp_safe = (
                 wif_uncompressed[:8] + "..." + wif_uncompressed[-4:]
@@ -842,7 +859,8 @@ class BitcoinKeyValidator:
 
 # Convenience function
 def validate_bitcoin_key_chain(
-    private_key: bytes, target_addresses: set,
+    private_key: bytes,
+    target_addresses: set,
 ) -> dict[str, Any]:
     """Convenience function: validate complete Bitcoin key chain.
 

@@ -15,10 +15,10 @@ NVIDIA GPU实时监控工具
 
 import json
 import subprocess
-import sys
 import time
 from datetime import datetime
 from pathlib import Path
+
 
 def get_nvidia_gpu_stats():
     """获取NVIDIA GPU状态(使用nvidia-smi)"""

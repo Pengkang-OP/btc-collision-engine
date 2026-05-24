@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """辅助功能验收测试 - 功能层 + 逻辑层 + 数据层
 
 本模块测试 `src.utils` 中的辅助功能，
@@ -15,27 +14,14 @@
 - 高可读性：结构化测试代码，清晰的测试用例命名，详细的文档字符串
 """
 
-import os
-import signal
-import threading
 import time
-from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import pytest
-
-from tests.acceptance.conftest import (
-    AcceptanceTestConstants,
-    assert_engine_state,
-    assert_pipeline_stage_complete,
-    assert_valid_bitcoin_address,
-    assert_valid_private_key,
-    create_mock_gpu_device,
-)
-
 
 # ============================================================================
 # 白盒测试 - 基于内部代码结构的测试
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.white_box
@@ -153,8 +139,7 @@ class TestErrorRecoveryWhiteBox:
         category = classify_recoverable_error(timeout_error)
         # 错误消息不含 "timeout" 关键字时，按异常类型匹配为 NETWORK_TIMEOUT
         assert category == RecoverableErrorCategory.GPU_TIMEOUT, (
-            "TimeoutError 分类逻辑不正确："
-            "含 'timeout' 关键字时应匹配为 GPU_TIMEOUT"
+            "TimeoutError 分类逻辑不正确：含 'timeout' 关键字时应匹配为 GPU_TIMEOUT"
         )
 
         # 测试不含 "timeout" 关键字的 TimeoutError
@@ -167,9 +152,7 @@ class TestErrorRecoveryWhiteBox:
         # 白盒验证：不可恢复错误
         system_exit = SystemExit()
         category = classify_recoverable_error(system_exit)
-        assert category is None, (
-            "SystemExit 分类逻辑不正确：应为 None（不可恢复）"
-        )
+        assert category is None, "SystemExit 分类逻辑不正确：应为 None（不可恢复）"
 
     def test_retry_on_error_logic(self, monkeypatch):
         """白盒测试：验证 retry_on_error 的逻辑分支
@@ -191,9 +174,7 @@ class TestErrorRecoveryWhiteBox:
 
         result = success_func()
         assert result == "success", "函数成功时逻辑不正确：应返回 'success'"
-        assert call_count[0] == 1, (
-            "函数成功时逻辑不正确：应只调用 1 次"
-        )
+        assert call_count[0] == 1, "函数成功时逻辑不正确：应只调用 1 次"
 
         # 白盒验证：重试逻辑
         call_count[0] = 0
@@ -206,17 +187,14 @@ class TestErrorRecoveryWhiteBox:
             return "success after retry"
 
         result = failing_func()
-        assert result == "success after retry", (
-            "重试逻辑不正确：应在 3 次尝试后成功"
-        )
-        assert call_count[0] == 3, (
-            "重试逻辑不正确：应调用 3 次"
-        )
+        assert result == "success after retry", "重试逻辑不正确：应在 3 次尝试后成功"
+        assert call_count[0] == 3, "重试逻辑不正确：应调用 3 次"
 
 
 # ============================================================================
 # 黑盒测试 - 基于规格说明的功能测试
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.black_box
@@ -250,18 +228,14 @@ class TestTimeoutBlackBox:
             return "success"
 
         result = invoke_with_timeout(normal_func, timeout=1.0)
-        assert result is True, (
-            "有效输入黑盒测试失败：正常函数应返回 True"
-        )
+        assert result is True, "有效输入黑盒测试失败：正常函数应返回 True"
 
         # 黑盒验证：超时函数
         def slow_func():
             time.sleep(2.0)
 
         result = invoke_with_timeout(slow_func, timeout=0.5)
-        assert result is False, (
-            "有效输入黑盒测试失败：超时函数应返回 False"
-        )
+        assert result is False, "有效输入黑盒测试失败：超时函数应返回 False"
 
     def test_black_box_invoke_with_timeout_invalid_input(self):
         """黑盒测试：使用无效输入调用 invoke_with_timeout
@@ -278,9 +252,7 @@ class TestTimeoutBlackBox:
 
         # 黑盒验证：无效输入
         result = invoke_with_timeout(lambda: None, timeout=0)
-        assert result is False, (
-            "无效输入黑盒测试失败：timeout=0 应返回 False"
-        )
+        assert result is False, "无效输入黑盒测试失败：timeout=0 应返回 False"
 
     def test_black_box_timeout_decorator(self):
         """黑盒测试：使用超时装饰器
@@ -338,9 +310,7 @@ class TestErrorRecoveryBlackBox:
             return "success"
 
         result = success_func()
-        assert result == "success", (
-            "有效输入黑盒测试失败：函数应成功执行"
-        )
+        assert result == "success", "有效输入黑盒测试失败：函数应成功执行"
 
     def test_black_box_retry_on_error_invalid_input(self):
         """黑盒测试：使用无效输入调用 retry_on_error
@@ -368,6 +338,7 @@ class TestErrorRecoveryBlackBox:
 # 功能层测试 - 功能正确性、功能调用、功能判断
 # ============================================================================
 
+
 @pytest.mark.acceptance
 @pytest.mark.functional
 class TestTimeoutFunctionalLayer:
@@ -394,18 +365,14 @@ class TestTimeoutFunctionalLayer:
             return "success"
 
         result = invoke_with_timeout(normal_func, timeout=1.0)
-        assert result is True, (
-            "invoke_with_timeout 功能不正确：正常函数应返回 True"
-        )
+        assert result is True, "invoke_with_timeout 功能不正确：正常函数应返回 True"
 
         # 功能正确性：超时函数
         def slow_func():
             time.sleep(2.0)
 
         result = invoke_with_timeout(slow_func, timeout=0.5)
-        assert result is False, (
-            "invoke_with_timeout 功能不正确：超时函数应返回 False"
-        )
+        assert result is False, "invoke_with_timeout 功能不正确：超时函数应返回 False"
 
     def test_functional_timeout_context_correctness(self):
         """功能层测试：TimeoutContext 功能正确性
@@ -420,14 +387,10 @@ class TestTimeoutFunctionalLayer:
         with TimeoutContext(seconds=1.0) as ctx:
             time.sleep(0.1)
             elapsed = ctx.elapsed_ms
-            assert elapsed > 0, (
-                "TimeoutContext 功能不正确：elapsed_ms 应大于 0"
-            )
+            assert elapsed > 0, "TimeoutContext 功能不正确：elapsed_ms 应大于 0"
 
         # 功能正确性：elapsed_ms
-        assert ctx.elapsed_ms > 0, (
-            "TimeoutContext 功能不正确：elapsed_ms 应正确返回耗时"
-        )
+        assert ctx.elapsed_ms > 0, "TimeoutContext 功能不正确：elapsed_ms 应正确返回耗时"
 
 
 @pytest.mark.acceptance
@@ -457,9 +420,7 @@ class TestErrorRecoveryFunctionalLayer:
             return "success"
 
         result = success_func()
-        assert result == "success", (
-            "retry_on_error 功能不正确：函数应成功执行"
-        )
+        assert result == "success", "retry_on_error 功能不正确：函数应成功执行"
 
     def test_functional_classify_recoverable_error_correctness(self):
         """功能层测试：classify_recoverable_error 功能正确性
@@ -477,22 +438,19 @@ class TestErrorRecoveryFunctionalLayer:
         os_error = OSError("No space left on device")
         category = classify_recoverable_error(os_error)
         assert category == RecoverableErrorCategory.TEMPORARY_IO, (
-            "classify_recoverable_error 功能不正确："
-            "OSError 应被分类为 TEMPORARY_IO"
+            "classify_recoverable_error 功能不正确：OSError 应被分类为 TEMPORARY_IO"
         )
 
         # 功能正确性：不可恢复错误
         system_exit = SystemExit()
         category = classify_recoverable_error(system_exit)
-        assert category is None, (
-            "classify_recoverable_error 功能不正确："
-            "SystemExit 应返回 None"
-        )
+        assert category is None, "classify_recoverable_error 功能不正确：SystemExit 应返回 None"
 
 
 # ============================================================================
 # 逻辑层测试 - 代码正确性、逻辑、逻辑正确性、逻辑判断
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.logic_layer
@@ -518,9 +476,7 @@ class TestTimeoutLogicLayer:
 
         # 逻辑判断：timeout <= 0 分支
         result = invoke_with_timeout(lambda: None, timeout=0)
-        assert result is False, (
-            "invoke_with_timeout 逻辑不正确：timeout=0 应返回 False"
-        )
+        assert result is False, "invoke_with_timeout 逻辑不正确：timeout=0 应返回 False"
 
     def test_logic_timeout_context_branch_coverage(self):
         """逻辑层测试：TimeoutContext 分支覆盖
@@ -535,9 +491,7 @@ class TestTimeoutLogicLayer:
         # 逻辑判断：正常退出分支
         with TimeoutContext(seconds=1.0) as ctx:
             time.sleep(0.1)
-            assert ctx.elapsed_ms > 0, (
-                "TimeoutContext 逻辑不正确：正常退出分支"
-            )
+            assert ctx.elapsed_ms > 0, "TimeoutContext 逻辑不正确：正常退出分支"
 
         # 逻辑判断：超时警告分支
         with TimeoutContext(seconds=0.01) as ctx:
@@ -576,17 +530,13 @@ class TestErrorRecoveryLogicLayer:
         os_error = OSError("No space left on device")
         category = classify_recoverable_error(os_error)
         assert category == RecoverableErrorCategory.TEMPORARY_IO, (
-            "classify_recoverable_error 逻辑不正确："
-            "OSError 分支"
+            "classify_recoverable_error 逻辑不正确：OSError 分支"
         )
 
         # 逻辑判断：SystemExit 分支
         system_exit = SystemExit()
         category = classify_recoverable_error(system_exit)
-        assert category is None, (
-            "classify_recoverable_error 逻辑不正确："
-            "SystemExit 分支"
-        )
+        assert category is None, "classify_recoverable_error 逻辑不正确：SystemExit 分支"
 
     def test_logic_retry_on_error_branch_coverage(self, monkeypatch):
         """逻辑层测试：retry_on_error 分支覆盖
@@ -607,17 +557,14 @@ class TestErrorRecoveryLogicLayer:
             return "success"
 
         result = success_func()
-        assert result == "success", (
-            "retry_on_error 逻辑不正确：函数成功分支"
-        )
-        assert call_count[0] == 1, (
-            "retry_on_error 逻辑不正确：函数成功分支应只调用 1 次"
-        )
+        assert result == "success", "retry_on_error 逻辑不正确：函数成功分支"
+        assert call_count[0] == 1, "retry_on_error 逻辑不正确：函数成功分支应只调用 1 次"
 
 
 # ============================================================================
 # 数据层测试 - 数据、数据流、数据管道、数据类型、数据调用
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.data_layer
@@ -639,21 +586,16 @@ class TestTimeoutDataLayer:
         - 超时时间数据为浮点数
         - 函数数据为可调用对象
         """
-        from src.utils.timeout import invoke_with_timeout, with_timeout
 
         # 数据：超时时间格式
         timeout_value = 1.0
-        assert isinstance(timeout_value, float), (
-            "数据格式不正确：超时时间应为 float 类型"
-        )
+        assert isinstance(timeout_value, float), "数据格式不正确：超时时间应为 float 类型"
 
         # 数据：函数格式
         def normal_func():
             return "success"
 
-        assert callable(normal_func), (
-            "数据格式不正确：函数应为可调用对象"
-        )
+        assert callable(normal_func), "数据格式不正确：函数应为可调用对象"
 
     def test_data_flow_integrity(self):
         """数据层测试：数据流完整性
@@ -672,9 +614,7 @@ class TestTimeoutDataLayer:
         result = invoke_with_timeout(normal_func, timeout=1.0)
 
         # 验证数据流完整性
-        assert result is True, (
-            "数据流完整性验证失败：输入 → 处理 → 输出"
-        )
+        assert result is True, "数据流完整性验证失败：输入 → 处理 → 输出"
 
     def test_data_type_conversion(self):
         """数据层测试：数据类型转换
@@ -690,9 +630,7 @@ class TestTimeoutDataLayer:
         def decorated_func():
             return "success"
 
-        assert callable(decorated_func), (
-            "数据类型转换不正确：装饰后的函数应为可调用对象"
-        )
+        assert callable(decorated_func), "数据类型转换不正确：装饰后的函数应为可调用对象"
 
 
 @pytest.mark.acceptance
@@ -722,9 +660,7 @@ class TestErrorRecoveryDataLayer:
 
         # 数据：异常格式
         os_error = OSError("No space left on device")
-        assert isinstance(os_error, OSError), (
-            "数据格式不正确：异常应为 OSError 类型"
-        )
+        assert isinstance(os_error, OSError), "数据格式不正确：异常应为 OSError 类型"
 
         # 数据：错误类别格式
         category = classify_recoverable_error(os_error)
@@ -751,14 +687,14 @@ class TestErrorRecoveryDataLayer:
 
         # 验证数据流完整性
         assert category == RecoverableErrorCategory.TEMPORARY_IO, (
-            "数据流完整性验证失败："
-            "输入异常 → 处理（分类） → 输出错误类别"
+            "数据流完整性验证失败：输入异常 → 处理（分类） → 输出错误类别"
         )
 
 
 # ============================================================================
 # 多模式测试 - 参数化测试覆盖多种策略
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.parametrize(
@@ -793,9 +729,7 @@ class TestTimeoutMultiMode:
             return "success"
 
         result = invoke_with_timeout(normal_func, timeout=1.0)
-        assert result is True, (
-            f"超时策略 {timeout_strategy} 下应成功执行"
-        )
+        assert result is True, f"超时策略 {timeout_strategy} 下应成功执行"
 
 
 @pytest.mark.acceptance
@@ -834,14 +768,13 @@ class TestErrorRecoveryMultiMode:
             return "success"
 
         result = success_func()
-        assert result == "success", (
-            f"恢复策略 {recovery_strategy} 下应成功执行"
-        )
+        assert result == "success", f"恢复策略 {recovery_strategy} 下应成功执行"
 
 
 # ============================================================================
 # 多状态测试 - 状态转换测试
 # ============================================================================
+
 
 @pytest.mark.acceptance
 class TestTimeoutMultiState:
@@ -860,9 +793,7 @@ class TestTimeoutMultiState:
 
         # 多状态验证：initialized
         ctx = TimeoutContext(seconds=1.0)
-        assert ctx is not None, (
-            "初始化状态不正确：TimeoutContext 实例不应为 None"
-        )
+        assert ctx is not None, "初始化状态不正确：TimeoutContext 实例不应为 None"
 
     def test_state_running(self):
         """多状态测试：运行状态"""
@@ -871,9 +802,7 @@ class TestTimeoutMultiState:
         # 多状态验证：running
         ctx = TimeoutContext(seconds=1.0)
         ctx.__enter__()
-        assert ctx._start_time > 0, (
-            "运行状态不正确：__enter__ 后 _start_time 应大于 0"
-        )
+        assert ctx._start_time > 0, "运行状态不正确：__enter__ 后 _start_time 应大于 0"
         ctx.__exit__(None, None, None)
 
 
@@ -894,14 +823,13 @@ class TestErrorRecoveryMultiState:
 
         # 多状态验证：initialized
         manager = ErrorRecoveryManager()
-        assert manager is not None, (
-            "初始化状态不正确：ErrorRecoveryManager 实例不应为 None"
-        )
+        assert manager is not None, "初始化状态不正确：ErrorRecoveryManager 实例不应为 None"
 
 
 # ============================================================================
 # 多数据组合测试 - 不同数据类型、格式、边界条件
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.parametrize(
@@ -932,9 +860,7 @@ class TestTimeoutMultiData:
             return "success"
 
         result = invoke_with_timeout(normal_func, timeout=timeout_value)
-        assert result is True, (
-            f"超时值 {timeout_value} 下应成功执行"
-        )
+        assert result is True, f"超时值 {timeout_value} 下应成功执行"
 
 
 @pytest.mark.acceptance
@@ -970,14 +896,13 @@ class TestErrorRecoveryMultiData:
         category = classify_recoverable_error(error)
 
         # 验证错误分类
-        assert category is not None, (
-            f"错误类型 {error_type.__name__} 应被分类为可恢复错误"
-        )
+        assert category is not None, f"错误类型 {error_type.__name__} 应被分类为可恢复错误"
 
 
 # ============================================================================
 # 边界条件测试
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.edge_cases
@@ -1004,9 +929,7 @@ class TestTimeoutEdgeCases:
 
         result = invoke_with_timeout(lambda: None, timeout=0.001)
         # 可能成功或失败，取决于系统调度
-        assert result in (True, False), (
-            "极短超时时 invoke_with_timeout 应返回 True 或 False"
-        )
+        assert result in (True, False), "极短超时时 invoke_with_timeout 应返回 True 或 False"
 
 
 @pytest.mark.acceptance
@@ -1046,5 +969,6 @@ class TestErrorRecoveryEdgeCases:
 if __name__ == "__main__":
     """主程序入口 - 用于独立运行测试"""
     import pytest
+
     # 运行所有测试
     pytest.main([__file__, "-v", "--tb=short", "-x"])

@@ -6,6 +6,7 @@ import sys
 import time
 import traceback
 
+
 def run_test_file(test_file):
     """运行单个测试文件"""
     print(f"\n{'=' * 80}")

@@ -148,15 +148,13 @@ class SecureKeyManager:
                 # Linux/macOS platform
                 return self._lock_memory_posix()
             logger.warning(
-                f"Unsupported OS: {os.name}, "
-                "cannot lock memory",
+                f"Unsupported OS: {os.name}, cannot lock memory",
             )
             return False
         except Exception as e:
             logger.error("Memory lock failed: %s", e)
             logger.error(
-                "Private key may be swapped to disk! "
-                "Recommend running with admin privileges.",
+                "Private key may be swapped to disk! Recommend running with admin privileges.",
             )
             if os.name == "posix":
                 logger.error(
@@ -207,7 +205,8 @@ class SecureKeyManager:
 
         except (OSError, AttributeError) as e:
             logger.warning(
-                "Cannot initialize POSIX memory locking: %s", e,
+                "Cannot initialize POSIX memory locking: %s",
+                e,
             )
             return False
 
@@ -241,14 +240,14 @@ class SecureKeyManager:
             self._kernel32 = kernel32
 
             logger.info(
-                "Windows memory locking initialized "
-                "(VirtualLock/VirtualUnlock)",
+                "Windows memory locking initialized (VirtualLock/VirtualUnlock)",
             )
             return True
 
         except (OSError, AttributeError) as e:
             logger.warning(
-                "Cannot initialize Windows memory locking: %s", e,
+                "Cannot initialize Windows memory locking: %s",
+                e,
             )
             return False
 
@@ -269,7 +268,8 @@ class SecureKeyManager:
 
         try:
             if os.name == "nt" and hasattr(
-                self, "_kernel32",
+                self,
+                "_kernel32",
             ):
                 # Windows: VirtualLock
                 addr = ctypes.addressof(
@@ -277,7 +277,8 @@ class SecureKeyManager:
                 )
                 size = len(self._key)
                 result = self._kernel32.VirtualLock(
-                    addr, size,
+                    addr,
+                    size,
                 )
 
                 if result:
@@ -285,12 +286,14 @@ class SecureKeyManager:
                     return True
                 error_code = ctypes.get_last_error()
                 logger.warning(
-                    "Windows VirtualLock failed, error code: %s", error_code,
+                    "Windows VirtualLock failed, error code: %s",
+                    error_code,
                 )
                 return False
 
             if os.name == "posix" and hasattr(
-                self, "_libc",
+                self,
+                "_libc",
             ):
                 # Linux/macOS: mlock
                 addr = ctypes.addressof(
@@ -305,15 +308,15 @@ class SecureKeyManager:
                 import errno
 
                 logger.warning(
-                    f"POSIX mlock failed, error: "
-                    f"{errno.errorcode.get(ctypes.get_errno(), 'Unknown')}",
+                    f"POSIX mlock failed, error: {errno.errorcode.get(ctypes.get_errno(), 'Unknown')}",
                 )
                 return False
             return False
 
         except Exception as e:
             logger.warning(
-                "Locking key memory failed: %s", e,
+                "Locking key memory failed: %s",
+                e,
             )
             return False
 
@@ -334,7 +337,8 @@ class SecureKeyManager:
 
         try:
             if os.name == "nt" and hasattr(
-                self, "_kernel32",
+                self,
+                "_kernel32",
             ):
                 # Windows: VirtualUnlock
                 addr = ctypes.addressof(
@@ -342,7 +346,8 @@ class SecureKeyManager:
                 )
                 size = len(self._key)
                 result = self._kernel32.VirtualUnlock(
-                    addr, size,
+                    addr,
+                    size,
                 )
 
                 if result:
@@ -354,7 +359,8 @@ class SecureKeyManager:
                 return False
 
             if os.name == "posix" and hasattr(
-                self, "_libc",
+                self,
+                "_libc",
             ):
                 # Linux/macOS: munlock
                 addr = ctypes.addressof(
@@ -374,12 +380,14 @@ class SecureKeyManager:
 
         except Exception as e:
             logger.warning(
-                "Unlocking key memory failed: %s", e,
+                "Unlocking key memory failed: %s",
+                e,
             )
             return False
 
     def generate_key(
-        self, key_bytes: bytes | None = None,
+        self,
+        key_bytes: bytes | None = None,
     ) -> None:
         """Generate or set private key.
 
@@ -618,10 +626,7 @@ class SecureKeyManager:
 
     def __del__(self) -> None:
         """Destructor - ensure clearing"""
-        if (
-            self._key is not None
-            and not self._cleared
-        ):
+        if self._key is not None and not self._cleared:
             # Silent failure acceptable in destructor
             # AttributeError: ctypes may be unloaded before __del__
             # (interpreter shutdown)
@@ -670,14 +675,10 @@ class SecureKeyManager:
         # L3 fix: use lock for thread-safe stats read
         with SecureKeyManager._stats_lock:
             total = SecureKeyManager._total_clears
-            successful = (
-                SecureKeyManager._successful_clears
-            )
+            successful = SecureKeyManager._successful_clears
             failed = SecureKeyManager._failed_clears
 
-        success_rate = (
-            (successful / total * 100) if total > 0 else 100.0
-        )
+        success_rate = (successful / total * 100) if total > 0 else 100.0
 
         return {
             "total": total,

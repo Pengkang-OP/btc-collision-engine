@@ -1,4 +1,5 @@
 """Translation engine for multi-language support."""
+
 import json
 from pathlib import Path
 
@@ -7,11 +8,10 @@ class Translator:
     """Simple translation engine using JSON locale files."""
 
     def __init__(
-        self, locale_dir: str | Path = "",
+        self,
+        locale_dir: str | Path = "",
     ):
-        self._locale_dir = Path(locale_dir or (
-            Path(__file__).parent / "locales"
-        ))
+        self._locale_dir = Path(locale_dir or (Path(__file__).parent / "locales"))
         self._translations: dict = {}
 
     def load(self, lang: str) -> None:
@@ -27,7 +27,9 @@ class Translator:
                 self._translations = json.load(f)
 
     def translate(
-        self, key: str, default: str = "",
+        self,
+        key: str,
+        default: str = "",
     ) -> str:
         """Translate a key.
 
@@ -40,5 +42,6 @@ class Translator:
 
         """
         return self._translations.get(
-            key, default or key,
+            key,
+            default or key,
         )

@@ -70,7 +70,8 @@ class AsyncPipelineAdapter(IAsyncExecutionPipeline):
 
             # 初始化缓冲区池
             self._pipeline.initialize_buffers(
-                context=kernel.context.context_obj, num_keys=batch_size,
+                context=kernel.context.context_obj,
+                num_keys=batch_size,
             )
 
             _qd = self._pipeline.queue_depth
@@ -106,7 +107,9 @@ class AsyncPipelineAdapter(IAsyncExecutionPipeline):
             # 调用现有AsyncGPUExecutor的run_batch_async方法
             # 注意：需要传递kernel对象
             raw_matches, exec_time_ms = self._pipeline.run_batch_async(
-                kernel=self._kernel.kernel_obj, seed=seed, batch_size=batch_size,
+                kernel=self._kernel.kernel_obj,
+                seed=seed,
+                batch_size=batch_size,
             )
 
             # 转换为MatchResult格式
@@ -217,17 +220,20 @@ class AsyncPipelineAdapter(IAsyncExecutionPipeline):
         matches = []
 
         for match in raw_matches:
-            match_result = cast(MatchResult, {
-                "address": match.get("address", ""),
-                "private_key": match.get("private_key", ""),
-                "private_key_hash": hashlib.sha256(
-                    str(match.get("private_key", "")).encode(),
-                ).hexdigest(),
-                "public_key": match.get("public_key", ""),
-                "hash160": match.get("hash160", ""),
-                "index": match.get("index", 0),
-                "seed": match.get("seed", ""),
-            })
+            match_result = cast(
+                MatchResult,
+                {
+                    "address": match.get("address", ""),
+                    "private_key": match.get("private_key", ""),
+                    "private_key_hash": hashlib.sha256(
+                        str(match.get("private_key", "")).encode(),
+                    ).hexdigest(),
+                    "public_key": match.get("public_key", ""),
+                    "hash160": match.get("hash160", ""),
+                    "index": match.get("index", 0),
+                    "seed": match.get("seed", ""),
+                },
+            )
             matches.append(match_result)
 
         return matches

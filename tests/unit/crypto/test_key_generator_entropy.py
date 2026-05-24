@@ -22,7 +22,9 @@ class TestEntropyHealthCheck(unittest.TestCase):
         """测试前准备"""
         self.key_gen = SecureKeyGenerator(config={"batch_size": 100})
 
-    @pytest.mark.skipif(sys.platform != "linux", reason="Linux /proc entropy test - non-Linux fallback returns True")
+    @pytest.mark.skipif(
+        sys.platform != "linux", reason="Linux /proc entropy test - non-Linux fallback returns True"
+    )
     def test_low_entropy_linux(self):
         """测试Linux低熵场景(< 1000 bits)"""
         # Mock熵池文件读取
@@ -106,7 +108,9 @@ class TestEntropyHealthCheck(unittest.TestCase):
 
                 self.assertEqual(len(keys), 5)
 
-    @pytest.mark.skipif(sys.platform != "linux", reason="Linux /proc entropy test - non-Linux fallback returns True")
+    @pytest.mark.skipif(
+        sys.platform != "linux", reason="Linux /proc entropy test - non-Linux fallback returns True"
+    )
     def test_multiple_low_entropy_warnings(self):
         """测试多次低熵警告统计"""
         with patch("pathlib.Path.exists", return_value=True):
@@ -128,7 +132,9 @@ class TestEntropyHealthCheck(unittest.TestCase):
                 # 1000应该返回True(>= 1000)
                 self.assertTrue(result)
 
-    @pytest.mark.skipif(sys.platform != "linux", reason="Linux /proc entropy test - non-Linux fallback returns True")
+    @pytest.mark.skipif(
+        sys.platform != "linux", reason="Linux /proc entropy test - non-Linux fallback returns True"
+    )
     def test_entropy_boundary_999(self):
         """测试熵值边界条件(999)"""
         with patch("pathlib.Path.exists", return_value=True):

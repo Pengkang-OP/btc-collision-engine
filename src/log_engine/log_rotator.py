@@ -1,4 +1,5 @@
 """Log file rotation utilities."""
+
 import shutil
 from pathlib import Path
 
@@ -34,7 +35,9 @@ class LogRotator:
         if path.stat().st_size < self._max_size:
             return False
         for i in range(
-            self._backup_count - 1, 0, -1,
+            self._backup_count - 1,
+            0,
+            -1,
         ):
             src = path.with_suffix(f".log.{i}")
             dst = path.with_suffix(f".log.{i + 1}")

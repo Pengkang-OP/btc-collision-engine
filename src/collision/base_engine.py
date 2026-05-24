@@ -29,9 +29,7 @@ class BaseCollisionEngine(ABC):
         self._running = False
         self._start_time: float | None = None
         self._total_keys_checked = 0
-        self._match_callback: (
-            Callable | None
-        ) = None
+        self._match_callback: Callable | None = None
 
     @abstractmethod
     def start(self, **kwargs: Any) -> None:

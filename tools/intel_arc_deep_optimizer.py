@@ -13,7 +13,6 @@ Intel Arc A770 GPU深度优化工具
 """
 
 import json
-import sys
 import time
 from pathlib import Path
 from typing import Any

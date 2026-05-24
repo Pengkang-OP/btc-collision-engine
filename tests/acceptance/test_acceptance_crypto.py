@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """加密后端验收测试 - 功能层 + 数据层 + 逻辑层
 
 本模块测试 `src.core.crypto_backend` 的加密后端功能，
@@ -17,30 +16,22 @@
 
 import os
 import threading
-import time
-from typing import Any, Dict, List, Optional, Tuple
 
 import pytest
 
-from tests.acceptance.conftest import (
-    AcceptanceTestConstants,
-    assert_valid_bitcoin_address,
-    assert_valid_private_key,
-    create_mock_gpu_device,
-)
 from src.core.crypto_backend import (
-    CryptoBackendManager,
-    PurePythonBackend,
-    OpenSSLBackend,
-    CoincurveBackend,
-    ECDSABackend,
     BackendType,
+    CoincurveBackend,
+    CryptoBackendManager,
+    ECDSABackend,
+    OpenSSLBackend,
+    PurePythonBackend,
 )
-
 
 # ============================================================================
 # 白盒测试 - 基于内部代码结构的测试
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.white_box
@@ -73,7 +64,6 @@ class TestCryptoBackendWhiteBox:
         - 后端名称正确返回
         - 后端可用性正确检测
         """
-        from src.core.crypto_backend import CryptoBackendManager, PurePythonBackend
 
         # 白盒验证：模拟后端可用性
         if backend_type == "pure_python":
@@ -93,18 +83,11 @@ class TestCryptoBackendWhiteBox:
         - 可用后端正确识别
         - 不可用后端正确标记
         """
-        from src.core.crypto_backend import (
-            CoincurveBackend,
-            OpenSSLBackend,
-            PurePythonBackend,
-        )
 
         # 白盒验证：后端可用性检测逻辑
         if backend_type == "pure_python":
             backend = PurePythonBackend()
-            assert backend.is_available is True, (
-                "Pure Python 后端可用性检测逻辑不正确：应始终可用"
-            )
+            assert backend.is_available is True, "Pure Python 后端可用性检测逻辑不正确：应始终可用"
 
         elif backend_type == "coincurve":
             # 模拟 coincurve 可用
@@ -112,16 +95,12 @@ class TestCryptoBackendWhiteBox:
                 import coincurve
 
                 backend = CoincurveBackend()
-                assert backend.is_available is True, (
-                    "coincurve 后端可用性检测逻辑不正确：应可用"
-                )
+                assert backend.is_available is True, "coincurve 后端可用性检测逻辑不正确：应可用"
             except ImportError:
                 # 模拟 coincurve 不可用
                 backend = CoincurveBackend()
                 # 注意：实际行为取决于安装状态
-                assert backend.is_available in (True, False), (
-                    "coincurve 后端可用性检测逻辑应返回布尔值"
-                )
+                assert backend.is_available in (True, False), "coincurve 后端可用性检测逻辑应返回布尔值"
 
     def test_backend_degradation_logic(self, backend_type, expected_name, monkeypatch):
         """白盒测试：验证后端降级逻辑
@@ -131,11 +110,6 @@ class TestCryptoBackendWhiteBox:
         - 降级路径覆盖所有后端
         - 所有后端都不可用时正确处理
         """
-        from src.core.crypto_backend import (
-            CryptoBackendManager,
-            PurePythonBackend,
-            BackendType,
-        )
 
         # CryptoBackendManager 是单例，autouse fixture 已设置了 _current_backend 为 Mock
         # 先重置 _current_backend 使 _select_best_backend 可以正常选择
@@ -163,7 +137,6 @@ class TestCryptoBackendWhiteBox:
         - 锁保护应防止竞态条件
         - 后端状态应一致
         """
-        from src.core.crypto_backend import CryptoBackendManager, PurePythonBackend
 
         # 白盒验证：线程安全逻辑
         manager = CryptoBackendManager()
@@ -190,14 +163,13 @@ class TestCryptoBackendWhiteBox:
             thread.join()
 
         # 验证：无异常发生
-        assert error_count[0] == 0, (
-            f"后端切换线程安全逻辑不正确：发生 {error_count[0]} 个异常"
-        )
+        assert error_count[0] == 0, f"后端切换线程安全逻辑不正确：发生 {error_count[0]} 个异常"
 
 
 # ============================================================================
 # 黑盒测试 - 基于规格说明的功能测试
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.black_box
@@ -225,7 +197,6 @@ class TestCryptoBackendBlackBox:
         - 压缩格式公钥长度为 33 字节
         - 非压缩格式公钥长度为 65 字节
         """
-        from src.core.crypto_backend import CryptoBackendManager
 
         manager = CryptoBackendManager()
 
@@ -240,30 +211,24 @@ class TestCryptoBackendBlackBox:
         # 注意：实际调用取决于后端可用性
         try:
             # 压缩格式
-            public_key_compressed = manager.generate_public_key(
-                valid_private_key, compressed=True
-            )
+            public_key_compressed = manager.generate_public_key(valid_private_key, compressed=True)
             if public_key_compressed:
                 assert isinstance(public_key_compressed, bytes), (
                     "generate_public_key 功能不正确：应返回 bytes 类型"
                 )
                 assert len(public_key_compressed) == 33, (
-                    "压缩格式公钥长度不正确：应为 33 字节，"
-                    f"实际为 {len(public_key_compressed)} 字节"
+                    f"压缩格式公钥长度不正确：应为 33 字节，实际为 {len(public_key_compressed)} 字节"
                 )
 
             # 非压缩格式
-            public_key_uncompressed = manager.generate_public_key(
-                valid_private_key, compressed=False
-            )
+            public_key_uncompressed = manager.generate_public_key(valid_private_key, compressed=False)
             if public_key_uncompressed:
                 assert isinstance(public_key_uncompressed, bytes), (
                     "generate_public_key 功能不正确：应返回 bytes 类型"
                 )
                 # Mock 后端始终返回压缩格式（33字节），真实后端才区分压缩/非压缩
                 assert len(public_key_uncompressed) in (33, 65), (
-                    "公钥长度不正确：应为 33 或 65 字节，"
-                    f"实际为 {len(public_key_uncompressed)} 字节"
+                    f"公钥长度不正确：应为 33 或 65 字节，实际为 {len(public_key_uncompressed)} 字节"
                 )
 
         except (RuntimeError, ImportError):
@@ -283,7 +248,6 @@ class TestCryptoBackendBlackBox:
         - 私钥为 n 时抛出异常或返回 None
         - 私钥非 32 字节时抛出异常
         """
-        from src.core.crypto_backend import CryptoBackendManager
 
         manager = CryptoBackendManager()
 
@@ -319,7 +283,6 @@ class TestCryptoBackendBlackBox:
         - 有效输入返回有效点坐标
         - 返回值为元组 (rx, ry)
         """
-        from src.core.crypto_backend import CryptoBackendManager
 
         manager = CryptoBackendManager()
         monkeypatch.setattr(manager, "_current_backend", mock_crypto_backend)
@@ -351,11 +314,6 @@ class TestCryptoBackendBlackBox:
         - coincurve 后端应返回 True（恒定时间）
         - Pure Python 后端可能返回 False（解释器级别不保证）
         """
-        from src.core.crypto_backend import (
-            CoincurveBackend,
-            CryptoBackendManager,
-            PurePythonBackend,
-        )
 
         # 黑盒验证：is_constant_time 功能
         manager = CryptoBackendManager()
@@ -363,9 +321,7 @@ class TestCryptoBackendBlackBox:
         # 注意：实际行为取决于后端可用性
         try:
             is_constant_time = manager.is_constant_time()
-            assert isinstance(is_constant_time, bool), (
-                "is_constant_time 功能不正确：应返回 bool 类型"
-            )
+            assert isinstance(is_constant_time, bool), "is_constant_time 功能不正确：应返回 bool 类型"
         except (RuntimeError, ImportError):
             # 后端不可用，跳过测试
             pytest.skip("加密后端不可用，跳过测试")
@@ -374,6 +330,7 @@ class TestCryptoBackendBlackBox:
 # ============================================================================
 # 功能层测试 - 功能正确性、功能调用、功能判断
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.functional
@@ -394,7 +351,6 @@ class TestCryptoBackendFunctionalLayer:
         - 不同私钥生成不同公钥
         - 压缩和非压缩格式生成不同公钥
         """
-        from src.core.crypto_backend import CryptoBackendManager
 
         manager = CryptoBackendManager()
 
@@ -411,12 +367,8 @@ class TestCryptoBackendFunctionalLayer:
                 )
 
             # 功能正确性：压缩和非压缩格式生成不同公钥
-            public_key_compressed = manager.generate_public_key(
-                private_key, compressed=True
-            )
-            public_key_uncompressed = manager.generate_public_key(
-                private_key, compressed=False
-            )
+            public_key_compressed = manager.generate_public_key(private_key, compressed=True)
+            public_key_uncompressed = manager.generate_public_key(private_key, compressed=False)
 
             if public_key_compressed and public_key_uncompressed:
                 # Mock 后端不区分压缩/非压缩，真实后端才区分
@@ -439,10 +391,6 @@ class TestCryptoBackendFunctionalLayer:
         - get_current_backend() 返回当前后端
         - 切换后端后功能正常
         """
-        from src.core.crypto_backend import (
-            CryptoBackendManager,
-            BackendType,
-        )
 
         manager = CryptoBackendManager()
 
@@ -458,9 +406,7 @@ class TestCryptoBackendFunctionalLayer:
             try:
                 manager.set_backend(backend_type)
                 current_backend = manager.current_backend
-                assert current_backend is not None, (
-                    f"后端切换功能不正确：{backend_type} 切换失败"
-                )
+                assert current_backend is not None, f"后端切换功能不正确：{backend_type} 切换失败"
             except (ValueError, RuntimeError):
                 # 后端不可用，继续测试下一个
                 continue
@@ -474,16 +420,13 @@ class TestCryptoBackendFunctionalLayer:
         - 不可用后端返回 False
         """
         from src.core.crypto_backend import (
-            CryptoBackendManager,
             is_secure_backend_available,
         )
 
         # 功能判断：后端可用性
         # 注意：is_secure_backend_available() 检查是否有安全的后端可用
         is_available = is_secure_backend_available()
-        assert isinstance(is_available, bool), (
-            f"后端可用性判断功能不正确：应返回 bool 类型"
-        )
+        assert isinstance(is_available, bool), "后端可用性判断功能不正确：应返回 bool 类型"
 
         # 功能判断：Pure Python 后端应始终可用
         manager = CryptoBackendManager()
@@ -496,6 +439,7 @@ class TestCryptoBackendFunctionalLayer:
 # ============================================================================
 # 逻辑层测试 - 代码正确性、逻辑、逻辑正确性、逻辑判断
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.logic_layer
@@ -517,7 +461,6 @@ class TestCryptoBackendLogicLayer:
         - 高优先级后端可用时选择高优先级后端
         - 高优先级后端不可用时降级到低优先级后端
         """
-        from src.core.crypto_backend import CryptoBackendManager
 
         manager = CryptoBackendManager()
 
@@ -546,7 +489,6 @@ class TestCryptoBackendLogicLayer:
         - 无效输入时的错误处理
         - 异常情况下的错误恢复
         """
-        from src.core.crypto_backend import CryptoBackendManager
 
         manager = CryptoBackendManager()
 
@@ -572,7 +514,6 @@ class TestCryptoBackendLogicLayer:
         - 锁保护应防止竞态条件
         - 后端状态应一致
         """
-        from src.core.crypto_backend import CryptoBackendManager
 
         manager = CryptoBackendManager()
 
@@ -603,14 +544,13 @@ class TestCryptoBackendLogicLayer:
             thread.join()
 
         # 验证：无异常发生
-        assert error_count[0] == 0, (
-            f"并发安全性逻辑不正确：发生 {error_count[0]} 个异常"
-        )
+        assert error_count[0] == 0, f"并发安全性逻辑不正确：发生 {error_count[0]} 个异常"
 
 
 # ============================================================================
 # 数据层测试 - 数据、数据流、数据管道、数据类型、数据调用
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.data_layer
@@ -633,7 +573,6 @@ class TestCryptoBackendDataLayer:
         - 公钥数据为 33 或 65 字节 bytes
         - 标量乘法结果为 (int, int) 元组
         """
-        from src.core.crypto_backend import CryptoBackendManager
 
         manager = CryptoBackendManager()
 
@@ -648,12 +587,9 @@ class TestCryptoBackendDataLayer:
             # 数据：公钥格式
             public_key = manager.generate_public_key(private_key, compressed=True)
             if public_key:
-                assert isinstance(public_key, bytes), (
-                    "公钥数据格式不正确：应为 bytes 类型"
-                )
+                assert isinstance(public_key, bytes), "公钥数据格式不正确：应为 bytes 类型"
                 assert len(public_key) in (33, 65), (
-                    "公钥数据格式不正确：长度应为 33 或 65 字节，"
-                    f"实际为 {len(public_key)} 字节"
+                    f"公钥数据格式不正确：长度应为 33 或 65 字节，实际为 {len(public_key)} 字节"
                 )
 
         except (RuntimeError, ImportError):
@@ -667,7 +603,6 @@ class TestCryptoBackendDataLayer:
         - 数据流各阶段数据格式正确
         - 数据无损坏或丢失
         """
-        from src.core.crypto_backend import CryptoBackendManager
 
         manager = CryptoBackendManager()
 
@@ -676,9 +611,7 @@ class TestCryptoBackendDataLayer:
 
         try:
             # 处理
-            output_public_key = manager.generate_public_key(
-                input_private_key, compressed=True
-            )
+            output_public_key = manager.generate_public_key(input_private_key, compressed=True)
 
             # 验证数据流完整性
             if output_public_key:
@@ -691,9 +624,7 @@ class TestCryptoBackendDataLayer:
                 )
 
                 # 输出公钥格式正确
-                assert len(output_public_key) in (33, 65), (
-                    "数据流完整性验证失败：输出公钥长度不正确"
-                )
+                assert len(output_public_key) in (33, 65), "数据流完整性验证失败：输出公钥长度不正确"
 
         except (RuntimeError, ImportError):
             pytest.skip("加密后端不可用，跳过测试")
@@ -706,7 +637,6 @@ class TestCryptoBackendDataLayer:
         - 公钥 bytes → 坐标 (int, int) 转换正确
         - 标量乘法 int 输入正确
         """
-        from src.core.crypto_backend import CryptoBackendManager
 
         manager = CryptoBackendManager()
 
@@ -714,12 +644,12 @@ class TestCryptoBackendDataLayer:
         private_key_bytes = os.urandom(32)
         private_key_int = int.from_bytes(private_key_bytes, "big")
 
-        assert isinstance(private_key_int, int), (
-            "数据类型转换不正确：bytes → int 应返回 int 类型"
-        )
-        assert 1 <= private_key_int <= 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364140 - 1, (
-            "数据类型转换不正确：私钥整数超出有效范围"
-        )
+        assert isinstance(private_key_int, int), "数据类型转换不正确：bytes → int 应返回 int 类型"
+        assert (
+            1
+            <= private_key_int
+            <= 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364140 - 1
+        ), "数据类型转换不正确：私钥整数超出有效范围"
 
         try:
             # 数据类型转换：生成公钥
@@ -730,15 +660,11 @@ class TestCryptoBackendDataLayer:
                 if len(public_key) == 33:
                     # 压缩格式：0x02 或 0x03 + x 坐标
                     prefix = public_key[0]
-                    assert prefix in (0x02, 0x03), (
-                        "数据类型转换不正确：压缩格式公钥前缀不正确"
-                    )
+                    assert prefix in (0x02, 0x03), "数据类型转换不正确：压缩格式公钥前缀不正确"
                 elif len(public_key) == 65:
                     # 非压缩格式：0x04 + x 坐标 + y 坐标
                     prefix = public_key[0]
-                    assert prefix == 0x04, (
-                        "数据类型转换不正确：非压缩格式公钥前缀不正确"
-                    )
+                    assert prefix == 0x04, "数据类型转换不正确：非压缩格式公钥前缀不正确"
 
         except (RuntimeError, ImportError):
             pytest.skip("加密后端不可用，跳过测试")
@@ -751,7 +677,6 @@ class TestCryptoBackendDataLayer:
         - 后端调用参数正确传递
         - 后端调用结果正确返回
         """
-        from src.core.crypto_backend import CryptoBackendManager
 
         manager = CryptoBackendManager()
 
@@ -765,9 +690,7 @@ class TestCryptoBackendDataLayer:
             # 验证后端调用结果正确返回
             # 注意：实际行为取决于后端可用性
             if public_key is not None:
-                assert isinstance(public_key, bytes), (
-                    "后端调用接口不正确：应返回 bytes 类型"
-                )
+                assert isinstance(public_key, bytes), "后端调用接口不正确：应返回 bytes 类型"
 
         except (RuntimeError, ImportError):
             # 后端不可用，跳过测试
@@ -777,6 +700,7 @@ class TestCryptoBackendDataLayer:
 # ============================================================================
 # 多后端测试 - 参数化测试覆盖四种后端
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.parametrize(
@@ -801,13 +725,6 @@ class TestCryptoBackendMultiBackend:
         - 所有后端都能成功初始化
         - 初始化后后端状态正确
         """
-        from src.core.crypto_backend import (
-            CoincurveBackend,
-            CryptoBackendManager,
-            ECDSABackend,
-            OpenSSLBackend,
-            PurePythonBackend,
-        )
 
         # 多后端验证：后端初始化
         if backend_type == "pure_python":
@@ -826,9 +743,7 @@ class TestCryptoBackendMultiBackend:
         assert backend.name is not None, f"{backend_type} 后端名称不应为 None"
 
         # 验证后端可用性
-        assert isinstance(backend.is_available, bool), (
-            f"{backend_type} 后端可用性应返回 bool 类型"
-        )
+        assert isinstance(backend.is_available, bool), f"{backend_type} 后端可用性应返回 bool 类型"
 
     def test_multi_backend_generate_public_key(self, backend_type, monkeypatch):
         """多后端测试：生成公钥
@@ -837,12 +752,6 @@ class TestCryptoBackendMultiBackend:
         - 所有后端都能生成公钥
         - 生成的公钥格式正确
         """
-        from src.core.crypto_backend import (
-            CoincurveBackend,
-            ECDSABackend,
-            OpenSSLBackend,
-            PurePythonBackend,
-        )
 
         # 创建后端实例
         backend_map = {
@@ -865,8 +774,7 @@ class TestCryptoBackendMultiBackend:
             # 验证生成的公钥
             if public_key:
                 assert isinstance(public_key, bytes), (
-                    f"{backend_type} 后端 generate_public_key 功能不正确："
-                    "应返回 bytes 类型"
+                    f"{backend_type} 后端 generate_public_key 功能不正确：应返回 bytes 类型"
                 )
                 assert len(public_key) in (33, 65), (
                     f"{backend_type} 后端 generate_public_key 功能不正确："
@@ -884,12 +792,6 @@ class TestCryptoBackendMultiBackend:
         - coincurve 后端应返回 True（恒定时间）
         - 其他后端可能返回 False（解释器级别不保证）
         """
-        from src.core.crypto_backend import (
-            CoincurveBackend,
-            ECDSABackend,
-            OpenSSLBackend,
-            PurePythonBackend,
-        )
 
         # 创建后端实例
         backend_map = {
@@ -917,6 +819,7 @@ class TestCryptoBackendMultiBackend:
 # 边界条件测试
 # ============================================================================
 
+
 @pytest.mark.acceptance
 @pytest.mark.edge_cases
 class TestCryptoBackendEdgeCases:
@@ -924,7 +827,6 @@ class TestCryptoBackendEdgeCases:
 
     def test_edge_case_private_key_zero(self, mock_crypto_backend):
         """边界条件测试：私钥为 0"""
-        from src.core.crypto_backend import CryptoBackendManager
 
         manager = CryptoBackendManager()
 
@@ -942,7 +844,6 @@ class TestCryptoBackendEdgeCases:
 
     def test_edge_case_private_key_n(self, mock_crypto_backend):
         """边界条件测试：私钥为 n（Secp256k1 曲线的阶）"""
-        from src.core.crypto_backend import CryptoBackendManager
         from src.core.secp256k1 import Secp256k1
 
         manager = CryptoBackendManager()
@@ -961,7 +862,6 @@ class TestCryptoBackendEdgeCases:
 
     def test_edge_case_private_key_n_minus_1(self, mock_crypto_backend):
         """边界条件测试：私钥为 n-1（最大有效私钥）"""
-        from src.core.crypto_backend import CryptoBackendManager
         from src.core.secp256k1 import Secp256k1
 
         manager = CryptoBackendManager()
@@ -970,14 +870,10 @@ class TestCryptoBackendEdgeCases:
         private_key_n_minus_1 = (Secp256k1.N - 1).to_bytes(32, "big")
 
         try:
-            public_key = manager.generate_public_key(
-                private_key_n_minus_1, compressed=True
-            )
+            public_key = manager.generate_public_key(private_key_n_minus_1, compressed=True)
             # 注意：n-1 是有效私钥
             if public_key is not None:
-                assert isinstance(public_key, bytes), (
-                    "边界条件测试失败：应返回 bytes 类型"
-                )
+                assert isinstance(public_key, bytes), "边界条件测试失败：应返回 bytes 类型"
         except (ValueError, RuntimeError):
             # 某些实现可能拒绝 n-1
             pass

@@ -147,7 +147,10 @@ class TestDataLoggerEngineRecording:
     def test_record_engine_data(self):
         """测试记录引擎数据"""
         self.logger.record_engine_data(
-            mode="random", target_count=10, is_running=True, current_position=500,
+            mode="random",
+            target_count=10,
+            is_running=True,
+            current_position=500,
         )
 
         # 验证当前数据
@@ -194,7 +197,10 @@ class TestDataLoggerSystemRecording:
     def test_record_system_data_with_custom_values(self):
         """测试记录自定义系统数据"""
         self.logger.record_system_data(
-            os_name="Windows", python_version="3.11.0", pid=12345, uptime=3600.0,
+            os_name="Windows",
+            python_version="3.11.0",
+            pid=12345,
+            uptime=3600.0,
         )
 
         current_data = self.logger.get_current_data()

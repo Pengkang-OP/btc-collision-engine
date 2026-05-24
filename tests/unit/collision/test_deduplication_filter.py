@@ -58,9 +58,7 @@ class TestDeduplicationFilterAddress(unittest.TestCase):
         """相同地址的私钥被拦截"""
         f = DeduplicationFilter(max_size=100)
         f.check_and_add(b"\x01" * 32, address="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
-        self.assertFalse(
-            f.check_and_add(b"\x02" * 32, address="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
-        )
+        self.assertFalse(f.check_and_add(b"\x02" * 32, address="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"))
 
     def test_address_case_insensitive(self):
         """地址比较大小写不敏感"""

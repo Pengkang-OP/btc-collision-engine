@@ -9,7 +9,6 @@ CI 中通过 -m "not (gpu or gpu_kernel)" 自动跳过。
     pytest tests/test_gpu_engine_mock.py -v --tb=short
 """
 
-
 import pytest
 
 pytestmark = [
@@ -22,6 +21,7 @@ pytestmark = [
 # ============================================================================
 # 测试：GPU 引擎初始化（使用 Mock 链）
 # ============================================================================
+
 
 @pytest.mark.usefixtures("mock_gpu_chain")
 class TestGPUEngineInit:
@@ -68,6 +68,7 @@ class TestGPUEngineInit:
 # ============================================================================
 # 测试：GPU 引擎生命周期
 # ============================================================================
+
 
 @pytest.mark.usefixtures("mock_gpu_chain")
 class TestGPUEngineLifecycle:

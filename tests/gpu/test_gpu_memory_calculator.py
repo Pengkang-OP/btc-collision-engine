@@ -227,10 +227,14 @@ class TestGetMemoryBreakdown(unittest.TestCase):
         result = GPUMemoryCalculator.get_memory_breakdown(0, 0)
         bpMB = GPUMemoryCalculator.BYTES_PER_MB
         self.assertAlmostEqual(
-            result["seed_buf_mb"], GPUMemoryCalculator.SEED_BUF_SIZE / bpMB, places=10,
+            result["seed_buf_mb"],
+            GPUMemoryCalculator.SEED_BUF_SIZE / bpMB,
+            places=10,
         )
         self.assertAlmostEqual(
-            result["precomp_table_mb"], GPUMemoryCalculator.PRECOMP_TABLE_SIZE / bpMB, places=10,
+            result["precomp_table_mb"],
+            GPUMemoryCalculator.PRECOMP_TABLE_SIZE / bpMB,
+            places=10,
         )
         self.assertEqual(result["match_flags_mb"], 0.0)
         self.assertEqual(result["targets_mb"], 0.0)

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """流水模式验收测试 - Pipeline 多步骤数据流转
 
 本模块测试完整的 Pipeline 数据流转流程，确保：
@@ -17,27 +16,22 @@
 """
 
 import os
-import threading
 import time
-from typing import Any, Dict, List, Optional, Tuple
 
 import pytest
 
 from tests.acceptance.conftest import (
     AcceptanceTestConstants,
-    assert_engine_state,
     assert_pipeline_stage_complete,
     assert_valid_bitcoin_address,
     assert_valid_private_key,
     create_mock_checkpoint_data,
-    create_mock_gpu_device,
-    create_mock_gpu_kernel,
 )
-
 
 # ============================================================================
 # Pipeline 测试 - 私钥生成 → 地址生成 → 碰撞检测
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.pipeline
@@ -45,7 +39,9 @@ class TestKeyGenerationPipeline:
     """私钥生成 → 地址生成 → 碰撞检测 Pipeline 测试"""
 
     def test_pipeline_key_generation_to_address_generation(
-        self, mock_event_bus, monkeypatch,
+        self,
+        mock_event_bus,
+        monkeypatch,
     ):
         """Pipeline 测试：私钥生成 → 地址生成
 
@@ -64,7 +60,9 @@ class TestKeyGenerationPipeline:
         # 验证阶段 1 完成
         assert_valid_private_key(private_key)
         assert_pipeline_stage_complete(
-            "key_generation", private_key, bytes,
+            "key_generation",
+            private_key,
+            bytes,
         )
 
         # Pipeline 阶段 2：地址生成
@@ -77,7 +75,9 @@ class TestKeyGenerationPipeline:
 
         # 验证阶段 2 完成
         assert_pipeline_stage_complete(
-            "address_generation", address, str,
+            "address_generation",
+            address,
+            str,
         )
         assert_valid_bitcoin_address(address)
 
@@ -94,7 +94,8 @@ class TestKeyGenerationPipeline:
         )
 
     def test_pipeline_address_generation_to_collision_detection(
-        self, mock_event_bus,
+        self,
+        mock_event_bus,
     ):
         """Pipeline 测试：地址生成 → 碰撞检测
 
@@ -118,26 +119,21 @@ class TestKeyGenerationPipeline:
         )
 
         # 验证 Pipeline 初始化
-        assert engine is not None, (
-            "Pipeline 初始化失败：KeyCollisionEngine 实例不应为 None"
-        )
+        assert engine is not None, "Pipeline 初始化失败：KeyCollisionEngine 实例不应为 None"
 
         # 验证 Pipeline 数据流
         # 注意：实际碰撞检测需要运行引擎
         # 这里验证 Pipeline 设置的正确性
         assert engine.checkpoint_mgr is None, (
-            "Pipeline 数据流验证失败："
-            "checkpoint_mgr 应为 None（未启用）"
+            "Pipeline 数据流验证失败：checkpoint_mgr 应为 None（未启用）"
         )
-        assert engine.dedup_filter is not None, (
-            "Pipeline 数据流验证失败："
-            "dedup_filter 不应为 None"
-        )
+        assert engine.dedup_filter is not None, "Pipeline 数据流验证失败：dedup_filter 不应为 None"
 
 
 # ============================================================================
 # 数据持久化 Pipeline 测试 - Checkpoint → DataLogger
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.pipeline
@@ -168,16 +164,16 @@ class TestDataPersistencePipeline:
         manager.save(test_data)
 
         # 验证阶段 1 完成
-        assert checkpoint_path.exists(), (
-            "Pipeline 阶段 1 失败：Checkpoint 文件未创建"
-        )
+        assert checkpoint_path.exists(), "Pipeline 阶段 1 失败：Checkpoint 文件未创建"
 
         # Pipeline 阶段 2：Checkpoint 加载
         loaded_data = manager.load()
 
         # 验证阶段 2 完成
         assert_pipeline_stage_complete(
-            "checkpoint_load", loaded_data, dict,
+            "checkpoint_load",
+            loaded_data,
+            dict,
         )
 
         # 验证数据完整性
@@ -187,8 +183,7 @@ class TestDataPersistencePipeline:
             f"实际 {loaded_data['version']}"
         )
         assert loaded_data["total_keys_checked"] == test_data["total_keys_checked"], (
-            f"Pipeline 数据完整性验证失败："
-            f"已检查私钥数量不匹配"
+            "Pipeline 数据完整性验证失败：已检查私钥数量不匹配"
         )
 
     def test_pipeline_data_logger_to_file(self, temp_dir, mock_event_bus):
@@ -211,9 +206,7 @@ class TestDataPersistencePipeline:
         pass  # DataLogger.record_performance_data has different signature, skipping
 
         # 验证阶段 1 完成
-        assert data_logger is not None, (
-            "Pipeline 阶段 1 失败：DataLogger 实例不应为 None"
-        )
+        assert data_logger is not None, "Pipeline 阶段 1 失败：DataLogger 实例不应为 None"
 
         # Pipeline 阶段 2：文件写入验证
         # 注意：实际文件写入取决于实现
@@ -225,6 +218,7 @@ class TestDataPersistencePipeline:
 # ============================================================================
 # 事件驱动 Pipeline 测试 - EventBus → Subscribers
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.pipeline
@@ -239,8 +233,7 @@ class TestEventDrivenPipeline:
         - 订阅者正确接收事件
         - 事件数据正确传递
         """
-        from src.collision.event_bus import EventBus
-        from src.collision.events import EngineStartEvent, EngineProgressEvent
+        from src.collision.events import EngineStartEvent
 
         # Pipeline 阶段 1：EventBus 发布
         received_events = []
@@ -260,9 +253,7 @@ class TestEventDrivenPipeline:
 
         # 验证阶段 1 完成
         assert len(received_events) == 1, (
-            f"Pipeline 阶段 1 失败："
-            f"订阅者应收到 1 个事件，"
-            f"实际收到 {len(received_events)} 个"
+            f"Pipeline 阶段 1 失败：订阅者应收到 1 个事件，实际收到 {len(received_events)} 个"
         )
 
         # 验证事件数据传递
@@ -272,8 +263,7 @@ class TestEventDrivenPipeline:
             f"实际为 {type(received_events[0]).__name__}"
         )
         assert received_events[0].target_count == 1, (
-            f"Pipeline 数据传递验证失败："
-            f"事件数据 targets_count 不正确"
+            "Pipeline 数据传递验证失败：事件数据 targets_count 不正确"
         )
 
     def test_pipeline_multiple_events(self, mock_event_bus):
@@ -284,8 +274,7 @@ class TestEventDrivenPipeline:
         - 多个订阅者正确接收
         - 事件顺序正确
         """
-        from src.collision.event_bus import EventBus
-        from src.collision.events import EngineStartEvent, EngineProgressEvent
+        from src.collision.events import EngineProgressEvent, EngineStartEvent
 
         # Pipeline 阶段 1：多事件发布
         received_events_1 = []
@@ -309,23 +298,18 @@ class TestEventDrivenPipeline:
         mock_event_bus.publish(event_2)
 
         # 验证阶段 1 完成
-        assert len(received_events_1) >= 1, (
-            f"Pipeline 多事件测试失败："
-            f"订阅者 1 应收到至少 1 个事件"
-        )
+        assert len(received_events_1) >= 1, "Pipeline 多事件测试失败：订阅者 1 应收到至少 1 个事件"
 
         # 验证事件分离
         # 注意：具体行为取决于实现
         # 这里验证 Pipeline 的正确性
-        assert mock_event_bus is not None, (
-            "Pipeline 多事件测试失败："
-            "EventBus 实例不应为 None"
-        )
+        assert mock_event_bus is not None, "Pipeline 多事件测试失败：EventBus 实例不应为 None"
 
 
 # ============================================================================
 # GPU 加速 Pipeline 测试 - CPU → GPU → Result
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.pipeline
@@ -347,11 +331,7 @@ class TestGPUAccelerationPipeline:
         seed = os.urandom(32)
 
         # 验证阶段 1 完成
-        assert len(seed) == 32, (
-            f"Pipeline 阶段 1 失败："
-            f"种子长度应为 32 字节，"
-            f"实际为 {len(seed)} 字节"
-        )
+        assert len(seed) == 32, f"Pipeline 阶段 1 失败：种子长度应为 32 字节，实际为 {len(seed)} 字节"
 
         # Pipeline 阶段 2：GPU 内核执行（模拟）
         # 注意：使用 Mock GPU，不执行真实内核
@@ -362,14 +342,13 @@ class TestGPUAccelerationPipeline:
 
         # 验证阶段 2 完成
         assert_pipeline_stage_complete(
-            "gpu_kernel_execution", results, list,
+            "gpu_kernel_execution",
+            results,
+            list,
         )
 
         # 验证 GPU 调用
-        mock_kernel.run_batch.assert_called_once(), (
-            "Pipeline 阶段 2 失败："
-            "GPU 内核应被调用一次"
-        )
+        mock_kernel.run_batch.assert_called_once(), ("Pipeline 阶段 2 失败：GPU 内核应被调用一次")
 
     def test_pipeline_gpu_to_result(self, mock_gpu_chain):
         """Pipeline 测试：GPU 内核执行 → 结果回传
@@ -397,23 +376,15 @@ class TestGPUAccelerationPipeline:
 
         # 验证阶段 1 完成
         assert len(results) == 1, (
-            f"Pipeline 阶段 1 失败："
-            f"应返回 1 个匹配结果，"
-            f"实际返回 {len(results)} 个"
+            f"Pipeline 阶段 1 失败：应返回 1 个匹配结果，实际返回 {len(results)} 个"
         )
 
         # Pipeline 阶段 2：结果回传验证
         result = results[0]
 
         # 验证结果数据格式
-        assert "private_key" in result, (
-            "Pipeline 阶段 2 失败："
-            "结果应包含 private_key 字段"
-        )
-        assert "address" in result, (
-            "Pipeline 阶段 2 失败："
-            "结果应包含 address 字段"
-        )
+        assert "private_key" in result, "Pipeline 阶段 2 失败：结果应包含 private_key 字段"
+        assert "address" in result, "Pipeline 阶段 2 失败：结果应包含 address 字段"
 
         # 验证私钥格式
         assert_valid_private_key(result["private_key"])
@@ -425,6 +396,7 @@ class TestGPUAccelerationPipeline:
 # ============================================================================
 # 监控数据 Pipeline 测试 - 采集 → 聚合 → 存储
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.pipeline
@@ -453,10 +425,7 @@ class TestMonitoringDataPipeline:
         monitoring.record_metric("memory_usage_mb", 512.0)
 
         # 验证阶段 1 完成
-        assert monitoring is not None, (
-            "Pipeline 阶段 1 失败："
-            "EnhancedMonitoringSystem 实例不应为 None"
-        )
+        assert monitoring is not None, "Pipeline 阶段 1 失败：EnhancedMonitoringSystem 实例不应为 None"
 
         # Pipeline 阶段 2：数据聚合
         avg_speed = monitoring.get_average("keys_per_second")
@@ -464,24 +433,13 @@ class TestMonitoringDataPipeline:
         avg_memory = monitoring.get_average("memory_usage_mb")
 
         # 验证阶段 2 完成
-        assert avg_speed is not None, (
-            "Pipeline 阶段 2 失败："
-            "平均速度不应为 None"
-        )
-        assert avg_cpu is not None, (
-            "Pipeline 阶段 2 失败："
-            "平均 CPU 使用率不应为 None"
-        )
-        assert avg_memory is not None, (
-            "Pipeline 阶段 2 失败："
-            "平均内存使用不应为 None"
-        )
+        assert avg_speed is not None, "Pipeline 阶段 2 失败：平均速度不应为 None"
+        assert avg_cpu is not None, "Pipeline 阶段 2 失败：平均 CPU 使用率不应为 None"
+        assert avg_memory is not None, "Pipeline 阶段 2 失败：平均内存使用不应为 None"
 
         # 验证聚合结果
         assert avg_speed == 1000.0, (
-            f"Pipeline 数据聚合验证失败："
-            f"平均速度不正确：期望 1000.0，"
-            f"实际 {avg_speed}"
+            f"Pipeline 数据聚合验证失败：平均速度不正确：期望 1000.0，实际 {avg_speed}"
         )
 
     def test_pipeline_aggregation_to_storage(self, temp_dir, mock_event_bus):
@@ -499,15 +457,12 @@ class TestMonitoringDataPipeline:
         data_logger = DataLogger(storage_dir=str(log_file))
 
         # 记录聚合数据
-        timestamp = time.time()
+        time.time()
         data_logger.record_performance_data(speed=1000.0, total_checked=1000, matches_found=0)
         # NOTE: Full API params differ from test expectations, simplified call
 
         # 验证阶段 1 完成
-        assert data_logger is not None, (
-            "Pipeline 阶段 1 失败："
-            "DataLogger 实例不应为 None"
-        )
+        assert data_logger is not None, "Pipeline 阶段 1 失败：DataLogger 实例不应为 None"
 
         # Pipeline 阶段 2：存储验证
         # 注意：实际文件写入取决于实现
@@ -519,6 +474,7 @@ class TestMonitoringDataPipeline:
 # ============================================================================
 # 边界条件测试
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.edge_cases
@@ -536,9 +492,7 @@ class TestPipelineEdgeCases:
         )
 
         assert len(engine.targets) == 0, (
-            f"边界条件测试失败："
-            f"空目标集合时 targets 长度应为 0，"
-            f"实际为 {len(engine.targets)}"
+            f"边界条件测试失败：空目标集合时 targets 长度应为 0，实际为 {len(engine.targets)}"
         )
 
     def test_edge_case_single_stage_pipeline(self, mock_event_bus):
@@ -573,10 +527,7 @@ class TestPipelineEdgeCases:
         manager.save(test_data)
 
         # 验证大数据处理
-        assert checkpoint_path.exists(), (
-            "边界条件测试失败："
-            "大数据 Checkpoint 文件未创建"
-        )
+        assert checkpoint_path.exists(), "边界条件测试失败：大数据 Checkpoint 文件未创建"
 
 
 # ============================================================================

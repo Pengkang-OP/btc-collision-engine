@@ -1,4 +1,5 @@
 """Enhanced monitoring with advanced metrics tracking."""
+
 import logging
 import threading
 from contextlib import suppress
@@ -42,7 +43,9 @@ class EnhancedMonitoringSystem:
             self._metrics.clear()
 
     def record_metric(
-        self, name: str, value: float,
+        self,
+        name: str,
+        value: float,
     ) -> None:
         """Record a metric value.
 
@@ -56,12 +59,11 @@ class EnhancedMonitoringSystem:
                 self._metrics[name] = []
             self._metrics[name].append(value)
             if len(self._metrics[name]) > 10000:
-                self._metrics[name] = (
-                    self._metrics[name][-5000:]
-                )
+                self._metrics[name] = self._metrics[name][-5000:]
 
     def get_average(
-        self, name: str,
+        self,
+        name: str,
     ) -> float:
         """Get average value for a metric.
 

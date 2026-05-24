@@ -11,7 +11,6 @@
 import re
 import sys
 from pathlib import Path
-from typing import Tuple
 
 # 修复Windows控制台编码问题 - 使用共享模块`nfrom tools.utf8_helper import setup_windows_utf8`nsetup_windows_utf8()
 
@@ -84,7 +83,7 @@ def detect_language(code_content: str, context: str) -> str:
     return "python"
 
 
-def fix_code_blocks_in_file(file_path: Path, dry_run: bool = False) -> Tuple[int, int]:
+def fix_code_blocks_in_file(file_path: Path, dry_run: bool = False) -> tuple[int, int]:
     """修复单个文件中的代码块
 
     Returns:

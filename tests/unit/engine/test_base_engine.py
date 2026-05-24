@@ -69,7 +69,10 @@ class MockEngine(BaseCollisionEngine):
         return ["random", "range", "brute_force"]
 
     def _safe_invoke_match_callback(
-        self, private_key: bytes, address: str, wif: str,
+        self,
+        private_key: bytes,
+        address: str,
+        wif: str,
     ) -> bool:
         """Safely invoke on_match callback with timeout protection.
 
@@ -87,6 +90,7 @@ class MockEngine(BaseCollisionEngine):
 # ============================================================================
 # 测试：抽象基类接口校验
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestBaseEngineInterface:
@@ -133,6 +137,7 @@ class TestBaseEngineInterface:
 # 测试：状态转换
 # ============================================================================
 
+
 @pytest.mark.unit
 @pytest.mark.state_machine
 class TestBaseEngineStateTransitions:
@@ -162,7 +167,7 @@ class TestBaseEngineStateTransitions:
     def test_multiple_start_stop_cycles(self):
         """测试：多次启停循环"""
         engine = MockEngine()
-        for cycle in range(5):
+        for _cycle in range(5):
             assert not engine.is_running()
             engine.start("random")
             assert engine.is_running()
@@ -180,6 +185,7 @@ class TestBaseEngineStateTransitions:
 # ============================================================================
 # 测试：非法转换拦截
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestBaseEngineIllegalTransitions:
@@ -210,6 +216,7 @@ class TestBaseEngineIllegalTransitions:
 # ============================================================================
 # 测试：进度和完成回调
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestBaseEngineProgressCompleteCallbacks:
@@ -307,10 +314,11 @@ class TestBaseEngineProgressCompleteCallbacks:
 # 测试：安全回调机制
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestBaseEngineSafeCallback:
     """BaseEngine 安全回调测试
-    
+
     NOTE: _safe_invoke_match_callback, on_match, _match_callback_timeout,
     and _match_callback_audit_enabled are KeyCollisionEngine features.
     These tests are kept as documentation of expected behavior but skipped
@@ -321,7 +329,9 @@ class TestBaseEngineSafeCallback:
         """测试：on_match 为 None 时返回 True（不阻塞）"""
         engine = MockEngine()
         result = engine._safe_invoke_match_callback(
-            b"\x01" * 32, "1Address", "WIFplaceholder",
+            b"\x01" * 32,
+            "1Address",
+            "WIFplaceholder",
         )
         assert result is True
 
@@ -336,7 +346,9 @@ class TestBaseEngineSafeCallback:
 
         engine.on_match = mock_on_match
         result = engine._safe_invoke_match_callback(
-            b"\x01" * 32, "1Address", "WIFplaceholder",
+            b"\x01" * 32,
+            "1Address",
+            "WIFplaceholder",
         )
         assert result is True
         assert len(results) == 1
@@ -350,7 +362,9 @@ class TestBaseEngineSafeCallback:
 
         engine.on_match = failing_callback
         result = engine._safe_invoke_match_callback(
-            b"\x01" * 32, "1Address", "WIFplaceholder",
+            b"\x01" * 32,
+            "1Address",
+            "WIFplaceholder",
         )
         assert result is False
 
@@ -368,7 +382,9 @@ class TestBaseEngineSafeCallback:
 
         no_audit = NoAuditEngine()
         result = no_audit._safe_invoke_match_callback(
-            b"\x01" * 32, "1Address", "WIFplaceholder",
+            b"\x01" * 32,
+            "1Address",
+            "WIFplaceholder",
         )
         assert result is True
 
@@ -376,6 +392,7 @@ class TestBaseEngineSafeCallback:
 # ============================================================================
 # 测试：线程安全
 # ============================================================================
+
 
 @pytest.mark.unit
 @pytest.mark.thread_safety
@@ -409,6 +426,7 @@ class TestBaseEngineThreadSafety:
 # ============================================================================
 # 测试：集成场景
 # ============================================================================
+
 
 @pytest.mark.integration
 class TestBaseEngineIntegration:

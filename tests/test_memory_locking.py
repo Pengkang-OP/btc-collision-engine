@@ -227,7 +227,7 @@ class TestMemoryLockingIntegration(unittest.TestCase):
         manager = SecureKeyManager(lock_memory=True)
         manager._try_lock_memory()
 
-        for i in range(3):
+        for _i in range(3):
             manager.generate_key()
             key = manager.get_key()
             self.assertEqual(len(key), 32)

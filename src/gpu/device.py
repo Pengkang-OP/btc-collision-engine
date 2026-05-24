@@ -100,12 +100,7 @@ def identify_vendor(device_name: str, vendor_str: str = "") -> str:
         return "amd"
 
     # Intel
-    if (
-        "intel" in vendor_lower
-        or "intel" in name_lower
-        or "iris" in name_lower
-        or "arc" in name_lower
-    ):
+    if "intel" in vendor_lower or "intel" in name_lower or "iris" in name_lower or "arc" in name_lower:
         return "intel"
 
     # 未知
@@ -292,8 +287,7 @@ class GPUDeviceDetector:
                 now = time.time()
                 if (
                     GPUDeviceDetector._devices_cache is not None
-                    and now - GPUDeviceDetector._devices_cache_timestamp
-                    < GPUDeviceDetector._cache_ttl
+                    and now - GPUDeviceDetector._devices_cache_timestamp < GPUDeviceDetector._cache_ttl
                 ):
                     # 使用缓存的设备信息
                     devices = GPUDeviceDetector._devices_cache
@@ -600,7 +594,8 @@ class GPUDevice:
             # OpenCL < 1.2: 不兼容，给出明确提示但不崩溃
             vendor_for_advice = identify_vendor(device_info.get("name", ""), cast("str", self.vendor))
             upgrade_info = OPENCL_UPGRADE_ADVICE.get(
-                vendor_for_advice, OPENCL_UPGRADE_ADVICE["unknown"],
+                vendor_for_advice,
+                OPENCL_UPGRADE_ADVICE["unknown"],
             )
             logger.warning(
                 f"COMP-2: OpenCL 版本不兼容 (当前: {self._opencl_version:.1f}, "
@@ -691,7 +686,9 @@ class GPUDevice:
             if vendor == "intel":
                 logger.info("启用GPU异步执行: Intel Arc 单 Out-of-Order 队列（DG2 numQueues=1）")
                 self.queue = cl.CommandQueue(
-                    self.context, self.device, properties=ooo_prop,
+                    self.context,
+                    self.device,
+                    properties=ooo_prop,
                 )
                 # Intel Arc: compute/transfer 共用同一 OOO 队列
                 self.compute_queue = self.queue
@@ -700,10 +697,14 @@ class GPUDevice:
             else:
                 logger.info("启用GPU异步执行: 创建双队列(计算+传输)")
                 self.compute_queue = cl.CommandQueue(
-                    self.context, self.device, properties=ooo_prop,
+                    self.context,
+                    self.device,
+                    properties=ooo_prop,
                 )
                 self.transfer_queue = cl.CommandQueue(
-                    self.context, self.device, properties=ooo_prop,
+                    self.context,
+                    self.device,
+                    properties=ooo_prop,
                 )
                 self.queue = self.compute_queue
                 logger.info("  - 计算队列: 已创建(支持性能分析)")
@@ -711,7 +712,8 @@ class GPUDevice:
         else:
             # 传统模式: 单一队列
             self.queue = cl.CommandQueue(
-                self.context, self.device,
+                self.context,
+                self.device,
             )
             logger.info("使用传统单队列模式(同步执行)")
 
@@ -744,7 +746,9 @@ class GPUDevice:
         # 检查计算单元
         if compute_units < min_compute_units:
             logger.warning(
-                "设备计算单元过少: %s (建议 >= %s), 性能可能受限", compute_units, min_compute_units,
+                "设备计算单元过少: %s (建议 >= %s), 性能可能受限",
+                compute_units,
+                min_compute_units,
             )
 
         # 检查显存
@@ -779,8 +783,7 @@ class GPUDevice:
             logger.warning("未找到 %s 的配置,使用默认参数", device_name)
 
     def _detect_and_validate_driver(self):
-        """检测驱动版本并验证健康状态
-        """
+        """检测驱动版本并验证健康状态"""
         # 1. 检测驱动版本
         self.driver_version = DriverManager.detect_driver_version(cast("str", self.vendor))
 
@@ -790,7 +793,9 @@ class GPUDevice:
 
         # 2. 检查驱动健康状态
         self.driver_health = DriverManager.check_driver_health(
-            self.vendor, self.driver_version, self.profile,
+            self.vendor,
+            self.driver_version,
+            self.profile,
         )
 
         # 3. 记录健康检查结果
@@ -807,7 +812,9 @@ class GPUDevice:
 
         # 4. 获取驱动优化标志
         self.driver_optimization_flags = DriverManager.get_driver_optimization_flags(
-            self.vendor, self.driver_version, self.profile,
+            self.vendor,
+            self.driver_version,
+            self.profile,
         )
 
         logger.debug(f"驱动优化标志: {self.driver_optimization_flags}")

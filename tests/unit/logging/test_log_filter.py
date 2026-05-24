@@ -2,6 +2,7 @@
 
 验证敏感数据正则表达式模式的正确性和完整性。
 """
+
 import pytest
 
 from src.utils.sensitive_patterns import (

@@ -44,7 +44,9 @@ def atomic_write(
 
 
 def atomic_json_write(
-    filepath: str | Path, data, **kwargs,
+    filepath: str | Path,
+    data,
+    **kwargs,
 ) -> None:
     """Atomically write JSON data to a file.
 

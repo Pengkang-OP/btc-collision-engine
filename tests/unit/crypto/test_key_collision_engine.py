@@ -649,7 +649,10 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
     def test_safe_invoke_callback_no_handler(self):
         """on_match=None 时 _safe_invoke_match_callback 返回 True"""
         engine = KeyCollisionEngine(
-            targets={"1TestAddr"}, on_match=None, max_workers=1, data_logging_enabled=False,
+            targets={"1TestAddr"},
+            on_match=None,
+            max_workers=1,
+            data_logging_enabled=False,
         )
         result = engine._safe_invoke_match_callback((1).to_bytes(32, "big"), "1TestAddr", "WIF123")
         self.assertTrue(result)
@@ -736,7 +739,9 @@ class TestKeyCollisionEngineContextManager(unittest.TestCase):
     def test_context_manager_enter_exit(self):
         """with语句进入/退出引擎"""
         with KeyCollisionEngine(
-            targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False,
+            targets={"1TestAddr"},
+            max_workers=1,
+            data_logging_enabled=False,
         ) as engine:
             self.assertFalse(engine.is_running())
             engine.start(mode="random")
@@ -1208,7 +1213,10 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
         from src.collision.checkpoint_manager import CheckpointManager
 
         self._create_checkpoint(
-            mode="brute_force", current_position=200, total_checked=300, range_end=None,
+            mode="brute_force",
+            current_position=200,
+            total_checked=300,
+            range_end=None,
         )
         mgr = CheckpointManager(filepath=self._ckpt_path)
         engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)

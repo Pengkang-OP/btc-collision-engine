@@ -16,10 +16,10 @@
 - 报告生成
 """
 
+import contextlib
 import json
 import os
 import pathlib
-import sys
 import tempfile
 from unittest.mock import Mock, patch
 
@@ -69,11 +69,8 @@ class TestPythonVersionCheck:
     def test_current_python_version_passes(self, checker):
         passed, message = checker.check_python_version()
         # 项目要求 Python >= 3.9
-        if sys.version_info >= (3, 9):
-            assert passed is True
-            assert "Python版本" in message
-        else:
-            assert passed is False  # pragma: no cover
+        assert passed is True
+        assert "Python版本" in message  # pragma: no cover
 
 
 # ============================================================================
@@ -318,7 +315,7 @@ class TestHealthCheckerIntegration:
         assert isinstance(results, dict)
         assert len(results) > 0
         # 每个结果应为 (bool, str) 元组
-        for key, (passed, message) in results.items():
+        for _key, (passed, message) in results.items():
             assert isinstance(passed, bool)
             assert isinstance(message, str)
 
@@ -360,10 +357,8 @@ class TestHealthCheckCLI:
             mock_instance = Mock()
             mock_instance.run_all_checks.return_value = {"test": (True, "all good")}
             mock_cls.return_value = mock_instance
-            try:
+            with contextlib.suppress(SystemExit):
                 main()
-            except SystemExit:
-                pass
 
     @patch("sys.argv", ["health_check.py", "--gpu", "--network"])
     def test_main_with_options(self):
@@ -371,10 +366,8 @@ class TestHealthCheckCLI:
             mock_instance = Mock()
             mock_instance.run_all_checks.return_value = {"test": (True, "ok")}
             mock_cls.return_value = mock_instance
-            try:
+            with contextlib.suppress(SystemExit):
                 main()
-            except SystemExit:
-                pass
 
     @patch("sys.argv", ["health_check.py", "--report", "report.txt"])
     def test_main_with_report(self, checker):
@@ -383,7 +376,5 @@ class TestHealthCheckCLI:
             mock_instance.run_all_checks.return_value = {"test": (True, "ok")}
             mock_instance.generate_report.return_value = "report content"
             mock_cls.return_value = mock_instance
-            try:
+            with contextlib.suppress(SystemExit):
                 main()
-            except SystemExit:
-                pass

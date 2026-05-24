@@ -56,7 +56,6 @@ def test_no_circular_dependency():
 
     # 尝试导入
     try:
-
         print("  ✅ 无循环依赖检测通过\n")
         return True
     except ImportError as e:

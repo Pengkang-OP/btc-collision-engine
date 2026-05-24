@@ -62,11 +62,13 @@ class GPUVendorBase(ABC):
 
         """
         recommended = profile.get(
-            "recommended_batch_size", self._RECOMMENDED_BATCH,
+            "recommended_batch_size",
+            self._RECOMMENDED_BATCH,
         )
         maximum = profile.get("max_batch_size", self._MAX_BATCH)
         memory_efficiency = profile.get(
-            "memory_efficiency", self._MEMORY_EFFICIENCY,
+            "memory_efficiency",
+            self._MEMORY_EFFICIENCY,
         )
 
         global_mem = device.device_info.get("global_mem_size", 0)

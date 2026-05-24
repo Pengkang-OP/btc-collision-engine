@@ -76,7 +76,8 @@ class ConfigCoordinator:
                 "auto_detect": self.config_manager.get("gpu.auto_detect", True),
                 "memory_usage_ratio": self.config_manager.get("gpu.memory_usage_ratio", 0.5),
                 "enable_vendor_optimizations": self.config_manager.get(
-                    "gpu.enable_vendor_optimizations", True,
+                    "gpu.enable_vendor_optimizations",
+                    True,
                 ),
             }
 

@@ -321,7 +321,9 @@ class TestExceptionIntegration(unittest.TestCase):
                 raise ValueError("Root cause")
             except ValueError as e:
                 raise ConfigError(
-                    "Configuration failed", original_error=e, context={"config_key": "test"},
+                    "Configuration failed",
+                    original_error=e,
+                    context={"config_key": "test"},
                 ) from e
         except ConfigError as e:
             self.assertEqual(e.error_code, 1003)

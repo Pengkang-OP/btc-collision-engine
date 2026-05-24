@@ -285,9 +285,8 @@ class DocumentQualityChecker:
             self.issues.append(Issue(Severity.ERROR, str(file_path), 0, "缺少主标题 (# Title)"))
 
         # 检查是否有目录（对于长文档）
-        if len(lines) > 50:
-            if not re.search(r"##\s+目录", content):
-                self.issues.append(Issue(Severity.WARNING, str(file_path), 0, "长文档建议添加目录"))
+        if len(lines) > 50 and not re.search(r"##\s+目录", content):
+            self.issues.append(Issue(Severity.WARNING, str(file_path), 0, "长文档建议添加目录"))
 
     def check_version_info(self, file_path: Path, content: str, lines: list[str]):
         """检查版本信息"""
@@ -389,7 +388,7 @@ class DocumentQualityChecker:
         """检查表格格式"""
         in_table = False
 
-        for i, line in enumerate(lines, 1):
+        for _i, line in enumerate(lines, 1):
             if "|" in line and line.strip():
                 if not in_table:
                     in_table = True
@@ -416,8 +415,8 @@ class DocumentQualityChecker:
         # 分类统计 - 使用常量避免字符串匹配错误
         code_block_issues = sum(1 for i in self.issues if IssueType.CODE_BLOCK in i.message)
         link_issues = sum(1 for i in self.issues if IssueType.LINK in i.message)
-        toc_issues = sum(1 for i in self.issues if IssueType.TOC in i.message)
-        version_issues = sum(1 for i in self.issues if IssueType.VERSION in i.message)
+        sum(1 for i in self.issues if IssueType.TOC in i.message)
+        sum(1 for i in self.issues if IssueType.VERSION in i.message)
         heading_issues = sum(1 for i in self.issues if IssueType.HEADING in i.message)
 
         # 使用配置的计算机制

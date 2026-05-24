@@ -62,7 +62,9 @@ class CryptoBackend(ABC):
 
     @abstractmethod
     def generate_public_key(
-        self, private_key: bytes, compressed: bool = True,
+        self,
+        private_key: bytes,
+        compressed: bool = True,
     ) -> bytes:
         """Generate public key from private key.
 
@@ -77,7 +79,10 @@ class CryptoBackend(ABC):
 
     @abstractmethod
     def scalar_multiply(
-        self, k: int, point_x: int, point_y: int,
+        self,
+        k: int,
+        point_x: int,
+        point_y: int,
     ) -> tuple[int, int]:
         """Elliptic curve scalar multiplication.
 
@@ -138,7 +143,9 @@ class PurePythonBackend(CryptoBackend):
         return True
 
     def generate_public_key(
-        self, private_key: bytes, compressed: bool = True,
+        self,
+        private_key: bytes,
+        compressed: bool = True,
     ) -> bytes:
         # v4.2.2 R4: generate_public_key already uses
         # scalar_multiply_const_time internally,
@@ -146,7 +153,10 @@ class PurePythonBackend(CryptoBackend):
         return self.ec.generate_public_key(private_key, compressed)
 
     def scalar_multiply(
-        self, k: int, point_x: int, point_y: int,
+        self,
+        k: int,
+        point_x: int,
+        point_y: int,
     ) -> tuple[int, int]:
         from .secp256k1 import ECPoint
 
@@ -179,6 +189,7 @@ class OpenSSLBackend(CryptoBackend):
     def _check_availability(self) -> bool:
         try:
             from cryptography.hazmat.primitives.asymmetric import ec  # noqa: F401
+
             return True
         except ImportError:
             return False
@@ -192,7 +203,9 @@ class OpenSSLBackend(CryptoBackend):
         return self._available
 
     def generate_public_key(
-        self, private_key: bytes, compressed: bool = True,
+        self,
+        private_key: bytes,
+        compressed: bool = True,
     ) -> bytes:
         if not self._available:
             raise RuntimeError("OpenSSL backend not available")
@@ -203,7 +216,9 @@ class OpenSSLBackend(CryptoBackend):
         # bytes
         private_value = int.from_bytes(private_key, "big")
         private_key_obj = ec.derive_private_key(
-            private_value, self._SECP256K1, self._backend,
+            private_value,
+            self._SECP256K1,
+            self._backend,
         )
 
         # Get public key
@@ -226,7 +241,10 @@ class OpenSSLBackend(CryptoBackend):
         return b"\x04" + x_bytes + y_bytes
 
     def scalar_multiply(
-        self, k: int, point_x: int, point_y: int,
+        self,
+        k: int,
+        point_x: int,
+        point_y: int,
     ) -> tuple[int, int]:
         """Note: cryptography library does not directly expose point
         multiplication, we implement it by creating temporary
@@ -315,6 +333,7 @@ class CoincurveBackend(CryptoBackend):
     def _check_availability(self) -> bool:
         try:
             import coincurve  # noqa: F401
+
             return True
         except ImportError:
             return False
@@ -328,7 +347,9 @@ class CoincurveBackend(CryptoBackend):
         return self._available
 
     def generate_public_key(
-        self, private_key: bytes, compressed: bool = True,
+        self,
+        private_key: bytes,
+        compressed: bool = True,
     ) -> bytes:
         if not self._available:
             raise RuntimeError("coincurve backend not available")
@@ -340,7 +361,10 @@ class CoincurveBackend(CryptoBackend):
         return private_key_obj.public_key.format(compressed=compressed)
 
     def scalar_multiply(
-        self, k: int, point_x: int, point_y: int,
+        self,
+        k: int,
+        point_x: int,
+        point_y: int,
     ) -> tuple[int, int]:
         """Coincurve scalar multiplication.
 
@@ -355,11 +379,7 @@ class CoincurveBackend(CryptoBackend):
         # Create public key object
         # Note: coincurve's API may need adjustment
         # Using public key multiplication concept here
-        pubkey_bytes = (
-            b"\x04"
-            + point_x.to_bytes(32, "big")
-            + point_y.to_bytes(32, "big")
-        )
+        pubkey_bytes = b"\x04" + point_x.to_bytes(32, "big") + point_y.to_bytes(32, "big")
 
         try:
             pubkey = coincurve.PublicKey(pubkey_bytes)
@@ -369,9 +389,7 @@ class CoincurveBackend(CryptoBackend):
             # Format result as uncompressed public key bytes
             # (0x04 + x + y)
             result_bytes = (
-                result.format(compressed=False)
-                if hasattr(result, "format")
-                else bytes(result)
+                result.format(compressed=False) if hasattr(result, "format") else bytes(result)
             )
             if result_bytes[0] == 0x04 and len(result_bytes) >= 65:
                 rx = int.from_bytes(result_bytes[1:33], "big")
@@ -436,14 +454,17 @@ class ECDSABackend(CryptoBackend):
         return self._available
 
     def generate_public_key(
-        self, private_key: bytes, compressed: bool = True,
+        self,
+        private_key: bytes,
+        compressed: bool = True,
     ) -> bytes:
         if not self._available:
             raise RuntimeError("ecdsa backend not available")
 
         # Generate public key using ecdsa
         signing_key = self._SigningKey.from_string(
-            private_key, curve=self._SECP256k1,
+            private_key,
+            curve=self._SECP256k1,
         )
         verifying_key = signing_key.get_verifying_key()
 
@@ -452,7 +473,10 @@ class ECDSABackend(CryptoBackend):
         return cast("bytes", b"\x04" + verifying_key.to_string())
 
     def scalar_multiply(
-        self, k: int, point_x: int, point_y: int,
+        self,
+        k: int,
+        point_x: int,
+        point_y: int,
     ) -> tuple[int, int]:
         """Ecdsa scalar multiplication.
 
@@ -520,10 +544,7 @@ class CryptoBackendManager:
         # Set default backend
         self._select_best_backend()
 
-        available = [
-            bt.name for bt, backend in self._backends.items()
-            if backend.is_available
-        ]
+        available = [bt.name for bt, backend in self._backends.items() if backend.is_available]
         if self._current_backend is None:
             raise RuntimeError("Crypto backend not initialized")
         logger.info(
@@ -574,7 +595,9 @@ class CryptoBackendManager:
         return cast("CryptoBackend", backend)
 
     def set_backend(
-        self, backend_type: BackendType, **kwargs,
+        self,
+        backend_type: BackendType,
+        **kwargs,
     ) -> bool:
         """Set current backend (thread-safe).
 
@@ -590,8 +613,7 @@ class CryptoBackendManager:
 
         """
         logger.debug(
-            f"Switching crypto backend: {backend_type.name}, "
-            f"params={kwargs}",
+            f"Switching crypto backend: {backend_type.name}, params={kwargs}",
         )
 
         with self._instance_lock:
@@ -599,13 +621,12 @@ class CryptoBackendManager:
                 use_const_time = kwargs.get("use_const_time", False)
                 existing = self._backends.get(backend_type)
                 if existing is not None and isinstance(
-                    existing, PurePythonBackend,
+                    existing,
+                    PurePythonBackend,
                 ):
                     existing._use_const_time = use_const_time
                 else:
-                    self._backends[backend_type] = (
-                        PurePythonBackend(use_const_time)
-                    )
+                    self._backends[backend_type] = PurePythonBackend(use_const_time)
 
             backend = self._backends.get(backend_type)
             if backend is None:
@@ -618,17 +639,12 @@ class CryptoBackendManager:
                     f"Backend {backend.name} is not available",
                 )
 
-            old_backend = (
-                self._current_backend.name
-                if self._current_backend
-                else "None"
-            )
+            old_backend = self._current_backend.name if self._current_backend else "None"
             self._current_backend = backend
             self._default_backend_type = backend_type
 
         logger.info(
-            f"Crypto backend switched: {old_backend} -> "
-            f"{backend.name}",
+            f"Crypto backend switched: {old_backend} -> {backend.name}",
         )
         return True
 
@@ -636,14 +652,12 @@ class CryptoBackendManager:
         """Get list of all available backends (thread-safe)"""
         with self._instance_lock:
             backends_copy = dict(self._backends)
-        return [
-            (bt, b.name)
-            for bt, b in backends_copy.items()
-            if b.is_available
-        ]
+        return [(bt, b.name) for bt, b in backends_copy.items() if b.is_available]
 
     def generate_public_key(
-        self, private_key: bytes, compressed: bool = True,
+        self,
+        private_key: bytes,
+        compressed: bool = True,
     ) -> bytes:
         """Generate public key using current backend.
 
@@ -666,8 +680,7 @@ class CryptoBackendManager:
             result = backend.generate_public_key(private_key, compressed)
             elapsed_ms = (time.perf_counter() - start_time) * 1000
             logger.debug(
-                f"Public key generation: {backend.name}, "
-                f"elapsed={elapsed_ms:.3f}ms",
+                f"Public key generation: {backend.name}, elapsed={elapsed_ms:.3f}ms",
             )
             return result
 
@@ -679,7 +692,10 @@ class CryptoBackendManager:
         return backend.is_constant_time()
 
     def scalar_multiply(
-        self, k: int, point_x: int, point_y: int,
+        self,
+        k: int,
+        point_x: int,
+        point_y: int,
     ) -> tuple[int, int]:
         """Elliptic curve scalar multiplication (delegates to current backend).
 
@@ -712,7 +728,8 @@ def get_crypto_backend() -> CryptoBackendManager:
 
 # Convenience functions
 def generate_public_key(
-    private_key: bytes, compressed: bool = True,
+    private_key: bytes,
+    compressed: bool = True,
 ) -> bytes:
     """Generate public key using current backend.
 
@@ -740,7 +757,8 @@ def generate_public_key(
 
 
 def set_crypto_backend(
-    backend_type: BackendType, **kwargs,
+    backend_type: BackendType,
+    **kwargs,
 ) -> bool:
     """Set crypto backend.
 
@@ -842,19 +860,13 @@ def get_backend_security_info() -> dict:
 def _get_security_recommendation(security_level: str) -> str:
     """Get security recommendation"""
     recommendations = {
-        "secure": (
-            "Current backend is secure, suitable for "
-            "production use"
-        ),
+        "secure": ("Current backend is secure, suitable for production use"),
         "partial": (
             "Current backend is partially secure, "
             "recommend installing coincurve library for "
             "better security"
         ),
-        "insecure": (
-            "Current backend is insecure, not "
-            "recommended for production use"
-        ),
+        "insecure": ("Current backend is insecure, not recommended for production use"),
     }
     return recommendations.get(security_level, "Unknown security level")
 

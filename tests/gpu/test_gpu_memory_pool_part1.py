@@ -936,7 +936,9 @@ class TestProportionalPools:
             {"name": "GPU1", "global_mem_size": 2 * 1024**3},
         ]
         pools = GPUMemoryPool.create_proportional_pools(
-            devices, contexts=[ctx0, ctx1], total_pool_mb=256,
+            devices,
+            contexts=[ctx0, ctx1],
+            total_pool_mb=256,
         )
         assert pools[0]._context is ctx0
         assert pools[1]._context is ctx1

@@ -69,13 +69,15 @@ class MultiFormatAddressGenerator:
         self.prefer_compressed = prefer_compressed
         self._public_key_cache: bytes | None = None
         logger.info(
-            "MultiFormatAddressGenerator initialized: "
-            "auto_detect=%s, prefer_compressed=%s",
-            auto_detect, prefer_compressed,
+            "MultiFormatAddressGenerator initialized: auto_detect=%s, prefer_compressed=%s",
+            auto_detect,
+            prefer_compressed,
         )
 
     def generate_public_key(
-        self, private_key: bytes, compressed: bool = True,
+        self,
+        private_key: bytes,
+        compressed: bool = True,
     ) -> bytes:
         """Generate public key from private key.
 
@@ -91,11 +93,13 @@ class MultiFormatAddressGenerator:
 
         generator = P2PKHAddressGenerator()
         return generator.private_key_to_public_key(
-            private_key, compressed,
+            private_key,
+            compressed,
         )
 
     def generate_p2pkh_address(
-        self, private_key: bytes,
+        self,
+        private_key: bytes,
     ) -> str:
         """Generate P2PKH address (Pay-to-Public-Key-Hash).
 
@@ -109,7 +113,8 @@ class MultiFormatAddressGenerator:
 
         """
         public_key = self.generate_public_key(
-            private_key, self.prefer_compressed,
+            private_key,
+            self.prefer_compressed,
         )
         from .address_generator import P2PKHAddressGenerator
 
@@ -117,7 +122,8 @@ class MultiFormatAddressGenerator:
         return generator.public_key_to_address(public_key)
 
     def generate_p2sh_address(
-        self, private_key: bytes,
+        self,
+        private_key: bytes,
     ) -> str:
         """Generate P2SH address (Pay-to-Script-Hash).
 
@@ -131,14 +137,17 @@ class MultiFormatAddressGenerator:
 
         """
         public_key = self.generate_public_key(
-            private_key, compressed=True,
+            private_key,
+            compressed=True,
         )
         return BitcoinKeyValidator.generate_p2sh_address(
             public_key,
         )
 
     def generate_bech32_address(
-        self, private_key: bytes, hrp: str = "bc",
+        self,
+        private_key: bytes,
+        hrp: str = "bc",
     ) -> str:
         """Generate Bech32 address (SegWit v0 - P2WPKH).
 
@@ -153,14 +162,18 @@ class MultiFormatAddressGenerator:
 
         """
         public_key = self.generate_public_key(
-            private_key, compressed=True,
+            private_key,
+            compressed=True,
         )
         return BitcoinKeyValidator.generate_bech32_address(
-            public_key, hrp,
+            public_key,
+            hrp,
         )
 
     def generate_taproot_address(
-        self, private_key: bytes, hrp: str = "bc",
+        self,
+        private_key: bytes,
+        hrp: str = "bc",
     ) -> str:
         """Generate Taproot address (SegWit v1 - P2TR).
 
@@ -182,14 +195,11 @@ class MultiFormatAddressGenerator:
 
             priv_key = coincurve.PrivateKey(private_key)
             pub_key = priv_key.public_key
-            xonly_pubkey = pub_key.format(compressed=True)[
-                1:33
-            ]
+            xonly_pubkey = pub_key.format(compressed=True)[1:33]
             return bech32_encode(hrp, 1, xonly_pubkey, "bech32m")
         except ImportError:
             logger.warning(
-                "coincurve not available, "
-                "cannot generate Taproot address",
+                "coincurve not available, cannot generate Taproot address",
             )
             raise ValueError(
                 "coincurve not available, cannot generate "
@@ -198,7 +208,8 @@ class MultiFormatAddressGenerator:
             ) from None
         except Exception as e:
             logger.error(
-                "Taproot address generation failed: %s", e,
+                "Taproot address generation failed: %s",
+                e,
             )
             raise ValueError(
                 f"Taproot address generation failed: {e}",
@@ -225,8 +236,7 @@ class MultiFormatAddressGenerator:
         """
         if len(private_key) != 32:
             raise ValueError(
-                f"Private key must be 32 bytes, "
-                f"got {len(private_key)} bytes",
+                f"Private key must be 32 bytes, got {len(private_key)} bytes",
             )
 
         if format_type == AddressFormat.P2PKH:
@@ -242,7 +252,9 @@ class MultiFormatAddressGenerator:
         )
 
     def generate_all_formats(
-        self, private_key: bytes, hrp: str = "bc",
+        self,
+        private_key: bytes,
+        hrp: str = "bc",
     ) -> dict[str, str]:
         """Generate all supported address formats.
 
@@ -262,8 +274,7 @@ class MultiFormatAddressGenerator:
         """
         if len(private_key) != 32:
             raise ValueError(
-                f"Private key must be 32 bytes, "
-                f"got {len(private_key)} bytes",
+                f"Private key must be 32 bytes, got {len(private_key)} bytes",
             )
 
         result = {}
@@ -274,7 +285,8 @@ class MultiFormatAddressGenerator:
             )
         except Exception as e:
             logger.error(
-                "P2PKH address generation failed: %s", e,
+                "P2PKH address generation failed: %s",
+                e,
             )
             result["p2pkh"] = ""
 
@@ -284,34 +296,40 @@ class MultiFormatAddressGenerator:
             )
         except Exception as e:
             logger.error(
-                "P2SH address generation failed: %s", e,
+                "P2SH address generation failed: %s",
+                e,
             )
             result["p2sh"] = ""
 
         try:
             result["bech32"] = self.generate_bech32_address(
-                private_key, hrp,
+                private_key,
+                hrp,
             )
         except Exception as e:
             logger.error(
-                "Bech32 address generation failed: %s", e,
+                "Bech32 address generation failed: %s",
+                e,
             )
             result["bech32"] = ""
 
         try:
             result["taproot"] = self.generate_taproot_address(
-                private_key, hrp,
+                private_key,
+                hrp,
             )
         except Exception as e:
             logger.error(
-                "Taproot address generation failed: %s", e,
+                "Taproot address generation failed: %s",
+                e,
             )
             result["taproot"] = ""
 
         return result
 
     def detect_address_format(
-        self, address: str,
+        self,
+        address: str,
     ) -> AddressFormat:
         """Detect Bitcoin address format.
 
@@ -339,12 +357,12 @@ class MultiFormatAddressGenerator:
         if address.startswith("bc1"):
             return AddressFormat.BECH32
         raise ValueError(
-            f"Unrecognized address format: "
-            f"{address[:20]}...",
+            f"Unrecognized address format: {address[:20]}...",
         )
 
     def get_targets_by_format(
-        self, targets: set[str],
+        self,
+        targets: set[str],
     ) -> dict[AddressFormat, set[str]]:
         """Categorize target addresses by format.
 
@@ -368,8 +386,7 @@ class MultiFormatAddressGenerator:
                 result[fmt].add(address.lower())
             except ValueError as e:
                 logger.warning(
-                    f"Cannot detect address format: "
-                    f"{address[:20]}... - {e}",
+                    f"Cannot detect address format: {address[:20]}... - {e}",
                 )
 
         return result
@@ -417,16 +434,12 @@ class MultiFormatAddressGenerator:
                 else:
                     continue
 
-                if (
-                    address
-                    and address.lower() in target_set
-                ):
+                if address and address.lower() in target_set:
                     return True, address, fmt.value
 
             except Exception as e:
                 logger.warning(
-                    f"Failed to generate {fmt.value} "
-                    f"address: {e}",
+                    f"Failed to generate {fmt.value} address: {e}",
                 )
                 continue
 
@@ -477,18 +490,14 @@ class MultiFormatAddressGenerator:
                 else:
                     continue
 
-                if (
-                    address
-                    and address.lower() in target_set
-                ):
+                if address and address.lower() in target_set:
                     matches.append(
                         (address, fmt.value),
                     )
 
             except Exception as e:
                 logger.warning(
-                    f"Failed to generate {fmt.value} "
-                    f"address: {e}",
+                    f"Failed to generate {fmt.value} address: {e}",
                 )
                 continue
 

@@ -24,7 +24,6 @@ from src.collision.events import (
     EngineStopEvent,
 )
 
-
 # ============================================================================
 # Fixtures
 # ============================================================================
@@ -111,7 +110,10 @@ class TestEventCreation:
 
     def test_engine_complete_event(self):
         event = EngineCompleteEvent(
-            total_checked=1000000, matches_found=5, elapsed_time=3600.0, stop_reason="normal",
+            total_checked=1000000,
+            matches_found=5,
+            elapsed_time=3600.0,
+            stop_reason="normal",
         )
         assert event.total_checked == 1000000
         assert event.matches_found == 5
@@ -341,9 +343,11 @@ class TestEventBusThreadSafety:
 
         def subscribe_loop():
             try:
-                for i in range(100):
+                for _i in range(100):
+
                     def handler(e):
                         return None
+
                     bus.subscribe(EngineProgressEvent, handler)
                     bus.unsubscribe(EngineProgressEvent, handler)
             except Exception as e:

@@ -255,6 +255,7 @@ class FirstRunWizard:
         # 检查 PyOpenCL 是否可用
         try:
             import pyopencl  # noqa: F401
+
             has_opencl = True
         except ImportError:
             has_opencl = False
@@ -283,7 +284,8 @@ class FirstRunWizard:
             print(f"  GPU 模式已启用，CPU 辅助线程默认使用 {workers} 个")
         else:
             raw = self._prompt(
-                f"  CPU 工作线程数（默认: {cpu_count}，建议不超过 CPU 核数）", str(cpu_count),
+                f"  CPU 工作线程数（默认: {cpu_count}，建议不超过 CPU 核数）",
+                str(cpu_count),
             )
             try:
                 workers = int(raw)

@@ -48,9 +48,7 @@ class RateLimitedLogger:
         """
         self._logger = base_logger
         self._min_interval = (
-            min_interval
-            if min_interval is not None
-            else self._get_default_min_interval()
+            min_interval if min_interval is not None else self._get_default_min_interval()
         )
         self._last_logged: dict[str, float] = {}
 

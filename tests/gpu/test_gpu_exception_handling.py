@@ -40,7 +40,9 @@ class TestGPURuntimeErrors:
         assert stats.gpu_errors == 1
         assert stats.resource_errors == 1
 
-    @pytest.mark.skip(reason="Mock GPU engine activates real hardware via GPUDeviceManager, needs deeper test infra")
+    @pytest.mark.skip(
+        reason="Mock GPU engine activates real hardware via GPUDeviceManager, needs deeper test infra"
+    )
     def test_gpu_runtime_error_recovery(self):
         """测试GPU运行时错误恢复"""
         mock_device = Mock()

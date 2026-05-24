@@ -73,7 +73,7 @@ class TestWorkStealingThreadPool:
         try:
             # 提交大量任务到单个队列
             futures = []
-            for i in range(100):
+            for _i in range(100):
                 future = pool.submit(lambda: time.sleep(0.01))
                 futures.append(future)
 

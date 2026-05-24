@@ -49,7 +49,8 @@ class GPUProfileLoader:
             version = data.get("_version", "1.0")
             if version != "1.0":
                 logger.warning(
-                    "不支持的配置文件版本: %s, 当前支持1.0。可能导致配置加载错误", version,
+                    "不支持的配置文件版本: %s, 当前支持1.0。可能导致配置加载错误",
+                    version,
                 )
 
             self.profiles = data
@@ -106,7 +107,10 @@ class GPUProfileLoader:
                     _type_name = type(series_data).__name__
                     logger.warning(
                         "跳过无效系列配置 %s/%s/%s: 期望dict, 得%s",
-                        vendor, arch_name, series_name, _type_name,
+                        vendor,
+                        arch_name,
+                        series_name,
+                        _type_name,
                     )
                     continue
 
@@ -120,7 +124,10 @@ class GPUProfileLoader:
                 if self._match_model(model_name, models):
                     logger.info(
                         "匹配GPU型号: %s -> %s/%s/%s",
-                        model_name, vendor, arch_name, series_name,
+                        model_name,
+                        vendor,
+                        arch_name,
+                        series_name,
                     )
                     return series_data
 
@@ -219,7 +226,10 @@ class GPUProfileLoader:
             errors.append(f"max_batch_size ({max_batch}) < recommended_batch_size ({rec_batch})")
 
     def _validate_profile_optimizations(
-        self, profile: dict[str, Any], errors: list[str], warnings: list[str],
+        self,
+        profile: dict[str, Any],
+        errors: list[str],
+        warnings: list[str],
     ) -> None:
         """验证 optimizations 字段（如果存在）"""
         if "optimizations" not in profile:
@@ -237,7 +247,9 @@ class GPUProfileLoader:
 
     @staticmethod
     def _validate_profile_optional_fields(
-        profile: dict[str, Any], errors: list[str], warnings: list[str],
+        profile: dict[str, Any],
+        errors: list[str],
+        warnings: list[str],
     ) -> None:
         """验证可选字段：compute_capability, memory_efficiency"""
         if "compute_capability" in profile:
@@ -256,7 +268,8 @@ class GPUProfileLoader:
 
     @staticmethod
     def _validate_profile_queue_depth(
-        profile: dict[str, Any], errors: list[str],
+        profile: dict[str, Any],
+        errors: list[str],
     ) -> None:
         """验证 queue_depth 可选字段"""
         if "queue_depth" not in profile:
@@ -269,7 +282,8 @@ class GPUProfileLoader:
 
     @staticmethod
     def _validate_profile_timeout(
-        profile: dict[str, Any], errors: list[str],
+        profile: dict[str, Any],
+        errors: list[str],
     ) -> None:
         """验证 timeout_seconds 可选字段"""
         if "timeout_seconds" not in profile:
@@ -282,7 +296,9 @@ class GPUProfileLoader:
 
     @staticmethod
     def _validate_profile_known_issues(
-        profile: dict[str, Any], errors: list[str], warnings: list[str],
+        profile: dict[str, Any],
+        errors: list[str],
+        warnings: list[str],
     ) -> None:
         """验证 known_issues 可选字段"""
         if "known_issues" not in profile:
@@ -301,7 +317,9 @@ class GPUProfileLoader:
 
     @staticmethod
     def _validate_profile_driver_versions(
-        profile: dict[str, Any], errors: list[str], warnings: list[str],
+        profile: dict[str, Any],
+        errors: list[str],
+        warnings: list[str],
     ) -> None:
         """验证 min_driver_version / recommended_driver_version 可选字段"""
         import re
@@ -315,8 +333,7 @@ class GPUProfileLoader:
                 return None
             if not re.match(GPUProfileLoader._DRIVER_VERSION_RE, value):
                 errors.append(
-                    f"{key}格式无效: '{value}' "
-                    f"(期望 X.Y.Z[.W] 如 '31.0.101.0')",
+                    f"{key}格式无效: '{value}' (期望 X.Y.Z[.W] 如 '31.0.101.0')",
                 )
                 return None
             return value
@@ -334,8 +351,7 @@ class GPUProfileLoader:
                 rec_parts += [0] * (max_len - len(rec_parts))
                 if rec_parts < min_parts:
                     errors.append(
-                        f"recommended_driver_version ({rec_ver}) < "
-                        f"min_driver_version ({min_ver})",
+                        f"recommended_driver_version ({rec_ver}) < min_driver_version ({min_ver})",
                     )
             except (ValueError, TypeError):
                 pass  # 格式错误已由 _check_drv 报告

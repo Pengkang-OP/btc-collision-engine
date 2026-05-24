@@ -174,8 +174,7 @@ class ObjectPool:
                 self._created_count += 1
                 self._miss_count += 1
                 logger.debug(
-                    f"Object pool exhausted, creating new object "
-                    f"(total created: {self._created_count})",
+                    f"Object pool exhausted, creating new object (total created: {self._created_count})",
                 )
 
         return obj
@@ -218,16 +217,12 @@ class ObjectPool:
                 "acquire_count": self._acquire_count,
                 "release_count": self._release_count,
                 "miss_count": self._miss_count,
-                "hit_rate": (
-                    total_acq - self._miss_count
-                ) / total_acq,
+                "hit_rate": (total_acq - self._miss_count) / total_acq,
                 "miss_rate": self._miss_count / total_acq,
                 "utilization": current / max(self._max_size, 1),
                 "pool_age_seconds": time.time() - self._start_time,
                 "prewarm_elapsed_ms": self._prewarm_elapsed * 1000,
-                "estimated_memory_mb": (
-                    current * self._obj_size_estimate
-                ) / (1024 * 1024),
+                "estimated_memory_mb": (current * self._obj_size_estimate) / (1024 * 1024),
             }
 
     def hit_ratio(self) -> float:
@@ -242,7 +237,8 @@ class ObjectPool:
             return (total - self._miss_count) / total
 
     def shrink(
-        self, target_size: int | None = None,
+        self,
+        target_size: int | None = None,
     ) -> int:
         """P3-7 new: Shrink pool (release excess objects).
 
@@ -286,7 +282,8 @@ class ObjectPool:
             return len(self._pool) * self._obj_size_estimate
 
     def auto_tune(
-        self, max_memory_mb: float = 128.0,
+        self,
+        max_memory_mb: float = 128.0,
     ) -> bool:
         """P3-7 new: Adaptively tune pool size.
 
@@ -310,16 +307,13 @@ class ObjectPool:
             adjusted = False
 
             # Scenario 1: High miss rate (>5%) → expand pool
-            if (
-                miss_rate > 0.05
-                and self._acquire_count > 100
-            ):
+            if miss_rate > 0.05 and self._acquire_count > 100:
                 max_by_memory = int(
-                    (max_memory_mb * 1024 * 1024)
-                    / self._obj_size_estimate,
+                    (max_memory_mb * 1024 * 1024) / self._obj_size_estimate,
                 )
                 new_max = min(
-                    self._max_size * 2, max_by_memory,
+                    self._max_size * 2,
+                    max_by_memory,
                 )
                 if new_max > self._max_size:
                     old_max = self._max_size
@@ -332,11 +326,7 @@ class ObjectPool:
                     adjusted = True
 
             # Scenario 2: Too many idle objects → shrink
-            if (
-                current
-                > self._initial_size
-                * POOL_SHRINK_THRESHOLD_RATIO
-            ):
+            if current > self._initial_size * POOL_SHRINK_THRESHOLD_RATIO:
                 target = self._initial_size
                 released = current - target
                 del self._pool[target:]
@@ -382,10 +372,13 @@ class ECPointPool:
             return ECPoint(None, None)
 
         self._pool = ObjectPool(
-            create_ecpoint, initial_size, max_size,
+            create_ecpoint,
+            initial_size,
+            max_size,
         )
         logger.info(
-            "ECPoint pool initialized: %s objects", initial_size,
+            "ECPoint pool initialized: %s objects",
+            initial_size,
         )
 
     def acquire(
@@ -452,7 +445,9 @@ class ByteArrayPool:
             max_size,
         )
         logger.info(
-            "ByteArray pool initialized: buffer_size=%s, count=%s", buffer_size, initial_size,
+            "ByteArray pool initialized: buffer_size=%s, count=%s",
+            buffer_size,
+            initial_size,
         )
 
     def acquire(self) -> bytearray:
@@ -528,7 +523,8 @@ class GlobalPoolManager:
         with self._lock:
             if not self._initialized:
                 self.ecpoint_pool = ECPointPool(
-                    initial_size=1000, max_size=10000,
+                    initial_size=1000,
+                    max_size=10000,
                 )
                 self.bytearray_pool_32 = ByteArrayPool(
                     buffer_size=32,
@@ -560,7 +556,8 @@ class GlobalPoolManager:
         return self.ecpoint_pool
 
     def get_bytearray_pool(
-        self, size: int = 32,
+        self,
+        size: int = 32,
     ) -> ByteArrayPool:
         """Get bytearray pool"""
         if not self._initialized:
@@ -591,10 +588,7 @@ class GlobalPoolManager:
             "ecpoint": self.ecpoint_pool.get_stats(),
             "bytearray_32": self.bytearray_pool_32.get_stats(),
             "bytearray_64": self.bytearray_pool_64.get_stats(),
-            "total_estimated_memory_mb": (
-                self.get_total_memory_estimate()
-                / (1024 * 1024)
-            ),
+            "total_estimated_memory_mb": (self.get_total_memory_estimate() / (1024 * 1024)),
         }
 
     def get_total_memory_estimate(self) -> int:
@@ -607,12 +601,11 @@ class GlobalPoolManager:
         if not self._initialized:
             self.initialize()
 
-        return sum(
-            p.estimate_memory() for p in self._pools_registry
-        )
+        return sum(p.estimate_memory() for p in self._pools_registry)
 
     def auto_tune_all(
-        self, max_memory_mb: float | None = None,
+        self,
+        max_memory_mb: float | None = None,
     ) -> bool:
         """P3-7 new: Adaptively tune all pools.
 
@@ -635,19 +628,13 @@ class GlobalPoolManager:
             try:
                 import psutil
 
-                available_mb = (
-                    psutil.virtual_memory().available
-                    / (1024 * 1024)
-                )
-                max_memory_mb = (
-                    available_mb * 0.25
-                )  # Use 25% available
+                available_mb = psutil.virtual_memory().available / (1024 * 1024)
+                max_memory_mb = available_mb * 0.25  # Use 25% available
             except ImportError:
                 max_memory_mb = 128.0
 
         logger.info(
-            f"Memory pool auto-tuning: "
-            f"total budget={max_memory_mb:.0f}MB",
+            f"Memory pool auto-tuning: total budget={max_memory_mb:.0f}MB",
         )
 
         # Allocate in 3:2:1 ratio for ECPoint, bytearray_32,
@@ -669,8 +656,7 @@ class GlobalPoolManager:
 
         if not adjusted:
             logger.debug(
-                "No pool tuning needed "
-                "(current configuration is optimal)",
+                "No pool tuning needed (current configuration is optimal)",
             )
 
         return adjusted
@@ -692,7 +678,8 @@ class GlobalPoolManager:
 
         if total > 0:
             logger.info(
-                "Memory pool shrink complete: %s objects released", total,
+                "Memory pool shrink complete: %s objects released",
+                total,
             )
 
         return total
@@ -700,7 +687,8 @@ class GlobalPoolManager:
     # ──────────────────────────── Auto clean-up ────────────────────────────
 
     def _auto_cleanup_loop(
-        self, interval: float,
+        self,
+        interval: float,
     ) -> None:
         """Auto clean-up background loop (daemon thread entry).
 
@@ -744,9 +732,7 @@ class GlobalPoolManager:
 
         """
         interval = (
-            interval_seconds
-            if interval_seconds is not None
-            else self.DEFAULT_AUTO_CLEANUP_INTERVAL
+            interval_seconds if interval_seconds is not None else self.DEFAULT_AUTO_CLEANUP_INTERVAL
         )
         start_cleanup_thread(
             self._cleanup_state,
@@ -756,7 +742,8 @@ class GlobalPoolManager:
         )
 
     def stop_auto_cleanup(
-        self, timeout: float | None = 5.0,
+        self,
+        timeout: float | None = 5.0,
     ) -> None:
         """P1-6 new: Stop auto-cleanup thread.
 

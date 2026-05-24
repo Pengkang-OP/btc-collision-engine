@@ -1,4 +1,5 @@
 """Log query engine for searching log entries."""
+
 import re
 
 
@@ -31,7 +32,8 @@ class LogQuery:
             e
             for e in entries
             if levels.get(
-                e.get("level", "INFO").upper(), 20,
+                e.get("level", "INFO").upper(),
+                20,
             )
             >= min_val
         ]
@@ -52,10 +54,7 @@ class LogQuery:
 
         """
         pattern = re.compile(
-            re.escape(text), re.IGNORECASE,
+            re.escape(text),
+            re.IGNORECASE,
         )
-        return [
-            e
-            for e in entries
-            if pattern.search(e.get("message", ""))
-        ]
+        return [e for e in entries if pattern.search(e.get("message", ""))]

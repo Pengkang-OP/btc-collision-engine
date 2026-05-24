@@ -92,7 +92,8 @@ class TestRecoveryStrategy(unittest.TestCase):
     def test_first_failure_retry_immediate(self):
         """测试第一次失败：立即重试"""
         strategy = self.manager._select_recovery_strategy(
-            gpu_id=0, failure_type=GPUFailureType.OUT_OF_MEMORY,
+            gpu_id=0,
+            failure_type=GPUFailureType.OUT_OF_MEMORY,
         )
         self.assertEqual(strategy, RecoveryStrategy.RETRY_IMMEDIATE)
 
@@ -105,7 +106,8 @@ class TestRecoveryStrategy(unittest.TestCase):
         )
 
         strategy = self.manager._select_recovery_strategy(
-            gpu_id=0, failure_type=GPUFailureType.OUT_OF_MEMORY,
+            gpu_id=0,
+            failure_type=GPUFailureType.OUT_OF_MEMORY,
         )
         # 第2次仍然是RETRY_IMMEDIATE（failure_count=1 <= 1）
         self.assertEqual(strategy, RecoveryStrategy.RETRY_IMMEDIATE)
@@ -117,12 +119,15 @@ class TestRecoveryStrategy(unittest.TestCase):
             self.manager._record_failure(
                 0,
                 GPUFailureRecord(
-                    gpu_id=0, failure_type=GPUFailureType.OUT_OF_MEMORY, error_message="test",
+                    gpu_id=0,
+                    failure_type=GPUFailureType.OUT_OF_MEMORY,
+                    error_message="test",
                 ),
             )
 
         strategy = self.manager._select_recovery_strategy(
-            gpu_id=0, failure_type=GPUFailureType.OUT_OF_MEMORY,
+            gpu_id=0,
+            failure_type=GPUFailureType.OUT_OF_MEMORY,
         )
         # 第3次是RETRY_WITH_DELAY（failure_count=2）
         self.assertEqual(strategy, RecoveryStrategy.RETRY_WITH_DELAY)
@@ -134,12 +139,15 @@ class TestRecoveryStrategy(unittest.TestCase):
             self.manager._record_failure(
                 0,
                 GPUFailureRecord(
-                    gpu_id=0, failure_type=GPUFailureType.OUT_OF_MEMORY, error_message="test",
+                    gpu_id=0,
+                    failure_type=GPUFailureType.OUT_OF_MEMORY,
+                    error_message="test",
                 ),
             )
 
         strategy = self.manager._select_recovery_strategy(
-            gpu_id=0, failure_type=GPUFailureType.OUT_OF_MEMORY,
+            gpu_id=0,
+            failure_type=GPUFailureType.OUT_OF_MEMORY,
         )
         self.assertEqual(strategy, RecoveryStrategy.REDUCE_BATCH_SIZE)
 
@@ -150,12 +158,15 @@ class TestRecoveryStrategy(unittest.TestCase):
             self.manager._record_failure(
                 0,
                 GPUFailureRecord(
-                    gpu_id=0, failure_type=GPUFailureType.OUT_OF_MEMORY, error_message="test",
+                    gpu_id=0,
+                    failure_type=GPUFailureType.OUT_OF_MEMORY,
+                    error_message="test",
                 ),
             )
 
         strategy = self.manager._select_recovery_strategy(
-            gpu_id=0, failure_type=GPUFailureType.OUT_OF_MEMORY,
+            gpu_id=0,
+            failure_type=GPUFailureType.OUT_OF_MEMORY,
         )
         # 第5次是REINITIALIZE（failure_count=4 < max_retry_count需要更多次数）
         # 由于max_retry_count=3，failure_count=4 >= 3，所以是DISABLE_GPU
@@ -165,7 +176,9 @@ class TestRecoveryStrategy(unittest.TestCase):
             manager._record_failure(
                 0,
                 GPUFailureRecord(
-                    gpu_id=0, failure_type=GPUFailureType.OUT_OF_MEMORY, error_message="test",
+                    gpu_id=0,
+                    failure_type=GPUFailureType.OUT_OF_MEMORY,
+                    error_message="test",
                 ),
             )
 
@@ -302,7 +315,8 @@ class TestGPURecoveryIntegration(unittest.TestCase):
 
         # 手动记录失败历史（不触发恢复）
         manager._record_failure(
-            0, GPUFailureRecord(gpu_id=0, failure_type=GPUFailureType.UNKNOWN, error_message="Test"),
+            0,
+            GPUFailureRecord(gpu_id=0, failure_type=GPUFailureType.UNKNOWN, error_message="Test"),
         )
 
         # 手动标记为失败

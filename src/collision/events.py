@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""Event types and event bus integration for collision detection.
-"""
+"""Event types and event bus integration for collision detection."""
 
 from dataclasses import dataclass, field
 from enum import Enum

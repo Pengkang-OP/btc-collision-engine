@@ -367,7 +367,9 @@ class HealthChecker:
         return True, "所有依赖版本符合要求"
 
     def run_all_checks(
-        self, include_gpu: bool = False, include_network: bool = False,
+        self,
+        include_gpu: bool = False,
+        include_network: bool = False,
     ) -> dict[str, tuple[bool, str]]:
         """运行所有健康检查
 

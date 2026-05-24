@@ -67,7 +67,9 @@ class PrecomputedPointTable:
     ]
 
     def __init__(
-        self, window_size: int = 8, ec: Any = None,
+        self,
+        window_size: int = 8,
+        ec: Any = None,
     ) -> None:
         """Initialize precomputed point table.
 
@@ -100,7 +102,8 @@ class PrecomputedPointTable:
 
             self.ec = EllipticCurve()
             self.G = ECPoint(
-                Secp256k1.Gx, Secp256k1.Gy,
+                Secp256k1.Gx,
+                Secp256k1.Gy,
             )
         else:
             self.ec = ec
@@ -114,23 +117,19 @@ class PrecomputedPointTable:
                 )
 
                 self.G = ECPoint(
-                    Secp256k1.Gx, Secp256k1.Gy,
+                    Secp256k1.Gx,
+                    Secp256k1.Gy,
                 )
 
         # Build precomputed table
         logger.info(
-            f"Building precomputed point table: "
-            f"window_size={window_size}, "
-            f"points={self.num_points}",
+            f"Building precomputed point table: window_size={window_size}, points={self.num_points}",
         )
         self.table = self._build_table()
 
-        memory_kb = (
-            self.num_points * 64 * 2
-        ) / 1024  # Estimate memory
+        memory_kb = (self.num_points * 64 * 2) / 1024  # Estimate memory
         logger.info(
-            f"Precomputed table built, "
-            f"estimated memory: {memory_kb:.1f}KB",
+            f"Precomputed table built, estimated memory: {memory_kb:.1f}KB",
         )
 
     def _build_table(self) -> list:
@@ -161,14 +160,17 @@ class PrecomputedPointTable:
         # table[i] = (i+1)*G = table[i-1] + G
         for i in range(2, self.num_points):
             next_point = self.ec.point_add(
-                table[i - 1], self.G,
+                table[i - 1],
+                self.G,
             )
             table.append(next_point)
 
         return table
 
     def scalar_multiply_with_table(
-        self, k: int, ec: Any = None,
+        self,
+        k: int,
+        ec: Any = None,
     ) -> Any:
         """Accelerated scalar multiplication using precomputed table.
 
@@ -224,20 +226,17 @@ class PrecomputedPointTable:
 
             # Extract current window value
             window_start = i * w
-            window_value = (
-                k >> window_start
-            ) & ((1 << w) - 1)
+            window_value = (k >> window_start) & ((1 << w) - 1)
 
             # If window value is non-zero, look up table
             # and accumulate
             if window_value > 0:
                 # table index starts at 0, corresponds to
                 # 1*G, so subtract 1
-                precomputed_point = self.table[
-                    window_value - 1
-                ]
+                precomputed_point = self.table[window_value - 1]
                 result = ec.point_add(
-                    result, precomputed_point,
+                    result,
+                    precomputed_point,
                 )
 
         return result
@@ -303,9 +302,7 @@ class PrecomputedTableManager:
         """
         with self._lock:
             if window_size not in self._tables:
-                self._tables[window_size] = (
-                    PrecomputedPointTable(window_size, ec)
-                )
+                self._tables[window_size] = PrecomputedPointTable(window_size, ec)
             return self._tables[window_size]
 
     def clear_cache(self) -> None:
@@ -320,7 +317,8 @@ precomputed_table_manager = PrecomputedTableManager()
 
 
 def get_precomputed_table(
-    window_size: int = 8, ec: Any = None,
+    window_size: int = 8,
+    ec: Any = None,
 ) -> PrecomputedPointTable:
     """Get precomputed table (convenience function).
 
@@ -333,5 +331,6 @@ def get_precomputed_table(
 
     """
     return precomputed_table_manager.get_table(
-        window_size, ec,
+        window_size,
+        ec,
     )

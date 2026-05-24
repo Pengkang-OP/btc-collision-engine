@@ -39,9 +39,14 @@ class IntelGPUOptimizer:
     """
 
     __slots__ = (
-        "_device", "_config", "_logger",
-        "_timeout_manager", "_memory_monitor",
-        "_benchmark_suite", "_auto_tuner", "_performance_reporter",
+        "_device",
+        "_config",
+        "_logger",
+        "_timeout_manager",
+        "_memory_monitor",
+        "_benchmark_suite",
+        "_auto_tuner",
+        "_performance_reporter",
     )
 
     def __init__(self, device: Any, config: dict[str, Any], engine_logger: Any = None) -> None:
@@ -187,7 +192,8 @@ class IntelGPUOptimizer:
                 return
             effective_ratio = getattr(self._device, "memory_efficiency", 0.70)
             self._memory_monitor = memory_cls(
-                total_memory_bytes=total_memory, safe_usage_ratio=effective_ratio,
+                total_memory_bytes=total_memory,
+                safe_usage_ratio=effective_ratio,
             )
             self._logger.info(
                 "✅ 显存监控器已初始化 "
@@ -276,9 +282,7 @@ class IntelGPUOptimizer:
         self._logger.info("\n📊 初始化 Intel GPU 监控和调优组件...")
         engine = engine_context.get("engine")
 
-        timeout_cls, memory_cls, benchmark_cls, tuner_cls, reporter_cls = (
-            self._lazy_import_components()
-        )
+        timeout_cls, memory_cls, benchmark_cls, tuner_cls, reporter_cls = self._lazy_import_components()
 
         self._init_timeout_manager(timeout_cls)
         self._init_memory_monitor(memory_cls)
@@ -362,8 +366,7 @@ class IntelGPUOptimizer:
             has_uint32_workaround = (
                 # DEPRECATED: '__global const uint *private_keys' 已于 v4.2.1 PRNG改造后从内核中移除
                 # 当前内核均使用 PRNG 模式
-                "__constant const uint *seed"
-                in kernel_source  # PRNG mode (seed 也是 uint*)
+                "__constant const uint *seed" in kernel_source  # PRNG mode (seed 也是 uint*)
             )
             if not has_uint32_workaround:
                 self._logger.error("❌ 内核未使用 uint32 workaround")

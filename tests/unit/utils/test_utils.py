@@ -301,10 +301,7 @@ class TestCaseWithMocks(unittest.TestCase):
 
     def add_patch(self, target: str, value=None):
         """添加patch并记录，在tearDown时自动清理"""
-        if value is None:
-            p = patch(target)
-        else:
-            p = patch(target, value)
+        p = patch(target) if value is None else patch(target, value)
         p.start()
         self.patches.append(p)
         return p
@@ -346,7 +343,6 @@ def skip_if_no_pyopencl(func):
     import unittest
 
     try:
-
         return func
     except ImportError:
         return unittest.skip("pyopencl not installed")(func)

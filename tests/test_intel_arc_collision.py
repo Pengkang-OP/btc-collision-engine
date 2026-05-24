@@ -74,10 +74,13 @@ class IntelArcTestMonitor:
 
     def __init__(self, total_memory_bytes: int):
         self.memory_monitor = IntelMemoryMonitor(
-            total_memory_bytes=total_memory_bytes, safe_usage_ratio=0.45,
+            total_memory_bytes=total_memory_bytes,
+            safe_usage_ratio=0.45,
         )
         self.timeout_manager = AdaptiveTimeoutManager(
-            base_timeout=30.0, min_timeout=10.0, max_timeout=120.0,
+            base_timeout=30.0,
+            min_timeout=10.0,
+            max_timeout=120.0,
         )
 
         # 性能统计

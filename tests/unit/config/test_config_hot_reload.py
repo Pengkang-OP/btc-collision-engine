@@ -197,6 +197,7 @@ class TestConfigWatcherErrors(unittest.TestCase):
     def test_02_missing_file_handled(self):
         """文件不存在时轮询不崩溃"""
         import tempfile
+
         path = tempfile.mktemp(suffix="_nonexistent_config.json")
         w = ConfigWatcher(path, lambda: None, poll_interval=0.3)
         w.start()
@@ -586,6 +587,7 @@ class TestNotificationChannelConcurrency(unittest.TestCase):
 
     def test_01_concurrent_add_channel_and_trigger(self):
         """S10: 并发 add_notification_channel + _trigger_alert 不崩溃"""
+
         # notification_channels 模块已移除，用简单 stub 替代
         class StubChannel:
             def send(self, alert):
@@ -596,7 +598,7 @@ class TestNotificationChannelConcurrency(unittest.TestCase):
 
         def adder():
             try:
-                for i in range(20):
+                for _i in range(20):
                     ch = StubChannel()
                     alert_sys.add_notification_channel(ch)
                     time.sleep(0.01)

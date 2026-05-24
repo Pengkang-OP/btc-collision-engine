@@ -55,7 +55,11 @@ class PerformanceBaseline:
             self.baseline_data[test_name] = self.baseline_data[test_name][-20:]
 
     def check_regression(
-        self, test_name: str, current_value: float, metric_name: str, threshold: float = 0.1,
+        self,
+        test_name: str,
+        current_value: float,
+        metric_name: str,
+        threshold: float = 0.1,
     ) -> bool:
         """检查性能回归
 
@@ -152,7 +156,8 @@ class TestGPUPerformanceBaseline:
 
         # 记录基线
         baseline.record(
-            "data_transfer", {"avg_time_ms": avg_time, "data_size_mb": data_size / (1024 * 1024)},
+            "data_transfer",
+            {"avg_time_ms": avg_time, "data_size_mb": data_size / (1024 * 1024)},
         )
 
         # 应该在合理范围内

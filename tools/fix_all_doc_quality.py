@@ -1,8 +1,10 @@
 """批量修复所有文档的代码块语言缺失问题"""
+
 import re
 from pathlib import Path
 
 DOCS_DIR = Path("docs")
+
 
 def fix_code_blocks(content: str, fname: str) -> str:
     lines = content.split("\n")
@@ -28,9 +30,18 @@ def fix_code_blocks(content: str, fname: str) -> str:
             # 根据代码内容更新语言推断
             if lang == "text":
                 stripped = line.strip()
-                if stripped.startswith("$ ") or stripped.startswith("# ") or "apt-get" in stripped or "pip install" in stripped or "git " in stripped or "docker " in stripped:
+                if (
+                    stripped.startswith("$ ")
+                    or stripped.startswith("# ")
+                    or "apt-get" in stripped
+                    or "pip install" in stripped
+                    or "git " in stripped
+                    or "docker " in stripped
+                ):
                     lang = "bash"
-                elif any(stripped.startswith(x) for x in ["import ", "from ", "def ", "class ", "print("]):
+                elif any(
+                    stripped.startswith(x) for x in ["import ", "from ", "def ", "class ", "print("]
+                ):
                     lang = "python"
                 elif stripped.startswith("{") and '"' in stripped:
                     lang = "json"
@@ -40,6 +51,7 @@ def fix_code_blocks(content: str, fname: str) -> str:
 
     return "\n".join(result)
 
+
 def fix_version_header(content: str) -> str:
     if "版本" in content[:500] or "Version" in content[:500]:
         return content
@@ -48,6 +60,7 @@ def fix_version_header(content: str) -> str:
         pos = m.end()
         return content[:pos] + "\n\n**版本**: v4.5.1\n" + content[pos:]
     return content
+
 
 def main():
     fixed_lang = 0
@@ -68,14 +81,19 @@ def main():
             # Check what changed
             if fix_version_header(original) != fix_version_header(content):
                 fixed_ver += 1
-                if not printed: print(f"  ✅ {fpath.name}"); printed = True
+                if not printed:
+                    print(f"  ✅ {fpath.name}")
+                    printed = True
             else:
                 fixed_lang += 1
-                if not printed: print(f"  ✅ {fpath.name}"); printed = True
+                if not printed:
+                    print(f"  ✅ {fpath.name}")
+                    printed = True
 
     print(f"\n总计: {total_docs} 个文档")
     print(f"版本信息添加: {fixed_ver}")
     print(f"代码块语言修复: {fixed_lang}")
+
 
 if __name__ == "__main__":
     main()

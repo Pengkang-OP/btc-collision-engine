@@ -47,7 +47,9 @@ class AsyncLogBuffer:
         self.queue: queue.Queue[logging.LogRecord] = queue.Queue(maxsize=config.buffer_size)
         self._stop_event = threading.Event()
         self._flush_thread = threading.Thread(
-            target=self._flush_loop, daemon=True, name="AsyncLogBuffer-Flush",
+            target=self._flush_loop,
+            daemon=True,
+            name="AsyncLogBuffer-Flush",
         )
         self._flush_thread.start()
         self._handlers: list[logging.Handler] = []

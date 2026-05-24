@@ -17,8 +17,6 @@ Intel Arc A770 GPU运算连续性优化方案
 4. 启用硬件并发执行
 """
 
-import sys
-from pathlib import Path
 
 def apply_intel_arc_continuity_optimizations(engine):
     """应用Intel Arc GPU运算连续性优化
@@ -46,7 +44,7 @@ def apply_intel_arc_continuity_optimizations(engine):
     - 支持并发命令队列(Concurrent Command Queues)
     - Copy引擎和Compute引擎可并行工作
     - 需要足够的队列深度来保持GPU忙碌
-    
+
     问题: 单队列或浅队列导致GPU空闲等待
     解决: 使用双队列+预提交策略
     """
@@ -71,7 +69,7 @@ def apply_intel_arc_continuity_optimizations(engine):
     - ULLS(超低延迟提交)会导致性能损失14-31%
     - 大批次+低频率提交优于小批次+高频率
     - 建议batch_size >= 500,000
-    
+
     当前batch_size: engine.batch_size
     建议值: 1,000,000 - 2,000,000
     """
@@ -101,7 +99,7 @@ def apply_intel_arc_continuity_optimizations(engine):
     - 使用Out-of-Order执行队列(如果支持)
     - 预提交多个工作项到队列
     - 避免CPU等待GPU完成
-    
+
     已实现: 异步双缓冲(Async Double Buffering)
     - Buffer A执行时,Buffer B准备数据
     - 消除CPU-GPU同步等待
@@ -127,7 +125,7 @@ def apply_intel_arc_continuity_optimizations(engine):
     - GDDR6显存,带宽512 GB/s
     - 需要合并内存访问(Coalesced Access)
     - 避免银行冲突(Bank Conflicts)
-    
+
     已实现:
     - uint32 workaround(避免Intel Arc hang bug)
     - 内存池复用(减少分配开销)

@@ -20,7 +20,8 @@ class TestRealAddressIntegration:
         """设置测试环境"""
         # 加载真实目标地址
         self.address_file = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "valid_addresses.txt",
+            os.path.dirname(os.path.abspath(__file__)),
+            "valid_addresses.txt",
         )
         self.targets = self._load_addresses()
 

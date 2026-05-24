@@ -71,7 +71,10 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
         from src.collision.checkpoint_manager import CheckpointManager
 
         self._create_checkpoint(
-            mode="brute_force", current_position=200, total_checked=300, range_end=None,
+            mode="brute_force",
+            current_position=200,
+            total_checked=300,
+            range_end=None,
         )
         mgr = CheckpointManager(filepath=self._ckpt_path)
         engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)

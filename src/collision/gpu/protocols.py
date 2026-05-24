@@ -74,7 +74,10 @@ class GPUKernel:
     """GPU内核封装"""
 
     def __init__(
-        self, kernel_obj: Any = None, name: str = "", context: GPUContext | None = None,
+        self,
+        kernel_obj: Any = None,
+        name: str = "",
+        context: GPUContext | None = None,
     ) -> None:
         self.kernel_obj = kernel_obj  # 底层内核对象（cl.Kernel等）
         self.name = name
@@ -151,7 +154,11 @@ class IKernelExecutor(Protocol):
         ...
 
     def execute_batch(
-        self, kernel: GPUKernel, seed: bytes, batch_size: int, stop_event: Any = None,
+        self,
+        kernel: GPUKernel,
+        seed: bytes,
+        batch_size: int,
+        stop_event: Any = None,
     ) -> tuple[list[MatchResult], float]:
         """执行单个批次
 

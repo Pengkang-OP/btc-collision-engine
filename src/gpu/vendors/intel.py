@@ -70,7 +70,9 @@ class IntelGPUVendor(GPUVendorBase):
         if "timeout_protection" in optimizations:
             timeout_seconds = profile.get("timeout_seconds", 30)
             _rate_logger.info(
-                "[OK] 启用超时保护机制: %s秒", timeout_seconds, key="intel_timeout_protection",
+                "[OK] 启用超时保护机制: %s秒",
+                timeout_seconds,
+                key="intel_timeout_protection",
             )
             # 在GPUKernel.run_batch中添加超时
             # 防止内核hang住导致线程永久阻塞
@@ -85,17 +87,18 @@ class IntelGPUVendor(GPUVendorBase):
             device_name_clean = re.sub(r"\s+", " ", device_name_clean)  # 合并多余空格
             # Arc A770/A750/A580 及 Pro 系列支持异步执行，不禁用
             is_high_end = any(
-                x in device_name_clean
-                for x in ["arc a770", "arc a750", "arc a580", "arc pro", "arc a3"]
+                x in device_name_clean for x in ["arc a770", "arc a750", "arc a580", "arc pro", "arc a3"]
             )
             if not is_high_end:
                 _rate_logger.warning(
-                    "[WARN] Intel GPU: 禁用异步传输以确保稳定性", key="intel_async_disabled",
+                    "[WARN] Intel GPU: 禁用异步传输以确保稳定性",
+                    key="intel_async_disabled",
                 )
                 device.enable_async_execution = False
             else:
                 _rate_logger.info(
-                    "[OK] Intel Arc 高端型号 (%s): 保持异步执行启用", device_name,
+                    "[OK] Intel Arc 高端型号 (%s): 保持异步执行启用",
+                    device_name,
                     key="intel_async_kept",
                 )
 
@@ -130,7 +133,8 @@ class IntelGPUVendor(GPUVendorBase):
         memory_efficiency = profile.get("memory_efficiency", 0.70)
         device.memory_efficiency = memory_efficiency
         _rate_logger.info(
-            "[OK] Intel GPU内存效率: %.0f%% (v4.2.1优化)", memory_efficiency * 100,
+            "[OK] Intel GPU内存效率: %.0f%% (v4.2.1优化)",
+            memory_efficiency * 100,
             key="intel_memory_efficiency",
         )
 
@@ -139,7 +143,8 @@ class IntelGPUVendor(GPUVendorBase):
         driver_version = device.driver_version
         if not driver_version:
             _rate_logger.warning(
-                "[WARN] 无法检测Intel驱动版本，使用保守模式", key="intel_no_driver_version",
+                "[WARN] 无法检测Intel驱动版本，使用保守模式",
+                key="intel_no_driver_version",
             )
             return
 
@@ -161,7 +166,8 @@ class IntelGPUVendor(GPUVendorBase):
                     )
                 else:
                     _rate_logger.info(
-                        "[OK] Intel驱动版本 %s 符合要求", driver_version,
+                        "[OK] Intel驱动版本 %s 符合要求",
+                        driver_version,
                         key=f"intel_driver_ok_{driver_version}",
                     )
             else:
@@ -228,7 +234,8 @@ class IntelGPUVendor(GPUVendorBase):
             os.environ["SYCL_DEVICE_FILTER"] = "opencl:gpu"
             applied["SYCL_DEVICE_FILTER"] = "opencl:gpu"
             _rate_logger.info(
-                "✅ SYCL_DEVICE_FILTER=opencl:gpu (减少12%启动延迟)", key="intel_sycl_filter",
+                "✅ SYCL_DEVICE_FILTER=opencl:gpu (减少12%启动延迟)",
+                key="intel_sycl_filter",
             )
 
         # 2. 启用 XeSS 内存压缩
@@ -262,7 +269,9 @@ class IntelGPUVendor(GPUVendorBase):
             os.environ["OCL_CACHE_DIR"] = cache_dir
             applied["OCL_CACHE_DIR"] = cache_dir
             _rate_logger.info(
-                "✅ 设置 OCL_CACHE_DIR=%s (编译缓存)", cache_dir, key="intel_ocl_cache",
+                "✅ 设置 OCL_CACHE_DIR=%s (编译缓存)",
+                cache_dir,
+                key="intel_ocl_cache",
             )
 
         return applied

@@ -81,9 +81,7 @@ class DeduplicationFilter:
                     len(self._seen_keys),
                 )
                 # Reset stats counter but keep sets for best-effort dedup
-                self._stats["max_exceeded"] = (
-                    self._stats.get("max_exceeded", 0) + 1
-                )
+                self._stats["max_exceeded"] = self._stats.get("max_exceeded", 0) + 1
 
         return True
 
@@ -106,10 +104,7 @@ class DeduplicationFilter:
             return False
 
         with self._lock:
-            return (
-                private_key in self._seen_keys
-                or address.lower() in self._seen_addresses
-            )
+            return private_key in self._seen_keys or address.lower() in self._seen_addresses
 
     def get_stats(self) -> dict:
         """Get filter statistics.

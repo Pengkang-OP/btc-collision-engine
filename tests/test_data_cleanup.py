@@ -32,6 +32,7 @@ class TestDataCleanerBasic(TestCase):
         """清理并恢复工作目录"""
         os.chdir(self._orig_cwd)
         import shutil
+
         if Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
@@ -69,6 +70,7 @@ class TestDataCleanerCleanAll(TestCase):
         """清理"""
         os.chdir(self._orig_cwd)
         import shutil
+
         if Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
@@ -156,6 +158,7 @@ class TestDataCleanerEdgeCases(TestCase):
     def tearDown(self):
         os.chdir(self._orig_cwd)
         import shutil
+
         if Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 

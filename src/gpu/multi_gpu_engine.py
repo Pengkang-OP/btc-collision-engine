@@ -325,7 +325,11 @@ class MultiGPUCollisionEngine:
                 elif val < min_val or val > max_val:
                     logger.warning(
                         "配置 %s=%s 超出范围 [%s, %s]，使用默认值 %s",
-                        key, val, min_val, max_val, default,
+                        key,
+                        val,
+                        min_val,
+                        max_val,
+                        default,
                     )
                     validated[key] = default
 
@@ -355,7 +359,12 @@ class MultiGPUCollisionEngine:
             val = getattr(config, attr, default)
             if not isinstance(val, (int, float)) or val < min_val or val > max_val:
                 logger.warning(
-                    "配置 %s=%s 超出范围 [%s, %s]，使用默认值 %s", attr, val, min_val, max_val, default,
+                    "配置 %s=%s 超出范围 [%s, %s]，使用默认值 %s",
+                    attr,
+                    val,
+                    min_val,
+                    max_val,
+                    default,
                 )
                 setattr(config, attr, default)
 
@@ -895,7 +904,10 @@ class MultiGPUCollisionEngine:
         return {"enabled": False}
 
     def get_monitor_issues(
-        self, severity: str | None = None, device_idx: int | None = None, limit: int = 100,
+        self,
+        severity: str | None = None,
+        device_idx: int | None = None,
+        limit: int = 100,
     ) -> list[dict]:
         """获取数据质量问题
 
@@ -968,7 +980,10 @@ class MultiGPUCollisionEngine:
         return f"{vendor}_{platform}"
 
     def _get_or_cache_compile_config(
-        self, device: dict, kernel_source: str, build_options: str,
+        self,
+        device: dict,
+        kernel_source: str,
+        build_options: str,
     ) -> dict:
         """获取或缓存内核编译配置（同厂商GPU共享编译配置）
 
@@ -1167,7 +1182,10 @@ class MultiGPUCollisionEngine:
         return self
 
     def __exit__(
-        self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None,
+        self,
+        exc_type: type | None,
+        exc_val: BaseException | None,
+        exc_tb: Any | None,
     ) -> None:
         """上下文管理器出口"""
         self.cleanup()
@@ -1272,7 +1290,9 @@ class MultiGPUCollisionEngine:
                         if total_memory > 0:
                             used_memory = total_memory * memory_usage
                             self.load_balancer.record_memory_usage(
-                                device_idx, used_memory, total_memory,
+                                device_idx,
+                                used_memory,
+                                total_memory,
                             )
 
         except Exception as e:

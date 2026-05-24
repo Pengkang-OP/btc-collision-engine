@@ -8,7 +8,6 @@
 5. 范围切分不重叠验证
 """
 
-
 from unittest.mock import Mock
 
 import pytest

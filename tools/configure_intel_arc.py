@@ -10,7 +10,6 @@ Intel Arc A770 GPU自动选择和配置工具
 """
 
 import json
-import sys
 from pathlib import Path
 
 from src.gpu.device import GPUDeviceDetector
@@ -117,12 +116,12 @@ def verify_config(config: dict):
     print_header("配置验证")
 
     checks = {
-        "GPU启用": config["gpu"]["use_gpu"] == True,
+        "GPU启用": config["gpu"]["use_gpu"],
         "设备索引设置": "device_index" in config["gpu"],
-        "内存池启用": config["gpu"]["gpu_memory_pool"] == True,
-        "异步执行禁用": config["gpu"]["async_execution"] == False,
-        "超时保护启用": config["gpu"]["timeout_protection"] == True,
-        "uint32 workaround": config["gpu"]["uint32_workaround"] == True,
+        "内存池启用": config["gpu"]["gpu_memory_pool"],
+        "异步执行禁用": not config["gpu"]["async_execution"],
+        "超时保护启用": config["gpu"]["timeout_protection"],
+        "uint32 workaround": config["gpu"]["uint32_workaround"],
     }
 
     all_passed = True

@@ -1,4 +1,5 @@
 """CLI log display window."""
+
 import logging
 
 logger = logging.getLogger(__name__)

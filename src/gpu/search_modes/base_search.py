@@ -49,7 +49,11 @@ class BaseSearchMode:
     # ── _execute_batch_loop 辅助方法（降低 C901） ────────────────
 
     def _process_batch_matches(
-        self, matches: list, batch_data: bytes, key_extractor_fn, mode_name: str,
+        self,
+        matches: list,
+        batch_data: bytes,
+        key_extractor_fn,
+        mode_name: str,
     ) -> None:
         """处理一批 GPU 匹配结果：提取私钥、WIF 编码、触发回调。"""
         engine = self.engine
@@ -74,9 +78,7 @@ class BaseSearchMode:
             engine.stats.add_match(private_key, address)  # type: ignore[attr-defined]
             if engine.on_match:
                 timeout_val = (
-                    engine._match_callback_timeout
-                    if hasattr(engine, "_match_callback_timeout")
-                    else 5.0
+                    engine._match_callback_timeout if hasattr(engine, "_match_callback_timeout") else 5.0
                 )
                 invoke_with_timeout(
                     engine.on_match,
@@ -112,7 +114,9 @@ class BaseSearchMode:
 
         elif "device" in error_str and ("lost" in error_str or "not found" in error_str):
             recovery_mgr = getattr(engine, "_recovery_manager", None) or getattr(
-                engine, "gpu_recovery_manager", None,
+                engine,
+                "gpu_recovery_manager",
+                None,
             )
             if recovery_mgr is not None:
                 try:

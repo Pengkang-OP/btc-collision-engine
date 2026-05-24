@@ -132,7 +132,10 @@ class TestKeyCollisionEngineSafeCallback(unittest.TestCase):
     def test_safe_invoke_callback_no_handler(self):
         """on_match=None 时 _safe_invoke_match_callback 返回 True"""
         engine = KeyCollisionEngine(
-            targets={"1TestAddr"}, on_match=None, max_workers=1, data_logging_enabled=False,
+            targets={"1TestAddr"},
+            on_match=None,
+            max_workers=1,
+            data_logging_enabled=False,
         )
         result = engine._safe_invoke_match_callback((1).to_bytes(32, "big"), "1TestAddr", "WIF123")
         self.assertTrue(result)

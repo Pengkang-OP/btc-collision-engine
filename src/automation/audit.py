@@ -102,8 +102,7 @@ class AuditModule:
         analysis_report: AnalysisReport | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> AuditResult:
-        """执行审核
-        """
+        """执行审核"""
         audit_id = self._generate_audit_id()
 
         try:
@@ -112,7 +111,9 @@ class AuditModule:
 
             # 执行规则检查
             violations, warnings_list, passed_checks = self._check_rules(
-                metrics, test_results, analysis_report,
+                metrics,
+                test_results,
+                analysis_report,
             )
 
             # 确定审核状态
@@ -158,7 +159,9 @@ class AuditModule:
         return f"audit_{uuid.uuid4().hex[:12]}"
 
     def _compute_audit_metrics(
-        self, test_results: TestSuiteResult, analysis_report: AnalysisReport | None,
+        self,
+        test_results: TestSuiteResult,
+        analysis_report: AnalysisReport | None,
     ) -> dict[str, Any]:
         """计算审核指标
 
@@ -374,7 +377,10 @@ class AuditModule:
         return {"passed": passed, "rule_id": rule.id}
 
     def _determine_status(
-        self, violations: list[Issue], warnings: list[Issue], passed_checks: int,
+        self,
+        violations: list[Issue],
+        warnings: list[Issue],
+        passed_checks: int,
     ) -> SystemStatus:
         """确定审核状态"""
         # 检查是否有阻塞性违规

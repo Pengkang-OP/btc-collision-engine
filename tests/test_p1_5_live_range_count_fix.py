@@ -123,7 +123,9 @@ class TestLiveRangeCountFix(unittest.TestCase):
         # batch_size=32, 1秒大约有多个批次
         # 合理范围：一个批次约32个
         self.assertLess(
-            mid_live, 1000, f"_live_range_count={mid_live} 异常偏高，可能存在 batch_end 重复提交",
+            mid_live,
+            1000,
+            f"_live_range_count={mid_live} 异常偏高，可能存在 batch_end 重复提交",
         )
 
         print(f"\n[P1-5-C ✓] 运行中 _live_range_count={mid_live} (合理范围)")
@@ -171,22 +173,21 @@ class TestLiveRangeCountFix(unittest.TestCase):
 
         # 检查："_live_range_count += batch_count" 只应出现在注释中
         lines = worker_source.split("\n")
-        exec_lines = [
-            line
-            for line in lines
-            if "self._live_range_count += batch_count" in line
-        ]
+        exec_lines = [line for line in lines if "self._live_range_count += batch_count" in line]
 
         for line in exec_lines:
             stripped = line.strip()
             # 必须是注释（以#开头）
             self.assertTrue(
-                stripped.startswith("#"), f"非注释行仍包含旧代码! 行内容: {line.strip()[:80]}",
+                stripped.startswith("#"),
+                f"非注释行仍包含旧代码! 行内容: {line.strip()[:80]}",
             )
 
         # 确认reminder提交代码存在
         self.assertIn(
-            "remainder = local_count % 32", worker_source, "缺少worker退出时的剩余计数提交代码",
+            "remainder = local_count % 32",
+            worker_source,
+            "缺少worker退出时的剩余计数提交代码",
         )
 
         # 确认_total_count减法代码存在于主循环中

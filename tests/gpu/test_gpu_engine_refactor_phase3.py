@@ -336,7 +336,8 @@ class TestPerformanceMonitoringPipeline:
         pipeline.record_metrics(batch_size=1_000_000, execution_time_ms=50.0)
 
         mock_perf_monitor.record_kernel_metrics.assert_called_once_with(
-            batch_size=1_000_000, execution_time_ms=50.0,
+            batch_size=1_000_000,
+            execution_time_ms=50.0,
         )
 
     def test_record_metrics_delegates_to_data_logger(self):

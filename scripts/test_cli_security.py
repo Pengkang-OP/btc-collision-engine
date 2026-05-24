@@ -3,7 +3,7 @@
 
 import contextlib
 import sys
-from pathlib import Path
+
 
 def test_security_check_integration():
     """测试安全检查集成到CLI"""

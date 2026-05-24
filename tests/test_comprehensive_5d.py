@@ -192,6 +192,7 @@ class TestMultiModeExceptionFlow:
 # 维度二：多状态测试 (Multi-State Tests)
 # ============================================================================
 
+
 @pytest.mark.unit
 @pytest.mark.state_machine
 class TestMultiStateTransitions:
@@ -310,6 +311,7 @@ class TestMultiStateIllegalTransitions:
 # 维度三：多数据测试 (Multi-Data Tests)
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestMultiDataNullValues:
     """多数据测试 - 空值注入"""
@@ -339,7 +341,7 @@ class TestMultiDataExtremeValues:
         stats = CollisionStats()
         stats.start_time = time.time()
 
-        large_number = 2 ** 62
+        large_number = 2**62
         stats.update(large_number)
 
         assert stats.total_checked == large_number
@@ -413,8 +415,8 @@ class TestMultiDataIncrementTypes:
     def test_increment_large_value(self):
         """测试：increment 接受大数值"""
         stats = CollisionStats()
-        stats.increment(10 ** 12)
-        assert stats.total_checked == 10 ** 12
+        stats.increment(10**12)
+        assert stats.total_checked == 10**12
 
     def test_increment_float_handling(self):
         """测试：increment 拒绝 float 类型"""
@@ -427,6 +429,7 @@ class TestMultiDataIncrementTypes:
 # ============================================================================
 # 维度四：多参数测试 (Multi-Parameter Tests)
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestMultiParameterCombinations:
@@ -485,6 +488,7 @@ class TestMultiParameterDependencyLogic:
 # ============================================================================
 # 维度五：多功能维度测试 (Multi-Function Tests)
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestMultiFunctionCoreFunctionality:
@@ -656,6 +660,7 @@ class TestMultiFunctionSecurity:
 # 综合测试：跨维度场景
 # ============================================================================
 
+
 @pytest.mark.integration
 class TestCrossDimensionScenarios:
     """跨维度综合测试"""
@@ -683,10 +688,12 @@ class TestCrossDimensionScenarios:
         stats.add_match(pk, address)
         bus.publish(EngineMatchEvent(private_key=pk, address=address))
 
-        bus.publish(EngineCompleteEvent(
-            total_checked=stats.total_checked,
-            matches_found=len(stats.matches),
-        ))
+        bus.publish(
+            EngineCompleteEvent(
+                total_checked=stats.total_checked,
+                matches_found=len(stats.matches),
+            )
+        )
 
         assert stats.total_checked == 5000
         assert len(stats.matches) == 1

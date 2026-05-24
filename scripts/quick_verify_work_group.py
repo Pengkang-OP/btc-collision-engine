@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 """快速验证work_group_size优化是否生效"""
 
-import sys
-from pathlib import Path
-
 from src.gpu.auto_config import GPUAutoConfigurator
 
 # 创建模拟设备信息

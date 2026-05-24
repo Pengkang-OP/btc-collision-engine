@@ -3,8 +3,8 @@
 
 import json
 import subprocess
-import sys
 from pathlib import Path
+
 
 def read_monitoring_data():
     """读取监控数据文件"""
@@ -173,7 +173,7 @@ def _health_check_section(monitoring_data, log_analysis):
     print("-" * 80)
     health_checks = []
     # 检查1: 进程
-    if monitoring_data or True:
+    if True:
         health_checks.append(("进程状态", True, "程序运行中"))
     # 检查2: 错误率
     err_cnt = log_analysis.get("error_count", 0)

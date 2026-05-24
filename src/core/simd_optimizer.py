@@ -74,8 +74,7 @@ class BatchOptimizer:
         self._precompute_constants()
 
         logger.info(
-            f"Batch optimizer initialized: "
-            f"batch_size={batch_size:,}",
+            f"Batch optimizer initialized: batch_size={batch_size:,}",
         )
 
     def _precompute_constants(self):
@@ -88,7 +87,8 @@ class BatchOptimizer:
         self.n = self.curve.N
 
     def batch_private_key_to_int(
-        self, private_keys: list[bytes],
+        self,
+        private_keys: list[bytes],
     ) -> list[int]:
         """Batch convert private key bytes to integers.
 
@@ -104,12 +104,11 @@ class BatchOptimizer:
             List of Python int (supports 256-bit large numbers)
 
         """
-        return [
-            int.from_bytes(pk, "big") for pk in private_keys
-        ]
+        return [int.from_bytes(pk, "big") for pk in private_keys]
 
     def batch_ripemd160(
-        self, data_list: list[bytes],
+        self,
+        data_list: list[bytes],
     ) -> list[bytes]:
         """Batch RIPEMD160 hash (NumPy-optimized memory layout).
 
@@ -129,13 +128,15 @@ class BatchOptimizer:
         # Batch process (optimized memory locality)
         for i, data in enumerate(data_list):
             results[i] = hashlib.new(
-                "ripemd160", data,
+                "ripemd160",
+                data,
             ).digest()
 
         return results
 
     def batch_sha256(
-        self, data_list: list[bytes],
+        self,
+        data_list: list[bytes],
     ) -> list[bytes]:
         """Batch SHA256 hash (optimized version).
 
@@ -154,7 +155,8 @@ class BatchOptimizer:
         return results
 
     def batch_base58_encode(
-        self, numbers: list[int],
+        self,
+        numbers: list[int],
     ) -> list[str]:
         """Batch Base58 encoding (optimized version).
 
@@ -169,10 +171,7 @@ class BatchOptimizer:
             List of Base58 encoded strings
 
         """
-        alphabet = (
-            "123456789ABCDEFGHJKLMNPQRSTUVWXYZ"
-            "abcdefghijkmnopqrstuvwxyz"
-        )
+        alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
         results = []
         for num in numbers:
@@ -190,7 +189,8 @@ class BatchOptimizer:
         return results
 
     def batch_hash160(
-        self, public_keys: list[bytes],
+        self,
+        public_keys: list[bytes],
     ) -> list[bytes]:
         """Batch Hash160 (SHA256 + RIPEMD160).
 
@@ -270,8 +270,7 @@ class BatchCollisionProcessor:
         self.target_addresses: set[str] = set()
 
         logger.info(
-            f"BatchCollisionProcessor initialized: "
-            f"batch_size={batch_size:,}",
+            f"BatchCollisionProcessor initialized: batch_size={batch_size:,}",
         )
 
     def set_targets(self, addresses: list[str]):
@@ -305,21 +304,24 @@ class BatchCollisionProcessor:
 
         # Process in batches
         for i in range(
-            0, len(private_keys), self.batch_size,
+            0,
+            len(private_keys),
+            self.batch_size,
         ):
-            batch = private_keys[
-                i : i + self.batch_size
-            ]
+            batch = private_keys[i : i + self.batch_size]
 
             # Batch generate addresses
             addresses = self._batch_generate_addresses(
-                batch, address_generator,
+                batch,
+                address_generator,
             )
 
             # Detect collisions
             # (strict=True ensures batch and addresses length match)
             for pk, addr in zip(
-                batch, addresses, strict=True,
+                batch,
+                addresses,
+                strict=True,
             ):
                 if addr in self.target_addresses:
                     matches.append((pk, addr))
@@ -343,7 +345,8 @@ class BatchCollisionProcessor:
         """
         # Use address generator's batch method if available
         if hasattr(
-            address_generator, "batch_generate",
+            address_generator,
+            "batch_generate",
         ):
             return address_generator.batch_generate(
                 private_keys,
@@ -352,10 +355,7 @@ class BatchCollisionProcessor:
         # Otherwise generate one by one
         addresses = []
         for pk in private_keys:
-            addr = (
-                address_generator
-                .generate_from_private_key(pk)
-            )
+            addr = address_generator.generate_from_private_key(pk)
             addresses.append(addr)
 
         return addresses
@@ -394,9 +394,7 @@ class NumpyOptimizedAddressGenerator:
         # Use list comprehension optimization
         # (10-20% faster than for loop)
         addresses = [
-            self.base_generator
-            .generate_from_private_key(pk, compressed)
-            for pk in private_keys
+            self.base_generator.generate_from_private_key(pk, compressed) for pk in private_keys
         ]
 
         return addresses

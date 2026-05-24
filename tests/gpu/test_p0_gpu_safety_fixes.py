@@ -69,7 +69,7 @@ class TestSnapshotIsolation:
 
     def test_snapshot_mutation_does_not_affect_original(self):
         """修改 snapshot 字段不影响原始 stats 对象"""
-        from src.collision.collision_stats import CollisionStats, StatsSnapshot
+        from src.collision.collision_stats import CollisionStats
 
         stats = CollisionStats()
         stats.record_keys(1000)
@@ -144,7 +144,9 @@ class TestSnapshotIsolation:
 # ===========================================================================
 
 
-@ pytest.mark.skip(reason="_safe_invoke_match_callback delegates to _result_processor.safe_invoke_match_callback; test needs refactor to test _result_processor directly")
+@pytest.mark.skip(
+    reason="_safe_invoke_match_callback delegates to _result_processor.safe_invoke_match_callback; test needs refactor to test _result_processor directly"
+)
 class TestSafeInvokeMatchCallbackIsolation:
     """P0-2: 验证 GPU _safe_invoke_match_callback 能隔离回调异常
 
@@ -232,7 +234,9 @@ class TestSafeInvokeMatchCallbackIsolation:
 # ===========================================================================
 
 
-@pytest.mark.skip(reason="pyproject.toml encoding issues on Windows GBK; coincurve version already validated in CI")
+@pytest.mark.skip(
+    reason="pyproject.toml encoding issues on Windows GBK; coincurve version already validated in CI"
+)
 class TestCoinCurveVersionConsistency:
     """P0-3: 验证 coincurve 版本声明在各配置文件中一致"""
 

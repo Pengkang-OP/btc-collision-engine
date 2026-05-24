@@ -13,7 +13,6 @@ GPU利用率监控测试 - v3.3.1
 
 import json
 import os
-import sys
 import threading
 import time
 from datetime import datetime
@@ -225,7 +224,7 @@ def test_gpu_utilization(mode: str = "async", duration: int = 60):
             "timestamp": datetime.now().isoformat(),
         }
 
-        output_dir = os.path.join(project_root, "test_results")
+        output_dir = os.path.join(Path(__file__).resolve().parent.parent, "test_results")
         os.makedirs(output_dir, exist_ok=True)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filepath = os.path.join(output_dir, f"gpu_utilization_{mode}_{timestamp}.json")

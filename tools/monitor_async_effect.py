@@ -6,6 +6,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+
 def check_async_enabled():
     """检查异步是否启用"""
     log_file = Path("logs/collision.log")
@@ -248,7 +249,6 @@ def continuous_monitor(interval=10):
 
 def main():
     """主函数"""
-    import sys
 
     if "--continuous" in sys.argv or "-c" in sys.argv:
         # 持续监控模式

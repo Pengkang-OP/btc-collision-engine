@@ -109,7 +109,9 @@ def test_gpu_initialization():
 
             print("[2/3] 初始化GPU引擎...")
             engine = GPUCollisionEngine(
-                targets={"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}, device_index=1, batch_size=65536,
+                targets={"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"},
+                device_index=1,
+                batch_size=65536,
             )
 
             print("[3/3] 验证配置...")

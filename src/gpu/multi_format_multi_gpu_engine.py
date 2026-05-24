@@ -41,8 +41,11 @@ class MultiFormatMultiGPUEngine:
     """
 
     __slots__ = (
-        "_multi_gpu_engine", "_format_manager", "_address_generator",
-        "_enable_post_processing", "_enable_cpu_fallback",
+        "_multi_gpu_engine",
+        "_format_manager",
+        "_address_generator",
+        "_enable_post_processing",
+        "_enable_cpu_fallback",
     )
 
     def __init__(self, multi_gpu_config: dict | None = None):
@@ -59,7 +62,9 @@ class MultiFormatMultiGPUEngine:
     def initialize(self, device_indices=None, device_count=-1, strategy="performance"):
         """初始化GPU设备"""
         return self._multi_gpu_engine.initialize(
-            device_indices=device_indices, device_count=device_count, strategy=strategy,
+            device_indices=device_indices,
+            device_count=device_count,
+            strategy=strategy,
         )
 
     def add_target(self, address: str) -> bool:
@@ -116,7 +121,9 @@ class MultiFormatMultiGPUEngine:
                     private_key_value = match.get("private_key_hash")
                     if private_key_value:
                         extra_formats = self._check_other_formats(
-                            private_key_value, matched_address, matched_format,
+                            private_key_value,
+                            matched_address,
+                            matched_format,
                         )
                     else:
                         extra_formats = []
@@ -154,7 +161,10 @@ class MultiFormatMultiGPUEngine:
         )
 
     def _check_other_formats(
-        self, private_key: bytes, matched_address: str, matched_format: str,
+        self,
+        private_key: bytes,
+        matched_address: str,
+        matched_format: str,
     ) -> list[tuple[str, str]]:
         """检查其他格式是否也匹配"""
         extra_matches: list[tuple[str, str]] = []

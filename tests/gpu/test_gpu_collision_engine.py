@@ -142,14 +142,16 @@ class TestGPUCollisionEngine:
     def test_gpu_engine_mock_initialization(self):
         """使用 Mock 测试 GPU 引擎初始化 - 无设备情况"""
         with (
-            patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True), patch(
+            patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True),
+            patch(
                 "src.gpu.device.GPUDeviceDetector.detect_devices",
                 return_value=[],
             ),
             patch(
                 "src.gpu.device.GPUDeviceDetector.is_gpu_available",
                 return_value=False,
-            ), pytest.raises(RuntimeError, match="pyopencl 不可用|未检测到 GPU 设备|GPU.*不可用"),
+            ),
+            pytest.raises(RuntimeError, match="pyopencl 不可用|未检测到 GPU 设备|GPU.*不可用"),
         ):
             GPUCollisionEngine(self.test_targets)
 
@@ -224,6 +226,7 @@ class TestGPUCollisionEngine:
             try:
                 engine.start(mode="invalid_mode")
                 import time
+
                 time.sleep(0.5)
             finally:
                 threading.excepthook = original_hook

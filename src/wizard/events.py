@@ -1,4 +1,5 @@
 """Wizard event definitions."""
+
 from dataclasses import dataclass, field
 from typing import Any
 

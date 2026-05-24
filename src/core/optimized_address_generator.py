@@ -81,7 +81,8 @@ class OptimizedP2PKHAddressGenerator(P2PKHAddressGenerator):
             backend_type = crypto_manager._default_backend_type
             if backend is not None and backend_type != BackendType.PURE_PYTHON:
                 return crypto_manager.generate_public_key(
-                    private_key, compressed,
+                    private_key,
+                    compressed,
                 )
         except (ImportError, AttributeError):
             pass  # Fall through to precomputed table or super
@@ -93,30 +94,20 @@ class OptimizedP2PKHAddressGenerator(P2PKHAddressGenerator):
 
             if public_point.is_infinity:
                 raise ValueError(
-                    "Generated public key is infinity point, "
-                    "invalid private key",
+                    "Generated public key is infinity point, invalid private key",
                 )
 
             if compressed:
-                prefix = (
-                    b"\x02"
-                    if int(public_point.y) % 2 == 0
-                    else b"\x03"
-                )
-                return (
-                    prefix + public_point.x.to_bytes(32, "big")
-                )
-            return (
-                b"\x04"
-                + public_point.x.to_bytes(32, "big")
-                + public_point.y.to_bytes(32, "big")
-            )
+                prefix = b"\x02" if int(public_point.y) % 2 == 0 else b"\x03"
+                return prefix + public_point.x.to_bytes(32, "big")
+            return b"\x04" + public_point.x.to_bytes(32, "big") + public_point.y.to_bytes(32, "big")
 
         # Final fallback: parent implementation (crypto_backend or pure Python EC)
         return super().private_key_to_public_key(private_key, compressed)
 
     def public_key_to_address(
-        self, public_key: bytes,
+        self,
+        public_key: bytes,
     ) -> str:
         """Generate Bitcoin address from public key.
 
@@ -136,11 +127,13 @@ class OptimizedP2PKHAddressGenerator(P2PKHAddressGenerator):
         # Use optimized hash path (SIMD or batch optimizer)
         hash160 = self.public_key_to_hash160(public_key)
         from .base58 import Base58
+
         address = Base58.check_encode(0x00, hash160)
         return address
 
     def public_key_to_hash160(
-        self, public_key: bytes,
+        self,
+        public_key: bytes,
     ) -> bytes:
         """Compute Hash160 from public key.
 
@@ -164,7 +157,8 @@ class OptimizedP2PKHAddressGenerator(P2PKHAddressGenerator):
         return HashUtils.hash160(public_key)
 
     def batch_generate(
-        self, private_keys: list[bytes],
+        self,
+        private_keys: list[bytes],
     ) -> list[str]:
         """Batch generate addresses from private keys.
 
@@ -178,10 +172,7 @@ class OptimizedP2PKHAddressGenerator(P2PKHAddressGenerator):
         if not private_keys:
             return []
 
-        return [
-            self.generate_address(pk)[0]
-            for pk in private_keys
-        ]
+        return [self.generate_address(pk)[0] for pk in private_keys]
 
     def get_optimization_info(self) -> dict:
         """Get optimization configuration information.

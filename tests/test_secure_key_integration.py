@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""SecureKeyManager集成到碰撞引擎的验证测试
-"""
+"""SecureKeyManager集成到碰撞引擎的验证测试"""
 
 import sys
 import time

@@ -60,7 +60,12 @@ class GPUBufferTracker:
         self._last_check_time = time.time()
 
     def track_buffer(
-        self, name: str, buffer: Any, size: int, buffer_type: str = "generic", context: str = "",
+        self,
+        name: str,
+        buffer: Any,
+        size: int,
+        buffer_type: str = "generic",
+        context: str = "",
     ) -> None:
         """注册缓冲区
 
@@ -347,7 +352,9 @@ class GPUBufferTracker:
         self._check_interval = interval
         self._periodic_check_stop = threading.Event()
         self._periodic_check_thread = threading.Thread(
-            target=self._periodic_check_loop, daemon=True, name="buffer-tracker-periodic",
+            target=self._periodic_check_loop,
+            daemon=True,
+            name="buffer-tracker-periodic",
         )
         self._periodic_check_thread.start()
         logger.info("GPU缓冲区追踪器：定期检查已启动，间隔 %s 秒", interval)

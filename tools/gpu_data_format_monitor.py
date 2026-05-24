@@ -8,9 +8,7 @@ GPU 数据格式实时监控工具
 - 地址格式（P2PKH / P2SH / Bech32）
 """
 
-import os
 import re
-import sys
 import time
 from datetime import datetime
 

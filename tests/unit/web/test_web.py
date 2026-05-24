@@ -90,7 +90,7 @@ class TestAuthFunctions:
 
     def test_validate_api_key_query_param_not_supported(self, monkeypatch):
         """Query param API keys are intentionally NOT supported.
-        
+
         Security design: _validate_api_key only reads from Authorization header
         to prevent API keys from leaking into browser history, server logs, etc.
         """
@@ -646,7 +646,8 @@ class TestCreateAppFlaskAvailable:
             encoding="utf-8",
         )
         (tmp_path / "error_log.json").write_text(
-            json.dumps([{"message": "test error", "type": "error"}]), encoding="utf-8",
+            json.dumps([{"message": "test error", "type": "error"}]),
+            encoding="utf-8",
         )
 
         dash.create_app(data_dir=tmp_path)
@@ -881,7 +882,10 @@ class TestRunDashboard:
 
         dash.run_dashboard(host="127.0.0.1", port=9999)
         mock_app_run.assert_called_once_with(
-            host="127.0.0.1", port=9999, debug=False, use_reloader=False,
+            host="127.0.0.1",
+            port=9999,
+            debug=False,
+            use_reloader=False,
         )
 
     def test_run_dashboard_with_api_key(self, flask_mock):

@@ -153,7 +153,10 @@ class TestSaveCurrentData:
         mock_data_logger.save_current_data.assert_called_once()
 
     def test_save_with_delegation_syncs_data(
-        self, storage_with_logger, mock_data_logger, sample_monitoring_data,
+        self,
+        storage_with_logger,
+        mock_data_logger,
+        sample_monitoring_data,
     ):
         """委托模式下同步 performance/system/engine 数据到 DataLogger"""
         storage_with_logger.save_current_data(sample_monitoring_data)
@@ -184,7 +187,10 @@ class TestSaveCurrentData:
             assert saved["performance"]["total_checked"] == 5000
 
     def test_delegation_error_handled(
-        self, storage_with_logger, mock_data_logger, sample_monitoring_data,
+        self,
+        storage_with_logger,
+        mock_data_logger,
+        sample_monitoring_data,
     ):
         """委托模式下 DataLogger 抛出异常应被捕获"""
         mock_data_logger.save_current_data.side_effect = RuntimeError("delegation error")
@@ -226,7 +232,10 @@ class TestSaveHistoryData:
         assert history[0]["performance"]["total_checked"] == 5000
 
     def test_delegation_error_handled(
-        self, storage_with_logger, mock_data_logger, sample_monitoring_data,
+        self,
+        storage_with_logger,
+        mock_data_logger,
+        sample_monitoring_data,
     ):
         """委托模式下缓冲区操作异常应被捕获"""
         mock_data_logger._history_buffer = None  # 模拟异常状态
