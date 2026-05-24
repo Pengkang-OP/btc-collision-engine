@@ -299,7 +299,11 @@ jobs:
         run: |
           pip install --upgrade pip setuptools wheel
           pip install -r requirements.txt
-          pip install pytest pytest-cov pytest-timeout pytest-benchmark
+          if python -c "import sys; sys.exit(0 if sys.version_info < (3, 10) else 1)"; then
+            pip install "pytest<9.0.0" pytest-cov pytest-timeout pytest-benchmark
+          else
+            pip install pytest pytest-cov pytest-timeout pytest-benchmark
+          fi
 
       - name: 运行测试
         timeout-minutes: 25
@@ -396,7 +400,7 @@ jobs:
         run: pytest tests/test_import_paths.py -v
 
       - name: 运行Bech32/P2SH测试
-        run: pytest tests/test_bech32_p2sh_conversion.py tests/test_bech32_p2sh_performance.py -v
+        run: pytest tests/unit/crypto/test_bech32_p2sh_conversion.py tests/unit/crypto/test_bech32_p2sh_performance.py -v
 
   # ──────────────────────────────────────────
   # 性能回归检测
