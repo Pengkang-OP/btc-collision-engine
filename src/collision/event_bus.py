@@ -22,7 +22,6 @@ def _build_event_class_map() -> None:
     if _EVENT_CLASS_TO_TYPE:
         return
     from .events import (  # noqa: PLC0415
-        CollisionEvent,
         EngineCompleteEvent,
         EngineErrorEvent,
         EngineMatchEvent,

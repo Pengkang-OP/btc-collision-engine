@@ -1,7 +1,13 @@
 """Log processor for filtering and transforming log entries."""
 
+from __future__ import annotations
+
 import logging
 import re
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.log_engine.events import LogEvent  # pragma: no cover
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +19,7 @@ class LogProcessor:
         self._filters: list = []
         self._transforms: list = []
 
-    def process(self, event: "LogEvent") -> dict | None:  # noqa: F821
+    def process(self, event: LogEvent) -> dict | None:  # noqa: F821
         """Process a log event into a dictionary.
 
         Args:
@@ -69,10 +75,25 @@ class SensitiveDataFilter(logging.Filter):
 
         """
         # PrivateKey=... pattern
-        message = re.sub(r"PrivateKey\s*[=:]\s*\S+", "PrivateKey=***REDACTED***", message, flags=re.IGNORECASE)
+        message = re.sub(
+            r"PrivateKey\s*[=:]\s*\S+",
+            "PrivateKey=***REDACTED***",
+            message,
+            flags=re.IGNORECASE,
+        )
         # Bech32m (Taproot) first (more specific), then Bech32
-        message = re.sub(r"bc1p[ac-hj-np-z02-9]{6,87}", "[BECH32M_ADDRESS]", message, flags=re.IGNORECASE)
-        message = re.sub(r"bc1[ac-hj-np-z02-9]{6,87}", "[BECH32_ADDRESS]", message, flags=re.IGNORECASE)
+        message = re.sub(
+            r"bc1p[ac-hj-np-z02-9]{6,87}",
+            "[BECH32M_ADDRESS]",
+            message,
+            flags=re.IGNORECASE,
+        )
+        message = re.sub(
+            r"bc1[ac-hj-np-z02-9]{6,87}",
+            "[BECH32_ADDRESS]",
+            message,
+            flags=re.IGNORECASE,
+        )
         # P2PKH + P2SH
         message = re.sub(r"[13][a-km-zA-HJ-NP-Z1-9]{25,34}", "[P2PKH_ADDRESS]", message)
         # WIF
@@ -104,7 +125,7 @@ class SensitiveDataFilter(logging.Filter):
         record_data = getattr(record, "data", {})
         if isinstance(record_data, dict):
             data_str = str(record_data)
-            for pattern in __class__.SENSITIVE_PATTERNS:
+            for pattern in SensitiveDataFilter.SENSITIVE_PATTERNS:
                 if pattern.search(data_str):
                     return False
 
