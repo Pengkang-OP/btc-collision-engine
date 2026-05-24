@@ -16,12 +16,12 @@ P2-4,P2,错误恢复,src/collision/gpu/engine.py,v4.2.1已修复,PYOPENCL_AVAILA
 P2-5,P2,日志管理,全局,v4.2.1已修复,经review确认WARNING/ERROR/INFO/DEBUG级别分配合理,中,已评估：异常路径全部使用exc_info=True,1天,已修复
 P2-6,P2,用户体验,src/cli/arg_parser.py; src/cli/commands.py,v4.2.1已修复,参数分组+中文帮助+示例+epilog,中,已完成：arg_parser.py覆盖全部参数用途,0.5天,已修复
 P2-7,P2,GUI功能,N/A（key_collision_gui.py已移除）,key_collision_gui.py在v4.x中已整体移除,中,无需修复（组件已移除）,1天,不适用
-P2-8,P2,性能测试,benchmarks/,待改进,项目有benchmarks/目录但缺少自动化CI对比流程,中,整合现有benchmark_runner.py到CI,1天,待改进
+P2-8,P2,性能测试,benchmarks/,v5.4.0已修复,CI已包含benchmark job（ci.yml L403-443），新增基准文件benchmark-baseline.json，支持回归检测,中,已完成：CI benchmark job + 基线文件 + benchmark_runner.py整合,1天,已修复
 P2-9,P2,配置管理,config.schema.json (新增),v5.4.0刚创建,JSON Schema已创建，集成至 --config-check 命令,中,已完成：config.schema.json + _validate_config_schema() + --config-check集成,1天,已修复
 P2-10,P2,测试覆盖,tests/test_checkpoint.py,tests/test_checkpoint.py等已存在且通过all,核心模块测试已补充,中,已完成：checkpoint/dedup核心模块测试覆盖,3天,已修复
 P3-1,P3,代码注释,全局,v4.2.1大幅改进,核心模块(GPU内核/ECDSA/哈希)均有详细算法注释,低,已完成：GPU引擎各子方法均有算法说明,1天,已改进
 P3-2,P3,命名规范,全局,v4.2.1已修复,review确认无过度缩写问题,低,已完成：核心API全部使用完整命名,0.5天,已修复
 P3-3,P3,文档示例,docs/,已有200+文档,CLI_GUIDE/USER_GUIDE/API参考齐全,低,已完成：快速入门/使用指南/故障排除,2天,已改进
 P3-4,P3,国际化,src/i18n/,v4.2.1已实现,项目已实现中英文国际化(i18n模块+_t函数),低,已完成：gettext风格i18n,3天,已修复
-P3-5,P3,监控界面,deploy/prometheus+grafana,待改进,Web仪表板为未来增强功能（当前有Prometheus+Grafana支持）,低,可基于现有deploy/prometheus+grafana扩展,5天,待改进
-P3-6,P3,CI/CD,.github/workflows/,待改进,当前有dependabot但缺少完整CI测试流程,低,可添加pytest+ruff+benchmark自动化,2天,待改进
+P3-5,P3,监控界面,deploy/prometheus+grafana,v5.4.0已改进,Grafana GPU仪表板(btc-collision-gpu.json) + Prometheus告警规则(btc-collision-alerts.yml) 已创建，含9条告警规则,低,已完成：GPU仪表板 + 9条告警规则 + rule_files启用,5天,已改进
+P3-6,P3,CI/CD,.github/workflows/ci.yml,v5.4.0已修复,CI已包含全部请求项：ruff lint、mypy类型检查、bandit安全扫描、pip-audit依赖扫描、pytest多版本矩阵(3.9-3.13)、benchmark回归检测、config验证、GPU静态检查、文档检查、门禁汇总,低,已完成：ci.yml 13个job全覆盖，无需额外改动,2天,已修复

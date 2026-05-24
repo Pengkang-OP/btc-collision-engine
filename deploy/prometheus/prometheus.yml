@@ -3,9 +3,9 @@ global:
   scrape_interval: 15s
   evaluation_interval: 15s
 
-# 告警规则（需要创建 rules/ 目录后启用）
-# rule_files:
-#   - "rules/*.yml"
+# 告警规则
+rule_files:
+  - "rules/*.yml"
 
 # 抓取配置
 scrape_configs:
