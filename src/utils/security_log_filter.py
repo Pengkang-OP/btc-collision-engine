@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-日志安全过滤器
+"""日志安全过滤器
 
 防止敏感信息（如私钥）泄露到日志文件中。
 自动检测和屏蔽比特币私钥模式。
@@ -61,12 +60,12 @@ class SecurityLogFilter(logging.Filter):
         mask_wif: bool = True,
         mask_addresses: bool = True,
     ) -> None:
-        """
-        Args:
-            name: 过滤器名称
-            mask_private_keys: 是否屏蔽私钥十六进制
-            mask_wif: 是否屏蔽WIF格式
-            mask_addresses: 是否屏蔽比特币地址
+        """Args:
+        name: 过滤器名称
+        mask_private_keys: 是否屏蔽私钥十六进制
+        mask_wif: 是否屏蔽WIF格式
+        mask_addresses: 是否屏蔽比特币地址
+
         """
         super().__init__(name)
         self.mask_private_keys = mask_private_keys
@@ -81,6 +80,7 @@ class SecurityLogFilter(logging.Filter):
 
         Returns:
             bool: 总是返回True（允许日志记录，但内容已被清理）
+
         """
         if not hasattr(record, "msg"):
             return True
@@ -111,6 +111,7 @@ class SecurityLogFilter(logging.Filter):
 
         Returns:
             str: 清理后的消息
+
         """
         if self.mask_private_keys:
             # 屏蔽64位十六进制私钥
@@ -152,6 +153,7 @@ class SecurityLogFilter(logging.Filter):
 
         Returns:
             str: 清理后的字符串
+
         """
         return self._sanitize_message(value)
 
@@ -165,6 +167,7 @@ class SecurityLogFilter(logging.Filter):
 
         Returns:
             str: 掩码后的私钥
+
         """
         if len(key_hex) != 64:
             return "[PRIVATE_KEY]"
@@ -182,7 +185,7 @@ def setup_security_logging() -> None:
     """
     # 创建安全过滤器
     security_filter = SecurityLogFilter(
-        name="security_filter", mask_private_keys=True, mask_wif=True, mask_addresses=True
+        name="security_filter", mask_private_keys=True, mask_wif=True, mask_addresses=True,
     )
 
     # 添加到根日志记录器（子 logger 会继承根 logger 的过滤器）
@@ -249,6 +252,7 @@ def sanitize_private_key_for_log(private_key: bytes) -> str:
 
     Returns:
         str: 私钥哈希（16位十六进制）
+
     """
     if not private_key:
         return "[EMPTY_KEY]"
@@ -265,6 +269,7 @@ def log_safe_error(logger: logging.Logger, message: str, **kwargs) -> None:
         logger: 日志记录器
         message: 错误消息
         **kwargs: 额外参数
+
     """
     # 安全过滤器会自动处理，这里只是便捷封装
     logger.error(message, **kwargs)
@@ -277,12 +282,13 @@ def log_safe_debug(logger: logging.Logger, message: str, **kwargs) -> None:
         logger: 日志记录器
         message: 调试消息
         **kwargs: 额外参数
+
     """
     logger.debug(message, **kwargs)
 
 
 def log_safe_exception(
-    logger: logging.Logger, message: str, exc: BaseException | None = None, **kwargs
+    logger: logging.Logger, message: str, exc: BaseException | None = None, **kwargs,
 ) -> None:
     """安全记录异常（不泄露敏感堆栈信息）
 
@@ -291,6 +297,7 @@ def log_safe_exception(
         message: 错误消息
         exc: 异常对象（可选）
         **kwargs: 额外参数
+
     """
     if exc is None:
         logger.error(message, **kwargs)

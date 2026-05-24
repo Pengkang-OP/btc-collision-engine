@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """Core cryptographic function tests for the BTC collision engine."""
 
-import hashlib
 import secrets
 
 import pytest
 
-from src.core.address_generator import P2PKHAddressGenerator, secure_clear_bytearray
+from src.core.address_generator import P2PKHAddressGenerator
 from src.core.base58 import Base58
 from src.core.hash_utils import HashUtils
 from src.core.secp256k1 import ECPoint, EllipticCurve, Secp256k1
@@ -60,7 +59,7 @@ class TestHashUtils:
         result = HashUtils.sha256(b"hello")
         expected = bytes.fromhex(
             "2cf24dba5fb0a30e26e83b2ac5b9e29e"
-            "1b161e5c1fa7425e73043362938b9824"
+            "1b161e5c1fa7425e73043362938b9824",
         )
         assert result == expected
 

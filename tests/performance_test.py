@@ -16,18 +16,13 @@
 """
 
 import logging
-import os
-import sys
 import time
 
-# 添加项目根目录到Python模块路径
-sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
-
-import pytest  # noqa: E402
+import pytest
 
 pytestmark = pytest.mark.gpu  # 需要真实GPU硬件
 
-from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine  # noqa: E402
+from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
 
 # 配置日志
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -42,6 +37,7 @@ def generate_test_targets(count: int = 1000) -> set[str]:
 
     Returns:
         目标地址集合
+
     """
     # 生成一些格式正确的比特币地址作为测试目标
     # 注意：这些地址不是真实的私钥生成的，仅用于测试
@@ -79,7 +75,7 @@ def test_single_gpu_performance():
     # 初始化引擎，只使用一个GPU
     if not engine.initialize(device_count=1):
         logger.error("无法初始化单GPU引擎")
-        return
+        return None
 
     # 测试参数
     total_keys = 10000000  # 1000万私钥
@@ -90,7 +86,7 @@ def test_single_gpu_performance():
     if not engine.start(targets=targets, mode="random", total_keys=total_keys):
         logger.error("无法启动单GPU测试")
         engine.cleanup()
-        return
+        return None
 
     # 运行测试
     time.sleep(test_duration)
@@ -124,13 +120,13 @@ def test_multi_gpu_performance():
 
     # 创建多GPU引擎
     engine = MultiGPUCollisionEngine(
-        {"enable_async_execution": True, "workload_monitor_interval": 2, "auto_rebalance": True}
+        {"enable_async_execution": True, "workload_monitor_interval": 2, "auto_rebalance": True},
     )
 
     # 初始化引擎，使用所有可用GPU
     if not engine.initialize(device_count=-1):
         logger.error("无法初始化多GPU引擎")
-        return
+        return None
 
     # 测试参数
     total_keys = 50000000  # 5000万私钥
@@ -141,7 +137,7 @@ def test_multi_gpu_performance():
     if not engine.start(targets=targets, mode="random", total_keys=total_keys):
         logger.error("无法启动多GPU测试")
         engine.cleanup()
-        return
+        return None
 
     # 运行测试
     time.sleep(test_duration)
@@ -157,7 +153,7 @@ def test_multi_gpu_performance():
     device_count = stats.get("device_count", 0)
 
     logger.info("多GPU测试结果:")
-    logger.info(f"  GPU数量: {device_count}")
+    logger.info("  GPU数量: %s", device_count)
     logger.info(f"  总检查私钥数: {total_keys_checked:,}")
     logger.info(f"  运行时间: {elapsed_time:.2f}秒")
     logger.info(f"  总吞吐量: {throughput:.0f} keys/s")
@@ -167,7 +163,7 @@ def test_multi_gpu_performance():
     # 打印每个GPU的详细统计
     per_device = stats.get("per_device", {})
     for device_idx, device_stats in per_device.items():
-        logger.info(f"  GPU {device_idx}:")
+        logger.info("  GPU %s:", device_idx)
         logger.info(f"    检查私钥数: {device_stats.get('keys_checked', 0):,}")
         logger.info(f"    吞吐量: {device_stats.get('throughput', 0):.0f} keys/s")
         logger.info(f"    错误率: {device_stats.get('error_rate', 0):.2f}%")
@@ -190,11 +186,11 @@ def test_batch_size_performance():
     results = []
 
     for batch_size in batch_sizes:
-        logger.info(f"测试批次大小: {batch_size}")
+        logger.info("测试批次大小: %s", batch_size)
 
         # 创建多GPU引擎
         engine = MultiGPUCollisionEngine(
-            {"enable_async_execution": True, "per_device_config": {"0": {"batch_size": batch_size}}}
+            {"enable_async_execution": True, "per_device_config": {"0": {"batch_size": batch_size}}},
         )
 
         # 初始化引擎，只使用一个GPU
@@ -258,7 +254,7 @@ def test_memory_usage():
     # 初始化引擎，只使用一个GPU
     if not engine.initialize(device_count=1):
         logger.error("无法初始化引擎")
-        return
+        return None
 
     # 测试参数
     total_keys = 20000000  # 2000万私钥
@@ -268,7 +264,7 @@ def test_memory_usage():
     if not engine.start(targets=targets, mode="random", total_keys=total_keys):
         logger.error("无法启动测试")
         engine.cleanup()
-        return
+        return None
 
     # 运行测试，期间监控内存使用
     start_time = time.time()
@@ -276,7 +272,7 @@ def test_memory_usage():
         time.sleep(5)
         # 获取工作负载统计
         workload_stats = engine.get_workload_stats()
-        logger.info(f"内存使用监控: {workload_stats}")
+        logger.info("内存使用监控: %s", workload_stats)
 
     # 停止引擎
     engine.stop()
@@ -299,13 +295,13 @@ def test_load_balancing():
 
     # 创建多GPU引擎
     engine = MultiGPUCollisionEngine(
-        {"enable_async_execution": True, "workload_monitor_interval": 2, "auto_rebalance": True}
+        {"enable_async_execution": True, "workload_monitor_interval": 2, "auto_rebalance": True},
     )
 
     # 初始化引擎，使用所有可用GPU
     if not engine.initialize(device_count=-1):
         logger.error("无法初始化引擎")
-        return
+        return None
 
     # 测试参数
     total_keys = 100000000  # 1亿私钥
@@ -315,7 +311,7 @@ def test_load_balancing():
     if not engine.start(targets=targets, mode="random", total_keys=total_keys):
         logger.error("无法启动测试")
         engine.cleanup()
-        return
+        return None
 
     # 运行测试，期间监控负载均衡
     start_time = time.time()
@@ -323,7 +319,7 @@ def test_load_balancing():
         time.sleep(10)
         # 获取工作负载统计
         workload_stats = engine.get_workload_stats()
-        logger.info(f"负载均衡监控: {workload_stats}")
+        logger.info("负载均衡监控: %s", workload_stats)
 
         # 获取性能历史
         performance_history = engine.get_performance_history()
@@ -378,7 +374,7 @@ def main():
     if test_results["batch_size"]:
         best_batch = max(test_results["batch_size"], key=lambda x: x["throughput"])
         logger.info(
-            f"最佳批次大小: {best_batch['batch_size']} (吞吐量: {best_batch['throughput']:.0f} keys/s)"
+            f"最佳批次大小: {best_batch['batch_size']} (吞吐量: {best_batch['throughput']:.0f} keys/s)",
         )
 
     logger.info("所有测试已完成！")

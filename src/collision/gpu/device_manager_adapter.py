@@ -45,6 +45,7 @@ class DeviceManagerAdapter:
         Args:
             config: 配置字典
             device_index: 默认设备索引，-1 表示自动选择
+
         """
         self.config = config or {}
         self._default_device_index = device_index
@@ -63,6 +64,7 @@ class DeviceManagerAdapter:
 
         Returns:
             GPUDevice 列表
+
         """
         try:
             from ...gpu.device import GPUDeviceDetector, identify_vendor
@@ -89,7 +91,7 @@ class DeviceManagerAdapter:
             return devices
 
         except Exception as e:
-            logger.error(f"列举 GPU 设备失败: {e}")
+            logger.error("列举 GPU 设备失败: %s", e)
             return []
 
     def select_device(self, device_index: int = -1) -> GPUDevice:
@@ -103,6 +105,7 @@ class DeviceManagerAdapter:
 
         Raises:
             RuntimeError: 没有可用设备或设备初始化失败
+
         """
         idx = device_index if device_index >= 0 else self._default_device_index
 
@@ -148,7 +151,7 @@ class DeviceManagerAdapter:
         except RuntimeError:
             raise
         except Exception as e:
-            logger.error(f"选择 GPU 设备失败: {e}")
+            logger.error("选择 GPU 设备失败: %s", e)
             raise RuntimeError(f"选择 GPU 设备失败: {e}") from e
 
     def create_context(self, device: GPUDevice) -> GPUContext:
@@ -162,6 +165,7 @@ class DeviceManagerAdapter:
 
         Raises:
             RuntimeError: 上下文创建失败
+
         """
         try:
             from ...gpu.context import GPUContext as GPUContextImpl
@@ -189,7 +193,7 @@ class DeviceManagerAdapter:
         except RuntimeError:
             raise
         except Exception as e:
-            logger.error(f"创建 GPU 上下文失败: {e}")
+            logger.error("创建 GPU 上下文失败: %s", e)
             raise RuntimeError(f"创建 GPU 上下文失败: {e}") from e
 
     def release_all(self) -> None:
@@ -213,7 +217,7 @@ class DeviceManagerAdapter:
             logger.info("设备管理器：GPU 资源已释放")
 
         except Exception as e:
-            logger.error(f"释放 GPU 资源失败: {e}")
+            logger.error("释放 GPU 资源失败: %s", e)
 
     def get_native_device(self) -> Any:
         """获取底层 GPUDevice 实例
@@ -222,6 +226,7 @@ class DeviceManagerAdapter:
 
         Returns:
             底层 GPUDevice 实例，未初始化时返回 None
+
         """
         return self._gpu_device
 
@@ -230,6 +235,7 @@ class DeviceManagerAdapter:
 
         Returns:
             底层 GPUContext 实例，未初始化时返回 None
+
         """
         return self._gpu_context
 
@@ -238,6 +244,7 @@ class DeviceManagerAdapter:
 
         Returns:
             是否启用异步执行
+
         """
         enable_async = True
 

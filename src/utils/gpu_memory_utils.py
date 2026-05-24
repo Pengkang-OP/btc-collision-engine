@@ -33,6 +33,7 @@ class BatchSizeConfig:
         max_batch_size: 最大batch_size，默认8388608 (8M)
         memory_alignment: 内存对齐字节数，默认1024
         per_key_memory: 每个私钥的内存占用（字节），默认36 (32+4)
+
     """
 
     memory_usage_ratio: float = 0.5
@@ -46,6 +47,7 @@ class BatchSizeConfig:
 
         Raises:
             ValueError: 当配置参数无效时
+
         """
         if not (0 < self.memory_usage_ratio <= 1.0):
             raise ValueError(f"memory_usage_ratio必须在(0, 1]范围内: {self.memory_usage_ratio}")
@@ -55,7 +57,7 @@ class BatchSizeConfig:
 
         if self.max_batch_size < self.min_batch_size:
             raise ValueError(
-                f"max_batch_size({self.max_batch_size})必须>=min_batch_size({self.min_batch_size})"
+                f"max_batch_size({self.max_batch_size})必须>=min_batch_size({self.min_batch_size})",
             )
 
         if self.memory_alignment <= 0:
@@ -130,6 +132,7 @@ def calculate_optimal_batch_size(
         >>> from src.utils.gpu_memory_utils import BatchSizeConfig
         >>> config = BatchSizeConfig(memory_usage_ratio=0.7, min_batch_size=2048)
         >>> batch_size = calculate_optimal_batch_size(device, config=config)
+
     """
     # 使用默认配置
     if config is None:

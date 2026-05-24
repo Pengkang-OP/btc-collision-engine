@@ -10,7 +10,7 @@ v4.2.2: H5修复 - 设备丢失恢复失败时发布 ENGINE_ERROR 事件。
 import struct
 import time
 from collections.abc import Callable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 # v4.2.2 S4: 将循环内 WIF 导入提升到模块级别
 from ...core.wif import WIF
@@ -33,10 +33,12 @@ class BaseSearchMode:
     避免在模块间复制状态。
     """
 
+    __slots__ = ("engine",)
+
     def __init__(self, engine: "GPUCollisionEngine") -> None:
-        """
-        Args:
-            engine: GPUCollisionEngine 实例引用
+        """Args:
+        engine: GPUCollisionEngine 实例引用
+
         """
         self.engine = engine
 
@@ -47,7 +49,7 @@ class BaseSearchMode:
     # ── _execute_batch_loop 辅助方法（降低 C901） ────────────────
 
     def _process_batch_matches(
-        self, matches: list, batch_data: bytes, key_extractor_fn, mode_name: str
+        self, matches: list, batch_data: bytes, key_extractor_fn, mode_name: str,
     ) -> None:
         """处理一批 GPU 匹配结果：提取私钥、WIF 编码、触发回调。"""
         engine = self.engine
@@ -89,6 +91,7 @@ class BaseSearchMode:
         Returns:
             int: 应返回的 batch_count（发生致命错误时）。
             None: 应 continue 继续执行。
+
         """
         engine = self.engine
         ExceptionHandler.handle_gpu_error(mode_name, error, engine.stats)
@@ -103,12 +106,12 @@ class BaseSearchMode:
             return None  # continue
 
         if "timeout" in error_str or "command_execution" in error_str:
-            logger.warning(f"GPU执行超时: {error}")
+            logger.warning("GPU执行超时: %s", error)
             # fall through to error counting
 
         elif "device" in error_str and ("lost" in error_str or "not found" in error_str):
             recovery_mgr = getattr(engine, "_recovery_manager", None) or getattr(
-                engine, "gpu_recovery_manager", None
+                engine, "gpu_recovery_manager", None,
             )
             if recovery_mgr is not None:
                 try:
@@ -117,7 +120,7 @@ class BaseSearchMode:
                         logger.info("GPU设备恢复成功")
                         return None  # continue
                 except Exception as recovery_err:
-                    logger.error(f"GPU恢复失败: {recovery_err}")
+                    logger.error("GPU恢复失败: %s", recovery_err)
             # 恢复失败 → 停止引擎
             try:
                 if hasattr(engine, "event_bus") and engine.event_bus:
@@ -130,7 +133,7 @@ class BaseSearchMode:
                             exception=error,
                             context={"gpu_id": getattr(engine, "device_index", 0)},
                             recoverable=False,
-                        )
+                        ),
                     )
             except (RuntimeError, AttributeError):
                 logger.debug("发布 ENGINE_ERROR 事件失败（非致命）", exc_info=True)
@@ -142,7 +145,7 @@ class BaseSearchMode:
             engine._consecutive_gpu_errors += 1
             if engine._consecutive_gpu_errors >= engine._max_gpu_error_retries:
                 _max_retry = engine._max_gpu_error_retries
-                logger.critical(f"GPU连续错误达上限({_max_retry}), 强制停止引擎防止无限循环")
+                logger.critical("GPU连续错误达上限(%s), 强制停止引擎防止无限循环", _max_retry)
                 engine._running = False
                 return engine.stats.total_checked if engine.stats else 0
         return None  # continue
@@ -217,6 +220,7 @@ class BaseSearchMode:
 
         Returns:
             连续的私钥字节串（每个32字节，大端序），共 count * 32 字节
+
         """
         keys_data = bytearray(count * 32)
         offset = 0

@@ -16,6 +16,7 @@ import secrets
 import threading
 from collections.abc import Callable
 from enum import Enum
+from typing import Optional, cast
 
 from ...core.secp256k1 import Secp256k1  # v4.2.2: 统一从 secp256k1 获取曲线参数
 
@@ -49,6 +50,7 @@ class KeyGenerator:
 
         Args:
             strategy: 私钥生成策略
+
         """
         self._strategy = strategy
         self._lock = threading.RLock()
@@ -89,6 +91,7 @@ class KeyGenerator:
 
         Raises:
             ValueError: 如果种子不是32字节
+
         """
         if len(seed) != 32:
             raise ValueError(f"种子必须是32字节，当前: {len(seed)}字节")
@@ -113,30 +116,29 @@ class KeyGenerator:
             if self._is_valid_private_key(key):
                 self._valid_count += 1
                 return key
-            else:
+            self._invalid_count += 1
+            # M-1修复: 改为迭代实现，避免递归栈溢出风险
+            # SEVERE-1修复: 只在重试时递增计数器，初次尝试已在上面计数
+            for retry in range(1000):
+                new_index = index + retry + 1
+                if self._strategy == KeyGenerationStrategy.PRNG_SEED:
+                    key = self._generate_prng_seed(seed, new_index)
+                elif self._strategy == KeyGenerationStrategy.AES_CTR:
+                    key = self._generate_aes_ctr(seed, new_index)
+                elif self._strategy == KeyGenerationStrategy.CHACHA20:
+                    key = self._generate_chacha20(seed, new_index)
+                elif self._strategy == KeyGenerationStrategy.RANDOM:
+                    key = self._generate_random()
+                elif self._strategy == KeyGenerationStrategy.DETERMINISTIC:
+                    key = self._generate_deterministic(seed, new_index)
+                else:
+                    key = self._generate_prng_seed(seed, new_index)
+                if self._is_valid_private_key(key):
+                    self._valid_count += 1
+                    return key
+                self._generated_count += 1
                 self._invalid_count += 1
-                # M-1修复: 改为迭代实现，避免递归栈溢出风险
-                # SEVERE-1修复: 只在重试时递增计数器，初次尝试已在上面计数
-                for retry in range(1000):
-                    new_index = index + retry + 1
-                    if self._strategy == KeyGenerationStrategy.PRNG_SEED:
-                        key = self._generate_prng_seed(seed, new_index)
-                    elif self._strategy == KeyGenerationStrategy.AES_CTR:
-                        key = self._generate_aes_ctr(seed, new_index)
-                    elif self._strategy == KeyGenerationStrategy.CHACHA20:
-                        key = self._generate_chacha20(seed, new_index)
-                    elif self._strategy == KeyGenerationStrategy.RANDOM:
-                        key = self._generate_random()
-                    elif self._strategy == KeyGenerationStrategy.DETERMINISTIC:
-                        key = self._generate_deterministic(seed, new_index)
-                    else:
-                        key = self._generate_prng_seed(seed, new_index)
-                    if self._is_valid_private_key(key):
-                        self._valid_count += 1
-                        return key
-                    self._generated_count += 1
-                    self._invalid_count += 1
-                raise ValueError("无法在1000次重试内为种子生成有效私钥")
+            raise ValueError("无法在1000次重试内为种子生成有效私钥")
 
     def generate_private_keys(self, seed: bytes, count: int, start_index: int = 0) -> list[bytes]:
         """批量生成私钥
@@ -148,6 +150,7 @@ class KeyGenerator:
 
         Returns:
             私钥列表
+
         """
         keys = []
         for i in range(start_index, start_index + count):
@@ -157,14 +160,18 @@ class KeyGenerator:
     def _generate_prng_seed(self, seed: bytes, index: int) -> bytes:
         """基于种子的线性确定性私钥生成（默认策略）
 
-        算法: key = (seed + index) mod N，确保在 secp256k1 有效范围内。
+        算法: key = (seed + index) mod 2^256，与 GPU 内核 batch_check.cl 中的
+        generate_private_key() 行为一致（256 位自然溢出）。
+
+        此方法不在此处校验私钥范围；调用方 generate_private_key() 会通过
+        _is_valid_private_key() 进行范围校验（1 <= k < SECP256K1_N），
+        与 GPU 内核在 batch_check.cl:1240 中的校验逻辑一致。
+
         注意: 这不是密码学安全的 PRNG，仅用于 GPU 批量碰撞中的快速密钥派生。
         如需更高安全性，请使用 AES_CTR 或 CHACHA20 策略。
         """
         seed_int = int.from_bytes(seed, "big")
-        key_int = (seed_int + index) % SECP256K1_N
-        if key_int == 0:
-            key_int = 1  # 确保私钥不为零（0 不是有效的 secp256k1 私钥）
+        key_int = (seed_int + index) % (2**256)
         return key_int.to_bytes(32, "big")
 
     def _generate_aes_ctr(self, seed: bytes, index: int) -> bytes:
@@ -266,6 +273,7 @@ class KeyGenerator:
 
         Returns:
             True如果私钥有效，否则False
+
         """
         if len(key) != 32:
             return False
@@ -278,6 +286,7 @@ class KeyGenerator:
 
         Args:
             key: 需要清零的私钥数据
+
         """
         if isinstance(key, bytearray):
             for i in range(len(key)):
@@ -290,6 +299,7 @@ class KeyGenerator:
 
         Returns:
             统计信息字典
+
         """
         return {
             "generated_count": self._generated_count,
@@ -323,6 +333,7 @@ class BatchKeyGenerator:
             strategy: 生成策略
             parallel_enabled: 是否启用并行生成
             max_workers: 最大工作线程数（None表示使用CPU核心数）
+
         """
         self._generator = KeyGenerator(strategy)
         self._parallel_enabled = parallel_enabled
@@ -345,11 +356,11 @@ class BatchKeyGenerator:
 
         Returns:
             私钥列表
+
         """
         if self._parallel_enabled and batch_size > 1000:
             return self._generate_parallel(seed, batch_size, start_index, progress_callback)
-        else:
-            return self._generate_serial(seed, batch_size, start_index, progress_callback)
+        return self._generate_serial(seed, batch_size, start_index, progress_callback)
 
     def _generate_serial(
         self,
@@ -376,7 +387,7 @@ class BatchKeyGenerator:
         """并行生成私钥"""
         import concurrent.futures
 
-        keys: list[bytes] = [None] * batch_size  # type: ignore[list-item]
+        keys: list[Optional[bytes]] = [None] * batch_size
         completed = 0
 
         def generate_chunk(chunk_start: int, chunk_end: int, chunk_index: int) -> None:
@@ -387,7 +398,7 @@ class BatchKeyGenerator:
 
             # S-1修复: 直接使用 j 作为数组索引，因为 chunk_keys 的长度与当前块大小一致
             for j, key in enumerate(chunk_keys):
-                keys[chunk_start + j] = key  # type: ignore[call-overload]
+                keys[chunk_start + j] = key
 
             # 更新进度
             if progress_callback:
@@ -414,7 +425,7 @@ class BatchKeyGenerator:
             # 等待所有任务完成
             concurrent.futures.wait(futures)
 
-        return keys  # type: ignore[return-value]
+        return cast("list[bytes]", keys)
 
     @property
     def strategy(self) -> KeyGenerationStrategy:
@@ -446,6 +457,7 @@ def get_key_generator(
 
     Returns:
         KeyGenerator实例
+
     """
     global _global_key_generator
 
@@ -466,6 +478,7 @@ def generate_private_key(seed: bytes, index: int) -> bytes:
 
     Returns:
         32字节私钥
+
     """
     generator = get_key_generator()
     return generator.generate_private_key(seed, index)
@@ -481,6 +494,7 @@ def generate_private_keys(seed: bytes, count: int, start_index: int = 0) -> list
 
     Returns:
         私钥列表
+
     """
     generator = get_key_generator()
     return generator.generate_private_keys(seed, count, start_index)

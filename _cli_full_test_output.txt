@@ -1,0 +1,62 @@
+
+[1m============================================================[0m
+[1m CLI Full-Feature Multi-Mode Test (v5.1)[0m
+[1m============================================================[0m
+  GPUs: NVIDIA GTX 1660 Ti (device 0) + Intel Arc A770 (device 1)
+  Config: config.json (batch_size=1M, queue_depth=auto, async=true)
+
+[1m--- Phase 1: Utility/Tool Commands ---[0m
+  [[32mOK[0m] --version (0.9s)
+  [[32mOK[0m] --examples (0.7s)
+  [[32mOK[0m] --config-check (0.8s)
+  [[32mOK[0m] --recommend (1.4s)
+  [[32mOK[0m] --platform-check (0.7s)
+  [[32mOK[0m] --health-check (0.9s)
+  [[32mOK[0m] --validate-addresses (0.9s)
+
+[1m--- Phase 2: Random Mode ---[0m
+  [[32mOK[0m] random + auto GPU (5.8s @ 1096579 keys/s)
+  [[32mOK[0m] random + NVIDIA GPU (dev 0) (6.0s @ 1125410 keys/s)
+  [[32mOK[0m] random + Intel GPU (dev 1) (6.0s @ 1117014 keys/s)
+  [[32mOK[0m] random + Multi-GPU (6.1s @ 1048537 keys/s)
+  [[32mOK[0m] random + Multi-GPU (indices 0 1) (6.0s @ 1130731 keys/s)
+  [[32mOK[0m] random + Multi-GPU (count=1) (6.1s @ 1142991 keys/s)
+  [[32mOK[0m] random + GPU batch_size=500000 (6.1s @ 1113193 keys/s)
+  [[32mOK[0m] random + GPU + checkpoint (8.0s @ 1138809 keys/s)
+  [[32mOK[0m] random + GPU + dedup (6.0s @ 1101304 keys/s)
+  [[32mOK[0m] random + GPU + dedup + checkpoint (8.2s @ 1047287 keys/s)
+
+[1m--- Phase 3: Range Mode ---[0m
+  [[32mOK[0m] range + GPU (NVIDIA) (6.4s @ 1082391 keys/s)
+  [[32mOK[0m] range + GPU (Intel) (6.3s @ 1084518 keys/s)
+  [[32mOK[0m] range + Multi-GPU (6.3s @ 982020 keys/s)
+
+[1m--- Phase 4: Brute Force Mode ---[0m
+  [[32mOK[0m] brute_force + GPU (NVIDIA) (6.4s @ 1068347 keys/s)
+  [[32mOK[0m] brute_force + GPU (Intel) (6.0s @ 1122105 keys/s)
+
+[1m--- Phase 5: Parameter Combinations ---[0m
+  [[32mOK[0m] random + GPU + verbose (-v) (5.0s @ 1109050 keys/s)
+  [[32mOK[0m] random + GPU + verbose (-vv) (5.0s @ 1100134 keys/s)
+  [[32mOK[0m] random + GPU + sensitive=hash_only (5.1s @ 939347 keys/s)
+  [[32mOK[0m] random + GPU + export-progress (5.0s @ 1081348 keys/s)
+  [[32mOK[0m] random + GPU + no-color (5.1s @ 1106552 keys/s)
+  [[32mOK[0m] random + GPU + en_US (5.0s @ 1192182 keys/s)
+
+[1m--- Phase 6: Edge Cases ---[0m
+  [[32mOK[0m] random + NVIDIA + workers=2 (5.1s @ 1127637 keys/s)
+  [[32mOK[0m] random + Intel + auto-tune (6.1s @ 1070194 keys/s)
+  [[32mOK[0m] random + NVIDIA + progress-interval=2 (6.2s @ 1307497 keys/s)
+  [[32mOK[0m] random + GPU + skip-security-check (5.0s @ 1080474 keys/s)
+  [[32mOK[0m] quick-run with GPU (0.7s)
+  [[32mOK[0m] template quick-test + run (0.9s)
+
+[1m============================================================[0m
+[1m Test Summary[0m
+[1m============================================================[0m
+  [32mPASSED[0m: 34
+  [31mFAILED[0m: 0
+  [33mERRORS[0m: 0
+  Total: 34
+
+Results saved to _cli_full_test_results.json

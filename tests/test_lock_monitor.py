@@ -194,7 +194,7 @@ class TestLockMonitorReset:
     """重置测试"""
 
     def test_reset_clears_all(self, monitor):
-        """reset 清空所有数据"""
+        """Reset 清空所有数据"""
         monitor.record_lock_acquire("lock_a", 5.0)
         monitor.record_lock_release("lock_a", 10.0)
         monitor.record_lock_acquire("lock_b", 3.0)

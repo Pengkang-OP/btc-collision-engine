@@ -215,8 +215,8 @@ class TestAsyncExecutorInit:
         gpu_device = MagicMock()
         gpu_device.device_info = {"name": "NVIDIA GeForce GTX 1660 SUPER"}
         executor = AsyncGPUExecutor(gpu_device, max_batch_size=10000)
-        # Should use GPU specific config max_batch_size (524288) over constructor param
-        assert executor.max_batch_size == 524288
+        # Should use GPU specific config max_batch_size (2097152, v5.1.1 4x upgrade) over constructor param
+        assert executor.max_batch_size == 2097152
 
     def test_init_initial_state(self):
         from src.gpu.async_executor import AsyncGPUExecutor
@@ -592,12 +592,14 @@ class TestCleanup:
         executor = AsyncGPUExecutor(gpu_device, max_batch_size=262144)
 
         mock_seed_buf = MagicMock()
-        executor.seed_buffer = mock_seed_buf
+        # v5.1.1: cleanup() iterates _seed_buffer_pool, not self.seed_buffer directly
+        executor._seed_buffer_pool = [mock_seed_buf]
 
         executor.cleanup()
 
         mock_seed_buf.release.assert_called_once()
         assert executor.seed_buffer is None
+        assert len(executor._seed_buffer_pool) == 0
 
     def test_cleanup_with_precomp_buffer(self):
         from src.gpu.async_executor import AsyncGPUExecutor

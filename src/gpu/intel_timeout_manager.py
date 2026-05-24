@@ -34,6 +34,11 @@ class AdaptiveTimeoutManager:
         >>> print(f"建议超时: {timeout:.1f}秒")
     """
 
+    __slots__ = (
+        "base_timeout", "history_size", "safety_factor", "min_timeout", "max_timeout",
+        "_execution_times", "_total_records", "_timeout_adjustments", "_last_timeout",
+    )
+
     def __init__(
         self,
         base_timeout: float = 30.0,
@@ -50,6 +55,7 @@ class AdaptiveTimeoutManager:
             safety_factor: 安全因子（标准差的倍数）
             min_timeout: 最小超时（秒）
             max_timeout: 最大超时（秒）
+
         """
         self.base_timeout = base_timeout
         self.history_size = history_size
@@ -66,9 +72,10 @@ class AdaptiveTimeoutManager:
         self._last_timeout = base_timeout
 
         logger.info(
-            "自适应超时管理器已初始化: "
-            f"base={base_timeout}s, history={history_size}, "
-            f"safety={safety_factor}x, range=[{min_timeout}s, {max_timeout}s]"
+            "自适应超时管理器已初始化: base=%ss, history=%s, "
+            "safety=%sx, range=[%ss, %ss]",
+            base_timeout, history_size, safety_factor,
+            min_timeout, max_timeout,
         )
 
     def record_execution_time(self, time_ms: float) -> None:
@@ -76,9 +83,10 @@ class AdaptiveTimeoutManager:
 
         Args:
             time_ms: 执行时间（毫秒）
+
         """
         if time_ms < 0:
-            logger.warning(f"忽略负的执行时间: {time_ms}")
+            logger.warning("忽略负的执行时间: %s", time_ms)
             return
 
         if time_ms > 600000:  # 10 分钟
@@ -99,10 +107,11 @@ class AdaptiveTimeoutManager:
 
         Returns:
             超时时间（秒）
+
         """
         if len(self._execution_times) < 3:
             logger.debug(
-                f"历史数据不足 ({len(self._execution_times)} < 3)，使用基础超时: {self.base_timeout}s"
+                f"历史数据不足 ({len(self._execution_times)} < 3)，使用基础超时: {self.base_timeout}s",
             )
             return self.base_timeout
 
@@ -129,7 +138,7 @@ class AdaptiveTimeoutManager:
             logger.info(
                 f"超时调整: {self._last_timeout:.1f}s -> {final_timeout:.1f}s "
                 f"(mean={mean_time:.0f}ms, std={std_dev:.0f}ms, "
-                f"n={len(times_list)})"
+                f"n={len(times_list)})",
             )
             self._last_timeout = final_timeout
 
@@ -140,6 +149,7 @@ class AdaptiveTimeoutManager:
 
         Returns:
             包含统计信息的字典
+
         """
         if not self._execution_times:
             return {
@@ -190,6 +200,7 @@ class AdaptiveTimeoutManager:
 
         Returns:
             如果执行时间超过阈值返回 True
+
         """
         timeout_ms = self.get_timeout() * 1000
         return execution_time_ms > timeout_ms * 0.8  # 超过 80% 就警告

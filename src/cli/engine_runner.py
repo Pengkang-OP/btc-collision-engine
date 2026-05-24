@@ -1,12 +1,11 @@
 """Engine runner with lifecycle functions for CLI main flow."""
 
 import signal
-import sys
+import threading
 import time
 from typing import Any
 
-from ..collision.event_bus import EventBus
-from ..collision.events import EngineStopEvent
+
 from ..i18n import _t
 from ..monitoring.alert_system import AlertSystem
 from ..utils import get_configured_logger
@@ -47,7 +46,7 @@ def _print_config_info(
     print(f"  模式: {getattr(args, 'mode', 'random')}")
     print(f"  目标地址数: {len(targets)}")
     print(f"  工作线程: {getattr(args, 'workers', 'auto')}")
-    print(f"  GPU: {'是' if getattr(args, 'use_gpu', False) else '否'}")
+    print(f"  GPU: {'是' if getattr(args, 'use_gpu', False) or getattr(args, 'multi_gpu', False) else '否'}")
     print(f"  断点续传: {'是' if getattr(args, 'checkpoint', False) else '否'}")
     print(f"  去重: {'是' if getattr(args, 'dedup', False) else '否'}")
     if start_val and end_val:
@@ -72,20 +71,23 @@ def _setup_and_start_engine(
     Returns:
         (engine, engine_type, alert_system, stop_event)
     """
-    use_gpu = getattr(args, "use_gpu", False)
-    mode = getattr(args, "mode", "random")
+    use_gpu = getattr(args, "use_gpu", False) or getattr(args, "multi_gpu", False)
 
     if use_gpu:
         from ..gpu.facade import GPUFacade
 
-        engine = GPUFacade(config=config)
+        engine = GPUFacade(
+            targets=list(targets),
+            config=config,
+            checkpoint_enabled=getattr(args, "checkpoint", False),
+            dedup_enabled=getattr(args, "dedup", False),
+        )
         engine_type = "GPU"
     else:
         from ..collision.key_collision_engine import KeyCollisionEngine
 
         engine = KeyCollisionEngine(
             targets=targets,
-            use_gpu=False,
             checkpoint_enabled=getattr(args, "checkpoint", False),
             dedup_enabled=getattr(args, "dedup", False),
         )
@@ -93,17 +95,14 @@ def _setup_and_start_engine(
 
     # 初始化告警系统
     alert_system = AlertSystem()
-    alert_system.initialize()
+    alert_system.setup_default_rules()
 
-    # 注册事件
-    event_bus = EventBus.get_instance()
-    event_bus.subscribe(EngineStopEvent, alert_system.on_engine_stop)
-
-    # 信号处理
-    stop_event = time.time()  # placeholder for graceful stop tracking
+    # 停止事件：用于优雅停止的跨线程通信
+    stop_event = threading.Event()
 
     def _sig_handler(signum, frame):
         logger.info("收到信号 %s，开始优雅停止", signum)
+        stop_event.set()
         engine.stop()
 
     signal.signal(signal.SIGINT, _sig_handler)
@@ -122,7 +121,7 @@ def _run_collision_loop(
     args: Any,
     total_range: int | None,
     alert_system: AlertSystem,
-    stop_event: float,
+    stop_event: threading.Event,
 ) -> None:
     """阶段7: 主运行循环，显示实时进度。"""
     from ..cli.progress import format_progress
@@ -131,12 +130,13 @@ def _run_collision_loop(
     start_time = time.time()
 
     try:
-        while engine.is_running():
+        while engine.is_running() and not stop_event.is_set():
             time.sleep(1.0)
 
             # 超时检查
             if duration and (time.time() - start_time) >= duration:
                 logger.info("运行时限 %s 秒已达，停止引擎", duration)
+                stop_event.set()
                 engine.stop()
                 break
 
@@ -156,6 +156,7 @@ def _run_collision_loop(
 
     except KeyboardInterrupt:
         logger.info("用户中断")
+        stop_event.set()
         engine.stop()
     finally:
         print()  # 换行

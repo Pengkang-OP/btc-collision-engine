@@ -16,10 +16,6 @@ import json
 import sys
 from pathlib import Path
 
-# 添加项目根目录
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-
 def detect_all_gpus():
     """检测所有GPU设备"""
     try:

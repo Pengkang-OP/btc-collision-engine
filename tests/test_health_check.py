@@ -18,6 +18,7 @@
 
 import json
 import os
+import pathlib
 import sys
 import tempfile
 from unittest.mock import Mock, patch
@@ -45,12 +46,12 @@ def checker_with_config():
     with tempfile.TemporaryDirectory() as tmpdir:
         # 创建 config.json
         config_path = os.path.join(tmpdir, "config.json")
-        with open(config_path, "w", encoding="utf-8") as f:
+        with pathlib.Path(config_path).open("w", encoding="utf-8") as f:
             json.dump({"collision": {}, "gpu": {}, "logging": {}}, f)
 
         # 创建必要目录
         for d in ["logs", "data_logs", "monitoring_data"]:
-            os.makedirs(os.path.join(tmpdir, d), exist_ok=True)
+            pathlib.Path(os.path.join(tmpdir, d)).mkdir(exist_ok=True, parents=True)
 
         c = HealthChecker(project_root=tmpdir)
         yield c
@@ -124,8 +125,7 @@ class TestConfigFileCheck:
     def test_invalid_json_config(self, checker):
         """无效 JSON 配置文件"""
         config_path = os.path.join(checker.project_root, "config.json")
-        with open(config_path, "w", encoding="utf-8") as f:
-            f.write("not valid json{{{")
+        pathlib.Path(config_path).write_text("not valid json{{{", encoding="utf-8")
 
         passed, message = checker.check_config_file()
         assert passed is False
@@ -134,7 +134,7 @@ class TestConfigFileCheck:
     def test_config_not_dict(self, checker):
         """配置文件根节点不是字典"""
         config_path = os.path.join(checker.project_root, "config.json")
-        with open(config_path, "w", encoding="utf-8") as f:
+        with pathlib.Path(config_path).open("w", encoding="utf-8") as f:
             json.dump(["list", "not", "dict"], f)
 
         passed, message = checker.check_config_file()

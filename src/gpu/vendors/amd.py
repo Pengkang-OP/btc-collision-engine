@@ -11,7 +11,6 @@ from typing import Any
 
 # 统一日志获取
 from ...utils import get_configured_logger
-from ..constants import PER_KEY_MEMORY_BYTES, align_batch_size
 from .base import GPUVendorBase
 
 logger = get_configured_logger("AMDVendor")
@@ -20,12 +19,15 @@ logger = get_configured_logger("AMDVendor")
 class AMDGPUVendor(GPUVendorBase):
     """AMD GPU优化处理器"""
 
+    _RECOMMENDED_BATCH: int = 524288
+    _MAX_BATCH: int = 1048576
+    _MEMORY_EFFICIENCY: float = 0.55
+
     def get_vendor_name(self) -> str:
         return "AMD"
 
     def apply_optimizations(self, device: Any, profile: dict[str, Any]) -> None:
-        """
-        应用AMD特定优化
+        """应用AMD特定优化
 
         优化策略:
         1. 内存合并访问优化
@@ -77,51 +79,3 @@ class AMDGPUVendor(GPUVendorBase):
 
         memory_efficiency = profile.get("memory_efficiency", 0.5)
         logger.debug(f"AMD GPU内存效率: {memory_efficiency * 100:.0f}%")
-
-    def calculate_batch_size(self, device: Any, profile: dict[str, Any]) -> int:
-        """
-        计算AMD GPU的最优batch_size
-
-        策略:
-        1. 使用profile中的recommended_batch_size作为基准
-        2. 根据显存大小和内存效率调整
-        3. 考虑Infinity Cache的影响
-        """
-        recommended = profile.get("recommended_batch_size", 524288)
-        maximum = profile.get("max_batch_size", 1048576)
-        memory_efficiency = profile.get("memory_efficiency", 0.55)
-
-        # 根据显存计算理论最大值
-        global_mem = device.device_info.get("global_mem_size", 0)
-        per_key_memory = PER_KEY_MEMORY_BYTES
-        mem_based_max = int((global_mem * memory_efficiency) / per_key_memory)
-
-        # 取三者最小值
-        optimal = min(recommended, maximum, mem_based_max)
-
-        # 向下对齐到1024的倍数，并确保不低于最小值
-        optimal = align_batch_size(optimal)
-
-        logger.info(
-            f"AMD batch_size: recommended={recommended}, mem={mem_based_max}, optimal={optimal}"
-        )
-
-        return optimal
-
-    def handle_errors(self, error: Exception, stats: Any | None = None) -> bool:
-        """
-        处理AMD GPU特定错误
-        """
-        error_msg = str(error).lower()
-
-        # 资源不足错误
-        if any(
-            keyword in error_msg
-            for keyword in ["out of memory", "out of resources", "allocation failed"]
-        ):
-            logger.error(f"AMD GPU资源不足: {error}")
-            if stats:
-                stats.record_gpu_error(is_resource_error=True)
-            return True
-
-        return super().handle_errors(error, stats)

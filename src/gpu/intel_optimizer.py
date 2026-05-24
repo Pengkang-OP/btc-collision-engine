@@ -19,11 +19,11 @@ logger = get_configured_logger("IntelOptimizer")
 
 # 延迟导入避免循环依赖
 if TYPE_CHECKING:
-    from .auto_tuner import GPUAutoTuner  # noqa: F401
-    from .benchmark_suite import GPUBenchmarkSuite  # noqa: F401
-    from .intel_memory_monitor import IntelMemoryMonitor  # noqa: F401
-    from .intel_timeout_manager import AdaptiveTimeoutManager  # noqa: F401
-    from .performance_reporter import PerformanceReportGenerator  # noqa: F401
+    from .auto_tuner import GPUAutoTuner
+    from .benchmark_suite import GPUBenchmarkSuite
+    from .intel_memory_monitor import IntelMemoryMonitor
+    from .intel_timeout_manager import AdaptiveTimeoutManager
+    from .performance_reporter import PerformanceReportGenerator
 
 
 class IntelGPUOptimizer:
@@ -35,7 +35,14 @@ class IntelGPUOptimizer:
         device: GPU 设备对象（GPUDevice 实例）
         config: 引擎配置字典
         logger: 可选的日志记录器，默认使用模块级 logger
+
     """
+
+    __slots__ = (
+        "_device", "_config", "_logger",
+        "_timeout_manager", "_memory_monitor",
+        "_benchmark_suite", "_auto_tuner", "_performance_reporter",
+    )
 
     def __init__(self, device: Any, config: dict[str, Any], engine_logger: Any = None) -> None:
         self._device = device
@@ -66,9 +73,10 @@ class IntelGPUOptimizer:
 
         Raises:
             RuntimeError: 如果 uint32 workaround 验证失败
+
         """
         self._logger.info("=" * 60)
-        self._logger.info("🔧 开始应用 Intel GPU 特殊优化")
+        self._logger.info("[*] 开始应用 Intel GPU 特殊优化")
         self._logger.info("=" * 60)
 
         result: dict[str, Any] = {}
@@ -76,7 +84,7 @@ class IntelGPUOptimizer:
         # 1. 验证 uint32 workaround
         kernel_source = engine_context.get("kernel_source", "")
         if not self._verify_uint32_workaround(kernel_source):
-            self._logger.error("❌ Intel uint32 workaround 验证失败")
+            self._logger.error("[ERR] Intel uint32 workaround 验证失败")
             raise RuntimeError("Intel GPU workaround 未正确应用，无法继续")
         result["uint32_workaround_verified"] = True
 
@@ -86,32 +94,32 @@ class IntelGPUOptimizer:
 
         # 3. 读取超时配置
         timeout = getattr(self._device, "timeout_seconds", 30)
-        self._logger.info(f"✅ Intel 超时保护: {timeout}秒")
+        self._logger.info("[OK] Intel 超时保护: %s秒", timeout)
         result["timeout_seconds"] = timeout
 
         # 4. 异步执行状态
         async_enabled = getattr(self._device, "enable_async_execution", False)
         if async_enabled:
-            self._logger.info("✅ Intel 异步执行: 已启用(双缓冲优化)")
+            self._logger.info("[OK] Intel 异步执行: 已启用(双缓冲优化)")
         else:
             self._logger.info("Intel 异步执行: 未启用(传统模式)")
         result["async_enabled"] = async_enabled
 
         # 5. 显存效率
         memory_efficiency = getattr(self._device, "memory_efficiency", 0.70)
-        self._logger.info(f"✅ Intel 显存效率: {memory_efficiency * 100:.0f}%")
+        self._logger.info("[OK] Intel 显存效率: %.0f%%", memory_efficiency * 100)
         result["memory_efficiency"] = memory_efficiency
 
         # 6. 驱动版本检查
         if hasattr(self._device, "driver_version") and self._device.driver_version:
-            self._logger.info(f"✅ Intel 驱动版本: {self._device.driver_version}")
+            self._logger.info("[OK] Intel 驱动版本: %s", self._device.driver_version)
             result["driver_version"] = self._device.driver_version
         else:
-            self._logger.warning("⚠️ 无法检测 Intel 驱动版本")
+            self._logger.warning("[WARN] 无法检测 Intel 驱动版本")
             result["driver_version"] = None
 
         self._logger.info("=" * 60)
-        self._logger.info("✅ Intel GPU 特殊优化应用完成")
+        self._logger.info("[OK] Intel GPU 特殊优化应用完成")
         self._logger.info("=" * 60)
 
         return result
@@ -119,7 +127,8 @@ class IntelGPUOptimizer:
     @staticmethod
     def _lazy_import_components() -> tuple:
         """延迟导入所有 5 个监控/调优组件类，返回 (Timeout, Memory, Benchmark, Tuner, Reporter)。
-        导入失败的组件对应位置为 None。"""
+        导入失败的组件对应位置为 None。
+        """
         classes = []
         for mod_rel, cls_name in [
             (".intel_timeout_manager", "AdaptiveTimeoutManager"),
@@ -166,24 +175,24 @@ class IntelGPUOptimizer:
             if not isinstance(device_info, dict):
                 self._logger.warning(
                     f"⚠️ device_info 类型异常: {type(device_info).__name__}, 跳过显存监控器初始化\n"
-                    "   显存监控功能将被禁用"
+                    "   显存监控功能将被禁用",
                 )
                 return
             total_memory = device_info.get("global_mem_size", 0)
             if total_memory <= 0:
                 self._logger.warning(
                     "⚠️ 无法获取显存大小（global_mem_size=0），跳过显存监控器初始化\n"
-                    "   显存监控功能将被禁用"
+                    "   显存监控功能将被禁用",
                 )
                 return
             effective_ratio = getattr(self._device, "memory_efficiency", 0.70)
             self._memory_monitor = memory_cls(
-                total_memory_bytes=total_memory, safe_usage_ratio=effective_ratio
+                total_memory_bytes=total_memory, safe_usage_ratio=effective_ratio,
             )
             self._logger.info(
                 "✅ 显存监控器已初始化 "
                 f"(总显存: {total_memory / 1024**3:.1f}GB, "
-                f"安全比例: {effective_ratio * 100:.0f}%)"
+                f"安全比例: {effective_ratio * 100:.0f}%)",
             )
         except (RuntimeError, ValueError, TypeError, AttributeError) as e:
             self._logger.warning(
@@ -246,7 +255,7 @@ class IntelGPUOptimizer:
                 self._benchmark_suite is not None,
                 self._auto_tuner is not None,
                 self._performance_reporter is not None,
-            ]
+            ],
         )
         if initialized_count == 5:
             self._logger.info("✅ 所有 5 个监控和调优组件初始化成功\n")
@@ -254,11 +263,11 @@ class IntelGPUOptimizer:
             self._logger.warning(
                 f"⚠️ {initialized_count}/5 个组件初始化成功，"
                 f"{5 - initialized_count} 个组件被禁用\n"
-                "   引擎仍可正常运行，但部分监控功能不可用\n"
+                "   引擎仍可正常运行，但部分监控功能不可用\n",
             )
         else:
             self._logger.error(
-                "❌ 所有监控和调优组件初始化失败\n   引擎将使用默认配置运行，无监控和调优功能\n"
+                "❌ 所有监控和调优组件初始化失败\n   引擎将使用默认配置运行，无监控和调优功能\n",
             )
         self._logger.info("✅ Intel GPU 监控和调优组件初始化完成\n")
 
@@ -292,6 +301,7 @@ class IntelGPUOptimizer:
 
         Returns:
             包含各项优化标志的字典
+
         """
         return {
             "async_execution": getattr(self._device, "enable_async_execution", False),
@@ -346,6 +356,7 @@ class IntelGPUOptimizer:
 
         Returns:
             bool: 验证成功返回 True
+
         """
         try:
             has_uint32_workaround = (

@@ -67,6 +67,14 @@ class IntelMemoryMonitor:
     CRITICAL_THRESHOLD = 0.85
     EMERGENCY_THRESHOLD = 0.95
 
+    __slots__ = (
+        "total_memory", "safe_usage_ratio", "safe_limit",
+        "warning_limit", "critical_limit", "emergency_limit",
+        "_warning_ratio", "_critical_ratio", "_emergency_ratio",
+        "current_usage", "peak_usage", "total_allocations", "total_deallocations",
+        "_history", "_max_history", "_allocation_sizes", "_leak_detection_window",
+    )
+
     def __init__(
         self,
         total_memory_bytes: int,
@@ -83,6 +91,7 @@ class IntelMemoryMonitor:
             warning_threshold: 警告阈值（相对于 safe_limit，默认 70%）
             critical_threshold: 严重阈值（相对于 safe_limit，默认 85%）
             emergency_threshold: 紧急阈值（相对于 safe_limit，默认 95%）
+
         """
         self.total_memory = total_memory_bytes
         self.safe_usage_ratio = safe_usage_ratio
@@ -112,7 +121,7 @@ class IntelMemoryMonitor:
         logger.info(
             "Intel 显存监控器已初始化: "
             f"total={total_memory_bytes / 1024**3:.1f}GB, "
-            f"safe_limit={self.safe_limit / 1024**2:.0f}MB ({safe_usage_ratio * 100:.0f}%)"
+            f"safe_limit={self.safe_limit / 1024**2:.0f}MB ({safe_usage_ratio * 100:.0f}%)",
         )
 
     def track_allocation(self, size_bytes: int, batch_count: int = 0) -> bool:
@@ -124,9 +133,10 @@ class IntelMemoryMonitor:
 
         Returns:
             如果分配安全返回 True，否则返回 False
+
         """
         if size_bytes <= 0:
-            logger.warning(f"忽略无效的分配大小: {size_bytes}")
+            logger.warning("忽略无效的分配大小: %s", size_bytes)
             return False
 
         new_usage = self.current_usage + size_bytes
@@ -151,7 +161,7 @@ class IntelMemoryMonitor:
         self._record_snapshot(batch_count)
 
         logger.debug(
-            f"显存分配: +{size_bytes / 1024**2:.1f}MB, 总计: {self.current_usage / 1024**2:.1f}MB"
+            f"显存分配: +{size_bytes / 1024**2:.1f}MB, 总计: {self.current_usage / 1024**2:.1f}MB",
         )
 
         return True
@@ -162,6 +172,7 @@ class IntelMemoryMonitor:
         Args:
             size_bytes: 释放的字节数
             batch_count: 当前批次计数
+
         """
         if size_bytes <= 0:
             return
@@ -173,7 +184,7 @@ class IntelMemoryMonitor:
         self._record_snapshot(batch_count)
 
         logger.debug(
-            f"显存释放: -{size_bytes / 1024**2:.1f}MB, 总计: {self.current_usage / 1024**2:.1f}MB"
+            f"显存释放: -{size_bytes / 1024**2:.1f}MB, 总计: {self.current_usage / 1024**2:.1f}MB",
         )
 
     def get_status(self) -> dict:
@@ -181,6 +192,7 @@ class IntelMemoryMonitor:
 
         Returns:
             包含显存状态的字典
+
         """
         status = self._determine_status()
 
@@ -205,6 +217,7 @@ class IntelMemoryMonitor:
 
         Returns:
             警告消息列表
+
         """
         warnings = []
         status = self.get_status()
@@ -213,17 +226,17 @@ class IntelMemoryMonitor:
         if status["status"] == MemoryStatus.EMERGENCY:
             warnings.append(
                 f"🚨 显存紧急: {status['usage_percent']:.1f}% "
-                f"({status['current_mb']:.0f}MB / {status['safe_limit_mb']:.0f}MB)"
+                f"({status['current_mb']:.0f}MB / {status['safe_limit_mb']:.0f}MB)",
             )
         elif status["status"] == MemoryStatus.CRITICAL:
             warnings.append(
-                f"⚠️ 显存严重: {status['usage_percent']:.1f}% "
-                f"({status['current_mb']:.0f}MB / {status['safe_limit_mb']:.0f}MB)"
+                f"[WARN] 显存严重: {status['usage_percent']:.1f}% "
+                f"({status['current_mb']:.0f}MB / {status['safe_limit_mb']:.0f}MB)",
             )
         elif status["status"] == MemoryStatus.WARNING:
             warnings.append(
                 f"💡 显存警告: {status['usage_percent']:.1f}% "
-                f"({status['current_mb']:.0f}MB / {status['safe_limit_mb']:.0f}MB)"
+                f"({status['current_mb']:.0f}MB / {status['safe_limit_mb']:.0f}MB)",
             )
 
         # 显存泄漏检测
@@ -233,7 +246,7 @@ class IntelMemoryMonitor:
                 "🔍 疑似显存泄漏: "
                 f"分配={self.total_allocations}, "
                 f"释放={self.total_deallocations}, "
-                f"未释放={self.total_allocations - self.total_deallocations}"
+                f"未释放={self.total_allocations - self.total_deallocations}",
             )
 
         return warnings
@@ -243,6 +256,7 @@ class IntelMemoryMonitor:
 
         Returns:
             如果显存压力过大返回 True
+
         """
         status = self.get_status()
         return status["status"] in [MemoryStatus.CRITICAL, MemoryStatus.EMERGENCY]
@@ -252,17 +266,17 @@ class IntelMemoryMonitor:
 
         Returns:
             减少比例（0.0-1.0），0.0 表示不需要减少
+
         """
         status = self.get_status()
 
         if status["status"] == MemoryStatus.EMERGENCY:
             return 0.5  # 减少 50%
-        elif status["status"] == MemoryStatus.CRITICAL:
+        if status["status"] == MemoryStatus.CRITICAL:
             return 0.3  # 减少 30%
-        elif status["status"] == MemoryStatus.WARNING:
+        if status["status"] == MemoryStatus.WARNING:
             return 0.1  # 减少 10%
-        else:
-            return 0.0
+        return 0.0
 
     def _detect_memory_leak(self) -> bool:
         """检测显存泄漏
@@ -271,6 +285,7 @@ class IntelMemoryMonitor:
 
         Returns:
             如果检测到可能的泄漏返回 True
+
         """
         if self.total_allocations < 10:
             return False
@@ -292,6 +307,7 @@ class IntelMemoryMonitor:
 
         Returns:
             当前显存状态
+
         """
         if self.safe_limit <= 0:
             return MemoryStatus.EMERGENCY
@@ -300,18 +316,18 @@ class IntelMemoryMonitor:
 
         if usage_ratio >= self._emergency_ratio:
             return MemoryStatus.EMERGENCY
-        elif usage_ratio >= self._critical_ratio:
+        if usage_ratio >= self._critical_ratio:
             return MemoryStatus.CRITICAL
-        elif usage_ratio >= self._warning_ratio:
+        if usage_ratio >= self._warning_ratio:
             return MemoryStatus.WARNING
-        else:
-            return MemoryStatus.NORMAL
+        return MemoryStatus.NORMAL
 
     def _record_snapshot(self, batch_count: int = 0) -> None:
         """记录显存快照
 
         Args:
             batch_count: 当前批次计数
+
         """
         usage_ratio = self.current_usage / self.safe_limit if self.safe_limit > 0 else 0
         status = self._determine_status()
@@ -339,6 +355,7 @@ class IntelMemoryMonitor:
 
         Returns:
             显存快照列表
+
         """
         return self._history[-last_n:]
 
@@ -357,6 +374,7 @@ class IntelMemoryMonitor:
 
         Returns:
             格式化的报告字符串
+
         """
         status = self.get_status()
 
@@ -378,7 +396,7 @@ class IntelMemoryMonitor:
         # 添加警告
         warnings = self.check_warnings()
         if warnings:
-            report_lines.append("⚠️ 警告:")
+            report_lines.append("[WARN] 警告:")
             for warning in warnings:
                 report_lines.append(f"  {warning}")
 

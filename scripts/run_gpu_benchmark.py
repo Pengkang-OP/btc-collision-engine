@@ -4,9 +4,6 @@ import sys
 import os
 import json
 
-# 添加项目根目录到路径
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 # 设置 stdout 编码，避免 GBK 编码问题
 if sys.stdout.encoding.lower() in ('gbk', 'gb2312', 'cp936'):
     import io

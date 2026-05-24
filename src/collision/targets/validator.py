@@ -34,8 +34,8 @@ class ValidationResult:
         error: 错误信息（验证失败或未验证时的原因）
 
     状态组合示例:
-        - valid=True, validated=True: 验证通过 ✅
-        - valid=False, validated=True: 验证失败（格式错误、校验和失败等） ❌
+        - valid=True, validated=True: 验证通过 [OK]
+        - valid=False, validated=True: 验证失败（格式错误、校验和失败等） [ERR]
         - valid=False, validated=False: 未验证（批量中止、未处理等） ⏸️
 
     使用示例:
@@ -61,10 +61,9 @@ class ValidationResult:
             return (
                 f"ValidationResult({self.address[:10]}..., valid=True, format={self.format_type})"
             )
-        elif not self.validated:
-            return f"ValidationResult({self.address[:10]}..., valid=False, validated=False, error={self.error})"  # noqa: E501
-        else:
-            return f"ValidationResult({self.address[:10]}..., valid=False, error={self.error})"
+        if not self.validated:
+            return f"ValidationResult({self.address[:10]}..., valid=False, validated=False, error={self.error})"
+        return f"ValidationResult({self.address[:10]}..., valid=False, error={self.error})"
 
 
 class AddressBatchValidator:
@@ -80,8 +79,7 @@ class AddressBatchValidator:
     """
 
     def __init__(self, max_workers: int = 4) -> None:
-        """
-        初始化批量地址验证器
+        """初始化批量地址验证器
 
         参数:
             max_workers: 最大工作线程数,默认4
@@ -92,19 +90,20 @@ class AddressBatchValidator:
         self.total_valid = 0
         self.total_invalid = 0
 
-        logger.info(f"AddressBatchValidator 初始化: max_workers={max_workers}")
+        logger.info("AddressBatchValidator 初始化: max_workers=%s", max_workers)
 
     # ── validate_batch 辅助方法（降低 C901） ──────────────────────
 
     @staticmethod
     def _normalize_addresses(
-        addresses: list[str | Any], strict_mode: bool, on_type_error: str
+        addresses: list[str | Any], strict_mode: bool, on_type_error: str,
     ) -> tuple[list[str], int, dict[str, ValidationResult] | None]:
         """将输入地址列表规范化为纯字符串列表。
 
         Returns:
             (str_addresses, skipped_count, abort_results):
             - abort_results 非 None 表示严格模式 abort 策略触发中止。
+
         """
         str_addresses: list[str] = []
         skipped_count = 0
@@ -138,10 +137,10 @@ class AddressBatchValidator:
                     )
                     logger.info(
                         f"严格模式验证中止: 已收集{len(str_addresses)}个有效地址（未验证），"
-                        f"遇到非字符串类型: {type(addr).__name__}"
+                        f"遇到非字符串类型: {type(addr).__name__}",
                     )
                     return str_addresses, skipped_count, results
-                elif on_type_error == "skip":
+                if on_type_error == "skip":
                     logger.info(f"跳过非字符串类型: {type(addr).__name__}")
                     skipped_count += 1
                 elif on_type_error == "convert":
@@ -156,7 +155,7 @@ class AddressBatchValidator:
                                 skipped_count += 1
                         except Exception as e:
                             logger.error(
-                                f"地址类型转换失败: {type(addr).__name__} -> str, 错误={e}"
+                                f"地址类型转换失败: {type(addr).__name__} -> str, 错误={e}",
                             )
                             skipped_count += 1
                     else:
@@ -183,7 +182,7 @@ class AddressBatchValidator:
         pct = (valid_count / len(results) * 100) if len(results) > 0 else 0
         logger.info(
             f"批量验证完成: 总数={len(results)}, 有效={valid_count}, "
-            f"无效={invalid_count}, 有效率={pct:.1f}%"
+            f"无效={invalid_count}, 有效率={pct:.1f}%",
         )
 
     def validate_batch(
@@ -198,14 +197,14 @@ class AddressBatchValidator:
             raise ValueError(f"无效的策略 '{on_type_error}',必须是 {valid_strategies} 之一")
 
         str_addresses, skipped_count, abort_results = self._normalize_addresses(
-            addresses, strict_mode, on_type_error
+            addresses, strict_mode, on_type_error,
         )
         if abort_results is not None:
             return abort_results
 
         if skipped_count > 0:
             logger.info(
-                f"数据类型转换: 总数={len(addresses)}, 有效={len(str_addresses)}, 跳过={skipped_count}"
+                f"数据类型转换: 总数={len(addresses)}, 有效={len(str_addresses)}, 跳过={skipped_count}",
             )
 
         logger.info(f"开始批量验证: 总数={len(str_addresses)}, 工作线程={self.max_workers}")
@@ -225,15 +224,14 @@ class AddressBatchValidator:
                         else:
                             self.total_invalid += 1
                 except Exception as e:
-                    logger.error(f"地址验证异常: {addr}, 错误={e}")
+                    logger.error("地址验证异常: %s, 错误=%s", addr, e)
                     results[addr] = ValidationResult(address=addr, valid=False, error=str(e))
 
         self._log_validation_summary(results)
         return results
 
     def _validate_single(self, address: str) -> ValidationResult:
-        """
-        验证单个地址
+        """验证单个地址
 
         参数:
             address: 待验证的地址
@@ -251,73 +249,67 @@ class AddressBatchValidator:
                 if version == 0x00 and len(payload) == 20:
                     logger.debug(f"地址验证成功: {address[:15]}... (P2PKH)")
                     return ValidationResult(address=address, valid=True, format_type=format_type)
-                else:
-                    logger.debug(
-                        f"地址验证失败: {address[:15]}... (P2PKH, version=0x{version:02x})"
-                    )
-                    return ValidationResult(
-                        address=address,
-                        valid=False,
-                        format_type=format_type,
-                        error=f"Invalid version: 0x{version:02x}",
-                    )
+                logger.debug(
+                    f"地址验证失败: {address[:15]}... (P2PKH, version=0x{version:02x})",
+                )
+                return ValidationResult(
+                    address=address,
+                    valid=False,
+                    format_type=format_type,
+                    error=f"Invalid version: 0x{version:02x}",
+                )
 
-            elif address.startswith("3"):
+            if address.startswith("3"):
                 format_type = "P2SH"
                 version, payload = Base58.check_decode(address)
                 if version == 0x05 and len(payload) == 20:
                     logger.debug(f"地址验证成功: {address[:15]}... (P2SH)")
                     return ValidationResult(address=address, valid=True, format_type=format_type)
-                else:
-                    logger.debug(f"地址验证失败: {address[:15]}... (P2SH, version=0x{version:02x})")
-                    return ValidationResult(
-                        address=address,
-                        valid=False,
-                        format_type=format_type,
-                        error=f"Invalid version: 0x{version:02x}",
-                    )
+                logger.debug(f"地址验证失败: {address[:15]}... (P2SH, version=0x{version:02x})")
+                return ValidationResult(
+                    address=address,
+                    valid=False,
+                    format_type=format_type,
+                    error=f"Invalid version: 0x{version:02x}",
+                )
 
-            elif address.lower().startswith("bc1p"):
+            if address.lower().startswith("bc1p"):
                 format_type = "Bech32m"
                 if 62 <= len(address) <= 74:
                     logger.debug(f"Bech32m地址基本验证通过: {address[:15]}...")
                     return ValidationResult(address=address, valid=True, format_type=format_type)
-                else:
-                    return ValidationResult(
-                        address=address,
-                        valid=False,
-                        format_type=format_type,
-                        error="Invalid length (Bech32m: 62-74)",
-                    )
+                return ValidationResult(
+                    address=address,
+                    valid=False,
+                    format_type=format_type,
+                    error="Invalid length (Bech32m: 62-74)",
+                )
 
-            elif address.lower().startswith("bc1"):
+            if address.lower().startswith("bc1"):
                 format_type = "Bech32"
                 if 42 <= len(address) <= 62:
                     logger.debug(f"Bech32地址基本验证通过: {address[:15]}...")
                     return ValidationResult(address=address, valid=True, format_type=format_type)
-                else:
-                    return ValidationResult(
-                        address=address,
-                        valid=False,
-                        format_type=format_type,
-                        error="Invalid length (Bech32: 42-62)",
-                    )
-
-            else:
                 return ValidationResult(
                     address=address,
                     valid=False,
-                    format_type="unknown",
-                    error="Unknown address format",
+                    format_type=format_type,
+                    error="Invalid length (Bech32: 42-62)",
                 )
+
+            return ValidationResult(
+                address=address,
+                valid=False,
+                format_type="unknown",
+                error="Unknown address format",
+            )
 
         except Exception as e:
             logger.error(f"地址验证异常: {address[:15]}..., 错误={e}")
             return ValidationResult(address=address, valid=False, error=str(e))
 
     def filter_valid(self, addresses: list[str | Any]) -> list[str]:
-        """
-        过滤出有效地址
+        """过滤出有效地址
 
         参数:
             addresses: 待过滤的地址列表
@@ -335,8 +327,7 @@ class AddressBatchValidator:
         return valid_addresses
 
     def get_summary(self) -> dict[str, float | int]:
-        """
-        获取验证统计摘要
+        """获取验证统计摘要
 
         返回:
             统计信息字典
@@ -351,12 +342,11 @@ class AddressBatchValidator:
                 ),
             }
 
-            logger.debug(f"验证统计摘要: {summary}")
+            logger.debug("验证统计摘要: %s", summary)
             return summary
 
     def get_validation_summary(self, results: dict[str, ValidationResult]) -> dict[str, Any]:
-        """
-        获取验证结果摘要(别名方法,保持向后兼容)
+        """获取验证结果摘要(别名方法,保持向后兼容)
 
         参数:
             results: validate_batch返回的结果字典
@@ -374,7 +364,7 @@ class AddressBatchValidator:
             "success_rate": (valid_count / len(results) * 100) if len(results) > 0 else 0,
         }
 
-        logger.debug(f"验证结果摘要: {summary}")
+        logger.debug("验证结果摘要: %s", summary)
         return summary
 
     def get_validation_coverage(self, results: dict[str, ValidationResult]) -> dict[str, Any]:
@@ -430,7 +420,7 @@ class AddressBatchValidator:
         logger.debug(
             f"验证覆盖率统计: 总数={total}, "
             f"已验证={validated}, 未验证={unvalidated}, "
-            f"覆盖率={coverage_stats['coverage']:.1f}%"
+            f"覆盖率={coverage_stats['coverage']:.1f}%",
         )
 
         return coverage_stats

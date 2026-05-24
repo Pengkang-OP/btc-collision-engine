@@ -74,6 +74,7 @@ def align_batch_size(batch_size: int, alignment: int = BATCH_SIZE_ALIGNMENT) -> 
 
     Returns:
         对齐后的批次大小，最小为 MIN_BATCH_SIZE
+
     """
     aligned = (batch_size // alignment) * alignment
     return max(aligned, MIN_BATCH_SIZE)
@@ -87,5 +88,6 @@ def clamp_batch_size(batch_size: int) -> int:
 
     Returns:
         限制在 [MIN_BATCH_SIZE, MAX_BATCH_SIZE] 范围内的值
+
     """
     return max(MIN_BATCH_SIZE, min(MAX_BATCH_SIZE, batch_size))

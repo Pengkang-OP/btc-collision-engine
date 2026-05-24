@@ -25,6 +25,7 @@ def atomic_write(
 
     Raises:
         OSError: If write fails
+
     """
     path = Path(filepath)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -37,13 +38,13 @@ def atomic_write(
             f.write(content)
         shutil.move(tmp_path, str(path))
     except Exception:
-        if os.path.exists(tmp_path):
-            os.unlink(tmp_path)
+        if Path(tmp_path).exists():
+            Path(tmp_path).unlink()
         raise
 
 
 def atomic_json_write(
-    filepath: str | Path, data, **kwargs
+    filepath: str | Path, data, **kwargs,
 ) -> None:
     """Atomically write JSON data to a file.
 
@@ -51,6 +52,7 @@ def atomic_json_write(
         filepath: Target file path
         data: Data to serialize as JSON
         **kwargs: Passed to json.dumps
+
     """
     atomic_write(
         filepath,
@@ -66,6 +68,7 @@ def atomic_json_read(filepath: str | Path):
 
     Returns:
         Deserialized JSON data, or None if file doesn't exist
+
     """
     path = Path(filepath)
     if not path.exists():
@@ -81,6 +84,7 @@ def ensure_directory(filepath: str | Path) -> Path:
 
     Returns:
         Path object for the directory
+
     """
     path = Path(filepath)
     if path.suffix:
@@ -97,6 +101,7 @@ def get_file_size_safe(filepath: str | Path) -> int:
 
     Returns:
         File size in bytes, or 0 on error
+
     """
     try:
         return Path(filepath).stat().st_size
@@ -112,6 +117,7 @@ def safe_file_delete(filepath: str | Path) -> bool:
 
     Returns:
         True if deleted or not found
+
     """
     try:
         Path(filepath).unlink(missing_ok=True)

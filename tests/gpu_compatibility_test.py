@@ -1,16 +1,12 @@
 #!/usr/bin/env python3
-"""
-GPU兼容性测试脚本
+"""GPU兼容性测试脚本
 
 测试系统在不同厂商和型号的GPU上的兼容性和性能。
 """
 
-import sys
 from unittest.mock import Mock, patch
 
 import pytest
-
-sys.path.insert(0, ".")
 
 pytestmark = [
     pytest.mark.gpu,
@@ -76,7 +72,7 @@ class TestGPUCompatibility:
                 for mod in list(sys.modules.keys()):
                     if mod.startswith("src.gpu"):
                         del sys.modules[mod]
-                from src.gpu.device import GPUDeviceDetector, identify_vendor, identify_gpu_model
+                from src.gpu.device import GPUDeviceDetector, identify_gpu_model, identify_vendor
 
                 devices = GPUDeviceDetector.detect_devices()
                 assert len(devices) == 1

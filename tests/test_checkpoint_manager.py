@@ -2,16 +2,13 @@
 
 import json
 import os
-import sys
+import pathlib
 import tempfile
 import time
 import unittest
+from unittest.mock import patch
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from unittest.mock import patch  # noqa: E402
-
-from src.collision.checkpoint_manager import CheckpointManager  # noqa: E402
+from src.collision.checkpoint_manager import CheckpointManager
 
 
 class TestCheckpointManagerBasic(unittest.TestCase):
@@ -25,8 +22,8 @@ class TestCheckpointManagerBasic(unittest.TestCase):
         self.mgr = CheckpointManager(filepath=self.tmp_path)
 
     def tearDown(self):
-        if os.path.exists(self.tmp_path):
-            os.unlink(self.tmp_path)
+        if pathlib.Path(self.tmp_path).exists():
+            pathlib.Path(self.tmp_path).unlink()
 
     def test_save_and_load(self):
         """保存后能正确加载"""
@@ -69,13 +66,13 @@ class TestCheckpointSensitiveInfoCleaning(unittest.TestCase):
         import uuid
 
         self.tmp_path = os.path.join(
-            tempfile.gettempdir(), f"test_ckpt_sens_{uuid.uuid4().hex[:8]}.json"
+            tempfile.gettempdir(), f"test_ckpt_sens_{uuid.uuid4().hex[:8]}.json",
         )
         self.mgr = CheckpointManager(filepath=self.tmp_path)
 
     def tearDown(self):
-        if os.path.exists(self.tmp_path):
-            os.unlink(self.tmp_path)
+        if pathlib.Path(self.tmp_path).exists():
+            pathlib.Path(self.tmp_path).unlink()
 
     def test_private_key_not_saved(self):
         """私钥明文不保存到断点文件"""
@@ -85,7 +82,7 @@ class TestCheckpointSensitiveInfoCleaning(unittest.TestCase):
                 "private_key_hex": "deadbeef" * 8,
                 "private_key_wif": "KwDiBf89QgGbjEhKnhXJuH7LrciVrZi3qYjgd9M7rFU65NZy3yH",
                 "timestamp": time.time(),
-            }
+            },
         ]
         self.mgr.save(
             mode="random",
@@ -96,8 +93,7 @@ class TestCheckpointSensitiveInfoCleaning(unittest.TestCase):
         )
 
         # 直接读取 JSON 文件内容
-        with open(self.tmp_path, encoding="utf-8") as f:
-            raw = f.read()
+        raw = pathlib.Path(self.tmp_path).read_text(encoding="utf-8")
 
         self.assertNotIn("deadbeef", raw)
         self.assertNotIn("KwDiBf89", raw)
@@ -114,8 +110,7 @@ class TestCheckpointSensitiveInfoCleaning(unittest.TestCase):
     def test_security_note_in_file(self):
         """断点文件包含安全说明"""
         self.mgr.save(mode="random", targets=set(), current_position=0, total_checked=0, matches=[])
-        with open(self.tmp_path, encoding="utf-8") as f:
-            raw = f.read()
+        raw = pathlib.Path(self.tmp_path).read_text(encoding="utf-8")
         self.assertIn("security_note", raw)
 
 
@@ -137,12 +132,12 @@ class TestCheckpointAtomicWrite(unittest.TestCase):
                 range_start=1,
                 range_end=10000,
             )
-            with open(tmp.name, encoding="utf-8") as f:
+            with pathlib.Path(tmp.name).open(encoding="utf-8") as f:
                 data = json.load(f)
             self.assertIn("mode", data)
         finally:
-            if os.path.exists(tmp.name):
-                os.unlink(tmp.name)
+            if pathlib.Path(tmp.name).exists():
+                pathlib.Path(tmp.name).unlink()
 
     def test_targets_saved_as_list(self):
         """目标地址保存为列表（可 JSON 序列化）"""
@@ -161,8 +156,8 @@ class TestCheckpointAtomicWrite(unittest.TestCase):
             self.assertIsInstance(data["targets"], list)
             self.assertIn("addr1", data["targets"])
         finally:
-            if os.path.exists(tmp.name):
-                os.unlink(tmp.name)
+            if pathlib.Path(tmp.name).exists():
+                pathlib.Path(tmp.name).unlink()
 
 
 class TestCheckpointAutoSave(unittest.TestCase):
@@ -177,8 +172,8 @@ class TestCheckpointAutoSave(unittest.TestCase):
             # 间隔为0，应立即触发
             self.assertTrue(mgr.should_auto_save())
         finally:
-            if os.path.exists(tmp.name):
-                os.unlink(tmp.name)
+            if pathlib.Path(tmp.name).exists():
+                pathlib.Path(tmp.name).unlink()
 
     def test_should_not_auto_save_too_soon(self):
         """刚保存后 should_auto_save() 应返回 False"""
@@ -190,8 +185,8 @@ class TestCheckpointAutoSave(unittest.TestCase):
             # 紧接着保存，间隔未到
             self.assertFalse(mgr.should_auto_save())
         finally:
-            if os.path.exists(tmp.name):
-                os.unlink(tmp.name)
+            if pathlib.Path(tmp.name).exists():
+                pathlib.Path(tmp.name).unlink()
 
 
 class TestCheckpointDefaultPath(unittest.TestCase):
@@ -216,8 +211,8 @@ class TestCheckpointSaveVariants(unittest.TestCase):
         self.mgr = CheckpointManager(filepath=self.tmp_path, auto_save_interval=9999)
 
     def tearDown(self):
-        if os.path.exists(self.tmp_path):
-            os.unlink(self.tmp_path)
+        if pathlib.Path(self.tmp_path).exists():
+            pathlib.Path(self.tmp_path).unlink()
 
     def test_save_force_writes_immediately(self):
         """force=True 强制写入"""
@@ -236,7 +231,7 @@ class TestCheckpointSaveVariants(unittest.TestCase):
         self.mgr._last_save_time = time.time()  # 刚保存过
         self.mgr.save(mode="random", targets=set(), current_position=0, total_checked=0, matches=[])
         # 间隔9999秒未到，不应写入文件
-        self.assertFalse(os.path.exists(self.tmp_path))
+        self.assertFalse(pathlib.Path(self.tmp_path).exists())
         # 但 buffer 应该有数据
         self.assertIsNotNone(self.mgr._buffer)
         self.assertTrue(self.mgr._dirty)
@@ -254,7 +249,7 @@ class TestCheckpointSaveVariants(unittest.TestCase):
         self.mgr._flush_buffer()
 
     def test_save_match_with_private_key_hash(self):
-        """match 含 private_key_hash 时被保存"""
+        """Match 含 private_key_hash 时被保存"""
         matches = [{"address": "1Addr", "timestamp": 1.0, "private_key_hash": "abc123"}]
         self.mgr.save(
             mode="random",
@@ -278,8 +273,8 @@ class TestCheckpointFlushErrors(unittest.TestCase):
         self.mgr = CheckpointManager(filepath=self.tmp_path)
 
     def tearDown(self):
-        if os.path.exists(self.tmp_path):
-            os.unlink(self.tmp_path)
+        if pathlib.Path(self.tmp_path).exists():
+            pathlib.Path(self.tmp_path).unlink()
 
     @patch("builtins.open")
     def test_flush_permission_error(self, mock_file):
@@ -308,11 +303,10 @@ class TestCheckpointFlushErrors(unittest.TestCase):
     def test_cleanup_temp_file_exists(self):
         """_cleanup_temp_file 删除存在的临时文件"""
         temp_file = self.tmp_path + ".tmp"
-        with open(temp_file, "w") as f:
-            f.write("test")
-        self.assertTrue(os.path.exists(temp_file))
+        pathlib.Path(temp_file).write_text("test")
+        self.assertTrue(pathlib.Path(temp_file).exists())
         self.mgr._cleanup_temp_file(temp_file)
-        self.assertFalse(os.path.exists(temp_file))
+        self.assertFalse(pathlib.Path(temp_file).exists())
 
     def test_cleanup_temp_file_not_exists(self):
         """_cleanup_temp_file 不存在的文件无异常"""
@@ -326,36 +320,35 @@ class TestCheckpointLoadEdgeCases(unittest.TestCase):
         import uuid
 
         self.tmp_path = os.path.join(
-            tempfile.gettempdir(), f"test_ckpt_load_{uuid.uuid4().hex[:8]}.json"
+            tempfile.gettempdir(), f"test_ckpt_load_{uuid.uuid4().hex[:8]}.json",
         )
         self.mgr = CheckpointManager(filepath=self.tmp_path)
 
     def tearDown(self):
         for p in [self.tmp_path, self.tmp_path + ".tmp"]:
-            if os.path.exists(p):
-                os.unlink(p)
+            if pathlib.Path(p).exists():
+                pathlib.Path(p).unlink()
 
     def test_load_version_mismatch(self):
         """版本不兼容时返回 None"""
-        with open(self.tmp_path, "w") as f:
+        with pathlib.Path(self.tmp_path).open("w") as f:
             json.dump({"version": 2, "mode": "random"}, f)
         result = self.mgr.load()
         self.assertIsNone(result)
 
     def test_load_corrupt_json(self):
         """损坏的 JSON 返回 None"""
-        with open(self.tmp_path, "w") as f:
-            f.write("not a json file {{{")
+        pathlib.Path(self.tmp_path).write_text("not a json file {{{")
         result = self.mgr.load()
         self.assertIsNone(result)
 
     def test_load_temp_file_recovery(self):
         """.tmp 文件恢复为主文件"""
         temp_file = self.tmp_path + ".tmp"
-        with open(temp_file, "w") as f:
+        with pathlib.Path(temp_file).open("w") as f:
             json.dump({"version": 1, "mode": "recovered"}, f)
-        self.assertTrue(os.path.exists(temp_file))
-        self.assertFalse(os.path.exists(self.tmp_path))
+        self.assertTrue(pathlib.Path(temp_file).exists())
+        self.assertFalse(pathlib.Path(self.tmp_path).exists())
 
         result = self.mgr.load()
         self.assertIsNotNone(result)
@@ -363,10 +356,10 @@ class TestCheckpointLoadEdgeCases(unittest.TestCase):
 
     def test_load_temp_recovery_with_main_exists(self):
         """.tmp 恢复时主文件已存在则不覆盖"""
-        with open(self.tmp_path, "w") as f:
+        with pathlib.Path(self.tmp_path).open("w") as f:
             json.dump({"version": 1, "mode": "main"}, f)
         temp_file = self.tmp_path + ".tmp"
-        with open(temp_file, "w") as f:
+        with pathlib.Path(temp_file).open("w") as f:
             json.dump({"version": 1, "mode": "temp"}, f)
 
         result = self.mgr.load()
@@ -384,11 +377,11 @@ class TestCheckpointDelete(unittest.TestCase):
 
     def tearDown(self):
         for p in [self.tmp_path, self.tmp_path + ".tmp"]:
-            if os.path.exists(p):
-                os.unlink(p)
+            if pathlib.Path(p).exists():
+                pathlib.Path(p).unlink()
 
     def test_delete_with_temp_file(self):
-        """delete 同时清理 .tmp 文件"""
+        """Delete 同时清理 .tmp 文件"""
         self.mgr.save(
             mode="random",
             targets=set(),
@@ -398,16 +391,15 @@ class TestCheckpointDelete(unittest.TestCase):
             force=True,
         )
         temp_file = self.tmp_path + ".tmp"
-        with open(temp_file, "w") as f:
-            f.write("temp")
-        self.assertTrue(os.path.exists(temp_file))
+        pathlib.Path(temp_file).write_text("temp")
+        self.assertTrue(pathlib.Path(temp_file).exists())
 
         self.mgr.delete()
-        self.assertFalse(os.path.exists(temp_file))
-        self.assertFalse(os.path.exists(self.tmp_path))
+        self.assertFalse(pathlib.Path(temp_file).exists())
+        self.assertFalse(pathlib.Path(self.tmp_path).exists())
 
     def test_delete_clears_buffer(self):
-        """delete 清空 buffer 和 dirty"""
+        """Delete 清空 buffer 和 dirty"""
         self.mgr.save(
             mode="random",
             targets=set(),
@@ -477,10 +469,10 @@ class TestCheckpointFlushDirCreation(unittest.TestCase):
             mgr._dirty = True
             mgr._buffer = {"version": 1, "test": True}
             mgr._flush_buffer()
-            self.assertTrue(os.path.exists(ckpt_path))
+            self.assertTrue(pathlib.Path(ckpt_path).exists())
         finally:
             mgr.delete()
-            if os.path.exists(subdir):
+            if pathlib.Path(subdir).exists():
                 shutil.rmtree(subdir, ignore_errors=True)
 
 
@@ -506,14 +498,14 @@ class TestCheckpointLoadTempRecoveryErrors(unittest.TestCase):
 
     def tearDown(self):
         for p in [self.tmp_path, self.tmp_path + ".tmp"]:
-            if os.path.exists(p):
-                os.unlink(p)
+            if pathlib.Path(p).exists():
+                pathlib.Path(p).unlink()
 
     @patch("os.replace", side_effect=OSError("rename failed"))
     def test_temp_recovery_rename_os_error(self, mock_rename):
-        """replace 失败时记录日志并清理"""
+        """Replace 失败时记录日志并清理"""
         temp_file = self.tmp_path + ".tmp"
-        with open(temp_file, "w") as f:
+        with pathlib.Path(temp_file).open("w") as f:
             json.dump({"version": 1, "mode": "test"}, f)
         # replace 会失败，但不应崩溃
         result = self.mgr.load()
@@ -521,9 +513,9 @@ class TestCheckpointLoadTempRecoveryErrors(unittest.TestCase):
 
     @patch("os.replace", side_effect=Exception("unexpected"))
     def test_temp_recovery_rename_unexpected_error(self, mock_rename):
-        """replace 未知异常被记录"""
+        """Replace 未知异常被记录"""
         temp_file = self.tmp_path + ".tmp"
-        with open(temp_file, "w") as f:
+        with pathlib.Path(temp_file).open("w") as f:
             json.dump({"version": 1, "mode": "test"}, f)
         result = self.mgr.load()
         self.assertIsNone(result)
@@ -535,7 +527,7 @@ class TestCheckpointDeleteErrors(unittest.TestCase):
     @patch("os.path.exists", return_value=True)
     @patch("os.remove", side_effect=Exception("delete failed"))
     def test_delete_exception_caught(self, mock_remove, mock_exists):
-        """delete 异常被捕获"""
+        """Delete 异常被捕获"""
         mgr = CheckpointManager(filepath="/tmp/test.json")
         mgr.delete()
 

@@ -5,8 +5,6 @@ data to prevent disk space exhaustion.
 """
 
 import logging
-import os
-import shutil
 import time
 from pathlib import Path
 
@@ -35,6 +33,7 @@ class DataCleaner:
 
         Returns:
             Number of files cleaned
+
         """
         total = 0
         now = time.time()
@@ -50,15 +49,13 @@ class DataCleaner:
                             f.unlink()
                             total += 1
                             logger.debug(
-                                f"Cleaned: {f}"
+                                "Cleaned: %s", f,
                             )
                         except OSError as e:
                             logger.warning(
-                                f"Failed to clean {f}: "
-                                f"{e}"
+                                "Failed to clean %s: %s", f, e,
                             )
         logger.info(
-            f"Data cleanup complete: "
-            f"{total} files removed"
+            "Data cleanup complete: %s files removed", total,
         )
         return total

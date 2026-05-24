@@ -1,0 +1,387 @@
+============================================================
+MultiGPUCollisionEngine Cross-Vendor Test
+============================================================
+
+[Test 1] Auto-detect all GPUs
+2026-05-24 03:11:36,641 - GPUDataMonitor - INFO - 数据监控器已创建
+2026-05-24 03:11:36,642 - GPURecoveryManager - INFO - GPURecoveryManager已初始化
+2026-05-24 03:11:36,642 - MultiGPUEngine - INFO - MultiGPUCollisionEngine已创建
+2026-05-24 03:11:36,788 - GPUDevice - INFO - 检测到 2 个GPU设备
+2026-05-24 03:11:36,788 - GPUSelector - INFO - 检测到 2 个GPU设备
+2026-05-24 03:11:36,789 - MultiGPUEngine - INFO - 初始化 2 个GPU设备: ['Intel(R) Arc(TM) A770 Graphics', 'NVIDIA GeForce GTX 1660 Ti']
+2026-05-24 03:11:36,789 - GPUMemoryPool - INFO - GPU 0 (Intel(R) Arc(TM) A770 Graphics): 显存 0.0GB, 内存池 256MB (50.0%)
+2026-05-24 03:11:36,789 - GPUMemoryPool - INFO - GPU内存池初始化: max_buffers=100, max_memory=256MB, dynamic_adjustment=True
+2026-05-24 03:11:36,789 - GPUMemoryPool - INFO - GPU 1 (NVIDIA GeForce GTX 1660 Ti): 显存 0.0GB, 内存池 256MB (50.0%)
+2026-05-24 03:11:36,789 - GPUMemoryPool - INFO - GPU内存池初始化: max_buffers=100, max_memory=256MB, dynamic_adjustment=True
+2026-05-24 03:11:36,789 - MultiGPUEngine - INFO - GPU 1 内存池分配: 256MB
+2026-05-24 03:11:36,789 - MultiGPUEngine - INFO - GPU 0 内存池分配: 256MB
+2026-05-24 03:11:36,790 - GPULoadBalancer - INFO - 初始负载权重: {1: 0.9199708985085486, 0: 0.08002910149145144}
+2026-05-24 03:11:36,790 - GPULoadBalancer - INFO - GPU负载均衡器已初始化: 设备数=2, 策略=performance, 重平衡间隔=30s
+2026-05-24 03:11:36,790 - MultiGPUEngine - INFO - 多GPU引擎初始化成功
+Devices detected: 2
+  Device[0]: Intel(R) Arc(TM) A770 Graphics | intel | ?
+  Device[1]: NVIDIA GeForce GTX 1660 Ti | nvidia | ?
+2026-05-24 03:11:36,790 - GPUWorker - INFO - GPU工作器已创建: 设备=1, 范围=0-1,839,941
+2026-05-24 03:11:36,790 - GPUWorker - INFO - GPU工作器已创建: 设备=0, 范围=1,839,941-1,999,999
+2026-05-24 03:11:36,791 - MultiGPUEngine - INFO - GPU 1 工作器已启动
+2026-05-24 03:11:36,792 - MultiGPUEngine - INFO - GPU 0 工作器已启动
+2026-05-24 03:11:36,792 - GPUDataMonitor - INFO - 数据监控循环已启动
+2026-05-24 03:11:36,792 - GPUDataMonitor - INFO - 数据监控器已启动
+2026-05-24 03:11:36,792 - MultiGPUEngine - INFO - 数据监控器已启动
+2026-05-24 03:11:36,793 - MultiGPUEngine - INFO - 工作负载监控线程已启动
+2026-05-24 03:11:36,793 - MultiGPUEngine - INFO - 多GPU碰撞已启动: 2个GPU, 总私钥数=2,000,000
+Engine started successfully
+2026-05-24 03:11:36,823 - src.collision.gpu.engine - INFO - GPU引擎：使用私钥生成策略: prng_seed
+2026-05-24 03:11:36,823 - src.collision.gpu.engine - INFO - GPU引擎：使用私钥生成策略: prng_seed
+2026-05-24 03:11:36,824 - GPUProfileLoader - INFO - GPU型号数据库加载成功: 3 个厂商 (版本 1.0)
+2026-05-24 03:11:36,824 - GPUProfileLoader - INFO - GPU型号数据库加载成功: 3 个厂商 (版本 1.0)
+2026-05-24 03:11:36,825 - GPUDevice - INFO - 检测到 2 个GPU设备
+2026-05-24 03:11:36,825 - GPUDevice - INFO - 检测到 2 个GPU设备
+2026-05-24 03:11:36,826 - GPUProfileLoader - INFO - GPU型号数据库加载成功: 3 个厂商 (版本 1.0)
+2026-05-24 03:11:36,826 - GPUProfileLoader - INFO - GPU型号数据库加载成功: 3 个厂商 (版本 1.0)
+2026-05-24 03:11:36,827 - src.collision.gpu.engine - INFO - [OK] 从配置文件 config.intel_arc.json读取异步设置: True (优先级2)
+2026-05-24 03:11:36,827 - src.collision.gpu.engine - INFO - [OK] GPU异步执行已启用 (来源: 配置文件 config.intel_arc.json) - 双缓冲优化
+2026-05-24 03:11:36,827 - GPUDevice - INFO - 检测到 2 个GPU设备
+2026-05-24 03:11:36,827 - GPUDevice - INFO - 使用指定GPU设备 [0]: NVIDIA GeForce GTX 1660 Ti
+2026-05-24 03:11:36,828 - src.collision.gpu.engine - INFO - [OK] 从配置文件 config.intel_arc.json读取异步设置: True (优先级2)
+2026-05-24 03:11:36,828 - GPUDevice - INFO - COMP-2: OpenCL 版本检测 — 平台: OpenCL 3.0 CUDA, 设备: OpenCL C 1.2 , 解析: 1.2
+2026-05-24 03:11:36,828 - src.collision.gpu.engine - INFO - [OK] GPU异步执行已启用 (来源: 配置文件 config.intel_arc.json) - 双缓冲优化
+2026-05-24 03:11:36,828 - GPUDevice - INFO - COMP-2: OpenCL 1.2 — 兼容模式 (标准 buffer 映射)
+  不支持 SVM 共享虚拟内存 (需 OpenCL 2.0+)
+  将使用标准 clCreateBuffer + clEnqueueMapBuffer 进行数据传输
+2026-05-24 03:11:36,829 - GPUDevice - INFO - 检测到 2 个GPU设备
+2026-05-24 03:11:36,829 - GPUProfileLoader - INFO - 匹配GPU型号: NVIDIA GeForce GTX 1660 Ti -> nvidia/turing/gtx_1660_series
+2026-05-24 03:11:36,829 - GPUDevice - INFO - 使用指定GPU设备 [1]: Intel(R) Arc(TM) A770 Graphics
+2026-05-24 03:11:36,829 - GPUDevice - INFO - 已加载GPU配置: NVIDIA GeForce GTX 1660 Ti -> nvidia, recommended_batch_size=524288
+2026-05-24 03:11:36,829 - GPUDevice - INFO - COMP-2: OpenCL 版本检测 — 平台: OpenCL 3.0 NEO , 设备: OpenCL C 1.2 , 解析: 1.2
+2026-05-24 03:11:36,830 - GPUDevice - INFO - COMP-2: OpenCL 1.2 — 兼容模式 (标准 buffer 映射)
+  不支持 SVM 共享虚拟内存 (需 OpenCL 2.0+)
+  将使用标准 clCreateBuffer + clEnqueueMapBuffer 进行数据传输
+2026-05-24 03:11:36,830 - GPUProfileLoader - INFO - 匹配GPU型号: Intel(R) Arc(TM) A770 Graphics -> intel/xe_hpg/arc_700_800_series
+2026-05-24 03:11:36,830 - GPUDevice - INFO - 已加载GPU配置: Intel(R) Arc(TM) A770 Graphics -> intel, recommended_batch_size=8388608
+2026-05-24 03:11:36,863 - GPUDevice - WARNING - 无法检测GPU驱动版本
+2026-05-24 03:11:36,863 - GPUDevice - INFO - 启用GPU异步执行: 创建双队列(计算+传输)
+2026-05-24 03:11:36,864 - GPUDevice - INFO -   - 计算队列: 已创建(支持性能分析)
+2026-05-24 03:11:36,864 - GPUDevice - INFO -   - 传输队列: 已创建(支持异步传输)
+2026-05-24 03:11:36,864 - GPUDevice - INFO - GPU设备初始化成功: Intel(R) Arc(TM) A770 Graphics (Intel(R) Corporation)
+  - 显存: 15.6 GB
+  - 计算单元: 512
+  - 最大工作组大小: 1024
+  - 本地内存: 64 KB
+  - 平台: Intel(R) OpenCL Graphics
+  - OpenCL: 1.2 (OpenCL 3.0 NEO )
+  - SVM: 不可用
+  - 异步执行: 已启用
+2026-05-24 03:11:36,864 - src.collision.gpu.engine - INFO - 检测到GPU设备: Intel(R) Arc(TM) A770 Graphics (Intel(R) Corporation)
+2026-05-24 03:11:36,864 - src.collision.gpu.engine - INFO -   - 显存: 15.6 GB
+  - 计算单元: 512
+  - 平台: Intel(R) OpenCL Graphics
+2026-05-24 03:11:36,903 - GPUDriverManager - INFO - 检测到NVIDIA驱动版本(nvidia-smi): 595.97
+2026-05-24 03:11:36,903 - GPUDevice - INFO - GPU驱动版本: 595.97, 状态: 正常
+2026-05-24 03:11:36,991 - GPUDevice - INFO - 启用GPU异步执行: 创建双队列(计算+传输)
+2026-05-24 03:11:36,991 - GPUDevice - INFO -   - 计算队列: 已创建(支持性能分析)
+2026-05-24 03:11:36,992 - GPUDevice - INFO -   - 传输队列: 已创建(支持异步传输)
+2026-05-24 03:11:36,992 - GPUDevice - INFO - GPU设备初始化成功: NVIDIA GeForce GTX 1660 Ti (NVIDIA Corporation)
+  - 显存: 6.0 GB
+  - 计算单元: 24
+  - 最大工作组大小: 1024
+  - 本地内存: 48 KB
+  - 平台: NVIDIA CUDA
+  - OpenCL: 1.2 (OpenCL 3.0 CUDA)
+  - SVM: 不可用
+  - 异步执行: 已启用
+2026-05-24 03:11:36,992 - src.collision.gpu.engine - INFO - 检测到GPU设备: NVIDIA GeForce GTX 1660 Ti (NVIDIA Corporation)
+2026-05-24 03:11:36,992 - src.collision.gpu.engine - INFO -   - 显存: 6.0 GB
+  - 计算单元: 24
+  - 平台: NVIDIA CUDA
+2026-05-24 03:11:37,083 - GPUContext - INFO - GPU上下文已创建: Intel(R) Arc(TM) A770 Graphics (Intel)
+2026-05-24 03:11:37,083 - GPUContext - INFO - GPU上下文已创建: NVIDIA GeForce GTX 1660 Ti (NVIDIA)
+2026-05-24 03:11:37,083 - IntelVendor - INFO - 应用Intel优化策略: Intel(R) Arc(TM) A770 Graphics
+2026-05-24 03:11:37,083 - NvidiaVendor - INFO - 应用NVIDIA优化策略: NVIDIA GeForce GTX 1660 Ti
+2026-05-24 03:11:37,083 - IntelVendor - INFO - [OK] 启用uint32 workaround(避免Intel Arc global char* hang bug)
+2026-05-24 03:11:37,084 - NvidiaVendor - WARNING - 驱动版本较旧,禁用异步传输优化
+2026-05-24 03:11:37,084 - GPUContext - ERROR - 应用GPU优化失败: RateLimitedLogger.info() got multiple values for argument 'key'
+2026-05-24 03:11:37,084 - NvidiaVendor - WARNING - NVIDIA驱动保守模式:降低性能预期以确保稳定性
+2026-05-24 03:11:37,084 - GPUContext - INFO - GPU厂商优化应用成功
+2026-05-24 03:11:37,084 - GPUContext - INFO - 编译新内核 [厂商=Intel, options='-cl-std=CL2.0', source_hash=855dc459b8abb900]
+2026-05-24 03:11:37,085 - GPUContext - INFO - 编译新内核 [厂商=NVIDIA, options='-cl-std=CL2.0', source_hash=855dc459b8abb900]
+C:\Users\pengk\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\pyopencl\cache.py:517: CompilerWarning: Non-empty compiler output encountered. Set the environment variable PYOPENCL_COMPILER_OUTPUT=1 to see more.
+  _create_built_program_from_source_cached(
+2026-05-24 03:11:37,110 - GPUContext - INFO - OpenCL 内核编译成功 (厂商编译(-cl-std=CL2.0)): 26ms
+2026-05-24 03:11:37,110 - GPUContext - INFO - OpenCL内核编译成功，已存入缓存 (key=855dc459b8abb900_-cl-std=CL2.0)
+2026-05-24 03:11:37,110 - GPUPerformanceOptimizer - INFO - GPU性能优化器初始化完成
+2026-05-24 03:11:37,119 - GPUContext - INFO - OpenCL 内核编译成功 (厂商编译(-cl-std=CL2.0)): 34ms
+2026-05-24 03:11:37,119 - GPUContext - INFO - OpenCL内核编译成功，已存入缓存 (key=855dc459b8abb900_-cl-std=CL2.0)
+2026-05-24 03:11:37,120 - GPUKernel - INFO - PRNG模式: 创建 seed_buf 32字节（替代原 keys_buf 0MB）
+2026-05-24 03:11:37,126 - GPUKernel - INFO - 预计算表常量缓冲区已创建: 496 uint32
+2026-05-24 03:11:37,126 - GPUKernel - INFO - PRNG模式: 创建 seed_buf 32字节（替代原 keys_buf 0MB）
+2026-05-24 03:11:37,126 - GPUKernel - INFO - GPU 缓冲区分配完成（PRNG模式）: max_batch_size=8192
+2026-05-24 03:11:37,127 - GPUKernel - INFO - 预计算表常量缓冲区已创建: 496 uint32
+2026-05-24 03:11:37,127 - GPUKernel - INFO - GPU 缓冲区分配完成（PRNG模式）: max_batch_size=16384
+2026-05-24 03:11:37,128 - GPUKernel - INFO - GPU 目标地址设置完成: 1 个目标
+2026-05-24 03:11:37,129 - GPUKernel - INFO - GPU 目标地址设置完成: 1 个目标
+2026-05-24 03:11:37,129 - GPUKernel - INFO - [OK] GPU内核基础验证通过（虚拟目标不匹配）
+2026-05-24 03:11:37,138 - CryptoBackend - WARNING - PurePythonBackend: 非恒定时间模式 - 不推荐用于生产环境，建议安装 coincurve 或 cryptography
+2026-05-24 03:11:37,139 - GPUKernel - INFO - [OK] GPU内核基础验证通过（虚拟目标不匹配）
+2026-05-24 03:11:37,299 - CryptoBackend - INFO - Crypto backend initialization complete: available=['PURE_PYTHON', 'OPENSSL', 'COINCURVE', 'ECDSA'], current=coincurve (libsecp256k1)
+2026-05-24 03:11:37,299 - GPUKernel - INFO - ALG-3增强验证: 测试私钥1 -> 地址 1BgGZ9...SAMH
+2026-05-24 03:11:37,299 - GPUKernel - INFO - ALG-3增强验证: 测试私钥1 -> 地址 1BgGZ9...SAMH
+2026-05-24 03:11:37,300 - GPUKernel - INFO -   Hash160: 751e76e8...
+2026-05-24 03:11:37,300 - GPUKernel - INFO -   Hash160: 751e76e8...
+2026-05-24 03:11:37,300 - GPUKernel - INFO - GPU 目标地址设置完成: 1 个目标
+2026-05-24 03:11:37,300 - GPUKernel - INFO - GPU 目标地址设置完成: 1 个目标
+2026-05-24 03:11:37,301 - GPUKernel - INFO - [OK] GPU内核增强验证通过（私钥1匹配地址1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH）
+2026-05-24 03:11:37,302 - src.collision.gpu.engine - INFO - [Performance] OpenCL内核编译: 217.53ms
+2026-05-24 03:11:37,302 - GPUMemoryPool - INFO - GPU内存池初始化: max_buffers=100, max_memory=512MB, dynamic_adjustment=True
+2026-05-24 03:11:37,302 - GPUMemoryPool - INFO - 为上下文 2447679415184 创建GPU内存池
+2026-05-24 03:11:37,302 - GPUMemoryPool - INFO - GPU内存池预分配完成: 6个generic类型缓冲区
+2026-05-24 03:11:37,302 - src.collision.gpu.engine - INFO - GPU内存池初始化完成: {'total_allocated': 6, 'total_reused': 0, 'reuse_rate': 0.0, 'current_memory_mb': 0.12744140625, 'max_memory_mb': 512.0, 'pooled_buffers': 6, 'max_buffers': 100, 'type_stats': {'input': 0, 'output': 0, 'temp': 0}, 'allocation_count': 0}
+2026-05-24 03:11:37,302 - GPUKernel - INFO - [OK] GPU内核增强验证通过（私钥1匹配地址1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH）
+2026-05-24 03:11:37,303 - src.collision.gpu.engine - INFO - 初始化GPU异步执行器...
+2026-05-24 03:11:37,303 - src.collision.gpu.engine - INFO - [Performance] OpenCL内核编译: 219.13ms
+2026-05-24 03:11:37,303 - GPUProfileLoader - INFO - 匹配GPU型号: NVIDIA GeForce GTX 1660 Ti -> nvidia/turing/gtx_1660_series
+2026-05-24 03:11:37,303 - GPUMemoryPool - INFO - GPU内存池初始化: max_buffers=100, max_memory=512MB, dynamic_adjustment=True
+2026-05-24 03:11:37,303 - src.collision.gpu.engine - INFO - 从GPU配置文件获取推荐队列深度: 8
+2026-05-24 03:11:37,304 - GPUMemoryPool - INFO - 为上下文 2447679415584 创建GPU内存池
+2026-05-24 03:11:37,304 - AsyncGPUExecutor - INFO - 异步GPU执行器已初始化: GPU型号=1660, max_batch=524288, initial_batch=131072, 预取=启用, queue_depth=8
+2026-05-24 03:11:37,304 - GPUMemoryPool - INFO - GPU内存池预分配完成: 8个generic类型缓冲区
+2026-05-24 03:11:37,304 - AsyncGPUExecutor - INFO - 创建缓冲区池（PRNG模式）: num_keys=16384, queue_depth=8
+2026-05-24 03:11:37,304 - src.collision.gpu.engine - INFO - GPU内存池初始化完成: {'total_allocated': 8, 'total_reused': 0, 'reuse_rate': 0.0, 'current_memory_mb': 0.18994140625, 'max_memory_mb': 512.0, 'pooled_buffers': 8, 'max_buffers': 100, 'type_stats': {'input': 0, 'output': 0, 'temp': 0}, 'allocation_count': 0}
+2026-05-24 03:11:37,304 - AsyncGPUExecutor - INFO - 预计算表缓冲区已创建: shape=(496,), dtype=uint32
+2026-05-24 03:11:37,304 - src.collision.gpu.engine - INFO - 初始化GPU异步执行器...
+2026-05-24 03:11:37,305 - AsyncGPUExecutor - INFO - 种子缓冲区已创建: 32字节（PRNG模式，节省约0.5MB)
+2026-05-24 03:11:37,305 - GPUProfileLoader - INFO - 匹配GPU型号: Intel(R) Arc(TM) A770 Graphics -> intel/xe_hpg/arc_700_800_series
+2026-05-24 03:11:37,305 - src.collision.gpu.engine - INFO - 从GPU配置文件获取推荐队列深度: 32
+2026-05-24 03:11:37,305 - AsyncGPUExecutor - INFO - 异步GPU执行器已初始化: GPU型号=intel, max_batch=16777216, initial_batch=4194304, 预取=启用, queue_depth=32
+2026-05-24 03:11:37,305 - AsyncGPUExecutor - INFO - 创建缓冲区池（PRNG模式）: num_keys=8192, queue_depth=32
+2026-05-24 03:11:37,305 - AsyncGPUExecutor - INFO - 缓冲区池创建完成（PRNG模式）: 8 个缓冲区，总显存消耗约 0.5 MB
+2026-05-24 03:11:37,305 - AsyncGPUExecutor - INFO - 预计算表缓冲区已创建: shape=(496,), dtype=uint32
+2026-05-24 03:11:37,306 - src.collision.gpu.engine - INFO - [OK] GPU异步执行器已初始化(双缓冲, 队列深度: 8)
+2026-05-24 03:11:37,306 - AsyncGPUExecutor - INFO - 种子缓冲区已创建: 32字节（PRNG模式，节省约0.25MB)
+2026-05-24 03:11:37,306 - GPUKernel - INFO - GPU 目标地址设置完成: 1 个目标
+2026-05-24 03:11:37,306 - src.collision.gpu.engine - INFO - [*] 检测到 NVIDIA GPU，应用特殊优化
+2026-05-24 03:11:37,306 - src.collision.gpu.engine - INFO - ============================================================
+2026-05-24 03:11:37,307 - src.collision.gpu.engine - INFO - [*] 开始应用 NVIDIA GPU 特殊优化
+2026-05-24 03:11:37,307 - src.collision.gpu.engine - INFO - ============================================================
+2026-05-24 03:11:37,308 - src.collision.gpu.engine - INFO - [OK] NVIDIA 驱动版本: 13.2.73 (OpenCL 1.2: N, OpenCL 2.0: N)
+2026-05-24 03:11:37,308 - src.collision.gpu.engine - INFO - [OK] NVIDIA GPU 架构: Turing (计算能力 CC 7.5, 异步拷贝: 支持, 原生 FP64: 不支持, 最低驱动: 440)
+2026-05-24 03:11:37,308 - src.collision.gpu.engine - INFO - ✅ NVIDIA 显存配置: 6.0GB（类型: GDDR），memory_ratio=0.60，异步传输=建议启用
+2026-05-24 03:11:37,308 - src.collision.gpu.engine - INFO - ✅ 快速数学优化: 已禁用（保证 SHA256/RIPEMD160/secp256k1 精度）
+2026-05-24 03:11:37,308 - src.collision.gpu.engine - INFO - ============================================================
+2026-05-24 03:11:37,308 - src.collision.gpu.engine - INFO - ✅ NVIDIA GPU 特殊优化应用完成
+2026-05-24 03:11:37,309 - src.collision.gpu.engine - INFO - ============================================================
+2026-05-24 03:11:37,309 - src.collision.gpu.engine - INFO - [OK] NVIDIA 优化器已初始化: 架构=Turing, memory_ratio=0.60
+2026-05-24 03:11:37,309 - src.collision.gpu.engine - INFO - GPU 设备初始化成功: NVIDIA GeForce GTX 1660 Ti (厂商: NVIDIA Corporation, batch_size: 16384, work_group_size: 256)
+2026-05-24 03:11:37,309 - AsyncGPUExecutor - INFO - 缓冲区池创建完成（PRNG模式）: 32 个缓冲区，总显存消耗约 1.0 MB
+2026-05-24 03:11:37,309 - src.collision.gpu.engine - INFO - [Performance] GPU设备初始化: 484.40ms
+2026-05-24 03:11:37,309 - src.collision.gpu.engine - INFO - [OK] GPU异步执行器已初始化(双缓冲, 队列深度: 32)
+2026-05-24 03:11:37,310 - RandomSearchMode - INFO - 预填充种子队列: 5 个种子
+2026-05-24 03:11:37,316 - GPUKernel - INFO - GPU 目标地址设置完成: 1 个目标
+2026-05-24 03:11:37,316 - RandomSearchMode - INFO - 预填充完成: 5/5
+2026-05-24 03:11:37,316 - src.collision.gpu.engine - INFO - [*] 检测到 Intel GPU，应用特殊优化
+2026-05-24 03:11:37,317 - src.collision.gpu.engine - INFO - ============================================================
+2026-05-24 03:11:37,317 - src.collision.gpu.engine - INFO - [*] 开始应用 Intel GPU 特殊优化
+2026-05-24 03:11:37,317 - src.collision.gpu.engine - INFO - ============================================================
+2026-05-24 03:11:37,318 - RandomSearchMode - INFO - 种子预生成线程已启动 (缓存深度=5)
+2026-05-24 03:11:37,318 - src.collision.gpu.engine - INFO - ✅ 内核源码使用 uint32 workaround
+2026-05-24 03:11:37,318 - RandomSearchMode - INFO - 随机搜索模式已初始化 (种子缓存深度=5)
+2026-05-24 03:11:37,318 - src.collision.gpu.engine - INFO - ✅ Intel uint32 workaround 验证通过 (已在GPU内核验证中确认)
+2026-05-24 03:11:37,318 - src.collision.gpu.engine - INFO - 已初始化搜索模式: ['random', 'brute_force', 'range_scan']
+2026-05-24 03:11:37,318 - src.collision.gpu.engine - INFO - 
+📊 初始化 Intel GPU 监控和调优组件...
+2026-05-24 03:11:37,323 - DataLogger - INFO - 数据日志系统初始化完成
+2026-05-24 03:11:37,323 - src.monitoring.enhanced_monitoring - INFO - Enhanced monitoring system initialized
+2026-05-24 03:11:37,323 - src.collision.gpu.engine - INFO - GPU引擎：增强监控系统已启用（事件适配器模式）
+2026-05-24 03:11:37,323 - src.collision.gpu._scheduler - WARNING - 动态性能基准计算失败，使用默认值: num_keys 必须在 1..16384 之间，当前为 100000
+2026-05-24 03:11:37,323 - GPUWorker - INFO - GPU 0 引擎初始化完成: 批次=16384
+2026-05-24 03:11:37,323 - GPUWorker - INFO - GPU 0 开始搜索...
+2026-05-24 03:11:37,326 - src.collision.gpu.engine - INFO - 启动搜索模式: random
+2026-05-24 03:11:37,326 - GPUWorker - INFO - GPU 0 引擎已启动: mode=random, kwargs=无
+2026-05-24 03:11:37,326 - RandomSearchMode - INFO - 使用GPU异步执行模式（双缓冲优化）
+2026-05-24 03:11:37,326 - RandomSearchMode - INFO - 启动GPU异步执行模式（双缓冲优化）
+2026-05-24 03:11:37,327 - IntelTimeoutManager - INFO - 自适应超时管理器已初始化: base=30.0s, history=50, safety=3.0x, range=[10.0s, 120.0s]
+2026-05-24 03:11:37,328 - src.collision.gpu.engine - INFO - ✅ 自适应超时管理器已初始化
+2026-05-24 03:11:37,328 - IntelMemoryMonitor - INFO - Intel 显存监控器已初始化: total=15.6GB, safe_limit=11153MB (70%)
+2026-05-24 03:11:37,328 - src.collision.gpu.engine - INFO - ✅ 显存监控器已初始化 (总显存: 15.6GB, 安全比例: 70%)
+2026-05-24 03:11:37,328 - GPUBenchmarkSuite - INFO - GPU 性能基准测试套件已初始化
+2026-05-24 03:11:37,328 - src.collision.gpu.engine - INFO - ✅ 基准测试套件已初始化
+2026-05-24 03:11:37,328 - GPUAutoTuner - INFO - GPU 自动调优器已初始化
+2026-05-24 03:11:37,328 - src.collision.gpu.engine - INFO - ✅ 自动调优器已初始化
+2026-05-24 03:11:37,329 - BatchSizeOptimizer - INFO - 智能批次优化器初始化: GPU=1660, init=131072, range=16384-524288
+2026-05-24 03:11:37,329 - GPUPerformanceReporter - INFO - 性能报告生成器已初始化
+2026-05-24 03:11:37,329 - src.collision.gpu.engine - INFO - ✅ 性能报告生成器已初始化
+2026-05-24 03:11:37,329 - src.collision.gpu.engine - INFO - ✅ 所有 5 个监控和调优组件初始化成功
+
+2026-05-24 03:11:37,329 - src.collision.gpu.engine - INFO - ✅ Intel GPU 监控和调优组件初始化完成
+
+2026-05-24 03:11:37,329 - src.collision.gpu.engine - INFO - [OK] Intel 超时保护: 30秒
+2026-05-24 03:11:37,329 - src.collision.gpu.engine - INFO - [OK] Intel 异步执行: 已启用(双缓冲优化)
+2026-05-24 03:11:37,329 - src.collision.gpu.engine - INFO - [OK] Intel 显存效率: 70%
+2026-05-24 03:11:37,330 - src.collision.gpu.engine - WARNING - [WARN] 无法检测 Intel 驱动版本
+2026-05-24 03:11:37,330 - src.collision.gpu.engine - INFO - ============================================================
+2026-05-24 03:11:37,330 - src.collision.gpu.engine - INFO - [OK] Intel GPU 特殊优化应用完成
+2026-05-24 03:11:37,330 - src.collision.gpu.engine - INFO - ============================================================
+2026-05-24 03:11:37,330 - src.collision.gpu.engine - INFO - GPU 设备初始化成功: Intel(R) Arc(TM) A770 Graphics (厂商: Intel(R) Corporation, batch_size: 8192, work_group_size: 256)
+2026-05-24 03:11:37,330 - src.collision.gpu.engine - INFO - [Performance] GPU设备初始化: 505.72ms
+2026-05-24 03:11:37,330 - RandomSearchMode - INFO - 预填充种子队列: 5 个种子
+2026-05-24 03:11:37,332 - RandomSearchMode - INFO - 预填充完成: 5/5
+2026-05-24 03:11:37,332 - RandomSearchMode - INFO - 种子预生成线程已启动 (缓存深度=5)
+2026-05-24 03:11:37,332 - RandomSearchMode - INFO - 随机搜索模式已初始化 (种子缓存深度=5)
+2026-05-24 03:11:37,332 - src.collision.gpu.engine - INFO - 已初始化搜索模式: ['random', 'brute_force', 'range_scan']
+2026-05-24 03:11:37,333 - DataLogger - INFO - 数据日志系统初始化完成
+2026-05-24 03:11:37,333 - src.monitoring.enhanced_monitoring - INFO - Enhanced monitoring system initialized
+2026-05-24 03:11:37,335 - src.collision.gpu.engine - INFO - GPU引擎：增强监控系统已启用（事件适配器模式）
+2026-05-24 03:11:37,335 - src.collision.gpu._scheduler - WARNING - 动态性能基准计算失败，使用默认值: num_keys 必须在 1..8192 之间，当前为 100000
+2026-05-24 03:11:37,335 - GPUWorker - INFO - GPU 1 引擎初始化完成: 批次=8192
+2026-05-24 03:11:37,335 - GPUWorker - INFO - GPU 1 开始搜索...
+2026-05-24 03:11:37,335 - src.collision.gpu.engine - INFO - 启动搜索模式: random
+2026-05-24 03:11:37,335 - GPUWorker - INFO - GPU 1 引擎已启动: mode=random, kwargs=无
+2026-05-24 03:11:37,335 - RandomSearchMode - INFO - 使用GPU异步执行模式（双缓冲优化）
+2026-05-24 03:11:37,341 - RandomSearchMode - INFO - 启动GPU异步执行模式（双缓冲优化）
+2026-05-24 03:11:37,408 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际8192个元素
+2026-05-24 03:11:37,409 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:37,413 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际8192个元素
+2026-05-24 03:11:37,413 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:37,442 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际8192个元素
+2026-05-24 03:11:37,442 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:37,474 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际8192个元素
+2026-05-24 03:11:37,474 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:37,503 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际8192个元素
+2026-05-24 03:11:37,503 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:37,534 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际8192个元素
+2026-05-24 03:11:37,534 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:37,566 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际8192个元素
+2026-05-24 03:11:37,568 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:37,597 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际8192个元素
+2026-05-24 03:11:37,597 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:37,627 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际8192个元素
+2026-05-24 03:11:37,627 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:37,658 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际8192个元素
+2026-05-24 03:11:37,658 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际16384个元素
+2026-05-24 03:11:37,658 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:37,658 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:37,686 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际8192个元素
+2026-05-24 03:11:37,686 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:37,717 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际8192个元素
+2026-05-24 03:11:37,717 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:37,750 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际8192个元素
+2026-05-24 03:11:37,750 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际16384个元素
+2026-05-24 03:11:37,751 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:37,751 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:37,780 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际8192个元素
+2026-05-24 03:11:37,780 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:37,808 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际8192个元素
+2026-05-24 03:11:37,809 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:37,841 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际16384个元素
+2026-05-24 03:11:37,841 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际8192个元素
+2026-05-24 03:11:37,841 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:37,841 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:37,869 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际8192个元素
+2026-05-24 03:11:37,869 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:37,899 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际8192个元素
+2026-05-24 03:11:37,899 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:37,930 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际8192个元素
+2026-05-24 03:11:37,930 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:37,962 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际8192个元素
+2026-05-24 03:11:37,962 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际16384个元素
+2026-05-24 03:11:37,962 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:37,963 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:37,992 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际8192个元素
+2026-05-24 03:11:37,992 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:38,025 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际8192个元素
+2026-05-24 03:11:38,025 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:38,056 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要65536个元素, 实际16384个元素
+2026-05-24 03:11:38,057 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 65536个元素
+2026-05-24 03:11:38,057 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际8192个元素
+2026-05-24 03:11:38,057 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:38,086 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际8192个元素
+2026-05-24 03:11:38,086 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:38,118 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要65536个元素, 实际16384个元素
+2026-05-24 03:11:38,120 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 65536个元素
+2026-05-24 03:11:38,120 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际8192个元素
+2026-05-24 03:11:38,120 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:38,148 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际8192个元素
+2026-05-24 03:11:38,148 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:38,179 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要65536个元素, 实际16384个元素
+2026-05-24 03:11:38,179 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 65536个元素
+2026-05-24 03:11:38,179 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际8192个元素
+2026-05-24 03:11:38,181 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:38,210 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际8192个元素
+2026-05-24 03:11:38,210 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:38,241 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要65536个元素, 实际16384个元素
+2026-05-24 03:11:38,242 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际8192个元素
+2026-05-24 03:11:38,242 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 65536个元素
+2026-05-24 03:11:38,242 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:38,271 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际8192个元素
+2026-05-24 03:11:38,271 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:38,319 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际8192个元素
+2026-05-24 03:11:38,319 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:38,332 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际8192个元素
+2026-05-24 03:11:38,332 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:38,639 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际65536个元素
+2026-05-24 03:11:38,642 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:38,735 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际65536个元素
+2026-05-24 03:11:38,740 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:38,826 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际65536个元素
+2026-05-24 03:11:38,831 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+2026-05-24 03:11:38,924 - AsyncGPUExecutor - WARNING - 缓冲区大小不足: 需要131072个元素, 实际65536个元素
+2026-05-24 03:11:38,935 - AsyncGPUExecutor - INFO - 已动态调整缓冲区大小为: 131072个元素
+Stats: 12,789,408 keys | 0 keys/s
+2026-05-24 03:11:39,800 - MultiGPUEngine - INFO - 停止多GPU碰撞...
+2026-05-24 03:11:39,800 - GPUWorker - INFO - GPU 1 收到停止信号
+2026-05-24 03:11:39,801 - MultiGPUEngine - INFO - GPU 1 工作器停止信号已发送
+2026-05-24 03:11:39,809 - GPUWorker - INFO - GPU 0 收到停止信号
+2026-05-24 03:11:39,815 - MultiGPUEngine - INFO - GPU 0 工作器停止信号已发送
+2026-05-24 03:11:39,872 - src.collision.gpu.engine - INFO - 停止搜索模式: random
+2026-05-24 03:11:39,891 - RandomSearchMode - INFO - 种子预生成线程已停止
+2026-05-24 03:11:39,945 - RandomSearchMode - INFO - 种子预生成线程已停止
+2026-05-24 03:11:39,949 - RandomSearchMode - INFO - 智能批次优化器统计: {'current_batch_size': 131072, 'initial_batch_size': 131072, 'performance_history_count': 30, 'memory_history_count': 30, 'load_history_count': 30, 'min_batch_size': 16384, 'max_batch_size': 524288, 'avg_throughput': 5172012.300813728, 'avg_memory_usage': 0.7}
+2026-05-24 03:11:39,949 - RandomSearchMode - INFO - GPU异步执行结束: 共处理 2999968 个私钥
+2026-05-24 03:11:39,969 - RandomSearchMode - INFO - 种子预生成线程已停止
+2026-05-24 03:11:39,978 - AsyncGPUExecutor - INFO - 异步GPU执行器资源已清理
+2026-05-24 03:11:39,980 - src.collision.gpu.engine - INFO - 停止搜索模式: random
+2026-05-24 03:11:39,992 - AsyncGPUExecutor - INFO - 异步GPU执行器资源已清理
+2026-05-24 03:11:40,010 - RandomSearchMode - INFO - 种子预生成线程已停止
+2026-05-24 03:11:40,010 - src.collision.gpu.engine - INFO - 设备管理器：异步执行器已清理 (耗时: 0.03秒)
+2026-05-24 03:11:40,011 - GPUBufferTracker - INFO - GPU引擎关闭时释放了4个缓冲区 (总大小: 66.0KB): _seed_buf, _match_buf, _precomp_buf, _targets_buf
+2026-05-24 03:11:40,022 - RandomSearchMode - INFO - 种子预生成线程已停止
+2026-05-24 03:11:40,022 - GPUKernel - WARNING - GPU内存泄漏检测报告: 未释放=4, 释放成功=4, 释放失败=0
+2026-05-24 03:11:40,022 - RandomSearchMode - INFO - 智能批次优化器统计: {'current_batch_size': 131072, 'initial_batch_size': 131072, 'performance_history_count': 30, 'memory_history_count': 30, 'load_history_count': 30, 'min_batch_size': 16384, 'max_batch_size': 524288, 'avg_throughput': 5373980.505652773, 'avg_memory_usage': 0.7}
+2026-05-24 03:11:40,022 - src.collision.gpu.engine - INFO - 设备管理器：内核已清理 (耗时: 0.01秒)
+2026-05-24 03:11:40,022 - RandomSearchMode - INFO - GPU异步执行结束: 共处理 11100160 个私钥
+2026-05-24 03:11:40,023 - GPUMemoryPool - INFO - GPU内存池已清空
+2026-05-24 03:11:40,023 - RandomSearchMode - INFO - 种子预生成线程已停止
+2026-05-24 03:11:40,023 - src.collision.gpu.engine - INFO - 设备管理器：内存池已清理 (耗时: 0.00秒)
+2026-05-24 03:11:40,023 - GPUContext - INFO - GPU上下文已清理
+2026-05-24 03:11:40,023 - src.collision.gpu.engine - INFO - 设备管理器：上下文已清理 (耗时: 0.00秒)
+2026-05-24 03:11:40,023 - GPUDevice - INFO - GPU资源已释放
+2026-05-24 03:11:40,023 - src.collision.gpu.engine - INFO - 设备管理器：设备已清理 (耗时: 0.00秒)
+2026-05-24 03:11:40,024 - src.collision.gpu.engine - INFO - 设备管理器：GPU资源清理完成
+2026-05-24 03:11:40,024 - src.collision.gpu.engine - INFO - GPU引擎：资源清理完成
+2026-05-24 03:11:40,024 - GPUWorker - INFO - GPU 0 工作器已停止
+2026-05-24 03:11:40,054 - AsyncGPUExecutor - INFO - 异步GPU执行器资源已清理
+2026-05-24 03:11:40,054 - AsyncGPUExecutor - INFO - 异步GPU执行器资源已清理
+2026-05-24 03:11:40,054 - src.collision.gpu.engine - INFO - 设备管理器：异步执行器已清理 (耗时: 0.00秒)
+2026-05-24 03:11:40,054 - GPUBufferTracker - INFO - GPU引擎关闭时释放了4个缓冲区 (总大小: 34.0KB): _seed_buf, _match_buf, _precomp_buf, _targets_buf
+2026-05-24 03:11:40,054 - GPUKernel - WARNING - GPU内存泄漏检测报告: 未释放=4, 释放成功=4, 释放失败=0
+2026-05-24 03:11:40,054 - src.collision.gpu.engine - INFO - 设备管理器：内核已清理 (耗时: 0.00秒)
+2026-05-24 03:11:40,054 - GPUMemoryPool - INFO - GPU内存池已清空
+2026-05-24 03:11:40,054 - src.collision.gpu.engine - INFO - 设备管理器：内存池已清理 (耗时: 0.00秒)
+2026-05-24 03:11:40,054 - GPUContext - INFO - GPU上下文已清理
+2026-05-24 03:11:40,055 - src.collision.gpu.engine - INFO - 设备管理器：上下文已清理 (耗时: 0.00秒)
+2026-05-24 03:11:40,055 - GPUDevice - INFO - GPU资源已释放
+2026-05-24 03:11:40,055 - src.collision.gpu.engine - INFO - 设备管理器：设备已清理 (耗时: 0.00秒)
+2026-05-24 03:11:40,055 - src.collision.gpu.engine - INFO - 设备管理器：GPU资源清理完成
+2026-05-24 03:11:40,055 - src.collision.gpu.engine - INFO - GPU引擎：资源清理完成
+2026-05-24 03:11:40,055 - GPUWorker - INFO - GPU 1 工作器已停止
+2026-05-24 03:11:40,055 - MultiGPUEngine - INFO - GPU 1 工作器已停止
+2026-05-24 03:11:40,055 - MultiGPUEngine - INFO - GPU 0 工作器已停止
+2026-05-24 03:11:40,055 - GPUDataMonitor - INFO - 数据监控循环已停止
+2026-05-24 03:11:40,056 - GPUDataMonitor - INFO - 数据监控器已停止
+2026-05-24 03:11:40,056 - MultiGPUEngine - INFO - 数据监控器已停止
+2026-05-24 03:11:40,056 - MultiGPUEngine - INFO - 多GPU碰撞已停止
+Engine stopped OK
+
+============================================================
+Test Complete
+============================================================

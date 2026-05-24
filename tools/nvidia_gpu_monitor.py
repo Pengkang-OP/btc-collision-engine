@@ -20,10 +20,6 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-# 添加项目根目录
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-
 def get_nvidia_gpu_stats():
     """获取NVIDIA GPU状态(使用nvidia-smi)"""
     try:

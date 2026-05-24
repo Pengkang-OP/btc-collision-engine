@@ -1,15 +1,10 @@
 #!/usr/bin/env python3
+"""测试: 目标地址包含多格式时的处理逻辑
 """
-测试: 目标地址包含多格式时的处理逻辑
-"""
 
-import os
-import sys
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
-from src.collision.targets.format_aware_manager import FormatAwareTargetManager  # noqa: E402
-from src.core.multi_format_generator import AddressFormat, MultiFormatAddressGenerator  # noqa: E402
+from src.collision.targets.format_aware_manager import FormatAwareTargetManager
+from src.core.multi_format_generator import AddressFormat, MultiFormatAddressGenerator
 
 print("=" * 80)
 print("测试: 多格式目标地址场景")
@@ -50,14 +45,14 @@ print(f"  1. 遍历到P2PKH格式，有{manager.get_targets_by_format()[AddressF
 print(f"     - 生成P2PKH地址: {addrs['p2pkh']}")
 print(
     "     - 检查是否在目标中: "
-    + f"{'是' if addrs['p2pkh'].lower() in manager.get_targets_by_format()[AddressFormat.P2PKH] else '否'}"
+     f"{'是' if addrs['p2pkh'].lower() in manager.get_targets_by_format()[AddressFormat.P2PKH] else '否'}",
 )
 print(f"  2. 继续遍历到Bech32格式，有{manager.get_targets_by_format()[AddressFormat.BECH32]}个目标")
 print(f"     - 生成Bech32地址: {addrs['bech32']}")
-bech32_match = addrs['bech32'].lower() in manager.get_targets_by_format()[AddressFormat.BECH32]
+bech32_match = addrs["bech32"].lower() in manager.get_targets_by_format()[AddressFormat.BECH32]
 print(
     "     - 检查是否在目标中: "
-    + f"{'是' if bech32_match else '否'}"
+     f"{'是' if bech32_match else '否'}",
 )
 print("  3. 两个格式都匹配，返回第一个匹配的（P2PKH先遍历）")
 

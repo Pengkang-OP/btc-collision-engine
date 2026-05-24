@@ -19,14 +19,14 @@ class DriverVersionParser:
 
     @staticmethod
     def parse_version(version_str: str) -> tuple[int, ...]:
-        """
-        解析驱动版本字符串为元组
+        """解析驱动版本字符串为元组
 
         Args:
             version_str: 版本字符串,如 "520.67.03" 或 "23.20.15002"
 
         Returns:
             版本元组,如 (520, 67, 3)
+
         """
         if not version_str:
             return (0,)
@@ -39,13 +39,12 @@ class DriverVersionParser:
             parts = [int(p) for p in cleaned.split(".") if p]
             return tuple(parts) if parts else (0,)
         except ValueError:
-            logger.warning(f"无法解析版本号: {version_str}")
+            logger.warning("无法解析版本号: %s", version_str)
             return (0,)
 
     @staticmethod
     def compare_versions(v1: str, v2: str) -> int:
-        """
-        比较两个版本号
+        """比较两个版本号
 
         Args:
             v1: 版本1
@@ -55,6 +54,7 @@ class DriverVersionParser:
             -1: v1 < v2
              0: v1 == v2
              1: v1 > v2
+
         """
         t1 = DriverVersionParser.parse_version(v1)
         t2 = DriverVersionParser.parse_version(v2)
@@ -66,15 +66,13 @@ class DriverVersionParser:
 
         if t1 < t2:
             return -1
-        elif t1 > t2:
+        if t1 > t2:
             return 1
-        else:
-            return 0
+        return 0
 
     @staticmethod
     def is_version_compatible(current: str, minimum: str) -> bool:
-        """
-        检查当前版本是否满足最低要求
+        """检查当前版本是否满足最低要求
 
         Args:
             current: 当前版本
@@ -82,6 +80,7 @@ class DriverVersionParser:
 
         Returns:
             True如果兼容
+
         """
         return DriverVersionParser.compare_versions(current, minimum) >= 0
 
@@ -120,11 +119,11 @@ class DriverManager:
 
     @staticmethod
     def detect_nvidia_driver_version() -> str | None:
-        """
-        检测NVIDIA驱动版本(支持Windows和Linux)
+        """检测NVIDIA驱动版本(支持Windows和Linux)
 
         Returns:
             驱动版本字符串或None
+
         """
         try:
             system = platform.system()
@@ -143,7 +142,7 @@ class DriverManager:
                             "--format=csv,noheader",
                         ],
                         "parser": "nvidia_smi",
-                    }
+                    },
                 )
             elif system == "Darwin":
                 # macOS: 检查 CUDA toolkit
@@ -156,7 +155,7 @@ class DriverManager:
                             "--format=csv,noheader",
                         ],
                         "parser": "nvidia_smi",
-                    }
+                    },
                 )
                 # 同时检查 CUDA toolkit 路径
                 detection_methods.append(
@@ -164,7 +163,7 @@ class DriverManager:
                         "name": "nvcc-version",
                         "cmd": ["/usr/local/cuda/bin/nvcc", "--version"],
                         "parser": "nvcc",
-                    }
+                    },
                 )
             else:
                 # Linux: 尝试多种方式
@@ -184,7 +183,7 @@ class DriverManager:
                             "cmd": ["cat", "/proc/driver/nvidia/version"],
                             "parser": "proc_driver",
                         },
-                    ]
+                    ],
                 )
 
             # 依次尝试各种检测方法
@@ -201,7 +200,7 @@ class DriverManager:
                     if result.returncode == 0 and result.stdout.strip():
                         parser_type: str = str(method["parser"])
                         version = DriverManager._parse_nvidia_output(
-                            result.stdout.strip(), parser_type
+                            result.stdout.strip(), parser_type,
                         )
                         if version:
                             logger.info(f"检测到NVIDIA驱动版本({method['name']}): {version}")
@@ -221,13 +220,12 @@ class DriverManager:
             return None
 
         except Exception as e:
-            logger.warning(f"检测NVIDIA驱动版本失败: {e}")
+            logger.warning("检测NVIDIA驱动版本失败: %s", e)
             return None
 
     @staticmethod
     def _parse_nvidia_output(output: str, parser_type: str) -> str | None:
-        """
-        解析NVIDIA驱动版本输出
+        """解析NVIDIA驱动版本输出
 
         Args:
             output: 命令输出
@@ -235,13 +233,14 @@ class DriverManager:
 
         Returns:
             驱动版本字符串或None
+
         """
         try:
             if parser_type == "nvidia_smi":
                 # nvidia-smi输出格式: "520.67.03"
                 return output.split("\n", maxsplit=1)[0].strip()
 
-            elif parser_type == "proc_driver":
+            if parser_type == "proc_driver":
                 # /proc/driver/nvidia/version格式:
                 # "NVRM version: NVIDIA UNIX x86_64 Kernel Module 520.67.03 ..."
                 match = re.search(r"Kernel Module\s+([\d.]+)", output)
@@ -250,23 +249,23 @@ class DriverManager:
 
             return None
         except Exception as e:
-            logger.debug(f"解析NVIDIA输出失败: {e}")
+            logger.debug("解析NVIDIA输出失败: %s", e)
             return None
 
     @staticmethod
     def detect_amd_driver_version() -> str | None:
-        """
-        检测AMD驱动版本(支持Windows和Linux)
+        """检测AMD驱动版本(支持Windows和Linux)
 
         Returns:
             驱动版本字符串或None
+
         """
         try:
             system = platform.system()
 
             if system == "Windows":
                 return DriverManager._detect_amd_windows()
-            elif system == "Darwin":
+            if system == "Darwin":
                 # macOS: 使用 system_profiler 检测 AMD GPU
                 try:
                     result = subprocess.run(  # nosec B603
@@ -286,11 +285,10 @@ class DriverManager:
                 except (OSError, subprocess.SubprocessError, ValueError):
                     pass
                 return None
-            else:
-                return DriverManager._detect_amd_linux()
+            return DriverManager._detect_amd_linux()
 
         except Exception as e:
-            logger.warning(f"检测AMD驱动版本失败: {e}")
+            logger.warning("检测AMD驱动版本失败: %s", e)
             return None
 
     @staticmethod
@@ -313,14 +311,13 @@ class DriverManager:
 
             if result.returncode == 0 and result.stdout.strip():
                 version = result.stdout.strip()
-                logger.info(f"检测到AMD驱动版本: {version}")
+                logger.info("检测到AMD驱动版本: %s", version)
                 return version
-            else:
-                logger.warning("无法获取AMD驱动版本")
-                return None
+            logger.warning("无法获取AMD驱动版本")
+            return None
 
         except Exception as e:
-            logger.debug(f"Windows AMD驱动检测失败: {e}")
+            logger.debug("Windows AMD驱动检测失败: %s", e)
             return None
 
     @staticmethod
@@ -352,7 +349,7 @@ class DriverManager:
                                     version = line.split("Version:")[1].strip()
                                     break
 
-                        logger.info(f"检测到AMD驱动版本(Linux): {version}")
+                        logger.info("检测到AMD驱动版本(Linux): %s", version)
                         return version
                 except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
                     # 忽略常见的指令找不到/超时，继续尝试下一个方式
@@ -362,23 +359,23 @@ class DriverManager:
             return None
 
         except Exception as e:
-            logger.debug(f"Linux AMD驱动检测失败: {e}")
+            logger.debug("Linux AMD驱动检测失败: %s", e)
             return None
 
     @staticmethod
     def detect_intel_driver_version() -> str | None:
-        """
-        检测Intel驱动版本(支持Windows和Linux)
+        """检测Intel驱动版本(支持Windows和Linux)
 
         Returns:
             驱动版本字符串或None
+
         """
         try:
             system = platform.system()
 
             if system == "Windows":
                 return DriverManager._detect_intel_windows()
-            elif system == "Darwin":
+            if system == "Darwin":
                 # macOS: 使用 system_profiler 检测 Intel GPU
                 try:
                     result = subprocess.run(  # nosec B603
@@ -398,11 +395,10 @@ class DriverManager:
                 except (OSError, subprocess.SubprocessError, ValueError):
                     pass
                 return None
-            else:
-                return DriverManager._detect_intel_linux()
+            return DriverManager._detect_intel_linux()
 
         except Exception as e:
-            logger.warning(f"检测Intel驱动版本失败: {e}")
+            logger.warning("检测Intel驱动版本失败: %s", e)
             return None
 
     @staticmethod
@@ -425,14 +421,13 @@ class DriverManager:
 
             if result.returncode == 0 and result.stdout.strip():
                 version = result.stdout.strip()
-                logger.info(f"检测到Intel驱动版本: {version}")
+                logger.info("检测到Intel驱动版本: %s", version)
                 return version
-            else:
-                logger.warning("无法获取Intel驱动版本")
-                return None
+            logger.warning("无法获取Intel驱动版本")
+            return None
 
         except Exception as e:
-            logger.debug(f"Windows Intel驱动检测失败: {e}")
+            logger.debug("Windows Intel驱动检测失败: %s", e)
             return None
 
     @staticmethod
@@ -465,7 +460,7 @@ class DriverManager:
                                     version = line.split(":")[1].strip().split()[0]
                                     break
 
-                        logger.info(f"检测到Intel驱动版本(Linux): {version}")
+                        logger.info("检测到Intel驱动版本(Linux): %s", version)
                         return version
                 except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
                     # 忽略常见的指令找不到/超时，继续尝试下一个方式
@@ -475,13 +470,12 @@ class DriverManager:
             return None
 
         except Exception as e:
-            logger.debug(f"Linux Intel驱动检测失败: {e}")
+            logger.debug("Linux Intel驱动检测失败: %s", e)
             return None
 
     @staticmethod
     def clear_driver_cache() -> None:
-        """
-        清除驱动版本缓存
+        """清除驱动版本缓存
 
         用于驱动更新后强制重新检测
         """
@@ -490,11 +484,11 @@ class DriverManager:
 
     @staticmethod
     def get_unstable_driver_report() -> dict:
-        """
-        获取不稳定驱动报告
+        """获取不稳定驱动报告
 
         Returns:
             包含不稳定驱动信息的字典
+
         """
         return {
             "last_updated": "2026-04-20",
@@ -514,32 +508,32 @@ class DriverManager:
 
     @staticmethod
     def add_unstable_driver(vendor: str, min_version: str, max_version: str, issue: str) -> None:
-        """
-        添加不稳定驱动版本到黑名单
+        """添加不稳定驱动版本到黑名单
 
         Args:
             vendor: 厂商标识('nvidia', 'amd', 'intel')
             min_version: 最低版本
             max_version: 最高版本
             issue: 问题描述
+
         """
         vendor_lower = vendor.lower()
         if vendor_lower not in DriverManager.UNSTABLE_DRIVERS:
             DriverManager.UNSTABLE_DRIVERS[vendor_lower] = []
 
         DriverManager.UNSTABLE_DRIVERS[vendor_lower].append((min_version, max_version, issue))
-        logger.warning(f"已添加不稳定驱动: {vendor} {min_version}-{max_version} ({issue})")
+        logger.warning("已添加不稳定驱动: %s %s-%s (%s)", vendor, min_version, max_version, issue)
 
     @staticmethod
     def detect_driver_version(vendor: str) -> str | None:
-        """
-        根据厂商检测驱动版本(带缓存)
+        """根据厂商检测驱动版本(带缓存)
 
         Args:
             vendor: 厂商标识 ('nvidia', 'amd', 'intel')
 
         Returns:
             驱动版本字符串或None
+
         """
         import time
 
@@ -551,11 +545,10 @@ class DriverManager:
             elapsed = time.time() - cache_time
 
             if elapsed < DriverManager._cache_ttl:
-                logger.debug(f"使用缓存的{vendor}驱动版本: {cached_version}")
+                logger.debug("使用缓存的%s驱动版本: %s", vendor, cached_version)
                 return cached_version
-            else:
-                logger.debug(f"{vendor}驱动版本缓存已过期")
-                del DriverManager._driver_version_cache[vendor_lower]
+            logger.debug("%s驱动版本缓存已过期", vendor)
+            del DriverManager._driver_version_cache[vendor_lower]
 
         # 执行检测
         if "nvidia" in vendor_lower:
@@ -565,19 +558,18 @@ class DriverManager:
         elif "intel" in vendor_lower:
             version = DriverManager.detect_intel_driver_version()
         else:
-            logger.warning(f"未知厂商: {vendor},无法检测驱动版本")
+            logger.warning("未知厂商: %s,无法检测驱动版本", vendor)
             version = None
 
         # 更新缓存
         DriverManager._driver_version_cache[vendor_lower] = (version, time.time())
-        logger.debug(f"已缓存{vendor}驱动版本: {version}")
+        logger.debug("已缓存%s驱动版本: %s", vendor, version)
 
         return version
 
     @staticmethod
     def check_driver_health(vendor: str, driver_version: str, profile: dict | None = None) -> dict:
-        """
-        检查驱动健康状态
+        """检查驱动健康状态
 
         Args:
             vendor: 厂商标识
@@ -591,6 +583,7 @@ class DriverManager:
                 'message': '描述信息',
                 'recommendations': ['建议列表']
             }
+
         """
         result: dict[str, Any] = {
             "status": "good",
@@ -624,7 +617,7 @@ class DriverManager:
             recommended_driver = profile.get("recommended_driver_version")
 
             if min_driver and not DriverVersionParser.is_version_compatible(
-                driver_version, min_driver
+                driver_version, min_driver,
             ):
                 result["status"] = "critical"
                 result["message"] = f"驱动版本过低: {driver_version}, 最低要求: {min_driver}"
@@ -632,7 +625,7 @@ class DriverManager:
                 return result
 
             if recommended_driver and not DriverVersionParser.is_version_compatible(
-                driver_version, recommended_driver
+                driver_version, recommended_driver,
             ):
                 if result["status"] == "good":
                     result["status"] = "warning"
@@ -640,7 +633,7 @@ class DriverManager:
                     f"驱动版本较旧: {driver_version}, 推荐版本: {recommended_driver}"
                 )
                 result["recommendations"].append(
-                    f"建议更新驱动到 {recommended_driver} 以获得最佳性能"
+                    f"建议更新驱动到 {recommended_driver} 以获得最佳性能",
                 )
 
         # 3. 根据厂商给出特定建议
@@ -652,10 +645,9 @@ class DriverManager:
 
     @staticmethod
     def get_driver_optimization_flags(
-        vendor: str, driver_version: str, profile: dict | None = None
+        vendor: str, driver_version: str, profile: dict | None = None,
     ) -> dict[str, bool]:
-        """
-        根据驱动版本获取优化标志
+        """根据驱动版本获取优化标志
 
         Args:
             vendor: 厂商标识
@@ -664,6 +656,7 @@ class DriverManager:
 
         Returns:
             优化标志字典
+
         """
         # 默认使用保守模式(更安全)
         flags = {

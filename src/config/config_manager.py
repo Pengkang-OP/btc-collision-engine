@@ -2,7 +2,7 @@
 
 import copy
 import json
-import os
+import pathlib
 import threading
 from collections.abc import Callable
 from typing import Any, Optional
@@ -94,7 +94,7 @@ class ConfigManager:
                     "load_balancing": {"enum": ["performance", "equal"]},
                     "auto_tuning": {"type": "boolean"},
                     # 队列深度优化 v4.2.1: GPU 命令队列预提交批次数
-                    "queue_depth": {"type": "integer", "minimum": 1, "maximum": 16},
+                    "queue_depth": {"type": "integer", "minimum": 0, "maximum": 64},
                     # 内存池相关配置
                     "gpu_memory_pool": {"type": "boolean"},
                     "max_buffers": {"type": "integer", "minimum": 1},
@@ -104,7 +104,7 @@ class ConfigManager:
                     "base_timeout_seconds": {"type": "number", "minimum": 1},
                     "max_error_retries": {"type": "integer", "minimum": 1},
                     # 种子预生成缓存
-                    "seed_prefetch_size": {"type": "integer", "minimum": 1, "maximum": 64},
+                    "seed_prefetch_size": {"type": "integer", "minimum": 1, "maximum": 4096},
                     # 驱动检查配置
                     "driver_check": {"type": "object"},
                     # 每设备独立配置
@@ -143,7 +143,7 @@ class ConfigManager:
                             "openssl",
                             "coincurve",
                             "ecdsa",
-                        ]
+                        ],
                     },
                     "constant_time": {"type": "boolean"},
                     "verify_checksums": {"type": "boolean"},
@@ -164,6 +164,10 @@ class ConfigManager:
                     "storage_dir": {"type": "string"},
                     "history_max_size": {"type": "integer", "minimum": 1},
                     "error_max_size": {"type": "integer", "minimum": 1},
+                    "report_interval": {"type": "integer", "minimum": 1},
+                    "log_level": {"enum": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]},
+                    "enable_memory_monitoring": {"type": "boolean"},
+                    "enable_timeout_monitoring": {"type": "boolean"},
                     "anomaly_thresholds": {
                         "type": "object",
                         "properties": {
@@ -219,18 +223,6 @@ class ConfigManager:
                 },
                 "additionalProperties": False,
             },
-            # CFG-2修复: 补充 config.json 中的 gui 区块
-            "gui": {
-                "type": "object",
-                "properties": {
-                    "theme": {"enum": ["dark", "light"]},
-                    "font": {"type": "string"},
-                    "font_size": {"type": "integer", "minimum": 8, "maximum": 72},
-                    "window_width": {"type": "integer", "minimum": 400},
-                    "window_height": {"type": "integer", "minimum": 300},
-                },
-                "additionalProperties": False,
-            },
             # CFG-2修复: 补充 config.json 中的 optimization 区块
             "optimization": {
                 "type": "object",
@@ -245,7 +237,7 @@ class ConfigManager:
         },
         "additionalProperties": False,  # 审查修复#3: 顶层也禁止额外属性
         "patternProperties": {
-            "^_comment": {"type": "string"}  # 允许 _comment / _comment_xxx 文档注解字段
+            "^_comment": {"type": "string"},  # 允许 _comment / _comment_xxx 文档注解字段
         },
     }
 
@@ -366,19 +358,10 @@ class ConfigManager:
             "language": "auto",
             "fallback_language": "en_US",
         },
-        # 审计修复: 补充 Schema 中声明但 DEFAULT_CONFIG 缺失的 gui 配置
-        "gui": {
-            "theme": "dark",
-            "font": "Consolas",
-            "font_size": 12,
-            "window_width": 1200,
-            "window_height": 800,
-        },
     }
 
     def __init__(self, config_file: str | None = None) -> None:
-        """
-        初始化配置管理器
+        """初始化配置管理器
 
         参数:
             config_file: 配置文件路径，None表示使用默认配置
@@ -390,7 +373,7 @@ class ConfigManager:
         # 避免每次实例化都执行不必要的深拷贝操作
         self._config_initialized = False
 
-        if config_file and os.path.exists(config_file):
+        if config_file and pathlib.Path(config_file).exists():
             self.load_config()
 
         # 配置热重载支持
@@ -433,8 +416,7 @@ class ConfigManager:
         return config
 
     def load_config(self) -> bool:
-        """
-        从文件加载配置（线程安全）
+        """从文件加载配置（线程安全）
 
         返回:
             加载成功返回True，失败返回False
@@ -443,7 +425,7 @@ class ConfigManager:
             if not self.config_file:
                 logger.warning("配置文件路径未设置，跳过加载")
                 return False
-            with open(self.config_file, encoding="utf-8") as f:
+            with pathlib.Path(self.config_file).open(encoding="utf-8") as f:
                 raw_config = json.load(f)
 
             # D-2修复: 过滤 _comment 注释键，兼容 config.example.json 直接使用
@@ -461,7 +443,7 @@ class ConfigManager:
                 self._merge_config(self.config, user_config)
             return True
         except Exception as e:
-            logger.error(f"加载配置文件失败: {e}")
+            logger.error("加载配置文件失败: %s", e)
             return False
 
     # ── 配置热重载 ──────────────────────────────────────────
@@ -483,7 +465,7 @@ class ConfigManager:
 
         old_config_backup = None
         try:
-            with open(self.config_file, encoding="utf-8") as f:
+            with pathlib.Path(self.config_file).open(encoding="utf-8") as f:
                 raw_config = json.load(f)
 
             new_config = self._strip_comments(raw_config)
@@ -597,11 +579,10 @@ class ConfigManager:
             # 记录警告日志，但不抛出异常
             import sys
 
-            print(f"WARNING: ConfigManager清理失败: {type(e).__name__}: {e}", file=sys.stderr)
+            sys.stderr.write(f"WARNING: ConfigManager清理失败: {type(e).__name__}: {e}\n")
 
     def save_config(self) -> bool:
-        """
-        保存配置到文件（线程安全）
+        """保存配置到文件（线程安全）
 
         返回:
             保存成功返回True，失败返回False
@@ -620,23 +601,23 @@ class ConfigManager:
                 from ..utils.file_utils import atomic_json_write
             except ImportError:
                 logger.warning("atomic_json_write 不可用，使用标准 json.dump 写入")
-                with open(self.config_file, "w", encoding="utf-8") as f:
+                with pathlib.Path(self.config_file).open("w", encoding="utf-8") as f:
                     json.dump(config_copy, f, ensure_ascii=False, indent=2)
                 return True
 
-            success = atomic_json_write(
-                self.config_file, config_copy, ensure_ascii=False, indent=2, fsync=True
+            atomic_json_write(
+                self.config_file, config_copy, ensure_ascii=False, indent=2,
             )
+            success = True
             if success:
                 logger.debug(f"配置文件已保存: {self.config_file}")
             return success
         except Exception as e:
-            logger.error(f"保存配置文件失败: {e}")
+            logger.error("保存配置文件失败: %s", e)
             return False
 
     def get(self, key: str, default: Any = None) -> Any:
-        """
-        获取配置值（线程安全）
+        """获取配置值（线程安全）
 
         参数:
             key: 配置键，支持点号分隔的路径，如 "collision.max_workers"
@@ -658,8 +639,7 @@ class ConfigManager:
         return value
 
     def set(self, key: str, value: Any) -> bool:
-        """
-        设置配置值（线程安全）
+        """设置配置值（线程安全）
 
         参数:
             key: 配置键，支持点号分隔的路径
@@ -682,8 +662,7 @@ class ConfigManager:
         return True
 
     def _merge_config(self, base: dict[str, Any], update: dict[str, Any]) -> None:
-        """
-        递归合并配置（必须在锁内调用）
+        """递归合并配置（必须在锁内调用）
 
         参数:
             base: 基础配置
@@ -696,8 +675,7 @@ class ConfigManager:
                 base[key] = value
 
     def _deep_copy_config(self, config: dict[str, Any]) -> dict[str, Any]:
-        """
-        深拷贝配置字典（避免在写文件时持有锁）
+        """深拷贝配置字典（避免在写文件时持有锁）
 
         参数:
             config: 要拷贝的配置字典
@@ -709,8 +687,7 @@ class ConfigManager:
         return copy.deepcopy(config)
 
     def validate(self, config: dict[str, Any] | None = None) -> dict[str, str]:
-        """
-        DF-3修复: 统一配置验证逻辑
+        """DF-3修复: 统一配置验证逻辑
 
         优先使用JSON Schema验证（如果可用），否则使用手动验证。
 
@@ -727,9 +704,8 @@ class ConfigManager:
         if HAS_JSONSCHEMA:
             # 使用JSON Schema验证
             return self._validate_with_schema(config)
-        else:
-            # 降级为手动验证
-            return self._validate_manual(config)
+        # 降级为手动验证
+        return self._validate_manual(config)
 
     def _validate_with_schema(self, config: dict[str, Any]) -> dict[str, str]:
         """DF-3修复: 使用JSON Schema验证配置
@@ -823,12 +799,12 @@ class ConfigManager:
             return None
         if value >= _gpu_max_batch_size:
             errors[key] = _t(
-                "config.validation.batch_size_max_gpu", value=value, max=_gpu_max_batch_size
+                "config.validation.batch_size_max_gpu", value=value, max=_gpu_max_batch_size,
             )
             return None
         if value > _schema_max_batch_size:
             errors[key] = _t(
-                "config.validation.batch_size_max_schema", value=value, max=_schema_max_batch_size
+                "config.validation.batch_size_max_schema", value=value, max=_schema_max_batch_size,
             )
             return None
         return value
@@ -856,7 +832,7 @@ class ConfigManager:
             return None
         if not isinstance(value, int) or value < min_val:
             errors[name] = _t(
-                "config.validation.batch_size_min", name=name, min_val=min_val, value=value
+                "config.validation.batch_size_min", name=name, min_val=min_val, value=value,
             )
             return None
         if max_val is not None and value > max_val:
@@ -871,7 +847,7 @@ class ConfigManager:
         return value
 
     def _validate_positive_float(
-        self, name: str, value: float, errors: dict[str, str], min_val: float = 0.0
+        self, name: str, value: float, errors: dict[str, str], min_val: float = 0.0,
     ) -> float | None:
         """验证正浮点数配置"""
         if not isinstance(value, (int, float)) or value < min_val:
@@ -886,16 +862,16 @@ class ConfigManager:
             if isinstance(value, str):
                 if value.lower() in ("true", "1", "yes", "on"):
                     return True
-                elif value.lower() in ("false", "0", "no", "off"):
+                if value.lower() in ("false", "0", "no", "off"):
                     return False
             errors[name] = _t(
-                "config.validation.bool_expected", value=value, type_name=type(value).__name__
+                "config.validation.bool_expected", value=value, type_name=type(value).__name__,
             )
             return False
         return value
 
     def _validate_checkpoint_interval(
-        self, value: int, errors: dict[str, str], prefix: str = ""
+        self, value: int, errors: dict[str, str], prefix: str = "",
     ) -> int | None:
         """验证检查点间隔
 
@@ -919,7 +895,7 @@ class ConfigManager:
         key = prefix + "level"
         if value.upper() not in valid_levels:
             errors[key] = _t(
-                "config.validation.invalid_log_level", value=value, valid_values=valid_levels
+                "config.validation.invalid_log_level", value=value, valid_values=valid_levels,
             )
             return None
         return value.upper()
@@ -980,11 +956,11 @@ class ConfigManager:
             )
         if "progress_interval" in collision:
             self._validate_positive_int(
-                "collision.progress_interval", collision["progress_interval"], errors
+                "collision.progress_interval", collision["progress_interval"], errors,
             )
         if "checkpoint_interval" in collision:
             self._validate_checkpoint_interval(
-                collision["checkpoint_interval"], errors, prefix="collision."
+                collision["checkpoint_interval"], errors, prefix="collision.",
             )
         if "dedup_max_size" in collision:
             self._validate_positive_int("collision.dedup_max_size", collision["dedup_max_size"], errors)
@@ -1015,7 +991,7 @@ class ConfigManager:
             if key in logging_cfg and not isinstance(logging_cfg[key], str):
                 errors[f"logging.{key}"] = _t(
                     "config.validation.type_mismatch",
-                    key=f"logging.{key}",
+                    name=f"logging.{key}",
                     expected_type="字符串/string",
                     actual_type=type(logging_cfg[key]).__name__,
                 )
@@ -1049,17 +1025,17 @@ class ConfigManager:
             self._validate_positive_int("engine.max_threads", engine_cfg["max_threads"], errors)
         if "checkpoint_interval" in engine_cfg:
             self._validate_checkpoint_interval(
-                engine_cfg["checkpoint_interval"], errors, prefix="engine."
+                engine_cfg["checkpoint_interval"], errors, prefix="engine.",
             )
 
     def _validate_gpu_section(
-        self, gpu_top: Any, gpu_cfg: dict[str, Any], errors: dict[str, str]
+        self, gpu_top: Any, gpu_cfg: dict[str, Any], errors: dict[str, str],
     ) -> None:
         """验证 gpu 配置节"""
         if gpu_top is not None and not isinstance(gpu_top, dict):
             errors["gpu"] = _t(
                 "config.validation.field_must_be_dict",
-                key="gpu",
+                name="gpu",
                 actual_type=type(gpu_top).__name__,
             )
             return
@@ -1069,7 +1045,7 @@ class ConfigManager:
             ratio = gpu_cfg["memory_usage_ratio"]
             if not isinstance(ratio, (int, float)) or not (0 < ratio <= 1):
                 errors["gpu.memory_usage_ratio"] = _t(
-                    "config.validation.memory_ratio_range", value=ratio
+                    "config.validation.memory_ratio_range", value=ratio,
                 )
         if "mode" in gpu_cfg and gpu_cfg["mode"] not in ("auto", "single", "multi"):
             errors["gpu.mode"] = _t("config.validation.gpu_mode_invalid", value=gpu_cfg["mode"])
@@ -1078,7 +1054,7 @@ class ConfigManager:
             "equal",
         ):
             errors["gpu.load_balancing"] = _t(
-                "config.validation.load_balancing_invalid", value=gpu_cfg["load_balancing"]
+                "config.validation.load_balancing_invalid", value=gpu_cfg["load_balancing"],
             )
         for key in ("use_gpu", "auto_detect", "enable_vendor_optimizations"):
             if key in gpu_cfg:
@@ -1129,7 +1105,7 @@ class ConfigManager:
             )
         if "max_records" in perf_cfg:
             self._validate_positive_int(
-                "performance_monitoring.max_records", perf_cfg["max_records"], errors
+                "performance_monitoring.max_records", perf_cfg["max_records"], errors,
             )
         if "log_level" in perf_cfg:
             self._validate_log_level(perf_cfg["log_level"], errors, prefix="performance_monitoring.log_")

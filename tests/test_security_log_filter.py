@@ -55,7 +55,7 @@ class TestSecurityLogFilterFilter:
     """测试 filter() 方法"""
 
     def test_filter_no_msg_attribute(self):
-        """record 无 msg 属性 → 直接返回 True"""
+        """Record 无 msg 属性 → 直接返回 True"""
         f = SecurityLogFilter()
         record = MagicMock(spec=[])
         result = f.filter(record)
@@ -72,7 +72,7 @@ class TestSecurityLogFilterFilter:
         assert record.msg == "normal log message"
 
     def test_filter_args_dict(self):
-        """args 为 dict 时每个 str 值被清理"""
+        """Args 为 dict 时每个 str 值被清理"""
         f = SecurityLogFilter()
         record = MagicMock()
         record.msg = "test"
@@ -81,7 +81,7 @@ class TestSecurityLogFilterFilter:
         assert result is True
 
     def test_filter_args_tuple(self):
-        """args 为 tuple/list 时每个 str 值被清理"""
+        """Args 为 tuple/list 时每个 str 值被清理"""
         f = SecurityLogFilter()
         record = MagicMock()
         record.msg = "test"
@@ -208,7 +208,7 @@ class TestSanitizeMessageBIP32:
     """测试 _sanitize_message — BIP32 扩展密钥掩码"""
 
     def test_masks_xprv(self):
-        """xprv 扩展私钥被掩码"""
+        """Xprv 扩展私钥被掩码"""
         f = SecurityLogFilter()
         # xprv + 107 base58 字符 (符合 BIP32 格式)
         xprv = "xprv" + "A" * 107
@@ -216,7 +216,7 @@ class TestSanitizeMessageBIP32:
         assert "[BIP32_EXTENDED_KEY]" in result
 
     def test_masks_xpub(self):
-        """xpub 扩展公钥被掩码"""
+        """Xpub 扩展公钥被掩码"""
         f = SecurityLogFilter()
         # xpub + 108 base58 字符
         xpub = "xpub" + "B" * 108

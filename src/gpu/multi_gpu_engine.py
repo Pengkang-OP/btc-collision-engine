@@ -12,6 +12,7 @@
 - 分布式统计聚合（减少锁竞争，可配置）
 """
 
+import pathlib
 import threading
 import time
 from collections.abc import Callable
@@ -24,7 +25,6 @@ from ..utils import get_configured_logger
 
 # 根据配置条件导入优化模块
 _aggregator_available = is_feature_enabled("distributed_aggregator")
-
 from .data_monitor import DataMonitor  # noqa: E402
 from .gpu_config import MultiGPUConfig, WorkerConfig  # noqa: E402
 from .gpu_recovery_manager import GPURecoveryManager  # noqa: E402
@@ -61,11 +61,55 @@ class MultiGPUCollisionEngine:
         engine.stop()
     """
 
+    __slots__ = (
+        # === 配置 ===
+        "config",
+        "selector",
+        "load_balancer",
+        "workers",
+        # === 状态锁 ===
+        "_state_lock",
+        "_workers_lock",
+        "_matches_lock",
+        "_performance_history_lock",
+        # === 运行状态 ===
+        "_running",
+        "_initialized",
+        "_stopping",
+        # === 设备 / 目标 ===
+        "_devices",
+        "_targets",
+        # === 结果收集 ===
+        "_all_matches",
+        "_match_callback",
+        # === 统计 ===
+        "_start_time",
+        "_total_keys_checked",
+        "_performance_history",
+        "_max_history_size",
+        # === 监控 / 恢复 ===
+        "data_monitor",
+        "_monitor_enabled",
+        "recovery_manager",
+        "_workload_monitor",
+        "_monitor_thread",
+        "_monitor_interval",
+        "_auto_rebalance",
+        # === 内存池 / 编译缓存 ===
+        "_compiled_programs",
+        "_device_memory_pool_config",
+        "_worker_join_timeout",
+        # === 可观测性 ===
+        "_stats_aggregator",
+        "_metrics",
+    )
+
     def __init__(self, config: dict | MultiGPUConfig | None = None) -> None:
         """初始化多GPU引擎
 
         Args:
             config: 配置字典（兼容旧接口）或 MultiGPUConfig 实例
+
         """
         # M-3修复: 添加配置验证（dict 和 MultiGPUConfig 均需验证）
         if isinstance(config, dict):
@@ -112,7 +156,7 @@ class MultiGPUCollisionEngine:
         self._total_keys_checked = 0
 
         # 数据监控器
-        self.data_monitor = DataMonitor(config=cast(Any, self.config.data_monitor))
+        self.data_monitor = DataMonitor(config=cast("Any", self.config.data_monitor))
         self._monitor_enabled = self.config.enable_data_monitor
 
         # GPU恢复管理器
@@ -175,6 +219,7 @@ class MultiGPUCollisionEngine:
 
         Returns:
             初始化是否成功
+
         """
         try:
             # 检测设备
@@ -200,7 +245,7 @@ class MultiGPUCollisionEngine:
                 return False
 
             logger.info(
-                f"初始化 {len(self._devices)} 个GPU设备: {[d['name'] for d in self._devices]}"
+                f"初始化 {len(self._devices)} 个GPU设备: {[d['name'] for d in self._devices]}",
             )
 
             # 按显存比例计算 Per-GPU 内存池分配配置
@@ -239,7 +284,7 @@ class MultiGPUCollisionEngine:
             return True
 
         except Exception as e:
-            logger.error(f"多GPU引擎初始化失败: {e}")
+            logger.error("多GPU引擎初始化失败: %s", e)
             return False
 
     def _validate_config_values(self, config: dict) -> dict:
@@ -261,6 +306,7 @@ class MultiGPUCollisionEngine:
 
         Returns:
             验证后的配置字典
+
         """
         validated = config.copy()
 
@@ -274,11 +320,12 @@ class MultiGPUCollisionEngine:
             if key in validated:
                 val = validated[key]
                 if not isinstance(val, (int, float)):
-                    logger.warning(f"配置 {key} 应为数值，使用默认值 {default}")
+                    logger.warning("配置 %s 应为数值，使用默认值 %s", key, default)
                     validated[key] = default
                 elif val < min_val or val > max_val:
                     logger.warning(
-                        f"配置 {key}={val} 超出范围 [{min_val}, {max_val}]，使用默认值 {default}"
+                        "配置 %s=%s 超出范围 [%s, %s]，使用默认值 %s",
+                        key, val, min_val, max_val, default,
                     )
                     validated[key] = default
 
@@ -308,7 +355,7 @@ class MultiGPUCollisionEngine:
             val = getattr(config, attr, default)
             if not isinstance(val, (int, float)) or val < min_val or val > max_val:
                 logger.warning(
-                    f"配置 {attr}={val} 超出范围 [{min_val}, {max_val}]，使用默认值 {default}"
+                    "配置 %s=%s 超出范围 [%s, %s]，使用默认值 %s", attr, val, min_val, max_val, default,
                 )
                 setattr(config, attr, default)
 
@@ -322,7 +369,7 @@ class MultiGPUCollisionEngine:
             rc.retry_delay_seconds = 5
         if rc.batch_size_reduction_factor < 0.1 or rc.batch_size_reduction_factor > 1.0:
             logger.warning(
-                f"batch_size_reduction_factor={rc.batch_size_reduction_factor} 超出范围，使用默认值 0.5"
+                f"batch_size_reduction_factor={rc.batch_size_reduction_factor} 超出范围，使用默认值 0.5",
             )
             rc.batch_size_reduction_factor = 0.5
 
@@ -342,6 +389,7 @@ class MultiGPUCollisionEngine:
         Args:
             total_allocated_mb: 所有GPU内存池分配总量 (MB)
             device_count: GPU数量
+
         """
         total_system_ram_mb = self._get_system_total_memory_mb()
         if total_system_ram_mb <= 0:
@@ -356,20 +404,20 @@ class MultiGPUCollisionEngine:
 
         if total_allocated_mb > total_system_ram_mb:
             logger.critical(
-                f"⚠️ 多GPU内存池总量 ({allocated_gb:.1f}GB, {device_count}个GPU) "
+                f"[WARN] 多GPU内存池总量 ({allocated_gb:.1f}GB, {device_count}个GPU) "
                 f"超出系统总RAM ({total_system_gb:.1f}GB)! "
-                f"建议降低 total_pool_mb 配置或减少GPU数量"
+                f"建议降低 total_pool_mb 配置或减少GPU数量",
             )
         elif total_allocated_mb > safe_limit_mb:
             logger.warning(
-                f"⚠️ 多GPU内存池总量 ({allocated_gb:.1f}GB, {device_count}个GPU) "
+                f"[WARN] 多GPU内存池总量 ({allocated_gb:.1f}GB, {device_count}个GPU) "
                 f"超出系统RAM安全上限 ({safe_gb:.1f}GB, 70% of {total_system_gb:.1f}GB). "
-                f"可能导致系统内存压力"
+                f"可能导致系统内存压力",
             )
         else:
             logger.info(
-                f"✅ 多GPU内存池总量 ({allocated_gb:.1f}GB) 在系统RAM安全范围内 "
-                f"({total_system_gb:.1f}GB 总RAM, {safe_gb:.1f}GB 安全上限)"
+                f"[OK] 多GPU内存池总量 ({allocated_gb:.1f}GB) 在系统RAM安全范围内 "
+                f"({total_system_gb:.1f}GB 总RAM, {safe_gb:.1f}GB 安全上限)",
             )
 
     @staticmethod
@@ -378,6 +426,7 @@ class MultiGPUCollisionEngine:
 
         Returns:
             系统总内存 (MB)，获取失败返回 -1
+
         """
         try:
             import ctypes
@@ -405,7 +454,7 @@ class MultiGPUCollisionEngine:
 
             # Linux
             try:
-                with open("/proc/meminfo") as f:
+                with pathlib.Path("/proc/meminfo").open() as f:
                     for line in f:
                         if line.startswith("MemTotal:"):
                             # 格式: "MemTotal:       16384000 kB"
@@ -442,6 +491,7 @@ class MultiGPUCollisionEngine:
 
         Returns:
             启动是否成功
+
         """
         if not self._initialized:
             logger.error("引擎未初始化,请先调用initialize()")
@@ -506,7 +556,7 @@ class MultiGPUCollisionEngine:
                     self._stats_aggregator.update_worker_stats(idx, {"status": "running"})
                 # 记录设备状态到 metrics
                 self._metrics.record_device_status(idx, True)
-                logger.info(f"GPU {idx} 工作器已启动")
+                logger.info("GPU %s 工作器已启动", idx)
 
             # 启动数据监控器
             if self._monitor_enabled:
@@ -524,7 +574,7 @@ class MultiGPUCollisionEngine:
             return True
 
         except Exception as e:
-            logger.error(f"启动多GPU碰撞失败: {e}")
+            logger.error("启动多GPU碰撞失败: %s", e)
             return False
 
     def stop(self) -> None:
@@ -565,9 +615,9 @@ class MultiGPUCollisionEngine:
         for idx, worker in workers_snapshot.items():
             try:
                 worker.stop_search()
-                logger.info(f"GPU {idx} 工作器停止信号已发送")
+                logger.info("GPU %s 工作器停止信号已发送", idx)
             except Exception as e:
-                logger.error(f"停止GPU {idx} 工作器失败: {e}")
+                logger.error("停止GPU %s 工作器失败: %s", idx, e)
 
         # 等待所有工作器结束
         for idx, worker in workers_snapshot.items():
@@ -576,9 +626,9 @@ class MultiGPUCollisionEngine:
                 if worker.is_alive():
                     logger.warning(f"GPU {idx} 工作器未在{self._worker_join_timeout}秒内停止")
                 else:
-                    logger.info(f"GPU {idx} 工作器已停止")
+                    logger.info("GPU %s 工作器已停止", idx)
             except Exception as e:
-                logger.error(f"等待GPU {idx} 工作器失败: {e}")
+                logger.error("等待GPU %s 工作器失败: %s", idx, e)
 
         # 更新统计
         self._update_combined_stats()
@@ -599,7 +649,7 @@ class MultiGPUCollisionEngine:
             try:
                 worker.pause_search()
             except Exception as e:
-                logger.error(f"暂停GPU {idx} 失败: {e}")
+                logger.error("暂停GPU %s 失败: %s", idx, e)
 
         logger.info("所有GPU工作器已暂停")
 
@@ -612,7 +662,7 @@ class MultiGPUCollisionEngine:
             try:
                 worker.resume_search()
             except Exception as e:
-                logger.error(f"恢复GPU {idx} 失败: {e}")
+                logger.error("恢复GPU %s 失败: %s", idx, e)
 
         logger.info("所有GPU工作器已恢复")
 
@@ -621,6 +671,7 @@ class MultiGPUCollisionEngine:
 
         Returns:
             汇总统计字典
+
         """
         # 使用分布式统计聚合器（如果启用）
         if self._stats_aggregator:
@@ -687,6 +738,7 @@ class MultiGPUCollisionEngine:
 
         Returns:
             设备索引 -> 统计信息映射
+
         """
         # 使用锁保护workers访问
         with self._workers_lock:
@@ -703,6 +755,7 @@ class MultiGPUCollisionEngine:
 
         Returns:
             匹配结果列表
+
         """
         # 使用锁保护_all_matches读取
         with self._matches_lock:
@@ -713,6 +766,7 @@ class MultiGPUCollisionEngine:
 
         Returns:
             True表示正在运行
+
         """
         # 使用锁保护_running读取
         with self._state_lock:
@@ -723,6 +777,7 @@ class MultiGPUCollisionEngine:
 
         Returns:
             True表示已初始化
+
         """
         # 使用锁保护_initialized读取
         with self._state_lock:
@@ -733,6 +788,7 @@ class MultiGPUCollisionEngine:
 
         Returns:
             设备信息列表
+
         """
         # 使用锁保护_devices读取
         with self._state_lock:
@@ -743,6 +799,7 @@ class MultiGPUCollisionEngine:
 
         Returns:
             GPULoadBalancer实例
+
         """
         return self.load_balancer
 
@@ -752,6 +809,7 @@ class MultiGPUCollisionEngine:
         Args:
             device_idx: 发现匹配的设备索引
             match: 匹配信息
+
         """
         match["device_idx"] = device_idx
         match["timestamp"] = time.time()
@@ -771,14 +829,14 @@ class MultiGPUCollisionEngine:
         masked = match.get("address", "Unknown")
         if len(masked) > 10:
             masked = f"{masked[:6]}...{masked[-4:]}"
-        logger.info(f"GPU {device_idx} 发现匹配: {masked}")
+        logger.info("GPU %s 发现匹配: %s", device_idx, masked)
 
         # 调用外部回调
         if self._match_callback:
             try:
                 self._match_callback(device_idx, match)
             except Exception as e:
-                logger.error(f"匹配回调异常: {e}")
+                logger.error("匹配回调异常: %s", e)
 
     def _on_anomaly_detected(self, device_idx: int, issue: dict):
         """处理数据异常检测回调
@@ -786,6 +844,7 @@ class MultiGPUCollisionEngine:
         Args:
             device_idx: GPU设备索引
             issue: 数据质量问题
+
         """
         severity = issue.get("severity", "low")
         issue.get("issue_type", "unknown")
@@ -793,48 +852,49 @@ class MultiGPUCollisionEngine:
 
         # 根据严重程度采取不同措施
         if severity == "critical":
-            logger.critical(f"GPU {device_idx} 严重数据异常: {message}")
+            logger.critical("GPU %s 严重数据异常: %s", device_idx, message)
             # 可选择暂停该GPU工作器
             if self.config.auto_pause_on_critical:
-                logger.warning(f"自动暂停GPU {device_idx}")
+                logger.warning("自动暂停GPU %s", device_idx)
                 self._pause_device(device_idx)
 
         elif severity == "high":
-            logger.error(f"GPU {device_idx} 高级别数据异常: {message}")
+            logger.error("GPU %s 高级别数据异常: %s", device_idx, message)
 
         elif severity == "medium":
-            logger.warning(f"GPU {device_idx} 中级别数据异常: {message}")
+            logger.warning("GPU %s 中级别数据异常: %s", device_idx, message)
 
         else:  # low
-            logger.debug(f"GPU {device_idx} 低级别数据异常: {message}")
+            logger.debug("GPU %s 低级别数据异常: %s", device_idx, message)
 
     def _pause_device(self, device_idx: int):
         """暂停指定GPU工作器
 
         Args:
             device_idx: GPU设备索引
+
         """
         with self._workers_lock:
             if device_idx in self.workers:
                 try:
                     self.workers[device_idx].pause_search()
-                    logger.info(f"GPU {device_idx} 已暂停")
+                    logger.info("GPU %s 已暂停", device_idx)
                 except Exception as e:
-                    logger.error(f"暂停GPU {device_idx} 失败: {e}")
+                    logger.error("暂停GPU %s 失败: %s", device_idx, e)
 
     def get_monitor_stats(self) -> dict:
         """获取数据监控统计
 
         Returns:
             监控统计字典
+
         """
         if self._monitor_enabled:
-            return cast(dict, self.data_monitor.get_stats())
-        else:
-            return {"enabled": False}
+            return cast("dict", self.data_monitor.get_stats())
+        return {"enabled": False}
 
     def get_monitor_issues(
-        self, severity: str | None = None, device_idx: int | None = None, limit: int = 100
+        self, severity: str | None = None, device_idx: int | None = None, limit: int = 100,
     ) -> list[dict]:
         """获取数据质量问题
 
@@ -845,14 +905,14 @@ class MultiGPUCollisionEngine:
 
         Returns:
             问题列表
+
         """
         if self._monitor_enabled:
             return cast(
-                list[dict],
+                "list[dict]",
                 self.data_monitor.get_issues(severity=severity, device_idx=device_idx, limit=limit),
             )
-        else:
-            return []
+        return []
 
     def _get_device_config(self, device: dict) -> WorkerConfig:
         """获取设备特定配置
@@ -862,6 +922,7 @@ class MultiGPUCollisionEngine:
 
         Returns:
             WorkerConfig 实例
+
         """
         # 基础配置
         config = WorkerConfig(
@@ -896,6 +957,7 @@ class MultiGPUCollisionEngine:
 
         Returns:
             格式为 '{vendor}_{platform}' 的唯一键
+
         """
         vendor = str(device.get("vendor", "unknown")).lower().strip()
         platform = str(device.get("platform_name", "unknown")).lower().strip()
@@ -905,7 +967,7 @@ class MultiGPUCollisionEngine:
         return f"{vendor}_{platform}"
 
     def _get_or_cache_compile_config(
-        self, device: dict, kernel_source: str, build_options: str
+        self, device: dict, kernel_source: str, build_options: str,
     ) -> dict:
         """获取或缓存内核编译配置（同厂商GPU共享编译配置）
 
@@ -921,12 +983,13 @@ class MultiGPUCollisionEngine:
 
         Returns:
             编译配置字典
+
         """
         vendor_key = self._get_vendor_key(device)
 
         if vendor_key in self._compiled_programs:
-            logger.info(f"同厂商 '{vendor_key}' 编译配置已存在，无需重新预处理")
-            return cast(dict, self._compiled_programs[vendor_key])
+            logger.info("同厂商 '%s' 编译配置已存在，无需重新预处理", vendor_key)
+            return cast("dict", self._compiled_programs[vendor_key])
 
         # 首次为该厂商记录编译配置
         compile_config = {
@@ -935,7 +998,7 @@ class MultiGPUCollisionEngine:
             "source_len": len(kernel_source),
         }
         self._compiled_programs[vendor_key] = compile_config
-        logger.info(f"注册厂商 '{vendor_key}' 编译配置: options='{build_options}'")
+        logger.info("注册厂商 '%s' 编译配置: options='%s'", vendor_key, build_options)
         return compile_config
 
     def _handle_gpu_worker_failure(self, gpu_id: int, error: Exception):
@@ -944,6 +1007,7 @@ class MultiGPUCollisionEngine:
         Args:
             gpu_id: GPU设备ID
             error: 捕获的异常
+
         """
         logger.error(f"GPU {gpu_id} 工作器失败: {type(error).__name__}: {error}")
 
@@ -960,8 +1024,9 @@ class MultiGPUCollisionEngine:
 
         Args:
             failed_gpu_id: 失败的GPU ID
+
         """
-        logger.info(f"GPU {failed_gpu_id} 失败，正在重新分配工作负载...")
+        logger.info("GPU %s 失败，正在重新分配工作负载...", failed_gpu_id)
 
         # 获取健康GPU列表
         failed_gpus = self.recovery_manager.get_failed_gpus()
@@ -972,12 +1037,12 @@ class MultiGPUCollisionEngine:
             self.stop()
             return
 
-        logger.info(f"健康GPU列表: {healthy_gpus}")
+        logger.info("健康GPU列表: %s", healthy_gpus)
 
         # 获取失败GPU的剩余工作量
         with self._workers_lock:
             if failed_gpu_id not in self.workers:
-                logger.warning(f"GPU {failed_gpu_id} 不在工作器列表中")
+                logger.warning("GPU %s 不在工作器列表中", failed_gpu_id)
                 return
 
             failed_worker = self.workers[failed_gpu_id]
@@ -989,7 +1054,7 @@ class MultiGPUCollisionEngine:
             remaining_keys = max(0, total_work - keys_done)
             logger.info(
                 f"GPU {failed_gpu_id} 工作范围: {key_range[0]:,}-{key_range[1]:,} "
-                f"(总计={total_work:,}, 已完成={keys_done:,}, 剩余={remaining_keys:,})"
+                f"(总计={total_work:,}, 已完成={keys_done:,}, 剩余={remaining_keys:,})",
             )
         if remaining_keys > 0:
             keys_per_gpu = remaining_keys // len(healthy_gpus)
@@ -1005,7 +1070,7 @@ class MultiGPUCollisionEngine:
                             worker.add_key_range(keys_per_gpu)
                             logger.info(f"GPU {idx} 已增加 {keys_per_gpu:,} 个密钥")
                 except Exception as e:
-                    logger.error(f"更新GPU {idx} 工作范围失败: {e}")
+                    logger.error("更新GPU %s 工作范围失败: %s", idx, e)
 
         # 移除失败的工作器
         with self._workers_lock:
@@ -1015,9 +1080,9 @@ class MultiGPUCollisionEngine:
                     failed_worker.stop_search()
                     failed_worker.join(timeout=10)
                     del self.workers[failed_gpu_id]
-                    logger.info(f"GPU {failed_gpu_id} 工作器已移除")
+                    logger.info("GPU %s 工作器已移除", failed_gpu_id)
                 except Exception as e:
-                    logger.error(f"移除GPU {failed_gpu_id} 工作器失败: {e}")
+                    logger.error("移除GPU %s 工作器失败: %s", failed_gpu_id, e)
 
         logger.info("工作负载重新分配完成")
 
@@ -1028,6 +1093,7 @@ class MultiGPUCollisionEngine:
             gpu_id: GPU ID
             failure_type: 失败类型
             error: 异常对象
+
         """
         alert_message = (
             f"GPU {gpu_id} 失败: {failure_type.value}\n"
@@ -1055,7 +1121,7 @@ class MultiGPUCollisionEngine:
 
         # 使用state_lock保护_total_keys_checked赋值（预留字段，供未来可观测性使用）
         with self._state_lock:
-            self._total_keys_checked = total_keys  # noqa: F841 (预留)
+            self._total_keys_checked = total_keys
 
     def cleanup(self) -> None:
         """清理所有资源
@@ -1084,7 +1150,7 @@ class MultiGPUCollisionEngine:
             try:
                 self.recovery_manager.cleanup()
             except Exception as e:
-                logger.warning(f"GPURecoveryManager清理异常: {e}")
+                logger.warning("GPURecoveryManager清理异常: %s", e)
 
         with self._matches_lock:
             self._all_matches.clear()
@@ -1100,7 +1166,7 @@ class MultiGPUCollisionEngine:
         return self
 
     def __exit__(
-        self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None
+        self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None,
     ) -> None:
         """上下文管理器出口"""
         self.cleanup()
@@ -1127,7 +1193,7 @@ class MultiGPUCollisionEngine:
                 else:
                     logger.info("工作负载监控线程已停止")
             except Exception as e:
-                logger.error(f"停止工作负载监控线程失败: {e}")
+                logger.error("停止工作负载监控线程失败: %s", e)
             finally:
                 self._monitor_thread = None
 
@@ -1151,7 +1217,7 @@ class MultiGPUCollisionEngine:
                 time.sleep(self._monitor_interval)
 
             except Exception as e:
-                logger.error(f"工作负载监控异常: {e}")
+                logger.error("工作负载监控异常: %s", e)
                 # 短暂休眠后继续
                 time.sleep(1)
 
@@ -1205,11 +1271,11 @@ class MultiGPUCollisionEngine:
                         if total_memory > 0:
                             used_memory = total_memory * memory_usage
                             self.load_balancer.record_memory_usage(
-                                device_idx, used_memory, total_memory
+                                device_idx, used_memory, total_memory,
                             )
 
         except Exception as e:
-            logger.error(f"收集性能数据失败: {e}")
+            logger.error("收集性能数据失败: %s", e)
 
     def _check_auto_rebalance(self):
         """检查是否需要自动重平衡"""
@@ -1226,13 +1292,14 @@ class MultiGPUCollisionEngine:
                 # 例如，根据新的权重调整工作器的任务范围
 
         except Exception as e:
-            logger.error(f"自动重平衡检查失败: {e}")
+            logger.error("自动重平衡检查失败: %s", e)
 
     def get_metrics(self) -> "dict":
         """获取结构化性能指标（Prometheus/JSON格式）
 
         Returns:
             GPUMetricsCollector 的导出数据
+
         """
         return self._metrics.export_json()
 
@@ -1241,6 +1308,7 @@ class MultiGPUCollisionEngine:
 
         Returns:
             Prometheus text exposition format 字符串
+
         """
         return self._metrics.export_prometheus()
 
@@ -1249,6 +1317,7 @@ class MultiGPUCollisionEngine:
 
         Returns:
             性能历史数据列表
+
         """
         with self._performance_history_lock:
             return self._performance_history.copy()
@@ -1258,6 +1327,7 @@ class MultiGPUCollisionEngine:
 
         Returns:
             工作负载统计字典
+
         """
         with self._performance_history_lock:
             history_count = len(self._performance_history)
@@ -1289,4 +1359,4 @@ class MultiGPUCollisionEngine:
             # 记录警告，但不抛出异常（对象正在销毁）
             import sys
 
-            print(f"WARNING: MultiGPUEngine清理失败: {type(e).__name__}: {e}", file=sys.stderr)
+            sys.stderr.write(f"WARNING: MultiGPUEngine清理失败: {type(e).__name__}: {e}\n")

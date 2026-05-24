@@ -2,7 +2,6 @@
 """GPU OpenCL Kernel Compilation Test"""
 
 import sys
-sys.path.insert(0, '.')
 import time
 
 from src.gpu.device import GPUDevice

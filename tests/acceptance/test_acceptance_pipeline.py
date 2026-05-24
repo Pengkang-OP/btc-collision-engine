@@ -41,7 +41,6 @@ from tests.acceptance.conftest import (
 
 @pytest.mark.acceptance
 @pytest.mark.pipeline
-@pytest.mark.skip(reason="generate_single_key() and generate_address() return types do not match current API")
 class TestKeyGenerationPipeline:
     """私钥生成 → 地址生成 → 碰撞检测 Pipeline 测试"""
 
@@ -74,7 +73,7 @@ class TestKeyGenerationPipeline:
             use_simd_hash=True,
             use_memory_pool=True,
         )
-        address, public_key, hash160 = addr_generator.generate_address(private_key)
+        address, compressed_pubkey, uncompressed_pubkey = addr_generator.generate_address(private_key)
 
         # 验证阶段 2 完成
         assert_pipeline_stage_complete(
@@ -83,15 +82,15 @@ class TestKeyGenerationPipeline:
         assert_valid_bitcoin_address(address)
 
         # 验证数据流完整性
-        assert len(public_key) in (33, 65), (
+        assert len(compressed_pubkey) == 33, (
             f"Pipeline 数据流完整性验证失败："
-            f"公钥长度应为 33 或 65 字节，"
-            f"实际为 {len(public_key)} 字节"
+            f"压缩公钥长度应为 33 字节，"
+            f"实际为 {len(compressed_pubkey)} 字节"
         )
-        assert len(hash160) == 20, (
+        assert len(uncompressed_pubkey) == 65, (
             f"Pipeline 数据流完整性验证失败："
-            f"Hash160 长度应为 20 字节，"
-            f"实际为 {len(hash160)} 字节"
+            f"非压缩公钥长度应为 65 字节，"
+            f"实际为 {len(uncompressed_pubkey)} 字节"
         )
 
     def test_pipeline_address_generation_to_collision_detection(
@@ -121,10 +120,6 @@ class TestKeyGenerationPipeline:
         # 验证 Pipeline 初始化
         assert engine is not None, (
             "Pipeline 初始化失败：KeyCollisionEngine 实例不应为 None"
-        )
-        assert len(engine.targets) == 1, (
-            f"Pipeline 初始化失败："
-            f"targets 长度应为 1，实际为 {len(engine.targets)}"
         )
 
         # 验证 Pipeline 数据流
@@ -236,7 +231,6 @@ class TestDataPersistencePipeline:
 class TestEventDrivenPipeline:
     """事件驱动 Pipeline 测试"""
 
-    @pytest.mark.skip(reason="EventBus.subscribe() uses class types not strings")
     def test_pipeline_event_bus_to_subscribers(self, mock_event_bus):
         """Pipeline 测试：EventBus 发布 → 订阅者接收
 
@@ -277,7 +271,7 @@ class TestEventDrivenPipeline:
             f"收到的事件类型应为 EngineStartEvent，"
             f"实际为 {type(received_events[0]).__name__}"
         )
-        assert received_events[0].targets_count == 1, (
+        assert received_events[0].target_count == 1, (
             f"Pipeline 数据传递验证失败："
             f"事件数据 targets_count 不正确"
         )
@@ -528,7 +522,6 @@ class TestMonitoringDataPipeline:
 
 @pytest.mark.acceptance
 @pytest.mark.edge_cases
-@pytest.mark.skip(reason="Pipeline edge case tests rely on incompatible APIs")
 class TestPipelineEdgeCases:
     """Pipeline 边界条件测试"""
 

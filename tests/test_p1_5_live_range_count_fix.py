@@ -1,5 +1,4 @@
-"""
-P1-5 修复验证：_live_range_count 双重计数BUG
+"""P1-5 修复验证：_live_range_count 双重计数BUG
 
 验证要点：
 1. _live_range_count 不被批次结束重复提交（L808-812 已删除）
@@ -7,15 +6,11 @@ P1-5 修复验证：_live_range_count 双重计数BUG
 3. total_count + _live_range_count 不重复计入已完成worker
 """
 
-import os
-import sys
 import threading
 import time
 import unittest
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
+from src.collision.key_collision_engine import KeyCollisionEngine
 
 
 class TestLiveRangeCountFix(unittest.TestCase):
@@ -128,7 +123,7 @@ class TestLiveRangeCountFix(unittest.TestCase):
         # batch_size=32, 1秒大约有多个批次
         # 合理范围：一个批次约32个
         self.assertLess(
-            mid_live, 1000, f"_live_range_count={mid_live} 异常偏高，可能存在 batch_end 重复提交"
+            mid_live, 1000, f"_live_range_count={mid_live} 异常偏高，可能存在 batch_end 重复提交",
         )
 
         print(f"\n[P1-5-C ✓] 运行中 _live_range_count={mid_live} (合理范围)")
@@ -186,12 +181,12 @@ class TestLiveRangeCountFix(unittest.TestCase):
             stripped = line.strip()
             # 必须是注释（以#开头）
             self.assertTrue(
-                stripped.startswith("#"), f"非注释行仍包含旧代码! 行内容: {line.strip()[:80]}"
+                stripped.startswith("#"), f"非注释行仍包含旧代码! 行内容: {line.strip()[:80]}",
             )
 
         # 确认reminder提交代码存在
         self.assertIn(
-            "remainder = local_count % 32", worker_source, "缺少worker退出时的剩余计数提交代码"
+            "remainder = local_count % 32", worker_source, "缺少worker退出时的剩余计数提交代码",
         )
 
         # 确认_total_count减法代码存在于主循环中

@@ -18,8 +18,6 @@ import os
 import argparse
 from datetime import datetime, timezone
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 # 设置 stdout 编码
 if sys.stdout.encoding.lower() in ('gbk', 'gb2312', 'cp936'):
     import io

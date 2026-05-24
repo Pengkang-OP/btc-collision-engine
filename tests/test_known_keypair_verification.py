@@ -1,30 +1,23 @@
-"""
-综合验证测试：基于动态生成密钥对的端到端验证
+"""综合验证测试：基于动态生成密钥对的端到端验证
 
 安全说明：测试数据在模块加载时通过 os.urandom(32) 动态生成，
 源码中不包含任何真实或固定私钥/WIF。每次测试运行使用不同的密钥对。
 """
 
 import os
-import sys
 
-# 确保项目根目录在 sys.path 中
-_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if _root not in sys.path:
-    sys.path.insert(0, _root)
-
-from src.collision.checkpoint_manager import CheckpointManager  # noqa: E402
-from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
-from src.core.address_generator import P2PKHAddressGenerator  # noqa: E402
-from src.core.base58 import Base58  # noqa: E402
-from src.core.bitcoin_key_validator import (  # noqa: E402
+from src.collision.checkpoint_manager import CheckpointManager
+from src.collision.key_collision_engine import KeyCollisionEngine
+from src.core.address_generator import P2PKHAddressGenerator
+from src.core.base58 import Base58
+from src.core.bitcoin_key_validator import (
     AddressType,
     BitcoinKeyValidator,
     KeyValidationConstants,
 )
-from src.core.secp256k1 import Secp256k1  # noqa: E402
-from src.core.wif import WIF  # noqa: E402
-from src.monitoring.data_logger import DataLogger  # noqa: E402
+from src.core.secp256k1 import Secp256k1
+from src.core.wif import WIF
+from src.monitoring.data_logger import DataLogger
 
 # ══════════════════════════════════════════════
 # 动态生成测试密钥对（无硬编码私钥）
@@ -327,7 +320,7 @@ class TestCollisionDetection:
                     "private_key": private_key,
                     "address": address,
                     "wif": wif,
-                }
+                },
             )
 
         engine = KeyCollisionEngine(

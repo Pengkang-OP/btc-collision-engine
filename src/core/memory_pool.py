@@ -38,6 +38,7 @@ Technical specifications:
 References:
 - Object Pool Pattern: "Design Patterns" - Gamma et al.
 - Memory Pool: "Memory Management in Python" - Python Docs
+
 """
 
 import threading
@@ -78,18 +79,18 @@ class ObjectPool:
     """
 
     __slots__ = [
+        "_acquire_count",
+        "_created_count",
         "_factory",
         "_initial_size",
-        "_max_size",
-        "_pool",
         "_lock",
-        "_created_count",
-        "_acquire_count",
-        "_release_count",
+        "_max_size",
         "_miss_count",
-        "_prewarm_elapsed",
-        "_start_time",
         "_obj_size_estimate",
+        "_pool",
+        "_prewarm_elapsed",
+        "_release_count",
+        "_start_time",
     ]
 
     def __init__(
@@ -99,8 +100,7 @@ class ObjectPool:
         max_size: int = 1000,
         object_size_estimate: int = POOL_DEFAULT_OBJECT_SIZE_ESTIMATE,
     ) -> None:
-        """
-        Initialize object pool.
+        """Initialize object pool.
 
         Args:
             factory: Object factory function (no args, returns new
@@ -112,10 +112,11 @@ class ObjectPool:
 
         Raises:
             ValueError: When parameters are invalid
+
         """
         if initial_size < 0:
             raise ValueError(
-                f"initial_size must be >= 0, got {initial_size}"
+                f"initial_size must be >= 0, got {initial_size}",
             )
         if max_size < initial_size:
             raise ValueError("max_size must be >= initial_size")
@@ -146,7 +147,7 @@ class ObjectPool:
             f"Object pool initialized: "
             f"initial={initial_size}, "
             f"max={max_size}, "
-            f"prewarm={_prewarm_ms:.1f}ms"
+            f"prewarm={_prewarm_ms:.1f}ms",
         )
 
     def _preallocate(self, count: int):
@@ -157,11 +158,11 @@ class ObjectPool:
             self._created_count += 1
 
     def acquire(self) -> Any:
-        """
-        Acquire an object from the pool.
+        """Acquire an object from the pool.
 
         Returns:
             Object from pool, or creates new one if pool is empty
+
         """
         with self._lock:
             self._acquire_count += 1  # P3-7 fix: inside lock for atomicity
@@ -174,20 +175,20 @@ class ObjectPool:
                 self._miss_count += 1
                 logger.debug(
                     f"Object pool exhausted, creating new object "
-                    f"(total created: {self._created_count})"
+                    f"(total created: {self._created_count})",
                 )
 
         return obj
 
     def release(self, obj: Any) -> None:
-        """
-        Return an object to the pool.
+        """Return an object to the pool.
 
         Automatically calls obj.reset() to clear data.
         If pool is full, the object is discarded (GC collected).
 
         Args:
             obj: Object to return
+
         """
         # Clear object data (security requirement)
         if hasattr(obj, "reset"):
@@ -200,11 +201,11 @@ class ObjectPool:
             # Otherwise discard to prevent unbounded pool growth
 
     def get_stats(self) -> dict:
-        """
-        P3-7 enhanced: Get detailed pool statistics.
+        """P3-7 enhanced: Get detailed pool statistics.
 
         Returns:
             Dictionary containing pool usage statistics
+
         """
         with self._lock:
             total_acq = max(self._acquire_count, 1)
@@ -230,21 +231,20 @@ class ObjectPool:
             }
 
     def hit_ratio(self) -> float:
-        """
-        P3-7 new: Hit ratio (pool reuse vs new creation).
+        """P3-7 new: Hit ratio (pool reuse vs new creation).
 
         Returns:
             0.0-1.0, higher is better
+
         """
         with self._lock:
             total = max(self._acquire_count, 1)
             return (total - self._miss_count) / total
 
     def shrink(
-        self, target_size: int | None = None
+        self, target_size: int | None = None,
     ) -> int:
-        """
-        P3-7 new: Shrink pool (release excess objects).
+        """P3-7 new: Shrink pool (release excess objects).
 
         Releases some objects when pool has too many idle objects
         to reduce memory usage.
@@ -254,6 +254,7 @@ class ObjectPool:
 
         Returns:
             Number of objects released
+
         """
         target = target_size or self._initial_size
         target = max(target, 0)
@@ -270,25 +271,24 @@ class ObjectPool:
             logger.info(
                 f"Object pool shrunk: {current} -> {target} "
                 f"(released {released}, ~"
-                f"{released * self._obj_size_estimate / 1024:.1f}KB)"
+                f"{released * self._obj_size_estimate / 1024:.1f}KB)",
             )
             return released
 
     def estimate_memory(self) -> int:
-        """
-        P3-7 new: Estimate current pool memory usage (bytes).
+        """P3-7 new: Estimate current pool memory usage (bytes).
 
         Returns:
             Estimated memory usage
+
         """
         with self._lock:
             return len(self._pool) * self._obj_size_estimate
 
     def auto_tune(
-        self, max_memory_mb: float = 128.0
+        self, max_memory_mb: float = 128.0,
     ) -> bool:
-        """
-        P3-7 new: Adaptively tune pool size.
+        """P3-7 new: Adaptively tune pool size.
 
         Dynamically adjusts max_size based on historical hit ratio
         and memory limits.
@@ -300,6 +300,7 @@ class ObjectPool:
 
         Returns:
             True if pool was adjusted
+
         """
         with self._lock:
             current = len(self._pool)
@@ -315,10 +316,10 @@ class ObjectPool:
             ):
                 max_by_memory = int(
                     (max_memory_mb * 1024 * 1024)
-                    / self._obj_size_estimate
+                    / self._obj_size_estimate,
                 )
                 new_max = min(
-                    self._max_size * 2, max_by_memory
+                    self._max_size * 2, max_by_memory,
                 )
                 if new_max > self._max_size:
                     old_max = self._max_size
@@ -326,7 +327,7 @@ class ObjectPool:
                     logger.info(
                         f"Object pool auto-expanded: "
                         f"max {old_max} -> {new_max} "
-                        f"(miss_rate={miss_rate:.1%})"
+                        f"(miss_rate={miss_rate:.1%})",
                     )
                     adjusted = True
 
@@ -343,7 +344,7 @@ class ObjectPool:
                     f"Object pool auto-shrunk: "
                     f"{current} -> {target} "
                     f"(released {released}, ~"
-                    f"{released * self._obj_size_estimate / 1024:.1f}KB)"
+                    f"{released * self._obj_size_estimate / 1024:.1f}KB)",
                 )
                 adjusted = True
 
@@ -368,12 +369,12 @@ class ECPointPool:
         initial_size: int = 1000,
         max_size: int = 10000,
     ) -> None:
-        """
-        Initialize ECPoint pool.
+        """Initialize ECPoint pool.
 
         Args:
             initial_size: Initial size
             max_size: Maximum size
+
         """
         from .secp256k1 import ECPoint
 
@@ -381,11 +382,10 @@ class ECPointPool:
             return ECPoint(None, None)
 
         self._pool = ObjectPool(
-            create_ecpoint, initial_size, max_size
+            create_ecpoint, initial_size, max_size,
         )
         logger.info(
-            f"ECPoint pool initialized: "
-            f"{initial_size} objects"
+            "ECPoint pool initialized: %s objects", initial_size,
         )
 
     def acquire(
@@ -394,8 +394,7 @@ class ECPointPool:
         y: Any = None,
         curve: Any = None,
     ) -> Any:
-        """
-        Acquire ECPoint object and set coordinates.
+        """Acquire ECPoint object and set coordinates.
 
         Args:
             x: X coordinate
@@ -404,6 +403,7 @@ class ECPointPool:
 
         Returns:
             Configured ECPoint object
+
         """
         from .secp256k1 import Secp256k1
 
@@ -437,13 +437,13 @@ class ByteArrayPool:
         initial_size: int = 500,
         max_size: int = 5000,
     ) -> None:
-        """
-        Initialize bytearray pool.
+        """Initialize bytearray pool.
 
         Args:
             buffer_size: Size of each buffer (bytes)
             initial_size: Initial size
             max_size: Maximum size
+
         """
         self._buffer_size = buffer_size
         self._pool = ObjectPool(
@@ -452,9 +452,7 @@ class ByteArrayPool:
             max_size,
         )
         logger.info(
-            f"ByteArray pool initialized: "
-            f"buffer_size={buffer_size}, "
-            f"count={initial_size}"
+            "ByteArray pool initialized: buffer_size=%s, count=%s", buffer_size, initial_size,
         )
 
     def acquire(self) -> bytearray:
@@ -462,8 +460,7 @@ class ByteArrayPool:
         return self._pool.acquire()
 
     def release(self, buffer: bytearray) -> None:
-        """
-        Return bytearray to pool.
+        """Return bytearray to pool.
 
         Note: Automatically clears buffer for security.
         """
@@ -531,7 +528,7 @@ class GlobalPoolManager:
         with self._lock:
             if not self._initialized:
                 self.ecpoint_pool = ECPointPool(
-                    initial_size=1000, max_size=10000
+                    initial_size=1000, max_size=10000,
                 )
                 self.bytearray_pool_32 = ByteArrayPool(
                     buffer_size=32,
@@ -553,7 +550,7 @@ class GlobalPoolManager:
 
                 self._initialized = True
                 logger.info(
-                    "Global pool manager initialized"
+                    "Global pool manager initialized",
                 )
 
     def get_ecpoint_pool(self) -> ECPointPool:
@@ -563,7 +560,7 @@ class GlobalPoolManager:
         return self.ecpoint_pool
 
     def get_bytearray_pool(
-        self, size: int = 32
+        self, size: int = 32,
     ) -> ByteArrayPool:
         """Get bytearray pool"""
         if not self._initialized:
@@ -571,22 +568,21 @@ class GlobalPoolManager:
 
         if size == 32:
             return self.bytearray_pool_32
-        elif size == 64:
+        if size == 64:
             return self.bytearray_pool_64
-        else:
-            # Dynamically create temporary pool
-            return ByteArrayPool(
-                buffer_size=size,
-                initial_size=100,
-                max_size=1000,
-            )
+        # Dynamically create temporary pool
+        return ByteArrayPool(
+            buffer_size=size,
+            initial_size=100,
+            max_size=1000,
+        )
 
     def get_all_stats(self) -> dict:
-        """
-        P3-7 new: Get aggregated statistics for all pools.
+        """P3-7 new: Get aggregated statistics for all pools.
 
         Returns:
             Dictionary with all pool statistics
+
         """
         if not self._initialized:
             self.initialize()
@@ -602,11 +598,11 @@ class GlobalPoolManager:
         }
 
     def get_total_memory_estimate(self) -> int:
-        """
-        P3-7 new: Estimate total memory usage of all pools (bytes).
+        """P3-7 new: Estimate total memory usage of all pools (bytes).
 
         Returns:
             Total memory estimate
+
         """
         if not self._initialized:
             self.initialize()
@@ -616,10 +612,9 @@ class GlobalPoolManager:
         )
 
     def auto_tune_all(
-        self, max_memory_mb: float | None = None
+        self, max_memory_mb: float | None = None,
     ) -> bool:
-        """
-        P3-7 new: Adaptively tune all pools.
+        """P3-7 new: Adaptively tune all pools.
 
         Allocates reasonable memory budget for each pool based on
         available system memory.
@@ -630,6 +625,7 @@ class GlobalPoolManager:
 
         Returns:
             True if any pool was adjusted
+
         """
         if not self._initialized:
             self.initialize()
@@ -651,7 +647,7 @@ class GlobalPoolManager:
 
         logger.info(
             f"Memory pool auto-tuning: "
-            f"total budget={max_memory_mb:.0f}MB"
+            f"total budget={max_memory_mb:.0f}MB",
         )
 
         # Allocate in 3:2:1 ratio for ECPoint, bytearray_32,
@@ -662,29 +658,29 @@ class GlobalPoolManager:
 
         adjusted = False
         adjusted |= self.ecpoint_pool._pool.auto_tune(
-            ecpoint_budget
+            ecpoint_budget,
         )
         adjusted |= self.bytearray_pool_32._pool.auto_tune(
-            ba32_budget
+            ba32_budget,
         )
         adjusted |= self.bytearray_pool_64._pool.auto_tune(
-            ba64_budget
+            ba64_budget,
         )
 
         if not adjusted:
             logger.debug(
                 "No pool tuning needed "
-                "(current configuration is optimal)"
+                "(current configuration is optimal)",
             )
 
         return adjusted
 
     def shrink_all(self) -> int:
-        """
-        P3-7 new: Shrink all pools.
+        """P3-7 new: Shrink all pools.
 
         Returns:
             Total number of objects released
+
         """
         if not self._initialized:
             self.initialize()
@@ -696,8 +692,7 @@ class GlobalPoolManager:
 
         if total > 0:
             logger.info(
-                f"Memory pool shrink complete: "
-                f"{total} objects released"
+                "Memory pool shrink complete: %s objects released", total,
             )
 
         return total
@@ -705,7 +700,7 @@ class GlobalPoolManager:
     # ──────────────────────────── Auto clean-up ────────────────────────────
 
     def _auto_cleanup_loop(
-        self, interval: float
+        self, interval: float,
     ) -> None:
         """Auto clean-up background loop (daemon thread entry).
 
@@ -723,7 +718,7 @@ class GlobalPoolManager:
                     f"tuned={tuned}, "
                     f"released={released}, "
                     f"total_memory="
-                    f"{stats['total_estimated_memory_mb']:.1f}MB"
+                    f"{stats['total_estimated_memory_mb']:.1f}MB",
                 )
 
         run_cleanup_loop_safely(
@@ -738,8 +733,7 @@ class GlobalPoolManager:
         self,
         interval_seconds: float | None = None,
     ) -> None:
-        """
-        P1-6 new: Start background auto-cleanup thread.
+        """P1-6 new: Start background auto-cleanup thread.
 
         v4.2.4: Uses shared start_cleanup_thread() for unified
         management.
@@ -747,6 +741,7 @@ class GlobalPoolManager:
         Args:
             interval_seconds: Cleanup interval (seconds),
                 default 300s (5 minutes)
+
         """
         interval = (
             interval_seconds
@@ -761,10 +756,9 @@ class GlobalPoolManager:
         )
 
     def stop_auto_cleanup(
-        self, timeout: float | None = 5.0
+        self, timeout: float | None = 5.0,
     ) -> None:
-        """
-        P1-6 new: Stop auto-cleanup thread.
+        """P1-6 new: Stop auto-cleanup thread.
 
         v4.2.4: Uses shared stop_cleanup_thread() for unified
         management.
@@ -772,6 +766,7 @@ class GlobalPoolManager:
         Args:
             timeout: Timeout for waiting thread to stop (seconds),
                 default 5 seconds
+
         """
         stop_cleanup_thread(
             self._cleanup_state,

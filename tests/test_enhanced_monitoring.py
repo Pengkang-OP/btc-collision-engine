@@ -15,21 +15,17 @@
 """
 
 import logging
-import os
+import pathlib
 import shutil
-import sys
 import tempfile
 import time
 from unittest.mock import MagicMock
 
 import pytest
 
-# 添加项目根目录到路径
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from src.monitoring.data_logger import DataLogger  # noqa: E402
-from src.monitoring.enhanced_monitoring import EnhancedMonitoringSystem  # noqa: E402
-from src.monitoring.monitor_config import MonitorConfig  # noqa: E402
+from src.monitoring.data_logger import DataLogger
+from src.monitoring.enhanced_monitoring import EnhancedMonitoringSystem
+from src.monitoring.monitor_config import MonitorConfig
 
 
 class TestEnhancedMonitoringSystemInit:
@@ -41,7 +37,7 @@ class TestEnhancedMonitoringSystemInit:
 
     def teardown_method(self):
         """每个测试后清理"""
-        if os.path.exists(self.test_dir):
+        if pathlib.Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_init_with_default_config(self):
@@ -56,7 +52,7 @@ class TestEnhancedMonitoringSystemInit:
     def test_init_with_custom_config(self):
         """测试使用自定义配置初始化"""
         config = MonitorConfig(
-            data_logging_enabled=True, collection_interval=2.0, enable_monitoring_data=False
+            data_logging_enabled=True, collection_interval=2.0, enable_monitoring_data=False,
         )
 
         monitor = EnhancedMonitoringSystem(engine=None, config=config)
@@ -88,7 +84,7 @@ class TestEnhancedMonitoringSystemInit:
         """v5.0.0: 验证已弃用的参数被正确拒绝"""
         with pytest.raises(TypeError, match="unexpected keyword argument"):
             EnhancedMonitoringSystem(
-                engine=None, collection_interval=3.0, enable_monitoring_data=False
+                engine=None, collection_interval=3.0, enable_monitoring_data=False,
             )
 
         # 旧 API 被拒绝，应使用 config=MonitorConfig(...) 替代
@@ -219,7 +215,7 @@ class TestEnhancedMonitoringSystemDataCollection:
         self.mock_engine._current_position = 5000
 
         config = MonitorConfig(
-            data_logging_enabled=True, collection_interval=0.1, enable_monitoring_data=False
+            data_logging_enabled=True, collection_interval=0.1, enable_monitoring_data=False,
         )
 
         self.monitor = EnhancedMonitoringSystem(engine=self.mock_engine, config=config)
@@ -228,7 +224,7 @@ class TestEnhancedMonitoringSystemDataCollection:
         """每个测试后清理"""
         if self.monitor.is_running():
             self.monitor.stop()
-        if os.path.exists(self.test_dir):
+        if pathlib.Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_collect_performance_data(self):
@@ -265,7 +261,7 @@ class TestEnhancedMonitoringSystemDataCollection:
     def test_collect_with_no_engine(self):
         """测试没有引擎时的数据采集"""
         monitor = EnhancedMonitoringSystem(
-            engine=None, config=MonitorConfig(data_logging_enabled=True, collection_interval=0.1)
+            engine=None, config=MonitorConfig(data_logging_enabled=True, collection_interval=0.1),
         )
 
         monitor.start()
@@ -401,7 +397,7 @@ class TestEnhancedMonitoringSystemStatus:
     def setup_method(self):
         """每个测试前准备"""
         config = MonitorConfig(
-            data_logging_enabled=True, enable_monitoring_data=False, collection_interval=0.1
+            data_logging_enabled=True, enable_monitoring_data=False, collection_interval=0.1,
         )
 
         self.mock_engine = MagicMock()
@@ -456,7 +452,7 @@ class TestEnhancedMonitoringSystemErrorHandling:
     def setup_method(self):
         """每个测试前准备"""
         config = MonitorConfig(
-            data_logging_enabled=True, collection_interval=0.1, enable_monitoring_data=False
+            data_logging_enabled=True, collection_interval=0.1, enable_monitoring_data=False,
         )
 
         self.monitor = EnhancedMonitoringSystem(engine=None, config=config)
@@ -510,7 +506,7 @@ class TestEnhancedMonitoringSystemIntegration:
 
     def teardown_method(self):
         """每个测试后清理"""
-        if os.path.exists(self.test_dir):
+        if pathlib.Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_full_lifecycle(self):

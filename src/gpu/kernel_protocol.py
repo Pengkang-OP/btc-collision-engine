@@ -51,6 +51,7 @@ class GPUKernelProtocol(Protocol):
         Raises:
             RuntimeError: GPU执行失败
             ValueError: 参数无效（seed长度不足32字节，或num_keys <= 0）
+
         """
         ...
 
@@ -73,6 +74,7 @@ class GPUKernelProtocol(Protocol):
         Raises:
             RuntimeError: GPU内存分配失败
             ValueError: 目标数据无效
+
         """
         ...
 
@@ -85,6 +87,7 @@ class GPUKernelProtocol(Protocol):
 
         Raises:
             RuntimeError: 资源清理失败
+
         """
         ...
 
@@ -98,6 +101,7 @@ class GPUKernelProtocol(Protocol):
 
         Returns:
             最大批次大小（正整数）
+
         """
         ...
 
@@ -108,6 +112,7 @@ class GPUKernelProtocol(Protocol):
 
         Returns:
             GPUDevice实例
+
         """
         ...
 
@@ -118,6 +123,7 @@ class GPUKernelProtocol(Protocol):
 
         Returns:
             pyopencl.Program实例
+
         """
         ...
 
@@ -151,12 +157,13 @@ class GPUKernelFactory:
         Example:
             >>> from src.gpu.kernel import GPUKernel
             >>> GPUKernelFactory.register(GPUKernel)
+
         """
         cls._kernel_class = kernel_class
 
     @classmethod
     def create(
-        cls, device: Any, max_batch_size: int | None = None, program: Any = None
+        cls, device: Any, max_batch_size: int | None = None, program: Any = None,
     ) -> GPUKernelProtocol:
         """创建GPU内核实例
 
@@ -170,16 +177,17 @@ class GPUKernelFactory:
 
         Raises:
             ValueError: 未注册内核类
+
         """
         if cls._kernel_class is None:
             raise ValueError("未注册GPU内核类，请先调用 GPUKernelFactory.register()")
 
         assert cls._kernel_class is not None  # 已通过上方 None 检查保证
         return cls._kernel_class(
-            device, max_batch_size=max_batch_size, program=program
-        )  # type: ignore[call-arg]
+            device, max_batch_size=max_batch_size, program=program,
+        )
 
     @classmethod
     def reset(cls) -> None:
         """重置工厂（用于测试）"""
-        cls._kernel_class = cast(type[GPUKernelProtocol] | None, None)
+        cls._kernel_class = cast("type[GPUKernelProtocol] | None", None)

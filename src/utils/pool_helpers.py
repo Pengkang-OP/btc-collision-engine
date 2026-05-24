@@ -30,6 +30,7 @@ def run_cleanup_loop_safely(
         name: Thread name for logging
         cleanup_fn: Callback to execute each cycle
         on_memory_error: Action on memory errors ('continue' or 'raise')
+
     """
     while not state.stop_event.is_set():
         try:
@@ -38,11 +39,11 @@ def run_cleanup_loop_safely(
             if on_memory_error == "raise":
                 raise
             logger.warning(
-                f"{name}: memory error during cleanup, continuing"
+                "%s: memory error during cleanup, continuing", name,
             )
         except Exception as e:
             logger.error(
-                f"{name}: cleanup error: {e}"
+                "%s: cleanup error: %s", name, e,
             )
         time.sleep(interval)
 
@@ -60,6 +61,7 @@ def start_cleanup_thread(
         loop_fn: Loop function to run
         interval: Sleep interval
         name: Thread name
+
     """
     if state.thread and state.thread.is_alive():
         return
@@ -72,7 +74,7 @@ def start_cleanup_thread(
     )
     thread.start()
     state.thread = thread
-    logger.debug(f"Cleanup thread '{name}' started")
+    logger.debug("Cleanup thread '%s' started", name)
 
 
 def stop_cleanup_thread(
@@ -86,9 +88,10 @@ def stop_cleanup_thread(
         state: Cleanup thread state
         name: Thread name
         timeout: Max seconds to wait for thread
+
     """
     state.stop_event.set()
     if state.thread and state.thread.is_alive():
         state.thread.join(timeout=timeout)
     state.thread = None
-    logger.debug(f"Cleanup thread '{name}' stopped")
+    logger.debug("Cleanup thread '%s' stopped", name)

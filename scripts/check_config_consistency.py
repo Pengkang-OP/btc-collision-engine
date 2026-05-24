@@ -10,11 +10,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-# 添加项目根目录到路径
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
-
-from src.config.config_manager import ConfigManager  # noqa: E402 — 需 sys.path 前置
+from src.config.config_manager import ConfigManager — 需 sys.path 前置
 
 
 class ConfigFixer:

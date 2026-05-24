@@ -1,26 +1,22 @@
 #!/usr/bin/env python3
-"""
-测试依赖注入修复 - 验证空指针问题已解决
+"""测试依赖注入修复 - 验证空指针问题已解决
 """
 
 import os
-import sys
+import pathlib
 import tempfile
 from unittest.mock import Mock
 
 import pytest
 
-# 添加项目根目录到路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
-from src.monitoring.monitoring_system import (  # noqa: E402
+from src.monitoring.monitoring_system import (
     AnomalyDetector,
     DataStorage,
     MonitoringData,
     MonitoringSystem,
     ReportGenerator,
 )
-from src.monitoring.monitoring_system import (  # noqa: E402
+from src.monitoring.monitoring_system import (
     MonitoringAlertAdapter as AlertSystem,
 )
 
@@ -151,14 +147,14 @@ class TestDependencyInjectionFix:
                             "cpu_usage": 50.0,
                             "memory_usage": 256.0,
                         },
-                    }
+                    },
                 )
 
             # 写入历史数据
             history_file = os.path.join(temp_dir, "history_data.json")
             import json
 
-            with open(history_file, "w") as f:
+            with pathlib.Path(history_file).open("w") as f:
                 json.dump(test_data, f)
 
             # 生成报告 - 不应崩溃
@@ -199,12 +195,12 @@ class TestDependencyInjectionFix:
                             "cpu_usage": 50.0,
                             "memory_usage": 256.0,
                         },
-                    }
+                    },
                 )
 
             # 写入历史数据
             history_file = os.path.join(temp_dir, "history_data.json")
-            with open(history_file, "w") as f:
+            with pathlib.Path(history_file).open("w") as f:
                 json.dump(test_data, f)
 
             # 生成报告

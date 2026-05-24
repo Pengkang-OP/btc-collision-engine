@@ -6,6 +6,7 @@
 """
 
 import os
+import pathlib
 import threading
 import time
 from collections.abc import Callable
@@ -71,7 +72,7 @@ class ConfigWatcher:
             debounce_seconds: 防抖间隔，短时间内多次变更仅触发一次
             poll_interval: 轮询模式下的检查间隔（秒）
         """
-        if not os.path.isabs(config_path):
+        if not pathlib.Path(config_path).is_absolute():
             raise ValueError(f"config_path 必须是绝对路径: {config_path}")
 
         self._config_path = os.path.abspath(config_path)
@@ -92,7 +93,7 @@ class ConfigWatcher:
 
         # 记录初始 mtime，避免启动时误触发
         try:
-            self._last_mtime = os.path.getmtime(self._config_path)
+            self._last_mtime = pathlib.Path(self._config_path).stat().st_mtime
         except OSError:
             # 文件不存在，设置为None
             self._last_mtime = None
@@ -196,7 +197,7 @@ class ConfigWatcher:
         """轮询主循环"""
         while not self._stop_event.is_set():
             try:
-                current_mtime = os.path.getmtime(self._config_path)
+                current_mtime = pathlib.Path(self._config_path).stat().st_mtime
                 # 只有当_last_mtime不为None且文件变更时才触发回调
                 # None表示启动时文件不存在，新创建时不触发
                 if self._last_mtime is not None and current_mtime > self._last_mtime:

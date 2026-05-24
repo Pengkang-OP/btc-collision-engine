@@ -19,6 +19,7 @@ class LogCollector:
 
         Args:
             entry: Log entry dictionary
+
         """
         with self._lock:
             self._entries.append(entry)
@@ -26,10 +27,10 @@ class LogCollector:
             try:
                 handler(entry)
             except Exception as e:
-                logger.error(f"Log handler error: {e}")
+                logger.error("Log handler error: %s", e)
 
     def get_entries(
-        self, limit: int = 100
+        self, limit: int = 100,
     ) -> list[dict]:
         """Get recent log entries.
 
@@ -38,6 +39,7 @@ class LogCollector:
 
         Returns:
             List of log entries
+
         """
         with self._lock:
             return self._entries[-limit:]

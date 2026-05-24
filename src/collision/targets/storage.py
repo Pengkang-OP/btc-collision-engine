@@ -12,9 +12,11 @@
 import csv
 import json
 import os
+import pathlib
 import re
 import sqlite3
 import tempfile
+import types
 from collections.abc import Callable
 from datetime import datetime
 from typing import Any
@@ -26,12 +28,12 @@ from ...utils.encoding_utils import EncodingUtils
 # 日志系统由CLI/main.py入口统一初始化
 logger = get_configured_logger("AddressStorage")
 
-# 比特币地址验证正则表达式
-ADDRESS_PATTERNS = {
+# 比特币地址验证正则表达式（不可变）
+ADDRESS_PATTERNS = types.MappingProxyType({
     "P2PKH": re.compile(r"^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$"),  # 1或3开头
     "P2SH": re.compile(r"^3[a-km-zA-HJ-NP-Z1-9]{25,34}$"),  # 3开头
     "BECH32": re.compile(r"^(bc1|tb1|bc1p)[a-zA-HJ-NP-Z0-9]{25,62}$"),  # bc1开头
-}
+})
 
 
 def validate_bitcoin_address(address: str) -> bool:
@@ -70,8 +72,7 @@ class AddressStorage:
     """
 
     def __init__(self, storage_type: str = "json", path: str = "targets_data") -> None:
-        """
-        初始化地址存储管理器
+        """初始化地址存储管理器
 
         参数:
             storage_type: 存储类型,可选 'json', 'sqlite', 'csv'
@@ -82,9 +83,11 @@ class AddressStorage:
 
         # 确保目录存在
         if storage_type in ("json", "csv") or storage_type == "sqlite":
-            os.makedirs(os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True)
+            pathlib.Path(
+                os.path.dirname(path) if os.path.dirname(path) else "."
+            ).mkdir(exist_ok=True, parents=True)
 
-        logger.info(f"AddressStorage 初始化: 类型={storage_type}, 路径={path}")
+        logger.info("AddressStorage 初始化: 类型=%s, 路径=%s", storage_type, path)
 
     def save_targets(self, targets: set[str], metadata: dict | None = None) -> bool:
         """保存目标地址集合到持久化存储
@@ -97,19 +100,19 @@ class AddressStorage:
 
         Returns:
             True 表示保存成功，False 表示失败
+
         """
         try:
             if self.storage_type == "json":
                 return self._save_json(targets, metadata)
-            elif self.storage_type == "sqlite":
+            if self.storage_type == "sqlite":
                 return self._save_sqlite(targets, metadata)
-            elif self.storage_type == "csv":
+            if self.storage_type == "csv":
                 return self._save_csv(targets, metadata)
-            else:
-                logger.error(f"不支持的存储类型: {self.storage_type}")
-                return False
+            logger.error(f"不支持的存储类型: {self.storage_type}")
+            return False
         except Exception as e:
-            logger.error(f"保存目标地址失败: {e}")
+            logger.error("保存目标地址失败: %s", e)
             return False
 
     def load_targets(self) -> tuple[set[str], dict | None]:
@@ -119,19 +122,19 @@ class AddressStorage:
 
         Returns:
             (目标地址集合, 元数据字典) 元组，加载失败返回 (set(), None)
+
         """
         try:
             if self.storage_type == "json":
                 return self._load_json()
-            elif self.storage_type == "sqlite":
+            if self.storage_type == "sqlite":
                 return self._load_sqlite()
-            elif self.storage_type == "csv":
+            if self.storage_type == "csv":
                 return self._load_csv()
-            else:
-                logger.error(f"不支持的存储类型: {self.storage_type}")
-                return set(), None
+            logger.error(f"不支持的存储类型: {self.storage_type}")
+            return set(), None
         except Exception as e:
-            logger.error(f"加载目标地址失败: {e}")
+            logger.error("加载目标地址失败: %s", e)
             return set(), None
 
     def _save_json(self, targets: set[str], metadata: dict | None = None) -> bool:
@@ -151,12 +154,12 @@ class AddressStorage:
             logger.info(f"JSON保存成功: {len(targets)} 个目标 -> {self.path}")
             return True
         except Exception as e:
-            logger.error(f"JSON保存失败: {e}")
+            logger.error("JSON保存失败: %s", e)
             return False
 
     def _load_json(self) -> tuple[set[str], dict | None]:
         """从JSON加载"""
-        if not os.path.exists(self.path):
+        if not pathlib.Path(self.path).exists():
             logger.warning(f"文件不存在: {self.path}")
             return set(), None
 
@@ -171,7 +174,7 @@ class AddressStorage:
             logger.info(f"JSON加载成功: {len(targets)} 个目标 <- {self.path}")
             return targets, metadata
         except Exception as e:
-            logger.error(f"JSON加载失败: {e}")
+            logger.error("JSON加载失败: %s", e)
             return set(), None
 
     def _save_sqlite(self, targets: set[str], metadata: dict | None = None) -> bool:
@@ -188,7 +191,7 @@ class AddressStorage:
                 logger.warning(f"跳过无效地址: {addr[:10]}...")
 
         if invalid_count > 0:
-            logger.warning(f"已过滤 {invalid_count} 个无效地址")
+            logger.warning("已过滤 %s 个无效地址", invalid_count)
 
         if not validated_targets:
             logger.error("没有有效地址可保存")
@@ -221,7 +224,7 @@ class AddressStorage:
                     # 参数化查询防止SQL注入
                     cursor.execute("INSERT OR IGNORE INTO targets (address) VALUES (?)", (addr,))
                     inserted += cursor.rowcount
-                except sqlite3.IntegrityError as e:  # noqa: F841
+                except sqlite3.IntegrityError:
                     logger.debug(f"地址已存在，跳过: {addr[:10]}...")
                 except (sqlite3.Error, ValueError) as e:
                     logger.warning(f"插入地址失败 {addr[:10]}...: {e}")
@@ -231,12 +234,12 @@ class AddressStorage:
                 for key, value in metadata.items():
                     # 验证元数据键名
                     if not isinstance(key, str) or len(key) > 100:
-                        logger.warning(f"跳过无效元数据键: {key}")
+                        logger.warning("跳过无效元数据键: %s", key)
                         continue
 
                     # 防止SQL注入：验证键名只包含安全字符
                     if not re.match(r"^[a-zA-Z0-9_-]+$", key):
-                        logger.warning(f"元数据键包含不安全字符: {key}")
+                        logger.warning("元数据键包含不安全字符: %s", key)
                         continue
 
                     cursor.execute(
@@ -250,14 +253,14 @@ class AddressStorage:
 
         except Exception as e:
             conn.rollback()
-            logger.error(f"SQLite保存失败: {e}")
+            logger.error("SQLite保存失败: %s", e)
             return False
         finally:
             conn.close()
 
     def _load_sqlite(self) -> tuple[set[str], dict | None]:
         """从SQLite加载"""
-        if not os.path.exists(self.path):
+        if not pathlib.Path(self.path).exists():
             logger.warning(f"数据库不存在: {self.path}")
             return set(), None
 
@@ -281,10 +284,10 @@ class AddressStorage:
                     metadata[key] = value
 
             logger.info(f"SQLite加载成功: {len(targets)} 个目标 <- {self.path}")
-            return targets, metadata if metadata else None
+            return targets, metadata or None
 
         except Exception as e:
-            logger.error(f"SQLite加载失败: {e}")
+            logger.error("SQLite加载失败: %s", e)
             return set(), None
         finally:
             conn.close()
@@ -317,12 +320,12 @@ class AddressStorage:
             logger.info(f"CSV保存成功: {len(targets)} 个目标 -> {self.path}")
             return True
         except Exception as e:
-            logger.error(f"CSV保存失败: {e}")
+            logger.error("CSV保存失败: %s", e)
             return False
 
     def _load_csv(self) -> tuple[set[str], dict | None]:
         """从CSV加载"""
-        if not os.path.exists(self.path):
+        if not pathlib.Path(self.path).exists():
             logger.warning(f"文件不存在: {self.path}")
             return set(), None
 
@@ -342,16 +345,16 @@ class AddressStorage:
             # 加载元数据
             metadata = None
             metadata_path = self.path.replace(".csv", "_metadata.json")
-            if os.path.exists(metadata_path):
+            if pathlib.Path(metadata_path).exists():
                 metadata_content = EncodingUtils.read_file(
-                    metadata_path, encoding="utf-8", try_multiple=True
+                    metadata_path, encoding="utf-8", try_multiple=True,
                 )
                 metadata = json.loads(metadata_content)
 
             logger.info(f"CSV加载成功: {len(targets)} 个目标 <- {self.path}")
             return targets, metadata
         except Exception as e:
-            logger.error(f"CSV加载失败: {e}")
+            logger.error("CSV加载失败: %s", e)
             return set(), None
 
     def export_csv(self, targets: set[str], output_path: str) -> bool:
@@ -363,6 +366,7 @@ class AddressStorage:
 
         Returns:
             True 表示导出成功
+
         """
         try:
             import io
@@ -381,12 +385,11 @@ class AddressStorage:
             return True
 
         except Exception as e:
-            logger.error(f"CSV导出失败: {e}")
+            logger.error("CSV导出失败: %s", e)
             return False
 
     def get_storage_info(self) -> dict[str, Any]:
-        """
-        获取存储信息
+        """获取存储信息
 
         返回:
             包含存储信息的字典
@@ -394,11 +397,11 @@ class AddressStorage:
         info = {
             "storage_type": self.storage_type,
             "path": self.path,
-            "exists": os.path.exists(self.path),
+            "exists": pathlib.Path(self.path).exists(),
         }
 
         if info["exists"]:
-            info["size_bytes"] = os.path.getsize(self.path)
+            info["size_bytes"] = pathlib.Path(self.path).stat().st_size
 
         return info
 
@@ -410,6 +413,7 @@ class AddressStorage:
 
         Raises:
             ValueError: 目录不在允许范围内。
+
         """
         if storage_dir is None:
             storage_dir = os.path.join(os.getcwd(), "targets_data")
@@ -419,9 +423,12 @@ class AddressStorage:
             os.path.abspath(os.environ.get("TEMP", tempfile.gettempdir())),
             os.path.abspath(os.environ.get("TMP", tempfile.gettempdir())),
         ]
-        if not any(storage_dir.startswith(d) for d in allowed_dirs):
+        # 使用 normcase 处理 Windows 大小写不敏感的文件系统
+        storage_dir_norm = os.path.normcase(storage_dir)
+        if not any(storage_dir_norm.startswith(os.path.normcase(d) + os.sep)
+                   or storage_dir_norm == os.path.normcase(d) for d in allowed_dirs):
             raise ValueError(f"存储目录必须在允许的路径范围内: {storage_dir}")
-        os.makedirs(storage_dir, exist_ok=True)
+        pathlib.Path(storage_dir).mkdir(exist_ok=True, parents=True)
         return storage_dir
 
     @staticmethod
@@ -430,6 +437,7 @@ class AddressStorage:
 
         Raises:
             ValueError: 不支持的存储类型。
+
         """
         import uuid
 
@@ -439,7 +447,7 @@ class AddressStorage:
         if storage_type not in ext_map:
             raise ValueError(f"不支持的存储类型: {storage_type}")
         return os.path.join(
-            storage_dir, f"imported_addresses_{timestamp}_{unique_id}{ext_map[storage_type]}"
+            storage_dir, f"imported_addresses_{timestamp}_{unique_id}{ext_map[storage_type]}",
         )
 
     def _read_source_addresses(self, real_source_path: str) -> list[str]:
@@ -454,13 +462,13 @@ class AddressStorage:
 
         max_addresses = 1_000_000
         if len(source_addresses) > max_addresses:
-            logger.warning(f"地址数量超过限制({max_addresses}), 仅处理前{max_addresses}个")
+            logger.warning("地址数量超过限制(%s), 仅处理前%s个", max_addresses, max_addresses)
             source_addresses = source_addresses[:max_addresses]
         return source_addresses
 
     @staticmethod
     def _batch_validate_addresses(
-        source_addresses: list[str], progress_callback: Callable | None
+        source_addresses: list[str], progress_callback: Callable | None,
     ) -> tuple[set, list]:
         """分批验证源地址，返回 (valid_addresses, invalid_addresses)。"""
         from .validator import AddressBatchValidator
@@ -508,13 +516,13 @@ class AddressStorage:
             storage_path = self._generate_storage_path(storage_dir, storage_type)
 
             real_source_path = os.path.realpath(source_path)
-            logger.info(f"开始导入地址: 源文件={real_source_path}, 存储类型={storage_type}")
+            logger.info("开始导入地址: 源文件=%s, 存储类型=%s", real_source_path, storage_type)
 
-            if not os.path.exists(real_source_path):
+            if not pathlib.Path(real_source_path).exists():
                 result["error"] = f"源文件不存在: {source_path}"
                 return result
 
-            file_size = os.path.getsize(real_source_path)
+            file_size = pathlib.Path(real_source_path).stat().st_size
             if file_size > 100 * 1024 * 1024:
                 result["error"] = "文件过大(>100MB)"
                 logger.error(f"文件过大: {real_source_path}, 大小={file_size / 1024 / 1024:.1f}MB")
@@ -526,7 +534,7 @@ class AddressStorage:
 
             if validate:
                 valid_addresses, invalid_addresses = self._batch_validate_addresses(
-                    source_addresses, progress_callback
+                    source_addresses, progress_callback,
                 )
             else:
                 valid_addresses = set(source_addresses)
@@ -554,7 +562,7 @@ class AddressStorage:
                     result["success"] = True
                     result["storage_path"] = storage_path
                     logger.info(
-                        f"地址导入成功: {len(valid_addresses)} 个有效地址已保存到 {storage_path}"
+                        f"地址导入成功: {len(valid_addresses)} 个有效地址已保存到 {storage_path}",
                     )
                 else:
                     result["error"] = "保存地址到存储失败"
@@ -566,11 +574,11 @@ class AddressStorage:
             return result
         except ValueError as e:
             result["error"] = str(e)
-            logger.error(f"地址导入失败: {e}")
+            logger.error("地址导入失败: %s", e)
             return result
         except Exception as e:
-            result["error"] = f"导入过程中发生错误: {str(e)}"
-            logger.error(f"地址导入失败: {e}", exc_info=True)
+            result["error"] = f"导入过程中发生错误: {e!s}"
+            logger.error("地址导入失败: %s", e, exc_info=True)
             return result
 
     def _read_json_source(self, file_path: str) -> list[str]:
@@ -598,7 +606,7 @@ class AddressStorage:
 
             return addresses
         except Exception as e:
-            logger.error(f"读取JSON源文件失败: {e}")
+            logger.error("读取JSON源文件失败: %s", e)
             return []
 
     def _read_csv_source(self, file_path: str) -> list[str]:
@@ -641,7 +649,7 @@ class AddressStorage:
 
             return addresses
         except Exception as e:
-            logger.error(f"读取CSV源文件失败: {e}")
+            logger.error("读取CSV源文件失败: %s", e)
             return []
 
     def _read_text_source(self, file_path: str) -> list[str]:
@@ -658,5 +666,5 @@ class AddressStorage:
 
             return addresses
         except Exception as e:
-            logger.error(f"读取文本源文件失败: {e}")
+            logger.error("读取文本源文件失败: %s", e)
             return []

@@ -1,0 +1,274 @@
+[
+  {
+    "name": "--version",
+    "status": "PASS",
+    "elapsed": 1.056847095489502,
+    "rc": 0,
+    "details": [],
+    "cmd": "C:\\Users\\pengk\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe f:\\Qoder\\btc-collision-engine\\key_collision_cli.py --version"
+  },
+  {
+    "name": "--examples",
+    "status": "PASS",
+    "elapsed": 0.7586653232574463,
+    "rc": 0,
+    "details": [],
+    "cmd": "C:\\Users\\pengk\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe f:\\Qoder\\btc-collision-engine\\key_collision_cli.py --examples"
+  },
+  {
+    "name": "--config-check",
+    "status": "PASS",
+    "elapsed": 0.7868924140930176,
+    "rc": 0,
+    "details": [],
+    "cmd": "C:\\Users\\pengk\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe f:\\Qoder\\btc-collision-engine\\key_collision_cli.py --config-check"
+  },
+  {
+    "name": "--recommend",
+    "status": "PASS",
+    "elapsed": 1.384012222290039,
+    "rc": 0,
+    "details": [],
+    "cmd": "C:\\Users\\pengk\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe f:\\Qoder\\btc-collision-engine\\key_collision_cli.py --recommend"
+  },
+  {
+    "name": "--platform-check",
+    "status": "PASS",
+    "elapsed": 0.8611078262329102,
+    "rc": 0,
+    "details": [],
+    "cmd": "C:\\Users\\pengk\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe f:\\Qoder\\btc-collision-engine\\key_collision_cli.py --platform-check"
+  },
+  {
+    "name": "--health-check",
+    "status": "PASS",
+    "elapsed": 0.8955678939819336,
+    "rc": 1,
+    "details": [],
+    "cmd": "C:\\Users\\pengk\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe f:\\Qoder\\btc-collision-engine\\key_collision_cli.py --health-check"
+  },
+  {
+    "name": "--validate-addresses",
+    "status": "PASS",
+    "elapsed": 0.967390775680542,
+    "rc": 0,
+    "details": [],
+    "cmd": "C:\\Users\\pengk\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe f:\\Qoder\\btc-collision-engine\\key_collision_cli.py --validate-addresses f:\\Qoder\\btc-collision-engine\\test_data\\test_targets.json"
+  },
+  {
+    "name": "random + auto GPU",
+    "status": "PASS",
+    "elapsed": 6.509371757507324,
+    "rc": 0,
+    "details": [],
+    "cmd": "f:\\Qoder\\btc-collision-engine\\config.json -t 1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH -m random --use-gpu --duration 4"
+  },
+  {
+    "name": "random + NVIDIA GPU (dev 0)",
+    "status": "PASS",
+    "elapsed": 6.788742542266846,
+    "rc": 0,
+    "details": [],
+    "cmd": "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH -m random --use-gpu --gpu-device 0 --duration 4"
+  },
+  {
+    "name": "random + Intel GPU (dev 1)",
+    "status": "PASS",
+    "elapsed": 6.717432260513306,
+    "rc": 0,
+    "details": [],
+    "cmd": "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH -m random --use-gpu --gpu-device 1 --duration 4"
+  },
+  {
+    "name": "random + Multi-GPU",
+    "status": "PASS",
+    "elapsed": 6.894502401351929,
+    "rc": 0,
+    "details": [],
+    "cmd": "f:\\Qoder\\btc-collision-engine\\config.json -t 1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH -m random --multi-gpu --duration 4"
+  },
+  {
+    "name": "random + Multi-GPU (indices 0 1)",
+    "status": "PASS",
+    "elapsed": 6.456928253173828,
+    "rc": 0,
+    "details": [],
+    "cmd": "-m random --multi-gpu --gpu-indices 0 1 --duration 4"
+  },
+  {
+    "name": "random + Multi-GPU (count=1)",
+    "status": "PASS",
+    "elapsed": 6.778191328048706,
+    "rc": 0,
+    "details": [],
+    "cmd": "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH -m random --multi-gpu --gpu-count 1 --duration 4"
+  },
+  {
+    "name": "random + GPU batch_size=500000",
+    "status": "PASS",
+    "elapsed": 6.999539136886597,
+    "rc": 0,
+    "details": [],
+    "cmd": "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH -m random --use-gpu --gpu-batch-size 500000 --duration 4"
+  },
+  {
+    "name": "random + GPU + checkpoint",
+    "status": "PASS",
+    "elapsed": 9.130393266677856,
+    "rc": 0,
+    "details": [],
+    "cmd": "-m random --use-gpu --checkpoint --checkpoint-interval 5 --duration 6"
+  },
+  {
+    "name": "random + GPU + dedup",
+    "status": "PASS",
+    "elapsed": 6.623265743255615,
+    "rc": 0,
+    "details": [],
+    "cmd": "-t 1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH -m random --use-gpu --dedup --duration 4"
+  },
+  {
+    "name": "random + GPU + dedup + checkpoint",
+    "status": "PASS",
+    "elapsed": 8.69218897819519,
+    "rc": 0,
+    "details": [],
+    "cmd": "random --use-gpu --dedup --checkpoint --checkpoint-interval 5 --duration 6"
+  },
+  {
+    "name": "range + GPU (NVIDIA)",
+    "status": "PASS",
+    "elapsed": 6.634350061416626,
+    "rc": 0,
+    "details": [],
+    "cmd": "0x1 --end 0x10000 --use-gpu --gpu-device 0 --duration 4"
+  },
+  {
+    "name": "range + GPU (Intel)",
+    "status": "PASS",
+    "elapsed": 6.680269718170166,
+    "rc": 0,
+    "details": [],
+    "cmd": "0x1 --end 0x10000 --use-gpu --gpu-device 1 --duration 4"
+  },
+  {
+    "name": "range + Multi-GPU",
+    "status": "PASS",
+    "elapsed": 6.766968727111816,
+    "rc": 0,
+    "details": [],
+    "cmd": "range --start 0x1 --end 0x10000 --multi-gpu --duration 4"
+  },
+  {
+    "name": "brute_force + GPU (NVIDIA)",
+    "status": "PASS",
+    "elapsed": 6.393299341201782,
+    "rc": 0,
+    "details": [],
+    "cmd": "brute_force --start 0x1 --use-gpu --gpu-device 0 --duration 4"
+  },
+  {
+    "name": "brute_force + GPU (Intel)",
+    "status": "PASS",
+    "elapsed": 6.729419708251953,
+    "rc": 0,
+    "details": [],
+    "cmd": "brute_force --start 0x1 --use-gpu --gpu-device 1 --duration 4"
+  },
+  {
+    "name": "random + GPU + verbose (-v)",
+    "status": "PASS",
+    "elapsed": 5.519414901733398,
+    "rc": 0,
+    "details": [],
+    "cmd": "-t 1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH -m random --use-gpu -v --duration 3"
+  },
+  {
+    "name": "random + GPU + verbose (-vv)",
+    "status": "PASS",
+    "elapsed": 5.512495279312134,
+    "rc": 0,
+    "details": [],
+    "cmd": "-t 1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH -m random --use-gpu -vv --duration 3"
+  },
+  {
+    "name": "random + GPU + sensitive=hash_only",
+    "status": "PASS",
+    "elapsed": 5.3122169971466064,
+    "rc": 0,
+    "details": [],
+    "cmd": "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH -m random --use-gpu --sensitive-mode hash_only --duration 3"
+  },
+  {
+    "name": "random + GPU + export-progress",
+    "status": "PASS",
+    "elapsed": 5.603782892227173,
+    "rc": 0,
+    "details": [],
+    "cmd": "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH -m random --use-gpu --export-progress f:\\Qoder\\btc-collision-engine\\_test_progress.json --duration 3"
+  },
+  {
+    "name": "random + GPU + no-color",
+    "status": "PASS",
+    "elapsed": 5.859313488006592,
+    "rc": 0,
+    "details": [],
+    "cmd": "-t 1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH -m random --use-gpu --no-color --duration 3"
+  },
+  {
+    "name": "random + GPU + en_US",
+    "status": "PASS",
+    "elapsed": 5.59445333480835,
+    "rc": 0,
+    "details": [],
+    "cmd": "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH -m random --use-gpu --language en_US --duration 3"
+  },
+  {
+    "name": "random + NVIDIA + workers=2",
+    "status": "PASS",
+    "elapsed": 5.559113025665283,
+    "rc": 0,
+    "details": [],
+    "cmd": "random --use-gpu --gpu-device 0 --workers 2 --duration 3"
+  },
+  {
+    "name": "random + Intel + auto-tune",
+    "status": "PASS",
+    "elapsed": 6.632751703262329,
+    "rc": 0,
+    "details": [],
+    "cmd": "-m random --use-gpu --gpu-device 1 --auto-tune --duration 4"
+  },
+  {
+    "name": "random + NVIDIA + progress-interval=2",
+    "status": "PASS",
+    "elapsed": 6.686126947402954,
+    "rc": 0,
+    "details": [],
+    "cmd": "random --use-gpu --gpu-device 0 --progress-interval 2 --duration 4"
+  },
+  {
+    "name": "random + GPU + skip-security-check",
+    "status": "PASS",
+    "elapsed": 5.5819456577301025,
+    "rc": 0,
+    "details": [],
+    "cmd": "-t 1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH -m random --use-gpu --skip-security-check --duration 3"
+  },
+  {
+    "name": "quick-run with GPU",
+    "status": "PASS",
+    "elapsed": 0.9301440715789795,
+    "rc": 0,
+    "details": [],
+    "cmd": "-m random --use-gpu --gpu-device 0 --quick-run --duration 3"
+  },
+  {
+    "name": "template quick-test + run",
+    "status": "PASS",
+    "elapsed": 0.7025017738342285,
+    "rc": 0,
+    "details": [],
+    "cmd": "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH -m random --use-gpu --template quick-test --duration 3"
+  }
+]

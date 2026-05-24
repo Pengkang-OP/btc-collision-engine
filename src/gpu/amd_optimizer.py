@@ -19,48 +19,13 @@ SHA256/RIPEMD160/secp256k1 等加密/哈希运算的精度。
 """
 
 import re
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from ..utils import get_configured_logger
 
 logger = get_configured_logger("AMDOptimizer")
 
 # 延迟导入避免循环依赖
-if TYPE_CHECKING:
-    pass
-
-
-# ---------------------------------------------------------------------------
-# 内部辅助组件
-# ---------------------------------------------------------------------------
-
-
-class _RateLimitedLogger:
-    """频率限制日志记录器
-
-    避免在高频循环中产生大量重复日志，每条消息在冷却期内只记录一次。
-    """
-
-    def __init__(self, base_logger: Any, cooldown_seconds: float = 60.0) -> None:
-        self._logger = base_logger
-        self._cooldown = cooldown_seconds
-        self._last_logged: dict = {}
-
-    def warning(self, key: str, message: str) -> None:
-        import time
-
-        now = time.monotonic()
-        if now - self._last_logged.get(key, 0.0) >= self._cooldown:
-            self._logger.warning(message)
-            self._last_logged[key] = now
-
-    def info(self, key: str, message: str) -> None:
-        import time
-
-        now = time.monotonic()
-        if now - self._last_logged.get(key, 0.0) >= self._cooldown:
-            self._logger.info(message)
-            self._last_logged[key] = now
 
 
 class AmdDriverDetector:
@@ -80,6 +45,8 @@ class AmdDriverDetector:
     MIN_ADRENALIN_MINOR = 10
     RECOMMENDED_ADRENALIN_YEAR = 25  # Adrenalin 25.x (最新推荐)
 
+    __slots__ = ("_device_info", "_logger")
+
     def __init__(self, device_info: dict, engine_logger: Any | None = None) -> None:
         self._device_info = device_info
         self._logger = engine_logger or logger
@@ -94,6 +61,7 @@ class AmdDriverDetector:
                 'is_sufficient': bool,      # 是否满足推荐最低版本
                 'recommendation': str | None,
             }
+
         """
         result = {
             "version_str": None,
@@ -103,7 +71,7 @@ class AmdDriverDetector:
         }
 
         version_str = self._device_info.get("driver_version") or self._device_info.get(
-            "version", ""
+            "version", "",
         )
         if not version_str:
             result["recommendation"] = (
@@ -476,6 +444,8 @@ class AmdArchDetector:
         ),
     ]
 
+    __slots__ = ("_device_info", "_logger")
+
     def __init__(self, device_info: dict, engine_logger: Any | None = None) -> None:
         self._device_info = device_info
         self._logger = engine_logger or logger
@@ -496,6 +466,7 @@ class AmdArchDetector:
                 'min_driver': str,              # 最低驱动版本
                 'recommended_driver': str,      # 推荐驱动版本
             }
+
         """
         device_name = self._device_info.get("name", "")
 
@@ -508,7 +479,7 @@ class AmdArchDetector:
                         **features,
                     }
 
-        self._logger.warning(f"⚠️ 无法识别 AMD GPU 架构：{device_name}，使用默认 GCN 配置")
+        self._logger.warning("[WARN] 无法识别 AMD GPU 架构：%s，使用默认 GCN 配置", device_name)
         return {
             "arch": "Unknown",
             "wavefront_size": 64,  # 保守默认値
@@ -531,6 +502,8 @@ class AmdWavefrontValidator:
     不对齐时记录 warning 并建议调整，不抛出异常。
     """
 
+    __slots__ = ("_arch_info", "_logger", "_wavefront_size")
+
     def __init__(self, arch_info: dict, engine_logger: Any | None = None) -> None:
         self._arch_info = arch_info
         self._logger = engine_logger or logger
@@ -550,6 +523,7 @@ class AmdWavefrontValidator:
                 'suggested_size': int | None,
                 'warning': str | None,
             }
+
         """
         result = {
             "valid": True,
@@ -578,7 +552,7 @@ class AmdWavefrontValidator:
                 f"{self._wavefront_size} 的倍数（架构: {self._arch_info.get('arch', 'Unknown')}），"
                 f"建议调整为 {suggested} 以获得最佳性能"
             )
-            self._logger.warning(f"⚠️ {result['warning']}")
+            self._logger.warning(f"[WARN] {result['warning']}")
 
         return result
 
@@ -619,7 +593,7 @@ class AmdMemoryOptimizer:
     _GDDR5_ARCHS = {"GCN1.0", "GCN3.0"}
 
     def __init__(
-        self, device_info: dict, arch_info: dict, engine_logger: Any | None = None
+        self, device_info: dict, arch_info: dict, engine_logger: Any | None = None,
     ) -> None:
         self._device_info = device_info
         self._arch_info = arch_info
@@ -636,6 +610,7 @@ class AmdMemoryOptimizer:
                 'infinity_cache_hint': bool,    # 是否建议利用 Infinity Cache
                 'infinity_cache_bonus': float,  # Infinity Cache 提升的 ratio 附加值
             }
+
         """
         global_mem = self._device_info.get("global_mem_size", 0)
         global_mem_gb = global_mem / (1024**3) if global_mem > 0 else 0.0
@@ -713,16 +688,20 @@ class AmdGPUOptimizer:
         device_info: 设备信息字典（包含 name, vendor, global_mem_size 等）
         config: 引擎配置字典
         engine_logger: 可选的日志记录器，默认使用模块级 logger
+
     """
 
+    __slots__ = (
+        "_device_info", "_config", "_logger",
+        "_driver_info", "_arch_info", "_wavefront_result", "_memory_config",
+    )
+
     def __init__(
-        self, device_info: dict, config: dict | None = None, engine_logger: Any | None = None
+        self, device_info: dict, config: dict | None = None, engine_logger: Any | None = None,
     ) -> None:
         self._device_info = device_info if isinstance(device_info, dict) else {}
         self._config = config or {}
         self._logger = engine_logger or logger
-        self._rate_logger = _RateLimitedLogger(self._logger)
-
         # 内部组件（防御性初始化，默认为 None）
         self._driver_info: dict | None = None
         self._arch_info: dict | None = None
@@ -740,9 +719,10 @@ class AmdGPUOptimizer:
 
         Returns:
             优化配置字典，包含各项优化状态和推荐参数
+
         """
         self._logger.info("=" * 60)
-        self._logger.info("🔧 开始应用 AMD GPU 特殊优化")
+        self._logger.info("[*] 开始应用 AMD GPU 特殊优化")
         self._logger.info("=" * 60)
 
         result: dict[str, Any] = {}
@@ -762,23 +742,23 @@ class AmdGPUOptimizer:
             if version_str:
                 sufficient = self._driver_info.get("is_sufficient", False)
                 _status = "充足" if sufficient else "较旧"
-                self._logger.info(f"✅ AMD 驱动: {version_str} ({driver_type}, 版本{_status})")
+                self._logger.info("[OK] AMD 驱动: %s (%s, 版本%s)", version_str, driver_type, _status)
             else:
-                self._logger.warning(f"⚠️ 无法检测 AMD 驱动版本（类型: {driver_type}）")
+                self._logger.warning("[WARN] 无法检测 AMD 驱动版本（类型: %s）", driver_type)
 
             if self._driver_info.get("recommendation"):
-                self._logger.warning(f"⚠️ {self._driver_info['recommendation']}")
+                self._logger.warning(f"[WARN] {self._driver_info['recommendation']}")
 
         except (OSError, FileNotFoundError) as e:
             self._logger.warning(
-                f"⚠️ AMD 驱动检测系统错误（非致命）: {type(e).__name__}\n   驱动版本信息将不可用",
+                f"[WARN] AMD 驱动检测系统错误（非致命）: {type(e).__name__}\n   驱动版本信息将不可用",
                 exc_info=True,
             )
             self._driver_info = {}
             result["driver"] = {}
         except Exception as e:
             self._logger.warning(
-                f"⚠️ AMD 驱动检测失败（非致命）: {type(e).__name__}: {e}\n   驱动版本信息将不可用"
+                f"[WARN] AMD 驱动检测失败（非致命）: {type(e).__name__}: {e}\n   驱动版本信息将不可用",
             )
             self._driver_info = {}
             result["driver"] = {}
@@ -795,16 +775,16 @@ class AmdGPUOptimizer:
             wavefront_size = self._arch_info.get("wavefront_size", 64)
             infinity_cache = self._arch_info.get("infinity_cache", False)
             self._logger.info(
-                f"✅ AMD GPU 架构: {self._arch_info['arch']}"
+                f"[OK] AMD GPU 架构: {self._arch_info['arch']}"
                 f"（Wavefront={wavefront_size}，"
                 f"Infinity Cache: {'支持' if infinity_cache else '不支持'}，"
-                f"Chiplet: {'是' if self._arch_info.get('chiplet') else '否'}）"
+                f"Chiplet: {'是' if self._arch_info.get('chiplet') else '否'}）",
             )
 
         except (ValueError, KeyError) as e:
             self._logger.warning(
-                f"⚠️ AMD 架构识别数据异常（非致命）: {type(e).__name__}: {e}\n"
-                "   架构特性将使用保守默认值（GCN，Wavefront=64）"
+                f"[WARN] AMD 架构识别数据异常（非致命）: {type(e).__name__}: {e}\n"
+                "   架构特性将使用保守默认值（GCN，Wavefront=64）",
             )
             self._arch_info = {
                 "arch": "Unknown",
@@ -818,8 +798,8 @@ class AmdGPUOptimizer:
             result["arch"] = self._arch_info
         except Exception as e:
             self._logger.warning(
-                f"⚠️ AMD 架构识别失败（非致命）: {type(e).__name__}: {e}\n"
-                "   架构特性将使用保守默认值（GCN，Wavefront=64）"
+                f"[WARN] AMD 架构识别失败（非致命）: {type(e).__name__}: {e}\n"
+                "   架构特性将使用保守默认值（GCN，Wavefront=64）",
             )
             self._arch_info = {
                 "arch": "Unknown",
@@ -844,21 +824,21 @@ class AmdGPUOptimizer:
 
             if self._wavefront_result["valid"]:
                 self._logger.info(
-                    "✅ AMD Wavefront 对齐验证通过: "
+                    "[OK] AMD Wavefront 对齐验证通过: "
                     f"work_group_size={work_group_size} 是 "
-                    f"Wavefront({self._wavefront_result['wavefront_size']}) 的整数倍"
+                    f"Wavefront({self._wavefront_result['wavefront_size']}) 的整数倍",
                 )
 
         except (ValueError, TypeError) as e:
             self._logger.warning(
-                f"⚠️ AMD Wavefront 验证参数异常（非致命）: {type(e).__name__}\n   Wavefront 对齐将跳过",
+                f"[WARN] AMD Wavefront 验证参数异常（非致命）: {type(e).__name__}\n   Wavefront 对齐将跳过",
                 exc_info=True,
             )
             self._wavefront_result = {}
             result["wavefront"] = {}
         except Exception as e:
             self._logger.warning(
-                f"⚠️ AMD Wavefront 验证失败（非致命）: {type(e).__name__}\n   Wavefront 对齐将跳过",
+                f"[WARN] AMD Wavefront 验证失败（非致命）: {type(e).__name__}\n   Wavefront 对齐将跳过",
                 exc_info=True,
             )
             self._wavefront_result = {}
@@ -883,14 +863,14 @@ class AmdGPUOptimizer:
             self._logger.info(
                 f"\u2705 AMD 显存配置: {mem_gb:.1f}GB（类型: {mem_type}），"
                 f"memory_ratio={mem_ratio:.2f}"
-                + (f"（含 Infinity Cache +{ic_bonus:.2f}）" if ic_bonus > 0 else "")
+                + (f"（含 Infinity Cache +{ic_bonus:.2f}）" if ic_bonus > 0 else ""),
             )
             if ic_hint:
-                self._logger.info("✅ AMD Infinity Cache 可用，局部性访问模式将受益")
+                self._logger.info("[OK] AMD Infinity Cache 可用，局部性访问模式将受益")
 
         except (ValueError, KeyError, TypeError) as e:
             self._logger.warning(
-                f"⚠️ AMD 显存优化配置数据异常（非致命）: {type(e).__name__}\n   显存配置将使用保守默认值",
+                f"[WARN] AMD 显存优化配置数据异常（非致命）: {type(e).__name__}\n   显存配置将使用保守默认值",
                 exc_info=True,
             )
             self._memory_config = {
@@ -903,7 +883,7 @@ class AmdGPUOptimizer:
             result["memory"] = self._memory_config
         except Exception as e:
             self._logger.warning(
-                f"⚠️ AMD 显存优化配置失败（非致命）: {type(e).__name__}\n   显存配置将使用保守默认值",
+                f"[WARN] AMD 显存优化配置失败（非致命）: {type(e).__name__}\n   显存配置将使用保守默认值",
                 exc_info=True,
             )
             self._memory_config = {
@@ -917,7 +897,7 @@ class AmdGPUOptimizer:
 
         # 5. 快速数学优化禁用确认（加密/哈希必须精确）
         result["fast_math_disabled"] = True
-        self._logger.info("✅ 快速数学优化: 已禁用（保证 SHA256/RIPEMD160/secp256k1 精度）")
+        self._logger.info("[OK] 快速数学优化: 已禁用（保证 SHA256/RIPEMD160/secp256k1 精度）")
 
         # 6. 汇总优化建议
         result["recommended_memory_ratio"] = (
@@ -931,7 +911,7 @@ class AmdGPUOptimizer:
         )
 
         self._logger.info("=" * 60)
-        self._logger.info("✅ AMD GPU 特殊优化应用完成")
+        self._logger.info("[OK] AMD GPU 特殊优化应用完成")
         self._logger.info("=" * 60)
 
         return result
@@ -941,6 +921,7 @@ class AmdGPUOptimizer:
 
         Returns:
             包含当前优化状态的字典
+
         """
         driver_version = None
         driver_type = "Unknown"

@@ -10,15 +10,12 @@
 测试结果将生成详细的测试报告。
 """
 
-import logging  # noqa: E402
-import os  # noqa: E402
-import sys  # noqa: E402
-import time  # noqa: E402
+import logging
+import os
+import pathlib
+import time
 
-# 添加项目根目录到Python模块路径
-sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
-
-from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine  # noqa: E402
+from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
 
 # 配置日志
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -42,6 +39,7 @@ class ComprehensiveTest:
 
         Returns:
             目标地址集合
+
         """
         # 使用格式正确的比特币地址作为测试目标
         sample_addresses = [
@@ -65,8 +63,9 @@ class ComprehensiveTest:
         Args:
             test_name: 测试名称
             test_func: 测试函数
+
         """
-        logger.info(f"开始测试: {test_name}")
+        logger.info("开始测试: %s", test_name)
         start_time = time.time()
 
         try:
@@ -106,7 +105,7 @@ class ComprehensiveTest:
             try:
                 engine.cleanup()
             except (OSError, RuntimeError) as e:
-                logger.debug(f"GPU清理失败（非致命）: {e}")
+                logger.debug("GPU清理失败（非致命）: %s", e)
             raise Exception("引擎初始化失败")
 
         # 启动碰撞
@@ -114,7 +113,7 @@ class ComprehensiveTest:
             try:
                 engine.cleanup()
             except (OSError, RuntimeError) as e:
-                logger.debug(f"GPU清理失败（非致命）: {e}")
+                logger.debug("GPU清理失败（非致命）: %s", e)
             raise Exception("引擎启动失败")
 
         # 运行一小段时间
@@ -142,7 +141,7 @@ class ComprehensiveTest:
             try:
                 engine.cleanup()
             except (OSError, RuntimeError) as e:
-                logger.debug(f"GPU清理失败（非致命）: {e}")
+                logger.debug("GPU清理失败（非致命）: %s", e)
             raise Exception("引擎初始化失败")
 
         # 启动碰撞
@@ -150,7 +149,7 @@ class ComprehensiveTest:
             try:
                 engine.cleanup()
             except (OSError, RuntimeError) as e:
-                logger.debug(f"GPU清理失败（非致命）: {e}")
+                logger.debug("GPU清理失败（非致命）: %s", e)
             raise Exception("引擎启动失败")
 
         # 运行一小段时间
@@ -180,21 +179,21 @@ class ComprehensiveTest:
                 {
                     "enable_async_execution": True,
                     "per_device_config": {"0": {"batch_size": batch_size}},
-                }
+                },
             )
 
             if not engine.initialize(device_count=1):
                 try:
                     engine.cleanup()
                 except (OSError, RuntimeError) as e:
-                    logger.debug(f"GPU清理失败（非致命）: {e}")
+                    logger.debug("GPU清理失败（非致命）: %s", e)
                 raise Exception(f"引擎初始化失败(批次大小: {batch_size})")
 
             if not engine.start(targets=targets, mode="random", total_keys=200000):
                 try:
                     engine.cleanup()
                 except (OSError, RuntimeError) as e:
-                    logger.debug(f"GPU清理失败（非致命）: {e}")
+                    logger.debug("GPU清理失败（非致命）: %s", e)
                 raise Exception(f"引擎启动失败 (批次大小: {batch_size})")
 
             # 运行一小段时间
@@ -217,21 +216,21 @@ class ComprehensiveTest:
         targets = self.generate_test_targets(10)
 
         engine = MultiGPUCollisionEngine(
-            {"enable_async_execution": True, "workload_monitor_interval": 2}
+            {"enable_async_execution": True, "workload_monitor_interval": 2},
         )
 
         if not engine.initialize(device_count=1):
             try:
                 engine.cleanup()
             except (OSError, RuntimeError) as e:
-                logger.debug(f"GPU清理失败（非致命）: {e}")
+                logger.debug("GPU清理失败（非致命）: %s", e)
             raise Exception("引擎初始化失败")
 
         if not engine.start(targets=targets, mode="random", total_keys=1000000):
             try:
                 engine.cleanup()
             except (OSError, RuntimeError) as e:
-                logger.debug(f"GPU清理失败（非致命）: {e}")
+                logger.debug("GPU清理失败（非致命）: %s", e)
             raise Exception("引擎启动失败")
 
         # 运行较长时间
@@ -259,14 +258,14 @@ class ComprehensiveTest:
             try:
                 engine.cleanup()
             except (OSError, RuntimeError) as e:
-                logger.debug(f"GPU清理失败（非致命）: {e}")
+                logger.debug("GPU清理失败（非致命）: %s", e)
             raise Exception("引擎初始化失败")
 
         if not engine.start(targets=min_targets, mode="random", total_keys=50000):
             try:
                 engine.cleanup()
             except (OSError, RuntimeError) as e:
-                logger.debug(f"GPU清理失败（非致命）: {e}")
+                logger.debug("GPU清理失败（非致命）: %s", e)
             raise Exception("引擎启动失败")
 
         # 运行一小段时间
@@ -291,14 +290,14 @@ class ComprehensiveTest:
             try:
                 engine.cleanup()
             except (OSError, RuntimeError) as e:
-                logger.debug(f"GPU清理失败（非致命）: {e}")
+                logger.debug("GPU清理失败（非致命）: %s", e)
             raise Exception("引擎初始化失败")
 
         # 启动应该失败，但系统应该能正常处理
         try:
             engine.start(targets=empty_targets, mode="random", total_keys=50000)
         except Exception as e:
-            logger.info(f"预期的错误: {e}")
+            logger.info("预期的错误: %s", e)
         finally:
             engine.stop()
             engine.cleanup()
@@ -310,21 +309,21 @@ class ComprehensiveTest:
         targets = self.generate_test_targets(10)
 
         engine = MultiGPUCollisionEngine(
-            {"enable_async_execution": True, "total_pool_mb": 256}  # 较小的内存池，测试内存管理
+            {"enable_async_execution": True, "total_pool_mb": 256},  # 较小的内存池，测试内存管理
         )
 
         if not engine.initialize(device_count=1):
             try:
                 engine.cleanup()
             except (OSError, RuntimeError) as e:
-                logger.debug(f"GPU清理失败（非致命）: {e}")
+                logger.debug("GPU清理失败（非致命）: %s", e)
             raise Exception("引擎初始化失败")
 
         if not engine.start(targets=targets, mode="random", total_keys=300000):
             try:
                 engine.cleanup()
             except (OSError, RuntimeError) as e:
-                logger.debug(f"GPU清理失败（非致命）: {e}")
+                logger.debug("GPU清理失败（非致命）: %s", e)
             raise Exception("引擎启动失败")
 
         # 运行一小段时间
@@ -346,7 +345,7 @@ class ComprehensiveTest:
         targets = self.generate_test_targets(10)
 
         engine = MultiGPUCollisionEngine(
-            {"enable_async_execution": True, "auto_rebalance": True, "workload_monitor_interval": 2}
+            {"enable_async_execution": True, "auto_rebalance": True, "workload_monitor_interval": 2},
         )
 
         # 初始化引擎，使用所有可用GPU
@@ -354,14 +353,14 @@ class ComprehensiveTest:
             try:
                 engine.cleanup()
             except (OSError, RuntimeError) as e:
-                logger.debug(f"GPU清理失败（非致命）: {e}")
+                logger.debug("GPU清理失败（非致命）: %s", e)
             raise Exception("引擎初始化失败")
 
         if not engine.start(targets=targets, mode="random", total_keys=1000000):
             try:
                 engine.cleanup()
             except (OSError, RuntimeError) as e:
-                logger.debug(f"GPU清理失败（非致命）: {e}")
+                logger.debug("GPU清理失败（非致命）: %s", e)
             raise Exception("引擎启动失败")
 
         # 运行一段时间，让负载均衡器工作
@@ -435,23 +434,21 @@ class ComprehensiveTest:
             if result["status"] == "pass":
                 if "result" in result:
                     report += f"结果: {result['result']}\n"
-            else:
-                if "error" in result:
-                    report += f"错误: {result['error']}\n"
+            elif "error" in result:
+                report += f"错误: {result['error']}\n"
 
         # 保存测试报告
         report_path = os.path.join(os.path.dirname(__file__), "test_report.md")
-        with open(report_path, "w", encoding="utf-8") as f:
-            f.write(report)
+        pathlib.Path(report_path).write_text(report, encoding="utf-8")
 
-        logger.info(f"测试报告已生成: {report_path}")
+        logger.info("测试报告已生成: %s", report_path)
 
         # 打印测试摘要
         logger.info("测试摘要:")
         logger.info(f"- 总测试时间: {total_time:.2f}秒")
-        logger.info(f"- 总测试数: {total_tests}")
-        logger.info(f"- 通过测试数: {passed_tests}")
-        logger.info(f"- 失败测试数: {failed_tests}")
+        logger.info("- 总测试数: %s", total_tests)
+        logger.info("- 通过测试数: %s", passed_tests)
+        logger.info("- 失败测试数: %s", failed_tests)
         logger.info(f"- 测试通过率: {pass_rate:.1f}%")
 
 

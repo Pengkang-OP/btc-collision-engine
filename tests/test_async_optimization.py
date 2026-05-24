@@ -1,15 +1,11 @@
 #!/usr/bin/env python3
 """测试GPU异步优化效果"""
 
-import sys
 import threading
 import time
-from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
-from src.gpu.device import GPUDeviceDetector  # noqa: E402
+from src.collision.gpu.engine import GPUCollisionEngine
+from src.gpu.device import GPUDeviceDetector
 
 
 def main():
@@ -80,7 +76,7 @@ def main():
         print(
             f"  [{(i + 1) * 5}s] 吞吐量: {throughput:>10,.0f} keys/s | "
             f"错误率: {report.error_rate_percent:>6.2f}% | "
-            f"批次: {report.total_batches}"
+            f"批次: {report.total_batches}",
         )
 
     # 停止引擎

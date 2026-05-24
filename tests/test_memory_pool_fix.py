@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-GPU内存池修复验证测试
+"""GPU内存池修复验证测试
 
 验证内容:
 1. 内存池是否正确初始化
@@ -11,22 +10,17 @@ GPU内存池修复验证测试
 
 import sys
 import time
-from pathlib import Path
 
 import pytest
-
-# 添加项目根目录
-sys.path.insert(0, str(Path(__file__).parent))
 
 # 标记为 GPU 测试，CI 中跳过
 pytestmark = pytest.mark.gpu
 
-from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
+from src.collision.gpu.engine import GPUCollisionEngine
 
 
 def test_memory_pool_fix():
     """测试内存池修复"""
-
     print("\n" + "=" * 80)
     print("🔍 GPU内存池修复验证测试")
     print("=" * 80)

@@ -14,6 +14,7 @@ class WizardMessageQueue:
 
         Args:
             message: Message payload
+
         """
         self._queue.put(message)
 
@@ -25,6 +26,7 @@ class WizardMessageQueue:
 
         Returns:
             Message or None if timeout
+
         """
         try:
             return self._queue.get(timeout=timeout)

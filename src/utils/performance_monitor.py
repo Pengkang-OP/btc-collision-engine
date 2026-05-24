@@ -36,9 +36,9 @@ class PerformanceTracker:
     """
 
     def __init__(self, max_records: int = 10000) -> None:
-        """
-        Args:
-            max_records: 最大记录数（超过后自动清理旧记录）
+        """Args:
+        max_records: 最大记录数（超过后自动清理旧记录）
+
         """
         self.max_records = max_records
         self._records: list[PerformanceMetrics] = []
@@ -52,8 +52,7 @@ class PerformanceTracker:
         error: str | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> None:
-        """
-        记录性能指标
+        """记录性能指标
 
         Args:
             operation: 操作名称
@@ -61,6 +60,7 @@ class PerformanceTracker:
             success: 是否成功
             error: 错误信息（如果失败）
             metadata: 额外元数据
+
         """
         metric = PerformanceMetrics(
             operation=operation,
@@ -80,14 +80,14 @@ class PerformanceTracker:
                 del self._records[:excess]
 
     def get_statistics(self, operation: str | None = None) -> dict:
-        """
-        获取性能统计
+        """获取性能统计
 
         Args:
             operation: 操作名称（None=全部）
 
         Returns:
             统计字典
+
         """
         with self._lock:
             records = self._records
@@ -123,10 +123,9 @@ class PerformanceTracker:
         }
 
     def get_slow_operations(
-        self, threshold_ms: float = 1000, limit: int = 10
+        self, threshold_ms: float = 1000, limit: int = 10,
     ) -> list[PerformanceMetrics]:
-        """
-        获取慢操作记录
+        """获取慢操作记录
 
         Args:
             threshold_ms: 耗时阈值（毫秒）
@@ -134,6 +133,7 @@ class PerformanceTracker:
 
         Returns:
             慢操作记录列表
+
         """
         with self._lock:
             slow_ops = [r for r in self._records if r.elapsed_ms > threshold_ms]
@@ -162,7 +162,7 @@ def _get_tracker_config():
             "max_records": config_mgr.get("performance_monitoring.max_records", 10000),
             "slow_threshold_ms": config_mgr.get("performance_monitoring.slow_threshold_ms", 30000),
             "track_slow_operations": config_mgr.get(
-                "performance_monitoring.track_slow_operations", True
+                "performance_monitoring.track_slow_operations", True,
             ),
             "log_level": config_mgr.get("performance_monitoring.log_level", "INFO"),
         }
@@ -235,15 +235,15 @@ class EnhancedPerformanceMonitor:
         log_result: bool = True,
         track: bool = True,
     ) -> None:
-        """
-        Args:
-            logger: 日志记录器
-            operation: 操作名称
-            level: 日志级别
-            log_result: 是否记录日志
-            track: 是否记录到性能追踪器
-                - True: 记录到全局追踪器，支持统计分析（默认）
-                - False: 仅记录日志，不存储到追踪器（适用于调试操作）
+        """Args:
+        logger: 日志记录器
+        operation: 操作名称
+        level: 日志级别
+        log_result: 是否记录日志
+        track: 是否记录到性能追踪器
+            - True: 记录到全局追踪器，支持统计分析（默认）
+            - False: 仅记录日志，不存储到追踪器（适用于调试操作）
+
         """
         self.logger = logger
         self.operation = operation
@@ -259,8 +259,7 @@ class EnhancedPerformanceMonitor:
         return self
 
     def __exit__(self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None) -> None:
-        """
-        退出上下文时的处理
+        """退出上下文时的处理
 
         注意: 此方法中的所有异常都被捕获，确保监控失败不会影响业务逻辑
         """
@@ -281,12 +280,12 @@ class EnhancedPerformanceMonitor:
                 try:
                     if success:
                         self.logger.log(
-                            self.level, f"[Performance] {self.operation}: {elapsed_ms:.2f}ms"
+                            self.level, f"[Performance] {self.operation}: {elapsed_ms:.2f}ms",
                         )
                     else:
                         _ms = elapsed_ms
                         self.logger.error(
-                            f"[Performance] {self.operation}: FAILED after {_ms:.2f}ms - {exc_val}"
+                            f"[Performance] {self.operation}: FAILED after {_ms:.2f}ms - {exc_val}",
                         )
                 except Exception as log_error:
                     # 日志失败不应影响业务，静默失败
@@ -309,7 +308,7 @@ class EnhancedPerformanceMonitor:
                     if config["track_slow_operations"] and elapsed_ms > config["slow_threshold_ms"]:
                         self.logger.warning(
                             f"[Performance] 慢操作检测: {self.operation} "
-                            f"耗时 {elapsed_ms:.2f}ms > {config['slow_threshold_ms']}ms"
+                            f"耗时 {elapsed_ms:.2f}ms > {config['slow_threshold_ms']}ms",
                         )
                 except Exception as track_error:
                     # 追踪失败不应影响业务，静默失败
@@ -333,12 +332,12 @@ class EnhancedPerformanceMonitor:
 
 
 def log_performance_summary(logger: logging.Logger, tracker: PerformanceTracker | None = None) -> None:
-    """
-    记录性能统计摘要
+    """记录性能统计摘要
 
     Args:
         logger: 日志记录器
         tracker: 性能追踪器（None=使用全局追踪器）
+
     """
     if tracker is None:
         tracker = _global_tracker
@@ -376,10 +375,9 @@ def log_performance_summary(logger: logging.Logger, tracker: PerformanceTracker 
 
 # 兼容性包装器
 def create_performance_monitor(
-    logger: logging.Logger, operation: str, level: str = "INFO"
+    logger: logging.Logger, operation: str, level: str = "INFO",
 ) -> "EnhancedPerformanceMonitor":
-    """
-    创建性能监控器（兼容旧API）
+    """创建性能监控器（兼容旧API）
 
     Args:
         logger: 日志记录器
@@ -388,5 +386,6 @@ def create_performance_monitor(
 
     Returns:
         EnhancedPerformanceMonitor实例
+
     """
     return EnhancedPerformanceMonitor(logger, operation, level)

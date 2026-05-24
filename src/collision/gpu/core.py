@@ -74,6 +74,7 @@ class CollisionCore(ICollisionCore):
             stats_factory: 统计对象工厂函数 (可选)
             checkpoint_factory: 断点管理器工厂函数 (可选)
             dedup_factory: 去重过滤器工厂函数 (可选)
+
         """
         self.targets = targets
         self.config = config or {}
@@ -106,7 +107,7 @@ class CollisionCore(ICollisionCore):
         self.dedup_enabled = self.config.get("dedup_enabled", False)
         self.checkpoint_enabled = self.config.get("checkpoint_enabled", False)
         self.progress_interval = self.config.get(
-            "progress_interval", 1.0
+            "progress_interval", 1.0,
         )  # Phase 4: 进度回调间隔(秒)
 
         logger.debug("CollisionCore 初始化完成")
@@ -116,6 +117,7 @@ class CollisionCore(ICollisionCore):
 
         Returns:
             统计信息字典
+
         """
         if not self.stats:
             return {}
@@ -131,7 +133,7 @@ class CollisionCore(ICollisionCore):
             {
                 "running": self._running,
                 "elapsed_time": elapsed_time,
-            }
+            },
         )
 
         return stats_dict
@@ -156,7 +158,7 @@ class CollisionCore(ICollisionCore):
                 logger.debug("使用注入的统计工厂初始化")
                 return
             except Exception as e:
-                logger.warning(f"注入的统计工厂初始化失败: {e}，使用默认")
+                logger.warning("注入的统计工厂初始化失败: %s，使用默认", e)
 
         # 默认实现
         try:
@@ -164,7 +166,7 @@ class CollisionCore(ICollisionCore):
 
             self.stats = CollisionStats()
         except Exception as e:
-            logger.error(f"初始化碰撞统计失败: {e}")
+            logger.error("初始化碰撞统计失败: %s", e)
             raise
 
     def _init_checkpoint(self):
@@ -176,7 +178,7 @@ class CollisionCore(ICollisionCore):
                 logger.debug("使用注入的断点工厂初始化")
                 return
             except Exception as e:
-                logger.warning(f"注入的断点工厂初始化失败: {e}，使用默认")
+                logger.warning("注入的断点工厂初始化失败: %s，使用默认", e)
 
         # 默认实现
         try:
@@ -184,7 +186,7 @@ class CollisionCore(ICollisionCore):
 
             self.checkpoint = CheckpointManager(auto_save_interval=self.checkpoint_interval)
         except Exception as e:
-            logger.error(f"初始化断点管理器失败: {e}")
+            logger.error("初始化断点管理器失败: %s", e)
             raise
 
     def _init_dedup_filter(self):
@@ -196,7 +198,7 @@ class CollisionCore(ICollisionCore):
                 logger.debug("使用注入的去重工厂初始化")
                 return
             except Exception as e:
-                logger.warning(f"注入的去重工厂初始化失败: {e}，使用默认")
+                logger.warning("注入的去重工厂初始化失败: %s，使用默认", e)
 
         # 默认实现
         try:
@@ -205,7 +207,7 @@ class CollisionCore(ICollisionCore):
 
             self.dedup_filter = DeduplicationFilter(max_size=dedup_max_size)
         except Exception as e:
-            logger.error(f"初始化去重过滤器失败: {e}")
+            logger.error("初始化去重过滤器失败: %s", e)
             raise
 
     def _restore_checkpoint(self):
@@ -231,7 +233,7 @@ class CollisionCore(ICollisionCore):
                     f"断点恢复: mode={mode}, "
                     f"total_checked={total_checked}, "
                     f"position={current_position}, "
-                    f"matches={len(saved_matches)}"
+                    f"matches={len(saved_matches)}",
                 )
 
                 # 恢复统计对象
@@ -258,7 +260,7 @@ class CollisionCore(ICollisionCore):
             else:
                 logger.info("未找到断点数据，从头开始")
         except Exception as e:
-            logger.error(f"恢复断点失败: {e}")
+            logger.error("恢复断点失败: %s", e)
 
     def _save_checkpoint(self):
         """保存断点"""
@@ -267,13 +269,13 @@ class CollisionCore(ICollisionCore):
 
         try:
             mode = self.config.get("mode", "random")
-            self.checkpoint.save(
-                mode=mode,
-                targets=self.targets,
-                current_position=getattr(self.stats, "total_checked", 0),
-                total_checked=getattr(self.stats, "total_checked", 0),
-                matches=[],  # 匹配数据通过回调单独处理
-            )
+            self.checkpoint.save({
+                "mode": mode,
+                "targets": list(self.targets),
+                "current_position": getattr(self.stats, "total_checked", 0),
+                "total_checked": getattr(self.stats, "total_checked", 0),
+                "matches": [],  # 匹配数据通过回调单独处理
+            })
             logger.debug("断点已保存")
         except Exception as e:
-            logger.error(f"保存断点失败: {e}")
+            logger.error("保存断点失败: %s", e)

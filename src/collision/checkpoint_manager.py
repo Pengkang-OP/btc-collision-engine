@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
-"""
-Checkpoint manager for saving and restoring collision engine state.
+"""Checkpoint manager for saving and restoring collision engine state.
 
 Provides crash recovery by periodically saving progress to JSON
 files with CRC32 integrity verification and atomic writes.
 """
 
-import hashlib
 import json
-import os
 import threading
 import time
 import zlib
@@ -68,22 +65,25 @@ class CheckpointManager:
         )
 
     def save(
-        self, state: dict
+        self, state: dict,
     ) -> None:
         """Save checkpoint with state data.
 
         Args:
             state: Engine state dictionary
+
         """
-        self._buffer = state
-        self._dirty = True
-        self._flush_buffer()
+        with self._lock:
+            self._buffer = state
+            self._dirty = True
+            self._flush_buffer()
 
     def load(self) -> dict | None:
         """Load checkpoint from file.
 
         Returns:
             State dictionary or None if no checkpoint
+
         """
         if not self.filepath.exists():
             return None
@@ -92,23 +92,21 @@ class CheckpointManager:
             if len(raw) > self._max_size:
                 raise CheckpointError(
                     f"Checkpoint too large: "
-                    f"{len(raw)} bytes"
+                    f"{len(raw)} bytes",
                 )
             data = fast_loads(raw.decode("utf-8"))
             if data.get("version") != CHECKPOINT_VERSION:
                 logger.warning(
-                    "Checkpoint version mismatch"
+                    "Checkpoint version mismatch",
                 )
             stored_crc = data.pop("crc32", None)
             if stored_crc is not None:
-                computed = zlib.crc32(
-                    fast_dumps(
-                        data, sort_keys=True
-                    ).encode()
-                )
+                # Compute CRC on data without crc32 field, single serialization
+                serialized = fast_dumps(data, sort_keys=True)
+                computed = zlib.crc32(serialized.encode())
                 if computed != stored_crc:
                     raise CRC32MismatchError(
-                        "CRC32 checksum mismatch"
+                        "CRC32 checksum mismatch",
                     )
             return data
         except (
@@ -117,16 +115,17 @@ class CheckpointManager:
             CheckpointError,
         ) as e:
             logger.error(
-                f"Failed to load checkpoint: {e}"
+                "Failed to load checkpoint: %s", e,
             )
             return None
 
     def delete(self) -> None:
         """Delete checkpoint file."""
-        if self.filepath.exists():
-            self.filepath.unlink()
-        self._buffer = None
-        self._dirty = False
+        with self._lock:
+            if self.filepath.exists():
+                self.filepath.unlink()
+            self._buffer = None
+            self._dirty = False
 
     def _flush_buffer(self) -> None:
         """Write buffered state to file atomically."""
@@ -135,13 +134,12 @@ class CheckpointManager:
         data = dict(self._buffer)
         data["version"] = CHECKPOINT_VERSION
         data["timestamp"] = time.time()
+        # Compute CRC on data without crc32 field, then add it and re-serialize
         serialized = fast_dumps(data, sort_keys=True)
         crc = zlib.crc32(serialized.encode())
         data["crc32"] = crc
         serialized = fast_dumps(data, sort_keys=True)
-        temp_path = self.filepath.with_suffix(
-            ".json.tmp"
-        )
+        temp_path = self.filepath.with_suffix(".json.tmp")
         temp_path.write_text(serialized, encoding="utf-8")
         temp_path.replace(self.filepath)
         self._last_save = time.time()

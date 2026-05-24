@@ -14,15 +14,13 @@ Tests performance improvements of various optimization strategies:
 import argparse
 import json
 import os
+import pathlib
 import sys
 import time
 from datetime import datetime
 from typing import Any, cast
 
-# 添加项目根目录到路径
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-
-from src.utils import get_configured_logger  # noqa: E402
+from src.utils import get_configured_logger
 
 # 日志系统由CLI/main.py入口统一初始化
 logger = get_configured_logger("PerformanceBenchmark")
@@ -86,6 +84,7 @@ class PerformanceBenchmark:
 
         Args:
             batch_sizes: 要测试的批次大小列表
+
         """
         if batch_sizes is None:
             batch_sizes = [10000, 50000, 100000, 500000]
@@ -107,7 +106,7 @@ class PerformanceBenchmark:
 
             # 测试批量SHA256
             result = BenchmarkResult(
-                f"SIMD_SHA256_{batch_size}", {"batch_size": batch_size, "operation": "SHA256"}
+                f"SIMD_SHA256_{batch_size}", {"batch_size": batch_size, "operation": "SHA256"},
             )
             result.start()
 
@@ -117,13 +116,13 @@ class PerformanceBenchmark:
 
             print(
                 f"  SHA256: {result.avg_speed:,.0f} keys/s, "
-                f"耗时: {cast(float, result.end_time) - cast(float, result.start_time):.3f}s"
+                f"耗时: {cast('float', result.end_time) - cast('float', result.start_time):.3f}s",
             )
             self.results.append(result)
 
             # 测试批量Hash160
             result = BenchmarkResult(
-                f"SIMD_HASH160_{batch_size}", {"batch_size": batch_size, "operation": "Hash160"}
+                f"SIMD_HASH160_{batch_size}", {"batch_size": batch_size, "operation": "Hash160"},
             )
             result.start()
 
@@ -133,7 +132,7 @@ class PerformanceBenchmark:
 
             print(
                 f"  Hash160: {result.avg_speed:,.0f} keys/s, "
-                f"耗时: {cast(float, result.end_time) - cast(float, result.start_time):.3f}s"
+                f"耗时: {cast('float', result.end_time) - cast('float', result.start_time):.3f}s",
             )
             self.results.append(result)
 
@@ -142,6 +141,7 @@ class PerformanceBenchmark:
 
         Args:
             worker_counts: 要测试的工作进程数量列表
+
         """
         import multiprocessing as mp
 
@@ -181,13 +181,13 @@ class PerformanceBenchmark:
                     return hashlib.sha256(pk).hexdigest()[:34]
 
             # 启动引擎
-            cast(Any, engine).start(
-                generator_func=generate_keys, address_generator=MockAddressGenerator()
+            cast("Any", engine).start(
+                generator_func=generate_keys, address_generator=MockAddressGenerator(),
             )
 
             # 提交任务并测试
             result = BenchmarkResult(
-                f"Multiprocess_{num_workers}", {"num_workers": num_workers, "batch_size": 10000}
+                f"Multiprocess_{num_workers}", {"num_workers": num_workers, "batch_size": 10000},
             )
             result.start()
 
@@ -214,38 +214,14 @@ class PerformanceBenchmark:
 
         Args:
             sizes: 要测试的元素数量列表
+
         """
         if sizes is None:
             sizes = [100000, 1000000, 10000000]
 
         print("\n" + "=" * 70)
-        print("Bloom Filter去重基准测试")
+        print("Bloom Filter去重基准测试 - 模块已移除，跳过")
         print("=" * 70)
-
-        from src.collision.bloom_deduplication_filter import BloomDeduplicationFilter
-
-        for size in sizes:
-            print(f"\n测试元素数量: {size:,}")
-
-            # 创建过滤器
-            bloom = BloomDeduplicationFilter(max_size=size, false_positive_rate=0.001)
-
-            # 测试添加性能
-            result = BenchmarkResult(f"BloomFilter_Add_{size}", {"max_size": size, "operation": "add"})
-            result.start()
-
-            for _i in range(size):
-                bloom.check_and_add(os.urandom(32))
-
-            result.total_processed = size
-            result.stop()
-
-            print(
-                f"  添加速度: {result.avg_speed:,.0f} items/s, "
-                f"耗时: {cast(float, result.end_time) - cast(float, result.start_time):.3f}s"
-            )
-            print(f"  内存使用: {bloom.bloom.bit_size // 8 / 1024 / 1024:.2f} MB")
-            self.results.append(result)
 
     def benchmark_comparison(self) -> None:
         """对比测试：优化前 vs 优化后"""
@@ -261,7 +237,7 @@ class PerformanceBenchmark:
         # 测试1: 传统方式（循环）
         print(f"\n传统方式（循环）- {batch_size:,}个元素")
         result_traditional = BenchmarkResult(
-            "Traditional_Loop", {"method": "loop", "batch_size": batch_size}
+            "Traditional_Loop", {"method": "loop", "batch_size": batch_size},
         )
         result_traditional.start()
 
@@ -278,7 +254,7 @@ class PerformanceBenchmark:
         # 测试2: SIMD优化（列表推导式）
         print(f"\nSIMD优化（列表推导式）- {batch_size:,}个元素")
         result_simd = BenchmarkResult(
-            "SIMD_ListComp", {"method": "list_comprehension", "batch_size": batch_size}
+            "SIMD_ListComp", {"method": "list_comprehension", "batch_size": batch_size},
         )
         result_simd.start()
 
@@ -331,6 +307,7 @@ class PerformanceBenchmark:
 
         Args:
             filepath: 输出文件路径
+
         """
         results_data = {
             "timestamp": datetime.now().isoformat(),
@@ -338,7 +315,7 @@ class PerformanceBenchmark:
             "results": [r.to_dict() for r in self.results],
         }
 
-        with open(filepath, "w", encoding="utf-8") as f:
+        with pathlib.Path(filepath).open("w", encoding="utf-8") as f:
             json.dump(results_data, f, indent=2, ensure_ascii=False)
 
         print(f"\n测试结果已保存到: {filepath}")

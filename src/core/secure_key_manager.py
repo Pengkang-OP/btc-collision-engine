@@ -39,8 +39,7 @@ class SecureMemoryError(Exception):
 
 
 class SecureKeyManager:
-    """
-    Secure key manager.
+    """Secure key manager.
 
     Provides secure private key storage, usage, and clearing
     functionality, addressing the following Python memory management
@@ -85,8 +84,7 @@ class SecureKeyManager:
     _failed_clears: int = 0
 
     def __init__(self, lock_memory: bool = True) -> None:
-        """
-        Initialize secure key manager.
+        """Initialize secure key manager.
 
         Args:
             lock_memory: Whether to lock memory to prevent swapping
@@ -98,6 +96,7 @@ class SecureKeyManager:
             - Windows without admin: VirtualLock() may fail,
               logged as warning
             - Memory locking requires sufficient privileges
+
         """
         self._key: bytearray | None = None
         self._locked = False
@@ -121,8 +120,7 @@ class SecureKeyManager:
             )
 
     def _try_lock_memory(self) -> bool:
-        """
-        Attempt to lock memory to prevent sensitive data from being
+        """Attempt to lock memory to prevent sensitive data from being
         swapped to disk.
 
         Linux/macOS: uses mlock() system call
@@ -137,6 +135,7 @@ class SecureKeyManager:
             - macOS: requires root
             - Windows: locking memory reduces working set space
             - Failure does not raise exception, but logs warning
+
         """
         if not self._lock_memory_enabled:
             return False
@@ -145,30 +144,28 @@ class SecureKeyManager:
             if os.name == "nt":
                 # Windows platform
                 return self._lock_memory_windows()
-            elif os.name == "posix":
+            if os.name == "posix":
                 # Linux/macOS platform
                 return self._lock_memory_posix()
-            else:
-                logger.warning(
-                    f"Unsupported OS: {os.name}, "
-                    "cannot lock memory"
-                )
-                return False
+            logger.warning(
+                f"Unsupported OS: {os.name}, "
+                "cannot lock memory",
+            )
+            return False
         except Exception as e:
-            logger.error(f"Memory lock failed: {e}")
+            logger.error("Memory lock failed: %s", e)
             logger.error(
                 "Private key may be swapped to disk! "
-                "Recommend running with admin privileges."
+                "Recommend running with admin privileges.",
             )
             if os.name == "posix":
                 logger.error(
-                    "On Linux, run: ulimit -l unlimited"
+                    "On Linux, run: ulimit -l unlimited",
                 )
             return False
 
     def _lock_memory_posix(self) -> bool:
-        """
-        POSIX (Linux/macOS) memory locking implementation.
+        """POSIX (Linux/macOS) memory locking implementation.
 
         Uses mlock() system call to lock memory pages, preventing
         swapping to disk.
@@ -178,7 +175,7 @@ class SecureKeyManager:
             if sys.platform == "darwin":
                 # macOS
                 libc = ctypes.CDLL(
-                    "/usr/lib/libSystem.B.dylib"
+                    "/usr/lib/libSystem.B.dylib",
                 )
             else:
                 # Linux
@@ -204,19 +201,18 @@ class SecureKeyManager:
             self._libc = libc
 
             logger.info(
-                "POSIX memory locking initialized (mlock/munlock)"
+                "POSIX memory locking initialized (mlock/munlock)",
             )
             return True
 
         except (OSError, AttributeError) as e:
             logger.warning(
-                f"Cannot initialize POSIX memory locking: {e}"
+                "Cannot initialize POSIX memory locking: %s", e,
             )
             return False
 
     def _lock_memory_windows(self) -> bool:
-        """
-        Windows platform memory locking implementation.
+        """Windows platform memory locking implementation.
 
         Uses VirtualLock() API to lock memory pages, preventing
         swapping to page file.
@@ -246,24 +242,24 @@ class SecureKeyManager:
 
             logger.info(
                 "Windows memory locking initialized "
-                "(VirtualLock/VirtualUnlock)"
+                "(VirtualLock/VirtualUnlock)",
             )
             return True
 
         except (OSError, AttributeError) as e:
             logger.warning(
-                f"Cannot initialize Windows memory locking: {e}"
+                "Cannot initialize Windows memory locking: %s", e,
             )
             return False
 
     def _lock_key_memory(self) -> bool:
-        """
-        Lock current key's memory pages.
+        """Lock current key's memory pages.
 
         Must be called after key generation.
 
         Returns:
             bool: Whether locking succeeded
+
         """
         if self._key is None or self._cleared:
             return False
@@ -273,34 +269,32 @@ class SecureKeyManager:
 
         try:
             if os.name == "nt" and hasattr(
-                self, "_kernel32"
+                self, "_kernel32",
             ):
                 # Windows: VirtualLock
                 addr = ctypes.addressof(
-                    ctypes.c_char.from_buffer(self._key)
+                    ctypes.c_char.from_buffer(self._key),
                 )
                 size = len(self._key)
                 result = self._kernel32.VirtualLock(
-                    addr, size
+                    addr, size,
                 )
 
                 if result:
                     self._memory_locked = True
                     return True
-                else:
-                    error_code = ctypes.get_last_error()
-                    logger.warning(
-                        f"Windows VirtualLock failed, "
-                        f"error code: {error_code}"
-                    )
-                    return False
+                error_code = ctypes.get_last_error()
+                logger.warning(
+                    "Windows VirtualLock failed, error code: %s", error_code,
+                )
+                return False
 
-            elif os.name == "posix" and hasattr(
-                self, "_libc"
+            if os.name == "posix" and hasattr(
+                self, "_libc",
             ):
                 # Linux/macOS: mlock
                 addr = ctypes.addressof(
-                    ctypes.c_char.from_buffer(self._key)
+                    ctypes.c_char.from_buffer(self._key),
                 )
                 size = len(self._key)
                 result = self._libc.mlock(addr, size)
@@ -308,31 +302,29 @@ class SecureKeyManager:
                 if result == 0:  # mlock returns 0 for success
                     self._memory_locked = True
                     return True
-                else:
-                    import errno
+                import errno
 
-                    logger.warning(
-                        f"POSIX mlock failed, error: "
-                        f"{errno.errorcode.get(ctypes.get_errno(), 'Unknown')}"
-                    )
-                    return False
-            else:
+                logger.warning(
+                    f"POSIX mlock failed, error: "
+                    f"{errno.errorcode.get(ctypes.get_errno(), 'Unknown')}",
+                )
                 return False
+            return False
 
         except Exception as e:
             logger.warning(
-                f"Locking key memory failed: {e}"
+                "Locking key memory failed: %s", e,
             )
             return False
 
     def _unlock_key_memory(self) -> bool:
-        """
-        Unlock current key's memory pages.
+        """Unlock current key's memory pages.
 
         Called before clearing the key.
 
         Returns:
             bool: Whether unlocking succeeded
+
         """
         if not self._memory_locked:
             return False
@@ -342,32 +334,31 @@ class SecureKeyManager:
 
         try:
             if os.name == "nt" and hasattr(
-                self, "_kernel32"
+                self, "_kernel32",
             ):
                 # Windows: VirtualUnlock
                 addr = ctypes.addressof(
-                    ctypes.c_char.from_buffer(self._key)
+                    ctypes.c_char.from_buffer(self._key),
                 )
                 size = len(self._key)
                 result = self._kernel32.VirtualUnlock(
-                    addr, size
+                    addr, size,
                 )
 
                 if result:
                     self._memory_locked = False
                     return True
-                else:
-                    logger.warning(
-                        "Windows VirtualUnlock failed"
-                    )
-                    return False
+                logger.warning(
+                    "Windows VirtualUnlock failed",
+                )
+                return False
 
-            elif os.name == "posix" and hasattr(
-                self, "_libc"
+            if os.name == "posix" and hasattr(
+                self, "_libc",
             ):
                 # Linux/macOS: munlock
                 addr = ctypes.addressof(
-                    ctypes.c_char.from_buffer(self._key)
+                    ctypes.c_char.from_buffer(self._key),
                 )
                 size = len(self._key)
                 result = self._libc.munlock(addr, size)
@@ -375,25 +366,22 @@ class SecureKeyManager:
                 if result == 0:  # munlock returns 0 success
                     self._memory_locked = False
                     return True
-                else:
-                    logger.warning(
-                        "POSIX munlock failed"
-                    )
-                    return False
-            else:
+                logger.warning(
+                    "POSIX munlock failed",
+                )
                 return False
+            return False
 
         except Exception as e:
             logger.warning(
-                f"Unlocking key memory failed: {e}"
+                "Unlocking key memory failed: %s", e,
             )
             return False
 
     def generate_key(
-        self, key_bytes: bytes | None = None
+        self, key_bytes: bytes | None = None,
     ) -> None:
-        """
-        Generate or set private key.
+        """Generate or set private key.
 
         Args:
             key_bytes: Optional private key bytes,
@@ -404,6 +392,7 @@ class SecureKeyManager:
             - Clears existing key if present before generating
             - Auto-attempts memory locking after generation
               (if enabled)
+
         """
         # If key exists, clear it first
         if self._key is not None and not self._cleared:
@@ -412,12 +401,12 @@ class SecureKeyManager:
         # Generate or set key
         if key_bytes is None:
             self._key = bytearray(
-                secrets.token_bytes(32)
+                secrets.token_bytes(32),
             )
         else:
             if len(key_bytes) != 32:
                 raise ValueError(
-                    "Private key must be 32 bytes"
+                    "Private key must be 32 bytes",
                 )
             self._key = bytearray(key_bytes)
 
@@ -429,8 +418,7 @@ class SecureKeyManager:
             self._lock_key_memory()
 
     def get_key(self) -> memoryview:
-        """
-        Get read-only view of private key.
+        """Get read-only view of private key.
 
         Returns:
             Read-only memoryview for safe key access
@@ -440,22 +428,22 @@ class SecureKeyManager:
             - Must call clear() after use
             - Do not store this reference elsewhere
             - For writable copy, use get_key_copy()
+
         """
         if self._key is None:
             raise SecureMemoryError(
-                "Key not generated, call generate_key() first"
+                "Key not generated, call generate_key() first",
             )
 
         if self._cleared:
             raise SecureMemoryError(
-                "Key has been cleared, cannot reuse"
+                "Key has been cleared, cannot reuse",
             )
 
         return memoryview(self._key).toreadonly()
 
     def get_key_copy(self) -> bytearray:
-        """
-        Get private key copy (temporary use).
+        """Get private key copy (temporary use).
 
         Returns:
             bytearray copy of private key, must call
@@ -464,22 +452,22 @@ class SecureKeyManager:
         Warning:
             - Copy does NOT auto-clear, must handle manually
             - Recommend get_key() + clear() for safety
+
         """
         if self._key is None:
             raise SecureMemoryError(
-                "Key not generated, call generate_key() first"
+                "Key not generated, call generate_key() first",
             )
 
         if self._cleared:
             raise SecureMemoryError(
-                "Key has been cleared, cannot reuse"
+                "Key has been cleared, cannot reuse",
             )
 
         return bytearray(self._key)
 
     def clear(self) -> None:
-        """
-        Securely clear private key memory.
+        """Securely clear private key memory.
 
         Clear strategy depends on backend (all based on
         ctypes.memset):
@@ -492,6 +480,7 @@ class SecureKeyManager:
         Note:
             - Unlocks memory before clearing
             - Memory marked swappable after clearing
+
         """
         if self._key is None or self._cleared:
             return
@@ -522,7 +511,7 @@ class SecureKeyManager:
                 SecureKeyManager._total_clears += 1
                 SecureKeyManager._failed_clears += 1
             raise SecureMemoryError(
-                f"Secure clear failed: {e}"
+                f"Secure clear failed: {e}",
             ) from e
 
     def _clear_secure(self) -> None:
@@ -542,22 +531,22 @@ class SecureKeyManager:
         if self._key:
             # Overwrite with random data for defense depth
             random_data = secrets.token_bytes(
-                len(self._key)
+                len(self._key),
             )
             for i in range(len(self._key)):
                 self._key[i] = random_data[i]
             # Use ctypes.memset for final zeroing
             addr = ctypes.addressof(
-                ctypes.c_char.from_buffer(self._key)
+                ctypes.c_char.from_buffer(self._key),
             )
             size = len(self._key)
             ctypes.memset(addr, 0, size)
             if any(self._key):
                 logger.error(
-                    "Secure clear failed, memory not zeroed"
+                    "Secure clear failed, memory not zeroed",
                 )
                 raise SecureMemoryError(
-                    "Clear failed: memory not properly zeroed"
+                    "Clear failed: memory not properly zeroed",
                 )
 
     def _clear_with_retry(self) -> None:
@@ -572,7 +561,7 @@ class SecureKeyManager:
         if self._key:
             # Overwrite with random data first
             random_data = secrets.token_bytes(
-                len(self._key)
+                len(self._key),
             )
             for i in range(len(self._key)):
                 self._key[i] = random_data[i]
@@ -582,8 +571,8 @@ class SecureKeyManager:
                 ctypes.memset(
                     ctypes.addressof(
                         ctypes.c_char.from_buffer(
-                            self._key
-                        )
+                            self._key,
+                        ),
                     ),
                     0,
                     len(self._key),
@@ -603,8 +592,8 @@ class SecureKeyManager:
                 ctypes.memset(
                     ctypes.addressof(
                         ctypes.c_char.from_buffer(
-                            self._key
-                        )
+                            self._key,
+                        ),
                     ),
                     0,
                     len(self._key),
@@ -626,7 +615,6 @@ class SecureKeyManager:
     ) -> None:
         """Context manager exit - auto-clear"""
         self.clear()
-        return None
 
     def __del__(self) -> None:
         """Destructor - ensure clearing"""
@@ -664,8 +652,7 @@ class SecureKeyManager:
 
     @staticmethod
     def get_clear_stats() -> dict:
-        """
-        Get clear statistics.
+        """Get clear statistics.
 
         Returns:
             dict: Dictionary containing clear statistics
@@ -678,6 +665,7 @@ class SecureKeyManager:
             >>> stats = SecureKeyManager.get_clear_stats()
             >>> print(f"Clear success rate: "
             ...       f"{stats['success_rate']:.2f}%")
+
         """
         # L3 fix: use lock for thread-safe stats read
         with SecureKeyManager._stats_lock:
@@ -712,8 +700,7 @@ class SecureKeyManager:
 def secure_key_context(
     key_bytes: bytes | None = None,
 ) -> Any:
-    """
-    Secure key context manager (convenience function).
+    """Secure key context manager (convenience function).
 
     Args:
         key_bytes: Optional private key bytes
@@ -726,6 +713,7 @@ def secure_key_context(
         >>> with secure_key_context() as private_key:
         ...     address = generate_address(private_key)
         >>> # Auto-cleared on exit
+
     """
     key_mgr = SecureKeyManager()
     try:
@@ -736,8 +724,7 @@ def secure_key_context(
 
 
 def generate_secure_key() -> bytearray:
-    """
-    Generate secure private key (single use).
+    """Generate secure private key (single use).
 
     Returns:
         bytearray: Newly generated private key
@@ -746,13 +733,13 @@ def generate_secure_key() -> bytearray:
         - This function does NOT clear the returned key
         - Caller must call secure_clear_bytearray() after use
         - Recommend using secure_key_context() instead
+
     """
     return bytearray(secrets.token_bytes(32))
 
 
 def validate_private_key(private_key: bytes) -> None:
-    """
-    Validate private key format and length.
+    """Validate private key format and length.
 
     Args:
         private_key: Private key bytes to validate
@@ -760,12 +747,13 @@ def validate_private_key(private_key: bytes) -> None:
     Raises:
         TypeError: If private_key is not bytes type
         ValueError: If private_key is not exactly 32 bytes
+
     """
     if not isinstance(private_key, bytes):
         raise TypeError(
-            f"Private key must be bytes type, got {type(private_key).__name__}"
+            f"Private key must be bytes type, got {type(private_key).__name__}",
         )
     if len(private_key) != 32:
         raise ValueError(
-            f"Private key must be exactly 32 bytes, got {len(private_key)} bytes"
+            f"Private key must be exactly 32 bytes, got {len(private_key)} bytes",
         )

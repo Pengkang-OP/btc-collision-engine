@@ -11,7 +11,7 @@ from .range_scan_search import RangeScanSearchMode
 
 __all__ = [
     "BaseSearchMode",
-    "RandomSearchMode",
     "BruteForceSearchMode",
+    "RandomSearchMode",
     "RangeScanSearchMode",
 ]

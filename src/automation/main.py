@@ -1,5 +1,4 @@
-"""
-端到端自动化闭环管理系统 - 主入口
+"""端到端自动化闭环管理系统 - 主入口
 提供命令行接口和API接口
 """
 
@@ -8,12 +7,10 @@ import os
 import sys
 from pathlib import Path
 
-# 添加项目根目录到路径
-_project_root = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(_project_root))
-os.chdir(_project_root)
+_project_root = Path(__file__).resolve().parent.parent.parent
+os.chdir(str(_project_root))
 
-from src.automation import (  # noqa: E402 — 需 sys.path 前置
+from src.automation import (  # noqa: E402
     AuditModule,
     AutoTestModule,
     DataAnalysisModule,
@@ -64,7 +61,7 @@ def run_tests_only(args):
     if args.output:
         import json
 
-        with open(args.output, "w") as f:
+        with Path(args.output).open("w") as f:
             json.dump(
                 {
                     "suite_id": results.suite_id,
@@ -164,7 +161,7 @@ def main():
         print("\n\n用户中断执行")
         sys.exit(130)
     except Exception as e:
-        print(f"\n执行错误: {str(e)}")
+        print(f"\n执行错误: {e!s}")
         if args.verbose:
             import traceback
 

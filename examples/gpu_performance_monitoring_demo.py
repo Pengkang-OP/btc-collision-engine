@@ -198,13 +198,12 @@ def example_4_comparison_cpu_vs_gpu():
         return
 
     from src.collision.key_collision_engine import KeyCollisionEngine
-    from src.monitoring.optimization_monitor import get_performance_monitor
 
     targets = {'1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'}
 
     # 测试CPU性能
     print("\n🔵 测试CPU引擎(5秒)...")
-    cpu_monitor = get_performance_monitor()
+    cpu_monitor = None
     cpu_monitor.start()
 
     cpu_engine = KeyCollisionEngine(

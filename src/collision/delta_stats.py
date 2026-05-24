@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Delta statistics tracking for collision detection progress.
+"""Delta statistics tracking for collision detection progress.
 """
 
 import threading
@@ -15,13 +14,13 @@ class DeltaStats:
     """
 
     def __init__(
-        self, window_seconds: int = 60
+        self, window_seconds: int = 60,
     ):
-        """
-        Initialize delta stats tracker.
+        """Initialize delta stats tracker.
 
         Args:
             window_seconds: Statistics window in seconds
+
         """
         self._window = window_seconds
         self._lock = threading.Lock()
@@ -31,7 +30,7 @@ class DeltaStats:
         self._delta_history: list[float] = []
 
     def update(
-        self, total_keys: int
+        self, total_keys: int,
     ) -> dict:
         """Update stats and compute delta.
 
@@ -40,6 +39,7 @@ class DeltaStats:
 
         Returns:
             Delta statistics dictionary
+
         """
         with self._lock:
             now = time.time()

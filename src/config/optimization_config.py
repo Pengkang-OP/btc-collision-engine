@@ -1,6 +1,6 @@
 """Optimization-specific configuration models."""
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 def is_feature_enabled(feature: str) -> bool:
@@ -17,6 +17,7 @@ def is_feature_enabled(feature: str) -> bool:
 @dataclass
 class OptimizationConfig:
     """Configuration for performance optimization."""
+
     enabled: bool = True
     batch_size: int = 100000
     precompute_tables: bool = True

@@ -12,6 +12,7 @@
     >>> print(f"P2PKH: {len(targets_by_format['p2pkh'])}")
 """
 
+import pathlib
 import threading
 
 from ...core.multi_format_generator import AddressFormat, MultiFormatAddressGenerator
@@ -21,8 +22,7 @@ logger = get_configured_logger("FormatAwareTargetManager")
 
 
 class FormatAwareTargetManager:
-    """
-    格式感知的目标地址管理器
+    """格式感知的目标地址管理器
 
     自动检测目标地址格式，支持多格式目标混合匹配。
     为碰撞引擎提供智能的格式感知地址生成和匹配接口。
@@ -54,8 +54,7 @@ class FormatAwareTargetManager:
         logger.info("FormatAwareTargetManager初始化完成")
 
     def add_target(self, address: str) -> bool:
-        """
-        添加单个目标地址，自动检测格式
+        """添加单个目标地址，自动检测格式
 
         参数:
             address: 比特币地址
@@ -74,7 +73,7 @@ class FormatAwareTargetManager:
                     if normalized not in self._targets_by_format[format_type]:
                         self._targets_by_format[format_type].add(normalized)
                         logger.debug(
-                            f"补充分类目标地址: {address[:6]}... (格式: {format_type.value})"
+                            f"补充分类目标地址: {address[:6]}... (格式: {format_type.value})",
                         )
                     return False
 
@@ -89,8 +88,7 @@ class FormatAwareTargetManager:
                 return False
 
     def add_targets(self, addresses: list[str]) -> int:
-        """
-        批量添加目标地址
+        """批量添加目标地址
 
         参数:
             addresses: 地址列表
@@ -107,8 +105,7 @@ class FormatAwareTargetManager:
         return count
 
     def load_from_file(self, filepath: str) -> int:
-        """
-        从文件加载目标地址
+        """从文件加载目标地址
 
         参数:
             filepath: 文件路径
@@ -118,7 +115,7 @@ class FormatAwareTargetManager:
         """
         with self._lock:
             try:
-                with open(filepath, encoding="utf-8") as f:
+                with pathlib.Path(filepath).open(encoding="utf-8") as f:
                     addresses = [
                         line.strip() for line in f if line.strip() and not line.startswith("#")
                     ]
@@ -128,12 +125,11 @@ class FormatAwareTargetManager:
                 return count
 
             except (OSError, ValueError, UnicodeDecodeError) as e:
-                logger.error(f"从文件加载目标失败: {filepath} - {e}")
+                logger.error("从文件加载目标失败: %s - %s", filepath, e)
                 return 0
 
     def get_targets_by_format(self) -> dict[AddressFormat, set[str]]:
-        """
-        获取按格式分组的目标地址
+        """获取按格式分组的目标地址
 
         返回:
             格式到地址集合的映射
@@ -142,8 +138,7 @@ class FormatAwareTargetManager:
             return {fmt: targets.copy() for fmt, targets in self._targets_by_format.items()}
 
     def get_all_targets(self) -> set[str]:
-        """
-        获取所有目标地址
+        """获取所有目标地址
 
         返回:
             所有目标地址集合
@@ -152,8 +147,7 @@ class FormatAwareTargetManager:
             return self._all_targets.copy()
 
     def get_format_stats(self) -> dict[str, int]:
-        """
-        获取格式统计信息
+        """获取格式统计信息
 
         返回:
             各格式目标数量统计
@@ -162,8 +156,7 @@ class FormatAwareTargetManager:
             return {fmt.value: len(targets) for fmt, targets in self._targets_by_format.items()}
 
     def has_targets(self, format_type: AddressFormat | None = None) -> bool:
-        """
-        检查是否存在目标地址
+        """检查是否存在目标地址
 
         参数:
             format_type: 指定格式，为None则检查所有格式
@@ -177,8 +170,7 @@ class FormatAwareTargetManager:
             return len(self._targets_by_format.get(format_type, set())) > 0
 
     def get_target_count(self, format_type: AddressFormat | None = None) -> int:
-        """
-        获取目标地址数量
+        """获取目标地址数量
 
         参数:
             format_type: 指定格式，为None则返回总数
@@ -192,8 +184,7 @@ class FormatAwareTargetManager:
             return len(self._targets_by_format.get(format_type, set()))
 
     def check_match(self, private_key: bytes) -> tuple[bool, str | None, str | None]:
-        """
-        检查私钥是否匹配任何目标
+        """检查私钥是否匹配任何目标
         【说明】返回第一个匹配，如需所有匹配请用 check_match_all
 
         参数:
@@ -205,8 +196,7 @@ class FormatAwareTargetManager:
         return self._generator.match_address(private_key, self._targets_by_format)
 
     def check_match_all(self, private_key: bytes) -> tuple[bool, list[tuple[str, str]]]:
-        """
-        检查私钥是否匹配所有目标格式的地址
+        """检查私钥是否匹配所有目标格式的地址
         【完整检查】遍历所有目标格式，返回所有匹配的地址
 
         参数:
@@ -228,8 +218,7 @@ class FormatAwareTargetManager:
             logger.info("所有目标已清空")
 
     def get_supported_formats(self) -> list[str]:
-        """
-        获取支持的目标格式列表
+        """获取支持的目标格式列表
 
         返回:
             包含目标的格式列表
@@ -240,8 +229,7 @@ class FormatAwareTargetManager:
             ]
 
     def get_max_batch_size(self) -> int:
-        """
-        获取最大批量大小（基于格式数量）
+        """获取最大批量大小（基于格式数量）
 
         返回:
             批量大小

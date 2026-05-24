@@ -24,7 +24,7 @@ class TestDataMonitor(unittest.TestCase):
                 "throughput_threshold": 0.5,
                 "error_rate_threshold": 0.1,
                 "stale_data_timeout": 2.0,
-            }
+            },
         )
 
     def tearDown(self):
@@ -229,7 +229,7 @@ class TestDataMonitor(unittest.TestCase):
         issue_low = DataQualityIssue(issue_type="test", severity="low", message="低级别", device_idx=0)
 
         issue_critical = DataQualityIssue(
-            issue_type="test", severity="critical", message="严重级别", device_idx=0
+            issue_type="test", severity="critical", message="严重级别", device_idx=0,
         )
 
         self.monitor._record_issue(issue_low)

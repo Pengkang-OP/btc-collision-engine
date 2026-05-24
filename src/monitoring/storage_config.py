@@ -1,5 +1,6 @@
 """Monitoring storage configuration."""
 
+import pathlib
 from dataclasses import dataclass
 
 
@@ -27,16 +28,17 @@ class DataStorageConfig:
 
         Returns:
             Path to the storage directory
+
         """
-        import os
         dir_path = storage_dir or "data_logs"
-        os.makedirs(dir_path, exist_ok=True)
+        pathlib.Path(dir_path).mkdir(exist_ok=True, parents=True)
         return dir_path
 
 
 @dataclass
 class StorageConfig:
     """Configuration for monitoring data storage."""
+
     enabled: bool = True
     max_size_mb: int = 100
     retention_days: int = 7

@@ -1,7 +1,8 @@
 """Log throttling utility.
 
 Provides unified error log frequency control to prevent log
-flooding."""
+flooding.
+"""
 
 import logging
 import time
@@ -14,13 +15,13 @@ class LogThrottle:
     """Throttles repeated log messages."""
 
     def __init__(
-        self, interval: float = 5.0
+        self, interval: float = 5.0,
     ):
         self._interval = interval
         self._last_log: dict[str, float] = {}
 
     def should_log(
-        self, key: str
+        self, key: str,
     ) -> bool:
         """Check if a message should be logged.
 
@@ -29,6 +30,7 @@ class LogThrottle:
 
         Returns:
             True if message should be logged
+
         """
         now = time.time()
         last = self._last_log.get(key, 0)
@@ -49,6 +51,7 @@ class LogThrottle:
             key: Unique message key
             log_fn: Log function (e.g. logger.warning)
             message: Message to log
+
         """
         if self.should_log(key):
             log_fn(message)

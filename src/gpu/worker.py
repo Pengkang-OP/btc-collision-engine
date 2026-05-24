@@ -58,6 +58,31 @@ class SingleGPUWorker(threading.Thread):
         worker.join()  # 等待线程结束
     """
 
+    __slots__ = (
+        # === 核心参数 ===
+        "device_idx",
+        "key_range",
+        "targets",
+        "config",
+        "result_callback",
+        "data_monitor",
+        "mode",
+        "range_start",
+        "range_end",
+        # === 线程控制 ===
+        "_stop_event",
+        "_pause_event",
+        "_lock",
+        # === 结果队列 ===
+        "_result_queue",
+        # === 统计 ===
+        "_stats",
+        "_delta_stats",
+        "_last_reported_match_count",
+        # === GPU 引擎 ===
+        "_gpu_engine",
+    )
+
     def __init__(
         self,
         device_idx: int,
@@ -82,6 +107,7 @@ class SingleGPUWorker(threading.Thread):
             mode: 碰撞模式 ('random' | 'range' | 'brute_force')
             range_start: range/brute_force 模式的起始私钥（十进制整数）
             range_end: range 模式的结束私钥（十进制整数）
+
         """
         super().__init__(daemon=True)
 
@@ -127,7 +153,7 @@ class SingleGPUWorker(threading.Thread):
         self._delta_stats: Any | None = None
         if _delta_stats_available:
             self._delta_stats = ThreadLocalDeltaStats()
-            logger.debug(f"GPU {device_idx}: 增量统计器已启用")
+            logger.debug("GPU %s: 增量统计器已启用", device_idx)
 
         # GPU引擎实例
         self._gpu_engine: GPUCollisionEngine | None = None
@@ -201,7 +227,7 @@ class SingleGPUWorker(threading.Thread):
             self._gpu_engine = GPUCollisionEngine(
                 targets=self.targets,
                 device_index=self.device_idx,
-                batch_size=cast(int | None, batch_size),
+                batch_size=cast("int | None", batch_size),
                 use_gpu_memory_pool=True,
             )
 
@@ -254,16 +280,16 @@ class SingleGPUWorker(threading.Thread):
 
         最多递归重试 3 次，防止 batch_size 已降至下限后仍 MemoryError 导致无限递归。
         """
-        MAX_MEMORY_RETRIES = 3
-        if _depth >= MAX_MEMORY_RETRIES:
-            logger.error(f"GPU {self.device_idx} 降批重试已达上限 ({MAX_MEMORY_RETRIES})，放弃")
+        max_memory_retries = 3
+        if _depth >= max_memory_retries:
+            logger.error(f"GPU {self.device_idx} 降批重试已达上限 ({max_memory_retries})，放弃")
             return
 
         current_batch = self.config.batch_size or 65536
         new_batch = max(current_batch // 2, 1024)
         logger.warning(
             f"GPU {self.device_idx} 内存不足（MemoryError），"
-            f"自动减小 batch_size: {current_batch:,} → {new_batch:,}"
+            f"自动减小 batch_size: {current_batch:,} → {new_batch:,}",
         )
         self.config.batch_size = new_batch
         with self._lock:
@@ -307,13 +333,13 @@ class SingleGPUWorker(threading.Thread):
                 engine_kwargs["end"] = self.range_end
 
             monitor_thread = threading.Thread(
-                target=lambda: self._run_monitor_loop(total_keys), daemon=True
+                target=lambda: self._run_monitor_loop(total_keys), daemon=True,
             )
             monitor_thread.start()
 
             self._gpu_engine.start(mode=self.mode, **engine_kwargs)
             logger.info(
-                f"GPU {self.device_idx} 引擎已启动: mode={self.mode}, kwargs={engine_kwargs or '无'}"
+                f"GPU {self.device_idx} 引擎已启动: mode={self.mode}, kwargs={engine_kwargs or '无'}",
             )
 
             monitor_thread.join(timeout=5.0)
@@ -365,7 +391,7 @@ class SingleGPUWorker(threading.Thread):
                 try:
                     self.result_callback(self.device_idx, match_dict)
                 except Exception as e:
-                    logger.error(f"结果回调异常: {e}")
+                    logger.error("结果回调异常: %s", e)
 
         self._last_reported_match_count = current_count
 
@@ -402,7 +428,7 @@ class SingleGPUWorker(threading.Thread):
                 self._report_new_matches(engine_stats.matches, len(engine_stats.matches))
 
         except AttributeError as e:
-            logger.debug(f"统计信息属性访问失败: {e}")
+            logger.debug("统计信息属性访问失败: %s", e)
             if self.data_monitor:
                 self.data_monitor.report_error(
                     device_idx=self.device_idx,
@@ -422,7 +448,7 @@ class SingleGPUWorker(threading.Thread):
             # 报告错误给监控器
             if self.data_monitor:
                 self.data_monitor.report_error(
-                    device_idx=self.device_idx, error_msg=str(e), error_type="stats_update_error"
+                    device_idx=self.device_idx, error_msg=str(e), error_type="stats_update_error",
                 )
 
     # 根据配置条件应用性能监控装饰器
@@ -466,6 +492,7 @@ class SingleGPUWorker(threading.Thread):
 
         Returns:
             统计信息字典
+
         """
         with self._lock:
             return self._stats.copy()
@@ -478,6 +505,7 @@ class SingleGPUWorker(threading.Thread):
 
         Returns:
             匹配结果列表
+
         """
         results = []
         with suppress(Empty):
@@ -492,15 +520,17 @@ class SingleGPUWorker(threading.Thread):
 
         Returns:
             True表示正在运行
+
         """
         with self._lock:
-            return cast(bool, self._stats["status"] == "running")
+            return cast("bool", self._stats["status"] == "running")
 
     def is_alive(self) -> bool:
         """检查线程是否存活
 
         Returns:
             True表示线程存活
+
         """
         return threading.Thread.is_alive(self)
 
@@ -509,6 +539,7 @@ class SingleGPUWorker(threading.Thread):
 
         Returns:
             GPU设备索引
+
         """
         return self.device_idx
 
@@ -517,6 +548,7 @@ class SingleGPUWorker(threading.Thread):
 
         Returns:
             (start, end) 范围
+
         """
         return self.key_range
 

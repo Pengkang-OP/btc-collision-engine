@@ -3,8 +3,8 @@
 import io
 import json
 import os
-import sys
 import platform
+import sys
 from typing import Any, Optional
 
 try:
@@ -18,6 +18,7 @@ except ImportError:
     Table = None
     Text = None
 
+
 def _get_utf8_console(stderr: bool = False, no_color: bool = False):
     """获取 UTF-8 兼容的 Console 实例。
     """
@@ -27,9 +28,8 @@ def _get_utf8_console(stderr: bool = False, no_color: bool = False):
             if stderr:
                 if hasattr(sys.stderr, "reconfigure"):
                     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
-            else:
-                if hasattr(sys.stdout, "reconfigure"):
-                    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+            elif hasattr(sys.stdout, "reconfigure"):
+                sys.stdout.reconfigure(encoding="utf-8", errors="replace")
         except (OSError, AttributeError, io.UnsupportedOperation):
             pass  # 静默失败
     # 检查 NO_COLOR 环境变量
@@ -37,18 +37,20 @@ def _get_utf8_console(stderr: bool = False, no_color: bool = False):
     actual_no_color = no_color or env_no_color
     console_kwargs = {
         "no_color": actual_no_color,
-        "stderr": stderr
+        "stderr": stderr,
     }
     if Console is not None:
         return Console(**console_kwargs)
     # 如果没有安装 rich，返回简单的对象
+
     class SimpleConsole:
         def __init__(self, **kwargs):
             self.no_color = kwargs.get("no_color", False)
             self.stderr = kwargs.get("stderr", False)
+
         def print(self, *args, **kwargs):
-            out = sys.stderr if self.stderr else sys.stdout
             print(*args, **kwargs)
+
         def rule(self, title="", **kwargs):
             out = sys.stderr if self.stderr else sys.stdout
             print(title, file=out)
@@ -58,7 +60,7 @@ def _get_utf8_console(stderr: bool = False, no_color: bool = False):
 class CLIOutput:
     """CLI 输出管理器单例类。"""
 
-    _instance: Optional['CLIOutput'] = None
+    _instance: Optional["CLIOutput"] = None
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
@@ -66,17 +68,19 @@ class CLIOutput:
         return cls._instance
 
     @classmethod
-    def get_instance(cls) -> 'CLIOutput':
+    def get_instance(cls) -> "CLIOutput":
         """获取单例实例。"""
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
 
     @classmethod
-    def init(cls, quiet: bool = False, no_color: bool = False, compact: bool = False) -> 'CLIOutput':
-        """初始化/重置单例。"""
-        cls._instance = cls(quiet=quiet, no_color=no_color, compact=compact)
-        return cls._instance
+    def init(cls, quiet: bool = False, no_color: bool = False, compact: bool = False) -> "CLIOutput":
+        """初始化/重置单例（绕过 `__new__` 的单例限制，确保创建全新实例）。"""
+        instance = object.__new__(cls)
+        instance.__init__(quiet=quiet, no_color=no_color, compact=compact)
+        cls._instance = instance
+        return instance
 
     @classmethod
     def reset_instance(cls):
@@ -248,6 +252,7 @@ def format_results(results: list[dict]) -> str:
 
     Returns:
         Formatted output string
+
     """
     if not results:
         return "No matches found."
@@ -255,7 +260,7 @@ def format_results(results: list[dict]) -> str:
     lines = ["=== Collision Results ==="]
     for i, r in enumerate(results, 1):
         lines.append(
-            f"{i}. Address: {r.get('address', 'N/A')}"
+            f"{i}. Address: {r.get('address', 'N/A')}",
         )
     return "\n".join(lines)
 
@@ -268,5 +273,6 @@ def format_json(data) -> str:
 
     Returns:
         Pretty JSON string
+
     """
     return json.dumps(data, indent=2, default=str)

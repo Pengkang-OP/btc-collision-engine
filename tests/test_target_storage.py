@@ -10,6 +10,7 @@
 """
 
 import os
+import pathlib
 import tempfile
 
 import pytest
@@ -133,7 +134,7 @@ class TestAddressStorageJson:
         storage_path = os.path.join(temp_dir, "targets.json")
         storage = AddressStorage(storage_type="json", path=storage_path)  # noqa: F841
         # 应创建目录
-        assert os.path.exists(os.path.dirname(storage_path) or ".")
+        assert pathlib.Path(os.path.dirname(storage_path) or ".").exists()
 
     def test_save_and_load_json(self, temp_dir, sample_addresses):
         from src.collision.targets.storage import AddressStorage
@@ -142,7 +143,7 @@ class TestAddressStorageJson:
         storage = AddressStorage(storage_type="json", path=storage_path)
         success = storage.save_targets(sample_addresses)
         assert success is True
-        assert os.path.exists(storage_path)
+        assert pathlib.Path(storage_path).exists()
 
         targets, metadata = storage.load_targets()
         assert targets == sample_addresses
@@ -177,7 +178,7 @@ class TestAddressStorageSqlite:
 
         storage_path = os.path.join(temp_dir, "targets.db")
         storage = AddressStorage(storage_type="sqlite", path=storage_path)  # noqa: F841
-        assert os.path.exists(os.path.dirname(storage_path) or ".")
+        assert pathlib.Path(os.path.dirname(storage_path) or ".").exists()
 
     def test_save_and_load_sqlite(self, temp_dir, sample_addresses):
         from src.collision.targets.storage import AddressStorage
@@ -225,7 +226,7 @@ class TestAddressStorageCsv:
         storage = AddressStorage(storage_type="json", path=storage_path)
         success = storage.export_csv(sample_addresses, export_path)
         assert success is True
-        assert os.path.exists(export_path)
+        assert pathlib.Path(export_path).exists()
 
 
 @pytest.mark.unit

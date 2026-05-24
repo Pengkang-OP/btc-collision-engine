@@ -27,6 +27,7 @@ class HashUtils:
 
         Returns:
             32-byte hash result
+
         """
         return hashlib.sha256(data).digest()
 
@@ -41,9 +42,10 @@ class HashUtils:
 
         Returns:
             32-byte hash result
+
         """
         return hashlib.sha256(
-            hashlib.sha256(data).digest()
+            hashlib.sha256(data).digest(),
         ).digest()
 
     @staticmethod
@@ -55,6 +57,7 @@ class HashUtils:
 
         Returns:
             20-byte hash result
+
         """
         return hashlib.new("ripemd160", data).digest()
 
@@ -75,15 +78,16 @@ class HashUtils:
         Raises:
             TypeError: If data is not bytes type
             ValueError: If data is empty
+
         """
         if not isinstance(data, bytes):
             raise TypeError(
-                f"Input data must be bytes type, got {type(data).__name__}"
+                f"Input data must be bytes type, got {type(data).__name__}",
             )
         if len(data) == 0:
             raise ValueError("Input data cannot be empty")
         return HashUtils.ripemd160(
-            HashUtils.sha256(data)
+            HashUtils.sha256(data),
         )
 
     @staticmethod
@@ -98,5 +102,6 @@ class HashUtils:
 
         Returns:
             8-character hex fingerprint
+
         """
         return HashUtils.hash160(key).hex()[:8]

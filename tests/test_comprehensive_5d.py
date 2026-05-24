@@ -12,18 +12,14 @@
 """
 
 import hashlib
-import sys
 import threading
 import time
 
 import pytest
 
-# 添加项目路径
-sys.path.insert(0, ".")
-
-from src.collision.collision_stats import CollisionStats  # noqa: E402
-from src.collision.event_bus import EventBus  # noqa: E402
-from src.collision.events import (  # noqa: E402
+from src.collision.collision_stats import CollisionStats
+from src.collision.event_bus import EventBus
+from src.collision.events import (
     CollisionEvent,
     EngineCompleteEvent,
     EngineErrorEvent,
@@ -188,8 +184,8 @@ class TestMultiModeExceptionFlow:
         # 验证超时机制存在
         from src.collision.base_engine import BaseCollisionEngine
 
-        assert hasattr(BaseCollisionEngine, '_invoke_match_callback_windows')
-        assert hasattr(BaseCollisionEngine, '_match_callback_timeout')
+        assert hasattr(BaseCollisionEngine, "_invoke_match_callback_windows")
+        assert hasattr(BaseCollisionEngine, "_match_callback_timeout")
 
 
 # ============================================================================

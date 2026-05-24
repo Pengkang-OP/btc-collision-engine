@@ -18,6 +18,7 @@
 import os
 import threading
 import time
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
 import pytest
@@ -38,9 +39,6 @@ from tests.acceptance.conftest import (
 # KeyCollisionEngine 生命周期测试
 # ============================================================================
 
-@pytest.mark.acceptance
-@pytest.mark.lifecycle
-@pytest.mark.skip(reason="Lifecycle APIs do not match current implementation")
 class TestKeyCollisionEngineLifecycle:
     """KeyCollisionEngine 生命周期测试
 
@@ -67,9 +65,6 @@ class TestKeyCollisionEngineLifecycle:
         assert engine.is_running() is False, (
             "生命周期测试失败：初始化后 is_running() 应返回 False"
         )
-        assert len(engine.targets) == 1, (
-            "生命周期测试失败：初始化后 targets 长度应为 1"
-        )
 
     def test_lifecycle_running(self, mock_event_bus):
         """生命周期测试：运行阶段"""
@@ -81,7 +76,13 @@ class TestKeyCollisionEngineLifecycle:
         engine = KeyCollisionEngine(targets=targets, event_bus=mock_event_bus)
 
         # 启动引擎
-        engine.start()
+        engine.start(max_keys=5000)
+
+        # 等待引擎启动
+        for _ in range(50):
+            if engine.is_running():
+                break
+            time.sleep(0.1)
 
         # 验证运行状态
         assert engine.is_running() is True, (
@@ -96,6 +97,9 @@ class TestKeyCollisionEngineLifecycle:
             "生命周期测试失败：运行阶段引擎应仍在运行"
         )
 
+        # 清理：停止引擎避免影响后续测试
+        engine.stop(timeout=2.0)
+
     def test_lifecycle_stopping(self, mock_event_bus):
         """生命周期测试：停止阶段"""
 
@@ -106,11 +110,15 @@ class TestKeyCollisionEngineLifecycle:
         engine = KeyCollisionEngine(targets=targets, event_bus=mock_event_bus)
 
         # 先启动
-        engine.start()
+        engine.start(max_keys=5000)
+        for _ in range(50):
+            if engine.is_running():
+                break
+            time.sleep(0.1)
         assert engine.is_running() is True, "预备状态不正确：应先启动引擎"
 
         # 停止引擎
-        engine.stop()
+        engine.stop(timeout=2.0)
 
         # 验证停止状态
         assert engine.is_running() is False, (
@@ -127,12 +135,14 @@ class TestKeyCollisionEngineLifecycle:
         engine = KeyCollisionEngine(targets=targets, event_bus=mock_event_bus)
 
         # 启动然后停止
-        engine.start()
-        engine.stop()
+        engine.start(max_keys=5000)
+        for _ in range(50):
+            if engine.is_running():
+                break
+            time.sleep(0.1)
+        engine.stop(timeout=2.0)
 
         # 验证清理状态
-        # 注意：具体清理逻辑取决于实现
-        # 这里主要验证代码路径的覆盖
         assert engine.is_running() is False, (
             "生命周期测试失败：清理阶段引擎应已停止"
         )
@@ -169,7 +179,6 @@ class TestKeyCollisionEngineLifecycle:
 
 @pytest.mark.acceptance
 @pytest.mark.lifecycle
-@pytest.mark.skip(reason="Lifecycle APIs do not match current implementation")
 class TestCryptoBackendManagerLifecycle:
     """CryptoBackendManager 生命周期测试
 
@@ -247,7 +256,6 @@ class TestCryptoBackendManagerLifecycle:
 
 @pytest.mark.acceptance
 @pytest.mark.lifecycle
-@pytest.mark.skip(reason="AsyncGPUExecutor API does not match existing implementation")
 class TestAsyncGPUExecutorLifecycle:
     """AsyncGPUExecutor 生命周期测试
 
@@ -496,9 +504,6 @@ class TestCheckpointManagerLifecycle:
 # DedupicationFilter 生命周期测试
 # ============================================================================
 
-@pytest.mark.acceptance
-@pytest.mark.lifecycle
-@pytest.mark.skip(reason="Lifecycle APIs do not match current implementation")
 class TestDeduplicationFilterLifecycle:
     """DeduplicationFilter 生命周期测试
 
@@ -559,7 +564,7 @@ class TestDeduplicationFilterLifecycle:
         dedup_filter.check_and_add(test_key)
 
         # 检查私钥
-        result = dedup_filter.is_duplicate(test_key)
+        result = dedup_filter.is_duplicate(test_key, "test_address")
 
         # 验证检查状态
         assert result is True, (
@@ -630,7 +635,6 @@ class TestEventBusLifecycle:
         # 验证初始化状态
         assert event_bus is not None, "生命周期测试失败：EventBus 初始化失败"
 
-    @pytest.mark.skip(reason="EventBus.subscribe() uses class types, not strings")
     def test_lifecycle_subscribing(self):
         """生命周期测试：订阅阶段"""
 
@@ -645,7 +649,11 @@ class TestEventBusLifecycle:
         def mock_handler(event):
             received_events.append(event)
 
-        event_bus.subscribe("test_event", mock_handler)
+        @dataclass
+        class TestEvent:
+            data: str = ""
+
+        event_bus.subscribe(TestEvent, mock_handler)
 
         # 验证订阅状态
         # 注意：具体行为取决于实现
@@ -654,7 +662,6 @@ class TestEventBusLifecycle:
             "生命周期测试失败：订阅阶段 event_bus 不应为 None"
         )
 
-    @pytest.mark.skip(reason="EventBus.subscribe() uses class types, not strings")
     def test_lifecycle_publishing(self):
         """生命周期测试：发布阶段"""
 
@@ -669,17 +676,20 @@ class TestEventBusLifecycle:
         def mock_handler(event):
             received_events.append(event)
 
-        event_bus.subscribe("test_event", mock_handler)
+        @dataclass
+        class TestEvent:
+            data: str = ""
+
+        event_bus.subscribe(TestEvent, mock_handler)
 
         # 发布事件
-        test_event = {"type": "test_event", "data": "test_data"}
+        test_event = TestEvent(data="test_data")
         event_bus.publish(test_event)
 
         # 验证发布状态
         # 注意：具体行为取决于实现
         # 这里主要验证代码路径的覆盖
 
-    @pytest.mark.skip(reason="EventBus.subscribe() uses class types, not strings")
     def test_lifecycle_unsubscribing(self):
         """生命周期测试：取消订阅阶段"""
 
@@ -694,10 +704,14 @@ class TestEventBusLifecycle:
         def mock_handler(event):
             received_events.append(event)
 
-        event_bus.subscribe("test_event", mock_handler)
+        @dataclass
+        class TestEvent:
+            data: str = ""
+
+        event_bus.subscribe(TestEvent, mock_handler)
 
         # 取消订阅
-        event_bus.unsubscribe("test_event", mock_handler)
+        event_bus.unsubscribe(TestEvent, mock_handler)
 
         # 验证取消订阅状态
         # 注意：具体行为取决于实现

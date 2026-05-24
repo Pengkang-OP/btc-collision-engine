@@ -16,9 +16,9 @@ class WizardStep(ABC):
 
         Returns:
             True if step should advance
+
         """
 
 
-class WizardPage(ABC):
+class WizardPage(ABC):  # noqa: B024
     """Abstract wizard page."""
-    pass

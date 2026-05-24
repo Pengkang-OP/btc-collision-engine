@@ -1,5 +1,4 @@
-"""
-GPU异常恢复管理器
+"""GPU异常恢复管理器
 
 提供GPU失败时的优雅降级、自动恢复和负载重分配功能。
 解决P1-2问题：GPU碰撞引擎异常恢复机制不完善。
@@ -12,7 +11,7 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import Any, Optional, cast
 
 from ..utils import get_configured_logger
 
@@ -49,6 +48,7 @@ class GPUFailureRecord:
         failure_type: 故障类型枚举（CRASH/TIMEOUT/MEMORY/PERFORMANCE_DEGRADATION等）
         error_message: 故障详细描述或异常消息
         timestamp: 故障发生时间戳（Unix时间，默认field(default_factory=time.time)）
+
     """
 
     gpu_id: int
@@ -81,6 +81,18 @@ class GPURecoveryManager:
         )
     """
 
+    __slots__ = (
+        "max_retry_count", "retry_delay_seconds", "batch_size_reduction_factor",
+        "auto_redistribute", "max_failed_gpus_before_fallback",
+        "_max_failure_history_per_gpu",
+        "_failed_gpus", "_failed_gpus_lock",
+        "_fallback_lock", "_fallback_to_cpu", "_fallback_callback", "_recovery_callback",
+        "_failure_history", "_history_lock",
+        "_recovery_callbacks",
+        "_total_failures", "_successful_recoveries", "_failed_recoveries", "_stats_lock",
+        "health_check_timeout", "_health_check_executor",
+    )
+
     def __init__(
         self,
         max_retry_count: int = 3,
@@ -97,6 +109,7 @@ class GPURecoveryManager:
             batch_size_reduction_factor: 批次缩减因子
             auto_redistribute: 是否自动重新分配负载
             max_failed_gpus_before_fallback: GPU失败数量超过此值时降级到CPU模式
+
         """
         self.max_retry_count = max_retry_count
         self.retry_delay_seconds = retry_delay_seconds
@@ -157,6 +170,7 @@ class GPURecoveryManager:
 
         Returns:
             True表示已处理，False表示需要外部干预
+
         """
         logger.error(f"GPU {gpu_id} 失败: {type(error).__name__}: {error}")
 
@@ -165,7 +179,7 @@ class GPURecoveryManager:
 
         # 2. 记录失败
         failure_record = GPUFailureRecord(
-            gpu_id=gpu_id, failure_type=failure_type, error_message=str(error)
+            gpu_id=gpu_id, failure_type=failure_type, error_message=str(error),
         )
         self._record_failure(gpu_id, failure_record)
 
@@ -180,7 +194,7 @@ class GPURecoveryManager:
         failure_record.recovery_successful = recovery_success
 
         if recovery_success:
-            logger.info(f"GPU {gpu_id} 恢复成功")
+            logger.info("GPU %s 恢复成功", gpu_id)
             # H2修复: 添加线程保护
             with self._stats_lock:
                 self._successful_recoveries += 1
@@ -189,7 +203,7 @@ class GPURecoveryManager:
             with self._failed_gpus_lock:
                 self._failed_gpus.discard(gpu_id)
         else:
-            logger.warning(f"GPU {gpu_id} 恢复失败")
+            logger.warning("GPU %s 恢复失败", gpu_id)
             # H2修复: 添加线程保护
             with self._stats_lock:
                 self._failed_recoveries += 1
@@ -204,17 +218,17 @@ class GPURecoveryManager:
             # 5. 重新分配负载
             if self.auto_redistribute and redistribute_callback:
                 try:
-                    logger.info(f"GPU {gpu_id} 正在重新分配负载...")
+                    logger.info("GPU %s 正在重新分配负载...", gpu_id)
                     redistribute_callback(gpu_id)
                 except Exception as e:
-                    logger.error(f"负载重分配失败: {e}")
+                    logger.error("负载重分配失败: %s", e)
 
             # 6. 触发告警
             if alert_callback:
                 try:
                     alert_callback(gpu_id, failure_type, error)
                 except Exception as e:
-                    logger.error(f"告警通知失败: {e}")
+                    logger.error("告警通知失败: %s", e)
 
         return True
 
@@ -226,6 +240,7 @@ class GPURecoveryManager:
 
         Returns:
             失败类型
+
         """
         error_msg = str(error).lower()
 
@@ -273,6 +288,7 @@ class GPURecoveryManager:
 
         Args:
             callback: 回调函数，签名为 callback(reason: str)
+
         """
         with self._fallback_lock:
             self._fallback_callback = callback
@@ -282,6 +298,7 @@ class GPURecoveryManager:
 
         Args:
             callback: 回调函数，签名为 callback()
+
         """
         with self._fallback_lock:
             self._recovery_callback = callback
@@ -293,6 +310,7 @@ class GPURecoveryManager:
 
         Args:
             gpu_id: 新失败的GPU ID
+
         """
         with self._failed_gpus_lock:
             failed_count = len(self._failed_gpus)
@@ -305,7 +323,7 @@ class GPURecoveryManager:
 
         if should_fallback:
             self._trigger_cpu_fallback(
-                f"{failed_count}个GPU失败，超过阈值{self.max_failed_gpus_before_fallback}"
+                f"{failed_count}个GPU失败，超过阈值{self.max_failed_gpus_before_fallback}",
             )
 
     def _trigger_cpu_fallback(self, reason: str):
@@ -313,6 +331,7 @@ class GPURecoveryManager:
 
         Args:
             reason: 降级原因
+
         """
         # 审查修复#1: 使用锁保护状态检查和修改
         with self._fallback_lock:
@@ -321,7 +340,7 @@ class GPURecoveryManager:
 
             self._fallback_to_cpu = True
 
-        logger.critical(f"🚨 GPU引擎降级到CPU模式: {reason}")
+        logger.critical("🚨 GPU引擎降级到CPU模式: %s", reason)
 
         # 调用降级回调
         with self._fallback_lock:
@@ -331,7 +350,7 @@ class GPURecoveryManager:
             try:
                 callback(reason)
             except Exception as e:
-                logger.error(f"降级回调执行失败: {e}")
+                logger.error("降级回调执行失败: %s", e)
 
     def recover_from_fallback(self) -> None:
         """从CPU模式恢复到GPU模式
@@ -352,7 +371,7 @@ class GPURecoveryManager:
                 return
 
             self._fallback_to_cpu = False
-            logger.info("✅ GPU引擎恢复到GPU模式")
+            logger.info("[OK] GPU引擎恢复到GPU模式")
             # 保存回调引用
             callback = self._recovery_callback
 
@@ -361,7 +380,7 @@ class GPURecoveryManager:
             try:
                 callback()
             except Exception as e:
-                logger.error(f"恢复回调执行失败: {e}")
+                logger.error("恢复回调执行失败: %s", e)
 
     @property
     def is_fallback_to_cpu(self) -> bool:
@@ -379,6 +398,7 @@ class GPURecoveryManager:
 
         Returns:
             恢复策略
+
         """
         # 获取该GPU的失败历史
         with self._history_lock:
@@ -389,24 +409,23 @@ class GPURecoveryManager:
             # 第1-2次失败：立即重试
             return RecoveryStrategy.RETRY_IMMEDIATE
 
-        elif failure_count == 2:
+        if failure_count == 2:
             # 第3次失败：延迟重试
             return RecoveryStrategy.RETRY_WITH_DELAY
 
-        elif failure_count == 3:
+        if failure_count == 3:
             # 第4次失败：减小批次
             return RecoveryStrategy.REDUCE_BATCH_SIZE
 
-        elif failure_count < self.max_retry_count:
+        if failure_count < self.max_retry_count:
             # 多次失败：重新初始化
             return RecoveryStrategy.REINITIALIZE
 
-        else:
-            # 超过最大重试：禁用GPU
-            return RecoveryStrategy.DISABLE_GPU
+        # 超过最大重试：禁用GPU
+        return RecoveryStrategy.DISABLE_GPU
 
     def _execute_recovery(
-        self, gpu_id: int, failure_type: GPUFailureType, strategy: RecoveryStrategy
+        self, gpu_id: int, failure_type: GPUFailureType, strategy: RecoveryStrategy,
     ) -> bool:
         """执行恢复策略
 
@@ -417,6 +436,7 @@ class GPURecoveryManager:
 
         Returns:
             True表示恢复成功
+
         """
         try:
             if strategy == RecoveryStrategy.RETRY_IMMEDIATE:
@@ -424,13 +444,13 @@ class GPURecoveryManager:
                 time.sleep(1.0)
                 return self._verify_gpu_health(gpu_id)
 
-            elif strategy == RecoveryStrategy.RETRY_WITH_DELAY:
+            if strategy == RecoveryStrategy.RETRY_WITH_DELAY:
                 # H1修复: 延迟重试后验证GPU状态
                 logger.info(f"GPU {gpu_id} 延迟 {self.retry_delay_seconds}秒后重试")
                 time.sleep(self.retry_delay_seconds)
                 return self._verify_gpu_health(gpu_id)
 
-            elif strategy == RecoveryStrategy.REDUCE_BATCH_SIZE:
+            if strategy == RecoveryStrategy.REDUCE_BATCH_SIZE:
                 # M1修复: 减小批次大小后验证GPU状态
                 if gpu_id in self._recovery_callbacks:
                     callback = self._recovery_callbacks[gpu_id]
@@ -438,7 +458,7 @@ class GPURecoveryManager:
                 # 验证GPU是否真正恢复
                 return self._verify_gpu_health(gpu_id)
 
-            elif strategy == RecoveryStrategy.REINITIALIZE:
+            if strategy == RecoveryStrategy.REINITIALIZE:
                 # H1修复: 重新初始化后验证GPU状态
                 if gpu_id in self._recovery_callbacks:
                     callback = self._recovery_callbacks[gpu_id]
@@ -449,15 +469,15 @@ class GPURecoveryManager:
                         return self._verify_gpu_health(gpu_id)
                 return False
 
-            elif strategy == RecoveryStrategy.DISABLE_GPU:
+            if strategy == RecoveryStrategy.DISABLE_GPU:
                 # 禁用GPU（无法恢复）
-                logger.warning(f"GPU {gpu_id} 已达到最大重试次数，标记为禁用")
+                logger.warning("GPU %s 已达到最大重试次数，标记为禁用", gpu_id)
                 return False
 
             return False
 
         except Exception as e:
-            logger.error(f"GPU {gpu_id} 恢复执行失败: {e}")
+            logger.error("GPU %s 恢复执行失败: %s", gpu_id, e)
             return False
 
     def _record_failure(self, gpu_id: int, record: GPUFailureRecord):
@@ -466,6 +486,7 @@ class GPURecoveryManager:
         Args:
             gpu_id: GPU ID
             record: 失败记录
+
         """
         with self._history_lock:
             if gpu_id not in self._failure_history:
@@ -483,7 +504,7 @@ class GPURecoveryManager:
             self._total_failures += 1
 
         logger.warning(
-            f"GPU {gpu_id} 失败记录: {record.failure_type.value} (总计: {self._total_failures})"
+            f"GPU {gpu_id} 失败记录: {record.failure_type.value} (总计: {self._total_failures})",
         )
 
     def _verify_gpu_health(self, gpu_id: int, timeout: float | None = None) -> bool:
@@ -499,6 +520,7 @@ class GPURecoveryManager:
 
         Returns:
             True表示GPU健康，False表示GPU仍然失败或超时
+
         """
         if timeout is None:
             timeout = self.health_check_timeout
@@ -515,39 +537,42 @@ class GPURecoveryManager:
                     # H4修复: 超时时尝试取消future
                     cancelled = future.cancel()
                     if cancelled:
-                        logger.warning(f"GPU {gpu_id} 健康检查超时（{timeout}秒），已取消未执行的任务")
+                        logger.warning(
+                            "GPU %s 健康检查超时（%s秒），已取消未执行的任务",
+                            gpu_id, timeout,
+                        )
                     else:
                         logger.warning(
-                            f"GPU {gpu_id} 健康检查超时（{timeout}秒），任务已在运行，无法取消"
+                            "GPU %s 健康检查超时（%s秒），任务已在运行，无法取消", gpu_id, timeout,
                         )
                     return False
 
                 # 检查结果
                 if result is None:
                     # 回调无返回值，假设健康
-                    logger.debug(f"GPU {gpu_id} 健康检查: 无返回值，假设健康")
+                    logger.debug("GPU %s 健康检查: 无返回值，假设健康", gpu_id)
                     return True
 
                 if isinstance(result, dict):
                     healthy = result.get("healthy", result.get("success", False))
                     if healthy:
-                        logger.debug(f"GPU {gpu_id} 健康检查通过")
+                        logger.debug("GPU %s 健康检查通过", gpu_id)
                     else:
-                        logger.warning(f"GPU {gpu_id} 健康检查失败")
+                        logger.warning("GPU %s 健康检查失败", gpu_id)
                     return bool(healthy)
 
                 # 其他类型，转换为bool
                 return bool(result)
 
             except concurrent.futures.CancelledError:
-                logger.warning(f"GPU {gpu_id} 健康检查已取消")
+                logger.warning("GPU %s 健康检查已取消", gpu_id)
                 return False
             except Exception as e:
-                logger.error(f"GPU {gpu_id} 健康检查异常: {e}")
+                logger.error("GPU %s 健康检查异常: %s", gpu_id, e)
                 return False
         else:
             # 没有注册回调，假设健康（向后兼容）
-            logger.debug(f"GPU {gpu_id} 健康检查: 无回调，假设健康")
+            logger.debug("GPU %s 健康检查: 无回调，假设健康", gpu_id)
             return True
 
     def register_recovery_callback(self, gpu_id: int, callback: Callable[[str, Any], None]) -> None:
@@ -556,9 +581,10 @@ class GPURecoveryManager:
         Args:
             gpu_id: GPU ID
             callback: 回调函数(action, params)
+
         """
         self._recovery_callbacks[gpu_id] = callback
-        logger.info(f"GPU {gpu_id} 恢复回调已注册")
+        logger.info("GPU %s 恢复回调已注册", gpu_id)
 
     def is_gpu_failed(self, gpu_id: int) -> bool:
         """检查GPU是否已失败
@@ -568,6 +594,7 @@ class GPURecoveryManager:
 
         Returns:
             True表示GPU已失败并被禁用
+
         """
         with self._failed_gpus_lock:
             return gpu_id in self._failed_gpus
@@ -577,6 +604,7 @@ class GPURecoveryManager:
 
         Returns:
             失败GPU ID集合
+
         """
         with self._failed_gpus_lock:
             return self._failed_gpus.copy()
@@ -588,6 +616,7 @@ class GPURecoveryManager:
 
         Returns:
             统计字典
+
         """
         # M2修复: 添加一致性快照
         with self._stats_lock:
@@ -611,6 +640,7 @@ class GPURecoveryManager:
 
         Args:
             gpu_id: GPU ID（None表示重置所有）
+
         """
         with self._history_lock:
             if gpu_id is None:
@@ -634,13 +664,14 @@ class GPURecoveryManager:
         Args:
             gpu_id: GPU ID
             initial_batch_size: 初始batch_size值
+
         """
         if gpu_id in self._recovery_callbacks:
             callback = self._recovery_callbacks[gpu_id]
             callback("reset_batch_size", initial_batch_size)
-            logger.info(f"GPU {gpu_id} batch_size已重置为: {initial_batch_size}")
+            logger.info("GPU %s batch_size已重置为: %s", gpu_id, initial_batch_size)
         else:
-            logger.warning(f"GPU {gpu_id} 未注册回调，无法重置batch_size")
+            logger.warning("GPU %s 未注册回调，无法重置batch_size", gpu_id)
 
     def cleanup(self) -> None:
         """清理资源：关闭健康检查线程池
@@ -652,5 +683,5 @@ class GPURecoveryManager:
                 self._health_check_executor.shutdown(wait=True)
                 logger.debug("健康检查线程池已关闭")
             except Exception as e:
-                logger.warning(f"关闭健康检查线程池时异常: {e}")
+                logger.warning("关闭健康检查线程池时异常: %s", e)
             self._health_check_executor = None  # type: ignore[assignment]

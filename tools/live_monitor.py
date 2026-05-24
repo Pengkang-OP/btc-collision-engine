@@ -6,9 +6,6 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-
 def get_current_program_info():
     """获取当前运行程序的信息"""
     import json

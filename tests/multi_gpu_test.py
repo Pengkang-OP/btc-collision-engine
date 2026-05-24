@@ -1,23 +1,17 @@
 #!/usr/bin/env python3
-"""
-多GPU测试脚本
+"""多GPU测试脚本
 
 此脚本用于测试多GPU的功能，包括初始化、碰撞检测和资源释放等。
 """
 
-import os
-import sys
 import time
 
-# 添加项目根目录到Python路径
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-import pytest  # noqa: E402
+import pytest
 
 pytestmark = pytest.mark.gpu  # 需要真实GPU硬件
 
-from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine  # noqa: E402
-from src.utils import get_configured_logger, init_logging  # noqa: E402
+from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
+from src.utils import get_configured_logger, init_logging
 
 # 配置日志
 init_logging()
@@ -44,15 +38,15 @@ def test_multi_gpu_initialization():
 
         # 获取设备信息
         devices = engine.get_devices()
-        logger.info(f"设备信息: {devices}")
+        logger.info("设备信息: %s", devices)
 
         # 获取设备数量
         device_count = len(devices)
-        logger.info(f"设备数量: {device_count}")
+        logger.info("设备数量: %s", device_count)
 
         return True
     except Exception as e:
-        logger.error(f"❌ 多GPU初始化失败: {e}")
+        logger.error("❌ 多GPU初始化失败: %s", e)
         import traceback
 
         traceback.print_exc()
@@ -63,7 +57,7 @@ def test_multi_gpu_initialization():
                 engine.stop()
                 logger.info("多GPU引擎已停止")
             except Exception as e:
-                logger.warning(f"停止引擎时出现错误: {e}")
+                logger.warning("停止引擎时出现错误: %s", e)
 
 
 def test_multi_gpu_collision_detection():
@@ -108,11 +102,11 @@ def test_multi_gpu_collision_detection():
 
         # 获取统计信息
         stats = engine.get_combined_stats()
-        logger.info(f"碰撞检测统计: {stats}")
+        logger.info("碰撞检测统计: %s", stats)
 
         return True
     except Exception as e:
-        logger.error(f"❌ 多GPU碰撞检测失败: {e}")
+        logger.error("❌ 多GPU碰撞检测失败: %s", e)
         import traceback
 
         traceback.print_exc()
@@ -123,7 +117,7 @@ def test_multi_gpu_collision_detection():
                 engine.stop()
                 logger.info("多GPU引擎已停止")
             except Exception as e:
-                logger.warning(f"停止引擎时出现错误: {e}")
+                logger.warning("停止引擎时出现错误: %s", e)
 
 
 def test_multi_gpu_resource_release():
@@ -172,7 +166,7 @@ def test_multi_gpu_resource_release():
         logger.info("✅ 多GPU资源释放成功")
         return True
     except Exception as e:
-        logger.error(f"❌ 多GPU资源释放失败: {e}")
+        logger.error("❌ 多GPU资源释放失败: %s", e)
         import traceback
 
         traceback.print_exc()
@@ -196,7 +190,7 @@ def main():
         else:
             logger.error("❌ 多GPU测试部分失败")
     except Exception as e:
-        logger.error(f"❌ 测试过程中出现错误: {e}")
+        logger.error("❌ 测试过程中出现错误: %s", e)
         import traceback
 
         traceback.print_exc()

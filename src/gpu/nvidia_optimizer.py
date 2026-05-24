@@ -19,48 +19,13 @@ SHA256/RIPEMD160/secp256k1 等加密/哈希运算的精度。
 """
 
 import re
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from ..utils import get_configured_logger
 
 logger = get_configured_logger("NvidiaOptimizer")
 
 # 延迟导入避免循环依赖
-if TYPE_CHECKING:
-    pass
-
-
-# ---------------------------------------------------------------------------
-# 内部辅助组件
-# ---------------------------------------------------------------------------
-
-
-class _RateLimitedLogger:
-    """频率限制日志记录器
-
-    避免在高频循环中产生大量重复日志，每条消息在冷却期内只记录一次。
-    """
-
-    def __init__(self, base_logger: Any, cooldown_seconds: float = 60.0) -> None:
-        self._logger = base_logger
-        self._cooldown = cooldown_seconds
-        self._last_logged: dict = {}
-
-    def warning(self, key: str, message: str) -> None:
-        import time
-
-        now = time.monotonic()
-        if now - self._last_logged.get(key, 0.0) >= self._cooldown:
-            self._logger.warning(message)
-            self._last_logged[key] = now
-
-    def info(self, key: str, message: str) -> None:
-        import time
-
-        now = time.monotonic()
-        if now - self._last_logged.get(key, 0.0) >= self._cooldown:
-            self._logger.info(message)
-            self._last_logged[key] = now
 
 
 class NvidiaDriverDetector:
@@ -90,6 +55,8 @@ class NvidiaDriverDetector:
         "Blackwell": 545,
     }
 
+    __slots__ = ("_device_info", "_logger")
+
     def __init__(self, device_info: dict, engine_logger: Any | None = None) -> None:
         self._device_info = device_info
         self._logger = engine_logger or logger
@@ -105,6 +72,7 @@ class NvidiaDriverDetector:
                 'opencl_20_ok': bool,
                 'recommendation': str | None,
             }
+
         """
         result: dict[str, Any] = {
             "version_str": None,
@@ -116,13 +84,18 @@ class NvidiaDriverDetector:
 
         # 尝试从 device_info 中提取
         version_str = self._device_info.get("driver_version") or self._device_info.get(
-            "version", ""
+            "version", "",
         )
         if not version_str:
-            result["recommendation"] = (
-                "无法检测 NVIDIA 驱动版本，建议升级至 450+ 以获得最佳 OpenCL 支持"
-            )
-            return result
+            # Fallback: 尝试从 OpenCL 平台信息中提取版本
+            fallback_version = self._try_opencl_platform_version()
+            if fallback_version:
+                version_str = fallback_version
+            else:
+                result["recommendation"] = (
+                    "无法检测 NVIDIA 驱动版本，建议升级至 450+ 以获得最佳 OpenCL 支持"
+                )
+                return result
 
         result["version_str"] = str(version_str)
 
@@ -160,6 +133,43 @@ class NvidiaDriverDetector:
         match = re.search(r"\b(\d{3,4})\b", version_str)
         if match:
             return int(match.group(1))
+        return None
+
+    def _try_opencl_platform_version(self) -> str | None:
+        """Fallback: 从 OpenCL 平台信息中提取 NVIDIA 驱动版本
+
+        当 nvidia-smi 不可用（未加入 PATH）时，尝试从 pyopencl
+        获取平台版本字符串。NVIDIA OpenCL 平台版本通常格式为
+        "OpenCL 3.0 CUDA 12.1.66" 或 "OpenCL 1.2 CUDA 10.2.135"。
+
+        Returns:
+            驱动版本字符串或 None
+        """
+        try:
+            import pyopencl as cl
+        except ImportError:
+            return None
+
+        try:
+            for platform in cl.get_platforms():
+                if "nvidia" in platform.name.lower():
+                    version = platform.version
+                    if version:
+                        # 尝试提取 CUDA 版本作为驱动版本的代理
+                        # 格式: "OpenCL X.Y CUDA A.B.C"
+                        cuda_match = re.search(r"CUDA\s+([\d.]+)", str(version))
+                        if cuda_match:
+                            cuda_ver = cuda_match.group(1)
+                            self._logger.debug(
+                                "从 OpenCL 平台信息提取到 CUDA 版本: %s (全量: %s)",
+                                cuda_ver, version,
+                            )
+                            return cuda_ver
+                        # 如果 CUDA 版本不可用，返回整个平台版本
+                        return str(version)
+        except Exception as e:
+            self._logger.debug("OpenCL 平台版本提取失败: %s", e)
+
         return None
 
 
@@ -382,6 +392,8 @@ class NvidiaArchDetector:
         ),
     ]
 
+    __slots__ = ("_device_info", "_logger")
+
     def __init__(self, device_info: dict, engine_logger: Any | None = None) -> None:
         self._device_info = device_info
         self._logger = engine_logger or logger
@@ -400,6 +412,7 @@ class NvidiaArchDetector:
                 'shared_memory_kb': int,        # 共享内存大小(KB)
                 'warp_size': int,               # Warp大小（常为32）
             }
+
         """
         device_name = self._device_info.get("name", "")
 
@@ -408,7 +421,7 @@ class NvidiaArchDetector:
                 if pattern.upper() in device_name.upper():
                     return {"arch": arch_name, **features}
 
-        self._logger.warning(f"⚠️ 无法识别 NVIDIA GPU 架构：{device_name}，使用默认配置")
+        self._logger.warning("[WARN] 无法识别 NVIDIA GPU 架构：%s，使用默认配置", device_name)
         return {"arch": "Unknown", "async_copy": False, "fp64_native": False}
 
 
@@ -438,7 +451,7 @@ class NvidiaMemoryOptimizer:
     ]
 
     def __init__(
-        self, device_info: dict, arch_features: dict, engine_logger: Any | None = None
+        self, device_info: dict, arch_features: dict, engine_logger: Any | None = None,
     ) -> None:
         self._device_info = device_info
         self._arch_features = arch_features
@@ -454,6 +467,7 @@ class NvidiaMemoryOptimizer:
                 'async_transfer': bool,     # 是否建议启用异步传输
                 'is_hbm': bool,             # 是否为HBM显存（数据中心卡）
             }
+
         """
         global_mem = self._device_info.get("global_mem_size", 0)
         global_mem_gb = global_mem / (1024**3) if global_mem > 0 else 0.0
@@ -507,16 +521,20 @@ class NvidiaGPUOptimizer:
         device_info: 设备信息字典（包含 name, vendor, global_mem_size 等）
         config: 引擎配置字典
         engine_logger: 可选的日志记录器，默认使用模块级 logger
+
     """
 
+    __slots__ = (
+        "_device_info", "_config", "_logger",
+        "_driver_info", "_arch_info", "_memory_config",
+    )
+
     def __init__(
-        self, device_info: dict, config: dict | None = None, engine_logger: Any | None = None
+        self, device_info: dict, config: dict | None = None, engine_logger: Any | None = None,
     ) -> None:
         self._device_info = device_info if isinstance(device_info, dict) else {}
         self._config = config or {}
         self._logger = engine_logger or logger
-        self._rate_logger = _RateLimitedLogger(self._logger)
-
         # 内部组件（防御性初始化，默认为 None）
         self._driver_info: dict | None = None
         self._arch_info: dict | None = None
@@ -533,9 +551,10 @@ class NvidiaGPUOptimizer:
 
         Returns:
             优化配置字典，包含各项优化状态和推荐参数
+
         """
         self._logger.info("=" * 60)
-        self._logger.info("🔧 开始应用 NVIDIA GPU 特殊优化")
+        self._logger.info("[*] 开始应用 NVIDIA GPU 特殊优化")
         self._logger.info("=" * 60)
 
         result: dict[str, Any] = {}
@@ -551,19 +570,22 @@ class NvidiaGPUOptimizer:
 
             if self._driver_info.get("version_str"):
                 self._logger.info(
-                    f"✅ NVIDIA 驱动版本: {self._driver_info['version_str']}"
-                    f"（OpenCL 1.2: {'✓' if self._driver_info['opencl_12_ok'] else '✗'}，"
-                    f"OpenCL 2.0: {'✓' if self._driver_info['opencl_20_ok'] else '✗'}）"
+                    "[OK] NVIDIA 驱动版本: %s"
+                    " (OpenCL 1.2: %s, OpenCL 2.0: %s)",
+                    self._driver_info["version_str"],
+                    "Y" if self._driver_info["opencl_12_ok"] else "N",
+                    "Y" if self._driver_info["opencl_20_ok"] else "N",
                 )
             else:
-                self._logger.warning("⚠️ 无法检测 NVIDIA 驱动版本")
+                self._logger.warning("[WARN] 无法检测 NVIDIA 驱动版本")
 
             if self._driver_info.get("recommendation"):
-                self._logger.warning(f"⚠️ {self._driver_info['recommendation']}")
+                self._logger.warning("[WARN] %s", self._driver_info["recommendation"])
 
         except Exception as e:
             self._logger.warning(
-                f"⚠️ NVIDIA 驱动检测失败（非致命）: {type(e).__name__}: {e}\n   驱动版本信息将不可用"
+                "[WARN] NVIDIA 驱动检测失败（非致命）: %s: %s\n   驱动版本信息将不可用",
+                type(e).__name__, e,
             )
             self._driver_info = {}
             result["driver"] = {}
@@ -578,16 +600,19 @@ class NvidiaGPUOptimizer:
             result["arch"] = self._arch_info
 
             self._logger.info(
-                f"\u2705 NVIDIA GPU 架构: {self._arch_info['arch']}"
-                f"（计算能力 CC {self._arch_info.get('compute_capability', '?')}，"
-                f"异步拷贝: {'支持' if self._arch_info.get('async_copy') else '不支持'}，"
-                f"原生 FP64: {'支持' if self._arch_info.get('fp64_native') else '不支持'}，"
-                f"最低驱动: {self._arch_info.get('min_driver', '?')}）"
+                "[OK] NVIDIA GPU 架构: %s"
+                " (计算能力 CC %s, 异步拷贝: %s, 原生 FP64: %s, 最低驱动: %s)",
+                self._arch_info["arch"],
+                self._arch_info.get("compute_capability", "?"),
+                "支持" if self._arch_info.get("async_copy") else "不支持",
+                "支持" if self._arch_info.get("fp64_native") else "不支持",
+                self._arch_info.get("min_driver", "?"),
             )
 
         except Exception as e:
             self._logger.warning(
-                f"⚠️ NVIDIA 架构识别失败（非致命）: {type(e).__name__}: {e}\n   架构特性将使用保守默认值"
+                "[WARN] NVIDIA 架构识别失败（非致命）: %s: %s\n   架构特性将使用保守默认值",
+                type(e).__name__, e,
             )
             self._arch_info = {"arch": "Unknown", "async_copy": False, "fp64_native": False}
             result["arch"] = self._arch_info
@@ -606,7 +631,7 @@ class NvidiaGPUOptimizer:
                 f"\u2705 NVIDIA 显存配置: {self._memory_config['global_mem_gb']:.1f}GB"
                 f"（类型: {'HBM' if self._memory_config.get('is_hbm') else 'GDDR'}），"
                 f"memory_ratio={self._memory_config['memory_ratio']:.2f}，"
-                f"异步传输={'建议启用' if self._memory_config['async_transfer'] else '不建议'}"
+                f"异步传输={'建议启用' if self._memory_config['async_transfer'] else '不建议'}",
             )
 
         except Exception as e:
@@ -649,6 +674,7 @@ class NvidiaGPUOptimizer:
 
         Returns:
             包含当前优化状态的字典
+
         """
         driver_version = None
         if self._driver_info:

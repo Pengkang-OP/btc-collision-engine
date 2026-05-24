@@ -16,9 +16,6 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-
 def run_ulls_verification_test(duration=60):
     """运行ULLS优化验证测试
 

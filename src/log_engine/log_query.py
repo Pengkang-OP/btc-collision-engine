@@ -1,6 +1,5 @@
 """Log query engine for searching log entries."""
 import re
-from typing import Any
 
 
 class LogQuery:
@@ -19,6 +18,7 @@ class LogQuery:
 
         Returns:
             Filtered entries
+
         """
         levels = {
             "DEBUG": 10,
@@ -31,7 +31,7 @@ class LogQuery:
             e
             for e in entries
             if levels.get(
-                e.get("level", "INFO").upper(), 20
+                e.get("level", "INFO").upper(), 20,
             )
             >= min_val
         ]
@@ -49,9 +49,10 @@ class LogQuery:
 
         Returns:
             Matching entries
+
         """
         pattern = re.compile(
-            re.escape(text), re.IGNORECASE
+            re.escape(text), re.IGNORECASE,
         )
         return [
             e

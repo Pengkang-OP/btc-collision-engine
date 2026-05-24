@@ -7,9 +7,6 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-
 def clear_screen():
     """清屏"""
     import subprocess

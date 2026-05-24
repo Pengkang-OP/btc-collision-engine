@@ -1,19 +1,15 @@
 #!/usr/bin/env python3
-"""
-测试 Windows 权限错误重试机制
+"""测试 Windows 权限错误重试机制
 """
 
 import json
 import os
-import sys
+import pathlib
 import tempfile
 import unittest
 from unittest.mock import patch
 
-# 添加项目根目录到路径
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from src.monitoring.data_logger import DataLogger  # noqa: E402
+from src.monitoring.data_logger import DataLogger
 
 
 class TestWindowsPermissionRetry(unittest.TestCase):
@@ -29,7 +25,7 @@ class TestWindowsPermissionRetry(unittest.TestCase):
         """清理测试环境"""
         import shutil
 
-        if os.path.exists(self.test_dir):
+        if pathlib.Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_save_history_data_with_permission_error(self):
@@ -61,10 +57,10 @@ class TestWindowsPermissionRetry(unittest.TestCase):
 
         # 验证文件已创建
         history_file = os.path.join(self.test_dir, "history_data.json")
-        self.assertTrue(os.path.exists(history_file))
+        self.assertTrue(pathlib.Path(history_file).exists())
 
         # 验证数据已保存（P0 版本化格式）
-        with open(history_file, encoding="utf-8") as f:
+        with pathlib.Path(history_file).open(encoding="utf-8") as f:
             raw = json.load(f)
         history = raw["data"] if isinstance(raw, dict) and "data" in raw else raw
         self.assertEqual(len(history), 1)
@@ -99,10 +95,10 @@ class TestWindowsPermissionRetry(unittest.TestCase):
 
         # 验证文件已创建
         current_file = os.path.join(self.test_dir, "current_data.json")
-        self.assertTrue(os.path.exists(current_file))
+        self.assertTrue(pathlib.Path(current_file).exists())
 
         # 验证数据已保存
-        with open(current_file, encoding="utf-8") as f:
+        with pathlib.Path(current_file).open(encoding="utf-8") as f:
             data = json.load(f)
         self.assertIn("performance", data)
         self.assertEqual(data["performance"]["speed"], 200.0)
@@ -133,10 +129,10 @@ class TestWindowsPermissionRetry(unittest.TestCase):
         self.data_logger.save_history_data()
 
         history_file = os.path.join(self.test_dir, "history_data.json")
-        self.assertTrue(os.path.exists(history_file))
+        self.assertTrue(pathlib.Path(history_file).exists())
 
         # 验证数据已保存（P0 版本化格式）
-        with open(history_file, encoding="utf-8") as f:
+        with pathlib.Path(history_file).open(encoding="utf-8") as f:
             raw = json.load(f)
         history = raw["data"] if isinstance(raw, dict) and "data" in raw else raw
         self.assertEqual(len(history), 1)

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Intel Arc GPU实际碰撞测试脚本
+"""Intel Arc GPU实际碰撞测试脚本
 
 功能：
 1. 使用真实比特币地址进行碰撞测试
@@ -21,12 +20,10 @@ from pathlib import Path
 
 # 添加项目根目录
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(_PROJECT_ROOT))
-
-from src.collision.collision_stats import CollisionStats  # noqa: E402
-from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
-from src.gpu.intel_memory_monitor import IntelMemoryMonitor  # noqa: E402
-from src.gpu.intel_timeout_manager import AdaptiveTimeoutManager  # noqa: E402
+from src.collision.collision_stats import CollisionStats
+from src.collision.gpu.engine import GPUCollisionEngine
+from src.gpu.intel_memory_monitor import IntelMemoryMonitor
+from src.gpu.intel_timeout_manager import AdaptiveTimeoutManager
 
 # 输出目录
 _TEST_OUTPUT_DIR = _PROJECT_ROOT / "test_results"
@@ -60,7 +57,7 @@ def load_valid_addresses(filepath: str = "") -> set[str]:
         logger.warning("未找到有效地址文件，将使用默认测试地址")
         return addresses
     try:
-        with open(filepath, encoding="utf-8") as f:
+        with Path(filepath).open(encoding="utf-8") as f:
             for line in f:
                 addr = line.strip()
                 if addr and len(addr) >= 26:
@@ -68,7 +65,7 @@ def load_valid_addresses(filepath: str = "") -> set[str]:
         logger.info(f"从 {filepath} 加载了 {len(addresses)} 个地址")
         return addresses
     except Exception as e:
-        logger.error(f"加载地址文件失败: {e}")
+        logger.error("加载地址文件失败: %s", e)
         return addresses
 
 
@@ -77,10 +74,10 @@ class IntelArcTestMonitor:
 
     def __init__(self, total_memory_bytes: int):
         self.memory_monitor = IntelMemoryMonitor(
-            total_memory_bytes=total_memory_bytes, safe_usage_ratio=0.45
+            total_memory_bytes=total_memory_bytes, safe_usage_ratio=0.45,
         )
         self.timeout_manager = AdaptiveTimeoutManager(
-            base_timeout=30.0, min_timeout=10.0, max_timeout=120.0
+            base_timeout=30.0, min_timeout=10.0, max_timeout=120.0,
         )
 
         # 性能统计
@@ -182,7 +179,6 @@ class IntelArcTestMonitor:
 
 def run_gpu_collision_test(targets: set[str], duration: int = 60, batch_size: int = 1048576) -> dict:
     """运行GPU碰撞测试"""
-
     print("\n" + "=" * 80)
     print("🚀 Intel Arc GPU 碰撞测试")
     print("=" * 80)
@@ -212,7 +208,7 @@ def run_gpu_collision_test(targets: set[str], duration: int = 60, batch_size: in
             f"  [{mins:02d}:{secs:02d}] "
             f"已检查: {stats.total_checked:>12,} | "
             f"速度: {stats.speed:>12,.0f} keys/s | "
-            f"匹配: {len(stats.matches)}"
+            f"匹配: {len(stats.matches)}",
         )
 
     def on_match(private_key: bytes, address: str, wif: str):
@@ -322,7 +318,7 @@ def run_gpu_collision_test(targets: set[str], duration: int = 60, batch_size: in
         result_file = (
             _TEST_OUTPUT_DIR / f"intel_arc_test_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         )
-        with open(str(result_file), "w", encoding="utf-8") as f:
+        with Path(str(result_file)).open("w", encoding="utf-8") as f:
             json.dump(test_result, f, indent=2, ensure_ascii=False)
 
         print(f"\n💾 测试结果已保存到: {result_file}")
@@ -330,7 +326,7 @@ def run_gpu_collision_test(targets: set[str], duration: int = 60, batch_size: in
         return test_result
 
     except Exception as e:
-        logger.error(f"GPU测试失败: {e}", exc_info=True)
+        logger.error("GPU测试失败: %s", e, exc_info=True)
         print(f"\n❌ GPU测试失败: {e}")
         import traceback
 
@@ -361,7 +357,7 @@ def run_cpu_baseline_test(targets: set[str], duration: int = 10) -> dict:
         print(
             f"  [{mins:02d}:{secs:02d}] "
             f"已检查: {stats.total_checked:>10,} | "
-            f"速度: {stats.speed:>10,.2f} keys/s"
+            f"速度: {stats.speed:>10,.2f} keys/s",
         )
 
     try:
@@ -402,7 +398,7 @@ def run_cpu_baseline_test(targets: set[str], duration: int = 10) -> dict:
         }
 
     except Exception as e:
-        logger.error(f"CPU测试失败: {e}")
+        logger.error("CPU测试失败: %s", e)
         print(f"\n⚠️ CPU测试跳过: {e}")
         return None
 
@@ -472,9 +468,8 @@ def main():
         print("\n🎉 Intel Arc GPU碰撞测试完成！")
 
         return 0
-    else:
-        print("\n❌ 测试失败")
-        return 1
+    print("\n❌ 测试失败")
+    return 1
 
 
 if __name__ == "__main__":

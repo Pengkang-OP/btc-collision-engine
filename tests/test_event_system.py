@@ -1,5 +1,4 @@
-"""
-事件系统单元测试
+"""事件系统单元测试
 
 测试范围:
 - 事件定义和类型
@@ -393,7 +392,6 @@ class TestDependencyInjection(unittest.TestCase):
 
     def test_custom_event_bus(self):
         """测试自定义事件总线注入"""
-
         EventBus()
 
         # 应该可以注入自定义事件总线

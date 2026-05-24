@@ -27,10 +27,10 @@ class KeyboardListener:
             try:
                 if sys.stdin.read(1).lower() == "q":
                     logger.info(
-                        "Stop requested via keyboard"
+                        "Stop requested via keyboard",
                     )
                     break
-            except (IOError, EOFError):
+            except (OSError, EOFError):
                 break
 
     def stop(self) -> None:

@@ -21,6 +21,7 @@ import importlib
 import json
 import logging
 import os
+import pathlib
 import shutil
 import socket
 import sys
@@ -53,7 +54,7 @@ class HealthChecker:
             project_root: 项目根目录路径
         """
         self.project_root = project_root or os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
         )
         self.results: dict[str, tuple[bool, str]] = {}
         self.required_configs = ["config.json", "config.production.json"]
@@ -91,11 +92,11 @@ class HealthChecker:
         """检查配置文件"""
         config_path = os.path.join(self.project_root, "config.json")
 
-        if not os.path.exists(config_path):
+        if not pathlib.Path(config_path).exists():
             return False, f"配置文件不存在: {config_path}"
 
         try:
-            with open(config_path, encoding="utf-8") as f:
+            with pathlib.Path(config_path).open(encoding="utf-8") as f:
                 config = json.load(f)
 
             if not isinstance(config, dict):
@@ -126,23 +127,22 @@ class HealthChecker:
 
     def check_directories(self) -> tuple[bool, str]:
         """检查必要目录是否存在且有权限"""
-        required_dirs = ["logs", "data_logs", "monitoring_data"]
+        required_dirs = ["logs", "data_logs"]
         missing = []
         no_permission = []
 
         for dir_name in required_dirs:
             dir_path = os.path.join(self.project_root, dir_name)
 
-            if not os.path.exists(dir_path):
+            if not pathlib.Path(dir_path).exists():
                 missing.append(dir_name)
                 continue
 
             # 检查写权限
             test_file = os.path.join(dir_path, ".test_write")
             try:
-                with open(test_file, "w") as f:
-                    f.write("test")
-                os.remove(test_file)
+                pathlib.Path(test_file).write_text("test")
+                pathlib.Path(test_file).unlink()
             except PermissionError:
                 no_permission.append(dir_name)
             except OSError:
@@ -193,15 +193,14 @@ class HealthChecker:
             storage = DataStorage()
             storage_dir = storage.storage_dir
 
-            if not os.path.exists(storage_dir):
+            if not pathlib.Path(storage_dir).exists():
                 return False, f"监控数据目录不存在: {storage_dir}"
 
             # 检查目录写权限
             test_file = os.path.join(storage_dir, ".test_monitoring")
             try:
-                with open(test_file, "w") as f:
-                    f.write("test")
-                os.remove(test_file)
+                pathlib.Path(test_file).write_text("test")
+                pathlib.Path(test_file).unlink()
             except PermissionError:
                 return False, f"监控数据目录无写权限: {storage_dir}"
 
@@ -219,12 +218,12 @@ class HealthChecker:
         for config_name in self.required_configs:
             config_path = os.path.join(self.project_root, config_name)
 
-            if not os.path.exists(config_path):
+            if not pathlib.Path(config_path).exists():
                 missing.append(config_name)
                 continue
 
             try:
-                with open(config_path, encoding="utf-8") as f:
+                with pathlib.Path(config_path).open(encoding="utf-8") as f:
                     config = json.load(f)
 
                 if not isinstance(config, dict):
@@ -249,7 +248,7 @@ class HealthChecker:
         for config_name in self.required_configs:
             config_path = os.path.join(self.project_root, config_name)
 
-            if os.path.exists(config_path):
+            if pathlib.Path(config_path).exists():
                 # 获取文件权限（八进制）
                 try:
                     stat_info = os.stat(config_path)
@@ -357,7 +356,7 @@ class HealthChecker:
 
                     if version < min_version:
                         issues.append(
-                            f"{dep}版本过低: {version_str} (需要 {'.'.join(map(str, min_version))}+)"
+                            f"{dep}版本过低: {version_str} (需要 {'.'.join(map(str, min_version))}+)",
                         )
 
             except ImportError:
@@ -368,7 +367,7 @@ class HealthChecker:
         return True, "所有依赖版本符合要求"
 
     def run_all_checks(
-        self, include_gpu: bool = False, include_network: bool = False
+        self, include_gpu: bool = False, include_network: bool = False,
     ) -> dict[str, tuple[bool, str]]:
         """运行所有健康检查
 
@@ -468,8 +467,7 @@ def main() -> None:
 
     if args.report:
         report = checker.generate_report()
-        with open(args.report, "w", encoding="utf-8") as f:
-            f.write(report)
+        pathlib.Path(args.report).write_text(report, encoding="utf-8")
         if not args.quiet:
             print(f"\n报告已保存: {args.report}")
 

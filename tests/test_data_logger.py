@@ -17,17 +17,14 @@
 
 import json
 import os
+import pathlib
 import shutil
-import sys
 import tempfile
 import time
 
 import pytest
 
-# 添加项目根目录到路径
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from src.monitoring.data_logger import DataLogger  # noqa: E402
+from src.monitoring.data_logger import DataLogger
 
 
 class TestDataLoggerInit:
@@ -39,7 +36,7 @@ class TestDataLoggerInit:
 
     def teardown_method(self):
         """每个测试后清理"""
-        if os.path.exists(self.test_dir):
+        if pathlib.Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_init_default(self):
@@ -62,7 +59,7 @@ class TestDataLoggerInit:
         new_dir = os.path.join(self.test_dir, "new_logs")
         logger = DataLogger(storage_dir=new_dir)  # noqa: F841
 
-        assert os.path.exists(new_dir)
+        assert pathlib.Path(new_dir).exists()
 
     def test_init_performance_log_file(self):
         """测试性能日志文件初始化"""
@@ -70,7 +67,7 @@ class TestDataLoggerInit:
 
         # 验证性能日志文件存在
         perf_log_path = os.path.join(self.test_dir, "performance.log")
-        assert os.path.exists(perf_log_path)
+        assert pathlib.Path(perf_log_path).exists()
 
 
 class TestDataLoggerPerformanceRecording:
@@ -83,7 +80,7 @@ class TestDataLoggerPerformanceRecording:
 
     def teardown_method(self):
         """每个测试后清理"""
-        if os.path.exists(self.test_dir):
+        if pathlib.Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_record_performance_data(self):
@@ -144,13 +141,13 @@ class TestDataLoggerEngineRecording:
 
     def teardown_method(self):
         """每个测试后清理"""
-        if os.path.exists(self.test_dir):
+        if pathlib.Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_record_engine_data(self):
         """测试记录引擎数据"""
         self.logger.record_engine_data(
-            mode="random", target_count=10, is_running=True, current_position=500
+            mode="random", target_count=10, is_running=True, current_position=500,
         )
 
         # 验证当前数据
@@ -184,7 +181,7 @@ class TestDataLoggerSystemRecording:
 
     def teardown_method(self):
         """每个测试后清理"""
-        if os.path.exists(self.test_dir):
+        if pathlib.Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_record_system_data(self):
@@ -197,7 +194,7 @@ class TestDataLoggerSystemRecording:
     def test_record_system_data_with_custom_values(self):
         """测试记录自定义系统数据"""
         self.logger.record_system_data(
-            os_name="Windows", python_version="3.11.0", pid=12345, uptime=3600.0
+            os_name="Windows", python_version="3.11.0", pid=12345, uptime=3600.0,
         )
 
         current_data = self.logger.get_current_data()
@@ -214,7 +211,7 @@ class TestDataLoggerErrorRecording:
 
     def teardown_method(self):
         """每个测试后清理"""
-        if os.path.exists(self.test_dir):
+        if pathlib.Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_record_error(self):
@@ -227,8 +224,8 @@ class TestDataLoggerErrorRecording:
 
         # 验证错误已记录（通过检查错误日志文件）
         error_log_path = os.path.join(self.test_dir, "error_log.json")
-        if os.path.exists(error_log_path):
-            with open(error_log_path) as f:
+        if pathlib.Path(error_log_path).exists():
+            with pathlib.Path(error_log_path).open() as f:
                 error_log = json.load(f)
             assert len(error_log) > 0
 
@@ -245,8 +242,8 @@ class TestDataLoggerErrorRecording:
 
         # 验证错误已记录
         error_log_path = os.path.join(self.test_dir, "error_log.json")
-        if os.path.exists(error_log_path):
-            with open(error_log_path) as f:
+        if pathlib.Path(error_log_path).exists():
+            with pathlib.Path(error_log_path).open() as f:
                 error_log = json.load(f)
             assert len(error_log) > 0
 
@@ -257,8 +254,8 @@ class TestDataLoggerErrorRecording:
 
         # 验证错误被记录
         error_log_path = os.path.join(self.test_dir, "error_log.json")
-        if os.path.exists(error_log_path):
-            with open(error_log_path) as f:
+        if pathlib.Path(error_log_path).exists():
+            with pathlib.Path(error_log_path).open() as f:
                 error_log = json.load(f)
             assert len(error_log) > 0
 
@@ -273,7 +270,7 @@ class TestDataLoggerSaveLoad:
 
     def teardown_method(self):
         """每个测试后清理"""
-        if os.path.exists(self.test_dir):
+        if pathlib.Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_save_current_data(self):
@@ -291,7 +288,7 @@ class TestDataLoggerSaveLoad:
 
         # 验证文件存在
         current_data_path = os.path.join(self.test_dir, "current_data.json")
-        assert os.path.exists(current_data_path)
+        assert pathlib.Path(current_data_path).exists()
 
     def test_save_history_data(self):
         """测试保存历史数据"""
@@ -308,7 +305,7 @@ class TestDataLoggerSaveLoad:
 
         # 验证文件存在
         history_data_path = os.path.join(self.test_dir, "history_data.json")
-        assert os.path.exists(history_data_path)
+        assert pathlib.Path(history_data_path).exists()
 
     def test_load_current_data(self):
         """测试加载当前数据"""
@@ -346,8 +343,8 @@ class TestDataLoggerSaveLoad:
         self.logger.save_history_data()
 
         # 验证文件存在
-        assert os.path.exists(os.path.join(self.test_dir, "current_data.json"))
-        assert os.path.exists(os.path.join(self.test_dir, "history_data.json"))
+        assert pathlib.Path(os.path.join(self.test_dir, "current_data.json")).exists()
+        assert pathlib.Path(os.path.join(self.test_dir, "history_data.json")).exists()
 
 
 class TestDataLoggerStatistics:
@@ -360,7 +357,7 @@ class TestDataLoggerStatistics:
 
     def teardown_method(self):
         """每个测试后清理"""
-        if os.path.exists(self.test_dir):
+        if pathlib.Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_get_statistics_empty(self):
@@ -417,7 +414,7 @@ class TestDataLoggerReports:
 
     def teardown_method(self):
         """每个测试后清理"""
-        if os.path.exists(self.test_dir):
+        if pathlib.Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_generate_daily_report(self):
@@ -479,7 +476,7 @@ class TestDataLoggerCleanup:
 
     def teardown_method(self):
         """每个测试后清理"""
-        if os.path.exists(self.test_dir):
+        if pathlib.Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_cleanup_old_history(self):
@@ -514,7 +511,7 @@ class TestDataLoggerThreadSafety:
 
     def teardown_method(self):
         """每个测试后清理"""
-        if os.path.exists(self.test_dir):
+        if pathlib.Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_concurrent_record(self):

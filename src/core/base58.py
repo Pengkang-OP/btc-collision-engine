@@ -4,8 +4,7 @@ from .hash_utils import HashUtils
 
 
 class Base58:
-    """
-    Base58 encode/decode utility.
+    """Base58 encode/decode utility.
 
     Implements Base58 and Base58Check encoding for Bitcoin address
     and private key representation.
@@ -40,8 +39,7 @@ class Base58:
 
     @staticmethod
     def encode(data: bytes) -> str:
-        """
-        Encode bytes to Base58 string.
+        """Encode bytes to Base58 string.
 
         Args:
             data: Input bytes
@@ -51,13 +49,14 @@ class Base58:
 
         Optimization:
             Uses _ENCODE_TABLE for O(1) lookup, 30%+ improvement
+
         """
         if not data:
             return ""
 
         # Count leading zeros
         leading_zeros = len(data) - len(
-            data.lstrip(b"\x00")
+            data.lstrip(b"\x00"),
         )
 
         # Convert bytes to integer
@@ -72,13 +71,12 @@ class Base58:
 
         # Reverse and add leading zeros (represented as '1')
         return "1" * leading_zeros + "".join(
-            reversed(result)
+            reversed(result),
         )
 
     @staticmethod
     def decode(s: str) -> bytes:
-        """
-        Decode Base58 string to bytes.
+        """Decode Base58 string to bytes.
 
         Args:
             s: Base58 encoded string
@@ -92,6 +90,7 @@ class Base58:
 
         Optimization:
             Uses _DECODE_TABLE for O(1) lookup, 40%+ improvement
+
         """
         if not s:
             return b""
@@ -104,7 +103,7 @@ class Base58:
         for c in s:
             if c not in Base58._DECODE_TABLE:
                 raise ValueError(
-                    f"Invalid Base58 character: '{c}'"
+                    f"Invalid Base58 character: '{c}'",
                 )
             # O(1) lookup via precomputed table
             num = (
@@ -117,7 +116,7 @@ class Base58:
             b""
             if num == 0
             else num.to_bytes(
-                (num.bit_length() + 7) // 8, "big"
+                (num.bit_length() + 7) // 8, "big",
             )
         )
 
@@ -126,10 +125,9 @@ class Base58:
 
     @staticmethod
     def check_encode(
-        version: int, payload: bytes
+        version: int, payload: bytes,
     ) -> str:
-        """
-        Base58Check encode.
+        """Base58Check encode.
 
         Steps:
         1. Prefix: version byte
@@ -143,6 +141,7 @@ class Base58:
 
         Returns:
             Base58Check encoded string
+
         """
         # Combine version and payload
         data = bytes([version]) + payload
@@ -155,8 +154,7 @@ class Base58:
 
     @staticmethod
     def check_decode(s: str) -> tuple[int, bytes]:
-        """
-        Base58Check decode.
+        """Base58Check decode.
 
         Steps:
         1. Decode Base58 string to bytes
@@ -171,11 +169,12 @@ class Base58:
 
         Raises:
             ValueError: When checksum verification fails
+
         """
         # Empty string check
         if not s:
             raise ValueError(
-                "Empty Base58Check string"
+                "Empty Base58Check string",
             )
 
         # Decode Base58 string
@@ -186,7 +185,7 @@ class Base58:
             raise ValueError(
                 "Base58Check data too short "
                 "(min 5 bytes: 1 version + "
-                "0+ payload + 4 checksum)"
+                "0+ payload + 4 checksum)",
             )
 
         # Split version, payload, and checksum
@@ -196,12 +195,12 @@ class Base58:
 
         # Verify checksum
         expected_checksum = HashUtils.double_sha256(
-            bytes([version]) + payload
+            bytes([version]) + payload,
         )[:4]
         if checksum != expected_checksum:
             raise ValueError(
                 "Base58Check checksum verification "
-                "failed"
+                "failed",
             )
 
         return version, payload

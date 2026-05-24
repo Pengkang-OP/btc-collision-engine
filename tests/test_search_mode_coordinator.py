@@ -416,7 +416,7 @@ class TestGetMode:
             return_value={
                 "mode": "random",
                 "seed_generated": 100,
-            }
+            },
         )
         status = coordinator.get_mode_status("random")
         assert status["mode"] == "random"

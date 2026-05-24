@@ -1,8 +1,8 @@
-"""
-数据模型定义
+"""数据模型定义
 """
 
 import json
+import pathlib
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -92,7 +92,7 @@ class AnalysisReport:
         }
 
     def save(self, filepath: str):
-        with open(filepath, "w", encoding="utf-8") as f:
+        with pathlib.Path(filepath).open("w", encoding="utf-8") as f:
             json.dump(self.to_dict(), f, ensure_ascii=False, indent=2)
 
 
@@ -218,7 +218,7 @@ class AuditResult:
         }
 
     def save(self, filepath: str):
-        with open(filepath, "w", encoding="utf-8") as f:
+        with pathlib.Path(filepath).open("w", encoding="utf-8") as f:
             json.dump(self.to_dict(), f, ensure_ascii=False, indent=2)
 
 

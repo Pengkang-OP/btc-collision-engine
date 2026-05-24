@@ -141,7 +141,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             targets: 目标地址集合 (set, O(1)查找)
             on_progress: 进度回调 fn(stats: CollisionStats)
             on_match: 匹配回调 fn(private_key: bytes, address: str, wif: str)
-                ⚠️ 安全注意:
+                [WARN] 安全注意:
                 - private_key是bytes副本，调用者负责安全处理
                 - Python bytes 不可变，无法直接清零；如需安全清零请先转为 bytearray
                 - 不要存储到日志或文件（除非加密）
@@ -1131,6 +1131,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         self._current_position = 0
         self._range_start = None
         self._range_end = None
+        self._live_range_count = 0  # 为实时进度显示初始化
         self.stats = CollisionStats()
         self.stats.start_time = time.time()
         self._running = True
@@ -1210,6 +1211,10 @@ class KeyCollisionEngine(BaseCollisionEngine):
         # 移除已完成的任务
         futures.pop(future, None)
 
+        # 更新实时计数，使 engine_runner 轮询能读取到进度
+        with self._state_lock:
+            self._live_range_count = total_count
+
         return total_count
 
     def _random_search_report_progress(self, total_count: int, current_time: float) -> None:
@@ -1283,13 +1288,18 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
     def _random_search_finalize(self, total_count: int) -> None:
         """随机搜索结束：更新统计、发布 COMPLETE。"""
+        # 合并 live 计数并重置
+        with self._state_lock:
+            final_count = max(total_count, self._live_range_count)
+            self._live_range_count = 0
+
         self._executor = None
         self._stats_updated.clear()
-        self.stats.update(total_count)
+        self.stats.update(final_count)
         self._stats_updated.set()
         self._running = False
 
-        self._publish_engine_complete(total_count)
+        self._publish_engine_complete(final_count)
 
     def _worker_generate_addresses(
         self, private_key_bytes: bytes, worker_id: int,
@@ -1701,7 +1711,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             logger.debug("发布 ENGINE_START 事件失败（非致命）: %s", e)
 
         if max_keys is None:
-            logger.warning("⚠️ brute_force模式未设置max_keys限制，将无限运行直到手动停止或找到匹配")
+            logger.warning("[WARN] brute_force模式未设置max_keys限制，将无限运行直到手动停止或找到匹配")
             logger.warning("建议：使用 max_keys 参数限制扫描数量，例如 max_keys=1_000_000_000")
 
         if self.data_logging_enabled and self.data_logger:
@@ -2181,15 +2191,10 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 live_count = self._live_range_count
 
             if live_count > 0:
-                # 有实时计数：合并到 stats。
-                # 注意：不重置 _live_range_count，它由主循环自行管理。
-                # 将 live_count 直接作为近似总计数更新到 stats。
-                # 主循环会定期调用 stats.update(safe_count)，
-                # 其中 safe_count = total_count + _live_range_count
+                # 有实时计数：合并到 stats
                 self.stats.update(max(live_count, self.stats.total_checked))
-            elif self.stats.start_time > 0 and self.stats.total_checked > 0:
-                # 即使 live_range_count 为 0，也通过 update() 刷新 elapsed 和 speed
-                # update() 内部已持有锁，避免直接访问私有 _lock
+            else:
+                # 始终调用 update() 刷新 elapsed/speed，确保轮询循环能正常工作
                 self.stats.update(self.stats.total_checked)
 
         return self.stats

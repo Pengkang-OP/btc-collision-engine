@@ -20,12 +20,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-# 添加项目根目录到路径
-project_root = str(Path(__file__).parent.parent)
-sys.path.insert(0, project_root)
-
-from src.collision.collision_stats import CollisionStats  # noqa: E402
-from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
+from src.collision.collision_stats import CollisionStats
+from src.collision.gpu.engine import GPUCollisionEngine
 
 
 class GPUMonitor:

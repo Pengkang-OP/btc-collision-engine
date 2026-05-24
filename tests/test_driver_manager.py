@@ -1,14 +1,9 @@
 """GPU驱动管理器单元测试"""
 
-import os
-import sys
 import unittest
 from unittest.mock import Mock, patch
 
-# 添加项目根目录到路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
-from src.gpu.driver_manager import DriverManager, DriverVersionParser  # noqa: E402
+from src.gpu.driver_manager import DriverManager, DriverVersionParser
 
 
 class TestDriverVersionParser(unittest.TestCase):
@@ -311,7 +306,6 @@ class TestDriverCache(unittest.TestCase):
     @patch("src.gpu.driver_manager.subprocess.run")
     def test_driver_cache_ttl(self, mock_run, mock_platform):
         """测试缓存过期机制"""
-
         mock_platform.return_value = "Windows"
         mock_result = Mock()
         mock_result.returncode = 0

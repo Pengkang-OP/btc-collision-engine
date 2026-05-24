@@ -10,17 +10,21 @@ logger = logging.getLogger(__name__)
 
 CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
 
+# Bech32/Bech32m checksum constants (BIP-0173 / BIP-0350)
+BECH32_CONST = 1
+BECH32M_CONST = 0x2BC830A3
+
 
 def bech32_polymod(values: list[int]) -> int:
     """Compute Bech32 checksum."""
-    GEN = [0x3B6A57B2, 0x26508E6D, 0x1EA119FA,
-           0x3D4233DD, 0x2A1462B3]
+    _gen = [0x3B6A57B2, 0x26508E6D, 0x1EA119FA,
+            0x3D4233DD, 0x2A1462B3]
     chk = 1
     for v in values:
         b = chk >> 25
         chk = (chk & 0x1FFFFFF) << 5 ^ v
         for i in range(5):
-            chk ^= GEN[i] if (b >> i) & 1 else 0
+            chk ^= _gen[i] if (b >> i) & 1 else 0
     return chk
 
 
@@ -67,26 +71,53 @@ def bech32_encode(hrp: str, witver: int, witprog: bytes, spec: str = "bech32") -
     return hrp + "1" + "".join(CHARSET[d] for d in combined)
 
 
-def decode_segwit_address(address: str) -> tuple[str | None, int, bytes]:
-    """Decode a segwit address to HRP, witness version, and program."""
+def decode_segwit_address(
+    address: str, expected_hrp: str | None = None
+) -> tuple[str | None, int, bytes]:
+    """Decode a segwit address to HRP, witness version, and program.
+
+    Args:
+        address: Bech32/Bech32m address string
+        expected_hrp: Optional expected HRP; if provided and mismatch, returns None
+
+    Returns:
+        (hrp, witness_version, witness_program) or (None, None, None) on failure
+    """
     hrp, data, spec = bech32_decode(address)
     if hrp is None or not data:
-        return None, 0, b""
+        return None, None, None
+    if expected_hrp is not None and hrp != expected_hrp:
+        return None, None, None
     witver = data[0]
     prog_bytes = _convertbits(data[1:], 5, 8)
     if prog_bytes is None:
-        return None, 0, b""
+        return None, None, None
     return hrp, witver, bytes(prog_bytes)
 
 
 def bech32_decode(address: str) -> tuple[str | None, list[int], str]:
-    """Decode a Bech32 or Bech32m address."""
+    """Decode a Bech32 or Bech32m address.
+
+    Per BIP-0173: uppercase is allowed for QR codes, but mixed case is invalid.
+    """
     pos = address.rfind("1")
     if pos < 1 or pos + 7 > len(address) or len(address) > 90:
         return None, [], ""
-    hrp = address[:pos].lower()
-    data_str = address[pos + 1:]
-    data = [CHARSET.find(c.lower()) for c in data_str]
+    # BIP-173: reject mixed case — hrp and data must share the same case
+    hrp_part = address[:pos]
+    data_part = address[pos + 1:]
+    hrp_lower = hrp_part.lower()
+    data_lower = data_part.lower()
+    # Check for mixed case: if hrp is not all-lower and not all-upper, reject.
+    # Also if hrp case != data case (both parts), reject.
+    hrp_is_lower = hrp_part == hrp_lower
+    hrp_is_upper = hrp_part == hrp_part.upper()
+    data_is_lower = data_part == data_lower
+    data_is_upper = data_part == data_part.upper()
+    if not ((hrp_is_lower and data_is_lower) or (hrp_is_upper and data_is_upper)):
+        return None, [], ""
+    hrp = hrp_lower
+    data = [CHARSET.find(c.lower()) for c in data_part]
     if any(d < 0 for d in data):
         return None, [], ""
     spec = "bech32"
@@ -94,4 +125,4 @@ def bech32_decode(address: str) -> tuple[str | None, list[int], str]:
         spec = "bech32m"
     elif not bech32_verify_checksum(hrp, data, "bech32"):
         return None, [], ""
-    return hrp, data[1:], spec
+    return hrp, data[:-6], spec  # 去掉末尾6字节checksum，保留witness version + program

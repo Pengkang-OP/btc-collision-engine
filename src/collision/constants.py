@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Collision detection constants and configuration defaults.
+"""Collision detection constants and configuration defaults.
 """
 
 # Search mode constants

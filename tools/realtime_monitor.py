@@ -6,10 +6,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-# 添加项目根目录
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-
 def read_monitoring_data():
     """读取监控数据文件"""
     monitoring_file = Path("monitoring_data/current_data.json")

@@ -1,0 +1,6 @@
+2026-05-24 00:30:40,574 - CryptoBackend - WARNING - PurePythonBackend: 非恒定时间模式 - 不推荐用于生产环境，建议安装 coincurve 或 cryptography
+2026-05-24 00:30:40,722 - CryptoBackend - INFO - Crypto backend initialization complete: available=['PURE_PYTHON', 'OPENSSL', 'COINCURVE', 'ECDSA'], current=coincurve (libsecp256k1)
+2026-05-24 00:30:40,722 - src.utils.logging_config - WARNING - 日志系统已被初始化，重复调用被忽略
+[INFO] 日志安全过滤器已启用 (显式: 16, 自动发现: 11, 总计: 27)
+2026-05-24 00:30:40,729 - src.cli.advanced_features - ERROR - Template not found: quick-test
+[ERROR] Template 'quick-test' not found in f:\Qoder\btc-collision-engine\config

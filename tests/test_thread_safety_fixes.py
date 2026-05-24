@@ -1,5 +1,6 @@
 """线程安全修复验证测试"""
 
+import pathlib
 import threading
 import time
 
@@ -52,7 +53,6 @@ class TestThreadSafetyFixes:
 
     def test_config_manager_concurrent_save_load(self):
         """测试配置管理器的并发保存和加载"""
-        import os
         import tempfile
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
@@ -90,8 +90,8 @@ class TestThreadSafetyFixes:
 
             assert len(errors) == 0, f"并发保存/加载错误: {errors}"
         finally:
-            if os.path.exists(config_file):
-                os.remove(config_file)
+            if pathlib.Path(config_file).exists():
+                pathlib.Path(config_file).unlink()
 
     def test_collision_engine_single_lock(self):
         """测试碰撞引擎使用单锁设计"""
@@ -157,7 +157,7 @@ class TestThreadSafetyFixes:
 
         # 输出性能信息
         print(
-            f"\n压力测试完成: {thread_count}线程 x {iterations}次迭代 = {thread_count * iterations}次操作"
+            f"\n压力测试完成: {thread_count}线程 x {iterations}次迭代 = {thread_count * iterations}次操作",
         )
         print(f"耗时: {elapsed:.2f}秒")
         print(f"吞吐量: {thread_count * iterations / elapsed:.0f} 操作/秒")
@@ -254,7 +254,7 @@ class TestThreadSafetyFixes:
 
             if should_log:
                 engine.data_logger.record_error(
-                    error_type="test_error", message=f"测试错误 {i}", context={"iteration": i}
+                    error_type="test_error", message=f"测试错误 {i}", context={"iteration": i},
                 )
 
         elapsed = time.time() - start_time

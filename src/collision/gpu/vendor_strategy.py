@@ -78,13 +78,13 @@ class IntelOptimizationStrategy:
                 {
                     "kernel_source": OPENCL_KERNEL_SOURCE,
                     "engine": context.engine,  # v4.2.1: 传递 engine 引用
-                }
+                },
             )
 
             logger.info("Intel GPU优化策略已应用")
 
         except Exception as e:
-            logger.error(f"应用Intel优化失败: {e}")
+            logger.error("应用Intel优化失败: %s", e)
 
         return components
 
@@ -135,7 +135,7 @@ class NvidiaOptimizationStrategy:
             logger.info(f"NVIDIA GPU优化策略已应用: arch={arch}, memory_ratio={mem_ratio:.2f}")
 
         except Exception as e:
-            logger.error(f"应用NVIDIA优化失败: {e}")
+            logger.error("应用NVIDIA优化失败: %s", e)
 
         return components
 
@@ -206,11 +206,11 @@ class AMDOptimizationStrategy:
             mem_ratio = optimization_result.get("recommended_memory_ratio", 0.60)
             wavefront = optimization_result.get("recommended_wavefront_size", 64)
             logger.info(
-                f"AMD GPU优化策略已应用: arch={arch}, mem_ratio={mem_ratio:.2f}, wf={wavefront}"
+                f"AMD GPU优化策略已应用: arch={arch}, mem_ratio={mem_ratio:.2f}, wf={wavefront}",
             )
 
         except Exception as e:
-            logger.error(f"应用AMD优化失败: {e}")
+            logger.error("应用AMD优化失败: %s", e)
 
         return components
 
@@ -286,6 +286,7 @@ class VendorOptimizationFactory:
 
         Returns:
             对应的优化策略实例
+
         """
         vendor_lower = vendor.lower()
 
@@ -293,15 +294,15 @@ class VendorOptimizationFactory:
         strategy_cls = cls._strategies.get(vendor_lower)
 
         if strategy_cls is None:
-            logger.warning(f"未识别的GPU厂商: {vendor}，使用默认策略")
+            logger.warning("未识别的GPU厂商: %s，使用默认策略", vendor)
             return DefaultOptimizationStrategy()
 
         try:
             strategy = strategy_cls()
-            logger.debug(f"创建{vendor}优化策略成功")
-            return cast(VendorOptimizationStrategy, strategy)
+            logger.debug("创建%s优化策略成功", vendor)
+            return cast("VendorOptimizationStrategy", strategy)
         except Exception as e:
-            logger.error(f"创建{vendor}优化策略失败: {e}")
+            logger.error("创建%s优化策略失败: %s", vendor, e)
             return DefaultOptimizationStrategy()
 
     @classmethod
@@ -311,9 +312,10 @@ class VendorOptimizationFactory:
         Args:
             vendor: 厂商标识符
             strategy_class: 策略类
+
         """
         cls._strategies[vendor.lower()] = strategy_class
-        logger.info(f"注册厂商优化策略: {vendor}")
+        logger.info("注册厂商优化策略: %s", vendor)
 
     @classmethod
     def get_supported_vendors(cls) -> list:
@@ -321,5 +323,6 @@ class VendorOptimizationFactory:
 
         Returns:
             厂商标识符列表
+
         """
         return list(cls._strategies.keys())

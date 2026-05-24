@@ -10,7 +10,7 @@
 import hashlib
 import logging
 import time
-from typing import Any
+from typing import Any, cast
 
 from .protocols import GPUKernel, IAsyncExecutionPipeline, MatchResult
 
@@ -28,6 +28,7 @@ class AsyncPipelineAdapter(IAsyncExecutionPipeline):
 
         Args:
             config: 配置字典
+
         """
         self.config = config or {}
         self._pipeline: Any = None
@@ -43,6 +44,7 @@ class AsyncPipelineAdapter(IAsyncExecutionPipeline):
 
         Raises:
             RuntimeError: 初始化失败
+
         """
         try:
             from ...gpu.async_executor import AsyncGPUExecutor
@@ -68,14 +70,14 @@ class AsyncPipelineAdapter(IAsyncExecutionPipeline):
 
             # 初始化缓冲区池
             self._pipeline.initialize_buffers(
-                context=kernel.context.context_obj, num_keys=batch_size
+                context=kernel.context.context_obj, num_keys=batch_size,
             )
 
             _qd = self._pipeline.queue_depth
             logger.info(f"异步管道初始化完成: batch_size={batch_size:,}, queue_depth={_qd}")
 
         except Exception as e:
-            logger.error(f"异步管道初始化失败: {e}")
+            logger.error("异步管道初始化失败: %s", e)
             raise RuntimeError(f"异步管道初始化失败: {e}") from e
 
     def run_batch(self, seed: bytes, batch_size: int) -> tuple[list[MatchResult], float]:
@@ -90,6 +92,7 @@ class AsyncPipelineAdapter(IAsyncExecutionPipeline):
 
         Raises:
             RuntimeError: 管道未初始化或执行失败
+
         """
         if not self._pipeline:
             raise RuntimeError("异步管道未初始化，请先调用initialize()")
@@ -103,7 +106,7 @@ class AsyncPipelineAdapter(IAsyncExecutionPipeline):
             # 调用现有AsyncGPUExecutor的run_batch_async方法
             # 注意：需要传递kernel对象
             raw_matches, exec_time_ms = self._pipeline.run_batch_async(
-                kernel=self._kernel.kernel_obj, seed=seed, batch_size=batch_size
+                kernel=self._kernel.kernel_obj, seed=seed, batch_size=batch_size,
             )
 
             # 转换为MatchResult格式
@@ -116,13 +119,13 @@ class AsyncPipelineAdapter(IAsyncExecutionPipeline):
                 f"batch_size={batch_size:,}, "
                 f"matches={len(matches)}, "
                 f"gpu_time={exec_time_ms:.0f}ms, "
-                f"total_time={total_elapsed_ms:.0f}ms"
+                f"total_time={total_elapsed_ms:.0f}ms",
             )
 
             return matches, total_elapsed_ms
 
         except Exception as e:
-            logger.error(f"异步批次执行失败: {e}")
+            logger.error("异步批次执行失败: %s", e)
             raise RuntimeError(f"异步批次执行失败: {e}") from e
 
     def is_ready(self) -> bool:
@@ -130,6 +133,7 @@ class AsyncPipelineAdapter(IAsyncExecutionPipeline):
 
         Returns:
             管道已初始化且内核可用时返回 True
+
         """
         return (
             self._pipeline is not None
@@ -143,6 +147,7 @@ class AsyncPipelineAdapter(IAsyncExecutionPipeline):
         Args:
             seed: 32字节随机种子
             num_keys: 密钥数量
+
         """
         if not self._pipeline:
             logger.debug("异步管道未初始化，跳过预取")
@@ -151,13 +156,14 @@ class AsyncPipelineAdapter(IAsyncExecutionPipeline):
         try:
             self._pipeline.prefetch_next_batch(seed, num_keys)
         except Exception as e:
-            logger.warning(f"预取下一批失败: {e}")
+            logger.warning("预取下一批失败: %s", e)
 
     def flush_pending(self) -> list:
         """收集所有尚未取回的异步执行结果
 
         Returns:
             List[Tuple[bytes, List[Dict]]]: 每个元素为 (seed, matches)
+
         """
         if not self._pipeline:
             return []
@@ -165,7 +171,7 @@ class AsyncPipelineAdapter(IAsyncExecutionPipeline):
         try:
             return self._pipeline.flush_pending()
         except Exception as e:
-            logger.error(f"刷写待处理结果失败: {e}")
+            logger.error("刷写待处理结果失败: %s", e)
             return []
 
     def get_stats(self) -> dict[str, Any]:
@@ -173,6 +179,7 @@ class AsyncPipelineAdapter(IAsyncExecutionPipeline):
 
         Returns:
             统计信息字典
+
         """
         if not self._pipeline:
             return {"status": "not_initialized"}
@@ -180,7 +187,7 @@ class AsyncPipelineAdapter(IAsyncExecutionPipeline):
         try:
             return self._pipeline.get_stats()
         except Exception as e:
-            logger.error(f"获取异步统计失败: {e}")
+            logger.error("获取异步统计失败: %s", e)
             return {"status": "error", "message": str(e)}
 
     def cleanup(self) -> None:
@@ -195,7 +202,7 @@ class AsyncPipelineAdapter(IAsyncExecutionPipeline):
             self._batch_size = 0
             logger.debug("异步管道资源已清理")
         except Exception as e:
-            logger.error(f"异步管道清理失败: {e}")
+            logger.error("异步管道清理失败: %s", e)
 
     def _convert_matches(self, raw_matches: list[dict]) -> list[MatchResult]:
         """转换匹配结果格式
@@ -205,21 +212,22 @@ class AsyncPipelineAdapter(IAsyncExecutionPipeline):
 
         Returns:
             MatchResult格式列表
+
         """
         matches = []
 
         for match in raw_matches:
-            match_result: MatchResult = {  # type: ignore[typeddict-unknown-key]
+            match_result = cast(MatchResult, {
                 "address": match.get("address", ""),
                 "private_key": match.get("private_key", ""),
                 "private_key_hash": hashlib.sha256(
-                    str(match.get("private_key", "")).encode()
+                    str(match.get("private_key", "")).encode(),
                 ).hexdigest(),
                 "public_key": match.get("public_key", ""),
                 "hash160": match.get("hash160", ""),
                 "index": match.get("index", 0),
                 "seed": match.get("seed", ""),
-            }
+            })
             matches.append(match_result)
 
         return matches

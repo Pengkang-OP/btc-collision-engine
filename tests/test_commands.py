@@ -122,8 +122,7 @@ class TestCmdValidateAddresses:
         from src.cli.commands import _cmd_validate_addresses
 
         target_file = os.path.join(temp_dir, "empty.txt")
-        with open(target_file, "w") as f:
-            f.write("# just a comment\n")
+        Path(target_file).write_text("# just a comment\n")
 
         with (
             patch.object(sys, "exit") as mock_exit,
@@ -137,7 +136,7 @@ class TestCmdValidateAddresses:
         from src.cli.commands import _cmd_validate_addresses
 
         target_file = os.path.join(temp_dir, "addresses.txt")
-        with open(target_file, "w") as f:
+        with Path(target_file).open("w") as f:
             f.write("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\n")
             f.write("invalid_address_xxx\n")
 
@@ -199,7 +198,7 @@ class TestCmdConfigCheck:
             "monitoring": {},
             "engine": {},
         }
-        with open(config_path, "w") as f:
+        with Path(config_path).open("w") as f:
             json.dump(config, f)
 
         with (
@@ -215,8 +214,7 @@ class TestCmdConfigCheck:
         from src.cli.commands import _cmd_config_check
 
         config_path = os.path.join(temp_dir, "invalid.json")
-        with open(config_path, "w") as f:
-            f.write("not valid json")
+        Path(config_path).write_text("not valid json")
 
         with (
             patch.object(commands_module, "CONFIG_FILE_NAME", config_path),
@@ -243,15 +241,14 @@ class TestSaveAddressToTargetsFile:
         mock_output = MagicMock()
 
         # 确保目标文件不存在
-        if os.path.exists(targets_path):
-            os.remove(targets_path)
+        if Path(targets_path).exists():
+            Path(targets_path).unlink()
 
         with patch.object(commands_module, "DEFAULT_TARGETS_FILE", targets_path):
             _save_address_to_targets_file("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", mock_output)
 
-        assert os.path.exists(targets_path)
-        with open(targets_path, encoding="utf-8") as f:
-            content = f.read()
+        assert Path(targets_path).exists()
+        content = Path(targets_path).read_text(encoding="utf-8")
         assert "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa" in content
 
     def test_skips_duplicate(self, temp_dir):
@@ -260,15 +257,14 @@ class TestSaveAddressToTargetsFile:
 
         targets_path = os.path.join(temp_dir, "dup_targets.txt")
         addr = "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
-        with open(targets_path, "w") as f:
-            f.write(addr + "\n")
+        Path(targets_path).write_text(addr + "\n")
 
         mock_output = MagicMock()
         with patch.object(commands_module, "DEFAULT_TARGETS_FILE", targets_path):
             _save_address_to_targets_file(addr, mock_output)
 
         # 不应重复添加
-        with open(targets_path) as f:
+        with Path(targets_path).open() as f:
             lines = f.readlines()
         addr_lines = [
             line.strip()
@@ -288,7 +284,7 @@ class TestHandleInfoCommands:
     """信息命令分发测试"""
 
     def test_examples_command(self):
-        """examples 命令：sys.exit 被 mock 后函数不会真正退出，返回值可能为 False"""
+        """Examples 命令：sys.exit 被 mock 后函数不会真正退出，返回值可能为 False"""
         from src.cli.commands import _handle_info_commands
 
         args = Mock()

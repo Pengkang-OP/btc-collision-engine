@@ -239,7 +239,7 @@ class TestCallbackSnapshotSafety:
             received_stats.append(stats)
 
         engine = GPUCollisionEngine(
-            {"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"}, on_complete=on_complete_callback
+            {"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"}, on_complete=on_complete_callback,
         )
 
         # 使用真实 CollisionStats，绕过 MagicMock 嵌套问题

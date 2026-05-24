@@ -71,6 +71,7 @@ class AlertRule:
 
         Returns:
             冷却时间(秒)
+
         """
         if self.cooldown is not None:
             return self.cooldown
@@ -118,6 +119,7 @@ class AlertSystem:
 
         Args:
             alert_log_file: 告警日志文件路径
+
         """
         self.rules: list[AlertRule] = []
         self.alert_history: list[AlertRecord] = []
@@ -147,6 +149,7 @@ class AlertSystem:
 
         Args:
             rule: 告警规则对象
+
         """
         self.rules.append(rule)
         logger.info(f"添加告警规则: {rule.name} ({rule.level.value})")
@@ -159,13 +162,14 @@ class AlertSystem:
 
         Returns:
             是否成功移除
+
         """
         initial_count = len(self.rules)
         self.rules = [r for r in self.rules if r.name != rule_name]
         removed = len(self.rules) < initial_count
 
         if removed:
-            logger.info(f"移除告警规则: {rule_name}")
+            logger.info("移除告警规则: %s", rule_name)
 
         return removed
 
@@ -174,6 +178,7 @@ class AlertSystem:
 
         Args:
             callback: 回调函数,接收AlertRecord参数
+
         """
         self.alert_callbacks.append(callback)
         logger.info("添加告警回调函数")
@@ -186,10 +191,11 @@ class AlertSystem:
 
         Args:
             channel: 通知渠道对象 (如 ConsoleNotification, LogFileNotification)
+
         """
         self.notification_channels.append(channel)
         channel_name = getattr(channel, "name", str(channel))
-        logger.info(f"添加告警通知渠道: {channel_name}")
+        logger.info("添加告警通知渠道: %s", channel_name)
 
     def remove_notification_channel(self, channel) -> bool:
         """移除告警通知渠道
@@ -199,11 +205,12 @@ class AlertSystem:
 
         Returns:
             是否成功移除
+
         """
         try:
             self.notification_channels.remove(channel)
             channel_name = getattr(channel, "name", str(channel))
-            logger.info(f"移除告警通知渠道: {channel_name}")
+            logger.info("移除告警通知渠道: %s", channel_name)
             return True
         except ValueError:
             return False
@@ -215,7 +222,7 @@ class AlertSystem:
         def check_performance_degradation(metrics: dict) -> bool:
             if "degradation_rate" not in metrics:
                 return False
-            return cast(bool, metrics["degradation_rate"] > 20.0)
+            return cast("bool", metrics["degradation_rate"] > 20.0)
 
         self.add_rule(
             AlertRule(
@@ -225,14 +232,14 @@ class AlertSystem:
                 condition=check_performance_degradation,
                 message="GPU性能退化超过20%",
                 cooldown=300,
-            )
+            ),
         )
 
         # 规则2: 内存使用>80%
         def check_memory_usage(metrics: dict) -> bool:
             if "memory_usage_percent" not in metrics:
                 return False
-            return cast(bool, metrics["memory_usage_percent"] > 80.0)
+            return cast("bool", metrics["memory_usage_percent"] > 80.0)
 
         self.add_rule(
             AlertRule(
@@ -242,14 +249,14 @@ class AlertSystem:
                 condition=check_memory_usage,
                 message="GPU内存使用超过80%",
                 cooldown=600,
-            )
+            ),
         )
 
         # 规则3: GPU温度>85°C
         def check_gpu_temperature(metrics: dict) -> bool:
             if "gpu_temperature" not in metrics:
                 return False
-            return cast(bool, metrics["gpu_temperature"] > 85.0)
+            return cast("bool", metrics["gpu_temperature"] > 85.0)
 
         self.add_rule(
             AlertRule(
@@ -259,14 +266,14 @@ class AlertSystem:
                 condition=check_gpu_temperature,
                 message="GPU温度超过85°C",
                 cooldown=120,
-            )
+            ),
         )
 
         # 规则4: 错误率>5%
         def check_error_rate(metrics: dict) -> bool:
             if "error_rate" not in metrics:
                 return False
-            return cast(bool, metrics["error_rate"] > 0.05)
+            return cast("bool", metrics["error_rate"] > 0.05)
 
         self.add_rule(
             AlertRule(
@@ -276,7 +283,7 @@ class AlertSystem:
                 condition=check_error_rate,
                 message="错误率超过5%",
                 cooldown=300,
-            )
+            ),
         )
 
         # 规则5: 吞吐量下降>50%
@@ -288,7 +295,7 @@ class AlertSystem:
             drop_rate = (metrics["baseline_throughput"] - metrics["throughput"]) / metrics[
                 "baseline_throughput"
             ]
-            return cast(bool, drop_rate > 0.5)
+            return cast("bool", drop_rate > 0.5)
 
         self.add_rule(
             AlertRule(
@@ -298,7 +305,7 @@ class AlertSystem:
                 condition=check_throughput_drop,
                 message="吞吐量下降超过50%",
                 cooldown=300,
-            )
+            ),
         )
 
         logger.info(f"默认告警规则设置完成: {len(self.rules)} 条规则")
@@ -317,6 +324,7 @@ class AlertSystem:
 
         Returns:
             清洗后的指标字典（不修改原字典）
+
         """
         sanitized = dict(metrics)
 
@@ -326,7 +334,7 @@ class AlertSystem:
             if raw > 100.0:
                 logger.warning(
                     f"指标异常: memory_usage_percent={raw:.1f} 超出0-100范围, "
-                    f"已钳制到100 (很可能传入了绝对MB值而非百分比)"
+                    f"已钳制到100 (很可能传入了绝对MB值而非百分比)",
                 )
                 sanitized["memory_usage_percent"] = 100.0
             elif raw < 0.0:
@@ -355,6 +363,7 @@ class AlertSystem:
 
         Returns:
             触发的告警记录列表
+
         """
         triggered_alerts: list[AlertRecord] = []
         current_time = time.time()
@@ -366,7 +375,7 @@ class AlertSystem:
         if not self._check_global_rate_limit(current_time):
             logger.warning(
                 f"告警速率限制触发: 已发送{self._global_rate_limit_max}条告警，"
-                f"将在{self._global_rate_limit_window}秒窗口后重置"
+                f"将在{self._global_rate_limit_window}秒窗口后重置",
             )
             self._rate_limit_exceeded_count += 1
             return triggered_alerts
@@ -430,6 +439,7 @@ class AlertSystem:
 
         Returns:
             True表示允许发送告警，False表示超过限制
+
         """
         # 清理过期的告警记录
         window_start = current_time - self._global_rate_limit_window
@@ -461,6 +471,7 @@ class AlertSystem:
 
         Returns:
             是否是重复告警
+
         """
         # 获取最近的告警
         recent_alerts = self.alert_history[-lookback:]
@@ -481,13 +492,14 @@ class AlertSystem:
 
         Args:
             alert: 告警记录
+
         """
         # 1. 调用所有旧版回调函数 (向后兼容)
         for callback in self.alert_callbacks:
             try:
                 callback(alert)
             except Exception as e:
-                logger.error(f"告警回调函数执行失败: {e}")
+                logger.error("告警回调函数执行失败: %s", e)
 
         # 2. 通过通知渠道发送 (C3修复: 遍历快照避免并发修改)
         for channel in list(self.notification_channels):
@@ -495,7 +507,7 @@ class AlertSystem:
                 channel.send(alert)
             except Exception as e:
                 channel_name = getattr(channel, "name", str(channel))
-                logger.error(f"通知渠道 {channel_name} 发送失败: {e}")
+                logger.error("通知渠道 %s 发送失败: %s", channel_name, e)
 
         # 3. 保存告警历史
         self._save_alert_history()
@@ -505,6 +517,7 @@ class AlertSystem:
 
         Args:
             alert_index: 告警记录索引
+
         """
         if 0 <= alert_index < len(self.alert_history):
             alert = self.alert_history[alert_index]
@@ -518,6 +531,7 @@ class AlertSystem:
 
         Returns:
             未解决的告警记录列表
+
         """
         return [a for a in self.alert_history if not a.resolved]
 
@@ -526,6 +540,7 @@ class AlertSystem:
 
         Returns:
             统计信息字典
+
         """
         stats: dict[str, Any] = {
             "total_alerts": len(self.alert_history),
@@ -563,6 +578,7 @@ class AlertSystem:
 
         Args:
             max_records: 最大保存记录数,避免文件过大
+
         """
         try:
             # 只保存最近的记录,避免文件过大
@@ -579,14 +595,14 @@ class AlertSystem:
                         "metrics": alert.metrics,
                         "resolved": alert.resolved,
                         "resolved_at": alert.resolved_at,
-                    }
+                    },
                 )
 
-            with open(self.alert_log_file, "w", encoding="utf-8") as f:
+            with Path(self.alert_log_file).open("w", encoding="utf-8") as f:
                 fast_dump(data, f, indent=2, ensure_ascii=False)
 
         except Exception as e:
-            logger.error(f"保存告警历史失败: {e}")
+            logger.error("保存告警历史失败: %s", e)
 
     def _load_alert_history(self):
         """从文件加载告警历史"""
@@ -594,7 +610,7 @@ class AlertSystem:
             return
 
         try:
-            with open(self.alert_log_file, encoding="utf-8") as f:
+            with Path(self.alert_log_file).open(encoding="utf-8") as f:
                 data = fast_load(f)
 
             for item in data:
@@ -612,7 +628,7 @@ class AlertSystem:
             logger.info(f"加载告警历史: {len(self.alert_history)} 条记录")
 
         except Exception as e:
-            logger.error(f"加载告警历史失败: {e}")
+            logger.error("加载告警历史失败: %s", e)
 
     def clear_history(self) -> None:
         """清空告警历史"""
@@ -631,6 +647,7 @@ def get_alert_system() -> AlertSystem:
 
     Returns:
         AlertSystem实例
+
     """
     global _alert_system
     if _alert_system is None:

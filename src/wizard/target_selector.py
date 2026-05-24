@@ -12,5 +12,6 @@ class TargetSelector:
 
         Returns:
             Selected targets
+
         """
-        return targets[:]
+        return targets.copy()

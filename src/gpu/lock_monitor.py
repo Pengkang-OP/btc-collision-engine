@@ -20,11 +20,19 @@ class LockMonitor:
     - 生成性能报告
     """
 
+    __slots__ = (
+        "slow_threshold_ms",
+        "_lock",
+        "_lock_stats",
+        "_enabled",
+    )
+
     def __init__(self, slow_threshold_ms: float = 10.0) -> None:
         """初始化监控器
 
         Args:
             slow_threshold_ms: 慢锁阈值(毫秒),超过此时间视为慢锁
+
         """
         self.slow_threshold_ms = slow_threshold_ms
         self._lock = threading.RLock()
@@ -38,7 +46,7 @@ class LockMonitor:
                 "total_hold_ms": 0.0,  # 总持有时间
                 "max_hold_ms": 0.0,  # 最大持有时间
                 "slow_acquisitions": 0,  # 慢锁次数
-            }
+            },
         )
 
         # 是否启用监控
@@ -58,6 +66,7 @@ class LockMonitor:
         Args:
             lock_name: 锁名称
             wait_time_ms: 等待时间(毫秒)
+
         """
         if not self._enabled:
             return
@@ -77,6 +86,7 @@ class LockMonitor:
         Args:
             lock_name: 锁名称
             hold_time_ms: 持有时间(毫秒)
+
         """
         if not self._enabled:
             return
@@ -94,6 +104,7 @@ class LockMonitor:
 
         Returns:
             统计信息字典
+
         """
         with self._lock:
             if lock_name not in self._lock_stats:
@@ -116,6 +127,7 @@ class LockMonitor:
 
         Returns:
             所有锁的统计信息
+
         """
         with self._lock:
             result = {}
@@ -128,6 +140,7 @@ class LockMonitor:
 
         Returns:
             格式化的报告字符串
+
         """
         stats = self.get_all_stats()
 
@@ -165,12 +178,20 @@ class MonitoredLock:
     包装threading.Lock,自动记录性能指标。
     """
 
+    __slots__ = (
+        "_lock",
+        "_monitor",
+        "_name",
+        "_acquire_time",
+    )
+
     def __init__(self, monitor: LockMonitor, name: str) -> None:
         """初始化
 
         Args:
             monitor: 锁监控器
             name: 锁名称
+
         """
         self._lock = threading.Lock()
         self._monitor = monitor
@@ -216,6 +237,7 @@ def get_lock_monitor() -> LockMonitor:
 
     Returns:
         LockMonitor实例
+
     """
     return _lock_monitor
 
@@ -228,5 +250,6 @@ def create_monitored_lock(name: str) -> MonitoredLock:
 
     Returns:
         MonitoredLock实例
+
     """
     return MonitoredLock(_lock_monitor, name)

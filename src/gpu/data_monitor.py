@@ -27,6 +27,16 @@ logger = get_configured_logger("GPUDataMonitor")
 class DataQualityIssue:
     """数据质量问题"""
 
+    __slots__ = (
+        "issue_type",
+        "severity",
+        "message",
+        "device_idx",
+        "details",
+        "timestamp",
+        "datetime",
+    )
+
     # 问题类型
     DUPLICATE_KEY = "duplicate_key"
     INVALID_KEY = "invalid_key"
@@ -53,6 +63,7 @@ class DataQualityIssue:
             message: 问题描述
             device_idx: GPU设备索引
             details: 详细信息
+
         """
         self.issue_type = issue_type
         self.severity = severity
@@ -94,11 +105,34 @@ class DataMonitor:
         monitor.stop()
     """
 
+    __slots__ = (
+        "config",
+        "check_interval",
+        "throughput_threshold",
+        "error_rate_threshold",
+        "stale_data_timeout",
+        "max_issues_per_minute",
+        "max_seen_keys",
+        "max_seen_addresses",
+        "_running",
+        "_monitor_thread",
+        "_stop_event",
+        "_lock",
+        "_device_stats",
+        "_issues",
+        "_issues_by_type",
+        "_issues_by_device",
+        "_issues_last_minute",
+        "_stats",
+        "_anomaly_callback",
+    )
+
     def __init__(self, config: dict[str, Any] | None = None) -> None:
         """初始化数据监控器
 
         Args:
             config: 监控配置
+
         """
         self.config = config or {}
 
@@ -108,7 +142,7 @@ class DataMonitor:
         self.error_rate_threshold = self.config.get("error_rate_threshold", 0.1)  # 错误率阈值
         self.stale_data_timeout = self.config.get("stale_data_timeout", 10.0)  # 数据过期时间
         self.max_issues_per_minute = self.config.get(
-            "max_issues_per_minute", 100
+            "max_issues_per_minute", 100,
         )  # 每分钟最大问题数
         self.max_seen_keys = self.config.get("max_seen_keys", 100000)  # 最大记录私钥数
         self.max_seen_addresses = self.config.get("max_seen_addresses", 10000)  # 最大记录地址数
@@ -132,7 +166,7 @@ class DataMonitor:
                 "error_history": deque(maxlen=60),
                 "seen_keys": set(),  # 用于检测重复
                 "seen_addresses": set(),
-            }
+            },
         )
 
         # 问题记录
@@ -162,6 +196,7 @@ class DataMonitor:
 
         Args:
             anomaly_callback: 异常检测回调(device_idx, issue)
+
         """
         if self._running:
             logger.warning("监控器已在运行")
@@ -173,7 +208,7 @@ class DataMonitor:
         self._anomaly_callback = anomaly_callback
 
         self._monitor_thread = threading.Thread(
-            target=self._monitor_loop, daemon=True, name="DataMonitor"
+            target=self._monitor_loop, daemon=True, name="DataMonitor",
         )
         self._monitor_thread.start()
 
@@ -195,7 +230,7 @@ class DataMonitor:
         logger.info("数据监控器已停止")
 
     def report_keys_generated(
-        self, device_idx: int, count: int, key_range: tuple[int, int] | None = None
+        self, device_idx: int, count: int, key_range: tuple[int, int] | None = None,
     ) -> None:
         """报告生成的私钥数据
 
@@ -203,6 +238,7 @@ class DataMonitor:
             device_idx: GPU设备索引
             count: 生成的私钥数量
             key_range: 私钥范围(start, end), 可选
+
         """
         if not self._running:
             return
@@ -215,7 +251,7 @@ class DataMonitor:
 
                 # 记录吞吐量
                 stats["throughput_history"].append(
-                    {"timestamp": time.time(), "count": count, "key_range": key_range}
+                    {"timestamp": time.time(), "count": count, "key_range": key_range},
                 )
 
                 self._stats["total_keys_monitored"] += count
@@ -225,7 +261,7 @@ class DataMonitor:
                 self._validate_key_range(device_idx, key_range)
 
         except Exception as e:
-            logger.error(f"报告私钥生成失败 [GPU {device_idx}]: {e}")
+            logger.error("报告私钥生成失败 [GPU %s]: %s", device_idx, e)
 
     def report_match(self, device_idx: int, match_data: dict) -> None:
         """报告匹配结果
@@ -238,6 +274,7 @@ class DataMonitor:
                 'hash': str,
                 'target_address': str
             }
+
         """
         if not self._running:
             return
@@ -255,7 +292,7 @@ class DataMonitor:
                 self._stats["total_matches_verified"] += 1
 
         except Exception as e:
-            logger.error(f"报告匹配结果失败 [GPU {device_idx}]: {e}")
+            logger.error("报告匹配结果失败 [GPU %s]: %s", device_idx, e)
 
     def report_error(self, device_idx: int, error_msg: str, error_type: str | None = None) -> None:
         """报告错误
@@ -264,6 +301,7 @@ class DataMonitor:
             device_idx: GPU设备索引
             error_msg: 错误消息
             error_type: 错误类型
+
         """
         if not self._running:
             return
@@ -276,17 +314,17 @@ class DataMonitor:
 
                 # 记录错误历史
                 stats["error_history"].append(
-                    {"timestamp": time.time(), "message": error_msg, "type": error_type}
+                    {"timestamp": time.time(), "message": error_msg, "type": error_type},
                 )
 
             # 在锁外检测
             self._detect_error_spike(device_idx)
 
         except Exception as e:
-            logger.error(f"报告错误失败 [GPU {device_idx}]: {e}")
+            logger.error("报告错误失败 [GPU %s]: %s", device_idx, e)
 
     def report_validation_result(
-        self, device_idx: int, passed: bool, validation_type: str | None = None
+        self, device_idx: int, passed: bool, validation_type: str | None = None,
     ) -> None:
         """报告验证结果
 
@@ -294,6 +332,7 @@ class DataMonitor:
             device_idx: GPU设备索引
             passed: 是否通过验证
             validation_type: 验证类型
+
         """
         if not self._running:
             return
@@ -308,13 +347,14 @@ class DataMonitor:
                     ) / self._stats["total_validations"]
 
         except Exception as e:
-            logger.error(f"报告验证结果失败 [GPU {device_idx}]: {e}")
+            logger.error("报告验证结果失败 [GPU %s]: %s", device_idx, e)
 
     def get_stats(self) -> dict[str, Any]:
         """获取监控统计
 
         Returns:
             监控统计字典
+
         """
         with self._lock:
             stats = self._stats.copy()
@@ -340,7 +380,7 @@ class DataMonitor:
             return stats
 
     def get_issues(
-        self, severity: str | None = None, device_idx: int | None = None, limit: int = 100
+        self, severity: str | None = None, device_idx: int | None = None, limit: int = 100,
     ) -> list[dict[str, Any]]:
         """获取检测到的问题
 
@@ -351,6 +391,7 @@ class DataMonitor:
 
         Returns:
             问题列表
+
         """
         with self._lock:
             issues = list(self._issues)  # 创建快照
@@ -372,7 +413,7 @@ class DataMonitor:
                 self._perform_checks()
                 self._stats["last_check_time"] = time.time()
             except Exception as e:
-                logger.error(f"监控循环异常: {e}")
+                logger.error("监控循环异常: %s", e)
 
             # 等待下一个检查周期
             self._stop_event.wait(self.check_interval)
@@ -403,6 +444,7 @@ class DataMonitor:
         Args:
             device_idx: GPU设备索引
             key_range: 私钥范围
+
         """
         start, end = key_range
 
@@ -433,6 +475,7 @@ class DataMonitor:
         Args:
             device_idx: GPU设备索引
             match_data: 匹配数据
+
         """
         private_key_hash = match_data.get("private_key_hash", "")
         address = match_data.get("address", "")
@@ -480,7 +523,7 @@ class DataMonitor:
                 for key in keys_to_remove:
                     stats["seen_keys"].discard(key)
                 logger.debug(
-                    f"GPU {device_idx} 清理旧的私钥哈希记录,保留{len(stats['seen_keys'])}个"
+                    f"GPU {device_idx} 清理旧的私钥哈希记录,保留{len(stats['seen_keys'])}个",
                 )
 
             stats["seen_keys"].add(private_key_hash)
@@ -503,7 +546,7 @@ class DataMonitor:
                 for addr in addrs_to_remove:
                     stats["seen_addresses"].discard(addr)
                 logger.debug(
-                    f"GPU {device_idx} 清理旧的地址记录,保留{len(stats['seen_addresses'])}个"
+                    f"GPU {device_idx} 清理旧的地址记录,保留{len(stats['seen_addresses'])}个",
                 )
 
             stats["seen_addresses"].add(address)
@@ -514,6 +557,7 @@ class DataMonitor:
         Args:
             device_idx: GPU设备索引
             current_time: 当前时间
+
         """
         stats = self._device_stats[device_idx]
         last_update = stats["last_update"]
@@ -533,6 +577,7 @@ class DataMonitor:
 
         Args:
             device_idx: GPU设备索引
+
         """
         stats = self._device_stats[device_idx]
         history = stats["throughput_history"]
@@ -565,6 +610,7 @@ class DataMonitor:
 
         Args:
             device_idx: GPU设备索引
+
         """
         stats = self._device_stats[device_idx]
 
@@ -592,6 +638,7 @@ class DataMonitor:
 
         Args:
             device_idx: GPU设备索引
+
         """
         stats = self._device_stats[device_idx]
         error_history = stats["error_history"]
@@ -621,6 +668,7 @@ class DataMonitor:
 
         Returns:
             平均吞吐量(keys/秒)
+
         """
         stats = self._device_stats[device_idx]
         history = stats["throughput_history"]
@@ -632,7 +680,7 @@ class DataMonitor:
         total_time = history[-1]["timestamp"] - history[0]["timestamp"]
 
         if total_time > 0:
-            return cast(float, total_keys / total_time)
+            return cast("float", total_keys / total_time)
 
         return 0.0
 
@@ -641,6 +689,7 @@ class DataMonitor:
 
         Args:
             issue: 数据质量问题
+
         """
         try:
             with self._lock:
@@ -659,7 +708,7 @@ class DataMonitor:
                 if len(recent_issues) > self.max_issues_per_minute:
                     _n = len(recent_issues)
                     _max = self.max_issues_per_minute
-                    logger.warning(f"问题频率过高: {_n}个/分钟, 超过阈值{_max}")
+                    logger.warning("问题频率过高: %s个/分钟, 超过阈值%s", _n, _max)
 
             # 在锁外记录日志和调用回调
             severity_map = {
@@ -679,10 +728,10 @@ class DataMonitor:
                 try:
                     self._anomaly_callback(issue.device_idx, issue_dict)
                 except Exception as e:
-                    logger.error(f"异常回调执行失败: {e}")
+                    logger.error("异常回调执行失败: %s", e)
 
             with self._lock:
                 self._stats["total_issues_detected"] += 1
 
         except Exception as e:
-            logger.error(f"记录问题失败: {e}")
+            logger.error("记录问题失败: %s", e)

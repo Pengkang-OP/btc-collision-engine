@@ -20,6 +20,7 @@ def setup_data_logging(event_bus, data_logger):
 
     Returns:
         DataLoggerAdapter wrapping the data logger
+
     """
     # Import event types to avoid circular imports
     from src.collision.events import EngineErrorEvent, EngineMatchEvent, EngineProgressEvent
@@ -48,7 +49,7 @@ class EnhancedMonitoringAdapter:
         self._monitoring.record_metric("matches", 1)
 
     def _on_progress(self, event):
-        keys = getattr(event, 'keys_checked', 0) or getattr(event, 'total_checked', 0)
+        keys = getattr(event, "keys_checked", 0) or getattr(event, "total_checked", 0)
         self._monitoring.record_metric("keys_checked", keys)
 
 
@@ -63,6 +64,7 @@ class EventAdapter:
 
         Returns:
             Adapted monitoring event
+
         """
         return {
             "type": "match_found",
@@ -78,6 +80,7 @@ class EventAdapter:
 
         Returns:
             Adapted monitoring event
+
         """
         return {
             "type": "error",
@@ -94,6 +97,7 @@ class EventAdapter:
 
         Returns:
             Adapted monitoring event
+
         """
         return {
             "type": "progress",

@@ -2,10 +2,9 @@
 
 import logging
 import os
+import pathlib
 import sys
 import unittest
-
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # 检测是否为Windows环境
 IS_WINDOWS = sys.platform.startswith("win")
@@ -30,18 +29,16 @@ class TestWindowsAtomicOperations(unittest.TestCase):
 
             # 模拟原子写入流程
             # 1. 写入临时文件
-            with open(temp_path, "w", encoding="utf-8") as f:
-                f.write(content)
+            pathlib.Path(temp_path).write_text(content, encoding="utf-8")
 
             # 2. 原子重命名（Windows上os.replace是原子的）
-            os.replace(temp_path, target_path)
+            pathlib.Path(temp_path).replace(target_path)
 
             # 3. 验证临时文件已被清理
-            self.assertFalse(os.path.exists(temp_path), "临时文件应该被清理")
+            self.assertFalse(pathlib.Path(temp_path).exists(), "临时文件应该被清理")
 
             # 4. 验证目标文件内容正确
-            with open(target_path, encoding="utf-8") as f:
-                read_content = f.read()
+            read_content = pathlib.Path(target_path).read_text(encoding="utf-8")
             self.assertEqual(read_content, content, "文件内容应该正确")
 
         finally:
@@ -64,18 +61,17 @@ class TestWindowsAtomicOperations(unittest.TestCase):
                 temp_path = target_path + f".tmp{thread_id}"
                 content = f"线程{thread_id}的内容"
 
-                with open(temp_path, "w", encoding="utf-8") as f:
-                    f.write(content)
+                pathlib.Path(temp_path).write_text(content, encoding="utf-8")
 
                 # 使用try-except处理可能的访问冲突
                 try:
-                    os.replace(temp_path, target_path)
+                    pathlib.Path(temp_path).replace(target_path)
                     write_count += 1
                 except PermissionError:
                     # 忽略权限错误，这在并发场景下是预期的
                     pass
             except (OSError, UnicodeDecodeError) as e:
-                logger.debug(f"并发写入线程{thread_id}异常（预期内）: {e}")
+                logger.debug("并发写入线程%s异常（预期内）: %s", thread_id, e)
 
         # 启动多个线程同时写入
         threads = []
@@ -91,11 +87,10 @@ class TestWindowsAtomicOperations(unittest.TestCase):
         self.assertGreater(write_count, 0, "至少有一次写入应该成功")
 
         # 验证文件存在且可读取
-        self.assertTrue(os.path.exists(target_path), "目标文件应该存在")
+        self.assertTrue(pathlib.Path(target_path).exists(), "目标文件应该存在")
 
         # 验证文件内容不为空
-        with open(target_path, encoding="utf-8") as f:
-            content = f.read()
+        content = pathlib.Path(target_path).read_text(encoding="utf-8")
         self.assertTrue(len(content) > 0, "文件内容不应为空")
 
         shutil.rmtree(test_dir, ignore_errors=True)
@@ -123,7 +118,7 @@ class TestWindowsAtomicOperations(unittest.TestCase):
             )
 
             # 验证文件存在
-            self.assertTrue(os.path.exists(checkpoint_file), "断点文件应该存在")
+            self.assertTrue(pathlib.Path(checkpoint_file).exists(), "断点文件应该存在")
 
             # 验证临时文件不存在（已被清理）
             temp_files = [f for f in os.listdir(test_dir) if f.endswith(".tmp")]
@@ -167,7 +162,7 @@ class TestWindowsMemoryLocking(unittest.TestCase):
                 # 或 ERROR_PRIVILEGE_NOT_HELD (1314) 是预期的
                 # 这些错误表示功能存在但当前用户没有权限
                 self.assertTrue(
-                    error_code in [14, 1453, 1314], f"预期的权限或内存不足错误，实际: {error_code}"
+                    error_code in [14, 1453, 1314], f"预期的权限或内存不足错误，实际: {error_code}",
                 )
 
         except Exception as e:
@@ -225,22 +220,19 @@ class TestWindowsACL(unittest.TestCase):
 
         try:
             # 创建文件
-            with open(test_file, "w", encoding="utf-8") as f:
-                f.write("测试内容")
+            pathlib.Path(test_file).write_text("测试内容", encoding="utf-8")
 
             # 测试文件存在
-            self.assertTrue(os.path.exists(test_file))
+            self.assertTrue(pathlib.Path(test_file).exists())
 
             # 测试文件可读
-            with open(test_file, encoding="utf-8") as f:
-                content = f.read()
+            content = pathlib.Path(test_file).read_text(encoding="utf-8")
             self.assertEqual(content, "测试内容")
 
             # 测试文件可写
-            with open(test_file, "a", encoding="utf-8") as f:
+            with pathlib.Path(test_file).open("a", encoding="utf-8") as f:
                 f.write("追加内容")
-            with open(test_file, encoding="utf-8") as f:
-                content = f.read()
+            content = pathlib.Path(test_file).read_text(encoding="utf-8")
             self.assertIn("追加内容", content)
 
         finally:

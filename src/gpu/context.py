@@ -22,7 +22,7 @@ logger = get_configured_logger("GPUContext")
 
 
 # 厂商编译选项配置
-# ⚠️  关键安全约束: 加密/哈希运算（secp256k1、SHA256、RIPEMD160）严格禁用
+# [WARN]  关键安全约束: 加密/哈希运算（secp256k1、SHA256、RIPEMD160）严格禁用
 # -cl-fast-relaxed-math。快速数学优化会破坏确定性运算精度，导致同一私钥
 # 在不同GPU厂商设备上产生不一致的Hash160结果。所有厂商统一使用CL2.0标准。
 VENDOR_BUILD_OPTIONS: dict[str, dict[str, Any]] = {
@@ -49,8 +49,7 @@ VENDOR_BUILD_OPTIONS: dict[str, dict[str, Any]] = {
 
 
 class GPUContext:
-    """
-    GPU上下文管理器
+    """GPU上下文管理器
 
     负责:
     1. 创建厂商特定的优化器
@@ -59,12 +58,19 @@ class GPUContext:
     4. 资源清理
     """
 
+    __slots__ = (
+        "device",
+        "vendor_handler",
+        "program",
+        "_kernel_cache",
+    )
+
     def __init__(self, device: GPUDevice) -> None:
-        """
-        初始化GPU上下文
+        """初始化GPU上下文
 
         Args:
             device: 已初始化的GPUDevice实例
+
         """
         self.device = device
         self.vendor_handler = self._create_vendor_handler()
@@ -77,15 +83,15 @@ class GPUContext:
 
         logger.info(
             f"GPU上下文已创建: {device.device_info.get('name', 'Unknown')} "
-            f"({self.vendor_handler.get_vendor_name()})"
+            f"({self.vendor_handler.get_vendor_name()})",
         )
 
     def _create_vendor_handler(self) -> GPUVendorBase:
-        """
-        根据厂商创建对应的优化处理器
+        """根据厂商创建对应的优化处理器
 
         Returns:
             厂商优化器实例
+
         """
         vendor = self.device.device_info.get("vendor", "")
         name = self.device.device_info.get("name", "")
@@ -96,17 +102,15 @@ class GPUContext:
         # 根据厂商类型创建处理器
         if vendor_type == "nvidia":
             return NVIDIAGPUVendor()
-        elif vendor_type == "amd":
+        if vendor_type == "amd":
             return AMDGPUVendor()
-        elif vendor_type == "intel":
+        if vendor_type == "intel":
             return IntelGPUVendor()
-        else:
-            logger.warning(f"未知GPU厂商: {vendor},使用默认优化器")
-            return GPUVendorBase()  # type: ignore[abstract]
+        logger.warning("未知GPU厂商: %s,使用默认优化器", vendor)
+        return GPUVendorBase()
 
     def apply_optimizations(self) -> None:
-        """
-        应用厂商特定优化
+        """应用厂商特定优化
 
         调用厂商优化器的apply_optimizations方法
         """
@@ -118,14 +122,14 @@ class GPUContext:
             self.vendor_handler.apply_optimizations(self.device, self.device.profile)
             logger.info("GPU厂商优化应用成功")
         except Exception as e:
-            logger.error(f"应用GPU优化失败: {e}")
+            logger.error("应用GPU优化失败: %s", e)
 
     def calculate_batch_size(self) -> int:
-        """
-        计算最优batch_size
+        """计算最优batch_size
 
         Returns:
             推荐的batch_size值
+
         """
         if not self.device.profile:
             # 未找到配置,使用默认值
@@ -135,24 +139,23 @@ class GPUContext:
         try:
             return self.vendor_handler.calculate_batch_size(self.device, self.device.profile)
         except Exception as e:
-            logger.error(f"计算batch_size失败: {e},使用默认值")
+            logger.error("计算batch_size失败: %s,使用默认值", e)
             return 65536
 
     def compile_kernel(self, kernel_source: str) -> Any:
-        """
-        编译OpenCL内核（自动使用内核缓存）
+        """编译OpenCL内核（自动使用内核缓存）
 
         Args:
             kernel_source: OpenCL内核源码
 
         Returns:
             编译后的Program对象
+
         """
         return self._get_or_compile_kernel(kernel_source)
 
     def _get_or_compile_kernel(self, kernel_source: str):
-        """
-        获取或编译OpenCL内核（内核缓存 + 重试机制）
+        """获取或编译OpenCL内核（内核缓存 + 重试机制）
 
         OpenCL Program 不能跨 context 共享，但同一 context 内相同源码可以复用。
         缓存策略: 以 (source_hash + build_options) 为键，避免同一 context 内
@@ -166,6 +169,7 @@ class GPUContext:
 
         Returns:
             编译后的Program对象
+
         """
         vendor_options = self._get_build_options()
 
@@ -178,14 +182,14 @@ class GPUContext:
         # 检查缓存
         if cache_key in self._kernel_cache:
             _vendor = self.vendor_handler.get_vendor_name()
-            logger.info(f"复用已编译内核 [厂商={_vendor}, source_hash={source_hash}]")
+            logger.info("复用已编译内核 [厂商=%s, source_hash=%s]", _vendor, source_hash)
             self.program = self._kernel_cache[cache_key]
             return self.program
 
         try:
             logger.info(
                 f"编译新内核 [厂商={self.vendor_handler.get_vendor_name()}, "
-                f"options='{vendor_options}', source_hash={source_hash}]"
+                f"options='{vendor_options}', source_hash={source_hash}]",
             )
 
             # COMP-2: 根据设备 OpenCL 版本构建自适应编译策略
@@ -206,7 +210,7 @@ class GPUContext:
                 ]
                 logger.debug(
                     f"COMP-2: OpenCL {device_ocl_version:.1f} >= {OPENCL_RECOMMENDED_VERSION}, "
-                    "使用三级编译策略 (厂商 → CL2.0 → CL1.2)"
+                    "使用三级编译策略 (厂商 → CL2.0 → CL1.2)",
                 )
             else:
                 context_strategies = [
@@ -215,7 +219,7 @@ class GPUContext:
                 ]
                 logger.debug(
                     f"COMP-2: OpenCL {device_ocl_version:.1f} < {OPENCL_RECOMMENDED_VERSION}, "
-                    "跳过 CL2.0 策略 (设备不支持), 使用二级编译策略 (厂商 → CL1.2)"
+                    "跳过 CL2.0 策略 (设备不支持), 使用二级编译策略 (厂商 → CL1.2)",
                 )
 
             # DEF-2修复: 使用共享重试函数
@@ -230,7 +234,7 @@ class GPUContext:
 
             # 存入缓存
             self._kernel_cache[cache_key] = self.program
-            logger.info(f"OpenCL内核编译成功，已存入缓存 (key={cache_key})")
+            logger.info("OpenCL内核编译成功，已存入缓存 (key=%s)", cache_key)
             return self.program
 
         except RuntimeError:
@@ -238,8 +242,7 @@ class GPUContext:
             raise
 
     def _get_build_options(self) -> str:
-        """
-        获取厂商特定的编译选项
+        """获取厂商特定的编译选项
 
         使用 VENDOR_BUILD_OPTIONS 配置表，按厂商返回精细化编译选项。
 
@@ -249,6 +252,7 @@ class GPUContext:
 
         Returns:
             编译选项字符串
+
         """
         vendor_name = self.vendor_handler.get_vendor_name().lower()
 
@@ -257,12 +261,12 @@ class GPUContext:
         if vendor_cfg is not None:
             options: list[str] = vendor_cfg["options"][:]
             logger.debug(
-                f"使用厂商编译配置 [{vendor_name}]: {' '.join(options)} — {vendor_cfg['description']}"
+                f"使用厂商编译配置 [{vendor_name}]: {' '.join(options)} — {vendor_cfg['description']}",
             )
             return " ".join(options)
 
         # 未知厂商：使用保守默认选项（不启用快速数学）
-        logger.warning(f"未知GPU厂商 '{vendor_name}'，使用默认编译选项（无快速数学）")
+        logger.warning("未知GPU厂商 '%s'，使用默认编译选项（无快速数学）", vendor_name)
         return ""
 
     def get_vendor_handler(self) -> GPUVendorBase:
@@ -277,12 +281,12 @@ class GPUContext:
                 self._kernel_cache.clear()
                 logger.debug("GPU内核缓存已清理")
         except Exception as e:
-            logger.warning(f"清理GPU内核缓存失败: {e}")
+            logger.warning("清理GPU内核缓存失败: %s", e)
 
         try:
             if self.program:
                 self.program = None
         except Exception as e:
-            logger.debug(f"清理GPU program引用失败（可忽略）: {e}")
+            logger.debug("清理GPU program引用失败（可忽略）: %s", e)
 
         logger.info("GPU上下文已清理")

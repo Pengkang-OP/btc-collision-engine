@@ -42,6 +42,7 @@ class GPUEngineFacade:
 
         Args:
             config: GPU 配置字典
+
         """
         self.config = config or {}
         self._initialized = False
@@ -65,7 +66,6 @@ class GPUEngineFacade:
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         """上下文管理器退出，自动清理资源"""
         self.cleanup()
-        return None
 
     def initialize(
         self,
@@ -81,6 +81,7 @@ class GPUEngineFacade:
             batch_size: 批次大小
             targets: 目标地址（可选）
             check_uncompressed: 是否检查未压缩地址
+
         """
         if self._initialized:
             logger.warning("GPUEngineFacade 已初始化，跳过重复初始化")
@@ -98,7 +99,7 @@ class GPUEngineFacade:
                 kernel = self._kernel_adapter.compile_kernel(device, self.context)
                 self.kernel = kernel
             except Exception as e:
-                logger.error(f"内核编译失败: {e}")
+                logger.error("内核编译失败: %s", e)
 
         # 初始化异步管道
         try:
@@ -108,19 +109,20 @@ class GPUEngineFacade:
                 batch_size=batch_size or 1_000_000,
             )
         except Exception as e:
-            logger.error(f"异步管道初始化失败: {e}")
+            logger.error("异步管道初始化失败: %s", e)
 
         self._initialized = True
-        logger.info(f"GPUEngineFacade 初始化完成: device={device}")
+        logger.info("GPUEngineFacade 初始化完成: device=%s", device)
 
     def get_device_info(self) -> dict[str, Any]:
         """获取 GPU 设备信息
 
         Returns:
             设备信息字典
+
         """
         if self.device is not None:
-            return cast(Any, self.device).to_dict()
+            return cast("Any", self.device).to_dict()
         return {"status": "not_initialized"}
 
     def is_initialized(self) -> bool:
@@ -132,6 +134,7 @@ class GPUEngineFacade:
 
         Returns:
             GPU 设备列表
+
         """
         return self._device_manager.list_devices()
 
@@ -142,13 +145,13 @@ class GPUEngineFacade:
                 if self._async_pipeline is not None:
                     self._async_pipeline.cleanup()
             except Exception as e:
-                logger.error(f"清理异步管道失败: {e}")
+                logger.error("清理异步管道失败: %s", e)
 
             try:
                 if self._device_manager is not None:
                     self._device_manager.release_all()
             except Exception as e:
-                logger.error(f"清理设备管理器失败: {e}")
+                logger.error("清理设备管理器失败: %s", e)
 
             self.device = None
             self.context = None

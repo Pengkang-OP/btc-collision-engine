@@ -12,6 +12,7 @@ class LanguageDetector:
 
         Returns:
             Language code (e.g. 'en', 'zh')
+
         """
         lang, _ = locale.getdefaultlocale()
         if lang:

@@ -14,69 +14,16 @@
 """
 
 import os
+import pathlib
 import tempfile
-import time
 from typing import Any
 
 # 统一日志获取
 from ...utils import get_configured_logger
-from ..constants import PER_KEY_MEMORY_BYTES, align_batch_size
+from ..rate_limited_logger import RateLimitedLogger as _RateLimitedLogger  # Task 8/11 refactor
 from .base import GPUVendorBase
 
 logger = get_configured_logger("IntelVendor")
-
-
-class _RateLimitedLogger:
-    """日志频率限制器 - 防止相同日志在短时间内重复输出导致泵洪"""
-
-    # P3-04修复: 默认最小间隔可通过环境变量 INTEL_LOG_RATE_LIMIT_SEC 配置
-    # v4.2.4: 移除类体求值 _DEFAULT_MIN_INTERVAL，改为 __init__ 懒求值，
-    # 避免 import 时的时序依赖和环境变量状态不确定性。
-    @staticmethod
-    def _get_default_min_interval() -> float:
-        """从环境变量读取默认限流间隔，异常时安全回退"""
-        try:
-            return float(os.environ.get("INTEL_LOG_RATE_LIMIT_SEC", "60.0"))
-        except (ValueError, TypeError):
-            return 60.0
-
-    def __init__(self, base_logger: Any, min_interval: float | None = None) -> None:
-        """
-        Args:
-            base_logger: 基础 logger
-            min_interval: 相同消息的最小输出间隔（秒），默认从环境变量读取，回退60s
-        """
-        self._logger = base_logger
-        self._min_interval = (
-            min_interval if min_interval is not None else self._get_default_min_interval()
-        )
-        self._last_logged: dict[str, float] = {}
-
-    def _should_log(self, key: str) -> bool:
-        now = time.time()
-        last = self._last_logged.get(key, 0.0)
-        if now - last >= self._min_interval:
-            self._last_logged[key] = now
-            return True
-        return False
-
-    def warning(self, msg: str, key: str | None = None) -> None:
-        k = key or msg[:80]
-        if self._should_log(k):
-            self._logger.warning(msg)
-
-    def info(self, msg: str, key: str | None = None) -> None:
-        k = key or msg[:80]
-        if self._should_log(k):
-            self._logger.info(msg)
-
-    def error(self, msg: str, key: str | None = None) -> None:
-        """error 级别不限流，始终输出"""
-        self._logger.error(msg)
-
-    def debug(self, msg: str) -> None:
-        self._logger.debug(msg)
-
 
 # 初始化限流 logger（默认间隔从环境变量读取，可自定义）
 _rate_logger = _RateLimitedLogger(logger)
@@ -85,12 +32,15 @@ _rate_logger = _RateLimitedLogger(logger)
 class IntelGPUVendor(GPUVendorBase):
     """Intel GPU优化处理器"""
 
+    _RECOMMENDED_BATCH: int = 1048576
+    _MAX_BATCH: int = 2097152
+    _MEMORY_EFFICIENCY: float = 0.70
+
     def get_vendor_name(self) -> str:
         return "Intel"
 
     def apply_optimizations(self, device: Any, profile: dict[str, Any]) -> None:
-        """
-        应用Intel特定优化
+        """应用Intel特定优化
 
         优化策略:
         1. uint32 workaround(避免global char* hang bug)
@@ -100,7 +50,7 @@ class IntelGPUVendor(GPUVendorBase):
         5. 根据驱动版本应用特定优化
         """
         device_name = device.device_info.get("name", "Unknown")
-        logger.info(f"应用Intel优化策略: {device_name}")
+        logger.info("应用Intel优化策略: %s", device_name)
 
         optimizations = profile.get("optimizations", [])
         known_issues = profile.get("known_issues", [])
@@ -108,7 +58,7 @@ class IntelGPUVendor(GPUVendorBase):
         # 1. uint32 workaround - 关键优化
         if "uint32_workaround" in optimizations:
             _rate_logger.info(
-                "✅ 启用uint32 workaround(避免Intel Arc global char* hang bug)",
+                "[OK] 启用uint32 workaround(避免Intel Arc global char* hang bug)",
                 key="intel_uint32_workaround",
             )
             # 标记设备需要特殊处理
@@ -120,7 +70,7 @@ class IntelGPUVendor(GPUVendorBase):
         if "timeout_protection" in optimizations:
             timeout_seconds = profile.get("timeout_seconds", 30)
             _rate_logger.info(
-                f"✅ 启用超时保护机制: {timeout_seconds}秒", key="intel_timeout_protection"
+                "[OK] 启用超时保护机制: %s秒", timeout_seconds, key="intel_timeout_protection",
             )
             # 在GPUKernel.run_batch中添加超时
             # 防止内核hang住导致线程永久阻塞
@@ -140,12 +90,12 @@ class IntelGPUVendor(GPUVendorBase):
             )
             if not is_high_end:
                 _rate_logger.warning(
-                    "⚠️ Intel GPU: 禁用异步传输以确保稳定性", key="intel_async_disabled"
+                    "[WARN] Intel GPU: 禁用异步传输以确保稳定性", key="intel_async_disabled",
                 )
                 device.enable_async_execution = False
             else:
                 _rate_logger.info(
-                    f"✅ Intel Arc 高端型号 ({device_name}): 保持异步执行启用",
+                    "[OK] Intel Arc 高端型号 (%s): 保持异步执行启用", device_name,
                     key="intel_async_kept",
                 )
 
@@ -172,7 +122,7 @@ class IntelGPUVendor(GPUVendorBase):
         # 最新 Arc 驱动 (v32.x+) 已部分修复，但仍建议保守启用 workaround。
         if "global_char_hang_bug" in known_issues:
             _rate_logger.warning(
-                "⚠️ Intel Arc存在global char* hang bug, 已启用uint32 workaround",
+                "[WARN] Intel Arc存在global char* hang bug, 已启用uint32 workaround",
                 key="intel_known_hang_bug",
             )
 
@@ -180,46 +130,16 @@ class IntelGPUVendor(GPUVendorBase):
         memory_efficiency = profile.get("memory_efficiency", 0.70)
         device.memory_efficiency = memory_efficiency
         _rate_logger.info(
-            f"✅ Intel GPU内存效率: {memory_efficiency * 100:.0f}% (v4.2.1优化)",
+            "[OK] Intel GPU内存效率: %.0f%% (v4.2.1优化)", memory_efficiency * 100,
             key="intel_memory_efficiency",
         )
-
-    def calculate_batch_size(self, device: Any, profile: dict[str, Any]) -> int:
-        """
-        计算Intel GPU的最优batch_size
-
-        策略:
-        1. v4.2.1: Intel Arc A770 16GB 可安全使用更大 batch_size
-        2. 70% 显存效率，兼顾稳定性与性能
-        3. 动态检测显存大小自动调整上限
-        """
-        recommended = profile.get("recommended_batch_size", 1048576)
-        maximum = profile.get("max_batch_size", 2097152)  # v4.2.3: A770 16GB 可安全承载 2M
-        memory_efficiency = profile.get("memory_efficiency", 0.70)  # v2.2.1优化: 45% -> 70%
-        # 根据显存计算理论最大值(使用更保守的memory_efficiency)
-        global_mem = device.device_info.get("global_mem_size", 0)
-        per_key_memory = PER_KEY_MEMORY_BYTES
-        mem_based_max = int((global_mem * memory_efficiency) / per_key_memory)
-
-        # 取三者最小值
-        optimal = min(recommended, maximum, mem_based_max)
-
-        # 向下对齐到1024的倍数，并确保不低于最小值
-        optimal = align_batch_size(optimal)
-
-        logger.info(
-            f"Intel batch_size计算: recommended={recommended}, "
-            f"mem_based={mem_based_max}, optimal={optimal} (保守策略)"
-        )
-
-        return optimal
 
     def _check_driver_version(self, device):
         """检查驱动版本并给出建议"""
         driver_version = device.driver_version
         if not driver_version:
             _rate_logger.warning(
-                "⚠️ 无法检测Intel驱动版本，使用保守模式", key="intel_no_driver_version"
+                "[WARN] 无法检测Intel驱动版本，使用保守模式", key="intel_no_driver_version",
             )
             return
 
@@ -235,56 +155,45 @@ class IntelGPUVendor(GPUVendorBase):
                 # 检查是否为推荐版本
                 if (major, minor, build, revision) < (31, 0, 101, 4500):
                     _rate_logger.warning(
-                        f"⚠️ Intel驱动 {driver_version} 较旧, 建议更新到 31.0.101.4500+ 以提升稳定性",
+                        "[WARN] Intel驱动 %s 较旧, 建议更新到 31.0.101.4500+ 以提升稳定性", driver_version,
                         key=f"intel_driver_old_{driver_version}",
                     )
                 else:
                     _rate_logger.info(
-                        f"✅ Intel驱动版本 {driver_version} 符合要求",
+                        "[OK] Intel驱动版本 %s 符合要求", driver_version,
                         key=f"intel_driver_ok_{driver_version}",
                     )
             else:
-                logger.debug(f"Intel驱动版本格式: {driver_version}")
+                logger.debug("Intel驱动版本格式: %s", driver_version)
         except (ValueError, IndexError) as e:
-            logger.debug(f"无法解析Intel驱动版本: {driver_version}, 错误: {e}")
+            logger.debug("无法解析Intel驱动版本: %s, 错误: %s", driver_version, e)
 
     def handle_errors(self, error: Exception, stats: Any | None = None) -> bool:
-        """
-        处理Intel GPU特定错误
+        """处理Intel GPU特定错误
 
-        Intel Arc容易出现超时和hang错误
+        Intel Arc容易出现超时和hang错误。资源错误委托给基类处理。
         """
         error_msg = str(error).lower()
 
         # 超时错误
         if "timeout" in error_msg or "timed out" in error_msg:
-            logger.error(f"Intel GPU执行超时: {error}")
+            logger.error("Intel GPU执行超时: %s", error)
             if stats:
                 stats.record_gpu_error(is_resource_error=False)
-            return True  # 继续执行,但记录错误
+            return True
 
         # 内核hang错误
         if "hang" in error_msg or "stall" in error_msg:
-            logger.error(f"Intel GPU内核hang: {error}")
-            if stats:
-                stats.record_gpu_error(is_resource_error=True)
-            return True  # 继续执行
-
-        # 资源不足
-        if any(
-            keyword in error_msg
-            for keyword in ["out of memory", "out of resources", "allocation failed"]
-        ):
-            logger.error(f"Intel GPU资源不足: {error}")
+            logger.error("Intel GPU内核hang: %s", error)
             if stats:
                 stats.record_gpu_error(is_resource_error=True)
             return True
 
+        # 资源不足和其他错误委托给基类
         return super().handle_errors(error, stats)
 
     def apply_environment_optimizations(self) -> dict[str, str]:
-        """
-        应用环境变量优化 (v4.2.1 新增)
+        """应用环境变量优化 (v4.2.1 新增)
 
         基于互联网研究的应用层优化:
         1. SYCL_DEVICE_FILTER: 强制使用OpenCL而非Level-Zero
@@ -296,6 +205,7 @@ class IntelGPUVendor(GPUVendorBase):
 
         Returns:
             Dict[str, str]: 应用的环境变量字典
+
         """
         applied = {}
 
@@ -317,7 +227,7 @@ class IntelGPUVendor(GPUVendorBase):
             os.environ["SYCL_DEVICE_FILTER"] = "opencl:gpu"
             applied["SYCL_DEVICE_FILTER"] = "opencl:gpu"
             _rate_logger.info(
-                "✅ SYCL_DEVICE_FILTER=opencl:gpu (减少12%启动延迟)", key="intel_sycl_filter"
+                "✅ SYCL_DEVICE_FILTER=opencl:gpu (减少12%启动延迟)", key="intel_sycl_filter",
             )
 
         # 2. 启用 XeSS 内存压缩
@@ -347,18 +257,17 @@ class IntelGPUVendor(GPUVendorBase):
                 cache_dir = os.path.join(os.environ.get("TEMP", ""), "intel_ocl_cache")
             else:  # Linux/macOS
                 cache_dir = os.path.join(tempfile.gettempdir(), "intel_ocl_cache")
-            os.makedirs(cache_dir, exist_ok=True)
+            pathlib.Path(cache_dir).mkdir(exist_ok=True, parents=True)
             os.environ["OCL_CACHE_DIR"] = cache_dir
             applied["OCL_CACHE_DIR"] = cache_dir
             _rate_logger.info(
-                f"✅ 设置 OCL_CACHE_DIR={cache_dir} (编译缓存)", key="intel_ocl_cache"
+                "✅ 设置 OCL_CACHE_DIR=%s (编译缓存)", cache_dir, key="intel_ocl_cache",
             )
 
         return applied
 
     def restore_environment_optimizations(self) -> None:
-        """
-        恢复环境变量原始值 (v4.2.4 新增)
+        """恢复环境变量原始值 (v4.2.4 新增)
 
         将 apply_environment_optimizations() 修改的环境变量恢复为原始值，
         防止全局状态污染和跨组件交叉污染。
@@ -376,11 +285,11 @@ class IntelGPUVendor(GPUVendorBase):
         self._env_originals = {}
 
     def get_optimization_report(self) -> str:
-        """
-        生成 Intel Arc 优化报告
+        """生成 Intel Arc 优化报告
 
         Returns:
             str: 格式化的优化报告
+
         """
         report_lines = [
             "=" * 60,

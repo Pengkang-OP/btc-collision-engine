@@ -19,9 +19,6 @@ from typing import Any
 
 # 确保项目根目录在路径中
 _root = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(_root))
-
-
 # ─────────────────────────────────────────────────────────────────────────────
 # 基准测试项
 # ─────────────────────────────────────────────────────────────────────────────
@@ -48,62 +45,8 @@ def bench_key_generation(duration: float = 10.0) -> dict[str, Any]:
     }
 
 
-def bench_address_conversion(duration: float = 10.0) -> dict[str, Any]:
-    """基准测试: 私钥 → 地址转换速度"""
-    from src.core.address_converter import AddressConverter
-    from src.core.key_generator import SecureKeyGenerator
-
-    gen = SecureKeyGenerator()
-    conv = AddressConverter()
-    key = gen.generate_secure_key()  # 预生成一个密钥
-
-    start = time.perf_counter()
-    count = 0
-    while time.perf_counter() - start < duration:
-        conv.private_key_to_address(key)
-        count += 1
-
-    elapsed = time.perf_counter() - start
-    return {
-        "name": "地址转换",
-        "keys_per_sec": count / elapsed,
-        "total_keys": count,
-        "duration_sec": elapsed,
-    }
-
-
-def bench_address_lookup(duration: float = 10.0, target_count: int = 1000) -> dict[str, Any]:
-    """基准测试: 地址哈希表查找速度"""
-    from src.core.address_converter import AddressConverter
-    from src.core.key_generator import SecureKeyGenerator
-    from src.core.target_address_table import BitcoinTargetTable
-
-    gen = SecureKeyGenerator()
-    conv = AddressConverter()
-    table = BitcoinTargetTable()
-
-    # 构建目标表
-    for _ in range(target_count):
-        k = gen.generate_secure_key()
-        a = conv.private_key_to_address(k)
-        table.add_address(a)
-
-    test_addr = conv.private_key_to_address(gen.generate_secure_key())
-
-    start = time.perf_counter()
-    count = 0
-    while time.perf_counter() - start < duration:
-        table.contains(test_addr)
-        count += 1
-
-    elapsed = time.perf_counter() - start
-    return {
-        "name": f"地址查找({target_count}目标)",
-        "lookups_per_sec": count / elapsed,
-        "total_lookups": count,
-        "table_size": target_count,
-        "duration_sec": elapsed,
-    }
+# AddressConverter 和 BitcoinTargetTable 模块已移除
+# bench_address_conversion 和 bench_address_lookup 已删除
 
 
 def bench_cpu_engine(duration: float = 15.0) -> dict[str, Any]:
@@ -196,8 +139,6 @@ def run_all(duration: float = 10.0, quick: bool = False) -> dict[str, Any]:
 
     tests = [
         ("私钥生成", lambda: bench_key_generation(duration)),
-        ("地址转换", lambda: bench_address_conversion(duration)),
-        ("地址查找", lambda: bench_address_lookup(duration)),
     ]
     if not quick:
         tests.append(("CPU引擎", lambda: bench_cpu_engine(duration * 1.5)))

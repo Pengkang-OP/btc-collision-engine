@@ -47,6 +47,7 @@ def _parse_opencl_version(version_str: str) -> float:
 
     Returns:
         版本号浮点数, 如 3.0, 2.1, 1.2; 解析失败返回 OPENCL_VERSION_UNKNOWN
+
     """
     if not version_str or version_str == "Unknown":
         return OPENCL_VERSION_UNKNOWN
@@ -60,8 +61,7 @@ def _parse_opencl_version(version_str: str) -> float:
 
 
 def identify_vendor(device_name: str, vendor_str: str = "") -> str:
-    """
-    识别GPU厂商
+    """识别GPU厂商
 
     Args:
         device_name: 设备名称
@@ -69,6 +69,7 @@ def identify_vendor(device_name: str, vendor_str: str = "") -> str:
 
     Returns:
         厂商标识: 'nvidia', 'amd', 'intel', 或 'unknown'
+
     """
     name_lower = device_name.lower()
     vendor_lower = vendor_str.lower()
@@ -87,7 +88,7 @@ def identify_vendor(device_name: str, vendor_str: str = "") -> str:
         return "nvidia"
 
     # AMD
-    elif (
+    if (
         "amd" in vendor_lower
         or "amd" in name_lower
         or "radeon" in name_lower
@@ -99,7 +100,7 @@ def identify_vendor(device_name: str, vendor_str: str = "") -> str:
         return "amd"
 
     # Intel
-    elif (
+    if (
         "intel" in vendor_lower
         or "intel" in name_lower
         or "iris" in name_lower
@@ -108,8 +109,7 @@ def identify_vendor(device_name: str, vendor_str: str = "") -> str:
         return "intel"
 
     # 未知
-    else:
-        return "unknown"
+    return "unknown"
 
 
 def _identify_nvidia_model(name_lower: str) -> str:
@@ -164,8 +164,7 @@ def _identify_intel_model(name_lower: str) -> str:
 
 
 def identify_gpu_model(device_name: str, vendor: str) -> str:
-    """
-    识别GPU型号
+    """识别GPU型号
 
     Args:
         device_name: 设备名称
@@ -173,6 +172,7 @@ def identify_gpu_model(device_name: str, vendor: str) -> str:
 
     Returns:
         GPU型号标识
+
     """
     name_lower = device_name.lower()
     vendor_lower = vendor.lower()
@@ -206,13 +206,13 @@ class GPUDeviceDetector:
 
     @staticmethod
     def is_gpu_available() -> bool:
-        """
-        检查GPU是否可用
+        """检查GPU是否可用
 
         使用缓存机制避免频繁检测，缓存有效期60秒。
 
         Returns:
             True如果GPU可用
+
         """
         import time
 
@@ -268,8 +268,7 @@ class GPUDeviceDetector:
 
     @staticmethod
     def get_gpu_health_status() -> dict:
-        """
-        获取GPU健康状态信息
+        """获取GPU健康状态信息
 
         用于监控系统和运维诊断，提供详细的GPU状态信息。
         复用is_gpu_available()的缓存，避免重复检测。
@@ -281,6 +280,7 @@ class GPUDeviceDetector:
                 - devices (List[str]): 设备名称列表
                 - status (str): 健康状态 ('healthy'/'unavailable'/'error')
                 - error (str, optional): 错误信息（仅在status='error'时存在）
+
         """
         import time
 
@@ -311,13 +311,12 @@ class GPUDeviceDetector:
                     "devices": device_names,
                     "status": "healthy",
                 }
-            else:
-                return {
-                    "available": False,
-                    "device_count": 0,
-                    "devices": [],
-                    "status": "unavailable",
-                }
+            return {
+                "available": False,
+                "device_count": 0,
+                "devices": [],
+                "status": "unavailable",
+            }
         except Exception as e:
             logger.error(f"GPU健康检查失败: {type(e).__name__}: {e}")
             return {
@@ -330,8 +329,7 @@ class GPUDeviceDetector:
 
     @staticmethod
     def clear_availability_cache() -> None:
-        """
-        清除GPU可用性缓存和设备信息缓存
+        """清除GPU可用性缓存和设备信息缓存
 
         在GPU状态可能发生变化时调用（如驱动更新、设备插拔），
         强制下次is_gpu_available()重新检测。
@@ -344,8 +342,7 @@ class GPUDeviceDetector:
 
     @staticmethod
     def detect_devices() -> list[dict]:
-        """
-        检测所有可用的GPU设备
+        """检测所有可用的GPU设备
 
         过滤规则:
         1. 跳过CPU设备
@@ -354,6 +351,7 @@ class GPUDeviceDetector:
 
         Returns:
             设备信息列表
+
         """
         if not PYOPENCL_AVAILABLE:
             logger.warning("pyopencl不可用,无法检测设备")
@@ -373,7 +371,7 @@ class GPUDeviceDetector:
                         # 过滤掉CPU设备
                         if device_type == cl.device_type.CPU:
                             cpu_name = device.get_info(cl.device_info.NAME)
-                            logger.debug(f"跳过CPU设备: {cpu_name}")
+                            logger.debug("跳过CPU设备: %s", cpu_name)
                             continue
 
                         # 只保留GPU设备
@@ -381,7 +379,7 @@ class GPUDeviceDetector:
                             continue
 
                         device_name = device.get_info(cl.device_info.NAME)
-                        device_name_lower = cast(str, device_name).lower()
+                        device_name_lower = cast("str", device_name).lower()
 
                         # 过滤掉核显/亮机显卡
                         if "intel" in device_name_lower and (
@@ -389,7 +387,7 @@ class GPUDeviceDetector:
                             or "uhd graphics" in device_name_lower
                             or "iris" in device_name_lower
                         ):
-                            logger.debug(f"跳过核显设备: {device_name}")
+                            logger.debug("跳过核显设备: %s", device_name)
                             continue
 
                         # COMP-2: 查询 OpenCL 版本信息
@@ -420,10 +418,10 @@ class GPUDeviceDetector:
                         devices.append(device_info)
 
                 except Exception as e:
-                    logger.warning(f"获取平台设备时出错: {e}")
+                    logger.warning("获取平台设备时出错: %s", e)
 
         except Exception as e:
-            logger.error(f"检测OpenCL设备失败: {e}")
+            logger.error("检测OpenCL设备失败: %s", e)
 
         logger.info(f"检测到 {len(devices)} 个GPU设备")
         return devices
@@ -440,6 +438,7 @@ class GPUDeviceDetector:
 
         Returns:
             最佳设备信息
+
         """
         if not devices:
             raise RuntimeError("没有可用的GPU设备")
@@ -472,18 +471,36 @@ class GPUDeviceDetector:
             f"自动选择最佳设备: {best_device['name']}\n"
             f"  - 显存: {best_device.get('global_mem_size', 0) / (1024**3):.1f} GB\n"
             f"  - 计算单元: {best_device.get('max_compute_units', 'N/A')}\n"
-            f"  - 统一评分: {best_device.get('_score', 0):.1f}"
+            f"  - 统一评分: {best_device.get('_score', 0):.1f}",
         )
 
         return best_device
 
 
 class GPUDevice:
-    """
-    GPU设备封装类
+    """GPU设备封装类
 
     保持与现有gpu_engine.py和gpu_collision_engine.py的API完全兼容
     """
+
+    __slots__ = (
+        "context",
+        "queue",
+        "compute_queue",
+        "transfer_queue",
+        "device",
+        "device_info",
+        "vendor",
+        "profile",
+        "profile_loader",
+        "driver_version",
+        "driver_health",
+        "driver_optimization_flags",
+        "enable_async_execution",
+        "_opencl_version",
+        "_opencl_version_str",
+        "_supports_svm",
+    )
 
     def __init__(self) -> None:
         """初始化GPU设备对象"""
@@ -512,14 +529,14 @@ class GPUDevice:
         self._supports_svm = False
 
     def initialize(self, device_index: int = -1, enable_async: bool = True) -> None:
-        """
-        初始化GPU设备
+        """初始化GPU设备
 
         Args:
             device_index: 设备索引
                          -1 = 自动选择最佳设备
                          >=0 = 使用指定索引的设备
             enable_async: 是否启用异步执行(双队列), 默认True开启双缓冲优化
+
         """
         # 设置异步标志
         self.enable_async_execution = enable_async
@@ -547,16 +564,15 @@ class GPUDevice:
                 ]
                 raise ValueError(
                     f"设备索引 {device_index} 超出范围 (0-{len(devices) - 1})\n可用设备:\n"
-                    + "\n".join(available)
+                    + "\n".join(available),
                 )
-            else:
-                device_info = devices[device_index]
-                logger.info(f"使用指定GPU设备 [{device_index}]: {device_info['name']}")
+            device_info = devices[device_index]
+            logger.info(f"使用指定GPU设备 [{device_index}]: {device_info['name']}")
 
         else:
             # 其他负数索引,视为无效
             raise ValueError(
-                f"无效的设备索引 {device_index}\n有效值: -1(自动选择) 或 0-{len(devices) - 1}(指定设备)"
+                f"无效的设备索引 {device_index}\n有效值: -1(自动选择) 或 0-{len(devices) - 1}(指定设备)",
             )
 
         # 保存设备对象
@@ -576,15 +592,15 @@ class GPUDevice:
 
         logger.info(
             f"COMP-2: OpenCL 版本检测 — 平台: {opencl_version_str}, "
-            f"设备: {opencl_c_version_str}, 解析: {self._opencl_version:.1f}"
+            f"设备: {opencl_c_version_str}, 解析: {self._opencl_version:.1f}",
         )
 
         # 按版本分级处理
         if self._opencl_version < OPENCL_MIN_REQUIRED_VERSION:
             # OpenCL < 1.2: 不兼容，给出明确提示但不崩溃
-            vendor_for_advice = identify_vendor(device_info.get("name", ""), cast(str, self.vendor))
+            vendor_for_advice = identify_vendor(device_info.get("name", ""), cast("str", self.vendor))
             upgrade_info = OPENCL_UPGRADE_ADVICE.get(
-                vendor_for_advice, OPENCL_UPGRADE_ADVICE["unknown"]
+                vendor_for_advice, OPENCL_UPGRADE_ADVICE["unknown"],
             )
             logger.warning(
                 f"COMP-2: OpenCL 版本不兼容 (当前: {self._opencl_version:.1f}, "
@@ -593,7 +609,7 @@ class GPUDevice:
                 f"  最低要求: OpenCL {OPENCL_MIN_REQUIRED_VERSION}\n"
                 f"  推荐版本: OpenCL {OPENCL_RECOMMENDED_VERSION}+\n"
                 f"  升级建议 ({upgrade_info['description']}):\n"
-                f"    {upgrade_info['advice']}"
+                f"    {upgrade_info['advice']}",
             )
             self._supports_svm = False
         elif self._opencl_version < OPENCL_RECOMMENDED_VERSION:
@@ -601,28 +617,28 @@ class GPUDevice:
             logger.info(
                 f"COMP-2: OpenCL {self._opencl_version:.1f} — 兼容模式 (标准 buffer 映射)\n"
                 f"  不支持 SVM 共享虚拟内存 (需 OpenCL {OPENCL_RECOMMENDED_VERSION}+)\n"
-                f"  将使用标准 clCreateBuffer + clEnqueueMapBuffer 进行数据传输"
+                f"  将使用标准 clCreateBuffer + clEnqueueMapBuffer 进行数据传输",
             )
             self._supports_svm = False
         elif self._opencl_version >= OPENCL_OPTIMAL_VERSION:
             # OpenCL 3.0+: 完全支持，可使用 SVM
             logger.info(
                 f"COMP-2: OpenCL {self._opencl_version:.1f} — 完全兼容\n"
-                f"  SVM 共享虚拟内存: ✅ 可用 (OpenCL 2.0+)\n"
-                f"  Sub-groups (SIMD): ✅ 可用\n"
-                f"  Generic Address Space: ✅ 可用\n"
-                f"  Extended atomics: ✅ 可用"
+                f"  SVM 共享虚拟内存: [OK] 可用 (OpenCL 2.0+)\n"
+                f"  Sub-groups (SIMD): [OK] 可用\n"
+                f"  Generic Address Space: [OK] 可用\n"
+                f"  Extended atomics: [OK] 可用",
             )
             self._supports_svm = True
         else:
             # OpenCL 2.0 - 2.x: 支持 SVM
             logger.info(
-                f"COMP-2: OpenCL {self._opencl_version:.1f} — 完全兼容\n  SVM 共享虚拟内存: ✅ 可用"
+                f"COMP-2: OpenCL {self._opencl_version:.1f} — 完全兼容\n  SVM 共享虚拟内存: [OK] 可用",
             )
             self._supports_svm = True
 
         # 识别GPU型号
-        vendor_identifier = identify_vendor(device_info.get("name", ""), cast(str, self.vendor))
+        vendor_identifier = identify_vendor(device_info.get("name", ""), cast("str", self.vendor))
         gpu_model = identify_gpu_model(device_info.get("name", ""), vendor_identifier)
 
         # 构建设备信息字典
@@ -662,33 +678,41 @@ class GPUDevice:
         self._detect_and_validate_driver()
 
         # 创建OpenCL上下文和命令队列
-        self.context = cl.Context([self.device])  # type: ignore[assignment,list-item] # noqa: E501
+        self.context = cl.Context([self.device])
 
-        # 异步优化: 创建双队列(计算+传输)
+        # 异步优化: 创建队列
         if self.enable_async_execution:
-            logger.info("启用GPU异步执行: 创建双队列(计算+传输)")
-            # 计算队列 - 用于内核执行
-            self.compute_queue = cl.CommandQueue(  # type: ignore[assignment] # PyOpenCL C扩展
-                self.context,  # type: ignore[arg-type] # PyOpenCL C扩展
-                self.device,
-                properties=cl.command_queue_properties.PROFILING_ENABLE,
+            # v5.2.1: Intel Arc DG2 仅 1 个硬件队列，使用单 Out-of-Order 队列避免双队列序列化
+            vendor = identify_vendor(device_info.get("name", ""), cast("str", self.vendor))
+            ooo_prop = (
+                cl.command_queue_properties.PROFILING_ENABLE
+                | cl.command_queue_properties.OUT_OF_ORDER_EXEC_MODE_ENABLE
             )
-            # 传输队列 - 用于数据传输
-            self.transfer_queue = cl.CommandQueue(  # type: ignore[assignment] # PyOpenCL C扩展
-                self.context,  # type: ignore[arg-type] # PyOpenCL C扩展
-                self.device,
-                properties=cl.command_queue_properties.PROFILING_ENABLE,
-            )
-            # 向后兼容: 默认使用计算队列
-            self.queue = self.compute_queue
-            logger.info("  - 计算队列: 已创建(支持性能分析)")
-            logger.info("  - 传输队列: 已创建(支持异步传输)")
+            if vendor == "intel":
+                logger.info("启用GPU异步执行: Intel Arc 单 Out-of-Order 队列（DG2 numQueues=1）")
+                self.queue = cl.CommandQueue(
+                    self.context, self.device, properties=ooo_prop,
+                )
+                # Intel Arc: compute/transfer 共用同一 OOO 队列
+                self.compute_queue = self.queue
+                self.transfer_queue = self.queue
+                logger.info("  - 单 OOO 队列: 已创建（内核+传输共用，事件依赖保证顺序）")
+            else:
+                logger.info("启用GPU异步执行: 创建双队列(计算+传输)")
+                self.compute_queue = cl.CommandQueue(
+                    self.context, self.device, properties=ooo_prop,
+                )
+                self.transfer_queue = cl.CommandQueue(
+                    self.context, self.device, properties=ooo_prop,
+                )
+                self.queue = self.compute_queue
+                logger.info("  - 计算队列: 已创建(支持性能分析)")
+                logger.info("  - 传输队列: 已创建(支持异步传输)")
         else:
             # 传统模式: 单一队列
             self.queue = cl.CommandQueue(
-                self.context,  # type: ignore[arg-type]
-                self.device,  # type: ignore[arg-type]
-            )  # type: ignore[assignment] # noqa: E501
+                self.context, self.device,
+            )
             logger.info("使用传统单队列模式(同步执行)")
 
         logger.info(
@@ -701,15 +725,15 @@ class GPUDevice:
             f"  - 平台: {self.device_info['platform']}\n"
             f"  - OpenCL: {self._opencl_version:.1f} ({self._opencl_version_str})\n"
             f"  - SVM: {'可用' if self._supports_svm else '不可用'}\n"
-            f"  - 异步执行: {'已启用' if self.enable_async_execution else '未启用'}"
+            f"  - 异步执行: {'已启用' if self.enable_async_execution else '未启用'}",
         )
 
     def _validate_device_capabilities(self, device_info: dict):
-        """
-        验证设备能力是否满足最低要求
+        """验证设备能力是否满足最低要求
 
         Args:
             device_info: 设备信息
+
         """
         min_compute_units = 2
         min_global_mem = 512 * 1024 * 1024  # 512MB
@@ -720,7 +744,7 @@ class GPUDevice:
         # 检查计算单元
         if compute_units < min_compute_units:
             logger.warning(
-                f"设备计算单元过少: {compute_units} (建议 >= {min_compute_units}), 性能可能受限"
+                "设备计算单元过少: %s (建议 >= %s), 性能可能受限", compute_units, min_compute_units,
             )
 
         # 检查显存
@@ -728,20 +752,20 @@ class GPUDevice:
             logger.warning(
                 f"设备显存过小: {global_mem / (1024**2):.0f} MB "
                 f"(建议 >= {min_global_mem / (1024**2):.0f} MB), "
-                "可能需要减小batch_size"
+                "可能需要减小batch_size",
             )
 
         logger.debug(f"设备能力: 计算单元={compute_units}, 显存={global_mem / (1024**3):.2f} GB")
 
     def _load_vendor_profile(self, device_name: str):
-        """
-        加载厂商型号配置
+        """加载厂商型号配置
 
         Args:
             device_name: 设备名称
+
         """
         # 使用共享函数识别厂商
-        vendor = identify_vendor(device_name, cast(str, self.vendor))
+        vendor = identify_vendor(device_name, cast("str", self.vendor))
 
         # 加载配置
         self.profile = self.profile_loader.get_profile(vendor, device_name)
@@ -749,17 +773,16 @@ class GPUDevice:
         if self.profile:
             logger.info(
                 f"已加载GPU配置: {device_name} -> {vendor}, "
-                f"recommended_batch_size={self.profile.get('recommended_batch_size', 'N/A')}"
+                f"recommended_batch_size={self.profile.get('recommended_batch_size', 'N/A')}",
             )
         else:
-            logger.warning(f"未找到 {device_name} 的配置,使用默认参数")
+            logger.warning("未找到 %s 的配置,使用默认参数", device_name)
 
     def _detect_and_validate_driver(self):
-        """
-        检测驱动版本并验证健康状态
+        """检测驱动版本并验证健康状态
         """
         # 1. 检测驱动版本
-        self.driver_version = DriverManager.detect_driver_version(cast(str, self.vendor))
+        self.driver_version = DriverManager.detect_driver_version(cast("str", self.vendor))
 
         if not self.driver_version:
             logger.warning("无法检测GPU驱动版本")
@@ -767,34 +790,34 @@ class GPUDevice:
 
         # 2. 检查驱动健康状态
         self.driver_health = DriverManager.check_driver_health(
-            self.vendor, self.driver_version, self.profile
+            self.vendor, self.driver_version, self.profile,
         )
 
         # 3. 记录健康检查结果
         if self.driver_health["status"] == "critical":
             logger.error(f"GPU驱动健康检查失败: {self.driver_health['message']}")
             for rec in self.driver_health["recommendations"]:
-                logger.error(f"  建议: {rec}")
+                logger.error("  建议: %s", rec)
         elif self.driver_health["status"] == "warning":
             logger.warning(f"GPU驱动健康检查警告: {self.driver_health['message']}")
             for rec in self.driver_health["recommendations"]:
-                logger.warning(f"  建议: {rec}")
+                logger.warning("  建议: %s", rec)
         else:
             logger.info(f"GPU驱动版本: {self.driver_version}, 状态: 正常")
 
         # 4. 获取驱动优化标志
         self.driver_optimization_flags = DriverManager.get_driver_optimization_flags(
-            self.vendor, self.driver_version, self.profile
+            self.vendor, self.driver_version, self.profile,
         )
 
         logger.debug(f"驱动优化标志: {self.driver_optimization_flags}")
 
     def get_driver_info(self) -> dict:
-        """
-        获取驱动信息
+        """获取驱动信息
 
         Returns:
             驱动信息字典
+
         """
         return {
             "version": self.driver_version,
@@ -803,11 +826,11 @@ class GPUDevice:
         }
 
     def get_device_info(self) -> dict:
-        """
-        获取设备信息
+        """获取设备信息
 
         Returns:
             设备信息字典
+
         """
         return self.device_info.copy()
 
@@ -842,7 +865,7 @@ class GPUDevice:
                 elapsed = time.time() - start_time
                 logger.debug(f"{name}已完成所有命令 (耗时: {elapsed:.2f}秒)")
             except Exception as e:
-                logger.warning(f"{name}清理失败: {e}")
+                logger.warning("%s清理失败: %s", name, e)
 
         self.queue = None
         self.compute_queue = None
@@ -858,7 +881,7 @@ class GPUDevice:
                     elapsed = time.time() - start_time
                     logger.debug(f"GPU上下文已完成所有命令 (耗时: {elapsed:.2f}秒)")
             except Exception as e:
-                logger.warning(f"GPU上下文完成失败: {e}")
+                logger.warning("GPU上下文完成失败: %s", e)
             finally:
                 self.context = None
 

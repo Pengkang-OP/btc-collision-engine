@@ -1,137 +1,79 @@
-"""配置迁移工具 (ARCH-2修复)
+"""Configuration migration utilities.
 
-提供配置文件版本检测、迁移和兼容性检查功能。
-支持从旧版本配置格式自动迁移到最新格式。
+Migrates old config.json formats to the latest schema version,
+automatically backing up the original file.
 """
 
 import json
-import os
-from typing import Any
+import logging
+import shutil
+from datetime import datetime
+from pathlib import Path
 
-from ..utils import get_configured_logger
-
-logger = get_configured_logger("ConfigMigration")
-
-
-# 配置版本标识: 当 DEFAULT_CONFIG 结构性变更时递增
-CONFIG_VERSION_KEY = "_config_version"
-CURRENT_CONFIG_VERSION = 2
+logger = logging.getLogger(__name__)
 
 
-class ConfigMigration:
-    """配置迁移管理器"""
-
-    @staticmethod
-    def detect_config_version(config: dict[str, Any]) -> int:
-        """检测配置文件版本
-
-        Args:
-            config: 配置字典
-
-        Returns:
-            配置版本号，无版本标识返回 0
-        """
-        return config.get(CONFIG_VERSION_KEY, 0)
-
-    @staticmethod
-    def needs_migration(config: dict[str, Any]) -> bool:
-        """检查是否需要迁移
-
-        Args:
-            config: 配置字典
-
-        Returns:
-            需要迁移返回 True
-        """
-        return ConfigMigration.detect_config_version(config) < CURRENT_CONFIG_VERSION
-
-    @staticmethod
-    def migrate(config: dict[str, Any]) -> dict[str, Any]:
-        """执行配置迁移到最新版本
-
-        Args:
-            config: 旧版本配置
-
-        Returns:
-            迁移后的配置
-        """
-        version = ConfigMigration.detect_config_version(config)
-        migrated = dict(config)
-
-        if version < 1:
-            migrated = ConfigMigration._migrate_v0_to_v1(migrated)
-        if version < 2:
-            migrated = ConfigMigration._migrate_v1_to_v2(migrated)
-
-        migrated[CONFIG_VERSION_KEY] = CURRENT_CONFIG_VERSION
-        logger.info(
-            f"配置已从 v{version} 迁移到 v{CURRENT_CONFIG_VERSION}: "
-            f"{len(migrated)} 个配置项"
-        )
-        return migrated
-
-    @staticmethod
-    def _migrate_v0_to_v1(config: dict[str, Any]) -> dict[str, Any]:
-        """v0 → v1: 统一 engine/collision 节，补充缺失字段"""
-        result = dict(config)
-        # 合并 collision → engine（如果两者都存在）
-        collision = result.pop("collision", {}) or {}
-        engine = result.get("engine", {})
-        if collision and not engine:
-            result["engine"] = collision
-        elif collision and engine:
-            # 合并，collision 覆盖 engine
-            merged = dict(engine)
-            merged.update(collision)
-            result["engine"] = merged
-        return result
-
-    @staticmethod
-    def _migrate_v1_to_v2(config: dict[str, Any]) -> dict[str, Any]:
-        """v1 → v2: 标准化 monitoring 配置结构"""
-        result = dict(config)
-        monitoring = result.get("monitoring", {})
-        if isinstance(monitoring, dict):
-            if "storage_dir" not in monitoring:
-                monitoring["storage_dir"] = "data_logs"
-            if "auto_cleanup" not in monitoring:
-                monitoring["auto_cleanup"] = {
-                    "enabled": True,
-                    "max_age_days": 30,
-                }
-            result["monitoring"] = monitoring
-        return result
-
-
-def migrate_config_file(config_path: str) -> bool:
-    """迁移指定配置文件到最新版本（原地更新）
+def migrate_config_file(config_path: str | None = None) -> bool:
+    """Migrate config.json to the latest format.
 
     Args:
-        config_path: 配置文件路径
+        config_path: Path to config file, defaults to 'config.json' in project root.
 
     Returns:
-        迁移成功返回 True，无需迁移也返回 True
+        True if migration was performed, False if already up to date.
     """
-    if not os.path.exists(config_path):
-        logger.warning(f"配置文件不存在，跳过迁移: {config_path}")
+    if config_path is None:
+        config_path = str(Path(__file__).parent.parent.parent / "config.json")
+
+    src = Path(config_path)
+    if not src.exists():
+        logger.error("配置文件不存在: %s", src)
+        print(f"[ERROR] 配置文件不存在: {src}")
         return False
 
     try:
-        with open(config_path, encoding="utf-8") as f:
+        with open(src, "r", encoding="utf-8") as f:
             config = json.load(f)
-
-        if not ConfigMigration.needs_migration(config):
-            logger.debug(f"配置文件已是最新版本: {config_path}")
-            return True
-
-        migrated = ConfigMigration.migrate(config)
-
-        with open(config_path, "w", encoding="utf-8") as f:
-            json.dump(migrated, f, ensure_ascii=False, indent=2)
-
-        logger.info(f"配置文件迁移完成: {config_path}")
-        return True
-
     except (json.JSONDecodeError, OSError) as e:
-        logger.error(f"配置迁移失败: {config_path}: {e}")
+        logger.error("无法读取配置文件: %s — %s", src, e)
+        print(f"[ERROR] 配置文件读取失败: {e}")
         return False
+
+    # Check if migration is needed (based on version or missing keys)
+    version = config.get("version", "0.0.0")
+    needs_migration = False
+
+    # Add any missing sections that are required in the latest schema
+    required_sections = [
+        "engine", "collision", "logging", "monitoring",
+        "gpu", "optimization", "crypto",
+    ]
+
+    for section in required_sections:
+        if section not in config:
+            config[section] = {}
+            needs_migration = True
+            logger.info("添加缺失配置节: %s", section)
+
+    if not needs_migration:
+        logger.info("配置已是最新格式 (version=%s)", version)
+        print(f"[INFO] 配置文件已是最新格式 (version={version}), 无需迁移")
+        return False
+
+    # Backup original
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_path = src.parent / f"config.backup.{timestamp}.json"
+    shutil.copy2(src, backup_path)
+    logger.info("已备份原配置: %s", backup_path)
+    print(f"[OK] 原配置已备份至: {backup_path}")
+
+    # Update version
+    config["version"] = "5.0.0"
+
+    # Write migrated config
+    with open(src, "w", encoding="utf-8") as f:
+        json.dump(config, f, indent=2, ensure_ascii=False)
+
+    logger.info("配置迁移完成: %s", src)
+    print("[完成] 配置已迁移至最新格式")
+    return True

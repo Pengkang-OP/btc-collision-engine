@@ -16,11 +16,11 @@ print("=" * 60)
 for test, expected in test_cases:
     try:
         result = datetime.datetime.fromisoformat(test)
-        print(f"✅ {repr(test):30} -> {result}")
+        print(f"✅ {test!r:30} -> {result}")
     except Exception as e:
         actual = type(e).__name__
         status = "✅" if actual == expected else "⚠️"
-        print(f"{status} {repr(test):30} -> {actual}: {e}")
+        print(f"{status} {test!r:30} -> {actual}: {e}")
 
 print("\n" + "=" * 60)
 print("结论: fromisoformat()只抛出ValueError和TypeError")

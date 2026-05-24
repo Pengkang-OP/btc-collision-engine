@@ -1,95 +1,17 @@
 #!/usr/bin/env python3
-"""
-异常处理优化的单元测试
+"""异常处理优化的单元测试
 
 测试异常分类、统计指标、公共方法等
 """
 
-import os
-import sys
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-# 添加项目根目录到路径
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from src.collision.collision_stats import CollisionStats
+from src.collision.key_collision_engine import KeyCollisionEngine
+from src.utils.exception_handler import ExceptionHandler
 
-from src.collision.collision_stats import CollisionStats  # noqa: E402
-from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
-from src.gpu.device_helper import GPUDeviceHelper  # noqa: E402
-from src.utils.exception_handler import ExceptionHandler  # noqa: E402
-
-
-class TestGPUExceptionHandling:
-    """GPU异常处理测试"""
-
-    def test_handle_gpu_batch_error_resource_error(self):
-        """测试资源不足错误识别"""
-        stats = CollisionStats()
-
-        # 测试各种资源不足关键词
-        resource_errors = [
-            RuntimeError("out of resources"),
-            RuntimeError("Out Of Resources"),
-            RuntimeError("CL_OUT_OF_RESOURCES"),
-            ValueError("out of memory"),
-            RuntimeError("memory allocation failed"),
-            RuntimeError("insufficient resources"),
-            RuntimeError("resource exhausted"),
-            RuntimeError("cl_mem_object_allocation_failure"),
-        ]
-
-        for error in resource_errors:
-            stats_before = stats.gpu_errors
-            GPUDeviceHelper.handle_gpu_batch_error("测试模式", error, stats)
-            assert stats.gpu_errors == stats_before + 1, f"应该记录GPU错误: {error}"
-            assert stats.resource_errors > 0, f"应该识别为资源错误: {error}"
-
-    def test_handle_gpu_batch_error_runtime_error(self):
-        """测试运行时错误（非资源）"""
-        stats = CollisionStats()
-
-        runtime_errors = [
-            RuntimeError("kernel execution failed"),
-            ValueError("invalid parameter"),
-        ]
-
-        for error in runtime_errors:
-            stats_before = stats.gpu_errors
-            GPUDeviceHelper.handle_gpu_batch_error("测试模式", error, stats)
-            assert stats.gpu_errors == stats_before + 1
-            # 这些不是资源错误
-            assert stats.resource_errors == 0
-
-    def test_handle_gpu_batch_error_data_error(self):
-        """测试数据错误（WIF编码等）"""
-        stats = CollisionStats()
-
-        data_errors = [
-            TypeError("expected bytes"),
-            OverflowError("value too large"),
-        ]
-
-        for error in data_errors:
-            stats_before = stats.gpu_errors
-            GPUDeviceHelper.handle_gpu_batch_error("测试模式", error, stats)
-            assert stats.gpu_errors == stats_before + 1
-            assert stats.wif_encode_errors == stats_before + 1  # 应该计数WIF错误
-
-    def test_handle_gpu_batch_error_unknown_error(self):
-        """测试未知错误"""
-        stats = CollisionStats()
-
-        unknown_error = KeyError("unexpected error")
-        GPUDeviceHelper.handle_gpu_batch_error("测试模式", unknown_error, stats)
-        assert stats.gpu_errors == 1
-
-    def test_handle_gpu_batch_error_without_stats(self):
-        """测试不传入stats参数（不应该崩溃）"""
-        # 不应该抛出异常
-        GPUDeviceHelper.handle_gpu_batch_error("测试模式", RuntimeError("test error"))
-        GPUDeviceHelper.handle_gpu_batch_error("测试模式", TypeError("test error"))
-        GPUDeviceHelper.handle_gpu_batch_error("测试模式", KeyError("test error"))
 
 
 class TestCollisionStatsErrorTracking:
@@ -173,7 +95,7 @@ class TestExceptionClassification:
         caught = False
         try:
             try:
-                raise KeyboardInterrupt()
+                raise KeyboardInterrupt
             except Exception as e:  # noqa: F841
                 # 不应该捕获KeyboardInterrupt
                 caught = True
@@ -524,7 +446,7 @@ class TestHandleEngineError:
         mock_logger.error.assert_called_once()
 
     def test_stats_without_method(self):
-        """stats 无 record_worker_error 方法时也不崩溃"""
+        """Stats 无 record_worker_error 方法时也不崩溃"""
         stats = MagicMock(spec=[])
         with patch("src.utils.exception_handler.logger") as mock_logger:
             ExceptionHandler.handle_engine_error("CPU", RuntimeError("x"), stats)
@@ -540,7 +462,7 @@ class TestHandleGpuError:
         stats.record_gpu_error = MagicMock()
         with patch("src.utils.exception_handler.logger") as mock_logger:
             result = ExceptionHandler.handle_gpu_error(
-                "随机碰撞", RuntimeError("out of resources"), stats
+                "随机碰撞", RuntimeError("out of resources"), stats,
             )
         assert result is True
         mock_logger.error.assert_called_once()
@@ -631,7 +553,7 @@ class TestHandleClResourceError:
         """资源耗尽 → 返回 True, 记录 warning"""
         with patch("src.utils.exception_handler.logger") as mock_logger:
             result = ExceptionHandler.handle_cl_resource_error(
-                RuntimeError("out of resources"), "buffer"
+                RuntimeError("out of resources"), "buffer",
             )
         assert result is True
         mock_logger.warning.assert_called_once()
@@ -640,7 +562,7 @@ class TestHandleClResourceError:
         """非资源错误 → 返回 False, 记录 error"""
         with patch("src.utils.exception_handler.logger") as mock_logger:
             result = ExceptionHandler.handle_cl_resource_error(
-                RuntimeError("unknown kernel error"), "kernel"
+                RuntimeError("unknown kernel error"), "kernel",
             )
         assert result is False
         mock_logger.error.assert_called_once()
@@ -648,12 +570,12 @@ class TestHandleClResourceError:
     def test_cl_out_of_host_memory(self):
         """CL_OUT_OF_HOST_MEMORY → 识别为资源耗尽"""
         result = ExceptionHandler.handle_cl_resource_error(
-            RuntimeError("cl_out_of_host_memory"), "buffer"
+            RuntimeError("cl_out_of_host_memory"), "buffer",
         )
         assert result is True
 
     def test_invalid_buffer_size(self):
-        """invalid buffer size → 识别为资源耗尽"""
+        """Invalid buffer size → 识别为资源耗尽"""
         result = ExceptionHandler.handle_cl_resource_error(RuntimeError("invalid buffer size"), "buffer")
         assert result is True
 

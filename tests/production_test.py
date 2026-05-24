@@ -1,24 +1,18 @@
 #!/usr/bin/env python3
-"""
-生产模式测试脚本
+"""生产模式测试脚本
 
 此脚本用于测试系统在生产环境下的性能和稳定性，包括更大的任务量、更长的运行时间、更复杂的目标地址集合等。
 """
 
-import os
-import sys
 import time
 
-# 添加项目根目录到Python路径
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-import pytest  # noqa: E402
+import pytest
 
 pytestmark = pytest.mark.gpu  # 需要真实GPU硬件
 
-from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
-from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine  # noqa: E402
-from src.utils import get_configured_logger, init_logging  # noqa: E402
+from src.collision.gpu.engine import GPUCollisionEngine
+from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
+from src.utils import get_configured_logger, init_logging
 
 # 配置日志
 init_logging()
@@ -69,12 +63,12 @@ def test_single_gpu_production():
 
         # 获取统计信息
         stats = engine.get_stats()
-        logger.info(f"碰撞检测统计: {stats}")
+        logger.info("碰撞检测统计: %s", stats)
 
         logger.info("✅ 单GPU生产模式测试成功")
         return True
     except Exception as e:
-        logger.error(f"❌ 单GPU生产模式测试失败: {e}")
+        logger.error("❌ 单GPU生产模式测试失败: %s", e)
         import traceback
 
         traceback.print_exc()
@@ -85,7 +79,7 @@ def test_single_gpu_production():
                 engine.stop()
                 logger.info("单GPU引擎已停止")
             except Exception as e:
-                logger.warning(f"停止引擎时出现错误: {e}")
+                logger.warning("停止引擎时出现错误: %s", e)
 
 
 def test_multi_gpu_production():
@@ -130,7 +124,7 @@ def test_multi_gpu_production():
         logger.info("开始运行生产模式碰撞检测任务，持续60秒...")
 
         start_result = engine.start(
-            targets=test_targets, mode="random", total_keys=100000000
+            targets=test_targets, mode="random", total_keys=100000000,
         )  # 1亿次碰撞检测
         if not start_result:
             logger.error("❌ 多GPU碰撞检测启动失败")
@@ -147,12 +141,12 @@ def test_multi_gpu_production():
 
         # 获取统计信息
         stats = engine.get_combined_stats()
-        logger.info(f"碰撞检测统计: {stats}")
+        logger.info("碰撞检测统计: %s", stats)
 
         logger.info("✅ 多GPU生产模式测试成功")
         return True
     except Exception as e:
-        logger.error(f"❌ 多GPU生产模式测试失败: {e}")
+        logger.error("❌ 多GPU生产模式测试失败: %s", e)
         import traceback
 
         traceback.print_exc()
@@ -163,7 +157,7 @@ def test_multi_gpu_production():
                 engine.stop()
                 logger.info("多GPU引擎已停止")
             except Exception as e:
-                logger.warning(f"停止引擎时出现错误: {e}")
+                logger.warning("停止引擎时出现错误: %s", e)
 
 
 def main():
@@ -180,7 +174,7 @@ def main():
         else:
             logger.error("❌ 生产模式测试部分失败")
     except Exception as e:
-        logger.error(f"❌ 测试过程中出现错误: {e}")
+        logger.error("❌ 测试过程中出现错误: %s", e)
         import traceback
 
         traceback.print_exc()

@@ -13,6 +13,7 @@ def calculate_trend(
 
     Returns:
         Slope of the linear regression
+
     """
     n = len(values)
     if n < 2:
@@ -36,5 +37,6 @@ def is_trending_up(
 
     Returns:
         True if slope exceeds threshold
+
     """
     return calculate_trend(values) > threshold

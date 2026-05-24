@@ -58,6 +58,7 @@ class GPUBatchScheduler:
 
         Args:
             engine: GPUCollisionEngine 实例引用
+
         """
         self._engine = engine
 
@@ -89,13 +90,13 @@ class GPUBatchScheduler:
             # 防止除零：在 Mock/极速环境下 execution_time 可能为 0
             if execution_time <= 0:
                 raise ZeroDivisionError(
-                    f"execution_time 为 {execution_time}，疑似 Mock 或无实际计算"
+                    f"execution_time 为 {execution_time}，疑似 Mock 或无实际计算",
                 )
             actual_speed = test_batch_size / execution_time
             engine._dynamic_speed_benchmark = actual_speed * 0.8
             logger.info(f"动态性能基准计算完成: {engine._dynamic_speed_benchmark:.0f} keys/s")
         except Exception as e:
-            logger.warning(f"动态性能基准计算失败，使用默认值: {e}")
+            logger.warning("动态性能基准计算失败，使用默认值: %s", e)
 
     # ========== 内存泄漏检查 ==========
 
@@ -110,12 +111,12 @@ class GPUBatchScheduler:
                     stats = engine._gpu_kernel._buffer_tracker.get_stats()
                     logger.debug(f"内存检查: {stats['count']}个缓冲区, {stats['total_size_mb']:.2f} MB")
                 except Exception as e:
-                    logger.error(f"内存泄漏检查失败: {e}", exc_info=True)
+                    logger.error("内存泄漏检查失败: %s", e, exc_info=True)
 
     # ========== GPU 批次执行 ==========
 
     def execute_batch(
-        self, seed: bytes, batch_size: int, batch_num: int
+        self, seed: bytes, batch_size: int, batch_num: int,
     ) -> tuple[list[dict[str, int]], float]:
         """执行 GPU batch 计算
 
@@ -129,9 +130,10 @@ class GPUBatchScheduler:
 
         Returns:
             (matches, execution_time_ms) 元组
+
         """
         if batch_num <= INITIAL_BATCHES_LOG or batch_num % BATCH_LOG_FREQUENCY == 0:
-            logger.debug(f"GPU batch {batch_num}: 运行 run_batch (size={batch_size})...")
+            logger.debug("GPU batch %s: 运行 run_batch (size=%s)...", batch_num, batch_size)
 
         # P2-3.2修复: 瞬态错误重试循环（DEF-2增强: 集成ErrorRecoveryManager追踪）
         # W1重构: 合并RuntimeError/MemoryError与通用Exception的重试逻辑
@@ -178,7 +180,7 @@ class GPUBatchScheduler:
                 logger.warning(
                     f"GPU batch {batch_num}: 瞬态错误重试 "
                     f"{retry + 1}/{GPU_BATCH_MAX_RETRIES}, "
-                    f"退避 {backoff:.3f}s: {type(e).__name__}: {e}"
+                    f"退避 {backoff:.3f}s: {type(e).__name__}: {e}",
                 )
                 time.sleep(backoff)
 
@@ -186,7 +188,7 @@ class GPUBatchScheduler:
         raise RuntimeError("BUG: execute_batch retry loop exhausted without result") from last_error
 
     def execute_batch_once(
-        self, seed: bytes, batch_size: int, batch_num: int
+        self, seed: bytes, batch_size: int, batch_num: int,
     ) -> tuple[list[dict[str, int]], float]:
         """单次 GPU batch 执行（由 execute_batch 调用）
 
@@ -197,6 +199,7 @@ class GPUBatchScheduler:
 
         Returns:
             (matches, execution_time_ms) 元组
+
         """
         engine = self._engine
         batch_start_time = time.time()
@@ -205,7 +208,7 @@ class GPUBatchScheduler:
             matches: list[dict[str, int]] = []
             if engine._gpu_kernel is not None:
                 if hasattr(engine._gpu_kernel, "program") and hasattr(
-                    engine._gpu_kernel, "_targets_buf"
+                    engine._gpu_kernel, "_targets_buf",
                 ):
                     try:
                         matches, execution_time_ms = engine._async_executor.run_batch_async(
@@ -216,14 +219,14 @@ class GPUBatchScheduler:
                             len(engine.targets),
                         )
                     except Exception as e:
-                        logger.warning(f"异步执行失败，回退到同步模式: {e}")
+                        logger.warning("异步执行失败，回退到同步模式: %s", e)
                         matches = engine._gpu_kernel.run_batch(
-                            seed, batch_size, stop_event=engine._stop_event
+                            seed, batch_size, stop_event=engine._stop_event,
                         )
                         execution_time_ms = (time.time() - batch_start_time) * 1000
                 else:
                     matches = engine._gpu_kernel.run_batch(
-                        seed, batch_size, stop_event=engine._stop_event
+                        seed, batch_size, stop_event=engine._stop_event,
                     )
                     execution_time_ms = (time.time() - batch_start_time) * 1000
             else:
@@ -241,7 +244,7 @@ class GPUBatchScheduler:
         if execution_time_ms > threshold_ms:
             logger.warning(
                 f"PERF-1警告: GPU batch {batch_num} 执行时间过长 "
-                f"({execution_time_ms:.0f}ms > {threshold_ms:.0f}ms)"
+                f"({execution_time_ms:.0f}ms > {threshold_ms:.0f}ms)",
             )
 
         self.check_memory_leaks()
@@ -266,13 +269,13 @@ class GPUBatchScheduler:
                 memory_allocated_mb=memory_mb,
             )
         except Exception as e:
-            logger.debug(f"记录GPU性能指标失败: {e}")
+            logger.debug("记录GPU性能指标失败: %s", e)
 
     def record_adjustment(self, old_size: int, new_size: int, reason: str, details: str = "") -> None:
         """记录调整历史"""
         engine = self._engine
         engine._engine_monitor.record_adjustment(
-            old_size=old_size, new_size=new_size, reason=reason, details=details
+            old_size=old_size, new_size=new_size, reason=reason, details=details,
         )
 
     # ========== 自适应批大小 ==========
@@ -300,7 +303,7 @@ class GPUBatchScheduler:
                 engine._adaptive_error_count = 0
                 logger.warning(
                     f"自适应调整: 错误率过高({error_rate:.2%})，"
-                    f"降低batch_size: {old_batch_size:,} -> {new_size:,}"
+                    f"降低batch_size: {old_batch_size:,} -> {new_size:,}",
                 )
         else:
             gpu_utilization = None
@@ -316,7 +319,7 @@ class GPUBatchScheduler:
                     engine.batch_size = new_size
                     logger.info(
                         f"自适应调整: GPU利用率低({gpu_utilization:.0%})，"
-                        f"增大batch_size: {old_batch_size:,} -> {new_size:,}"
+                        f"增大batch_size: {old_batch_size:,} -> {new_size:,}",
                     )
 
     # ========== 进度与断点 ==========
@@ -327,7 +330,7 @@ class GPUBatchScheduler:
         current_time = time.time()
         if current_time - engine._last_progress_time < engine._progress_interval_sec:
             return
-        logger.debug(f"GPU 进度回调: batch_count={batch_count}")
+        logger.debug("GPU 进度回调: batch_count=%s", batch_count)
 
         assert engine.stats is not None
         stats_snapshot = engine.stats.snapshot()
@@ -371,18 +374,19 @@ class GPUBatchScheduler:
                 if new_batch_size != current_batch_size and adjustments:
                     reason = list(adjustments.keys())[0]
                     logger.info(
-                        f"自适应优化: batch_size {current_batch_size} -> {new_batch_size} ({reason})"
+                        "自适应优化: batch_size %s -> %s (%s)",
+                        current_batch_size, new_batch_size, reason,
                     )
                     engine.batch_size = new_batch_size
         except Exception as adjust_error:
-            logger.debug(f"自适应调整失败: {adjust_error}")
+            logger.debug("自适应调整失败: %s", adjust_error)
 
         self.maybe_adjust_batch_size()
 
     def save_checkpoint(self, count: int) -> None:
         """保存断点"""
         engine = self._engine
-        if engine.checkpoint_mgr and engine.checkpoint_mgr.should_auto_save():
+        if engine.checkpoint_mgr and engine.checkpoint_mgr.should_auto_save:
             matches_list = [
                 {
                     "private_key_hash": m["private_key_hash"],
@@ -390,15 +394,15 @@ class GPUBatchScheduler:
                 }
                 for m in engine.stats.matches
             ]
-            engine.checkpoint_mgr.save(
-                mode=engine._current_mode,
-                targets=engine.targets,
-                current_position=engine._current_position,
-                total_checked=count,
-                matches=matches_list,
-                range_start=engine._range_start,
-                range_end=engine._range_end,
-            )
+            engine.checkpoint_mgr.save({
+                "mode": engine._current_mode,
+                "targets": list(engine.targets),
+                "current_position": engine._current_position,
+                "total_checked": count,
+                "matches": matches_list,
+                "range_start": engine._range_start,
+                "range_end": engine._range_end,
+            })
 
     # ========== GPU 缓冲区调整 ==========
 
@@ -433,6 +437,6 @@ class GPUBatchScheduler:
             logger.info(f"GPU缓冲区调整完成: {new_batch_size:,}")
             self.record_adjustment(old_batch_size, new_batch_size, "buffer_resize")
         except Exception as e:
-            logger.error(f"GPU缓冲区调整失败: {e}", exc_info=True)
+            logger.error("GPU缓冲区调整失败: %s", e, exc_info=True)
             if engine._gpu_kernel:
                 engine.batch_size = engine._gpu_kernel._max_batch_size

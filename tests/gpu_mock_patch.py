@@ -11,18 +11,13 @@
     使用正确的patch策略，确保cl.Buffer能够接受任意参数组合。
 """
 
-import os
-import sys
 from unittest.mock import Mock, patch
 
 import pytest
 
 pytestmark = pytest.mark.gpu
 
-# 添加项目根目录到路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-
-from tests.gpu_mock_factory import GPUMockFactory  # noqa: E402
+from tests.gpu_mock_factory import GPUMockFactory
 
 
 def patch_pyopencl_buffer_for_test(test_func):

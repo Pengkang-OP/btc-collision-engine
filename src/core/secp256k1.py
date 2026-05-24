@@ -21,9 +21,9 @@ import warnings
 from typing import Any, cast
 
 __all__ = [
-    "Secp256k1",
     "ECPoint",
     "EllipticCurve",
+    "Secp256k1",
     # generate_public_key 是 EllipticCurve 的实例方法，非模块级函数，不在此导出
     # scalar_multiply_const_time 是 EllipticCurve 的实例方法，非模块级函数，不在此导出
     # 以下故意未导出，以防止非恒定时间使用:
@@ -33,8 +33,7 @@ __all__ = [
 
 
 class Secp256k1:
-    """
-    secp256k1 椭圆曲线参数类
+    """secp256k1 椭圆曲线参数类
 
     定义比特币使用的secp256k1椭圆曲线的所有数学参数。
     曲线方程: y² = x³ + 7 (mod p)
@@ -73,6 +72,7 @@ class Secp256k1:
 
         Returns:
             True如果所有参数正确
+
         """
         # P/N 精确常量值（secp256k1 标准参数，经比特币社区充分审计）
         _p_expected = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
@@ -118,6 +118,7 @@ class Secp256k1:
 
         Returns:
             True 如果 n 很可能为素数
+
         """
         if n < 2:
             return False
@@ -132,7 +133,7 @@ class Secp256k1:
                 _logger.error("secp256k1 曲线参数验证失败: N*G != 无穷远点")
                 return False
         except Exception as e:
-            _logger.error(f"N*G 验证执行异常: {e}")
+            _logger.error("N*G 验证执行异常: %s", e)
             return False
 
         if Secp256k1.N >= Secp256k1.P:
@@ -185,8 +186,7 @@ class Secp256k1:
 
 
 class ECPoint:
-    """
-    ⚠️ 教学参考实现 — 不应在生产环境中使用
+    """⚠️ 教学参考实现 — 不应在生产环境中使用
     =========================================
     本类为 secp256k1 椭圆曲线的**教学参考实现**。
     Python 层面无法保证完全的恒定时间执行和侧信道防护。
@@ -208,8 +208,7 @@ class ECPoint:
     """
 
     def __init__(self, x: int | None, y: int | None, curve: Any = Secp256k1) -> None:
-        """
-        初始化椭圆曲线点
+        """初始化椭圆曲线点
 
         参数:
             x: x坐标，None表示无穷远点
@@ -221,9 +220,8 @@ class ECPoint:
         self.curve = curve
         self.is_infinity = x is None or y is None
 
-    def __eq__(self, other: Any) -> bool:
-        """
-        判断两个点是否相等
+    def __eq__(self, other: object) -> bool:
+        """判断两个点是否相等
 
         参数:
             other: 另一个ECPoint对象
@@ -240,8 +238,7 @@ class ECPoint:
         return self.x == other.x and self.y == other.y
 
     def __repr__(self) -> str:
-        """
-        返回点的字符串表示
+        """返回点的字符串表示
 
         返回:
             点的十六进制坐标表示或"Infinity"
@@ -251,8 +248,7 @@ class ECPoint:
         return f"ECPoint(x={self.x:064x}, y={self.y:064x})"
 
     def copy(self) -> "ECPoint":
-        """
-        创建点的副本
+        """创建点的副本
 
         返回:
             当前点的深拷贝
@@ -261,8 +257,7 @@ class ECPoint:
 
 
 class EllipticCurve:
-    """
-    ⚠️ 教学参考实现 — 不应在生产环境中使用
+    """⚠️ 教学参考实现 — 不应在生产环境中使用
     =========================================
     本类为 secp256k1 椭圆曲线的**教学参考实现**。
     Python 层面无法保证完全的恒定时间执行和侧信道防护。
@@ -282,8 +277,7 @@ class EllipticCurve:
     """
 
     def __init__(self, curve: Any = Secp256k1) -> None:
-        """
-        初始化椭圆曲线运算器
+        """初始化椭圆曲线运算器
 
         参数:
             curve: 椭圆曲线参数类，默认Secp256k1
@@ -291,8 +285,7 @@ class EllipticCurve:
         self.curve = curve
 
     def mod_inverse(self, a: int, m: int) -> int:
-        """
-        计算模逆元（扩展欧几里得算法）
+        """计算模逆元（扩展欧几里得算法）
 
         计算a在模m下的乘法逆元，即找到x使得 (a * x) % m = 1
 
@@ -340,8 +333,7 @@ class EllipticCurve:
         return t
 
     def mod_inverse_const_time(self, a: int, m: int) -> int:
-        """
-        计算模逆元（恒定时间实现，基于Fermat小定理）
+        """计算模逆元（恒定时间实现，基于Fermat小定理）
 
         当m为素数时，使用Fermat小定理 a^(m-2) mod m 计算模逆元。
         此实现是恒定时间的，因为：
@@ -398,8 +390,7 @@ class EllipticCurve:
         return result
 
     def point_add(self, p1: ECPoint, p2: ECPoint) -> ECPoint:
-        """
-        椭圆曲线点加法
+        """椭圆曲线点加法
 
         计算两个椭圆曲线点的和。处理以下情况：
         - 任一点为无穷远点
@@ -465,8 +456,7 @@ class EllipticCurve:
         return ECPoint(x3, y3, self.curve)
 
     def is_on_curve(self, point: ECPoint) -> bool:
-        """
-        验证点是否在椭圆曲线上
+        """验证点是否在椭圆曲线上
 
         检查点是否满足曲线方程: y² = x³ + ax + b (mod p)
         对于secp256k1: y² = x³ + 7 (mod p)
@@ -522,7 +512,7 @@ class EllipticCurve:
         """
         raise RuntimeError(
             "scalar_multiply() 非恒定时间实现已被永久禁用。\n"
-            "请使用 scalar_multiply_const_time() 替代。\n"
+            "请使用 scalar_multiply_const_time() 替代。\n",
         )
 
         # 确保k为正数且在曲线阶范围内
@@ -546,8 +536,7 @@ class EllipticCurve:
         return result
 
     def _const_time_select(self, condition: int, a: ECPoint, b: ECPoint) -> ECPoint:
-        """
-        恒定时间条件选择 (P1-1 修复版)
+        """恒定时间条件选择 (P1-1 修复版)
 
         如果 condition == 0: 返回 a
         如果 condition == 1: 返回 b
@@ -581,10 +570,10 @@ class EllipticCurve:
         mask = -condition
 
         # 将无穷远点映射为 (0, 0) 以参与位运算
-        a_x = 0 if a.is_infinity else cast(int, a.x)
-        a_y = 0 if a.is_infinity else cast(int, a.y)
-        b_x = 0 if b.is_infinity else cast(int, b.x)
-        b_y = 0 if b.is_infinity else cast(int, b.y)
+        a_x = 0 if a.is_infinity else cast("int", a.x)
+        a_y = 0 if a.is_infinity else cast("int", a.y)
+        b_x = 0 if b.is_infinity else cast("int", b.x)
+        b_y = 0 if b.is_infinity else cast("int", b.y)
 
         # 位掩码选择坐标（无分支）
         x = (a_x & ~mask) | (b_x & mask)
@@ -604,8 +593,7 @@ class EllipticCurve:
         return ECPoint(x, y, self.curve)
 
     def scalar_multiply_const_time(self, k: int, point: ECPoint) -> ECPoint:
-        """
-        ⚠️ 教学参考实现 — 不应在生产环境中使用
+        """⚠️ 教学参考实现 — 不应在生产环境中使用
         =========================================
         Python 层面无法保证完全的恒定时间执行。
         生产环境请使用 crypto_backend.py 中的优化后端（coincurve/OpenSSL）。
@@ -680,8 +668,7 @@ class EllipticCurve:
         return r0
 
     def generate_public_key(self, private_key: bytes | int, compressed: bool = True) -> bytes:
-        """
-        ⚠️ 教学参考实现 — 不应在生产环境中使用
+        """⚠️ 教学参考实现 — 不应在生产环境中使用
         =========================================
         Python 层面无法保证完全的恒定时间执行和侧信道防护。
         生产环境请使用 crypto_backend.py 中的优化后端（coincurve/OpenSSL）。
@@ -734,10 +721,9 @@ class EllipticCurve:
             prefix_byte = 2 + (1 - is_even)
             prefix = bytes([prefix_byte])
             return prefix + x_bytes
-        else:
-            # 非压缩格式: 0x04 + x坐标 + y坐标
-            y_bytes = public_point.y.to_bytes(32, "big")
-            return b"\x04" + x_bytes + y_bytes
+        # 非压缩格式: 0x04 + x坐标 + y坐标
+        y_bytes = public_point.y.to_bytes(32, "big")
+        return b"\x04" + x_bytes + y_bytes
 
     def generate_public_key_const_time(self, private_key: bytes | int, compressed: bool = True) -> bytes:
         """恒定时间公钥生成 (generate_public_key 的显式别名)
@@ -753,8 +739,7 @@ _production_warning_lock = threading.Lock()
 
 
 def _issue_production_warning() -> None:
-    """
-    发出生产环境使用警告
+    """发出生产环境使用警告
 
     在首次导入或首次使用时发出警告，提醒用户此模块不应用于生产环境。
     警告仅发出一次，避免日志污染。
@@ -796,14 +781,14 @@ def _issue_production_warning() -> None:
 
 
 def check_production_environment() -> bool:
-    """
-    检测是否在生产环境使用此模块
+    """检测是否在生产环境使用此模块
 
     通过检查调用栈判断是否从生产代码路径调用。
     如果检测到生产环境使用，发出警告。
 
     Returns:
         True 如果检测到可能的生产环境使用
+
     """
     import inspect
 

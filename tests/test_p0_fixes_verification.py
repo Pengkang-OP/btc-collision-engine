@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-P0修复验证测试
+"""P0修复验证测试
 
 验证代码审查中发现的P0关键问题的修复效果。
 """
@@ -8,6 +7,7 @@ P0修复验证测试
 import hashlib
 import json
 import os
+import pathlib
 import threading
 
 # ============================================================================
@@ -157,7 +157,7 @@ class TestSensitiveDataFilterRedact:
         """BIP32扩展密钥应被替换"""
         from src.log_engine.log_processor import SensitiveDataFilter
 
-        fake_xprv = "xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbN6mRyPHQpQ4QnZt7nEk2RgvXVcqvNNt5ThEZQUQoFwSsXPyDyoB6F5TsPgpXfXaM"  # noqa: E501
+        fake_xprv = "xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbN6mRyPHQpQ4QnZt7nEk2RgvXVcqvNNt5ThEZQUQoFwSsXPyDyoB6F5TsPgpXfXaM"
         result = SensitiveDataFilter.redact(f"key: {fake_xprv}")
         assert fake_xprv not in result
         assert "[BIP32_EXTENDED_KEY]" in result
@@ -208,35 +208,7 @@ class TestSensitiveDataFilterRedact:
 # ============================================================================
 
 
-class TestContinuousMatcherThreadSafety:
-    """验证 ContinuousMatcher 计数器线程安全"""
-
-    def test_concurrent_increment_no_race(self):
-        """多线程并发增加计数器不应丢数据"""
-        from unittest.mock import MagicMock
-
-        from src.collision.continuous_matcher import ContinuousMatcher
-
-        # Mock target_table 以避免依赖
-        mock_table = MagicMock()
-        mock_table.check_match.return_value = (False, None)
-
-        matcher = ContinuousMatcher(target_table=mock_table)
-        iterations = 1000
-        num_threads = 10
-
-        def increment():
-            for _ in range(iterations):
-                matcher.total_checked += 1  # 现在在锁内
-
-        threads = [threading.Thread(target=increment) for _ in range(num_threads)]
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
-
-        expected = iterations * num_threads
-        assert matcher.total_checked == expected, f"Expected {expected}, got {matcher.total_checked}"
+# ContinuousMatcher 模块已移除 — TestContinuousMatcherThreadSafety 已删除
 
 
 # ============================================================================
@@ -276,8 +248,8 @@ class TestI18NFix:
         i18n_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "src", "i18n", "locales")
         zh_file = os.path.join(i18n_dir, "zh_CN.json")
 
-        if os.path.exists(zh_file):
-            with open(zh_file, encoding="utf-8") as f:
+        if pathlib.Path(zh_file).exists():
+            with pathlib.Path(zh_file).open(encoding="utf-8") as f:
                 data = json.load(f)
 
             # 查找所有包含 stop_failed 键的值
@@ -315,9 +287,8 @@ class TestDockerComposeSecurity:
         """Grafana 密码不应包含硬编码弱密码"""
         compose_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), "docker-compose.yml")
 
-        if os.path.exists(compose_file):
-            with open(compose_file, encoding="utf-8") as f:
-                content = f.read()
+        if pathlib.Path(compose_file).exists():
+            content = pathlib.Path(compose_file).read_text(encoding="utf-8")
 
             assert "changeme" not in content, "不应包含弱密码 changeme"
             assert "GF_ADMIN_PASSWORD" in content, "应使用环境变量配置密码"

@@ -18,21 +18,23 @@ class LogManager:
 
         Returns:
             Logger instance
+
         """
         if name not in self._loggers:
             self._loggers[name] = logging.getLogger(
-                name
+                name,
             )
         return self._loggers[name]
 
     def set_level(
-        self, name: str, level: int
+        self, name: str, level: int,
     ) -> None:
         """Set log level for a logger.
 
         Args:
             name: Logger name
             level: Logging level
+
         """
         log = self.get_logger(name)
         log.setLevel(level)

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-GPU Mock 测试基础设施 - 统一的 Mock 工厂
+"""GPU Mock 测试基础设施 - 统一的 Mock 工厂
 
 提供标准化、可复用的 GPU Mock 对象，覆盖所有 GPU 测试场景：
 - OpenCL 设备 / 平台 / 上下文
@@ -115,6 +114,7 @@ class GPUMockFactory:
 
         Returns:
             配置好的 Mock 对象
+
         """
         device = Mock()
 
@@ -151,6 +151,7 @@ class GPUMockFactory:
 
         Returns:
             配置好的 Mock 平台对象
+
         """
         if devices is None:
             devices = [GPUMockFactory.create_cl_device()]
@@ -170,6 +171,7 @@ class GPUMockFactory:
 
         Returns:
             配置好的 Mock 上下文对象
+
         """
         if device is None:
             device = GPUMockFactory.create_cl_device()
@@ -196,6 +198,7 @@ class GPUMockFactory:
 
         Returns:
             配置好的 Mock Buffer 对象
+
         """
         if HAS_PYOPENCL:
             buf = Mock(spec=cl.Buffer)
@@ -228,6 +231,7 @@ class GPUMockFactory:
 
         Returns:
             配置好的 Mock Program 对象
+
         """
         prog = Mock()
         if build_success:
@@ -258,6 +262,7 @@ class GPUMockFactory:
 
         Returns:
             配置好的 Mock GPUDevice 对象
+
         """
         device_info = {
             "name": name,
@@ -290,6 +295,7 @@ class GPUMockFactory:
 
         Returns:
             配置好的 Mock GPUContext 对象
+
         """
         ctx = Mock()
         ctx.program = Mock()
@@ -314,6 +320,7 @@ class GPUMockFactory:
 
         Returns:
             配置好的 Mock GPUKernel 对象
+
         """
         if run_batch_result is None:
             run_batch_result = ([], 1.0)
@@ -348,6 +355,7 @@ class GPUMockFactory:
 
         Returns:
             配置好的 Mock cl 模块对象
+
         """
         mock_cl = Mock()
 
@@ -414,7 +422,7 @@ class GPUMockFactory:
                 ...  # mock_buf 是 Buffer 的 Mock 返回值
         """
         mock_buf = Mock()
-        with patch("pyopencl.Buffer", return_value=mock_buf) as _patch:  # noqa: F841
+        with patch("pyopencl.Buffer", return_value=mock_buf) as _patch:
             yield mock_buf
 
     @staticmethod
@@ -450,11 +458,11 @@ class GPUMockFactory:
         mock_buffer = GPUMockFactory.create_cl_buffer()
 
         with (
-            patch("src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE", True),
-            patch("src.collision.gpu_collision_engine.GPUDevice", return_value=mock_device),
-            patch("src.collision.gpu_collision_engine.GPUContext", return_value=mock_context),
-            patch("src.collision.gpu_collision_engine.GPUKernel", return_value=mock_kernel),
-            patch("src.collision.gpu_collision_engine.GPUProfileLoader") as mock_loader,
+            patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True),
+            patch("src.gpu.device_manager.GPUDevice", return_value=mock_device),
+            patch("src.gpu.device_manager.GPUContext", return_value=mock_context),
+            patch("src.gpu.device_manager.GPUKernel", return_value=mock_kernel),
+            patch("src.gpu.device_manager.GPUProfileLoader") as mock_loader,
             patch("pyopencl.Buffer", return_value=mock_buffer),
             patch("src.gpu.async_executor.AsyncGPUExecutor.initialize_buffers"),
             patch(
@@ -511,6 +519,6 @@ class GPUMockFactory:
         """返回包含 NVIDIA / AMD / Intel Arc 三种设备的多平台列表。"""
         platform1 = cls.create_cl_platform("Platform NVIDIA", [cls.nvidia_device()])
         platform2 = cls.create_cl_platform(
-            "Platform AMD-Intel", [cls.amd_device(), cls.intel_arc_device()]
+            "Platform AMD-Intel", [cls.amd_device(), cls.intel_arc_device()],
         )
         return [platform1, platform2]

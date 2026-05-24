@@ -28,11 +28,13 @@ class SearchModeCoordinator:
     MODE_BRUTE_FORCE = "brute_force"
     MODE_RANGE_SCAN = "range_scan"
 
+    __slots__ = ("engine", "logger", "_current_mode", "_modes")
+
     def __init__(self, engine: "GPUCollisionEngine", logger: Any | None = None) -> None:
-        """
-        Args:
-            engine: GPUCollisionEngine实例
-            logger: 日志记录器
+        """Args:
+        engine: GPUCollisionEngine实例
+        logger: 日志记录器
+
         """
         self.engine = engine
         self.logger = logger or _logger
@@ -45,8 +47,9 @@ class SearchModeCoordinator:
 
     def _init_modes(self):
         """初始化所有搜索模式"""
-        # 从配置读取seed_prefetch_size
-        seed_prefetch_size = 5
+        # v5.1: 从模块级常量获取默认值（而非硬编码 5）
+        from .search_modes.random_search import SEED_PREFETCH_SIZE
+        seed_prefetch_size = SEED_PREFETCH_SIZE
         try:
             if hasattr(self.engine, "config") and self.engine.config:
                 cfg_gpu = self.engine.config.get("gpu", {})
@@ -55,10 +58,22 @@ class SearchModeCoordinator:
                     if isinstance(val, int):
                         seed_prefetch_size = val
         except Exception:
-            seed_prefetch_size = 5
+            pass  # 使用模块级默认值
+
+        # v5.1.2: 将自适应控制器从 AsyncGPUExecutor 传递给 RandomSearchMode
+        adaptive_controller = None
+        try:
+            if hasattr(self.engine, "_async_executor") and self.engine._async_executor:
+                adaptive_controller = getattr(
+                    self.engine._async_executor, "_adaptive_controller", None,
+                )
+        except Exception:
+            pass
 
         self._modes[self.MODE_RANDOM] = RandomSearchMode(
-            self.engine, seed_prefetch_size=seed_prefetch_size
+            self.engine,
+            seed_prefetch_size=seed_prefetch_size,
+            adaptive_controller=adaptive_controller,
         )
         self._modes[self.MODE_BRUTE_FORCE] = BruteForceSearchMode(self.engine)
         self._modes[self.MODE_RANGE_SCAN] = RangeScanSearchMode(self.engine)
@@ -76,6 +91,7 @@ class SearchModeCoordinator:
             mode: 搜索模式名称
             resume: 是否从检查点恢复
             **kwargs: 模式特定的参数
+
         """
         if mode not in self._modes:
             available = ", ".join(self.get_available_modes())
@@ -84,7 +100,7 @@ class SearchModeCoordinator:
         self._current_mode = mode
         search_mode = self._modes[mode]
 
-        self.logger.info(f"启动搜索模式: {mode}")
+        self.logger.info("启动搜索模式: %s", mode)
 
         # 处理检查点恢复
         if resume:
@@ -127,9 +143,10 @@ class SearchModeCoordinator:
         Args:
             new_mode: 新的搜索模式
             **kwargs: 模式特定的参数
+
         """
         if self._current_mode == new_mode:
-            self.logger.warning(f"已经是 {new_mode} 模式，无需切换")
+            self.logger.warning("已经是 %s 模式，无需切换", new_mode)
             return
 
         self.logger.info(f"切换搜索模式: {self._current_mode} -> {new_mode}")
@@ -146,10 +163,10 @@ class SearchModeCoordinator:
         """保存当前模式的状态"""
         if self.engine.checkpoint_mgr:
             try:
-                cast(Any, self.engine)._save_checkpoint(self.engine.stats.total_keys)
+                cast("Any", self.engine)._save_checkpoint(self.engine.stats.total_keys)
                 self.logger.info("当前状态已保存到检查点")
             except Exception as e:
-                self.logger.error(f"保存检查点失败: {e}")
+                self.logger.error("保存检查点失败: %s", e)
 
     def stop(self) -> None:
         """停止当前搜索模式"""
@@ -177,6 +194,7 @@ class SearchModeCoordinator:
 
         Returns:
             搜索模式实例，不存在则返回None
+
         """
         return self._modes.get(mode)
 
@@ -188,6 +206,7 @@ class SearchModeCoordinator:
 
         Returns:
             状态字典
+
         """
         search_mode = self._modes.get(mode)
         if not search_mode:
@@ -196,17 +215,16 @@ class SearchModeCoordinator:
         try:
             # 检查搜索模式是否有status方法
             if hasattr(search_mode, "get_status"):
-                return cast(dict[str, Any], search_mode.get_status())
-            else:
-                return {
-                    "mode": mode,
-                    "status": "available",
-                    "engine_running": (
-                        self.engine.is_running() if hasattr(self.engine, "is_running") else False
-                    ),
-                }
+                return cast("dict[str, Any]", search_mode.get_status())
+            return {
+                "mode": mode,
+                "status": "available",
+                "engine_running": (
+                    self.engine.is_running() if hasattr(self.engine, "is_running") else False
+                ),
+            }
         except Exception as e:
-            self.logger.error(f"获取搜索模式状态失败: {e}")
+            self.logger.error("获取搜索模式状态失败: %s", e)
             return {"error": str(e)}
 
     def get_all_modes_status(self) -> dict[str, dict[str, Any]]:
@@ -214,6 +232,7 @@ class SearchModeCoordinator:
 
         Returns:
             状态字典，键为模式名称，值为状态字典
+
         """
         status_dict = {}
         for mode in self.get_available_modes():

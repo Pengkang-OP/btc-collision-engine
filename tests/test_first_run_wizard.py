@@ -9,15 +9,13 @@
 
 import json
 import os
+import pathlib
 import shutil
-import sys
 import tempfile
 from unittest import TestCase
 from unittest.mock import patch
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-from src.utils.first_run_wizard import FirstRunWizard  # noqa: E402
+from src.utils.first_run_wizard import FirstRunWizard
 
 
 class TestFirstRunWizardBasic(TestCase):
@@ -30,7 +28,7 @@ class TestFirstRunWizardBasic(TestCase):
 
     def tearDown(self):
         """清理临时目录"""
-        if os.path.exists(self.test_dir):
+        if pathlib.Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_initialization(self):
@@ -95,7 +93,7 @@ class TestFirstRunWizardBasic(TestCase):
             "logging": {"level": "INFO"},
             "monitoring": {"enabled": True},
         }
-        with open(self.wizard.config_path, "w", encoding="utf-8") as f:
+        with pathlib.Path(self.wizard.config_path).open("w", encoding="utf-8") as f:
             json.dump(config_data, f)
 
         self.assertFalse(self.wizard.should_run())
@@ -113,8 +111,7 @@ class TestFirstRunWizardBasic(TestCase):
     def test_should_run_with_small_config(self):
         """小配置文件（<50字节）时应运行向导"""
         self.wizard.config_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(self.wizard.config_path, "w", encoding="utf-8") as f:
-            f.write("{}")  # 只有2字节
+        pathlib.Path(self.wizard.config_path).write_text("{}", encoding="utf-8")  # 只有2字节
 
         with patch("sys.stdin") as mock_stdin:
             mock_stdin.isatty.return_value = True
@@ -131,7 +128,7 @@ class TestFirstRunWizardConfig(TestCase):
 
     def tearDown(self):
         """清理临时目录"""
-        if os.path.exists(self.test_dir):
+        if pathlib.Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_save_config(self):
@@ -140,14 +137,14 @@ class TestFirstRunWizardConfig(TestCase):
 
         # 模拟保存配置
         self.wizard.config_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(self.wizard.config_path, "w", encoding="utf-8") as f:
+        with pathlib.Path(self.wizard.config_path).open("w", encoding="utf-8") as f:
             json.dump(config, f, indent=2, ensure_ascii=False)
 
         # 验证文件存在
         self.assertTrue(self.wizard.config_path.exists())
 
         # 验证内容
-        with open(self.wizard.config_path, encoding="utf-8") as f:
+        with pathlib.Path(self.wizard.config_path).open(encoding="utf-8") as f:
             loaded_config = json.load(f)
 
         self.assertEqual(loaded_config["collision"]["mode"], "random")
@@ -159,7 +156,7 @@ class TestFirstRunWizardConfig(TestCase):
         example_config = {"collision": {"mode": "range"}, "gpu": {"enabled": True}}
 
         self.wizard.example_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(self.wizard.example_path, "w", encoding="utf-8") as f:
+        with pathlib.Path(self.wizard.example_path).open("w", encoding="utf-8") as f:
             json.dump(example_config, f)
 
         # 验证示例文件存在
@@ -264,7 +261,7 @@ class TestFirstRunWizardEdgeCases(TestCase):
 
     def tearDown(self):
         """清理临时目录"""
-        if os.path.exists(self.test_dir):
+        if pathlib.Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_nonexistent_project_root(self):

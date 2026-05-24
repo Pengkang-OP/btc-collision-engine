@@ -1,17 +1,12 @@
 #!/usr/bin/env python3
-"""
-SecureKeyManager集成到碰撞引擎的验证测试
+"""SecureKeyManager集成到碰撞引擎的验证测试
 """
 
-import os
 import sys
 import time
 
-# 添加项目根目录到路径
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
-from src.core.address_generator import P2PKHAddressGenerator  # noqa: E402
+from src.collision.key_collision_engine import KeyCollisionEngine
+from src.core.address_generator import P2PKHAddressGenerator
 
 
 def test_secure_integration():
@@ -82,10 +77,9 @@ def test_secure_integration():
         print("   私钥在匹配时被正确保存")
         print("   未匹配的私钥已自动清零")
         return True
-    else:
-        print("\n[WARN] 未找到匹配（正常，概率极低）")
-        print("   但至少验证了引擎可以正常运行")
-        return True
+    print("\n[WARN] 未找到匹配（正常，概率极低）")
+    print("   但至少验证了引擎可以正常运行")
+    return True
 
 
 def test_performance_impact():

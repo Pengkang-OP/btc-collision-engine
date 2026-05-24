@@ -12,5 +12,6 @@ class GPUSelector:
 
         Returns:
             Selected device indices
+
         """
         return [d.get("index", i) for i, d in enumerate(devices)]

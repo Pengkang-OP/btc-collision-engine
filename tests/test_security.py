@@ -2,6 +2,7 @@
 """安全合规测试 - 验证密码学安全性和数据保护"""
 
 import os
+import pathlib
 import secrets
 import time
 
@@ -215,7 +216,7 @@ class TestDataProtection:
 
         for config_file in config_files:
             filepath = os.path.join(os.path.dirname(os.path.dirname(__file__)), config_file)
-            if os.path.exists(filepath):
+            if pathlib.Path(filepath).exists():
                 # 在Unix系统上检查权限
                 if os.name != "nt":  # 非Windows
                     stat = os.stat(filepath)

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-GPU内存池缓冲区归还验证测试
+"""GPU内存池缓冲区归还验证测试
 
 验证v3.2.1修复 (历史版本):
 1. 缓冲区释放时归还到内存池
@@ -12,23 +11,18 @@ GPU内存池缓冲区归还验证测试
 版本: v3.2.1 (历史版本)
 """
 
-import os
 import sys
 import time
 
-# 添加项目根目录到路径
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-import pytest  # noqa: E402
+import pytest
 
 pytestmark = pytest.mark.gpu  # 需要真实GPU硬件
 
-from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
+from src.collision.gpu.engine import GPUCollisionEngine
 
 
 def test_buffer_return_to_pool():
     """测试缓冲区归还到内存池"""
-
     print("=" * 80)
     print("GPU内存池缓冲区归还验证测试")
     print("=" * 80)
@@ -115,7 +109,7 @@ def test_buffer_return_to_pool():
         print(
             f"  循环{i + 1}: 已分配={stats['total_allocated']}, "
             f"已复用={stats['total_reused']}, "
-            f"池中={stats['pooled_buffers']}"
+            f"池中={stats['pooled_buffers']}",
         )
 
     # 最终统计

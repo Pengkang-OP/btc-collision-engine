@@ -15,18 +15,7 @@ def test_all():
     print("=" * 60)
     print()
 
-    # 测试1: GPUDeviceHelper独立模块
-    print("测试1: GPUDeviceHelper独立模块")
-    try:
-        from src.gpu.device_helper import GPUDeviceHelper
-
-        print("  ✅ 导入成功")
-        print(f"  ✅ 类常量: {len(GPUDeviceHelper.RESOURCE_ERROR_KEYWORDS)}个关键词")
-        assert "out of memory" in GPUDeviceHelper.RESOURCE_ERROR_KEYWORDS
-        print("  ✅ 关键词验证通过")
-    except Exception as e:
-        print(f"  ❌ 失败: {e}")
-        return False
+    # GPUDeviceHelper 模块已移除 — 测试1已删除
     print()
 
     # 测试2: GPUKernelProtocol接口
@@ -127,7 +116,6 @@ def test_all():
     print("测试7: 循环依赖消除验证")
     try:
         # 尝试导入所有模块，如果有循环依赖会失败
-        from src.gpu.device_helper import GPUDeviceHelper
         from src.gpu.kernel_protocol import GPUKernelProtocol
         from src.monitoring.enhanced_monitoring import EnhancedMonitoringSystem
         from src.monitoring.monitor_config import MonitorConfig

@@ -25,6 +25,22 @@ class SmartBatchSizeOptimizer:
     根据GPU性能、内存使用和系统负载动态调整批次大小。
     """
 
+    __slots__ = (
+        "_gpu_model",
+        "_initial_batch_size",
+        "_min_batch_size",
+        "_max_batch_size",
+        "_performance_history",
+        "_memory_history",
+        "_load_history",
+        "_adjustment_interval",
+        "_history_window",
+        "_performance_threshold",
+        "_adjustment_counter",
+        "_lock",
+        "_current_batch_size",
+    )
+
     def __init__(
         self,
         initial_batch_size: int,
@@ -32,14 +48,14 @@ class SmartBatchSizeOptimizer:
         max_batch_size: int = 1048576,
         gpu_model: str = "default",
     ) -> None:
-        """
-        初始化智能批次大小优化器
+        """初始化智能批次大小优化器
 
         Args:
             initial_batch_size: 初始批次大小
             min_batch_size: 最小批次大小
             max_batch_size: 最大批次大小
             gpu_model: GPU型号标识
+
         """
         # GPU型号特定配置
         self._gpu_model = gpu_model
@@ -75,49 +91,49 @@ class SmartBatchSizeOptimizer:
         _min_b = self._min_batch_size
         _max_b = self._max_batch_size
         logger.info(
-            f"智能批次优化器初始化: GPU={gpu_model}, init={_init_batch}, range={_min_b}-{_max_b}"
+            "智能批次优化器初始化: GPU=%s, init=%s, range=%s-%s", gpu_model, _init_batch, _min_b, _max_b,
         )
 
     def _get_gpu_config(self, gpu_model: str) -> dict:
-        """
-        获取GPU特定配置
+        """获取GPU特定配置
 
         Args:
             gpu_model: GPU型号标识
 
         Returns:
             GPU配置字典
+
         """
         gpu_configs = {
             "1660": {
-                "initial_batch_size": 131072,
-                "min_batch_size": 16384,
-                "max_batch_size": 524288,
-            },
-            "rtx40": {
-                "initial_batch_size": 524288,
-                "min_batch_size": 32768,
+                "initial_batch_size": 1048576,
+                "min_batch_size": 262144,
                 "max_batch_size": 2097152,
             },
+            "rtx40": {
+                "initial_batch_size": 2097152,
+                "min_batch_size": 262144,
+                "max_batch_size": 8388608,
+            },
             "rtx30": {
-                "initial_batch_size": 262144,
-                "min_batch_size": 32768,
-                "max_batch_size": 1048576,
+                "initial_batch_size": 1048576,
+                "min_batch_size": 262144,
+                "max_batch_size": 4194304,
             },
             "rtx": {
-                "initial_batch_size": 262144,
-                "min_batch_size": 32768,
-                "max_batch_size": 1048576,
+                "initial_batch_size": 1048576,
+                "min_batch_size": 262144,
+                "max_batch_size": 4194304,
             },
             "10": {
-                "initial_batch_size": 131072,
-                "min_batch_size": 16384,
-                "max_batch_size": 524288,
+                "initial_batch_size": 1048576,
+                "min_batch_size": 262144,
+                "max_batch_size": 2097152,
             },
             "9": {
-                "initial_batch_size": 65536,
-                "min_batch_size": 8192,
-                "max_batch_size": 262144,
+                "initial_batch_size": 524288,
+                "min_batch_size": 131072,
+                "max_batch_size": 1048576,
             },
             "amd7000": {
                 "initial_batch_size": 524288,
@@ -148,15 +164,15 @@ class SmartBatchSizeOptimizer:
         return gpu_configs.get(gpu_model, gpu_configs.get("default", {}))
 
     def record_performance(
-        self, batch_size: int, execution_time_ms: float, throughput: float
+        self, batch_size: int, execution_time_ms: float, throughput: float,
     ) -> None:
-        """
-        记录性能数据
+        """记录性能数据
 
         Args:
             batch_size: 批次大小
             execution_time_ms: 执行时间(毫秒)
             throughput: 吞吐量(keys/s)
+
         """
         with self._lock:
             self._performance_history.append(
@@ -165,7 +181,7 @@ class SmartBatchSizeOptimizer:
                     "batch_size": batch_size,
                     "execution_time_ms": execution_time_ms,
                     "throughput": throughput,
-                }
+                },
             )
 
             # 保持历史数据大小
@@ -173,12 +189,12 @@ class SmartBatchSizeOptimizer:
                 self._performance_history = self._performance_history[-self._history_window :]
 
     def record_memory_usage(self, used_memory_mb: float, total_memory_mb: float) -> None:
-        """
-        记录内存使用情况
+        """记录内存使用情况
 
         Args:
             used_memory_mb: 已使用内存(MB)
             total_memory_mb: 总内存(MB)
+
         """
         with self._lock:
             self._memory_history.append(
@@ -187,7 +203,7 @@ class SmartBatchSizeOptimizer:
                     "used_memory_mb": used_memory_mb,
                     "total_memory_mb": total_memory_mb,
                     "usage_ratio": used_memory_mb / total_memory_mb if total_memory_mb > 0 else 0,
-                }
+                },
             )
 
             # 保持历史数据大小
@@ -195,16 +211,16 @@ class SmartBatchSizeOptimizer:
                 self._memory_history = self._memory_history[-self._history_window :]
 
     def record_system_load(self, cpu_load: float, gpu_load: float) -> None:
-        """
-        记录系统负载
+        """记录系统负载
 
         Args:
             cpu_load: CPU负载(0-1)
             gpu_load: GPU负载(0-1)
+
         """
         with self._lock:
             self._load_history.append(
-                {"timestamp": time.time(), "cpu_load": cpu_load, "gpu_load": gpu_load}
+                {"timestamp": time.time(), "cpu_load": cpu_load, "gpu_load": gpu_load},
             )
 
             # 保持历史数据大小
@@ -212,11 +228,11 @@ class SmartBatchSizeOptimizer:
                 self._load_history = self._load_history[-self._history_window :]
 
     def get_optimal_batch_size(self) -> int:
-        """
-        获取优化后的批次大小
+        """获取优化后的批次大小
 
         Returns:
             优化后的批次大小
+
         """
         with self._lock:
             # 如果历史数据不足，返回当前批次大小
@@ -260,7 +276,7 @@ class SmartBatchSizeOptimizer:
                     # 确保在合理范围内
                     new_size = max(self._min_batch_size, min(new_size, self._max_batch_size))
                     logger.info(
-                        f"批次大小调整: {self._current_batch_size} -> {new_size} (平滑过渡)"
+                        f"批次大小调整: {self._current_batch_size} -> {new_size} (平滑过渡)",
                     )
                     self._current_batch_size = new_size
                 else:
@@ -270,11 +286,11 @@ class SmartBatchSizeOptimizer:
             return self._current_batch_size
 
     def _analyze_performance_trend(self) -> int:
-        """
-        分析性能趋势，确定最优批次大小
+        """分析性能趋势，确定最优批次大小
 
         Returns:
             推荐的批次大小
+
         """
         # 计算不同批次大小的平均吞吐量
         batch_performance: dict[int, list[float]] = {}
@@ -291,7 +307,7 @@ class SmartBatchSizeOptimizer:
             avg_throughput[batch_size] = sum(throughputs) / len(throughputs)
             # 计算标准差，衡量性能稳定性
             variance = sum((t - avg_throughput[batch_size]) ** 2 for t in throughputs) / len(
-                throughputs
+                throughputs,
             )
             std_throughput[batch_size] = variance**0.5
 
@@ -323,21 +339,21 @@ class SmartBatchSizeOptimizer:
             if trend > 1.15 and recent_batch_sizes[-1] > recent_batch_sizes[0]:
                 # 性能提升且批次大小在增加，继续增加
                 return best_batch_size * 2
-            elif trend < 0.85 and recent_batch_sizes[-1] > recent_batch_sizes[0]:
+            if trend < 0.85 and recent_batch_sizes[-1] > recent_batch_sizes[0]:
                 # 性能下降且批次大小在增加，减小批次大小
                 return best_batch_size // 2
 
         return best_batch_size
 
     def _adjust_for_memory(self, batch_size: int) -> int:
-        """
-        根据内存使用情况调整批次大小
+        """根据内存使用情况调整批次大小
 
         Args:
             batch_size: 基础批次大小
 
         Returns:
             调整后的批次大小
+
         """
         if not self._memory_history:
             return batch_size
@@ -350,20 +366,20 @@ class SmartBatchSizeOptimizer:
         if avg_usage_ratio > 0.85:
             return batch_size // 2
         # 如果内存使用低于40%，可以考虑增加批次大小
-        elif avg_usage_ratio < 0.4:
+        if avg_usage_ratio < 0.4:
             return batch_size * 2
 
         return batch_size
 
     def _adjust_for_system_load(self, batch_size: int) -> int:
-        """
-        根据系统负载调整批次大小
+        """根据系统负载调整批次大小
 
         Args:
             batch_size: 基础批次大小
 
         Returns:
             调整后的批次大小
+
         """
         if not self._load_history:
             return batch_size
@@ -377,20 +393,20 @@ class SmartBatchSizeOptimizer:
         if avg_cpu_load > 0.85 or avg_gpu_load > 0.95:
             return batch_size // 2
         # 如果GPU负载低于40%，可以考虑增加批次大小
-        elif avg_gpu_load < 0.4:
+        if avg_gpu_load < 0.4:
             return batch_size * 2
 
         return batch_size
 
     def _align_to_power_of_two(self, size: int) -> int:
-        """
-        将大小对齐到最近的2的幂
+        """将大小对齐到最近的2的幂
 
         Args:
             size: 原始大小
 
         Returns:
             对齐后的大小
+
         """
         if size <= 0:
             return self._min_batch_size
@@ -402,15 +418,14 @@ class SmartBatchSizeOptimizer:
 
         if size - lower < upper - size:
             return lower
-        else:
-            return upper
+        return upper
 
     def get_stats(self) -> dict:
-        """
-        获取优化器统计信息
+        """获取优化器统计信息
 
         Returns:
             统计信息字典
+
         """
         with self._lock:
             stats = {
@@ -426,22 +441,21 @@ class SmartBatchSizeOptimizer:
             # 计算平均性能
             if self._performance_history:
                 avg_throughput = sum(r["throughput"] for r in self._performance_history) / len(
-                    self._performance_history
+                    self._performance_history,
                 )
                 stats["avg_throughput"] = avg_throughput
 
             # 计算平均内存使用
             if self._memory_history:
                 avg_usage = sum(r["usage_ratio"] for r in self._memory_history) / len(
-                    self._memory_history
+                    self._memory_history,
                 )
                 stats["avg_memory_usage"] = avg_usage
 
             return stats
 
     def reset(self) -> None:
-        """
-        重置优化器状态
+        """重置优化器状态
         """
         with self._lock:
             self._performance_history.clear()
@@ -457,10 +471,9 @@ global_optimizer_lock = threading.Lock()
 
 
 def get_batch_size_optimizer(
-    initial_batch_size: int = 1048576, gpu_model: str = "default"
+    initial_batch_size: int = 1048576, gpu_model: str = "default",
 ) -> SmartBatchSizeOptimizer:
-    """
-    获取全局智能批次大小优化器实例
+    """获取全局智能批次大小优化器实例
 
     Args:
         initial_batch_size: 初始批次大小
@@ -468,21 +481,21 @@ def get_batch_size_optimizer(
 
     Returns:
         SmartBatchSizeOptimizer实例
+
     """
     global global_batch_optimizer
 
     with global_optimizer_lock:
         if global_batch_optimizer is None:
             global_batch_optimizer = SmartBatchSizeOptimizer(
-                initial_batch_size, gpu_model=gpu_model
+                initial_batch_size, gpu_model=gpu_model,
             )
 
     return global_batch_optimizer
 
 
 def reset_batch_size_optimizer() -> None:
-    """
-    重置全局智能批次大小优化器
+    """重置全局智能批次大小优化器
     """
     global global_batch_optimizer
 

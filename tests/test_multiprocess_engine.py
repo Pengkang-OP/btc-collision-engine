@@ -652,7 +652,7 @@ class TestHybridEngineStart:
 
         # 显式跳过不可导入的模块，而非静默吞掉异常
         pytest.importorskip(
-            "src.collision.key_collision", reason="KeyCollisionEngine 在当前环境不可导入"
+            "src.collision.key_collision", reason="KeyCollisionEngine 在当前环境不可导入",
         )
         engine = HybridCollisionEngine(use_multiprocess=False, num_workers=2)
         result = engine.start(targets=["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"])

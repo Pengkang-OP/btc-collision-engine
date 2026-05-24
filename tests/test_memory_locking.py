@@ -1,18 +1,12 @@
-"""
-SecureKeyManager内存锁定功能测试
+"""SecureKeyManager内存锁定功能测试
 
 验证P1-1修复：内存锁定功能完整实现
 """
 
-import os
-import sys
 import unittest
 from unittest.mock import Mock, patch
 
-# 添加项目根目录到路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
-from src.core.secure_key_manager import SecureKeyManager, SecureMemoryError  # noqa: E402
+from src.core.secure_key_manager import SecureKeyManager, SecureMemoryError
 
 
 class TestMemoryLockingPosix(unittest.TestCase):
@@ -278,12 +272,13 @@ class TestMemoryLockingSecurity(unittest.TestCase):
         manager = SecureKeyManager()
         manager.generate_key()
 
-        # 获取密钥引用
+        # 获取密钥引用 — get_key() 每次返回新的 memoryview，
+        # 但底层数据缓冲区相同
         key_ref1 = manager.get_key()
         key_ref2 = manager.get_key()
 
-        # 应该是同一个对象
-        self.assertIs(key_ref1, key_ref2)
+        # 内容应相同（指向同一底层密钥数据）
+        self.assertEqual(bytes(key_ref1), bytes(key_ref2))
 
     @patch("src.core.secure_key_manager.os.name", "posix")
     @patch("src.core.secure_key_manager.sys.platform", "linux")

@@ -1,7 +1,6 @@
 """Enhanced monitoring with advanced metrics tracking."""
 import logging
 import threading
-import time
 
 from src.monitoring.data_logger import DataLogger
 
@@ -23,21 +22,35 @@ class EnhancedMonitoringSystem:
         # Create data logger for engine compatibility
         self.data_logger = DataLogger()
         logger.info(
-            "Enhanced monitoring system initialized"
+            "Enhanced monitoring system initialized",
         )
 
     def is_running(self) -> bool:
         """Check if monitoring system is running."""
         return True
 
+    def stop(self) -> None:
+        """Stop the monitoring system and clean up resources.
+
+        Safely shuts down the data logger and clears metrics storage.
+        This method is idempotent - calling it multiple times is safe.
+        """
+        with self._lock:
+            try:
+                self.data_logger = None
+            except Exception:
+                pass
+            self._metrics.clear()
+
     def record_metric(
-        self, name: str, value: float
+        self, name: str, value: float,
     ) -> None:
         """Record a metric value.
 
         Args:
             name: Metric name
             value: Metric value
+
         """
         with self._lock:
             if name not in self._metrics:
@@ -49,7 +62,7 @@ class EnhancedMonitoringSystem:
                 )
 
     def get_average(
-        self, name: str
+        self, name: str,
     ) -> float:
         """Get average value for a metric.
 
@@ -58,6 +71,7 @@ class EnhancedMonitoringSystem:
 
         Returns:
             Average value or 0
+
         """
         with self._lock:
             values = self._metrics.get(name, [])

@@ -11,14 +11,9 @@
   E - 已知测试向量 (私钥 1~10)
 """
 
-import os
-import sys
+import inspect
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
-
-import inspect  # noqa: E402
-
-from src.core.secp256k1 import ECPoint, EllipticCurve, Secp256k1  # noqa: E402
+from src.core.secp256k1 import ECPoint, EllipticCurve, Secp256k1
 
 
 class TestP1_1ConstTimeSelectFix:
@@ -47,14 +42,13 @@ class TestP1_1ConstTimeSelectFix:
         code_lines = []
         for l in lines:  # noqa: E741
             stripped = l.strip()
-            if not docstring_ended and stripped.startswith('"""') or stripped.endswith('"""'):
+            if (not docstring_ended and stripped.startswith('"""')) or stripped.endswith('"""'):
                 if in_docstring:
                     in_docstring = False
                     docstring_ended = True
                     continue
-                else:
-                    in_docstring = True
-                    continue
+                in_docstring = True
+                continue
             if in_docstring:
                 continue
             if stripped.startswith("#"):

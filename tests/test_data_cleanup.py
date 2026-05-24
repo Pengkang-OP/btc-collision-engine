@@ -10,16 +10,13 @@
 
 import os
 import shutil
-import sys
 import tempfile
 import time
 from pathlib import Path
 from unittest import TestCase
 from unittest.mock import patch
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-from src.utils.data_cleanup import DataCleaner  # noqa: E402
+from src.utils.data_cleanup import DataCleaner
 
 
 class TestDataCleanerBasic(TestCase):
@@ -30,15 +27,15 @@ class TestDataCleanerBasic(TestCase):
         self.test_dir = tempfile.mkdtemp()
 
         # 创建必要的子目录
-        os.makedirs(os.path.join(self.test_dir, "data_logs"), exist_ok=True)
-        os.makedirs(os.path.join(self.test_dir, "logs"), exist_ok=True)
-        os.makedirs(os.path.join(self.test_dir, "monitoring_data"), exist_ok=True)
+        Path(os.path.join(self.test_dir, "data_logs")).mkdir(exist_ok=True, parents=True)
+        Path(os.path.join(self.test_dir, "logs")).mkdir(exist_ok=True, parents=True)
+        Path(os.path.join(self.test_dir, "monitoring_data")).mkdir(exist_ok=True, parents=True)
 
         self.cleaner = DataCleaner(project_root=self.test_dir)
 
     def tearDown(self):
         """清理临时目录"""
-        if os.path.exists(self.test_dir):
+        if Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_initialization(self):
@@ -74,14 +71,14 @@ class TestDataCleanerTempFiles(TestCase):
         self.test_dir = tempfile.mkdtemp()
 
         # 创建必要的子目录
-        os.makedirs(os.path.join(self.test_dir, "data_logs"), exist_ok=True)
-        os.makedirs(os.path.join(self.test_dir, "logs"), exist_ok=True)
+        Path(os.path.join(self.test_dir, "data_logs")).mkdir(exist_ok=True, parents=True)
+        Path(os.path.join(self.test_dir, "logs")).mkdir(exist_ok=True, parents=True)
 
         self.cleaner = DataCleaner(project_root=self.test_dir)
 
     def tearDown(self):
         """清理临时目录"""
-        if os.path.exists(self.test_dir):
+        if Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_clean_temp_files_no_files(self):
@@ -158,13 +155,13 @@ class TestDataCleanerOldData(TestCase):
     def setUp(self):
         """创建临时项目目录结构"""
         self.test_dir = tempfile.mkdtemp()
-        os.makedirs(os.path.join(self.test_dir, "data_logs"), exist_ok=True)
+        Path(os.path.join(self.test_dir, "data_logs")).mkdir(exist_ok=True, parents=True)
 
         self.cleaner = DataCleaner(project_root=self.test_dir)
 
     def tearDown(self):
         """清理临时目录"""
-        if os.path.exists(self.test_dir):
+        if Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_clean_old_data_no_files(self):
@@ -235,13 +232,13 @@ class TestDataCleanerLogRotation(TestCase):
     def setUp(self):
         """创建临时项目目录结构"""
         self.test_dir = tempfile.mkdtemp()
-        os.makedirs(os.path.join(self.test_dir, "logs"), exist_ok=True)
+        Path(os.path.join(self.test_dir, "logs")).mkdir(exist_ok=True, parents=True)
 
         self.cleaner = DataCleaner(project_root=self.test_dir)
 
     def tearDown(self):
         """清理临时目录"""
-        if os.path.exists(self.test_dir):
+        if Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_rotate_logs_no_files(self):
@@ -301,13 +298,13 @@ class TestDataCleanerMonitoringData(TestCase):
     def setUp(self):
         """创建临时项目目录结构"""
         self.test_dir = tempfile.mkdtemp()
-        os.makedirs(os.path.join(self.test_dir, "monitoring_data"), exist_ok=True)
+        Path(os.path.join(self.test_dir, "monitoring_data")).mkdir(exist_ok=True, parents=True)
 
         self.cleaner = DataCleaner(project_root=self.test_dir)
 
     def tearDown(self):
         """清理临时目录"""
-        if os.path.exists(self.test_dir):
+        if Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_clean_monitoring_data_no_files(self):
@@ -354,15 +351,15 @@ class TestDataCleanerCleanAll(TestCase):
         self.test_dir = tempfile.mkdtemp()
 
         # 创建所有子目录
-        os.makedirs(os.path.join(self.test_dir, "data_logs"), exist_ok=True)
-        os.makedirs(os.path.join(self.test_dir, "logs"), exist_ok=True)
-        os.makedirs(os.path.join(self.test_dir, "monitoring_data"), exist_ok=True)
+        Path(os.path.join(self.test_dir, "data_logs")).mkdir(exist_ok=True, parents=True)
+        Path(os.path.join(self.test_dir, "logs")).mkdir(exist_ok=True, parents=True)
+        Path(os.path.join(self.test_dir, "monitoring_data")).mkdir(exist_ok=True, parents=True)
 
         self.cleaner = DataCleaner(project_root=self.test_dir)
 
     def tearDown(self):
         """清理临时目录"""
-        if os.path.exists(self.test_dir):
+        if Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_clean_all_empty_dirs(self):
@@ -404,7 +401,7 @@ class TestDataCleanerDiskUsage(TestCase):
 
     def tearDown(self):
         """清理临时目录"""
-        if os.path.exists(self.test_dir):
+        if Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_get_disk_usage(self):
@@ -431,7 +428,7 @@ class TestDataCleanerEdgeCases(TestCase):
 
     def tearDown(self):
         """清理临时目录"""
-        if os.path.exists(self.test_dir):
+        if Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_nonexistent_project_root(self):
@@ -450,7 +447,7 @@ class TestDataCleanerEdgeCases(TestCase):
         """清理时遇到权限错误"""
         # 在Windows上难以真正测试权限问题
         # 这里测试正常情况
-        os.makedirs(os.path.join(self.test_dir, "data_logs"), exist_ok=True)
+        Path(os.path.join(self.test_dir, "data_logs")).mkdir(exist_ok=True, parents=True)
         cleaner = DataCleaner(project_root=self.test_dir)
 
         result = cleaner.clean_all(dry_run=True)
@@ -458,7 +455,7 @@ class TestDataCleanerEdgeCases(TestCase):
 
     def test_multiple_clean_operations(self):
         """多次清理操作"""
-        os.makedirs(os.path.join(self.test_dir, "data_logs"), exist_ok=True)
+        Path(os.path.join(self.test_dir, "data_logs")).mkdir(exist_ok=True, parents=True)
         cleaner = DataCleaner(project_root=self.test_dir)
 
         # 第一次清理
@@ -478,12 +475,12 @@ class TestDataCleanerOldReports(TestCase):
     def setUp(self):
         """创建临时项目目录"""
         self.test_dir = tempfile.mkdtemp()
-        os.makedirs(os.path.join(self.test_dir, "data_logs"), exist_ok=True)
+        Path(os.path.join(self.test_dir, "data_logs")).mkdir(exist_ok=True, parents=True)
         self.cleaner = DataCleaner(project_root=self.test_dir)
 
     def tearDown(self):
         """清理临时目录"""
-        if os.path.exists(self.test_dir):
+        if Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_clean_old_reports_no_dir(self):
@@ -551,12 +548,12 @@ class TestRotatePerformanceLog(TestCase):
     def setUp(self):
         """创建临时项目目录"""
         self.test_dir = tempfile.mkdtemp()
-        os.makedirs(os.path.join(self.test_dir, "data_logs"), exist_ok=True)
+        Path(os.path.join(self.test_dir, "data_logs")).mkdir(exist_ok=True, parents=True)
         self.cleaner = DataCleaner(project_root=self.test_dir)
 
     def tearDown(self):
         """清理临时目录"""
-        if os.path.exists(self.test_dir):
+        if Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_no_file_returns_false(self):

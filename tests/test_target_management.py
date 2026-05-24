@@ -1,6 +1,7 @@
 """目标地址管理模块单元测试"""
 
 import os
+import pathlib
 import sys
 import tempfile
 from unittest.mock import patch
@@ -131,7 +132,7 @@ class TestTargetResolver:
         try:
             # 使用显式编码创建文件
             with tempfile.NamedTemporaryFile(
-                mode="w", suffix=".txt", delete=False, encoding="utf-8"
+                mode="w", suffix=".txt", delete=False, encoding="utf-8",
             ) as f:
                 f.write("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\n")
                 f.write("# 这是注释\n")
@@ -144,8 +145,8 @@ class TestTargetResolver:
             assert len(addresses) == 1
             assert "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa" in addresses
         finally:
-            if temp_path and os.path.exists(temp_path):
-                os.unlink(temp_path)
+            if temp_path and pathlib.Path(temp_path).exists():
+                pathlib.Path(temp_path).unlink()
 
     def test_detect_format(self):
         """测试格式检测"""
@@ -195,7 +196,7 @@ class TestAddressValidator:
             [
                 "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
                 "invalid",
-            ]
+            ],
         )
 
         summary = validator.get_validation_summary(results)
@@ -360,8 +361,8 @@ class TestAddressStorage:
             assert loaded_targets == targets
             assert loaded_metadata == metadata
         finally:
-            if os.path.exists(temp_path):
-                os.unlink(temp_path)
+            if pathlib.Path(temp_path).exists():
+                pathlib.Path(temp_path).unlink()
 
     def test_csv_save_load(self):
         """测试CSV保存和加载"""
@@ -381,8 +382,8 @@ class TestAddressStorage:
 
             assert loaded_targets == targets
         finally:
-            if os.path.exists(temp_path):
-                os.unlink(temp_path)
+            if pathlib.Path(temp_path).exists():
+                pathlib.Path(temp_path).unlink()
 
     def test_get_storage_info(self):
         """测试获取存储信息"""
@@ -399,8 +400,8 @@ class TestAddressStorage:
             assert info["exists"] is True
             assert info["size_bytes"] > 0
         finally:
-            if os.path.exists(temp_path):
-                os.unlink(temp_path)
+            if pathlib.Path(temp_path).exists():
+                pathlib.Path(temp_path).unlink()
 
 
 class TestEncodingCompatibility:
@@ -418,8 +419,8 @@ class TestEncodingCompatibility:
             assert "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa" in content
             assert "中文注释" in content
         finally:
-            if os.path.exists(temp_path):
-                os.unlink(temp_path)
+            if pathlib.Path(temp_path).exists():
+                pathlib.Path(temp_path).unlink()
 
     def test_read_gbk_file(self):
         """测试读取GBK编码文件"""
@@ -434,8 +435,8 @@ class TestEncodingCompatibility:
             content = EncodingUtils.read_file(temp_path, try_multiple=True)
             assert "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa" in content
         finally:
-            if os.path.exists(temp_path):
-                os.unlink(temp_path)
+            if pathlib.Path(temp_path).exists():
+                pathlib.Path(temp_path).unlink()
 
     def test_detect_encoding(self):
         """测试编码检测"""
@@ -449,8 +450,8 @@ class TestEncodingCompatibility:
             # 应该检测到utf-8或类似的编码
             assert detected in ["utf-8", "utf-8-sig", "ascii"]
         finally:
-            if os.path.exists(temp_path):
-                os.unlink(temp_path)
+            if pathlib.Path(temp_path).exists():
+                pathlib.Path(temp_path).unlink()
 
     def test_write_and_read_utf8(self):
         """测试写入和读取UTF-8文件"""
@@ -464,8 +465,8 @@ class TestEncodingCompatibility:
             read_content = EncodingUtils.read_file(temp_path, encoding="utf-8")
             assert read_content == content
         finally:
-            if os.path.exists(temp_path):
-                os.unlink(temp_path)
+            if pathlib.Path(temp_path).exists():
+                pathlib.Path(temp_path).unlink()
 
     def test_fixed_sampling(self):
         """测试固定采样模式"""
@@ -478,13 +479,13 @@ class TestEncodingCompatibility:
         try:
             # 使用固定采样，限制5KB
             encoding = EncodingUtils.detect_file_encoding(
-                temp_path, max_sample_size=5000, use_dynamic_sampling=False
+                temp_path, max_sample_size=5000, use_dynamic_sampling=False,
             )
             # 应该能检测到utf-8
             assert encoding == "utf-8"
         finally:
-            if os.path.exists(temp_path):
-                os.unlink(temp_path)
+            if pathlib.Path(temp_path).exists():
+                pathlib.Path(temp_path).unlink()
 
     def test_boundary_sampling_small(self):
         """测试边界大小文件采样 - 小文件边界"""
@@ -498,8 +499,8 @@ class TestEncodingCompatibility:
             encoding = EncodingUtils.detect_file_encoding(temp_path)
             assert encoding in ["utf-8", "ascii"]
         finally:
-            if os.path.exists(temp_path):
-                os.unlink(temp_path)
+            if pathlib.Path(temp_path).exists():
+                pathlib.Path(temp_path).unlink()
 
     def test_boundary_sampling_medium(self):
         """测试边界大小文件采样 - 中文件边界"""
@@ -513,8 +514,8 @@ class TestEncodingCompatibility:
             encoding = EncodingUtils.detect_file_encoding(temp_path)
             assert encoding in ["utf-8", "ascii"]
         finally:
-            if os.path.exists(temp_path):
-                os.unlink(temp_path)
+            if pathlib.Path(temp_path).exists():
+                pathlib.Path(temp_path).unlink()
 
     def test_dynamic_vs_fixed_sampling(self):
         """对比动态和固定采样的差异"""
@@ -530,15 +531,15 @@ class TestEncodingCompatibility:
 
             # 固定采样（限制1KB）
             encoding_fixed = EncodingUtils.detect_file_encoding(
-                temp_path, max_sample_size=1024, use_dynamic_sampling=False
+                temp_path, max_sample_size=1024, use_dynamic_sampling=False,
             )
 
             # 两种模式都应该能检测到utf-8
             assert encoding_dynamic == "utf-8"
             assert encoding_fixed == "utf-8"
         finally:
-            if os.path.exists(temp_path):
-                os.unlink(temp_path)
+            if pathlib.Path(temp_path).exists():
+                pathlib.Path(temp_path).unlink()
 
     def test_none_max_sample_size(self):
         """测试max_sample_size为None时使用默认值"""
@@ -552,8 +553,8 @@ class TestEncodingCompatibility:
             encoding = EncodingUtils.detect_file_encoding(temp_path, max_sample_size=None)
             assert encoding == "utf-8"
         finally:
-            if os.path.exists(temp_path):
-                os.unlink(temp_path)
+            if pathlib.Path(temp_path).exists():
+                pathlib.Path(temp_path).unlink()
 
     def test_sampling_strategy_matrix(self):
         """测试采样策略矩阵：不同文件大小 x 不同max_sample_size"""
@@ -588,11 +589,11 @@ class TestEncodingCompatibility:
                 # 执行编码检测
                 if max_size is None:
                     encoding = EncodingUtils.detect_file_encoding(
-                        temp_path, use_dynamic_sampling=use_dynamic
+                        temp_path, use_dynamic_sampling=use_dynamic,
                     )
                 else:
                     encoding = EncodingUtils.detect_file_encoding(
-                        temp_path, max_sample_size=max_size, use_dynamic_sampling=use_dynamic
+                        temp_path, max_sample_size=max_size, use_dynamic_sampling=use_dynamic,
                     )
 
                 # 所有测试都应该能检测到utf-8或ascii
@@ -601,8 +602,8 @@ class TestEncodingCompatibility:
                     "ascii",
                 ], f"{description} 失败: 期望utf-8或ascii，实际{encoding}"
             finally:
-                if os.path.exists(temp_path):
-                    os.unlink(temp_path)
+                if pathlib.Path(temp_path).exists():
+                    pathlib.Path(temp_path).unlink()
 
     def test_sampling_size_calculation(self):
         """测试采样大小计算的准确性"""
@@ -627,15 +628,15 @@ class TestEncodingCompatibility:
             try:
                 # 验证不会抛出异常，且能检测到编码
                 encoding = EncodingUtils.detect_file_encoding(
-                    temp_path, use_dynamic_sampling=use_dynamic
+                    temp_path, use_dynamic_sampling=use_dynamic,
                 )
                 assert encoding in [
                     "utf-8",
                     "ascii",
                 ], f"{strategy_desc} (文件大小={file_size}) 失败"
             finally:
-                if os.path.exists(temp_path):
-                    os.unlink(temp_path)
+                if pathlib.Path(temp_path).exists():
+                    pathlib.Path(temp_path).unlink()
 
 
 class TestDataCompatibility:
@@ -723,8 +724,8 @@ class TestCrossPlatformCompatibility:
             addresses = resolver.load_from_file(temp_path)
             assert len(addresses) == 1
         finally:
-            if os.path.exists(temp_path):
-                os.unlink(temp_path)
+            if pathlib.Path(temp_path).exists():
+                pathlib.Path(temp_path).unlink()
 
     def test_platform_encoding_detection(self):
         """测试平台编码检测"""
@@ -756,7 +757,7 @@ class TestErrorHandling:
         if platform.system() == "Windows":
             # Windows系统目录（通常需要管理员权限）
             storage = AddressStorage(
-                storage_type="json", path="C:\\Windows\\System32\\test_btc_data.json"
+                storage_type="json", path="C:\\Windows\\System32\\test_btc_data.json",
             )
         else:
             # Unix系统目录
@@ -768,8 +769,8 @@ class TestErrorHandling:
             # 如果没抛异常，检查结果
             assert (
                 result is False
-                or os.path.exists("C:\\Windows\\System32\\test_btc_data.json")
-                or os.path.exists("/etc/test_btc_data.json")
+                or pathlib.Path("C:\\Windows\\System32\\test_btc_data.json").exists()
+                or pathlib.Path("/etc/test_btc_data.json").exists()
             )
         except PermissionError:
             # 如果抛出权限错误，也是预期的行为
@@ -832,7 +833,7 @@ class TestTargetResolverSecurity:
         """正常路径允许（文件在当前目录）"""
         resolver = TargetResolver(enable_cache=False)
         tmp = tempfile.NamedTemporaryFile(
-            mode="w", suffix=".txt", delete=False, dir=os.getcwd(), encoding="utf-8"
+            mode="w", suffix=".txt", delete=False, dir=os.getcwd(), encoding="utf-8",
         )
         tmp.write("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\n")
         tmp.close()
@@ -840,13 +841,13 @@ class TestTargetResolverSecurity:
             result = resolver.load_from_file(tmp.name)
             assert "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa" in result
         finally:
-            os.unlink(tmp.name)
+            pathlib.Path(tmp.name).unlink()
 
     def test_oversized_file_rejected(self):
         """文件超过100MB限制时返回空集合"""
         resolver = TargetResolver(enable_cache=False)
         tmp = tempfile.NamedTemporaryFile(
-            mode="w", suffix=".txt", delete=False, dir=os.getcwd(), encoding="utf-8"
+            mode="w", suffix=".txt", delete=False, dir=os.getcwd(), encoding="utf-8",
         )
         tmp.write("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\n")
         tmp.close()
@@ -856,7 +857,7 @@ class TestTargetResolverSecurity:
                 result = resolver.load_from_file(tmp.name)
                 assert result == set()
         finally:
-            os.unlink(tmp.name)
+            pathlib.Path(tmp.name).unlink()
 
 
 if __name__ == "__main__":

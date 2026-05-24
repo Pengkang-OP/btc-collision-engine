@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-GPU碰撞引擎24小时稳定性测试
+"""GPU碰撞引擎24小时稳定性测试
 
 测试目标:
 1. 验证长时间运行无内存泄漏
@@ -12,7 +11,6 @@ GPU碰撞引擎24小时稳定性测试
 """
 
 import json
-import sys
 import threading
 import time
 from datetime import datetime, timedelta
@@ -21,22 +19,20 @@ from typing import Any
 
 # 添加项目根目录到路径
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(_PROJECT_ROOT))
-
-from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
-from src.monitoring.gpu_performance_monitor import GPUPerformanceMonitor  # noqa: E402
+from src.collision.gpu.engine import GPUCollisionEngine
+from src.monitoring.gpu_performance_monitor import GPUPerformanceMonitor
 
 
 class StabilityTestRunner:
     """稳定性测试运行器"""
 
     def __init__(self, duration_hours: int = 24, check_interval: int = 300):
-        """
-        初始化稳定性测试
+        """初始化稳定性测试
 
         Args:
             duration_hours: 测试时长(小时),默认24小时
             check_interval: 检查间隔(秒),默认5分钟
+
         """
         self.duration_hours = duration_hours
         self.check_interval = check_interval
@@ -70,7 +66,7 @@ class StabilityTestRunner:
             f"吞吐量: {metrics['throughput']:>10,.0f} keys/s | "
             f"错误率: {metrics['error_rate']:>6.2f}% | "
             f"显存: {metrics['memory_mb']:>8.2f} MB | "
-            f"批次: {metrics['total_batches']:>6}"
+            f"批次: {metrics['total_batches']:>6}",
         )
 
     def save_intermediate_report(self):
@@ -85,7 +81,7 @@ class StabilityTestRunner:
         }
 
         report_path = self.test_data_dir / "stability_test_intermediate.json"
-        with open(report_path, "w", encoding="utf-8") as f:
+        with Path(report_path).open("w", encoding="utf-8") as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
 
     def check_memory_leak(self) -> bool:
@@ -210,7 +206,7 @@ class StabilityTestRunner:
         print("  目标地址: 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
         print(f"\n开始时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print(
-            f"预计结束: {(datetime.now() + timedelta(hours=self.duration_hours)).strftime('%Y-%m-%d %H:%M:%S')}"  # noqa: E501
+            f"预计结束: {(datetime.now() + timedelta(hours=self.duration_hours)).strftime('%Y-%m-%d %H:%M:%S')}",
         )
 
         # 初始化引擎
@@ -303,7 +299,7 @@ class StabilityTestRunner:
             final_report = self.generate_final_report()
 
             report_path = self.test_data_dir / "stability_test_final_report.json"
-            with open(report_path, "w", encoding="utf-8") as f:
+            with Path(report_path).open("w", encoding="utf-8") as f:
                 json.dump(final_report, f, indent=2, ensure_ascii=False)
 
             # 打印总结
@@ -324,7 +320,7 @@ class StabilityTestRunner:
             print(f"  平均错误率: {err['avg_error_rate']:.4f}%")
             print(f"  最大错误率: {err['max_error_rate']:.4f}%")
             print(
-                f"  零错误检查: {err['zero_error_checks']}/{final_report['test_info']['total_checks']}"
+                f"  零错误检查: {err['zero_error_checks']}/{final_report['test_info']['total_checks']}",
             )
 
             print("\n显存使用:")
@@ -334,7 +330,7 @@ class StabilityTestRunner:
 
             print("\n稳定性检查:")
             print(
-                f"  内存泄漏: {'[FAIL] 检测到' if checks['memory_leak_detected'] else '[PASS] 未检测到'}"
+                f"  内存泄漏: {'[FAIL] 检测到' if checks['memory_leak_detected'] else '[PASS] 未检测到'}",
             )
             print(f"  性能稳定: {'[FAIL] 不稳定' if checks['performance_unstable'] else '[PASS] 稳定'}")
             print(f"  错误检测: {'[FAIL] 有错误' if checks['errors_detected'] else '[PASS] 无错误'}")

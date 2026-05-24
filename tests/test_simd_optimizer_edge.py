@@ -1,5 +1,6 @@
 """simd_optimizer 全面测试 — 覆盖 BatchOptimizer, BatchCollisionProcessor,
-NumpyOptimizedAddressGenerator 及工厂函数"""
+NumpyOptimizedAddressGenerator 及工厂函数
+"""
 
 import hashlib
 import unittest

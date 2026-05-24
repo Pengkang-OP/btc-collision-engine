@@ -33,6 +33,7 @@ class MockAssertions:
         Args:
             mock_kernel: GPU内核Mock
             min_calls: 最小调用次数
+
         """
         assert mock_kernel.run_batch.call_count >= min_calls, (
             f"GPU内核执行次数{mock_kernel.run_batch.call_count} < {min_calls}"
@@ -45,6 +46,7 @@ class MockAssertions:
         Args:
             mock_kernel: GPU内核Mock
             expected_count: 期望的目标地址数量
+
         """
         mock_kernel.set_targets.assert_called_once()
         call_args = mock_kernel.set_targets.call_args
@@ -67,6 +69,7 @@ class MockAssertions:
         Args:
             mock_context: GPU上下文Mock
             expected_batch_size: 期望的batch_size
+
         """
         mock_context.calculate_batch_size.assert_called()
         actual_batch_size = mock_context.calculate_batch_size.return_value
@@ -80,6 +83,7 @@ class MockAssertions:
 
         Args:
             mock_device: GPU设备Mock
+
         """
         mock_device.initialize.assert_called_once()
 
@@ -91,6 +95,7 @@ class MockAssertions:
             mock_device: GPU设备Mock
             mock_context: GPU上下文Mock
             mock_kernel: GPU内核Mock
+
         """
         # 复用已有的方法
         MockAssertions.assert_cleanup_called(mock_device, mock_context, mock_kernel)
@@ -101,6 +106,7 @@ class MockAssertions:
 
         Args:
             mock_kernel: GPU内核Mock
+
         """
         # 验证run_batch返回空列表
         call_count = mock_kernel.run_batch.call_count
@@ -116,5 +122,6 @@ class MockAssertions:
 
         Args:
             mock_kernel: GPU内核Mock
+
         """
         mock_kernel.gpu_optimizer.analyze_and_adjust.assert_called()

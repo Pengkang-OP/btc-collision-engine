@@ -5,11 +5,7 @@ import os
 import sys
 from pathlib import Path
 
-# 添加项目根目录到路径
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
-
-from src.utils.key_audit import (  # noqa: E402 — 需 sys.path 前置
+from src.utils.key_audit import ( — 需 sys.path 前置
     KeyAuditLevel,
     KeyAuditLogger,
     KeyOperationType,

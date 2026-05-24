@@ -48,7 +48,7 @@ goto :eof
 
 rem ── 检查 Python 版本 >= 3.9 ─────────────────────────────────────
 :check_python_version
-python -c "import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)" >nul 2>&1
+python -c "import sys; v=sys.version_info; sys.exit(0 if v.major>=3 and v.minor>=9 else 1)" >nul 2>&1
 if errorlevel 1 (
     echo [ERROR] Python version too old (需要 >= 3.9)
     pause
