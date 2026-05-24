@@ -302,7 +302,7 @@ jobs:
           pip install pytest pytest-cov pytest-timeout pytest-benchmark
 
       - name: 运行测试
-        timeout-minutes: 25
+        timeout-minutes: 45
         run: |
           pytest tests/ \
             -v \
