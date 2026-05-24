@@ -360,13 +360,13 @@ jobs:
         run: pytest tests/test_comprehensive_5d.py -v --tb=short --timeout=120
 
       - name: 运行核心引擎测试
-        run: pytest tests/test_base_engine.py -v --tb=short --timeout=120
+        run: pytest tests/unit/engine/test_base_engine.py -v --tb=short --timeout=120
 
       - name: 运行配置与CLI测试
-        run: pytest tests/test_config.py tests/test_cli.py -v --tb=short --timeout=60
+        run: pytest tests/unit/config/test_config.py tests/unit/cli/test_cli.py -v --tb=short --timeout=60
 
       - name: 运行GPU核心测试（无GPU依赖）
-        run: pytest tests/test_gpu_core.py -v --tb=short --timeout=60
+        run: pytest tests/gpu/test_gpu_core.py -v --tb=short --timeout=60
 
   # ──────────────────────────────────────────
   # 关键路径测试
