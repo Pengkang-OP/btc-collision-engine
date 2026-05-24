@@ -43,7 +43,7 @@ from typing import Any
 
 # bech32 可用性标记（保留供未来条件导入使用）
 try:
-    import bech32  # noqa: F811
+    import bech32  # noqa: F401,F811
 
     _HAS_BECH32 = True
 except ImportError:

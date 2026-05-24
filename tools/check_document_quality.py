@@ -292,14 +292,13 @@ class DocumentQualityChecker:
         """检查版本信息"""
         # 检查是否包含版本信息（在前20行）
         first_20_lines = "\n".join(lines[:20])
-        if not re.search(r"[*]*[*]版本[*]*[*]:\s*v?\d+\.\d+", first_20_lines):
-            # 某些文档可能不需要版本信息（如README）
-            if file_path.name not in ["README.md", "CONTRIBUTING.md"]:
-                self.issues.append(
-                    Issue(
-                        Severity.WARNING, str(file_path), 1, "建议添加版本信息 (例如: **版本**: v4.2.2)"
-                    )
-                )
+        if not re.search(r"[*]*[*]版本[*]*[*]:\s*v?\d+\.\d+", first_20_lines) and file_path.name not in [
+            "README.md",
+            "CONTRIBUTING.md",
+        ]:
+            self.issues.append(
+                Issue(Severity.WARNING, str(file_path), 1, "建议添加版本信息 (例如: **版本**: v4.2.2)")
+            )
 
     def check_links(self, file_path: Path, content: str, lines: list[str]):
         """检查链接"""

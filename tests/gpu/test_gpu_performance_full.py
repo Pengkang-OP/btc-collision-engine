@@ -49,6 +49,10 @@ class GPUPerformanceTester:
         print("  步骤1: 加载测试地址")
         print("=" * 80)
 
+        from pathlib import Path
+
+        project_root = Path(__file__).resolve().parent.parent.parent
+
         # 从文件加载
         address_file = project_root / "btc_addresses_sorted.txt.txt"
         resolver = TargetResolver(enable_cache=True)
@@ -373,6 +377,10 @@ class GPUPerformanceTester:
             stab_rating = "不稳定 ⭐⭐"
 
         print(f"  稳定性评级: {stab_rating}")
+
+        from pathlib import Path
+
+        project_root = Path(__file__).resolve().parent.parent.parent
 
         # 保存报告
         report_file = (

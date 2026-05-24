@@ -92,7 +92,7 @@ class TestCryptoBackendWhiteBox:
         elif backend_type == "coincurve":
             # 模拟 coincurve 可用
             try:
-                import coincurve
+                import coincurve  # noqa: F401
 
                 backend = CoincurveBackend()
                 assert backend.is_available is True, "coincurve 后端可用性检测逻辑不正确：应可用"
