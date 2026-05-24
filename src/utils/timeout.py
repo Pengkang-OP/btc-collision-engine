@@ -241,8 +241,9 @@ def invoke_with_timeout(
 
     if os.name == "nt":
         return _execute_with_thread_timeout(func, args, kwargs, timeout, callback_name)
-    # 使用 getattr 避免 Windows 上的类型检查错误
-    if hasattr(signal, "SIGALRM") and hasattr(signal, "setitimer"):
+    # SIGALRM 仅主线程可用；非主线程回退到线程超时
+    if (hasattr(signal, "SIGALRM") and hasattr(signal, "setitimer")
+            and threading.current_thread() is threading.main_thread()):
         return _execute_with_sigalrm_timeout(func, args, kwargs, timeout, callback_name)
     return _execute_with_thread_timeout(func, args, kwargs, timeout, callback_name)
 
