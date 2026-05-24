@@ -116,15 +116,13 @@ class TestRandomSearchModeInit:
         assert mode._seed_queue.maxsize == SEED_PREFETCH_SIZE  # v6.4: 10→100
 
     @patch("src.gpu.search_modes.random_search.threading.Thread")
-    def test_init_starts_prefetch_thread(self, mock_thread):
+    def test_init_does_not_start_thread(self, mock_thread):
+        """v6.5: __init__ 不再启动线程（延迟到 execute()）"""
         from src.gpu.search_modes.random_search import RandomSearchMode
 
         engine = _make_engine_stub()
         RandomSearchMode(engine)
-        assert mock_thread.called
-        # Thread started with daemon=True
-        call_kwargs = mock_thread.call_args[1]
-        assert call_kwargs.get("daemon") is True
+        assert not mock_thread.called, "__init__ 不应创建线程"
 
     @patch("src.gpu.search_modes.random_search.threading.Thread")
     def test_init_custom_seed_prefetch_size(self, mock_thread):

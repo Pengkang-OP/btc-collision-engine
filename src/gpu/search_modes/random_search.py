@@ -99,17 +99,20 @@ class RandomSearchMode(BaseSearchMode):
         self._seed_used_count = 0
         self._seed_generation_errors = 0
 
-        # 启动时预填充队列
+        # 启动时预填充队列（同步，不涉及线程）
         if SEED_PREFILL_ON_START:
             self._prefill_seed_queue()
 
-        self._start_seed_prefetch_thread()
+        # 线程延迟启动：在 execute() 中按需启动，避免测试中创建实例就产生线程
+        # self._start_seed_prefetch_thread()  # 移到 _ensure_seed_thread_running()
 
         ctrl_info = ", 自适应控制=启用" if adaptive_controller else ""
         logger.info("随机搜索模式已初始化 (种子缓存深度=%s%s)", seed_prefetch_size, ctrl_info)
 
     def _start_seed_prefetch_thread(self) -> None:
-        """启动后台种子预生成 daemon 线程"""
+        """启动后台种子预生成 daemon 线程（幂等：已启动则跳过）"""
+        if self._seed_thread is not None and self._seed_thread.is_alive():
+            return
         self._seed_stop_event.clear()
         self._seed_thread = threading.Thread(
             target=self._seed_prefetch_worker,
@@ -118,6 +121,11 @@ class RandomSearchMode(BaseSearchMode):
         )
         self._seed_thread.start()
         logger.info(f"种子预生成线程已启动 (缓存深度={self._seed_prefetch_size})")
+
+    def _ensure_seed_thread_running(self) -> None:
+        """确保种子预生成线程在运行（在 execute() 入口调用）"""
+        if self._seed_thread is None or not self._seed_thread.is_alive():
+            self._start_seed_prefetch_thread()
 
     def _prefill_seed_queue(self) -> None:
         """启动时预填充种子队列
@@ -265,6 +273,9 @@ class RandomSearchMode(BaseSearchMode):
     def execute(self) -> None:
         """执行随机搜索（入口，自动选择同步或异步模式）"""
         engine = self.engine
+
+        # 确保种子预生成线程已启动（延迟初始化）
+        self._ensure_seed_thread_running()
 
         # 检查异步执行器是否可用
         if hasattr(engine, "_async_executor") and engine._async_executor is not None:
