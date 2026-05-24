@@ -59,8 +59,7 @@ class TestSeedToKeyConsistency:
         gpu_key = (seed_int + index) % (2**256)
 
         assert cpu_key == gpu_key, (
-            f"种子={seed.hex()[:16]}..., index={index}: "
-            f"CPU={hex(cpu_key)}, GPU={hex(gpu_key)}"
+            f"种子={seed.hex()[:16]}..., index={index}: CPU={hex(cpu_key)}, GPU={hex(gpu_key)}"
         )
 
     @pytest.mark.parametrize("seed", TEST_SEEDS)
@@ -78,9 +77,7 @@ class TestSeedToKeyConsistency:
         # process_matches_prng 恢复路径
         recovery_key = (seed_int + index) % (2**256)
 
-        assert recovery_key == gpu_key, (
-            f"恢复路径与GPU不一致: seed={seed.hex()[:16]}..., index={index}"
-        )
+        assert recovery_key == gpu_key, f"恢复路径与GPU不一致: seed={seed.hex()[:16]}..., index={index}"
 
     def test_gpu_256bit_overflow_behavior(self):
         """验证 GPU 256 位加法溢出行为
@@ -99,12 +96,10 @@ class TestSeedToKeyConsistency:
 
     def test_key_generator_formula_consistency(self):
         """验证 KeyGenerator._generate_prng_seed 使用 (seed + index) % 2^256"""
-        from src.collision.gpu.key_generator import KeyGenerator, KeyGenerationStrategy
+        from src.collision.gpu.key_generator import KeyGenerationStrategy, KeyGenerator
 
         gen = KeyGenerator(strategy=KeyGenerationStrategy.PRNG_SEED)
-        seed = bytes.fromhex(
-            "c0ffeec0ffeec0ffeec0ffeec0ffeec0ffeec0ffeec0ffeec0ffeec0ffeec0ff"
-        )
+        seed = bytes.fromhex("c0ffeec0ffeec0ffeec0ffeec0ffeec0ffeec0ffeec0ffeec0ffeec0ffeec0ff")
         seed_int = int.from_bytes(seed, "big")
 
         for index in [0, 1, 100, 999999]:
@@ -116,19 +111,15 @@ class TestSeedToKeyConsistency:
 
     def test_key_generator_produces_valid_private_keys(self):
         """验证 KeyGenerator.generate_private_key 始终产出有效私钥 (1 <= k < N)"""
-        from src.collision.gpu.key_generator import KeyGenerator, KeyGenerationStrategy
+        from src.collision.gpu.key_generator import KeyGenerationStrategy, KeyGenerator
 
         gen = KeyGenerator(strategy=KeyGenerationStrategy.PRNG_SEED)
-        seed = bytes.fromhex(
-            "c0ffeec0ffeec0ffeec0ffeec0ffeec0ffeec0ffeec0ffeec0ffeec0ffeec0ff"
-        )
+        seed = bytes.fromhex("c0ffeec0ffeec0ffeec0ffeec0ffeec0ffeec0ffeec0ffeec0ffeec0ffeec0ff")
 
         for index in [0, 1, 100, 524288, 2097152]:
             key = gen.generate_private_key(seed, index)
             key_int = int.from_bytes(key, "big")
-            assert 1 <= key_int < SECP256K1_N, (
-                f"生成的私钥无效: index={index}, key={hex(key_int)}"
-            )
+            assert 1 <= key_int < SECP256K1_N, f"生成的私钥无效: index={index}, key={hex(key_int)}"
 
 
 class TestResultProcessorValidation:
@@ -157,7 +148,7 @@ class TestResultProcessorValidation:
     def test_valid_keys_pass_validation(self):
         """验证有效私钥通过范围校验"""
         # k=1 是最小有效私钥
-        assert 1 >= 1 and 1 < SECP256K1_N, "k=1 应通过校验"
+        assert 1 >= 1 and SECP256K1_N > 1, "k=1 应通过校验"
 
         # k=N-1 是最大有效私钥
         assert (SECP256K1_N - 1) >= 1 and (SECP256K1_N - 1) < SECP256K1_N, "k=N-1 应通过校验"
@@ -194,9 +185,7 @@ class TestEndiannessConsistency:
             s_d_j = w[7 - j]  # s.d[j] = seed[7-j]
             gpu_value |= s_d_j << (32 * j)
 
-        assert cpu_value == gpu_value, (
-            f"端序不一致: CPU=0x{cpu_value:064x}, GPU=0x{gpu_value:064x}"
-        )
+        assert cpu_value == gpu_value, f"端序不一致: CPU=0x{cpu_value:064x}, GPU=0x{gpu_value:064x}"
 
         # 额外验证: 对于简单值，结果应该特别明显
         simple_seed = b"\x00" * 31 + b"\x42"  # CPU 大端解释 = 0x42
@@ -234,8 +223,14 @@ class TestCurveParameterConsistency:
         # SECP256K1_N[8] = {0xD0364141, 0xBFD25E8C, 0xAF48A03B, 0xBAAEDCE6,
         #                    0xFFFFFFFE, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF}
         gpu_n_parts = [
-            0xD0364141, 0xBFD25E8C, 0xAF48A03B, 0xBAAEDCE6,
-            0xFFFFFFFE, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+            0xD0364141,
+            0xBFD25E8C,
+            0xAF48A03B,
+            0xBAAEDCE6,
+            0xFFFFFFFE,
+            0xFFFFFFFF,
+            0xFFFFFFFF,
+            0xFFFFFFFF,
         ]
 
         # GPU 使用 LE uint32 数组: n_val.d[i] = SECP256K1_N[i]
@@ -243,9 +238,7 @@ class TestCurveParameterConsistency:
         for i in range(8):
             gpu_n |= gpu_n_parts[i] << (32 * i)
 
-        assert cpu_n == gpu_n, (
-            f"N 值不一致: CPU={hex(cpu_n)}, GPU={hex(gpu_n)}"
-        )
+        assert cpu_n == gpu_n, f"N 值不一致: CPU={hex(cpu_n)}, GPU={hex(gpu_n)}"
 
     def test_p_matches_between_cpu_and_gpu(self):
         """验证 P (field prime) 在 CPU 和 GPU 之间一致"""
@@ -253,14 +246,18 @@ class TestCurveParameterConsistency:
 
         # GPU side (batch_check.cl:33)
         gpu_p_parts = [
-            0xFFFFFC2F, 0xFFFFFFFE, 0xFFFFFFFF, 0xFFFFFFFF,
-            0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+            0xFFFFFC2F,
+            0xFFFFFFFE,
+            0xFFFFFFFF,
+            0xFFFFFFFF,
+            0xFFFFFFFF,
+            0xFFFFFFFF,
+            0xFFFFFFFF,
+            0xFFFFFFFF,
         ]
 
         gpu_p = 0
         for i in range(8):
             gpu_p |= gpu_p_parts[i] << (32 * i)
 
-        assert cpu_p == gpu_p, (
-            f"P 值不一致: CPU={hex(cpu_p)}, GPU={hex(gpu_p)}"
-        )
+        assert cpu_p == gpu_p, f"P 值不一致: CPU={hex(cpu_p)}, GPU={hex(gpu_p)}"

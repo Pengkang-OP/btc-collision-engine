@@ -11,9 +11,8 @@ Intel Arc A770 GPU诊断工具
 """
 
 import platform
-import sys
 import time
-from pathlib import Path
+
 
 def print_header(title: str):
     """打印标题"""

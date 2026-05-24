@@ -49,8 +49,12 @@ class GPUFacade:
     )
 
     def __init__(
-        self, targets=None, use_gpu=True, checkpoint_enabled=False,
-        dedup_enabled=False, config=None,
+        self,
+        targets=None,
+        use_gpu=True,
+        checkpoint_enabled=False,
+        dedup_enabled=False,
+        config=None,
     ):
         """初始化GPU外观类
 
@@ -134,6 +138,7 @@ class GPUFacade:
         """
         try:
             from .device import GPUDeviceDetector
+
             return len(GPUDeviceDetector.detect_devices())
         except Exception:
             return 0
@@ -147,6 +152,7 @@ class GPUFacade:
         """
         try:
             from .device import GPUDeviceDetector
+
             return GPUDeviceDetector.detect_devices()
         except Exception:
             return []
@@ -201,7 +207,10 @@ class GPUFacade:
             return False
 
     def start_collision(
-        self, targets: list[str], mode: str = "random", batch_size: int = 10000,
+        self,
+        targets: list[str],
+        mode: str = "random",
+        batch_size: int = 10000,
     ) -> bool:
         """启动GPU碰撞
 

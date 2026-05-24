@@ -11,23 +11,25 @@
     python scripts/long_running_stability_test.py --duration 28800
 """
 
-import time
-import json
-import sys
-import os
 import argparse
+import json
+import os
+import sys
+import time
 from datetime import datetime, timezone
 
 # 设置 stdout 编码
-if sys.stdout.encoding.lower() in ('gbk', 'gb2312', 'cp936'):
+if sys.stdout.encoding.lower() in ("gbk", "gb2312", "cp936"):
     import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
 
 def get_memory_mb():
     """获取当前进程内存使用 (MB)"""
     try:
         import psutil
+
         proc = psutil.Process()
         return round(proc.memory_info().rss / 1024 / 1024, 2)
     except ImportError:
@@ -36,12 +38,9 @@ def get_memory_mb():
 
 def main():
     parser = argparse.ArgumentParser(description="长时间运行稳定性测试")
-    parser.add_argument("--duration", type=int, default=300,
-                        help="测试持续时间（秒），默认 300 (5分钟)")
-    parser.add_argument("--interval", type=int, default=30,
-                        help="采样间隔（秒），默认 30")
-    parser.add_argument("--output", type=str, default=None,
-                        help="输出文件路径")
+    parser.add_argument("--duration", type=int, default=300, help="测试持续时间（秒），默认 300 (5分钟)")
+    parser.add_argument("--interval", type=int, default=30, help="采样间隔（秒），默认 30")
+    parser.add_argument("--output", type=str, default=None, help="输出文件路径")
     args = parser.parse_args()
 
     output_path = args.output or f"test_results/long_running_test_{int(time.time())}.json"
@@ -58,6 +57,7 @@ def main():
 
     try:
         import pyopencl as cl
+
         devices = [d.name.strip() for p in cl.get_platforms() for d in p.get_devices()]
         print(f"  GPU 设备: {', '.join(devices)}")
     except ImportError:
@@ -69,8 +69,10 @@ def main():
     print()
 
     # 运行测试
-    from src.collision.gpu.engine import GPUCollisionEngine
     import warnings
+
+    from src.collision.gpu.engine import GPUCollisionEngine
+
     warnings.filterwarnings("ignore")
 
     target_idx = 1 if len(devices) > 1 else 0
@@ -93,9 +95,9 @@ def main():
         time.sleep(args.interval)
         sample_count += 1
         elapsed = time.time() - start_time
-        stats = getattr(engine, 'stats', None)
-        speed = getattr(stats, 'speed', 0) if stats else 0
-        total = getattr(stats, 'total_checked', 0) if stats else 0
+        stats = getattr(engine, "stats", None)
+        speed = getattr(stats, "speed", 0) if stats else 0
+        total = getattr(stats, "total_checked", 0) if stats else 0
         mem = get_memory_mb()
 
         sample = {
@@ -138,7 +140,7 @@ def main():
     print(f"  最高速度: {result['max_speed_keys_per_sec']:,} keys/s")
     print(f"  内存增长: {result['memory_growth_mb']:+.1f} MB")
 
-    if result['memory_growth_mb'] > 50:
+    if result["memory_growth_mb"] > 50:
         print("  警告: 内存增长超过 50MB，可能存在内存泄漏!")
     else:
         print("  内存稳定，无泄漏迹象")

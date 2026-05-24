@@ -13,8 +13,8 @@
 """
 
 import json
-import sys
 from pathlib import Path
+
 
 def detect_all_gpus():
     """检测所有GPU设备"""

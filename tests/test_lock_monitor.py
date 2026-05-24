@@ -358,7 +358,7 @@ class TestThreadSafety:
 
         def recorder(name):
             try:
-                for i in range(200):
+                for _i in range(200):
                     monitor.record_lock_acquire(name, 1.0)
                     monitor.record_lock_release(name, 1.0)
             except Exception as e:

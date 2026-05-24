@@ -1,4 +1,5 @@
 """Log collector for aggregating log entries."""
+
 import logging
 import threading
 from collections.abc import Callable
@@ -30,7 +31,8 @@ class LogCollector:
                 logger.error("Log handler error: %s", e)
 
     def get_entries(
-        self, limit: int = 100,
+        self,
+        limit: int = 100,
     ) -> list[dict]:
         """Get recent log entries.
 

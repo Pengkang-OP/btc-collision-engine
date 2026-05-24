@@ -123,7 +123,9 @@ class PerformanceTracker:
         }
 
     def get_slow_operations(
-        self, threshold_ms: float = 1000, limit: int = 10,
+        self,
+        threshold_ms: float = 1000,
+        limit: int = 10,
     ) -> list[PerformanceMetrics]:
         """获取慢操作记录
 
@@ -162,7 +164,8 @@ def _get_tracker_config():
             "max_records": config_mgr.get("performance_monitoring.max_records", 10000),
             "slow_threshold_ms": config_mgr.get("performance_monitoring.slow_threshold_ms", 30000),
             "track_slow_operations": config_mgr.get(
-                "performance_monitoring.track_slow_operations", True,
+                "performance_monitoring.track_slow_operations",
+                True,
             ),
             "log_level": config_mgr.get("performance_monitoring.log_level", "INFO"),
         }
@@ -280,7 +283,8 @@ class EnhancedPerformanceMonitor:
                 try:
                     if success:
                         self.logger.log(
-                            self.level, f"[Performance] {self.operation}: {elapsed_ms:.2f}ms",
+                            self.level,
+                            f"[Performance] {self.operation}: {elapsed_ms:.2f}ms",
                         )
                     else:
                         _ms = elapsed_ms
@@ -375,7 +379,9 @@ def log_performance_summary(logger: logging.Logger, tracker: PerformanceTracker 
 
 # 兼容性包装器
 def create_performance_monitor(
-    logger: logging.Logger, operation: str, level: str = "INFO",
+    logger: logging.Logger,
+    operation: str,
+    level: str = "INFO",
 ) -> "EnhancedPerformanceMonitor":
     """创建性能监控器（兼容旧API）
 

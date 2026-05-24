@@ -36,7 +36,8 @@ class SecureKeyGenerator:
     """
 
     def __init__(
-        self, config: dict | None = None,
+        self,
+        config: dict | None = None,
     ) -> None:
         """Initialize private key generator.
 
@@ -60,10 +61,12 @@ class SecureKeyGenerator:
 
         # P1-3 fix: entropy pool check configuration
         self.entropy_check_enabled = config.get(
-            "entropy_check_enabled", True,
+            "entropy_check_enabled",
+            True,
         )
         self.min_entropy_bits = config.get(
-            "min_entropy_bits", 1000,
+            "min_entropy_bits",
+            1000,
         )
 
         # Statistics
@@ -76,9 +79,7 @@ class SecureKeyGenerator:
         }
 
         logger.info(
-            "SecureKeyGenerator initialized: "
-            "batch_size=%d, rate_limit=%d, "
-            "entropy_check=%s",
+            "SecureKeyGenerator initialized: batch_size=%d, rate_limit=%d, entropy_check=%s",
             self.batch_size,
             self.rate_limit,
             self.entropy_check_enabled,
@@ -99,36 +100,31 @@ class SecureKeyGenerator:
 
         try:
             # Linux: check entropy pool
-            entropy_file = (
-                "/proc/sys/kernel/random/entropy_avail"
-            )
+            entropy_file = "/proc/sys/kernel/random/entropy_avail"
             if pathlib.Path(entropy_file).exists():
                 with pathlib.Path(entropy_file).open() as f:
                     entropy = int(f.read().strip())
 
-                self.stats["entropy_checks"] = (
-                    self.stats.get("entropy_checks", 0) + 1
-                )
+                self.stats["entropy_checks"] = self.stats.get("entropy_checks", 0) + 1
 
                 if entropy < self.min_entropy_bits:
                     _entropy = entropy
                     _min_e = self.min_entropy_bits
                     logger.warning(
-                        "System entropy low: %s bits (<%s), "
-                        "recommend installing haveged/rng-tools",
-                        _entropy, _min_e,
+                        "System entropy low: %s bits (<%s), recommend installing haveged/rng-tools",
+                        _entropy,
+                        _min_e,
                     )
                     self.stats["low_entropy_count"] = (
                         self.stats.get(
-                            "low_entropy_count", 0,
+                            "low_entropy_count",
+                            0,
                         )
                         + 1
                     )
 
                     # Detailed suggestion on first warning
-                    if (
-                        self.stats["low_entropy_count"] == 1
-                    ):
+                    if self.stats["low_entropy_count"] == 1:
                         logger.warning(
                             "Low entropy may degrade key "
                             "generation quality.\n"
@@ -146,7 +142,8 @@ class SecureKeyGenerator:
                         )
                         self.stats["warnings_issued"] = (
                             self.stats.get(
-                                "warnings_issued", 0,
+                                "warnings_issued",
+                                0,
                             )
                             + 1
                         )
@@ -154,11 +151,13 @@ class SecureKeyGenerator:
                     return False
                 if entropy < self.min_entropy_bits * 2:
                     logger.debug(
-                        "System entropy moderate: %s bits", entropy,
+                        "System entropy moderate: %s bits",
+                        entropy,
                     )
                     return True
                 logger.debug(
-                    "System entropy sufficient: %s bits", entropy,
+                    "System entropy sufficient: %s bits",
+                    entropy,
                 )
                 return True
 
@@ -183,7 +182,8 @@ class SecureKeyGenerator:
             return True  # Assume healthy if cannot check
 
     def generate_batch(
-        self, count: int,
+        self,
+        count: int,
     ) -> list[bytearray]:
         """Generate private keys in batch - returns mutable bytearray
         for secure clearing after use.
@@ -208,8 +208,7 @@ class SecureKeyGenerator:
         # P1-3 fix: check entropy pool health
         if not self._check_entropy_health():
             logger.warning(
-                "Low entropy health, generated keys may "
-                "have security risks",
+                "Low entropy health, generated keys may have security risks",
             )
             # Log but don't block, to avoid performance impact
 
@@ -229,8 +228,7 @@ class SecureKeyGenerator:
                     private_key,
                 ):
                     logger.debug(
-                        "Invalid private key generated, "
-                        "regenerating",
+                        "Invalid private key generated, regenerating",
                     )
                     continue
 
@@ -240,10 +238,7 @@ class SecureKeyGenerator:
                 # 4. Rate control (if configured)
                 if self.rate_limit > 0:
                     elapsed = time.time() - start_time
-                    expected_time = (
-                        len(private_keys)
-                        / self.rate_limit
-                    )
+                    expected_time = len(private_keys) / self.rate_limit
                     if elapsed < expected_time:
                         time.sleep(
                             expected_time - elapsed,
@@ -262,15 +257,10 @@ class SecureKeyGenerator:
             self._total_generated += len(private_keys)
 
         elapsed = time.time() - start_time
-        rate = (
-            len(private_keys) / elapsed
-            if elapsed > 0
-            else 0
-        )
+        rate = len(private_keys) / elapsed if elapsed > 0 else 0
 
         logger.debug(
-            "Batch generation complete: %d keys in %.2fs "
-            "(%.0f keys/s)",
+            "Batch generation complete: %d keys in %.2fs (%.0f keys/s)",
             len(private_keys),
             elapsed,
             rate,
@@ -305,15 +295,15 @@ class SecureKeyGenerator:
                 return private_key
 
         raise RuntimeError(
-            "Failed to generate valid private key "
-            "(exceeded max attempts)",
+            "Failed to generate valid private key (exceeded max attempts)",
         )
 
     # 别名：兼容测试中 generate_single_key 的调用
     generate_single_key = generate_single
 
     def _is_valid_private_key(
-        self, key: bytes,
+        self,
+        key: bytes,
     ) -> bool:
         """Validate private key against secp256k1 curve
         specification.
@@ -342,14 +332,8 @@ class SecureKeyGenerator:
 
         """
         with self._lock:
-            elapsed = (
-                datetime.utcnow() - self._start_time
-            ).total_seconds()
-            rate = (
-                self._total_generated / elapsed
-                if elapsed > 0
-                else 0
-            )
+            elapsed = (datetime.utcnow() - self._start_time).total_seconds()
+            rate = self._total_generated / elapsed if elapsed > 0 else 0
 
             stats = {
                 "total_generated": self._total_generated,
@@ -359,15 +343,15 @@ class SecureKeyGenerator:
                 "rate_limit": self.rate_limit,
                 "key_format": self.key_format,
                 # P1-3 fix: add entropy stats
-                "entropy_check_enabled": (
-                    self.entropy_check_enabled
-                ),
+                "entropy_check_enabled": (self.entropy_check_enabled),
                 "min_entropy_bits": self.min_entropy_bits,
                 "low_entropy_warnings": self.stats.get(
-                    "low_entropy_count", 0,
+                    "low_entropy_count",
+                    0,
                 ),
                 "entropy_checks": self.stats.get(
-                    "entropy_checks", 0,
+                    "entropy_checks",
+                    0,
                 ),
             }
 

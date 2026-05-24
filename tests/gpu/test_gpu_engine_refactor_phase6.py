@@ -145,7 +145,8 @@ class TestEngineIntegration:
             from src.collision.gpu.engine import CollisionCore, GPUCollisionEngine
 
             engine = GPUCollisionEngine(  # noqa: F841
-                targets=mock_targets, data_logging_enabled=False,
+                targets=mock_targets,
+                data_logging_enabled=False,
             )
             CollisionCore.assert_called_once()
         finally:

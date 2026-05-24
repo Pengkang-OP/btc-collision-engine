@@ -107,7 +107,8 @@ class CollisionCore(ICollisionCore):
         self.dedup_enabled = self.config.get("dedup_enabled", False)
         self.checkpoint_enabled = self.config.get("checkpoint_enabled", False)
         self.progress_interval = self.config.get(
-            "progress_interval", 1.0,
+            "progress_interval",
+            1.0,
         )  # Phase 4: 进度回调间隔(秒)
 
         logger.debug("CollisionCore 初始化完成")
@@ -269,13 +270,15 @@ class CollisionCore(ICollisionCore):
 
         try:
             mode = self.config.get("mode", "random")
-            self.checkpoint.save({
-                "mode": mode,
-                "targets": list(self.targets),
-                "current_position": getattr(self.stats, "total_checked", 0),
-                "total_checked": getattr(self.stats, "total_checked", 0),
-                "matches": [],  # 匹配数据通过回调单独处理
-            })
+            self.checkpoint.save(
+                {
+                    "mode": mode,
+                    "targets": list(self.targets),
+                    "current_position": getattr(self.stats, "total_checked", 0),
+                    "total_checked": getattr(self.stats, "total_checked", 0),
+                    "matches": [],  # 匹配数据通过回调单独处理
+                }
+            )
             logger.debug("断点已保存")
         except Exception as e:
             logger.error("保存断点失败: %s", e)

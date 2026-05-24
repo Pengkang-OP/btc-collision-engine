@@ -185,7 +185,10 @@ def setup_security_logging() -> None:
     """
     # 创建安全过滤器
     security_filter = SecurityLogFilter(
-        name="security_filter", mask_private_keys=True, mask_wif=True, mask_addresses=True,
+        name="security_filter",
+        mask_private_keys=True,
+        mask_wif=True,
+        mask_addresses=True,
     )
 
     # 添加到根日志记录器（子 logger 会继承根 logger 的过滤器）
@@ -288,7 +291,10 @@ def log_safe_debug(logger: logging.Logger, message: str, **kwargs) -> None:
 
 
 def log_safe_exception(
-    logger: logging.Logger, message: str, exc: BaseException | None = None, **kwargs,
+    logger: logging.Logger,
+    message: str,
+    exc: BaseException | None = None,
+    **kwargs,
 ) -> None:
     """安全记录异常（不泄露敏感堆栈信息）
 

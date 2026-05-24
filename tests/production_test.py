@@ -124,7 +124,9 @@ def test_multi_gpu_production():
         logger.info("开始运行生产模式碰撞检测任务，持续60秒...")
 
         start_result = engine.start(
-            targets=test_targets, mode="random", total_keys=100000000,
+            targets=test_targets,
+            mode="random",
+            total_keys=100000000,
         )  # 1亿次碰撞检测
         if not start_result:
             logger.error("❌ 多GPU碰撞检测启动失败")

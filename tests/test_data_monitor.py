@@ -133,7 +133,7 @@ class TestDataMonitor(unittest.TestCase):
         self.monitor.start()
 
         # 报告多次数据生成
-        for i in range(10):
+        for _i in range(10):
             self.monitor.report_keys_generated(device_idx=0, count=1000)
             time.sleep(0.1)
 
@@ -213,7 +213,7 @@ class TestDataMonitor(unittest.TestCase):
         # 主线程不应该被阻塞
         start_time = time.time()
 
-        for i in range(100):
+        for _i in range(100):
             self.monitor.report_keys_generated(device_idx=0, count=1)
 
         elapsed = time.time() - start_time
@@ -229,7 +229,10 @@ class TestDataMonitor(unittest.TestCase):
         issue_low = DataQualityIssue(issue_type="test", severity="low", message="低级别", device_idx=0)
 
         issue_critical = DataQualityIssue(
-            issue_type="test", severity="critical", message="严重级别", device_idx=0,
+            issue_type="test",
+            severity="critical",
+            message="严重级别",
+            device_idx=0,
         )
 
         self.monitor._record_issue(issue_low)

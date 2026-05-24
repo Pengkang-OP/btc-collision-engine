@@ -69,9 +69,7 @@ def benchmark_secp256k1_scalar_multiply(iterations=100):
     # 验证结果正确性（使用k=2）
     result_2g = ec.scalar_multiply_const_time(2, G)
     expected_x = 0xC6047F9441ED7D6D3045406E95C07CD85C778E4B8CEF3CA7ABAC09B95C709EE5
-    assert result_2g.x == expected_x, (
-        f"X坐标不匹配: {result_2g.x:#x} != {expected_x:#x}"
-    )
+    assert result_2g.x == expected_x, f"X坐标不匹配: {result_2g.x:#x} != {expected_x:#x}"
     print(f"\n  [PASS] 计算结果正确 (2G.x = {result_2g.x:#x})")
 
 

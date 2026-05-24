@@ -103,8 +103,7 @@ def validate_batch_size(value: str) -> int:
     n = int(value)
     if not (1 <= n <= 10_000_000):
         raise ValueError(
-            f"Batch size must be between 1 and 10,000,000, "
-            f"got {n}",
+            f"Batch size must be between 1 and 10,000,000, got {n}",
         )
     return n
 
@@ -125,7 +124,6 @@ def validate_worker_count(value: str) -> int:
     n = int(value)
     if not (1 <= n <= 1024):
         raise ValueError(
-            f"Worker count must be between 1 and 1024, "
-            f"got {n}",
+            f"Worker count must be between 1 and 1024, got {n}",
         )
     return n

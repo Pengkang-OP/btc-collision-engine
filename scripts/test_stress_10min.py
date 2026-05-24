@@ -5,7 +5,6 @@ GPU碰撞引擎稳定性压力测试
 """
 
 import os
-import sys
 import time
 
 import psutil

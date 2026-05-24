@@ -116,7 +116,10 @@ class GPUBatchScheduler:
     # ========== GPU 批次执行 ==========
 
     def execute_batch(
-        self, seed: bytes, batch_size: int, batch_num: int,
+        self,
+        seed: bytes,
+        batch_size: int,
+        batch_num: int,
     ) -> tuple[list[dict[str, int]], float]:
         """执行 GPU batch 计算
 
@@ -188,7 +191,10 @@ class GPUBatchScheduler:
         raise RuntimeError("BUG: execute_batch retry loop exhausted without result") from last_error
 
     def execute_batch_once(
-        self, seed: bytes, batch_size: int, batch_num: int,
+        self,
+        seed: bytes,
+        batch_size: int,
+        batch_num: int,
     ) -> tuple[list[dict[str, int]], float]:
         """单次 GPU batch 执行（由 execute_batch 调用）
 
@@ -208,7 +214,8 @@ class GPUBatchScheduler:
             matches: list[dict[str, int]] = []
             if engine._gpu_kernel is not None:
                 if hasattr(engine._gpu_kernel, "program") and hasattr(
-                    engine._gpu_kernel, "_targets_buf",
+                    engine._gpu_kernel,
+                    "_targets_buf",
                 ):
                     try:
                         matches, execution_time_ms = engine._async_executor.run_batch_async(
@@ -221,12 +228,16 @@ class GPUBatchScheduler:
                     except Exception as e:
                         logger.warning("异步执行失败，回退到同步模式: %s", e)
                         matches = engine._gpu_kernel.run_batch(
-                            seed, batch_size, stop_event=engine._stop_event,
+                            seed,
+                            batch_size,
+                            stop_event=engine._stop_event,
                         )
                         execution_time_ms = (time.time() - batch_start_time) * 1000
                 else:
                     matches = engine._gpu_kernel.run_batch(
-                        seed, batch_size, stop_event=engine._stop_event,
+                        seed,
+                        batch_size,
+                        stop_event=engine._stop_event,
                     )
                     execution_time_ms = (time.time() - batch_start_time) * 1000
             else:
@@ -275,7 +286,10 @@ class GPUBatchScheduler:
         """记录调整历史"""
         engine = self._engine
         engine._engine_monitor.record_adjustment(
-            old_size=old_size, new_size=new_size, reason=reason, details=details,
+            old_size=old_size,
+            new_size=new_size,
+            reason=reason,
+            details=details,
         )
 
     # ========== 自适应批大小 ==========
@@ -376,7 +390,9 @@ class GPUBatchScheduler:
                     reason = list(adjustments.keys())[0]
                     logger.info(
                         "自适应优化: batch_size %s -> %s (%s)",
-                        current_batch_size, new_batch_size, reason,
+                        current_batch_size,
+                        new_batch_size,
+                        reason,
                     )
                     engine.batch_size = new_batch_size
         except Exception as adjust_error:
@@ -395,15 +411,17 @@ class GPUBatchScheduler:
                 }
                 for m in engine.stats.matches
             ]
-            engine.checkpoint_mgr.save({
-                "mode": engine._current_mode,
-                "targets": list(engine.targets),
-                "current_position": engine._current_position,
-                "total_checked": count,
-                "matches": matches_list,
-                "range_start": engine._range_start,
-                "range_end": engine._range_end,
-            })
+            engine.checkpoint_mgr.save(
+                {
+                    "mode": engine._current_mode,
+                    "targets": list(engine.targets),
+                    "current_position": engine._current_position,
+                    "total_checked": count,
+                    "matches": matches_list,
+                    "range_start": engine._range_start,
+                    "range_end": engine._range_end,
+                }
+            )
 
     # ========== GPU 缓冲区调整 ==========
 

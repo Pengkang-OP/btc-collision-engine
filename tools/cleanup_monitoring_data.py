@@ -3,10 +3,9 @@
 监控数据自动清理工具
 
 定期清理过期的监控数据，防止磁盘空间占用过多
-"""  # ruff: noqa: T201
+"""  # noqa: T201
 
 import argparse
-import sys
 import time
 from datetime import datetime
 from pathlib import Path
@@ -67,21 +66,15 @@ class MonitoringDataCleaner:
         logger.info(f"截止时间: {cutoff_date.strftime('%Y-%m-%d %H:%M:%S')}")
 
         # 清理监控数据目录
-        stats["monitoring"] = self._cleanup_directory(
-            self.monitoring_dir, cutoff_time, dry_run
-        )
+        stats["monitoring"] = self._cleanup_directory(self.monitoring_dir, cutoff_time, dry_run)
 
         # 清理数据日志目录
-        stats["data_logs"] = self._cleanup_directory(
-            self.data_logs_dir, cutoff_time, dry_run
-        )
+        stats["data_logs"] = self._cleanup_directory(self.data_logs_dir, cutoff_time, dry_run)
 
         # 清理日志文件
         logs_dir = PROJECT_ROOT / "logs"
         if logs_dir.exists():
-            stats["logs"] = self._cleanup_directory(
-                logs_dir, cutoff_time, dry_run
-            )
+            stats["logs"] = self._cleanup_directory(logs_dir, cutoff_time, dry_run)
 
         # 汇总统计
         for key in ["monitoring", "data_logs", "logs"]:
@@ -108,9 +101,7 @@ class MonitoringDataCleaner:
 
         return stats
 
-    def _cleanup_directory(
-        self, directory: Path, cutoff_time: float, dry_run: bool = False
-    ) -> dict:
+    def _cleanup_directory(self, directory: Path, cutoff_time: float, dry_run: bool = False) -> dict:
         """
         清理指定目录
 
@@ -189,11 +180,7 @@ class MonitoringDataCleaner:
         if not directory.exists():
             return 0
 
-        return sum(
-            f.stat().st_size
-            for f in directory.rglob("*")
-            if f.is_file()
-        )
+        return sum(f.stat().st_size for f in directory.rglob("*") if f.is_file())
 
     def get_cleanup_recommendation(self, max_age_days: int = 30) -> dict:
         """

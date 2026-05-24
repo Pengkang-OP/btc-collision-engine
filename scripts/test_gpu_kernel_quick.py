@@ -6,6 +6,8 @@ import sys
 
 # 添加项目根目录到路径
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+
 def test_kernel_load():
     """测试内核加载"""
     print("=" * 60)

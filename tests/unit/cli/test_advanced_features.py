@@ -6,8 +6,6 @@
 - AdvancedFeatureManager: 功能开关管理
 """
 
-import os
-import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -18,7 +16,6 @@ from src.cli.advanced_features import (
     apply_template,
     recommend_parameters,
 )
-
 
 # ============================================================================
 # apply_template
@@ -51,7 +48,7 @@ class TestApplyTemplate:
         template_file = template_dir / "quick-test.json"
         template_file.write_text('{"test": true}')
 
-        with patch("src.cli.advanced_features.Path") as mock_path:
+        with patch("src.cli.advanced_features.Path"):
             mock_templates_dir = MagicMock()
             mock_templates_dir.exists.return_value = True
             mock_candidate = MagicMock()
@@ -64,11 +61,10 @@ class TestApplyTemplate:
                 return MagicMock()
 
             # 直接 mock Path 的行为
-            with patch("builtins.open", create=True):
-                with patch.object(Path, "write_text") as mock_write:
-                    result = apply_template("quick-test")
-                    # 至少能进入正确的分支
-                    assert isinstance(result, bool)
+            with patch("builtins.open", create=True), patch.object(Path, "write_text"):
+                result = apply_template("quick-test")
+                # 至少能进入正确的分支
+                assert isinstance(result, bool)
 
     def test_template_os_error(self):
         """文件写入错误时返回 False。"""

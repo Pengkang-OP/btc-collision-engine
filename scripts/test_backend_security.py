@@ -2,9 +2,8 @@
 """加密后端安全检查测试"""
 
 import sys
-from pathlib import Path
 
-from src.core.crypto_backend import ( — 需 sys.path 前置
+from src.core.crypto_backend import (  # 需 sys.path 前置
     get_backend_security_info,
     is_secure_backend_available,
     verify_production_ready,

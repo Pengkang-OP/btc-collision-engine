@@ -1,4 +1,5 @@
 """Log event type definitions."""
+
 from dataclasses import dataclass
 
 

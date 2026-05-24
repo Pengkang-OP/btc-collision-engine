@@ -176,10 +176,7 @@ class GPUMockFactory:
         if device is None:
             device = GPUMockFactory.create_cl_device()
 
-        if HAS_PYOPENCL:
-            ctx = Mock(spec=cl.Context)
-        else:
-            ctx = Mock()
+        ctx = Mock(spec=cl.Context) if HAS_PYOPENCL else Mock()
         ctx.devices = [device]
         ctx.get_info = Mock(return_value=Mock())
         return ctx
@@ -200,10 +197,7 @@ class GPUMockFactory:
             配置好的 Mock Buffer 对象
 
         """
-        if HAS_PYOPENCL:
-            buf = Mock(spec=cl.Buffer)
-        else:
-            buf = Mock()
+        buf = Mock(spec=cl.Buffer) if HAS_PYOPENCL else Mock()
         buf.size = size
 
         # 关键修复: Buffer 构造函数需要正确处理参数
@@ -519,6 +513,7 @@ class GPUMockFactory:
         """返回包含 NVIDIA / AMD / Intel Arc 三种设备的多平台列表。"""
         platform1 = cls.create_cl_platform("Platform NVIDIA", [cls.nvidia_device()])
         platform2 = cls.create_cl_platform(
-            "Platform AMD-Intel", [cls.amd_device(), cls.intel_arc_device()],
+            "Platform AMD-Intel",
+            [cls.amd_device(), cls.intel_arc_device()],
         )
         return [platform1, platform2]

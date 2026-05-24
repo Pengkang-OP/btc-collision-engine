@@ -44,7 +44,7 @@ def generate_toc(headings: list[tuple[int, int, str]]) -> str:
 
     toc_lines = ["## 目录\n"]
 
-    for level, line_num, title in headings:
+    for level, _line_num, title in headings:
         # 跳过主标题（level 1）
         if level == 1:
             continue

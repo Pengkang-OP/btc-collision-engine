@@ -333,7 +333,8 @@ class SingleGPUWorker(threading.Thread):
                 engine_kwargs["end"] = self.range_end
 
             monitor_thread = threading.Thread(
-                target=lambda: self._run_monitor_loop(total_keys), daemon=True,
+                target=lambda: self._run_monitor_loop(total_keys),
+                daemon=True,
             )
             monitor_thread.start()
 
@@ -452,7 +453,9 @@ class SingleGPUWorker(threading.Thread):
             # 报告错误给监控器
             if self.data_monitor:
                 self.data_monitor.report_error(
-                    device_idx=self.device_idx, error_msg=str(e), error_type="stats_update_error",
+                    device_idx=self.device_idx,
+                    error_msg=str(e),
+                    error_type="stats_update_error",
                 )
 
     # 根据配置条件应用性能监控装饰器

@@ -70,13 +70,20 @@ class RandomSearchMode(BaseSearchMode):
     """
 
     __slots__ = (
-        "_seed_prefetch_size", "_adaptive_controller",
-        "_seed_queue", "_seed_stop_event", "_seed_thread",
-        "_seed_generated_count", "_seed_used_count", "_seed_generation_errors",
+        "_seed_prefetch_size",
+        "_adaptive_controller",
+        "_seed_queue",
+        "_seed_stop_event",
+        "_seed_thread",
+        "_seed_generated_count",
+        "_seed_used_count",
+        "_seed_generation_errors",
     )
 
     def __init__(
-        self, engine: "GPUCollisionEngine", seed_prefetch_size: int = SEED_PREFETCH_SIZE,
+        self,
+        engine: "GPUCollisionEngine",
+        seed_prefetch_size: int = SEED_PREFETCH_SIZE,
         adaptive_controller=None,
     ) -> None:
         super().__init__(engine)
@@ -105,7 +112,9 @@ class RandomSearchMode(BaseSearchMode):
         """启动后台种子预生成 daemon 线程"""
         self._seed_stop_event.clear()
         self._seed_thread = threading.Thread(
-            target=self._seed_prefetch_worker, name="SeedPrefetch", daemon=True,
+            target=self._seed_prefetch_worker,
+            name="SeedPrefetch",
+            daemon=True,
         )
         self._seed_thread.start()
         logger.info(f"种子预生成线程已启动 (缓存深度={self._seed_prefetch_size})")
@@ -317,7 +326,9 @@ class RandomSearchMode(BaseSearchMode):
 
                 # 执行GPU batch计算
                 matches, execution_time_ms = engine._execute_gpu_batch(
-                    seed, current_batch_size, batch_num,
+                    seed,
+                    current_batch_size,
+                    batch_num,
                 )
 
                 # 重置连续错误计数
@@ -402,7 +413,12 @@ class RandomSearchMode(BaseSearchMode):
         return True
 
     def _handle_batch_execution(
-        self, engine: Any, seed: bytes, batch_size: int, batch_optimizer: Any, batch_num: int,
+        self,
+        engine: Any,
+        seed: bytes,
+        batch_size: int,
+        batch_optimizer: Any,
+        batch_num: int,
     ) -> "tuple[list[tuple[bytes, list[dict]]], float]":
         """执行单个批次并返回结果（v5.2.0: 每批次种子随匹配绑定）
 
@@ -421,7 +437,12 @@ class RandomSearchMode(BaseSearchMode):
         return batch_results, execution_time_ms
 
     def _record_performance_data(
-        self, engine, batch_optimizer, batch_size, execution_time_ms, speed,
+        self,
+        engine,
+        batch_optimizer,
+        batch_size,
+        execution_time_ms,
+        speed,
     ) -> None:
         """记录性能数据"""
         # 内存使用
@@ -441,7 +462,11 @@ class RandomSearchMode(BaseSearchMode):
         batch_optimizer.record_performance(batch_size, execution_time_ms, speed)
 
     def _handle_batch_error(  # type: ignore[override]
-        self, e, engine, batch_num, consecutive_errors,
+        self,
+        e,
+        engine,
+        batch_num,
+        consecutive_errors,
     ) -> int:
         """处理批次执行错误"""
         if isinstance(e, KeyboardInterrupt):
@@ -518,7 +543,11 @@ class RandomSearchMode(BaseSearchMode):
                 self._adaptive_controller.record_seed_queue_state(seed_occ)
 
             batch_results, execution_time_ms = self._handle_batch_execution(
-                engine, seed, batch_size, batch_optimizer, batch_num,
+                engine,
+                seed,
+                batch_size,
+                batch_optimizer,
+                batch_num,
             )
 
             if engine._stop_event.is_set():
@@ -544,7 +573,11 @@ class RandomSearchMode(BaseSearchMode):
                 )
             if batch_num % 10 == 0:
                 self._record_performance_data(
-                    engine, batch_optimizer, batch_size, execution_time_ms, speed,
+                    engine,
+                    batch_optimizer,
+                    batch_size,
+                    execution_time_ms,
+                    speed,
                 )
             consecutive_errors = 0
             current_buffer = next_buffer
@@ -581,7 +614,8 @@ class RandomSearchMode(BaseSearchMode):
         logger.info("启动GPU异步执行模式（v5.1 流水线并行 + 后台收集器）")
         current_batch_size = engine.batch_size or 1000000
         buffer_data, current_batch_size, current_buffer, batch_optimizer = self._setup_async_buffers(
-            engine, current_batch_size,
+            engine,
+            current_batch_size,
         )
 
         batch_count = 0

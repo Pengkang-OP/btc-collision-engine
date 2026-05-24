@@ -1,4 +1,5 @@
 """Monitoring system configuration models."""
+
 from dataclasses import dataclass, field
 
 

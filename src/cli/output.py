@@ -20,8 +20,7 @@ except ImportError:
 
 
 def _get_utf8_console(stderr: bool = False, no_color: bool = False):
-    """获取 UTF-8 兼容的 Console 实例。
-    """
+    """获取 UTF-8 兼容的 Console 实例。"""
     if platform.system() == "Windows":
         # Windows 特殊处理：尝试设置 stdout/stderr 为 utf-8
         try:
@@ -54,6 +53,7 @@ def _get_utf8_console(stderr: bool = False, no_color: bool = False):
         def rule(self, title="", **kwargs):
             out = sys.stderr if self.stderr else sys.stdout
             print(title, file=out)
+
     return SimpleConsole(**console_kwargs)
 
 

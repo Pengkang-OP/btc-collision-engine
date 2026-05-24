@@ -15,13 +15,15 @@ class LogThrottle:
     """Throttles repeated log messages."""
 
     def __init__(
-        self, interval: float = 5.0,
+        self,
+        interval: float = 5.0,
     ):
         self._interval = interval
         self._last_log: dict[str, float] = {}
 
     def should_log(
-        self, key: str,
+        self,
+        key: str,
     ) -> bool:
         """Check if a message should be logged.
 

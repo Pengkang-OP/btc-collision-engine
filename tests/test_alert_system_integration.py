@@ -20,7 +20,10 @@ class TestAlertSystemIntegration:
 
         # 创建监控器(无引擎)
         self.monitor = GPUPerformanceMonitor(
-            engine=None, check_interval=1.0, degradation_threshold=0.75, history_size=100,
+            engine=None,
+            check_interval=1.0,
+            degradation_threshold=0.75,
+            history_size=100,
         )
 
     def test_performance_degradation_triggers_alert(self, tmp_path):
@@ -178,18 +181,27 @@ class TestAlertSystemIntegration:
 
         # 第一次触发告警
         self.monitor.record_kernel_metrics(
-            batch_size=1000000, execution_time_ms=500.0, memory_allocated_mb=256.0, error_count=0,
+            batch_size=1000000,
+            execution_time_ms=500.0,
+            memory_allocated_mb=256.0,
+            error_count=0,
         )
 
         self.monitor.record_kernel_metrics(
-            batch_size=1000000, execution_time_ms=2500.0, memory_allocated_mb=256.0, error_count=0,
+            batch_size=1000000,
+            execution_time_ms=2500.0,
+            memory_allocated_mb=256.0,
+            error_count=0,
         )
 
         alerts_after_first = len(alert_system.get_active_alerts())
 
         # 立即再次触发(应该在冷却期内)
         self.monitor.record_kernel_metrics(
-            batch_size=1000000, execution_time_ms=3000.0, memory_allocated_mb=256.0, error_count=0,
+            batch_size=1000000,
+            execution_time_ms=3000.0,
+            memory_allocated_mb=256.0,
+            error_count=0,
         )
 
         alerts_after_second = len(alert_system.get_active_alerts())

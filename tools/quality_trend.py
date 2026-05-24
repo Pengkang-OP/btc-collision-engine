@@ -9,7 +9,6 @@
 """
 
 import json
-import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -17,6 +16,8 @@ from pathlib import Path
 from utf8_helper import setup_windows_utf8
 
 setup_windows_utf8()
+
+import contextlib
 
 from tools.check_document_quality import DocumentQualityChecker
 
@@ -33,10 +34,8 @@ class QualityTrendAnalyzer:
         """清理残留的临时文件"""
         temp_file = self.history_file.with_suffix(".tmp")
         if temp_file.exists():
-            try:
+            with contextlib.suppress(OSError):
                 temp_file.unlink()
-            except OSError:
-                pass
 
     def load_history(self) -> list[dict]:
         """加载历史记录"""

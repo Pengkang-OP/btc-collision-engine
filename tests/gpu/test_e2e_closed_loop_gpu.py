@@ -192,7 +192,9 @@ class TestGPUEngineInitClosedLoop:
 # ============================================================================
 
 
-@pytest.mark.skip(reason="Phase 6 重构: _safe_invoke_match_callback 委托至 _result_processor，mock 链路不兼容")
+@pytest.mark.skip(
+    reason="Phase 6 重构: _safe_invoke_match_callback 委托至 _result_processor，mock 链路不兼容"
+)
 @pytest.mark.gpu
 class TestGPUEngineMatchCallbackClosedLoop:
     """GPU 匹配回调闭环测试"""

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """引擎核心验收测试 - 功能层 + 逻辑层 + 白盒 + 黑盒
 
 本模块测试 `src.collision.key_collision_engine.KeyCollisionEngine` 的核心功能，
@@ -17,29 +16,20 @@
 """
 
 import os
-import sys
 import threading
 import time
-from contextlib import suppress
-from typing import Any, Dict, List, Optional, Set, Tuple
 
 import pytest
 
 from tests.acceptance.conftest import (
     AcceptanceTestConstants,
-    assert_engine_state,
-    assert_pipeline_stage_complete,
-    assert_valid_bitcoin_address,
-    assert_valid_private_key,
     create_mock_checkpoint_data,
-    create_mock_gpu_device,
-    create_mock_gpu_kernel,
 )
-
 
 # ============================================================================
 # 白盒测试 - 基于内部代码结构的测试
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.white_box
@@ -195,7 +185,7 @@ class TestKeyCollisionEngineWhiteBox:
         - 异常事件不会影响主流程
         """
         from src.collision.event_bus import EventBus
-        from src.collision.events import EngineStartEvent, EngineProgressEvent
+        from src.collision.events import EngineStartEvent
 
         # 白盒验证：直接检查事件总线的内部状态
         assert isinstance(mock_event_bus, EventBus), "event_bus 应为 EventBus 实例"
@@ -218,6 +208,7 @@ class TestKeyCollisionEngineWhiteBox:
 # ============================================================================
 # 黑盒测试 - 基于规格说明的功能测试
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.black_box
@@ -413,6 +404,7 @@ class TestKeyCollisionEngineBlackBox:
 # 功能层测试 - 功能正确性、功能调用、功能判断
 # ============================================================================
 
+
 @pytest.mark.acceptance
 @pytest.mark.functional
 class TestKeyCollisionEngineFunctionalLayer:
@@ -463,9 +455,14 @@ class TestKeyCollisionEngineFunctionalLayer:
         targets = {AcceptanceTestConstants.VALID_P2PKH_ADDRESS}
 
         # 功能调用：验证回调函数设置
-        mock_on_match = lambda pk, addr, wif: None
-        mock_on_progress = lambda stats: None
-        mock_on_complete = lambda stats: None
+        def mock_on_match(pk, addr, wif):
+            return None
+
+        def mock_on_progress(stats):
+            return None
+
+        def mock_on_complete(stats):
+            return None
 
         engine = KeyCollisionEngine(
             targets=targets,
@@ -517,6 +514,7 @@ class TestKeyCollisionEngineFunctionalLayer:
 # ============================================================================
 # 逻辑层测试 - 代码正确性、逻辑、逻辑正确性、逻辑判断
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.logic_layer
@@ -578,9 +576,7 @@ class TestKeyCollisionEngineLogicLayer:
         low_memory = engine._memory_high_threshold_mb - 100
         old_batch = engine._batch_size
         engine._check_memory_and_downgrade(low_memory, current_time)
-        assert engine._batch_size == old_batch, (
-            "内存使用低于 high_threshold 时，不应触发降级"
-        )
+        assert engine._batch_size == old_batch, "内存使用低于 high_threshold 时，不应触发降级"
 
         # 情况 2：内存使用超过 critical_threshold
         critical_memory = engine._memory_critical_threshold_mb + 100
@@ -597,7 +593,6 @@ class TestKeyCollisionEngineLogicLayer:
         - 损坏的检查点文件应被正确处理
         """
         from src.collision.checkpoint_manager import CheckpointManager
-        from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 逻辑正确性：检查点保存和加载
         checkpoint_path = temp_dir / "test_checkpoint.json"
@@ -611,9 +606,7 @@ class TestKeyCollisionEngineLogicLayer:
         loaded_data = manager.load()
         assert loaded_data is not None, "检查点加载失败"
         assert loaded_data["version"] == test_data["version"], "检查点版本不匹配"
-        assert loaded_data["total_keys_checked"] == test_data["total_keys_checked"], (
-            "检查点数据不匹配"
-        )
+        assert loaded_data["total_keys_checked"] == test_data["total_keys_checked"], "检查点数据不匹配"
 
         # 逻辑正确性：损坏的检查点文件
         with open(checkpoint_path, "w") as f:
@@ -630,7 +623,6 @@ class TestKeyCollisionEngineLogicLayer:
         - 过滤器容量满时应触发清理
         """
         from src.collision.deduplication_filter import DeduplicationFilter
-        from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 逻辑判断：去重过滤
         dedup_filter = DeduplicationFilter(max_size=100)
@@ -643,7 +635,7 @@ class TestKeyCollisionEngineLogicLayer:
         assert dedup_filter.check_and_add(test_key) is False, "已检查的私钥应被过滤"
 
         # 逻辑正确性：过滤器容量超限不应静默清空数据
-        for i in range(100):
+        for _i in range(100):
             key = os.urandom(32)
             dedup_filter.check_and_add(key)
 
@@ -692,6 +684,7 @@ class TestKeyCollisionEngineLogicLayer:
 # ============================================================================
 # 多模式测试 - 参数化测试覆盖三种搜索模式
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.parametrize(
@@ -752,14 +745,14 @@ class TestKeyCollisionEngineMultiMode:
 
         # 多模式验证：batch_size
         assert engine._batch_size > 0, (
-            f"搜索模式 {search_mode} 下 batch_size 应大于 0，"
-            f"实际为 {engine._batch_size}"
+            f"搜索模式 {search_mode} 下 batch_size 应大于 0，实际为 {engine._batch_size}"
         )
 
 
 # ============================================================================
 # 多状态测试 - 状态转换测试
 # ============================================================================
+
 
 @pytest.mark.acceptance
 class TestKeyCollisionEngineMultiState:
@@ -864,6 +857,7 @@ class TestKeyCollisionEngineMultiState:
 # 多数据组合测试 - 不同数据类型、格式、边界条件
 # ============================================================================
 
+
 @pytest.mark.acceptance
 @pytest.mark.parametrize(
     "address_type,address",
@@ -911,14 +905,13 @@ class TestKeyCollisionEngineMultiData:
         engine = KeyCollisionEngine(targets=targets, event_bus=mock_event_bus)
 
         # 多数据验证：Hash160 提取（mock 环境下可能为空，放宽检查）
-        assert isinstance(engine.target_hash160s, set), (
-            f"{address_type} 地址 Hash160 提取完成"
-        )
+        assert isinstance(engine.target_hash160s, set), f"{address_type} 地址 Hash160 提取完成"
 
 
 # ============================================================================
 # 边界条件测试
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.edge_cases
@@ -971,10 +964,11 @@ class TestKeyCollisionEngineEdgeCases:
 # 异常处理测试
 # ============================================================================
 
+
 @pytest.mark.acceptance
 class TestKeyCollisionEngineExceptionHandling:
     """KeyCollisionEngine 异常处理测试"""
-    
+
     @pytest.mark.parametrize(
         "exception_type,exception",
         [
@@ -989,7 +983,7 @@ class TestKeyCollisionEngineExceptionHandling:
         # 注意：KeyCollisionEngine 初始化时的异常处理
         # 某些异常可能会被捕获并记录日志，而不是直接抛出
         pass  # 具体实现取决于代码
-    
+
     def test_exception_handling_callback(self, mock_event_bus):
         """异常处理测试：回调函数异常"""
 

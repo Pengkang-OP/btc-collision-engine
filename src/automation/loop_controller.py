@@ -219,7 +219,9 @@ class LoopController:
             return None
 
     def _run_audit_phase(
-        self, test_results: TestSuiteResult, analysis_report: AnalysisReport,
+        self,
+        test_results: TestSuiteResult,
+        analysis_report: AnalysisReport,
     ) -> AuditResult | None:
         """执行审核阶段"""
         print("\n[Phase 3] Audit Module")

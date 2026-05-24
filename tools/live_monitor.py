@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """实时监控GPU碰撞引擎 - 持续监控模式"""
 
-import sys
 import time
 from datetime import datetime
 from pathlib import Path
+
 
 def get_current_program_info():
     """获取当前运行程序的信息"""

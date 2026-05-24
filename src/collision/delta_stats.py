@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""Delta statistics tracking for collision detection progress.
-"""
+"""Delta statistics tracking for collision detection progress."""
 
 import threading
 import time
@@ -14,7 +13,8 @@ class DeltaStats:
     """
 
     def __init__(
-        self, window_seconds: int = 60,
+        self,
+        window_seconds: int = 60,
     ):
         """Initialize delta stats tracker.
 
@@ -30,7 +30,8 @@ class DeltaStats:
         self._delta_history: list[float] = []
 
     def update(
-        self, total_keys: int,
+        self,
+        total_keys: int,
     ) -> dict:
         """Update stats and compute delta.
 
@@ -46,23 +47,15 @@ class DeltaStats:
             elapsed = now - self._last_check
             if elapsed <= 0:
                 return {}
-            delta_keys = (
-                total_keys - self._last_keys
-            )
+            delta_keys = total_keys - self._last_keys
             throughput = delta_keys / elapsed
             self._delta_history.append(throughput)
-            if (
-                len(self._delta_history)
-                > self._window
-            ):
+            if len(self._delta_history) > self._window:
                 self._delta_history.pop(0)
             self._last_check = now
             self._last_keys = total_keys
             avg_throughput = (
-                sum(self._delta_history)
-                / len(self._delta_history)
-                if self._delta_history
-                else 0
+                sum(self._delta_history) / len(self._delta_history) if self._delta_history else 0
             )
             return {
                 "delta_keys": delta_keys,

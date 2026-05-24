@@ -54,12 +54,20 @@ class GPUMetricsCollector:
     )
 
     __slots__ = (
-        "_lock", "_created_at",
-        "_keys_checked_total", "_matches_found_total", "_errors_total",
+        "_lock",
+        "_created_at",
+        "_keys_checked_total",
+        "_matches_found_total",
+        "_errors_total",
         "_recovery_events_total",
-        "_throughput", "_memory_usage_bytes", "_device_active",
-        "_kernel_latency_buckets", "_kernel_latency_sum", "_kernel_latency_count",
-        "_pool_hits", "_pool_misses",
+        "_throughput",
+        "_memory_usage_bytes",
+        "_device_active",
+        "_kernel_latency_buckets",
+        "_kernel_latency_sum",
+        "_kernel_latency_count",
+        "_pool_hits",
+        "_pool_misses",
     )
 
     def __init__(self) -> None:

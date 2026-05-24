@@ -26,7 +26,10 @@ def test_stats_consistency():
     targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
 
     engine = KeyCollisionEngine(
-        targets=targets, max_workers=4, data_logging_enabled=True, data_logging_interval=1,
+        targets=targets,
+        max_workers=4,
+        data_logging_enabled=True,
+        data_logging_interval=1,
     )
 
     # 在后台线程运行
@@ -122,7 +125,10 @@ def test_error_logging_rate_limit():
     targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
 
     engine = KeyCollisionEngine(
-        targets=targets, max_workers=2, data_logging_enabled=True, data_logging_interval=1,
+        targets=targets,
+        max_workers=2,
+        data_logging_enabled=True,
+        data_logging_interval=1,
     )
 
     def run_engine():
@@ -181,7 +187,10 @@ def test_cpu_cache_mechanism():
     targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
 
     engine = KeyCollisionEngine(
-        targets=targets, max_workers=4, data_logging_enabled=True, data_logging_interval=1,
+        targets=targets,
+        max_workers=4,
+        data_logging_enabled=True,
+        data_logging_interval=1,
     )
 
     def run_engine():

@@ -4,7 +4,6 @@
 测试系统是否支持根据目标地址格式自动生成对应格式的地址。
 """
 
-
 import secrets
 
 from src.collision.targets.format_aware_manager import FormatAwareTargetManager

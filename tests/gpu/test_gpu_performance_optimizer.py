@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""GPU自适应性能优化器测试
-"""
+"""GPU自适应性能优化器测试"""
+
+import unittest
 
 import pytest
-import unittest
 
 from src.gpu.performance_optimizer import (
     GPUPerformanceOptimizer,
@@ -38,7 +38,8 @@ class TestGPUPerformanceOptimizer(unittest.TestCase):
 
         # Intel
         self.assertEqual(
-            self.optimizer.detect_vendor("Intel Arc A770", "Intel Corporation"), GPUVendor.INTEL,
+            self.optimizer.detect_vendor("Intel Arc A770", "Intel Corporation"),
+            GPUVendor.INTEL,
         )
 
         # Unknown
@@ -105,14 +106,16 @@ class TestGPUPerformanceOptimizer(unittest.TestCase):
     def test_analyze_and_adjust_error_rate_too_high(self):
         """测试错误率过高时的调整"""
         # 先记录一些性能数据
-        for i in range(10):
+        for _i in range(10):
             self.optimizer.record_performance(
                 PerformanceMetrics(batch_execution_time_ms=50, keys_per_second=100000, error_count=1),
             )
 
         # 创建配置文件
         self.optimizer.create_optimized_profile(
-            device_name="Test GPU", vendor_str="Test", global_mem_size=8 * 1024**3,
+            device_name="Test GPU",
+            vendor_str="Test",
+            global_mem_size=8 * 1024**3,
         )
 
         # 测试高错误率调整
@@ -128,7 +131,7 @@ class TestGPUPerformanceOptimizer(unittest.TestCase):
     def test_analyze_and_adjust_execution_too_slow(self):
         """测试执行时间过长时的调整"""
         # 记录慢速性能数据
-        for i in range(10):
+        for _i in range(10):
             self.optimizer.record_performance(
                 PerformanceMetrics(
                     batch_execution_time_ms=2000,  # 2秒，超过阈值
@@ -139,12 +142,15 @@ class TestGPUPerformanceOptimizer(unittest.TestCase):
 
         # 创建配置文件
         self.optimizer.create_optimized_profile(
-            device_name="Test GPU", vendor_str="Test", global_mem_size=8 * 1024**3,
+            device_name="Test GPU",
+            vendor_str="Test",
+            global_mem_size=8 * 1024**3,
         )
 
         # 测试慢速调整
         new_batch_size, adjustments = self.optimizer.analyze_and_adjust(
-            current_batch_size=100000, error_rate=0.0,
+            current_batch_size=100000,
+            error_rate=0.0,
         )
 
         # 应该减小batch_size
@@ -154,7 +160,7 @@ class TestGPUPerformanceOptimizer(unittest.TestCase):
     def test_analyze_and_adjust_performance_good(self):
         """测试性能良好时的调整"""
         # 记录快速性能数据
-        for i in range(10):
+        for _i in range(10):
             self.optimizer.record_performance(
                 PerformanceMetrics(
                     batch_execution_time_ms=10,
@@ -165,12 +171,15 @@ class TestGPUPerformanceOptimizer(unittest.TestCase):
 
         # 创建配置文件
         self.optimizer.create_optimized_profile(
-            device_name="Test GPU", vendor_str="Test", global_mem_size=8 * 1024**3,
+            device_name="Test GPU",
+            vendor_str="Test",
+            global_mem_size=8 * 1024**3,
         )
 
         # 测试性能良好调整
         new_batch_size, adjustments = self.optimizer.analyze_and_adjust(
-            current_batch_size=100000, error_rate=0.0,
+            current_batch_size=100000,
+            error_rate=0.0,
         )
 
         # 应该增大batch_size
@@ -181,10 +190,12 @@ class TestGPUPerformanceOptimizer(unittest.TestCase):
         """测试优化报告生成"""
         # 创建配置并记录数据
         self.optimizer.create_optimized_profile(
-            device_name="NVIDIA RTX 3080", vendor_str="NVIDIA", global_mem_size=10 * 1024**3,
+            device_name="NVIDIA RTX 3080",
+            vendor_str="NVIDIA",
+            global_mem_size=10 * 1024**3,
         )
 
-        for i in range(5):
+        for _i in range(5):
             self.optimizer.record_performance(
                 PerformanceMetrics(batch_execution_time_ms=50, keys_per_second=100000, error_count=0),
             )
@@ -223,12 +234,16 @@ class TestGPUPerformanceOptimizer(unittest.TestCase):
         """测试基于显存的batch_size调整"""
         # 小显存（1GB）
         profile_small = self.optimizer.create_optimized_profile(
-            device_name="Test GPU", vendor_str="Test", global_mem_size=1 * 1024**3,
+            device_name="Test GPU",
+            vendor_str="Test",
+            global_mem_size=1 * 1024**3,
         )
 
         # 大显存（16GB）
         profile_large = self.optimizer.create_optimized_profile(
-            device_name="Test GPU", vendor_str="Test", global_mem_size=16 * 1024**3,
+            device_name="Test GPU",
+            vendor_str="Test",
+            global_mem_size=16 * 1024**3,
         )
 
         # 大显存应该允许更大的batch_size

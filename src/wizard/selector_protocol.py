@@ -1,4 +1,5 @@
 """Wizard selector protocol definitions."""
+
 from typing import Protocol
 
 

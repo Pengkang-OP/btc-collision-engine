@@ -1,4 +1,5 @@
 """Progress display utilities for CLI."""
+
 import sys
 import time
 
@@ -23,10 +24,7 @@ def format_progress(
     elapsed_str = f"{elapsed:.0f}s"
     speed_str = f"{speed:,.0f}" if speed >= 1 else f"{speed:.1f}"
     return (
-        f"进度: {keys_checked:,} keys "
-        f"| 速度: {speed_str} keys/s "
-        f"| 命中: {matches} "
-        f"| 耗时: {elapsed_str}"
+        f"进度: {keys_checked:,} keys | 速度: {speed_str} keys/s | 命中: {matches} | 耗时: {elapsed_str}"
     )
 
 
@@ -53,8 +51,7 @@ class ProgressBar:
         elapsed = time.time() - self._start
         rate = current / max(elapsed, 0.001)
         sys.stdout.write(
-            f"\r|{bar}| {ratio:.0%} "
-            f"[{rate:.0f} keys/s]",
+            f"\r|{bar}| {ratio:.0%} [{rate:.0f} keys/s]",
         )
         sys.stdout.flush()
 

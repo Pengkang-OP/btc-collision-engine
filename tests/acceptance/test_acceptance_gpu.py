@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """GPU 引擎验收测试 - 多状态 + 多数据组合
 
 本模块测试 `src.gpu.async_executor.AsyncGPUExecutor` 的 GPU 引擎功能，
@@ -17,25 +16,13 @@
 
 import os
 import threading
-import time
-from typing import Any, Dict, List, Optional, Tuple
 
 import pytest
-
-from tests.acceptance.conftest import (
-    AcceptanceTestConstants,
-    assert_engine_state,
-    assert_pipeline_stage_complete,
-    assert_valid_bitcoin_address,
-    assert_valid_private_key,
-    create_mock_gpu_device,
-    create_mock_gpu_kernel,
-)
-
 
 # ============================================================================
 # 白盒测试 - 基于内部代码结构的测试
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.white_box
@@ -123,12 +110,11 @@ class TestAsyncGPUExecutorWhiteBox:
 
         # 白盒验证：队列深度管理逻辑
         assert executor.queue_depth == queue_depth, (
-            f"queue_depth 应设置正确：期望 {queue_depth}，"
-            f"实际 {executor.queue_depth}"
+            f"queue_depth 应设置正确：期望 {queue_depth}，实际 {executor.queue_depth}"
         )
 
         # 模拟添加待处理批次
-        for i in range(queue_depth):
+        for _i in range(queue_depth):
             mock_batch = {"seed": os.urandom(32), "num_keys": 1000}
             executor.pending_batches.append(mock_batch)
 
@@ -168,6 +154,7 @@ class TestAsyncGPUExecutorWhiteBox:
 # ============================================================================
 # 黑盒测试 - 基于规格说明的功能测试
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.black_box
@@ -212,8 +199,7 @@ class TestAsyncGPUExecutorBlackBox:
         assert executor.is_async_ready is False, "初始化后 is_async_ready 应返回 False"
         # GPU 型号配置可能覆盖构造参数，使用 >= 验证
         assert executor.max_batch_size >= max_batch_size, (
-            f"max_batch_size 应至少为 {max_batch_size}，"
-            f"实际 {executor.max_batch_size}"
+            f"max_batch_size 应至少为 {max_batch_size}，实际 {executor.max_batch_size}"
         )
 
     def test_black_box_init_with_invalid_parameters(self, mock_gpu_chain):
@@ -316,6 +302,7 @@ class TestAsyncGPUExecutorBlackBox:
 # 功能层测试 - 功能正确性、功能调用、功能判断
 # ============================================================================
 
+
 @pytest.mark.acceptance
 @pytest.mark.functional
 class TestAsyncGPUExecutorFunctionalLayer:
@@ -416,6 +403,7 @@ class TestAsyncGPUExecutorFunctionalLayer:
 # 逻辑层测试 - 代码正确性、逻辑、逻辑正确性、逻辑判断
 # ============================================================================
 
+
 @pytest.mark.acceptance
 @pytest.mark.logic_layer
 class TestAsyncGPUExecutorLogicLayer:
@@ -470,8 +458,7 @@ class TestAsyncGPUExecutorLogicLayer:
 
         # 逻辑判断：队列深度管理
         assert executor.queue_depth == queue_depth, (
-            f"队列深度管理逻辑不正确：期望 {queue_depth}，"
-            f"实际 {executor.queue_depth}"
+            f"队列深度管理逻辑不正确：期望 {queue_depth}，实际 {executor.queue_depth}"
         )
 
     def test_logic_timeout_handling(self, mock_gpu_chain):
@@ -493,9 +480,7 @@ class TestAsyncGPUExecutorLogicLayer:
         # 逻辑正确性：超时处理
         # 模拟超时情况
         executor.sync_fallback_count = 1
-        assert executor.sync_fallback_count == 1, (
-            "超时处理逻辑不正确：sync_fallback_count 应正确增加"
-        )
+        assert executor.sync_fallback_count == 1, "超时处理逻辑不正确：sync_fallback_count 应正确增加"
 
     def test_logic_error_handling_paths(self, mock_gpu_chain):
         """逻辑层测试：错误处理路径
@@ -569,14 +554,13 @@ class TestAsyncGPUExecutorLogicLayer:
         assert executor.sync_fallback_count == expected_count, (
             f"并发逻辑不正确：期望 {expected_count}，实际 {executor.sync_fallback_count}"
         )
-        assert error_count[0] == 0, (
-            f"并发逻辑不正确：发生 {error_count[0]} 个异常"
-        )
+        assert error_count[0] == 0, f"并发逻辑不正确：发生 {error_count[0]} 个异常"
 
 
 # ============================================================================
 # 多状态测试 - 状态转换测试
 # ============================================================================
+
 
 @pytest.mark.acceptance
 class TestAsyncGPUExecutorMultiState:
@@ -606,9 +590,7 @@ class TestAsyncGPUExecutorMultiState:
         )
 
         # 多状态验证：initialized
-        assert executor.is_async_ready is False, (
-            "初始化状态不正确：is_async_ready 应返回 False"
-        )
+        assert executor.is_async_ready is False, "初始化状态不正确：is_async_ready 应返回 False"
 
     def test_state_running(self, mock_gpu_chain):
         """多状态测试：运行状态
@@ -629,9 +611,7 @@ class TestAsyncGPUExecutorMultiState:
         # 多状态验证：running
         try:
             executor.start()
-            assert executor.is_async_ready is True, (
-                "运行状态不正确：is_async_ready 应返回 True"
-            )
+            assert executor.is_async_ready is True, "运行状态不正确：is_async_ready 应返回 True"
         except (RuntimeError, NotImplementedError):
             # 预期行为：某些方法可能未实现
             pass
@@ -662,9 +642,7 @@ class TestAsyncGPUExecutorMultiState:
 
         # 多状态验证：stopped
         executor.stop()
-        assert executor.is_async_ready is False, (
-            "停止状态不正确：is_async_ready 应返回 False"
-        )
+        assert executor.is_async_ready is False, "停止状态不正确：is_async_ready 应返回 False"
 
     def test_state_error_handling(self, mock_gpu_chain):
         """多状态测试：错误状态
@@ -685,14 +663,13 @@ class TestAsyncGPUExecutorMultiState:
         # 多状态验证：error
         # 模拟错误状态
         executor.sync_fallback_count = 100  # 模拟大量回退
-        assert executor.sync_fallback_count == 100, (
-            "错误状态不正确：sync_fallback_count 应正确设置"
-        )
+        assert executor.sync_fallback_count == 100, "错误状态不正确：sync_fallback_count 应正确设置"
 
 
 # ============================================================================
 # 多数据组合测试 - 不同数据类型、格式、边界条件
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.parametrize(
@@ -726,13 +703,10 @@ class TestAsyncGPUExecutorMultiData:
         )
 
         # 多数据验证：初始化
-        assert executor is not None, (
-            f"批次大小 {batch_size} 下执行器应成功初始化"
-        )
+        assert executor is not None, f"批次大小 {batch_size} 下执行器应成功初始化"
         # GPU 型号配置可能覆盖构造参数，最大批次由 GPU 配置决定
         assert executor.max_batch_size > 0, (
-            f"批次大小 {batch_size} 下 max_batch_size 应大于 0，"
-            f"实际 {executor.max_batch_size}"
+            f"批次大小 {batch_size} 下 max_batch_size 应大于 0，实际 {executor.max_batch_size}"
         )
 
     def test_multi_data_execute_with_different_batch_sizes(self, mock_gpu_chain, batch_size):
@@ -756,9 +730,7 @@ class TestAsyncGPUExecutorMultiData:
             seed = os.urandom(32)
             results = executor.execute_batch(seed=seed, batch_size=batch_size)
             # 验证返回结果
-            assert isinstance(results, list), (
-                f"批次大小 {batch_size} 下执行应返回列表类型"
-            )
+            assert isinstance(results, list), f"批次大小 {batch_size} 下执行应返回列表类型"
         except (RuntimeError, NotImplementedError):
             # 预期行为：某些方法可能未实现
             pass
@@ -767,6 +739,7 @@ class TestAsyncGPUExecutorMultiData:
 # ============================================================================
 # 边界条件测试
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.edge_cases
@@ -825,8 +798,7 @@ class TestAsyncGPUExecutorEdgeCases:
             queue_depth=max_queue_depth,
         )
         assert executor.queue_depth == max_queue_depth, (
-            f"最大队列深度应正确设置：期望 {max_queue_depth}，"
-            f"实际 {executor.queue_depth}"
+            f"最大队列深度应正确设置：期望 {max_queue_depth}，实际 {executor.queue_depth}"
         )
 
     def test_edge_case_empty_seed(self, mock_gpu_chain):

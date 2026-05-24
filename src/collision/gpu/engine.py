@@ -405,7 +405,9 @@ class GPUCollisionEngine(BaseCollisionEngine):
         elif device_manager_class is not None:
             # 使用自定义的device_manager类
             self._device_manager = device_manager_class(
-                device_index=device_index, config=gpu_facade_config, logger=logger,
+                device_index=device_index,
+                config=gpu_facade_config,
+                logger=logger,
             )
             self._device_manager.initialize(
                 targets,
@@ -415,7 +417,9 @@ class GPUCollisionEngine(BaseCollisionEngine):
         else:
             # 使用默认的GPUDeviceManager
             self._device_manager = GPUDeviceManager(
-                device_index=device_index, config=gpu_facade_config, logger=logger,
+                device_index=device_index,
+                config=gpu_facade_config,
+                logger=logger,
             )
             self._device_manager.initialize(
                 targets,
@@ -630,15 +634,17 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 for m in self.stats.matches
                 if isinstance(m, dict) and "private_key_hash" in m and "address" in m
             ]
-            self.checkpoint_mgr.save({
-                "mode": self._current_mode,
-                "targets": list(self.targets),
-                "current_position": self._current_position,
-                "total_checked": self.stats.total_checked,
-                "matches": matches_list,
-                "range_start": self._range_start,
-                "range_end": self._range_end,
-            })
+            self.checkpoint_mgr.save(
+                {
+                    "mode": self._current_mode,
+                    "targets": list(self.targets),
+                    "current_position": self._current_position,
+                    "total_checked": self.stats.total_checked,
+                    "matches": matches_list,
+                    "range_start": self._range_start,
+                    "range_end": self._range_end,
+                }
+            )
         except Exception as e:
             logger.error("保存最终断点失败: %s", e, exc_info=True)
 
@@ -843,7 +849,8 @@ class GPUCollisionEngine(BaseCollisionEngine):
             "GPU引擎: 目标地址数=%s >= %s，自动切换为仅检查压缩格式（性能优先）。"
             "注意：非压缩P2PKH地址将不会被匹配！如需确保匹配所有地址，"
             "请设置 check_uncompressed=True。",
-            target_count, compression_auto_threshold,
+            target_count,
+            compression_auto_threshold,
         )
         return 0
 
@@ -866,13 +873,19 @@ class GPUCollisionEngine(BaseCollisionEngine):
     # ========== GPU 批次执行 ==========
 
     def _execute_gpu_batch(
-        self, seed: bytes, batch_size: int, batch_num: int,
+        self,
+        seed: bytes,
+        batch_size: int,
+        batch_num: int,
     ) -> tuple[list[dict[str, int]], float]:
         """执行 GPU batch 计算 [委托给 _scheduler]"""
         return self._scheduler.execute_batch(seed, batch_size, batch_num)
 
     def _execute_gpu_batch_once(
-        self, seed: bytes, batch_size: int, batch_num: int,
+        self,
+        seed: bytes,
+        batch_size: int,
+        batch_num: int,
     ) -> tuple[list[dict[str, int]], float]:
         """单次 GPU batch 执行 [委托给 _scheduler]"""
         return self._scheduler.execute_batch_once(seed, batch_size, batch_num)
@@ -900,7 +913,11 @@ class GPUCollisionEngine(BaseCollisionEngine):
         self._scheduler.update_performance_metrics(batch_size, execution_time_ms)
 
     def _record_adjustment(
-        self, old_size: int, new_size: int, reason: str, details: str = "",
+        self,
+        old_size: int,
+        new_size: int,
+        reason: str,
+        details: str = "",
     ) -> None:
         """记录调整历史 [委托给 _scheduler]"""
         self._scheduler.record_adjustment(old_size, new_size, reason, details)
@@ -971,7 +988,10 @@ class GPUCollisionEngine(BaseCollisionEngine):
         )
 
     def _wait_for_async_key_generation(
-        self, gen_thread: threading.Thread, gen_result: list[Any], batch_num: int,
+        self,
+        gen_thread: threading.Thread,
+        gen_result: list[Any],
+        batch_num: int,
     ) -> bytes:
         """等待异步私钥生成完成"""
         if self._random_search_mode is None:
@@ -979,7 +999,9 @@ class GPUCollisionEngine(BaseCollisionEngine):
         return cast(
             "bytes",
             self._random_search_mode._wait_for_async_key_generation(
-                gen_thread, gen_result, batch_num,
+                gen_thread,
+                gen_result,
+                batch_num,
             ),
         )
 
@@ -1054,13 +1076,18 @@ class GPUCollisionEngine(BaseCollisionEngine):
         results = pipeline.run_benchmark(iterations)
         if save_report and results:
             report_path = self.generate_performance_report(
-                include_benchmarks=True, include_tuning=False, include_recommendations=True,
+                include_benchmarks=True,
+                include_tuning=False,
+                include_recommendations=True,
             )
             logger.info("基准测试报告已保存: %s", report_path)
         return cast("dict[str, Any]", results)
 
     def start_auto_tuning(
-        self, max_iterations: int = 30, save_report: bool = True, auto_apply: bool = False,
+        self,
+        max_iterations: int = 30,
+        save_report: bool = True,
+        auto_apply: bool = False,
     ) -> dict[str, Any]:
         """启动自动调优 (P2)"""
         if max_iterations <= 0:
@@ -1078,14 +1105,17 @@ class GPUCollisionEngine(BaseCollisionEngine):
 
         pipeline: Any = self._get_perf_pipeline()
         results = pipeline.start_auto_tuning(
-            max_iterations=max_iterations, on_new_batch_size=on_new_batch_size,
+            max_iterations=max_iterations,
+            on_new_batch_size=on_new_batch_size,
         )
         optimal_size = results.get("optimal_batch_size")
         if not auto_apply and optimal_size:
             logger.info(f"要应用此配置，请使用: engine.batch_size = {optimal_size:,}")
         if save_report and results:
             report_path = self.generate_performance_report(
-                include_benchmarks=False, include_tuning=True, include_recommendations=True,
+                include_benchmarks=False,
+                include_tuning=True,
+                include_recommendations=True,
             )
             logger.info("调优报告已保存: %s", report_path)
         return cast("dict[str, Any]", results)

@@ -198,7 +198,9 @@ class TestDiskSpaceCheck:
         with patch("shutil.disk_usage") as mock_du:
             # 模拟磁盘只有 1MB 可用
             mock_du.return_value = Mock(
-                free=1 * 1024 * 1024, total=1024 * 1024 * 1024, used=1023 * 1024 * 1024,
+                free=1 * 1024 * 1024,
+                total=1024 * 1024 * 1024,
+                used=1023 * 1024 * 1024,
             )
             result = lc.check_disk_space(min_free_mb=100)
             assert result is False
@@ -211,7 +213,9 @@ class TestDiskSpaceCheck:
         lc.init({"file": "/tmp/test.log", "enable_console": False})
         with patch("shutil.disk_usage") as mock_du:
             mock_du.return_value = Mock(
-                free=50 * 1024 * 1024, total=1024 * 1024 * 1024, used=974 * 1024 * 1024,
+                free=50 * 1024 * 1024,
+                total=1024 * 1024 * 1024,
+                used=974 * 1024 * 1024,
             )
             result = lc.check_disk_space(min_free_mb=100)
             assert result is False

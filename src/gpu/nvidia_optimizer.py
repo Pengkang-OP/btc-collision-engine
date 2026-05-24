@@ -84,7 +84,8 @@ class NvidiaDriverDetector:
 
         # 尝试从 device_info 中提取
         version_str = self._device_info.get("driver_version") or self._device_info.get(
-            "version", "",
+            "version",
+            "",
         )
         if not version_str:
             # Fallback: 尝试从 OpenCL 平台信息中提取版本
@@ -162,7 +163,8 @@ class NvidiaDriverDetector:
                             cuda_ver = cuda_match.group(1)
                             self._logger.debug(
                                 "从 OpenCL 平台信息提取到 CUDA 版本: %s (全量: %s)",
-                                cuda_ver, version,
+                                cuda_ver,
+                                version,
                             )
                             return cuda_ver
                         # 如果 CUDA 版本不可用，返回整个平台版本
@@ -451,7 +453,10 @@ class NvidiaMemoryOptimizer:
     ]
 
     def __init__(
-        self, device_info: dict, arch_features: dict, engine_logger: Any | None = None,
+        self,
+        device_info: dict,
+        arch_features: dict,
+        engine_logger: Any | None = None,
     ) -> None:
         self._device_info = device_info
         self._arch_features = arch_features
@@ -525,12 +530,19 @@ class NvidiaGPUOptimizer:
     """
 
     __slots__ = (
-        "_device_info", "_config", "_logger",
-        "_driver_info", "_arch_info", "_memory_config",
+        "_device_info",
+        "_config",
+        "_logger",
+        "_driver_info",
+        "_arch_info",
+        "_memory_config",
     )
 
     def __init__(
-        self, device_info: dict, config: dict | None = None, engine_logger: Any | None = None,
+        self,
+        device_info: dict,
+        config: dict | None = None,
+        engine_logger: Any | None = None,
     ) -> None:
         self._device_info = device_info if isinstance(device_info, dict) else {}
         self._config = config or {}
@@ -570,8 +582,7 @@ class NvidiaGPUOptimizer:
 
             if self._driver_info.get("version_str"):
                 self._logger.info(
-                    "[OK] NVIDIA 驱动版本: %s"
-                    " (OpenCL 1.2: %s, OpenCL 2.0: %s)",
+                    "[OK] NVIDIA 驱动版本: %s (OpenCL 1.2: %s, OpenCL 2.0: %s)",
                     self._driver_info["version_str"],
                     "Y" if self._driver_info["opencl_12_ok"] else "N",
                     "Y" if self._driver_info["opencl_20_ok"] else "N",
@@ -585,7 +596,8 @@ class NvidiaGPUOptimizer:
         except Exception as e:
             self._logger.warning(
                 "[WARN] NVIDIA 驱动检测失败（非致命）: %s: %s\n   驱动版本信息将不可用",
-                type(e).__name__, e,
+                type(e).__name__,
+                e,
             )
             self._driver_info = {}
             result["driver"] = {}
@@ -600,8 +612,7 @@ class NvidiaGPUOptimizer:
             result["arch"] = self._arch_info
 
             self._logger.info(
-                "[OK] NVIDIA GPU 架构: %s"
-                " (计算能力 CC %s, 异步拷贝: %s, 原生 FP64: %s, 最低驱动: %s)",
+                "[OK] NVIDIA GPU 架构: %s (计算能力 CC %s, 异步拷贝: %s, 原生 FP64: %s, 最低驱动: %s)",
                 self._arch_info["arch"],
                 self._arch_info.get("compute_capability", "?"),
                 "支持" if self._arch_info.get("async_copy") else "不支持",
@@ -612,7 +623,8 @@ class NvidiaGPUOptimizer:
         except Exception as e:
             self._logger.warning(
                 "[WARN] NVIDIA 架构识别失败（非致命）: %s: %s\n   架构特性将使用保守默认值",
-                type(e).__name__, e,
+                type(e).__name__,
+                e,
             )
             self._arch_info = {"arch": "Unknown", "async_copy": False, "fp64_native": False}
             result["arch"] = self._arch_info
@@ -636,8 +648,7 @@ class NvidiaGPUOptimizer:
 
         except Exception as e:
             self._logger.warning(
-                f"⚠️ NVIDIA 显存优化配置失败（非致命）: {type(e).__name__}\n"
-                "   显存配置将使用保守默认值",
+                f"⚠️ NVIDIA 显存优化配置失败（非致命）: {type(e).__name__}\n   显存配置将使用保守默认值",
                 exc_info=True,
             )
             self._memory_config = {
@@ -659,9 +670,7 @@ class NvidiaGPUOptimizer:
         result["recommended_async_transfer"] = (
             self._memory_config.get("async_transfer", False) if self._memory_config else False
         )
-        result["arch_name"] = (
-            self._arch_info.get("arch", "Unknown") if self._arch_info else "Unknown"
-        )
+        result["arch_name"] = self._arch_info.get("arch", "Unknown") if self._arch_info else "Unknown"
 
         self._logger.info("=" * 60)
         self._logger.info("✅ NVIDIA GPU 特殊优化应用完成")

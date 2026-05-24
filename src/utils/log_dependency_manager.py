@@ -220,8 +220,7 @@ def get_dependency_manager() -> LogDependencyManager:
 
 
 def init_log_dependencies() -> None:
-    """初始化日志依赖
-    """
+    """初始化日志依赖"""
     manager = get_dependency_manager()
 
     # 注册依赖项

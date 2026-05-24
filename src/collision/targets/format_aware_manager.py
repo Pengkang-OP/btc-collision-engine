@@ -116,9 +116,7 @@ class FormatAwareTargetManager:
         with self._lock:
             try:
                 with pathlib.Path(filepath).open(encoding="utf-8") as f:
-                    addresses = [
-                        line.strip() for line in f if line.strip() and not line.startswith("#")
-                    ]
+                    addresses = [line.strip() for line in f if line.strip() and not line.startswith("#")]
 
                 count = self.add_targets(addresses)
                 logger.info(f"从文件加载目标: {filepath}, {count}/{len(addresses)} 成功")
@@ -224,9 +222,7 @@ class FormatAwareTargetManager:
             包含目标的格式列表
         """
         with self._lock:
-            return [
-                fmt.value for fmt, targets in self._targets_by_format.items() if len(targets) > 0
-            ]
+            return [fmt.value for fmt, targets in self._targets_by_format.items() if len(targets) > 0]
 
     def get_max_batch_size(self) -> int:
         """获取最大批量大小（基于格式数量）

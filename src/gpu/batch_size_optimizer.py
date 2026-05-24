@@ -91,7 +91,11 @@ class SmartBatchSizeOptimizer:
         _min_b = self._min_batch_size
         _max_b = self._max_batch_size
         logger.info(
-            "智能批次优化器初始化: GPU=%s, init=%s, range=%s-%s", gpu_model, _init_batch, _min_b, _max_b,
+            "智能批次优化器初始化: GPU=%s, init=%s, range=%s-%s",
+            gpu_model,
+            _init_batch,
+            _min_b,
+            _max_b,
         )
 
     def _get_gpu_config(self, gpu_model: str) -> dict:
@@ -164,7 +168,10 @@ class SmartBatchSizeOptimizer:
         return gpu_configs.get(gpu_model, gpu_configs.get("default", {}))
 
     def record_performance(
-        self, batch_size: int, execution_time_ms: float, throughput: float,
+        self,
+        batch_size: int,
+        execution_time_ms: float,
+        throughput: float,
     ) -> None:
         """记录性能数据
 
@@ -455,8 +462,7 @@ class SmartBatchSizeOptimizer:
             return stats
 
     def reset(self) -> None:
-        """重置优化器状态
-        """
+        """重置优化器状态"""
         with self._lock:
             self._performance_history.clear()
             self._memory_history.clear()
@@ -471,7 +477,8 @@ global_optimizer_lock = threading.Lock()
 
 
 def get_batch_size_optimizer(
-    initial_batch_size: int = 1048576, gpu_model: str = "default",
+    initial_batch_size: int = 1048576,
+    gpu_model: str = "default",
 ) -> SmartBatchSizeOptimizer:
     """获取全局智能批次大小优化器实例
 
@@ -488,15 +495,15 @@ def get_batch_size_optimizer(
     with global_optimizer_lock:
         if global_batch_optimizer is None:
             global_batch_optimizer = SmartBatchSizeOptimizer(
-                initial_batch_size, gpu_model=gpu_model,
+                initial_batch_size,
+                gpu_model=gpu_model,
             )
 
     return global_batch_optimizer
 
 
 def reset_batch_size_optimizer() -> None:
-    """重置全局智能批次大小优化器
-    """
+    """重置全局智能批次大小优化器"""
     global global_batch_optimizer
 
     with global_optimizer_lock:

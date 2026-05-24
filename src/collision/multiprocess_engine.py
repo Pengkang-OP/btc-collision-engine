@@ -24,23 +24,17 @@ class MultiProcessCollisionEngine:
     def __init__(self, config: dict | None = None):
         self.config = config or {}
         self._num_workers = self.config.get(
-            "max_workers", multiprocessing.cpu_count(),
+            "max_workers",
+            multiprocessing.cpu_count(),
         )
         self._running = False
-        self._task_queue: (
-            multiprocessing.Queue | None
-        ) = None
-        self._result_queue: (
-            multiprocessing.Queue | None
-        ) = None
-        self._processes: list[
-            multiprocessing.Process
-        ] = []
+        self._task_queue: multiprocessing.Queue | None = None
+        self._result_queue: multiprocessing.Queue | None = None
+        self._processes: list[multiprocessing.Process] = []
         self._total_keys = 0
         self._start_time: float | None = None
         logger.info(
-            f"Multi-process engine initialized: "
-            f"{self._num_workers} workers",
+            f"Multi-process engine initialized: {self._num_workers} workers",
         )
 
     def start(self) -> None:
@@ -62,8 +56,7 @@ class MultiProcessCollisionEngine:
             self._processes.append(p)
 
         logger.info(
-            f"Started {self._num_workers} worker "
-            f"processes",
+            f"Started {self._num_workers} worker processes",
         )
 
     def stop(self) -> None:
@@ -74,18 +67,14 @@ class MultiProcessCollisionEngine:
                 p.terminate()
                 p.join(timeout=5)
         self._processes.clear()
-        elapsed = (
-            time.time() - self._start_time
-            if self._start_time
-            else 0
-        )
+        elapsed = time.time() - self._start_time if self._start_time else 0
         logger.info(
-            f"Multi-process engine stopped: "
-            f"{self._total_keys} keys in {elapsed:.1f}s",
+            f"Multi-process engine stopped: {self._total_keys} keys in {elapsed:.1f}s",
         )
 
     def _worker_loop(
-        self, worker_id: int,
+        self,
+        worker_id: int,
     ) -> None:
         """Worker process main loop."""
         while self._running:
@@ -94,13 +83,16 @@ class MultiProcessCollisionEngine:
                     timeout=1,
                 )
                 self._process_task(
-                    worker_id, task,
+                    worker_id,
+                    task,
                 )
             except queue.Empty:
                 continue
 
     def _process_task(
-        self, worker_id: int, task: bytes,
+        self,
+        worker_id: int,
+        task: bytes,
     ) -> None:
         """Process a single task (private key).
 
@@ -112,17 +104,11 @@ class MultiProcessCollisionEngine:
         self._result_queue.put(task)
 
     def get_stats(self) -> dict:
-        elapsed = (
-            time.time() - self._start_time
-            if self._start_time
-            else 0
-        )
+        elapsed = time.time() - self._start_time if self._start_time else 0
         return {
             "total_keys": self._total_keys,
             "elapsed": elapsed,
-            "throughput": (
-                self._total_keys / max(elapsed, 0.001)
-            ),
+            "throughput": (self._total_keys / max(elapsed, 0.001)),
             "workers": self._num_workers,
             "running": self._running,
         }

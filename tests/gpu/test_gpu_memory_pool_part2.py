@@ -3,11 +3,12 @@
 覆盖: GPUBufferAllocator, GlobalGPUMemoryManager (+ P1-6 自动清理), get_gpu_memory_pool
 """
 
-import pytest
 import sys
 import threading
 import time
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 # ---- 绕过 src.gpu.__init__ 导入链 ----
 _mock_kernel_impl = MagicMock()
@@ -188,7 +189,9 @@ class TestGlobalGPUMemoryManager:
 # ===========================================================================
 
 
-@pytest.mark.skip(reason="_CleanupThreadState/internal API changed (Phase 6): _cleanup_thread, _cleanup_stop_event renamed")
+@pytest.mark.skip(
+    reason="_CleanupThreadState/internal API changed (Phase 6): _cleanup_thread, _cleanup_stop_event renamed"
+)
 class TestGlobalGPUMemoryManagerAutoCleanup:
     """P1-6 自动清理线程测试"""
 
@@ -280,14 +283,14 @@ class TestGlobalGPUMemoryManagerAutoCleanup:
 
         def wait_side_effect(timeout):
             call_count[0] += 1
-            if call_count[0] >= 3:
-                return True
-            return False
+            return call_count[0] >= 3
 
         # mock _evict_lru_locked to raise on first call
         with patch.object(GPUMemoryPool, "_evict_lru_locked", side_effect=TestException("err")):
             with patch.object(
-                mgr._cleanup_state._cleanup_stop_event, "wait", side_effect=wait_side_effect,
+                mgr._cleanup_state._cleanup_stop_event,
+                "wait",
+                side_effect=wait_side_effect,
             ):
                 mgr._auto_cleanup_loop(interval=0.01, lru_timeout=0.1)
         # 不应崩溃
@@ -302,7 +305,9 @@ class TestGlobalGPUMemoryManagerAutoCleanup:
 
         with patch.object(GPUMemoryPool, "_evict_lru_locked", side_effect=MemoryError("OOM")):
             with patch.object(
-                mgr._cleanup_state._cleanup_stop_event, "wait", side_effect=wait_side_effect,
+                mgr._cleanup_state._cleanup_stop_event,
+                "wait",
+                side_effect=wait_side_effect,
             ):
                 mgr._auto_cleanup_loop(interval=0.01, lru_timeout=0.1)
         # 不应崩溃
@@ -325,9 +330,7 @@ class TestGlobalGPUMemoryManagerAutoCleanup:
 
         def wait_side_effect(timeout):
             call_count[0] += 1
-            if call_count[0] >= 2:
-                return True
-            return False
+            return call_count[0] >= 2
 
         class FakeCL:
             @staticmethod
@@ -335,8 +338,13 @@ class TestGlobalGPUMemoryManagerAutoCleanup:
                 return mm
 
         # 注入 pyopencl mock
-        with patch.dict(sys.modules, {"pyopencl": FakeCL}), patch.object(
-            mgr._cleanup_state._cleanup_stop_event, "wait", side_effect=wait_side_effect,
+        with (
+            patch.dict(sys.modules, {"pyopencl": FakeCL}),
+            patch.object(
+                mgr._cleanup_state._cleanup_stop_event,
+                "wait",
+                side_effect=wait_side_effect,
+            ),
         ):
             mgr._auto_cleanup_loop(interval=0.01, lru_timeout=0.1)
         # 不应崩溃

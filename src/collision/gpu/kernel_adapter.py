@@ -99,7 +99,11 @@ class GPUKernelAdapter(IKernelExecutor):
             raise  # DEF-2修复: 直接重抛，保留内层已含重试次数的详细异常消息
 
     def execute_batch(
-        self, kernel: GPUKernel, seed: bytes, batch_size: int, stop_event: Any = None,
+        self,
+        kernel: GPUKernel,
+        seed: bytes,
+        batch_size: int,
+        stop_event: Any = None,
     ) -> tuple[list[MatchResult], float]:
         """执行单个批次
 
@@ -127,7 +131,9 @@ class GPUKernelAdapter(IKernelExecutor):
 
             # 执行批次
             raw_matches = kernel_impl.run_batch(
-                seed=seed, batch_size=batch_size, stop_event=stop_event,
+                seed=seed,
+                batch_size=batch_size,
+                stop_event=stop_event,
             )
 
             execution_time_ms = (time.time() - start_time) * 1000
@@ -159,17 +165,20 @@ class GPUKernelAdapter(IKernelExecutor):
         matches = []
 
         for match in raw_matches:
-            match_result = cast(MatchResult, {
-                "address": match.get("address", ""),
-                "private_key": match.get("private_key", ""),
-                "private_key_hash": hashlib.sha256(
-                    str(match.get("private_key", "")).encode(),
-                ).hexdigest(),
-                "public_key": match.get("public_key", ""),
-                "hash160": match.get("hash160", ""),
-                "index": match.get("index", 0),
-                "seed": match.get("seed", ""),
-            })
+            match_result = cast(
+                MatchResult,
+                {
+                    "address": match.get("address", ""),
+                    "private_key": match.get("private_key", ""),
+                    "private_key_hash": hashlib.sha256(
+                        str(match.get("private_key", "")).encode(),
+                    ).hexdigest(),
+                    "public_key": match.get("public_key", ""),
+                    "hash160": match.get("hash160", ""),
+                    "index": match.get("index", 0),
+                    "seed": match.get("seed", ""),
+                },
+            )
             matches.append(match_result)
 
         return matches

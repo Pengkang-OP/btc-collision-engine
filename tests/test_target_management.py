@@ -132,7 +132,10 @@ class TestTargetResolver:
         try:
             # 使用显式编码创建文件
             with tempfile.NamedTemporaryFile(
-                mode="w", suffix=".txt", delete=False, encoding="utf-8",
+                mode="w",
+                suffix=".txt",
+                delete=False,
+                encoding="utf-8",
             ) as f:
                 f.write("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\n")
                 f.write("# 这是注释\n")
@@ -479,7 +482,9 @@ class TestEncodingCompatibility:
         try:
             # 使用固定采样，限制5KB
             encoding = EncodingUtils.detect_file_encoding(
-                temp_path, max_sample_size=5000, use_dynamic_sampling=False,
+                temp_path,
+                max_sample_size=5000,
+                use_dynamic_sampling=False,
             )
             # 应该能检测到utf-8
             assert encoding == "utf-8"
@@ -531,7 +536,9 @@ class TestEncodingCompatibility:
 
             # 固定采样（限制1KB）
             encoding_fixed = EncodingUtils.detect_file_encoding(
-                temp_path, max_sample_size=1024, use_dynamic_sampling=False,
+                temp_path,
+                max_sample_size=1024,
+                use_dynamic_sampling=False,
             )
 
             # 两种模式都应该能检测到utf-8
@@ -589,11 +596,14 @@ class TestEncodingCompatibility:
                 # 执行编码检测
                 if max_size is None:
                     encoding = EncodingUtils.detect_file_encoding(
-                        temp_path, use_dynamic_sampling=use_dynamic,
+                        temp_path,
+                        use_dynamic_sampling=use_dynamic,
                     )
                 else:
                     encoding = EncodingUtils.detect_file_encoding(
-                        temp_path, max_sample_size=max_size, use_dynamic_sampling=use_dynamic,
+                        temp_path,
+                        max_sample_size=max_size,
+                        use_dynamic_sampling=use_dynamic,
                     )
 
                 # 所有测试都应该能检测到utf-8或ascii
@@ -628,7 +638,8 @@ class TestEncodingCompatibility:
             try:
                 # 验证不会抛出异常，且能检测到编码
                 encoding = EncodingUtils.detect_file_encoding(
-                    temp_path, use_dynamic_sampling=use_dynamic,
+                    temp_path,
+                    use_dynamic_sampling=use_dynamic,
                 )
                 assert encoding in [
                     "utf-8",
@@ -757,7 +768,8 @@ class TestErrorHandling:
         if platform.system() == "Windows":
             # Windows系统目录（通常需要管理员权限）
             storage = AddressStorage(
-                storage_type="json", path="C:\\Windows\\System32\\test_btc_data.json",
+                storage_type="json",
+                path="C:\\Windows\\System32\\test_btc_data.json",
             )
         else:
             # Unix系统目录
@@ -833,7 +845,11 @@ class TestTargetResolverSecurity:
         """正常路径允许（文件在当前目录）"""
         resolver = TargetResolver(enable_cache=False)
         tmp = tempfile.NamedTemporaryFile(
-            mode="w", suffix=".txt", delete=False, dir=os.getcwd(), encoding="utf-8",
+            mode="w",
+            suffix=".txt",
+            delete=False,
+            dir=os.getcwd(),
+            encoding="utf-8",
         )
         tmp.write("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\n")
         tmp.close()
@@ -847,7 +863,11 @@ class TestTargetResolverSecurity:
         """文件超过100MB限制时返回空集合"""
         resolver = TargetResolver(enable_cache=False)
         tmp = tempfile.NamedTemporaryFile(
-            mode="w", suffix=".txt", delete=False, dir=os.getcwd(), encoding="utf-8",
+            mode="w",
+            suffix=".txt",
+            delete=False,
+            dir=os.getcwd(),
+            encoding="utf-8",
         )
         tmp.write("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\n")
         tmp.close()

@@ -267,9 +267,7 @@ class TestSaveAddressToTargetsFile:
         with Path(targets_path).open() as f:
             lines = f.readlines()
         addr_lines = [
-            line.strip()
-            for line in lines
-            if line.strip() and not line.strip().startswith("#")
+            line.strip() for line in lines if line.strip() and not line.strip().startswith("#")
         ]
         assert addr_lines.count(addr) == 1
 

@@ -144,7 +144,8 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
             # 1. 记录到性能监控器
             if self._perf_monitor:
                 self._perf_monitor.record_kernel_metrics(
-                    batch_size=batch_size, execution_time_ms=execution_time_ms,
+                    batch_size=batch_size,
+                    execution_time_ms=execution_time_ms,
                 )
 
             # 2. 记录到数据日志
@@ -302,7 +303,10 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
         return monitors
 
     def _detect_anomalies(
-        self, batch_size: int, execution_time_ms: float, metrics: dict[str, Any],
+        self,
+        batch_size: int,
+        execution_time_ms: float,
+        metrics: dict[str, Any],
     ) -> None:
         """异常检测
 

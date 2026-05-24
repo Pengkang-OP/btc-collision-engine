@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """验收测试共享配置文件 - 提供全局 Fixture 和测试配置
 
 本文件包含:
@@ -14,21 +13,20 @@
 4. 隔离性: 每个测试独立运行，互不干扰
 """
 
-import json
-import os
 import shutil
 import tempfile
 import time
-from contextlib import suppress
+from collections.abc import Generator
 from pathlib import Path
-from typing import Any, Dict, Generator, List, Optional, Set, Tuple
-from unittest.mock import MagicMock, Mock, patch
+from typing import Any, Optional
+from unittest.mock import Mock, patch
 
 import pytest
 
 # ============================================================================
 # 测试常量定义
 # ============================================================================
+
 
 class AcceptanceTestConstants:
     """验收测试常量集合
@@ -52,7 +50,7 @@ class AcceptanceTestConstants:
 
     # GPU 测试常量
     DEFAULT_GPU_BATCH_SIZE = 65536
-    DEFAULT_GPU_MEM_SIZE = 8 * 1024 ** 3  # 8GB
+    DEFAULT_GPU_MEM_SIZE = 8 * 1024**3  # 8GB
 
     # 搜索模式
     SEARCH_MODE_RANDOM = "random"
@@ -73,6 +71,7 @@ class AcceptanceTestConstants:
 # ============================================================================
 # 公共 Mock 创建函数
 # ============================================================================
+
 
 def create_mock_gpu_device(
     device_name: str = "Test GPU",
@@ -183,7 +182,7 @@ def create_mock_checkpoint_data(
     version: int = 2,
     total_keys_checked: int = 1000000,
     matches_found: int = 2,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """创建模拟的检查点数据
 
     Args:
@@ -221,6 +220,7 @@ def create_mock_checkpoint_data(
 # ============================================================================
 # Pytest Fixtures
 # ============================================================================
+
 
 @pytest.fixture(scope="session")
 def test_data_dir() -> Path:
@@ -277,6 +277,7 @@ def setup_test_logging() -> Generator[None, None, None]:
 # 其他 Fixtures
 # ============================================================================
 
+
 @pytest.fixture(scope="function")
 def temp_dir() -> Generator[Path, None, None]:
     """创建临时目录用于测试
@@ -295,7 +296,7 @@ def temp_dir() -> Generator[Path, None, None]:
 
 
 @pytest.fixture(scope="function")
-def mock_gpu_chain() -> Generator[Tuple[Mock, Mock, Mock], None, None]:
+def mock_gpu_chain() -> Generator[tuple[Mock, Mock, Mock], None, None]:
     """提供完整的 GPU Mock 链，用于 GPU 碰撞引擎测试
 
     这个 fixture 封装了 GPU 设备、上下文和内核的 Mock 对象，
@@ -314,12 +315,12 @@ def mock_gpu_chain() -> Generator[Tuple[Mock, Mock, Mock], None, None]:
     mock_kernel = create_mock_gpu_kernel()
 
     # 应用 Mock 补丁
-    with patch("src.gpu.device.GPUDevice", return_value=mock_device), patch(
-        "src.gpu.context.GPUContext", return_value=mock_context
-    ), patch("src.gpu.kernel_impl.GPUKernel", return_value=mock_kernel), patch(
-        "src.collision.gpu.engine.PYOPENCL_AVAILABLE", True
-    ), patch(
-        "src.gpu.device.GPUDeviceDetector.is_gpu_available", return_value=True
+    with (
+        patch("src.gpu.device.GPUDevice", return_value=mock_device),
+        patch("src.gpu.context.GPUContext", return_value=mock_context),
+        patch("src.gpu.kernel_impl.GPUKernel", return_value=mock_kernel),
+        patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True),
+        patch("src.gpu.device.GPUDeviceDetector.is_gpu_available", return_value=True),
     ):
         yield mock_device, mock_context, mock_kernel
 
@@ -377,7 +378,7 @@ def mock_target_resolver() -> Any:
 
 
 @pytest.fixture(scope="function")
-def sample_target_addresses() -> Set[str]:
+def sample_target_addresses() -> set[str]:
     """提供样本目标地址集合
 
     Returns:
@@ -419,12 +420,13 @@ def mock_deduplication_filter() -> Any:
 @pytest.fixture(scope="function", autouse=True)
 def mock_crypto_backend_autouse() -> Generator[None, None, None]:
     """自动 Mock 加密后端管理器，使所有引擎测试可用
-    
+
     修补 CryptoBackendManager.current_backend 属性，确保测试环境中
     引擎初始化时始终有可用的后端，避免 RuntimeError。
     """
-    from src.core.crypto_backend import crypto_manager as _global_cm
     from unittest.mock import Mock
+
+    from src.core.crypto_backend import crypto_manager as _global_cm
 
     mock_backend = Mock()
     mock_backend.name = "mock_backend (test)"
@@ -435,11 +437,15 @@ def mock_crypto_backend_autouse() -> Generator[None, None, None]:
     mock_backend.get_performance_stats.return_value = {"keys_per_second": 100000}
 
     # 保存原始的 _current_backend
-    original = _global_cm._CryptoBackendManager__current_backend if hasattr(_global_cm, '_CryptoBackendManager__current_backend') else _global_cm._current_backend
+    original = (
+        _global_cm._CryptoBackendManager__current_backend
+        if hasattr(_global_cm, "_CryptoBackendManager__current_backend")
+        else _global_cm._current_backend
+    )
     _global_cm._current_backend = mock_backend
-    
+
     yield
-    
+
     # 恢复
     _global_cm._current_backend = original
 
@@ -451,10 +457,10 @@ def mock_crypto_backend() -> Any:
     Returns:
         Mock: 配置好的 CryptoBackendManager Mock 对象
     """
-    from unittest.mock import Mock, MagicMock
+    from unittest.mock import Mock
 
     mock_backend = Mock()
-    
+
     # 模拟后端管理方法
     mock_backend.initialize = Mock(return_value=True)
     mock_backend.cleanup = Mock(return_value=True)
@@ -463,16 +469,14 @@ def mock_crypto_backend() -> Any:
     )
     mock_backend.get_current_backend = Mock(return_value="pure_python")
     mock_backend.switch_backend = Mock(return_value=True)
-    
+
     # 模拟密码学方法
     mock_backend.generate_public_key = Mock(
         return_value=b"\x02" + b"\x11" * 32  # 压缩公钥格式
     )
-    mock_backend.scalar_multiply = Mock(
-        return_value=b"\x02" + b"\x22" * 32
-    )
+    mock_backend.scalar_multiply = Mock(return_value=b"\x02" + b"\x22" * 32)
     mock_backend.verify_signature = Mock(return_value=True)
-    
+
     # 模拟性能统计
     mock_backend.get_performance_stats = Mock(
         return_value={
@@ -481,12 +485,12 @@ def mock_crypto_backend() -> Any:
             "memory_usage_mb": 10.5,
         }
     )
-    
+
     yield mock_backend
 
 
 @pytest.fixture(scope="function")
-def valid_addresses(test_data_dir: Path) -> List[str]:
+def valid_addresses(test_data_dir: Path) -> list[str]:
     """加载有效地址列表
 
     Args:
@@ -499,17 +503,13 @@ def valid_addresses(test_data_dir: Path) -> List[str]:
     if not valid_file.exists():
         return [AcceptanceTestConstants.VALID_P2PKH_ADDRESS]
 
-    with open(valid_file, "r") as f:
-        addresses = [
-            line.strip()
-            for line in f
-            if line.strip() and not line.strip().startswith("#")
-        ]
+    with open(valid_file) as f:
+        addresses = [line.strip() for line in f if line.strip() and not line.strip().startswith("#")]
     return addresses
 
 
 @pytest.fixture(scope="function")
-def invalid_addresses(test_data_dir: Path) -> List[str]:
+def invalid_addresses(test_data_dir: Path) -> list[str]:
     """加载无效地址列表
 
     Args:
@@ -522,18 +522,15 @@ def invalid_addresses(test_data_dir: Path) -> List[str]:
     if not invalid_file.exists():
         return [AcceptanceTestConstants.INVALID_ADDRESS_FORMAT]
 
-    with open(invalid_file, "r") as f:
-        addresses = [
-            line.strip()
-            for line in f
-            if line.strip() and not line.strip().startswith("#")
-        ]
+    with open(invalid_file) as f:
+        addresses = [line.strip() for line in f if line.strip() and not line.strip().startswith("#")]
     return addresses
 
 
 # ============================================================================
 # 辅助断言函数
 # ============================================================================
+
 
 def assert_valid_bitcoin_address(address: str, message: Optional[str] = None) -> None:
     """断言给定的字符串是有效的 Bitcoin 地址
@@ -550,9 +547,9 @@ def assert_valid_bitcoin_address(address: str, message: Optional[str] = None) ->
 
     # 检查地址前缀
     valid_prefixes = ("1", "3", "bc1")
-    assert any(
-        address.startswith(prefix) for prefix in valid_prefixes
-    ), message or f"地址必须以 {valid_prefixes} 之一开头，实际: {address}"
+    assert any(address.startswith(prefix) for prefix in valid_prefixes), (
+        message or f"地址必须以 {valid_prefixes} 之一开头，实际: {address}"
+    )
 
 
 def assert_valid_private_key(private_key: bytes, message: Optional[str] = None) -> None:
@@ -568,15 +565,13 @@ def assert_valid_private_key(private_key: bytes, message: Optional[str] = None) 
     assert isinstance(private_key, bytes), (
         message or f"私钥必须是 bytes 类型，实际类型: {type(private_key)}"
     )
-    assert len(private_key) == 32, (
-        message or f"私钥必须是 32 字节，实际长度: {len(private_key)}"
-    )
+    assert len(private_key) == 32, message or f"私钥必须是 32 字节，实际长度: {len(private_key)}"
 
     # 检查私钥范围 (1 <= private_key <= n-1)
     private_key_int = int.from_bytes(private_key, "big")
-    assert 1 <= private_key_int <= 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364140 - 1, (
-        message or f"私钥超出有效范围: {private_key_int}"
-    )
+    assert (
+        1 <= private_key_int <= 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364140 - 1
+    ), message or f"私钥超出有效范围: {private_key_int}"
 
 
 def assert_engine_state(
@@ -597,21 +592,13 @@ def assert_engine_state(
     assert engine is not None, message or "引擎实例不能为 None"
 
     if expected_state == AcceptanceTestConstants.STATE_INITIALIZED:
-        assert not engine.is_running(), (
-            message or "引擎应该处于初始化状态，但 is_running() 返回 True"
-        )
+        assert not engine.is_running(), message or "引擎应该处于初始化状态，但 is_running() 返回 True"
     elif expected_state == AcceptanceTestConstants.STATE_RUNNING:
-        assert engine.is_running(), (
-            message or "引擎应该处于运行状态，但 is_running() 返回 False"
-        )
+        assert engine.is_running(), message or "引擎应该处于运行状态，但 is_running() 返回 False"
     elif expected_state == AcceptanceTestConstants.STATE_STOPPED:
-        assert not engine.is_running(), (
-            message or "引擎应该处于停止状态，但 is_running() 返回 True"
-        )
+        assert not engine.is_running(), message or "引擎应该处于停止状态，但 is_running() 返回 True"
     elif expected_state == AcceptanceTestConstants.STATE_ERROR:
-        assert hasattr(engine, "_error"), (
-            message or "引擎应该处于错误状态，但缺少 _error 属性"
-        )
+        assert hasattr(engine, "_error"), message or "引擎应该处于错误状态，但缺少 _error 属性"
 
 
 def assert_pipeline_stage_complete(
@@ -631,9 +618,7 @@ def assert_pipeline_stage_complete(
     Raises:
         AssertionError: 如果阶段结果无效
     """
-    assert stage_result is not None, (
-        message or f"Pipeline 阶段 '{stage_name}' 的结果不能为 None"
-    )
+    assert stage_result is not None, message or f"Pipeline 阶段 '{stage_name}' 的结果不能为 None"
 
     if expected_type is not None:
         assert isinstance(stage_result, expected_type), (
@@ -645,6 +630,7 @@ def assert_pipeline_stage_complete(
 # ============================================================================
 # Pytest 配置钩子
 # ============================================================================
+
 
 def pytest_configure(config: Any) -> None:
     """配置 pytest 环境，注册自定义 marker
@@ -671,7 +657,7 @@ def pytest_configure(config: Any) -> None:
     config.addinivalue_line("markers", "logic_layer: 逻辑层测试（代码正确性、逻辑、判断）")
 
 
-def pytest_collection_modifyitems(config: Any, items: List[Any]) -> None:
+def pytest_collection_modifyitems(config: Any, items: list[Any]) -> None:
     """修改测试项集合，根据 marker 对测试进行分类
 
     Args:
@@ -679,9 +665,7 @@ def pytest_collection_modifyitems(config: Any, items: List[Any]) -> None:
         items: 测试项列表
     """
     # 为验收测试添加超时标记
-    acceptance_timeout_marker = pytest.mark.timeout(
-        AcceptanceTestConstants.MAX_ACCEPTABLE_TIME_SEC
-    )
+    acceptance_timeout_marker = pytest.mark.timeout(AcceptanceTestConstants.MAX_ACCEPTABLE_TIME_SEC)
 
     for item in items:
         # 为所有验收测试添加超时保护
@@ -701,6 +685,7 @@ def pytest_collection_modifyitems(config: Any, items: List[Any]) -> None:
 # 清理函数
 # ============================================================================
 
+
 @pytest.fixture(scope="session", autouse=True)
 def cleanup_after_all_tests() -> Generator[None, None, None]:
     """所有测试结束后执行全局清理
@@ -718,7 +703,7 @@ def cleanup_after_all_tests() -> Generator[None, None, None]:
         Path(tempfile.gettempdir()) / "btc_acceptance_test_*",
     ]
 
-    for temp_dir_pattern in temp_dirs:
+    for _temp_dir_pattern in temp_dirs:
         for temp_dir in Path(tempfile.gettempdir()).glob("btc_acceptance_test_*"):
             if temp_dir.is_dir():
                 shutil.rmtree(temp_dir, ignore_errors=True)

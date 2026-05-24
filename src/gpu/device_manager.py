@@ -219,8 +219,7 @@ class GPUDeviceManager:
                     e,
                 )
                 raise RuntimeError(
-                    f"GPU初始化失败: {e} (GPU 引擎仅支持 P2PKH 地址格式, "
-                    "其他格式请使用 CPU 模式)",
+                    f"GPU初始化失败: {e} (GPU 引擎仅支持 P2PKH 地址格式, 其他格式请使用 CPU 模式)",
                 ) from e
             except ValueError as e:
                 # 使用ExceptionHandler记录详细错误
@@ -234,8 +233,7 @@ class GPUDeviceManager:
                     e,
                 )
                 raise RuntimeError(
-                    f"GPU初始化失败: {e}。请检查GPU驱动和OpenCL环境, "
-                    "或使用CPU引擎作为备选方案。",
+                    f"GPU初始化失败: {e}。请检查GPU驱动和OpenCL环境, 或使用CPU引擎作为备选方案。",
                 ) from e
             except RuntimeError as e:
                 # 使用ExceptionHandler记录详细错误
@@ -249,8 +247,7 @@ class GPUDeviceManager:
                     e,
                 )
                 raise RuntimeError(
-                    f"GPU初始化失败: {e}。请检查GPU驱动和OpenCL环境, "
-                    "或使用CPU引擎作为备选方案。",
+                    f"GPU初始化失败: {e}。请检查GPU驱动和OpenCL环境, 或使用CPU引擎作为备选方案。",
                 ) from e
 
         return self
@@ -397,8 +394,7 @@ class GPUDeviceManager:
         if skipped_addresses:
             skipped_count = len(skipped_addresses)
             self.logger.warning(
-                "GPU 引擎仅支持 P2PKH 格式碰撞 — "
-                "已跳过 %d 个非 P2PKH 目标地址:",
+                "GPU 引擎仅支持 P2PKH 格式碰撞 — 已跳过 %d 个非 P2PKH 目标地址:",
                 skipped_count,
             )
             # 显示每个被跳过地址的格式和原因 (最多显示 10 条避免日志洪水)
@@ -552,16 +548,20 @@ class GPUDeviceManager:
             if profile_queue_depth > 0:
                 self.logger.info(
                     "GPU推荐队列深度: %s (config: %s, 最终: %s)",
-                    profile_queue_depth, config_queue_depth, queue_depth,
+                    profile_queue_depth,
+                    config_queue_depth,
+                    queue_depth,
                 )
 
             self._async_executor = AsyncGPUExecutor(
-                dev, max_batch_size=batch_size, queue_depth=queue_depth,
+                dev,
+                max_batch_size=batch_size,
+                queue_depth=queue_depth,
             )
 
             # v5.1: 使用GPU特定初始批次大小（而非引擎配置），避免缓冲区频繁 resize
             executor = self._require_async_executor()
-            init_batch = getattr(executor, 'initial_batch_size', batch_size)
+            init_batch = getattr(executor, "initial_batch_size", batch_size)
             executor.initialize_buffers(dev.context, num_keys=init_batch)
 
             # v5.1: 启动后台结果收集器（消除主循环阻塞，实现流水线并行）
@@ -569,7 +569,8 @@ class GPUDeviceManager:
 
             self.logger.info(
                 "[OK] GPU异步执行器已初始化(流水线并行, 队列深度: %d, 初始批次: %d, 后台收集器: 启用)",
-                queue_depth, init_batch,
+                queue_depth,
+                init_batch,
             )
         else:
             self._async_executor = None

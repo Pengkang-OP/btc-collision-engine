@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""测试 Windows 权限错误重试机制
-"""
+"""测试 Windows 权限错误重试机制"""
 
 import json
 import os

@@ -218,7 +218,9 @@ class GPUAutoConfigurator:
         if adjusted_wgs != recommended_wgs:
             logger.info(
                 "[NVIDIA] wgs: %s->%s (max=%s, align=32)",
-                recommended_wgs, adjusted_wgs, max_wgs,
+                recommended_wgs,
+                adjusted_wgs,
+                max_wgs,
             )
         config["work_group_size"] = adjusted_wgs
 
@@ -290,7 +292,9 @@ class GPUAutoConfigurator:
         if adjusted_wgs != recommended_wgs:
             logger.info(
                 "[Intel Arc] wgs: %s->%s (max=%s, align=32)",
-                recommended_wgs, adjusted_wgs, max_wgs,
+                recommended_wgs,
+                adjusted_wgs,
+                max_wgs,
             )
         config["work_group_size"] = adjusted_wgs
 
@@ -318,7 +322,10 @@ class GPUAutoConfigurator:
         adjusted_wgs = _align_work_group_size(recommended_wgs, max_wgs, 32)
         if adjusted_wgs != recommended_wgs:
             logger.info(
-                "[Unknown GPU] wgs: %s->%s (max=%s, align=32)", recommended_wgs, adjusted_wgs, max_wgs,
+                "[Unknown GPU] wgs: %s->%s (max=%s, align=32)",
+                recommended_wgs,
+                adjusted_wgs,
+                max_wgs,
             )
         config["work_group_size"] = adjusted_wgs
 

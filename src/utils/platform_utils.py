@@ -73,11 +73,13 @@ def has_gpu_support() -> bool:
     """
     try:
         import opencl  # noqa: F401
+
         return True
     except ImportError:
         pass
     try:
         import pyopencl  # noqa: F401
+
         return True
     except ImportError:
         pass

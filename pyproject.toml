@@ -177,10 +177,11 @@ ignore = ["E203"]
 "src/monitoring/alert_notifications.py" = ["E501"] # HTML 邮件模板字符串
 "src/utils/ui_tutorial.py" = ["E501"]              # 长行 UI 字符串/格式化提示文本
 "src/collision/targets/validator.py" = ["E501"]    # doctest 示例 + 中文注释
-"scripts/**/*.py" = ["E501", "E402"]               # 脚本：sys.path.insert + 可读性长行
+"scripts/**/*.py" = ["E501", "E402", "T201"]               # 脚本：sys.path.insert + 可读性长行 + print合法
 "scripts/_batch_p1.py" = ["E501"]                  # 嵌入式源码字符串补丁脚本
 "scripts/extract_opencl_kernels.py" = ["E501"]     # 文档字符串含 markdown 代码示例
 "benchmarks/**/*.py" = ["E501", "E402", "T201"]        # 基准测试：格式化非关键，允许 print
+"tests/**/*.py" = ["T201"]                             # 测试代码：print 调试输出合法
 # ── 合法 CLI 工具允许 print() 输出 ──────────────────────────
 "src/cli/*.py" = ["T201"]                                # CLI 命令行接口输出
 "src/utils/first_run_wizard.py" = ["T201"]               # 首次运行向导
@@ -189,6 +190,7 @@ ignore = ["E203"]
 "src/utils/performance_benchmark.py" = ["T201"]          # 性能基准测试 CLI
 "src/utils/health_check.py" = ["T201"]                   # 健康检查 CLI
 "src/gpu/multi_format_multi_gpu_engine.py" = ["T201"]   # GPU 引擎示例/测试
+"tools/**/*.py" = ["T201"]                             # 运维工具：print 合法输出
 
 [tool.ruff.lint.mccabe]
 max-complexity = 15

@@ -17,8 +17,7 @@ BECH32M_CONST = 0x2BC830A3
 
 def bech32_polymod(values: list[int]) -> int:
     """Compute Bech32 checksum."""
-    _gen = [0x3B6A57B2, 0x26508E6D, 0x1EA119FA,
-            0x3D4233DD, 0x2A1462B3]
+    _gen = [0x3B6A57B2, 0x26508E6D, 0x1EA119FA, 0x3D4233DD, 0x2A1462B3]
     chk = 1
     for v in values:
         b = chk >> 25
@@ -105,7 +104,7 @@ def bech32_decode(address: str) -> tuple[str | None, list[int], str]:
         return None, [], ""
     # BIP-173: reject mixed case — hrp and data must share the same case
     hrp_part = address[:pos]
-    data_part = address[pos + 1:]
+    data_part = address[pos + 1 :]
     hrp_lower = hrp_part.lower()
     data_lower = data_part.lower()
     # Check for mixed case: if hrp is not all-lower and not all-upper, reject.

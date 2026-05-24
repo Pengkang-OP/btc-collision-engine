@@ -142,7 +142,8 @@ class DataMonitor:
         self.error_rate_threshold = self.config.get("error_rate_threshold", 0.1)  # 错误率阈值
         self.stale_data_timeout = self.config.get("stale_data_timeout", 10.0)  # 数据过期时间
         self.max_issues_per_minute = self.config.get(
-            "max_issues_per_minute", 100,
+            "max_issues_per_minute",
+            100,
         )  # 每分钟最大问题数
         self.max_seen_keys = self.config.get("max_seen_keys", 100000)  # 最大记录私钥数
         self.max_seen_addresses = self.config.get("max_seen_addresses", 10000)  # 最大记录地址数
@@ -208,7 +209,9 @@ class DataMonitor:
         self._anomaly_callback = anomaly_callback
 
         self._monitor_thread = threading.Thread(
-            target=self._monitor_loop, daemon=True, name="DataMonitor",
+            target=self._monitor_loop,
+            daemon=True,
+            name="DataMonitor",
         )
         self._monitor_thread.start()
 
@@ -230,7 +233,10 @@ class DataMonitor:
         logger.info("数据监控器已停止")
 
     def report_keys_generated(
-        self, device_idx: int, count: int, key_range: tuple[int, int] | None = None,
+        self,
+        device_idx: int,
+        count: int,
+        key_range: tuple[int, int] | None = None,
     ) -> None:
         """报告生成的私钥数据
 
@@ -324,7 +330,10 @@ class DataMonitor:
             logger.error("报告错误失败 [GPU %s]: %s", device_idx, e)
 
     def report_validation_result(
-        self, device_idx: int, passed: bool, validation_type: str | None = None,
+        self,
+        device_idx: int,
+        passed: bool,
+        validation_type: str | None = None,
     ) -> None:
         """报告验证结果
 
@@ -380,7 +389,10 @@ class DataMonitor:
             return stats
 
     def get_issues(
-        self, severity: str | None = None, device_idx: int | None = None, limit: int = 100,
+        self,
+        severity: str | None = None,
+        device_idx: int | None = None,
+        limit: int = 100,
     ) -> list[dict[str, Any]]:
         """获取检测到的问题
 

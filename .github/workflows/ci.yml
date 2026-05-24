@@ -274,7 +274,7 @@ jobs:
     name: 测试 (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    needs: [lint]  # lint 通过后才运行完整测试
+    needs: [lint] # lint 通过后才运行完整测试
 
     strategy:
       fail-fast: false
@@ -473,7 +473,21 @@ jobs:
     name: CI 门禁检查
     runs-on: ubuntu-latest
     timeout-minutes: 2
-    needs: [lint, test, comprehensive-tests, critical-tests, config-validation, security-scan, dependency-scan, import-check, type-check, gpu-static-check, benchmark, docs-check]
+    needs:
+      [
+        lint,
+        test,
+        comprehensive-tests,
+        critical-tests,
+        config-validation,
+        security-scan,
+        dependency-scan,
+        import-check,
+        type-check,
+        gpu-static-check,
+        benchmark,
+        docs-check,
+      ]
     if: always()
 
     steps:

@@ -31,7 +31,7 @@ def check_async_status():
 
     # 获取最后100行
     last_lines = lines[-100:] if len(lines) > 100 else lines
-    log_text = "".join(last_lines)
+    "".join(last_lines)
 
     print("=" * 80)
     print("  GPU异步功能状态检查")

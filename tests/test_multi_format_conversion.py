@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""比特币多格式地址转换验证测试
-"""
-
+"""比特币多格式地址转换验证测试"""
 
 import secrets
 
@@ -46,7 +44,7 @@ print("[2] P2SH Address (Pay-to-Script-Hash)")
 print("-" * 80)
 
 # AddressConverter 模块已移除 — P2SH/Bech32 测试已删除
-print(f"ℹ P2SH/Bech32 conversion requires AddressConverter (module removed)")
+print("ℹ P2SH/Bech32 conversion requires AddressConverter (module removed)")
 
 # 4. Taproot地址生成 (SegWit v1)
 print("\n" + "=" * 80)

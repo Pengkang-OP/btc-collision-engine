@@ -74,7 +74,6 @@ def fix_fenced_code_blocks(content: str, filepath: Path) -> str:
     result = []
     in_code_block = False
     code_block_start = -1
-    code_lines: list[str] = []
 
     # 基于文件内容推断语言
     inferred_lang = _infer_language(content, filepath)
@@ -125,7 +124,9 @@ def _infer_language(content: str, filepath: Path) -> str:
         return "bash"
 
     # Python 特征
-    if re.search(r"^import\s+|^from\s+|^def\s+|^class\s+|print\(|os\.|sys\.|pathlib", content, re.MULTILINE):
+    if re.search(
+        r"^import\s+|^from\s+|^def\s+|^class\s+|print\(|os\.|sys\.|pathlib", content, re.MULTILINE
+    ):
         return "python"
 
     # JSON 特征
@@ -133,7 +134,9 @@ def _infer_language(content: str, filepath: Path) -> str:
         return "json"
 
     # YAML 特征
-    if re.search(r"^---\s*$", content, re.MULTILINE) or re.search(r"^[a-zA-Z_]+:\s", content, re.MULTILINE):
+    if re.search(r"^---\s*$", content, re.MULTILINE) or re.search(
+        r"^[a-zA-Z_]+:\s", content, re.MULTILINE
+    ):
         return "yaml"
 
     # TOML 特征
@@ -156,9 +159,12 @@ def _infer_language(content: str, filepath: Path) -> str:
 def run_quality_check() -> list[tuple[float, str]]:
     """运行质量检查并返回低分文档列表"""
     import subprocess
+
     result = subprocess.run(
         [sys.executable, "tools/check_document_quality.py"],
-        capture_output=True, text=True, encoding="utf-8",
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
     )
     output = result.stdout + result.stderr
     poor_docs: list[tuple[float, str]] = []

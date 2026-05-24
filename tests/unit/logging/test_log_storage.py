@@ -14,7 +14,6 @@ import pytest
 
 from src.log_engine.log_storage import LogStorage
 
-
 # ============================================================================
 # Fixtures
 # ============================================================================
@@ -42,18 +41,18 @@ class TestLogStorageInit:
 
     def test_default_dir(self):
         import tempfile
-        import os
         from pathlib import Path
+
         # 使用临时目录避免污染工作区
         with tempfile.TemporaryDirectory() as d:
-            s = LogStorage(storage_dir=d)
+            LogStorage(storage_dir=d)
             assert Path(d).is_dir()
 
     def test_default_path_works(self):
         """默认路径 'logs' 能正常工作"""
         with tempfile.TemporaryDirectory() as d:
             logs_dir = pathlib.Path(d) / "logs"
-            s = LogStorage(storage_dir=str(logs_dir))
+            LogStorage(storage_dir=str(logs_dir))
             assert logs_dir.is_dir()
 
 
@@ -87,6 +86,7 @@ class TestLogStorageSave:
 
     def test_multiple_saves_creates_separate_files(self, storage, tmpdir):
         import time
+
         storage.save([{"id": 1}])
         time.sleep(1.1)  # save() 使用 int(time.time()) 秒级文件名
         storage.save([{"id": 2}])
@@ -119,6 +119,7 @@ class TestLogStorageLoad:
 
     def test_load_all_multiple_files(self, storage, tmpdir):
         import time
+
         storage.save([{"id": 1}])
         time.sleep(1.1)
         storage.save([{"id": 2}])
@@ -131,6 +132,7 @@ class TestLogStorageLoad:
     def test_load_all_sorted_by_filename(self, storage, tmpdir):
         """文件按名称排序加载，保证时间顺序"""
         import time
+
         storage.save([{"seq": 1}])
         time.sleep(1.1)
         storage.save([{"seq": 2}])
@@ -149,7 +151,7 @@ class TestLogStorageEdgeCases:
     def test_storage_dir_with_subdirs(self, tmpdir):
         """支持子目录路径"""
         sub = pathlib.Path(tmpdir) / "sub" / "logs"
-        s = LogStorage(storage_dir=str(sub))
+        LogStorage(storage_dir=str(sub))
         assert sub.is_dir()
 
     def test_save_and_load_roundtrip(self, storage, tmpdir):

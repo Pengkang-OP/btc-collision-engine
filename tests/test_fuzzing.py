@@ -12,7 +12,6 @@
     pytest tests/test_fuzzing.py -v --tb=short
 """
 
-
 import pytest
 
 HYPOTHESIS_AVAILABLE = False

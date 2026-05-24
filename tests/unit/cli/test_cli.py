@@ -13,7 +13,6 @@
     pytest tests/test_cli.py -v --tb=short
 """
 
-
 import pathlib
 
 import pytest
@@ -79,6 +78,7 @@ class TestCLIEntryPoint:
 # 测试：参数模式校验
 # ============================================================================
 
+
 @pytest.mark.unit
 class TestCLIModeArguments:
     """CLI 模式参数测试"""
@@ -108,6 +108,7 @@ class TestCLIModeArguments:
 # ============================================================================
 # 测试：参数组合与互斥
 # ============================================================================
+
 
 @pytest.mark.unit
 class TestCLIArgumentCombinations:

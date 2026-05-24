@@ -355,14 +355,20 @@ class DataLogger:
             with pathlib.Path(self.performance_log_file).open("a", encoding="utf-8") as f:
                 f.writelines(lines_to_write)
             self._record_pipeline_metric(
-                "performance_log", success=True, extra={"batched_lines": len(lines_to_write)},
+                "performance_log",
+                success=True,
+                extra={"batched_lines": len(lines_to_write)},
             )
         except Exception as e:
             self.logger.error("批量写入性能日志失败: %s", e)
             self._record_pipeline_metric("performance_log", success=False, error=str(e)[:200])
 
     def record_system_data(
-        self, os_name: str = "", python_version: str = "", pid: int = 0, uptime: float = 0.0,
+        self,
+        os_name: str = "",
+        python_version: str = "",
+        pid: int = 0,
+        uptime: float = 0.0,
     ) -> None:
         """记录系统数据
 
@@ -522,7 +528,9 @@ class DataLogger:
 
         self.logger.info(
             "碰撞匹配事件: 地址=%s, 模式=%s, 类型=%s",
-            safe_addr, collision_mode, match_type,
+            safe_addr,
+            collision_mode,
+            match_type,
         )
 
     def record_error(
@@ -762,7 +770,10 @@ class DataLogger:
                     continue
                 # 最后一次尝试失败，使用回退方案
                 self.logger.warning(
-                    "原子替换全部失败 (%s/%s)，回退到直接写入: %s", max_retries, max_retries, dst,
+                    "原子替换全部失败 (%s/%s)，回退到直接写入: %s",
+                    max_retries,
+                    max_retries,
+                    dst,
                 )
                 return self._fallback_direct_write(src, dst)
             except OSError as e:
@@ -779,7 +790,10 @@ class DataLogger:
             # （某些杀毒软件返回非标准 OSError 而非 PermissionError）
             self.logger.warning(
                 "原子替换全部失败 (%s/%s)，回退到直接写入: %s - %s",
-                max_retries, max_retries, last_os_error, dst,
+                max_retries,
+                max_retries,
+                last_os_error,
+                dst,
             )
             return self._fallback_direct_write(src, dst)
 
@@ -1261,7 +1275,10 @@ class DataLogger:
         }
 
     def _generate_recommendations(
-        self, speeds: list[float], cpu_usages: list[float], memory_usages: list[float],
+        self,
+        speeds: list[float],
+        cpu_usages: list[float],
+        memory_usages: list[float],
     ) -> list[str]:
         """生成优化建议"""
         recommendations = []
@@ -1332,7 +1349,9 @@ class DataLogger:
             # 配置读取失败时静默回退到默认值
             self.logger.debug(
                 "auto_cleanup配置回退: enabled=%s, max_age_days=%s, 原因: %s",
-                default_enabled, default_max_age_days, e,
+                default_enabled,
+                default_max_age_days,
+                e,
             )
             return default_enabled, default_max_age_days
 
@@ -1372,18 +1391,19 @@ class DataLogger:
                 if filename.startswith("report_") and filename.endswith(".json"):
                     filepath = os.path.join(self.storage_dir, filename)
                     if (
-                    pathlib.Path(filepath).is_file()
-                    and pathlib.Path(filepath).stat().st_mtime < cutoff_time
-                ):
+                        pathlib.Path(filepath).is_file()
+                        and pathlib.Path(filepath).stat().st_mtime < cutoff_time
+                    ):
                         dest = os.path.join(archive_dir, filename)
                         shutil.move(filepath, dest)
                         moved_count += 1
 
             if moved_count > 0:
                 self.logger.info(
-                "自动归档了 %s 个过期报告文件（保留期: %s 天）",
-                moved_count, max_age_days,
-            )
+                    "自动归档了 %s 个过期报告文件（保留期: %s 天）",
+                    moved_count,
+                    max_age_days,
+                )
 
             self._last_cleanup_time = current_time
         except Exception as e:

@@ -271,7 +271,9 @@ class TestHandleGpuError:
         stats.record_gpu_error = MagicMock()
         with patch("src.utils.exception_handler.logger") as mock_logger:
             result = ExceptionHandler.handle_gpu_error(
-                "随机碰撞", RuntimeError("out of resources"), stats,
+                "随机碰撞",
+                RuntimeError("out of resources"),
+                stats,
             )
         assert result is True
         mock_logger.warning.assert_called_once()
@@ -362,7 +364,8 @@ class TestHandleClResourceError:
         """资源耗尽 → 返回 True, 记录 warning"""
         with patch("src.utils.exception_handler.logger") as mock_logger:
             result = ExceptionHandler.handle_cl_resource_error(
-                RuntimeError("out of resources"), "buffer",
+                RuntimeError("out of resources"),
+                "buffer",
             )
         assert result is True
         mock_logger.warning.assert_called_once()
@@ -371,7 +374,8 @@ class TestHandleClResourceError:
         """非资源错误 → 返回 False, 记录 error"""
         with patch("src.utils.exception_handler.logger") as mock_logger:
             result = ExceptionHandler.handle_cl_resource_error(
-                RuntimeError("unknown kernel error"), "kernel",
+                RuntimeError("unknown kernel error"),
+                "kernel",
             )
         assert result is False
         mock_logger.error.assert_called_once()
@@ -379,7 +383,8 @@ class TestHandleClResourceError:
     def test_cl_out_of_host_memory(self):
         """CL_OUT_OF_HOST_MEMORY → 识别为资源耗尽"""
         result = ExceptionHandler.handle_cl_resource_error(
-            RuntimeError("cl_out_of_host_memory"), "buffer",
+            RuntimeError("cl_out_of_host_memory"),
+            "buffer",
         )
         assert result is True
 

@@ -51,13 +51,11 @@ class EncodingUtils:
                 raise
 
         raise UnicodeDecodeError(
-            "utf-8", b"", 0, 0,
-            f"Failed to decode {file_path} with all encodings: {errors}"
+            "utf-8", b"", 0, 0, f"Failed to decode {file_path} with all encodings: {errors}"
         )
 
     @staticmethod
-    def read_file(file_path: str, encoding: str = "utf-8",
-                  try_multiple: bool = False) -> str:
+    def read_file(file_path: str, encoding: str = "utf-8", try_multiple: bool = False) -> str:
         """Read entire file content with optional encoding fallback.
 
         Args:
@@ -88,13 +86,11 @@ class EncodingUtils:
                 raise
 
         raise UnicodeDecodeError(
-            "utf-8", b"", 0, 0,
-            f"Failed to decode {file_path} with all encodings: {errors}"
+            "utf-8", b"", 0, 0, f"Failed to decode {file_path} with all encodings: {errors}"
         )
 
     @staticmethod
-    def write_file(file_path: str, content: str,
-                   encoding: str = "utf-8") -> None:
+    def write_file(file_path: str, content: str, encoding: str = "utf-8") -> None:
         """Write string content to a file.
 
         Args:

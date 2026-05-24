@@ -61,10 +61,12 @@ class TestUTF8HelperMock(unittest.TestCase):
         with mock.patch.object(utf8_helper.sys, "platform", "win32"):
             with mock.patch.object(utf8_helper, "is_utf8_setup_needed", return_value=True):
                 with mock.patch.object(
-                    utf8_helper.ctypes.windll.kernel32, "SetConsoleOutputCP",
+                    utf8_helper.ctypes.windll.kernel32,
+                    "SetConsoleOutputCP",
                 ) as mock_output:
                     with mock.patch.object(
-                        utf8_helper.ctypes.windll.kernel32, "SetConsoleCP",
+                        utf8_helper.ctypes.windll.kernel32,
+                        "SetConsoleCP",
                     ) as mock_input:
                         with mock.patch.object(utf8_helper.io, "TextIOWrapper"):
                             utf8_helper.setup_windows_utf8()
@@ -121,7 +123,9 @@ class TestUTF8HelperMock(unittest.TestCase):
                 with mock.patch.object(utf8_helper.ctypes.windll.kernel32, "SetConsoleOutputCP"):
                     with mock.patch.object(utf8_helper.ctypes.windll.kernel32, "SetConsoleCP"):
                         with mock.patch.object(
-                            utf8_helper.io, "TextIOWrapper", side_effect=OSError("IO Error"),
+                            utf8_helper.io,
+                            "TextIOWrapper",
+                            side_effect=OSError("IO Error"),
                         ):
                             with mock.patch.object(utf8_helper.logger, "debug") as mock_log:
                                 result = utf8_helper.setup_windows_utf8()

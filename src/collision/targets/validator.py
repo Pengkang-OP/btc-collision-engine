@@ -58,9 +58,7 @@ class ValidationResult:
 
     def __repr__(self) -> str:
         if self.valid:
-            return (
-                f"ValidationResult({self.address[:10]}..., valid=True, format={self.format_type})"
-            )
+            return f"ValidationResult({self.address[:10]}..., valid=True, format={self.format_type})"
         if not self.validated:
             return f"ValidationResult({self.address[:10]}..., valid=False, validated=False, error={self.error})"
         return f"ValidationResult({self.address[:10]}..., valid=False, error={self.error})"
@@ -96,7 +94,9 @@ class AddressBatchValidator:
 
     @staticmethod
     def _normalize_addresses(
-        addresses: list[str | Any], strict_mode: bool, on_type_error: str,
+        addresses: list[str | Any],
+        strict_mode: bool,
+        on_type_error: str,
     ) -> tuple[list[str], int, dict[str, ValidationResult] | None]:
         """将输入地址列表规范化为纯字符串列表。
 
@@ -197,7 +197,9 @@ class AddressBatchValidator:
             raise ValueError(f"无效的策略 '{on_type_error}',必须是 {valid_strategies} 之一")
 
         str_addresses, skipped_count, abort_results = self._normalize_addresses(
-            addresses, strict_mode, on_type_error,
+            addresses,
+            strict_mode,
+            on_type_error,
         )
         if abort_results is not None:
             return abort_results

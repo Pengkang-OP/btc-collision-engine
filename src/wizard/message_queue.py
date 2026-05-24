@@ -1,4 +1,5 @@
 """Wizard message queue for inter-component communication."""
+
 import queue
 from typing import Any
 

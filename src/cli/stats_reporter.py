@@ -1,4 +1,5 @@
 """Statistics reporting utilities for CLI."""
+
 import json
 from typing import Any
 
@@ -43,7 +44,7 @@ def _print_final_summary(engine: Any, engine_type: str, args: Any) -> None:
                 print(f"  总检查私钥:    {stats.get('total_checked', 0):,}")
                 print(f"  平均速度:      {stats.get('avg_speed', stats.get('speed', 0)):,.0f} keys/s")
                 print(f"  命中次数:      {stats.get('matches_found', 0)}")
-                elapsed = stats.get('elapsed', 0)
+                elapsed = stats.get("elapsed", 0)
                 if elapsed > 0:
                     print(f"  运行时长:      {elapsed:.1f}s")
             else:

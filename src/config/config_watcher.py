@@ -264,4 +264,5 @@ class ConfigWatcher:
             # 析构期间记录异常但不抛出，避免GC崩溃
             # 注意：不使用 pass 静默吞掉，必须记录以便排查资源泄漏
             import sys
+
             sys.stderr.write(f"[ConfigWatcher.__del__] 析构异常(可忽略): {e!r}\n")

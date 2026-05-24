@@ -45,8 +45,13 @@ def migrate_config_file(config_path: str | None = None) -> bool:
 
     # Add any missing sections that are required in the latest schema
     required_sections = [
-        "engine", "collision", "logging", "monitoring",
-        "gpu", "optimization", "crypto",
+        "engine",
+        "collision",
+        "logging",
+        "monitoring",
+        "gpu",
+        "optimization",
+        "crypto",
     ]
 
     for section in required_sections:

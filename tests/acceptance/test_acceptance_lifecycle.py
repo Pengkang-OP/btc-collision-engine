@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """生命周期验收测试 - 组件完整生命周期
 
 本模块测试所有核心组件的完整生命周期，确保：
@@ -16,28 +15,20 @@
 """
 
 import os
-import threading
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
 
 import pytest
 
 from tests.acceptance.conftest import (
     AcceptanceTestConstants,
-    assert_engine_state,
-    assert_pipeline_stage_complete,
-    assert_valid_bitcoin_address,
-    assert_valid_private_key,
     create_mock_checkpoint_data,
-    create_mock_gpu_device,
-    create_mock_gpu_kernel,
 )
-
 
 # ============================================================================
 # KeyCollisionEngine 生命周期测试
 # ============================================================================
+
 
 class TestKeyCollisionEngineLifecycle:
     """KeyCollisionEngine 生命周期测试
@@ -62,9 +53,7 @@ class TestKeyCollisionEngineLifecycle:
 
         # 验证初始化状态
         assert engine is not None, "生命周期测试失败：引擎初始化失败"
-        assert engine.is_running() is False, (
-            "生命周期测试失败：初始化后 is_running() 应返回 False"
-        )
+        assert engine.is_running() is False, "生命周期测试失败：初始化后 is_running() 应返回 False"
 
     def test_lifecycle_running(self, mock_event_bus):
         """生命周期测试：运行阶段"""
@@ -85,17 +74,13 @@ class TestKeyCollisionEngineLifecycle:
             time.sleep(0.1)
 
         # 验证运行状态
-        assert engine.is_running() is True, (
-            "生命周期测试失败：启动后 is_running() 应返回 True"
-        )
+        assert engine.is_running() is True, "生命周期测试失败：启动后 is_running() 应返回 True"
 
         # 短暂运行
         time.sleep(0.1)
 
         # 验证仍在运行
-        assert engine.is_running() is True, (
-            "生命周期测试失败：运行阶段引擎应仍在运行"
-        )
+        assert engine.is_running() is True, "生命周期测试失败：运行阶段引擎应仍在运行"
 
         # 清理：停止引擎避免影响后续测试
         engine.stop(timeout=2.0)
@@ -121,9 +106,7 @@ class TestKeyCollisionEngineLifecycle:
         engine.stop(timeout=2.0)
 
         # 验证停止状态
-        assert engine.is_running() is False, (
-            "生命周期测试失败：停止后 is_running() 应返回 False"
-        )
+        assert engine.is_running() is False, "生命周期测试失败：停止后 is_running() 应返回 False"
 
     def test_lifecycle_cleanup(self, mock_event_bus):
         """生命周期测试：清理阶段"""
@@ -143,9 +126,7 @@ class TestKeyCollisionEngineLifecycle:
         engine.stop(timeout=2.0)
 
         # 验证清理状态
-        assert engine.is_running() is False, (
-            "生命周期测试失败：清理阶段引擎应已停止"
-        )
+        assert engine.is_running() is False, "生命周期测试失败：清理阶段引擎应已停止"
 
     def test_lifecycle_error_recovery(self, mock_event_bus):
         """生命周期测试：错误恢复"""
@@ -160,22 +141,19 @@ class TestKeyCollisionEngineLifecycle:
         engine._engine_stop_reason = "error"
 
         # 验证错误状态
-        assert engine._engine_stop_reason == "error", (
-            "生命周期测试失败：错误恢复状态不正确"
-        )
+        assert engine._engine_stop_reason == "error", "生命周期测试失败：错误恢复状态不正确"
 
         # 重置错误状态
         engine._engine_stop_reason = "normal"
 
         # 验证恢复正常
-        assert engine._engine_stop_reason == "normal", (
-            "生命周期测试失败：错误恢复后状态不正确"
-        )
+        assert engine._engine_stop_reason == "normal", "生命周期测试失败：错误恢复后状态不正确"
 
 
 # ============================================================================
 # CryptoBackendManager 生命周期测试
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.lifecycle
@@ -230,9 +208,7 @@ class TestCryptoBackendManagerLifecycle:
         # 注意：具体行为取决于实现
         # 这里主要验证代码路径的覆盖
         original_backend = manager._current_backend
-        assert original_backend is not None, (
-            "生命周期测试失败：原始后端不应为 None"
-        )
+        assert original_backend is not None, "生命周期测试失败：原始后端不应为 None"
 
     def test_lifecycle_cleanup(self, monkeypatch):
         """生命周期测试：清理阶段"""
@@ -245,14 +221,13 @@ class TestCryptoBackendManagerLifecycle:
         # 验证清理状态
         # 注意：具体清理逻辑取决于实现
         # 这里主要验证代码路径的覆盖
-        assert manager is not None, (
-            "生命周期测试失败：清理阶段 manager 不应为 None"
-        )
+        assert manager is not None, "生命周期测试失败：清理阶段 manager 不应为 None"
 
 
 # ============================================================================
 # AsyncGPUExecutor 生命周期测试
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.lifecycle
@@ -282,9 +257,7 @@ class TestAsyncGPUExecutorLifecycle:
 
         # 验证初始化状态
         assert executor is not None, "生命周期测试失败：AsyncGPUExecutor 初始化失败"
-        assert executor.is_async_ready is False, (
-            "生命周期测试失败：初始化后 is_async_ready 应返回 False"
-        )
+        assert executor.is_async_ready is False, "生命周期测试失败：初始化后 is_async_ready 应返回 False"
 
     def test_lifecycle_starting(self, mock_gpu_chain):
         """生命周期测试：启动阶段"""
@@ -329,9 +302,7 @@ class TestAsyncGPUExecutorLifecycle:
             seed = os.urandom(32)
             results = executor.execute_batch(seed=seed, batch_size=1000)
             # 验证执行结果
-            assert isinstance(results, list), (
-                "生命周期测试失败：执行结果应为 list 类型"
-            )
+            assert isinstance(results, list), "生命周期测试失败：执行结果应为 list 类型"
         except (RuntimeError, NotImplementedError):
             # 预期行为：某些方法可能未实现
             pass
@@ -376,14 +347,13 @@ class TestAsyncGPUExecutorLifecycle:
         # 验证清理状态
         # 注意：具体清理逻辑取决于实现
         # 这里主要验证代码路径的覆盖
-        assert executor is not None, (
-            "生命周期测试失败：清理阶段 executor 不应为 None"
-        )
+        assert executor is not None, "生命周期测试失败：清理阶段 executor 不应为 None"
 
 
 # ============================================================================
 # CheckpointManager 生命周期测试
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.lifecycle
@@ -409,9 +379,7 @@ class TestCheckpointManagerLifecycle:
 
         # 验证初始化状态
         assert manager is not None, "生命周期测试失败：CheckpointManager 初始化失败"
-        assert manager.exists is False, (
-            "生命周期测试失败：初始化后 exists 应返回 False"
-        )
+        assert manager.exists is False, "生命周期测试失败：初始化后 exists 应返回 False"
 
     def test_lifecycle_saving(self, temp_dir):
         """生命周期测试：保存阶段"""
@@ -427,12 +395,8 @@ class TestCheckpointManagerLifecycle:
         manager.save(test_data)
 
         # 验证保存状态
-        assert manager.exists is True, (
-            "生命周期测试失败：保存后 exists 应返回 True"
-        )
-        assert checkpoint_path.exists(), (
-            "生命周期测试失败：保存后检查点文件应存在"
-        )
+        assert manager.exists is True, "生命周期测试失败：保存后 exists 应返回 True"
+        assert checkpoint_path.exists(), "生命周期测试失败：保存后检查点文件应存在"
 
     def test_lifecycle_loading(self, temp_dir):
         """生命周期测试：加载阶段"""
@@ -452,9 +416,7 @@ class TestCheckpointManagerLifecycle:
 
         # 验证加载状态
         assert loaded_data is not None, "生命周期测试失败：加载后数据不应为 None"
-        assert loaded_data["version"] == test_data["version"], (
-            "生命周期测试失败：加载后版本不匹配"
-        )
+        assert loaded_data["version"] == test_data["version"], "生命周期测试失败：加载后版本不匹配"
         assert loaded_data["total_keys_checked"] == test_data["total_keys_checked"], (
             "生命周期测试失败：加载后数据不匹配"
         )
@@ -476,12 +438,8 @@ class TestCheckpointManagerLifecycle:
         manager.delete()
 
         # 验证删除状态
-        assert manager.exists is False, (
-            "生命周期测试失败：删除后 exists 应返回 False"
-        )
-        assert not checkpoint_path.exists(), (
-            "生命周期测试失败：删除后检查点文件不应存在"
-        )
+        assert manager.exists is False, "生命周期测试失败：删除后 exists 应返回 False"
+        assert not checkpoint_path.exists(), "生命周期测试失败：删除后检查点文件不应存在"
 
     def test_lifecycle_cleanup(self, temp_dir):
         """生命周期测试：清理阶段"""
@@ -495,14 +453,13 @@ class TestCheckpointManagerLifecycle:
         # 验证清理状态
         # 注意：具体清理逻辑取决于实现
         # 这里主要验证代码路径的覆盖
-        assert manager is not None, (
-            "生命周期测试失败：清理阶段 manager 不应为 None"
-        )
+        assert manager is not None, "生命周期测试失败：清理阶段 manager 不应为 None"
 
 
 # ============================================================================
 # DedupicationFilter 生命周期测试
 # ============================================================================
+
 
 class TestDeduplicationFilterLifecycle:
     """DeduplicationFilter 生命周期测试
@@ -524,12 +481,8 @@ class TestDeduplicationFilterLifecycle:
         dedup_filter = DeduplicationFilter(max_size=10000)
 
         # 验证初始化状态
-        assert dedup_filter is not None, (
-            "生命周期测试失败：DeduplicationFilter 初始化失败"
-        )
-        assert dedup_filter.get_stats()["unique_keys"] == 0, (
-            "生命周期测试失败：初始化后 size() 应返回 0"
-        )
+        assert dedup_filter is not None, "生命周期测试失败：DeduplicationFilter 初始化失败"
+        assert dedup_filter.get_stats()["unique_keys"] == 0, "生命周期测试失败：初始化后 size() 应返回 0"
 
     def test_lifecycle_adding(self):
         """生命周期测试：添加阶段"""
@@ -544,12 +497,8 @@ class TestDeduplicationFilterLifecycle:
         result = dedup_filter.check_and_add(test_key)
 
         # 验证添加状态
-        assert result is True, (
-            "生命周期测试失败：添加后应返回 True"
-        )
-        assert dedup_filter.get_stats()["unique_keys"] == 1, (
-            "生命周期测试失败：添加后 size() 应返回 1"
-        )
+        assert result is True, "生命周期测试失败：添加后应返回 True"
+        assert dedup_filter.get_stats()["unique_keys"] == 1, "生命周期测试失败：添加后 size() 应返回 1"
 
     def test_lifecycle_checking(self):
         """生命周期测试：检查阶段"""
@@ -567,9 +516,7 @@ class TestDeduplicationFilterLifecycle:
         result = dedup_filter.is_duplicate(test_key, "test_address")
 
         # 验证检查状态
-        assert result is True, (
-            "生命周期测试失败：检查已添加的私钥应返回 True"
-        )
+        assert result is True, "生命周期测试失败：检查已添加的私钥应返回 True"
 
     def test_lifecycle_resetting(self):
         """生命周期测试：重置阶段"""
@@ -587,9 +534,7 @@ class TestDeduplicationFilterLifecycle:
         dedup_filter.reset()
 
         # 验证重置状态
-        assert dedup_filter.get_stats()["unique_keys"] == 0, (
-            "生命周期测试失败：重置后 size() 应返回 0"
-        )
+        assert dedup_filter.get_stats()["unique_keys"] == 0, "生命周期测试失败：重置后 size() 应返回 0"
 
     def test_lifecycle_cleanup(self):
         """生命周期测试：清理阶段"""
@@ -602,14 +547,13 @@ class TestDeduplicationFilterLifecycle:
         # 验证清理状态
         # 注意：具体清理逻辑取决于实现
         # 这里主要验证代码路径的覆盖
-        assert dedup_filter is not None, (
-            "生命周期测试失败：清理阶段 dedup_filter 不应为 None"
-        )
+        assert dedup_filter is not None, "生命周期测试失败：清理阶段 dedup_filter 不应为 None"
 
 
 # ============================================================================
 # EventBus 生命周期测试
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.lifecycle
@@ -658,9 +602,7 @@ class TestEventBusLifecycle:
         # 验证订阅状态
         # 注意：具体行为取决于实现
         # 这里主要验证代码路径的覆盖
-        assert event_bus is not None, (
-            "生命周期测试失败：订阅阶段 event_bus 不应为 None"
-        )
+        assert event_bus is not None, "生命周期测试失败：订阅阶段 event_bus 不应为 None"
 
     def test_lifecycle_publishing(self):
         """生命周期测试：发布阶段"""
@@ -731,9 +673,7 @@ class TestEventBusLifecycle:
         # 验证清理状态
         # 注意：具体清理逻辑取决于实现
         # 这里主要验证代码路径的覆盖
-        assert event_bus is not None, (
-            "生命周期测试失败：清理阶段 event_bus 不应为 None"
-        )
+        assert event_bus is not None, "生命周期测试失败：清理阶段 event_bus 不应为 None"
 
 
 # ============================================================================

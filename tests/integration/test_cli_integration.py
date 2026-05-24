@@ -18,10 +18,8 @@ from src.cli.commands import _dispatch_utility_commands
 from src.cli.engine_runner import (
     _compute_range,
     _run_collision_loop,
-    _setup_and_start_engine,
 )
 from src.cli.validation import validate_args
-
 
 # ============================================================================
 # Argument parsing + validation pipeline
@@ -36,8 +34,10 @@ class TestArgParsingPipeline:
         """最小参数 - random 模式正常解析。"""
         sys.argv = [
             "key_collision_cli",
-            "-t", "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
-            "-m", "random",
+            "-t",
+            "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+            "-m",
+            "random",
         ]
         args = parse_args()
         assert args.mode == "random"
@@ -48,8 +48,10 @@ class TestArgParsingPipeline:
         """文件模式 + checkpoint 正常解析。"""
         sys.argv = [
             "key_collision_cli",
-            "-f", "targets.txt",
-            "-m", "random",
+            "-f",
+            "targets.txt",
+            "-m",
+            "random",
             "--checkpoint",
         ]
         args = parse_args()
@@ -60,7 +62,8 @@ class TestArgParsingPipeline:
         """--use-gpu 和 --multi-gpu 互斥。"""
         sys.argv = [
             "key_collision_cli",
-            "-t", "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+            "-t",
+            "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
             "--use-gpu",
         ]
         args = parse_args()
@@ -71,7 +74,8 @@ class TestArgParsingPipeline:
         """-v 叠加计数。"""
         sys.argv = [
             "key_collision_cli",
-            "-t", "test",
+            "-t",
+            "test",
             "-vvv",
         ]
         args = parse_args()
@@ -81,7 +85,8 @@ class TestArgParsingPipeline:
         """--auto-tune 参数正常解析。"""
         sys.argv = [
             "key_collision_cli",
-            "-t", "test",
+            "-t",
+            "test",
             "--auto-tune",
         ]
         args = parse_args()
@@ -91,8 +96,10 @@ class TestArgParsingPipeline:
         """--batch-size 参数正常解析。"""
         sys.argv = [
             "key_collision_cli",
-            "-t", "test",
-            "--batch-size", "50000",
+            "-t",
+            "test",
+            "--batch-size",
+            "50000",
         ]
         args = parse_args()
         assert args.batch_size == 50000
@@ -101,7 +108,8 @@ class TestArgParsingPipeline:
         """验证：缺少 -t 和 -f 时返回 False。"""
         sys.argv = [
             "key_collision_cli",
-            "-m", "random",
+            "-m",
+            "random",
         ]
         args = parse_args()
         assert validate_args(args) is False
@@ -110,8 +118,10 @@ class TestArgParsingPipeline:
         """验证：无效模式被 argparse 自身拒绝（parse 时退出码 2）。"""
         sys.argv = [
             "key_collision_cli",
-            "-t", "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
-            "-m", "invalid",
+            "-t",
+            "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+            "-m",
+            "invalid",
         ]
         # argparse 自身的 choices 校验在 parse 阶段就触发 SystemExit(2)
         with pytest.raises(SystemExit) as exc_info:
@@ -205,8 +215,10 @@ class TestUtilityCommandDispatch:
         """--language 参数解析。"""
         sys.argv = [
             "key_collision_cli",
-            "-t", "test",
-            "--language", "en_US",
+            "-t",
+            "test",
+            "--language",
+            "en_US",
         ]
         args = parse_args()
         assert args.language == "en_US"
@@ -285,10 +297,12 @@ class TestEngineRunnerLifecycle:
         # 在循环开始后立即设置 stop_event
         def set_stop():
             import time
+
             time.sleep(0.1)
             stop_event.set()
 
         import threading as _threading
+
         _threading.Thread(target=set_stop, daemon=True).start()
 
         _run_collision_loop(
@@ -325,6 +339,7 @@ class TestConfigLoading:
     def test_load_config_with_valid_file(self, tmp_path):
         """有效配置文件正常加载。"""
         import json
+
         from src.cli.config_loader import ConfigLoader
 
         config_data = {
@@ -384,6 +399,7 @@ class TestCLIMainEntry:
         mock_dispatch.return_value = True  # 表示工具命令已处理
 
         from src.cli.main import main
+
         main()
 
         mock_dispatch.assert_called_once()
@@ -395,6 +411,7 @@ class TestCLIMainEntry:
         mock_parse.side_effect = FileNotFoundError("test")
 
         from src.cli.main import main
+
         with pytest.raises(SystemExit) as exc_info:
             main()
         assert exc_info.value.code == 1

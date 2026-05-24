@@ -1,7 +1,7 @@
 """WIF (Wallet Import Format) 边界与错误路径覆盖测试"""
+
 import unittest
 from unittest.mock import patch
-import pytest
 
 from src.core.wif import WIF
 
@@ -58,6 +58,7 @@ class TestWIFDecodeEdge(unittest.TestCase):
         # payload: version(0x80) + key(32) + 0x01 = 34 bytes + checksum(4) = 38
         payload = bytes([0x80]) + b"\x01" * 32 + bytes([0x01])
         from src.core.hash_utils import HashUtils
+
         checksum = HashUtils.double_sha256(payload)[:4]
         mock_decode.return_value = payload + checksum
         pk, compressed = WIF.decode("fake_wif")
@@ -70,6 +71,7 @@ class TestWIFDecodeEdge(unittest.TestCase):
         # payload: version(0x80) + key(32) = 33 bytes + checksum(4) = 37
         payload = bytes([0x80]) + b"\x01" * 32
         from src.core.hash_utils import HashUtils
+
         checksum = HashUtils.double_sha256(payload)[:4]
         mock_decode.return_value = payload + checksum
         pk, compressed = WIF.decode("fake_wif")
@@ -82,6 +84,7 @@ class TestWIFDecodeEdge(unittest.TestCase):
         # payload with 34 bytes of key (not 32/33); total >= 37 to pass min-length check
         payload = bytes([0x80]) + b"\x01" * 34
         from src.core.hash_utils import HashUtils
+
         checksum = HashUtils.double_sha256(payload)[:4]
         mock_decode.return_value = payload + checksum
         with self.assertRaises(ValueError) as ctx:

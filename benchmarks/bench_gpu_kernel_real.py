@@ -5,7 +5,6 @@ GPU 内核性能基准测试（真实硬件）
 
 import sys
 import time
-from pathlib import Path
 
 from src.collision.gpu.engine import GPUCollisionEngine
 

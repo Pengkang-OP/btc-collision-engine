@@ -1,4 +1,5 @@
 """Integration between logging and monitoring systems."""
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -14,7 +15,8 @@ class LogMonitoringIntegrator:
         )
 
     def integrate(
-        self, log_entry: dict,
+        self,
+        log_entry: dict,
     ) -> None:
         """Process a log entry through monitoring.
 

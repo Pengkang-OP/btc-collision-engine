@@ -46,10 +46,19 @@ class GPULoadBalancer:
     # 厂商性能系数已迁移到 GPUDeviceScorer (P3-11)
 
     __slots__ = (
-        "devices", "strategy", "rebalance_interval", "min_rebalance_threshold",
-        "memory_usage_threshold", "_scorer",
-        "_weights", "_key_ranges", "_last_rebalance_time",
-        "_performance_stats", "_memory_stats", "_historical_performance", "_load_history",
+        "devices",
+        "strategy",
+        "rebalance_interval",
+        "min_rebalance_threshold",
+        "memory_usage_threshold",
+        "_scorer",
+        "_weights",
+        "_key_ranges",
+        "_last_rebalance_time",
+        "_performance_stats",
+        "_memory_stats",
+        "_historical_performance",
+        "_load_history",
     )
 
     def __init__(
@@ -130,7 +139,10 @@ class GPULoadBalancer:
         return self._weights.copy()
 
     def assign_key_range(
-        self, total_keys: int, device_idx: int, key_offset: int = 0,
+        self,
+        total_keys: int,
+        device_idx: int,
+        key_offset: int = 0,
     ) -> tuple[int, int]:
         """为指定GPU分配私钥搜索范围
 
@@ -187,7 +199,9 @@ class GPULoadBalancer:
         return cumulative
 
     def assign_all_key_ranges(
-        self, total_keys: int, key_offset: int = 0,
+        self,
+        total_keys: int,
+        key_offset: int = 0,
     ) -> dict[int, tuple[int, int]]:
         """为所有GPU分配私钥范围
 
@@ -204,7 +218,9 @@ class GPULoadBalancer:
 
         # 按权重排序,确保大权重GPU先分配
         sorted_devices = sorted(
-            self.devices, key=lambda d: self._weights.get(d["global_index"], 0), reverse=True,
+            self.devices,
+            key=lambda d: self._weights.get(d["global_index"], 0),
+            reverse=True,
         )
 
         for device in sorted_devices:
@@ -225,7 +241,10 @@ class GPULoadBalancer:
         return ranges
 
     def record_performance(
-        self, device_idx: int, throughput: float, error_rate: float = 0.0,
+        self,
+        device_idx: int,
+        throughput: float,
+        error_rate: float = 0.0,
     ) -> None:
         """记录GPU实际性能
 
@@ -254,12 +273,13 @@ class GPULoadBalancer:
 
         # 保持历史数据大小
         if len(self._historical_performance[device_idx]) > 50:
-            self._historical_performance[device_idx] = self._historical_performance[device_idx][
-                -50:
-            ]
+            self._historical_performance[device_idx] = self._historical_performance[device_idx][-50:]
 
     def record_memory_usage(
-        self, device_idx: int, used_memory_mb: float, total_memory_mb: float,
+        self,
+        device_idx: int,
+        used_memory_mb: float,
+        total_memory_mb: float,
     ) -> None:
         """记录GPU内存使用情况
 

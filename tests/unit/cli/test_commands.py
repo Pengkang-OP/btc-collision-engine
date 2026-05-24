@@ -9,8 +9,6 @@
 - 快速运行模式核心流程
 """
 
-import sys
-import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -22,7 +20,6 @@ from src.cli.commands import (
     _handle_system_commands,
     _handle_wizard_and_quickstart,
 )
-
 
 # ============================================================================
 # _handle_info_commands

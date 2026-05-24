@@ -116,7 +116,9 @@ def test_crypto_backend_in_gpu():
 
             # 创建引擎
             engine = GPUCollisionEngine(
-                targets={"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}, device_index=1, batch_size=65536,
+                targets={"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"},
+                device_index=1,
+                batch_size=65536,
             )
 
             print("  ✅ GPU引擎初始化成功")
@@ -149,7 +151,8 @@ def test_cpu_engine_performance():
 
         print("\n[1/2] 创建CPU引擎实例...")
         engine = KeyCollisionEngine(  # noqa: F841
-            targets={"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}, max_workers=2,
+            targets={"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"},
+            max_workers=2,
         )
         print("  ✅ CPU引擎创建成功")
 

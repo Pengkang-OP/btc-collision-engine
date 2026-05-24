@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """GPU碰撞引擎状态报告生成器"""
 
-import sys
 from datetime import datetime
 from pathlib import Path
+
 
 def generate_report():
     """生成详细的状态报告"""

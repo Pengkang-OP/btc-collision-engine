@@ -1,4 +1,5 @@
 """Log manager for centralized log configuration."""
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -27,7 +28,9 @@ class LogManager:
         return self._loggers[name]
 
     def set_level(
-        self, name: str, level: int,
+        self,
+        name: str,
+        level: int,
     ) -> None:
         """Set log level for a logger.
 

@@ -2,7 +2,6 @@
 
 import hashlib
 import threading
-import time
 import unittest
 
 from src.collision.collision_stats import CollisionStats
@@ -130,7 +129,13 @@ class TestCollisionStatsSnapshot(unittest.TestCase):
     def test_snapshot_keys(self):
         stats = CollisionStats()
         snap = stats.snapshot()
-        for key in ["total_keys_checked", "total_matches", "total_errors", "elapsed_seconds", "throughput"]:
+        for key in [
+            "total_keys_checked",
+            "total_matches",
+            "total_errors",
+            "elapsed_seconds",
+            "throughput",
+        ]:
             self.assertIn(key, snap)
 
 

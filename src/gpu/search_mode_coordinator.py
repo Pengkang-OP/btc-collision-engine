@@ -49,6 +49,7 @@ class SearchModeCoordinator:
         """初始化所有搜索模式"""
         # v5.1: 从模块级常量获取默认值（而非硬编码 5）
         from .search_modes.random_search import SEED_PREFETCH_SIZE
+
         seed_prefetch_size = SEED_PREFETCH_SIZE
         try:
             if hasattr(self.engine, "config") and self.engine.config:
@@ -65,7 +66,9 @@ class SearchModeCoordinator:
         try:
             if hasattr(self.engine, "_async_executor") and self.engine._async_executor:
                 adaptive_controller = getattr(
-                    self.engine._async_executor, "_adaptive_controller", None,
+                    self.engine._async_executor,
+                    "_adaptive_controller",
+                    None,
                 )
         except Exception:
             pass

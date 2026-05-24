@@ -11,9 +11,11 @@
     python test_multi_format_multi_gpu_integration.py
 """
 
-import pytest
+import contextlib
 import secrets
 import sys
+
+import pytest
 
 from src.core.multi_format_generator import MultiFormatAddressGenerator
 from src.gpu.multi_format_multi_gpu_engine import create_multi_format_multi_gpu_engine
@@ -24,10 +26,8 @@ def engine():
     """创建多格式多GPU引擎实例作为测试 fixture"""
     eng = create_multi_format_multi_gpu_engine()
     yield eng
-    try:
+    with contextlib.suppress(Exception):
         eng.cleanup()
-    except Exception:
-        pass
 
 
 def test_format_manager():

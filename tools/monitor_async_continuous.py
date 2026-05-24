@@ -8,6 +8,7 @@ import sys
 import time
 from pathlib import Path
 
+
 def monitor_performance(duration_seconds=60):
     """监控指定时间的性能"""
 

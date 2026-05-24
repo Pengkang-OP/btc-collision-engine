@@ -1,5 +1,4 @@
-"""src/automation 模块测试
-"""
+"""src/automation 模块测试"""
 
 from datetime import datetime
 

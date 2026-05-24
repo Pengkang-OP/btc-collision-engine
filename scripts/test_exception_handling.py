@@ -15,6 +15,8 @@ import time
 
 # 添加项目根目录到路径
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+
 def test_1_exception_handling_code_review():
     """测试1: 代码审查 - 异常处理完整性"""
     print("=" * 70)

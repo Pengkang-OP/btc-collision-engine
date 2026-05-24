@@ -10,9 +10,9 @@ import pathlib
 import sys
 import time
 
-from src.collision.targets.resolver import TargetResolver
 from src.collision.gpu.engine import GPUCollisionEngine
 from src.collision.key_collision_engine import KeyCollisionEngine
+from src.collision.targets.resolver import TargetResolver
 
 
 def run_cpu_test(targets, duration=15):

@@ -51,7 +51,7 @@ class TestM3OptimizationBenchmark:
             keys = []
 
             with SecureKeyManager() as key_mgr:
-                for i in range(batch_size):
+                for _i in range(batch_size):
                     key_mgr.generate_key(b"\x01" * 32)
                     private_key = key_mgr.get_key()
                     keys.append(bytes(private_key))
@@ -89,10 +89,7 @@ class TestM3OptimizationBenchmark:
         time_after = time.perf_counter() - start
 
         # 计算性能提升
-        if time_before > 0:
-            improvement = ((time_before - time_after) / time_before) * 100
-        else:
-            improvement = 0
+        improvement = (time_before - time_after) / time_before * 100 if time_before > 0 else 0
 
         print("\nSecureKeyManager对象创建开销对比:")
         print(f"  优化前（每私钥创建）: {time_before * 1000:.3f}ms (100私钥)")

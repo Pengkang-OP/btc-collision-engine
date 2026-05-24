@@ -1,4 +1,5 @@
 """Event adapters for monitoring system integration."""
+
 import logging
 
 logger = logging.getLogger(__name__)

@@ -35,7 +35,10 @@ def _make_rotating_handler(filename: str, max_bytes: int, backup_count: int) -> 
             from .logging_config import SafeRotatingFileHandler
 
             return SafeRotatingFileHandler(
-                filename, maxBytes=max_bytes, backupCount=backup_count, encoding="utf-8",
+                filename,
+                maxBytes=max_bytes,
+                backupCount=backup_count,
+                encoding="utf-8",
             )
     return RotatingFileHandler(filename, maxBytes=max_bytes, backupCount=backup_count, encoding="utf-8")
 
@@ -157,7 +160,10 @@ class SampledLogger:
     _COUNTER_MAX = 10**9
 
     def __init__(
-        self, logger: logging.Logger, sample_rate: int = 100, max_per_second: float = 0.0,
+        self,
+        logger: logging.Logger,
+        sample_rate: int = 100,
+        max_per_second: float = 0.0,
     ) -> None:
         """参数:
         logger: 底层日志记录器

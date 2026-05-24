@@ -284,7 +284,11 @@ def _run_main() -> None:
 
     # 阶段6: 构建引擎、初始化告警、注册信号、启动
     engine, engine_type, alert_system, stop_event = _setup_and_start_engine(
-        args, targets, config, start_val, end_val,
+        args,
+        targets,
+        config,
+        start_val,
+        end_val,
     )
 
     # 阶段7: 主循环

@@ -230,7 +230,11 @@ class GPUPerformanceOptimizer:
         return GPUVendor.UNKNOWN
 
     def create_optimized_profile(
-        self, device_name: str, vendor_str: str, global_mem_size: int, compile_time_ms: float = 0.0,
+        self,
+        device_name: str,
+        vendor_str: str,
+        global_mem_size: int,
+        compile_time_ms: float = 0.0,
     ) -> GPUProfile:
         """创建优化的GPU配置
 
@@ -458,7 +462,10 @@ class GPUPerformanceOptimizer:
                 "new_batch": new_batch_size,
             }
             logger.info(
-                "性能良好，增大batch: %s -> %s (*%s)", current_batch_size, new_batch_size, growth_ratio,
+                "性能良好，增大batch: %s -> %s (*%s)",
+                current_batch_size,
+                new_batch_size,
+                growth_ratio,
             )
 
         if new_batch_size != current_batch_size:
@@ -549,7 +556,11 @@ class GPUPerformanceOptimizer:
 
         with self._lock:
             return self._analyze_perform_adjustments(
-                current_batch_size, error_rate, engine, strategy, now,
+                current_batch_size,
+                error_rate,
+                engine,
+                strategy,
+                now,
             )
 
     def get_optimization_report(self) -> dict[str, Any]:
@@ -573,9 +584,7 @@ class GPUPerformanceOptimizer:
             avg_error = sum(m.error_count for m in recent) / len(recent)
 
             # 计算时间范围
-            time_range_sec = (
-                self._metrics_history[-1].timestamp - self._metrics_history[0].timestamp
-            )
+            time_range_sec = self._metrics_history[-1].timestamp - self._metrics_history[0].timestamp
 
             return {
                 "status": "active",

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """端到端验收测试 - 完整用户场景
 
 本模块测试完整的用户场景，确保：
@@ -15,29 +14,18 @@
 - 高可读性：结构化测试代码，清晰的测试用例命名，详细的文档字符串
 """
 
-import os
-import sys
-import threading
 import time
-from typing import Any, Dict, List, Optional, Set, Tuple
 
 import pytest
 
 from tests.acceptance.conftest import (
     AcceptanceTestConstants,
-    assert_engine_state,
-    assert_pipeline_stage_complete,
-    assert_valid_bitcoin_address,
-    assert_valid_private_key,
-    create_mock_checkpoint_data,
-    create_mock_gpu_device,
-    create_mock_gpu_kernel,
 )
-
 
 # ============================================================================
 # 端到端测试 - 完整用户场景
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.e2e
@@ -74,9 +62,7 @@ class TestEndToEnd:
 
         # 验证阶段 1
         assert engine is not None, "端到端测试失败：引擎初始化失败"
-        assert engine.is_running() is False, (
-            "端到端测试失败：初始化后 is_running() 应返回 False"
-        )
+        assert engine.is_running() is False, "端到端测试失败：初始化后 is_running() 应返回 False"
 
         # 阶段 2：启动
         engine.start(max_keys=5000)
@@ -88,9 +74,7 @@ class TestEndToEnd:
             time.sleep(0.1)
 
         # 验证阶段 2
-        assert engine.is_running() is True, (
-            "端到端测试失败：启动后 is_running() 应返回 True"
-        )
+        assert engine.is_running() is True, "端到端测试失败：启动后 is_running() 应返回 True"
 
         # 阶段 3：运行（短暂运行）
         time.sleep(0.1)  # 运行 100 毫秒
@@ -99,9 +83,7 @@ class TestEndToEnd:
         engine.stop(timeout=2.0)
 
         # 验证阶段 4
-        assert engine.is_running() is False, (
-            "端到端测试失败：停止后 is_running() 应返回 False"
-        )
+        assert engine.is_running() is False, "端到端测试失败：停止后 is_running() 应返回 False"
 
         # 阶段 5：清理
         # 注意：具体清理逻辑取决于实现
@@ -141,18 +123,14 @@ class TestEndToEnd:
                 if engine.is_running():
                     break
                 time.sleep(0.1)
-            assert engine.is_running() is True, (
-                f"端到端测试失败：模式 {mode} 启动失败"
-            )
+            assert engine.is_running() is True, f"端到端测试失败：模式 {mode} 启动失败"
 
             # 短暂运行
             time.sleep(0.1)
 
             # 停止
             engine.stop(timeout=2.0)
-            assert engine.is_running() is False, (
-                f"端到端测试失败：模式 {mode} 停止失败"
-            )
+            assert engine.is_running() is False, f"端到端测试失败：模式 {mode} 停止失败"
 
     def test_e2e_callback_workflow(self, mock_event_bus):
         """端到端测试：回调工作流"""
@@ -178,9 +156,7 @@ class TestEndToEnd:
         )
 
         # 验证回调设置
-        assert engine.on_match is not None, (
-            "端到端测试失败：回调函数设置失败"
-        )
+        assert engine.on_match is not None, "端到端测试失败：回调函数设置失败"
 
         # 注意：由于是随机碰撞，不一定能匹配到
         # 这里主要验证回调函数的设置和工作流
@@ -188,7 +164,6 @@ class TestEndToEnd:
     def test_e2e_checkpoint_workflow(self, mock_event_bus, temp_dir):
         """端到端测试：检查点工作流"""
 
-        from src.collision.checkpoint_manager import CheckpointManager
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 端到端：检查点工作流
@@ -208,18 +183,14 @@ class TestEndToEnd:
             if engine.is_running():
                 break
             time.sleep(0.1)
-        assert engine.is_running() is True, (
-            "端到端测试失败：启动后 is_running() 应返回 True"
-        )
+        assert engine.is_running() is True, "端到端测试失败：启动后 is_running() 应返回 True"
 
         # 短暂运行
         time.sleep(0.1)
 
         # 停止
         engine.stop(timeout=2.0)
-        assert engine.is_running() is False, (
-            "端到端测试失败：停止后 is_running() 应返回 False"
-        )
+        assert engine.is_running() is False, "端到端测试失败：停止后 is_running() 应返回 False"
 
         # 验证检查点
         # 注意：具体检查点保存逻辑取决于实现
@@ -228,6 +199,7 @@ class TestEndToEnd:
 # ============================================================================
 # 多模式端到端验证 - 随机、范围扫描、暴力穷举
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.parametrize(
@@ -267,12 +239,8 @@ class TestEndToEndMultiMode:
             engine._range_end = 1000
 
         # 验证
-        assert engine is not None, (
-            f"多模式端到端测试失败：模式 {search_mode} 初始化失败"
-        )
-        assert engine._current_mode == search_mode, (
-            f"多模式端到端测试失败：模式 {search_mode} 设置失败"
-        )
+        assert engine is not None, f"多模式端到端测试失败：模式 {search_mode} 初始化失败"
+        assert engine._current_mode == search_mode, f"多模式端到端测试失败：模式 {search_mode} 设置失败"
 
     def test_multi_mode_start_stop(self, mock_event_bus, search_mode):
         """多模式端到端测试：启动和停止"""
@@ -298,18 +266,14 @@ class TestEndToEndMultiMode:
             if engine.is_running():
                 break
             time.sleep(0.1)
-        assert engine.is_running() is True, (
-            f"多模式端到端测试失败：模式 {search_mode} 启动失败"
-        )
+        assert engine.is_running() is True, f"多模式端到端测试失败：模式 {search_mode} 启动失败"
 
         # 短暂运行
         time.sleep(0.1)
 
         # 停止
         engine.stop(timeout=2.0)
-        assert engine.is_running() is False, (
-            f"多模式端到端测试失败：模式 {search_mode} 停止失败"
-        )
+        assert engine.is_running() is False, f"多模式端到端测试失败：模式 {search_mode} 停止失败"
 
     def test_multi_mode_batch_size(self, mock_event_bus, search_mode, monkeypatch):
         """多模式端到端测试：batch_size"""
@@ -328,14 +292,14 @@ class TestEndToEndMultiMode:
 
         # 验证 batch_size
         assert engine._batch_size > 0, (
-            f"多模式端到端测试失败：模式 {search_mode} "
-            f"batch_size 应大于 0，实际为 {engine._batch_size}"
+            f"多模式端到端测试失败：模式 {search_mode} batch_size 应大于 0，实际为 {engine._batch_size}"
         )
 
 
 # ============================================================================
 # 完整工作流测试 - 初始化 → 启动 → 运行 → 停止 → 清理
 # ============================================================================
+
 
 @pytest.mark.acceptance
 class TestCompleteWorkflow:
@@ -354,15 +318,9 @@ class TestCompleteWorkflow:
         )
 
         # 验证初始化阶段
-        assert engine is not None, (
-            "完整工作流测试失败：初始化阶段失败"
-        )
-        assert engine.is_running() is False, (
-            "完整工作流测试失败：初始化阶段 is_running() 应返回 False"
-        )
-        assert isinstance(engine.targets, set), (
-            "完整工作流测试失败：初始化阶段 targets 应为 set 类型"
-        )
+        assert engine is not None, "完整工作流测试失败：初始化阶段失败"
+        assert engine.is_running() is False, "完整工作流测试失败：初始化阶段 is_running() 应返回 False"
+        assert isinstance(engine.targets, set), "完整工作流测试失败：初始化阶段 targets 应为 set 类型"
 
     def test_workflow_startup(self, mock_event_bus):
         """完整工作流测试：启动阶段"""
@@ -386,9 +344,7 @@ class TestCompleteWorkflow:
             time.sleep(0.1)
 
         # 验证启动阶段
-        assert engine.is_running() is True, (
-            "完整工作流测试失败：启动阶段 is_running() 应返回 True"
-        )
+        assert engine.is_running() is True, "完整工作流测试失败：启动阶段 is_running() 应返回 True"
 
         # 清理：停止引擎避免影响后续测试
         engine.stop(timeout=2.0)
@@ -415,17 +371,13 @@ class TestCompleteWorkflow:
             time.sleep(0.1)
 
         # 验证运行阶段
-        assert engine.is_running() is True, (
-            "完整工作流测试失败：运行阶段 is_running() 应返回 True"
-        )
+        assert engine.is_running() is True, "完整工作流测试失败：运行阶段 is_running() 应返回 True"
 
         # 短暂运行
         time.sleep(0.1)
 
         # 验证：引擎仍在运行
-        assert engine.is_running() is True, (
-            "完整工作流测试失败：运行阶段引擎应仍在运行"
-        )
+        assert engine.is_running() is True, "完整工作流测试失败：运行阶段引擎应仍在运行"
 
         # 清理：停止引擎避免影响后续测试
         engine.stop(timeout=2.0)
@@ -448,17 +400,13 @@ class TestCompleteWorkflow:
             if engine.is_running():
                 break
             time.sleep(0.1)
-        assert engine.is_running() is True, (
-            "完整工作流测试失败：应先启动引擎"
-        )
+        assert engine.is_running() is True, "完整工作流测试失败：应先启动引擎"
 
         # 停止
         engine.stop(timeout=2.0)
 
         # 验证停止阶段
-        assert engine.is_running() is False, (
-            "完整工作流测试失败：停止阶段 is_running() 应返回 False"
-        )
+        assert engine.is_running() is False, "完整工作流测试失败：停止阶段 is_running() 应返回 False"
 
     def test_workflow_cleanup(self, mock_event_bus):
         """完整工作流测试：清理阶段"""
@@ -481,14 +429,13 @@ class TestCompleteWorkflow:
         engine.stop(timeout=2.0)
 
         # 验证清理阶段
-        assert engine.is_running() is False, (
-            "完整工作流测试失败：清理阶段引擎应已停止"
-        )
+        assert engine.is_running() is False, "完整工作流测试失败：清理阶段引擎应已停止"
 
 
 # ============================================================================
 # 错误处理端到端测试 - 错误检测 → 错误处理 → 错误恢复
 # ============================================================================
+
 
 @pytest.mark.acceptance
 class TestErrorHandlingEndToEnd:
@@ -510,9 +457,7 @@ class TestErrorHandlingEndToEnd:
         engine._engine_stop_reason = "error"
 
         # 验证错误检测
-        assert engine._engine_stop_reason == "error", (
-            "错误处理端到端测试失败：错误检测失败"
-        )
+        assert engine._engine_stop_reason == "error", "错误处理端到端测试失败：错误检测失败"
 
     def test_error_handling_handling(self, mock_event_bus):
         """错误处理端到端测试：错误处理"""
@@ -528,9 +473,7 @@ class TestErrorHandlingEndToEnd:
 
         # 模拟错误处理
         # 注意：具体错误处理逻辑取决于实现
-        assert engine is not None, (
-            "错误处理端到端测试失败：错误处理失败"
-        )
+        assert engine is not None, "错误处理端到端测试失败：错误处理失败"
 
     def test_error_handling_recovery(self, mock_event_bus):
         """错误处理端到端测试：错误恢复"""
@@ -549,17 +492,14 @@ class TestErrorHandlingEndToEnd:
         engine._running = False
 
         # 验证错误恢复
-        assert engine._engine_stop_reason == "normal", (
-            "错误处理端到端测试失败：错误恢复失败"
-        )
-        assert engine._running is False, (
-            "错误处理端到端测试失败：错误恢复后 _running 应为 False"
-        )
+        assert engine._engine_stop_reason == "normal", "错误处理端到端测试失败：错误恢复失败"
+        assert engine._running is False, "错误处理端到端测试失败：错误恢复后 _running 应为 False"
 
 
 # ============================================================================
 # 边界条件测试
 # ============================================================================
+
 
 @pytest.mark.acceptance
 @pytest.mark.edge_cases
@@ -574,9 +514,7 @@ class TestEndToEndEdgeCases:
             targets=set(),
             event_bus=mock_event_bus,
         )
-        assert len(engine.targets) == 0, (
-            "边界条件测试失败：空目标集合时 targets 长度应为 0"
-        )
+        assert len(engine.targets) == 0, "边界条件测试失败：空目标集合时 targets 长度应为 0"
 
     def test_edge_case_single_target(self, mock_event_bus):
         """边界条件测试：单个目标地址"""
@@ -588,9 +526,7 @@ class TestEndToEndEdgeCases:
             event_bus=mock_event_bus,
         )
         # mock 环境下地址可能无法解码，放宽断言
-        assert isinstance(engine.targets, set), (
-            "边界条件测试失败：targets 应为 set 类型"
-        )
+        assert isinstance(engine.targets, set), "边界条件测试失败：targets 应为 set 类型"
 
     def test_edge_case_max_workers(self, mock_event_bus):
         """边界条件测试：最大工作线程数"""
@@ -602,9 +538,7 @@ class TestEndToEndEdgeCases:
             max_workers=1000,  # 非常大的值
             event_bus=mock_event_bus,
         )
-        assert engine.max_workers is not None, (
-            "边界条件测试失败：max_workers 应被正确设置"
-        )
+        assert engine.max_workers is not None, "边界条件测试失败：max_workers 应被正确设置"
 
 
 # ============================================================================

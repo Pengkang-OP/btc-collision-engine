@@ -10,6 +10,7 @@
 - setup_logger / get_logger / get_sampled_logger
 """
 
+import contextlib
 import logging
 import os
 import pathlib
@@ -33,17 +34,13 @@ def temp_log_dir():
     # 关闭所有处理器
     root = logging.getLogger()
     for handler in list(root.handlers):
-        try:
+        with contextlib.suppress(Exception):
             handler.close()
-        except Exception:
-            pass
     root.handlers.clear()
     import shutil
 
-    try:
+    with contextlib.suppress(PermissionError):
         shutil.rmtree(tmpdir)
-    except PermissionError:
-        pass
 
 
 @pytest.fixture
@@ -348,7 +345,7 @@ class TestAsyncLogger:
             al._handler = MagicMock(spec=logging.Handler)
             record = logging.LogRecord("test", logging.INFO, "", 0, "msg", (), None)
             # 快速大量填充，即使写入线程消耗队列，也应有丢弃（竞态条件已通过数量对冲）
-            for i in range(100):
+            for _i in range(100):
                 al.emit(record)
             # 如果写入线程消耗太快导致无丢弃，跳过而非报错
             if al._dropped_count == 0:
@@ -433,10 +430,8 @@ class TestSetupLogger:
             assert len(file_handlers) >= 1
         finally:
             for h in list(logger.handlers):
-                try:
+                with contextlib.suppress(Exception):
                     h.close()
-                except Exception:
-                    pass
             logger.handlers.clear()
 
     def test_creates_log_directory(self, temp_log_dir):
@@ -449,10 +444,8 @@ class TestSetupLogger:
             assert pathlib.Path(log_subdir).is_dir()
         finally:
             for h in list(logger.handlers):
-                try:
+                with contextlib.suppress(Exception):
                     h.close()
-                except Exception:
-                    pass
             logger.handlers.clear()
 
 

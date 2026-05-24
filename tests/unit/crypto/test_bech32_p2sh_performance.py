@@ -101,7 +101,7 @@ class TestBech32P2SHPerformance:
 
         # 计算命中率: 2 hits / (2 hits + 4 misses) = 33.3%
         hit_rate = stats2["hits"] / (stats2["hits"] + stats2["misses"]) * 100
-        assert hit_rate == pytest.approx(100/3, abs=0.1), "命中率应该是~33.3%（P2SH不缓存）"
+        assert hit_rate == pytest.approx(100 / 3, abs=0.1), "命中率应该是~33.3%（P2SH不缓存）"
 
     def test_resolve_without_cache_performance(self, benchmark):
         """测试禁用缓存的性能"""
@@ -173,7 +173,9 @@ class TestMemoryUsage:
             stats = resolver.cache.get_stats()
             # LRU缓存会自动淘汰旧数据；P2SH不缓存，只有2个唯一地址
             assert stats["lru_size"] <= 10, f"缓存大小不应超过10，实际为{stats['lru_size']}"
-            assert stats["lru_size"] == 2, f"应该只有2个唯一地址（P2SH不缓存），实际为{stats['lru_size']}"
+            assert stats["lru_size"] == 2, (
+                f"应该只有2个唯一地址（P2SH不缓存），实际为{stats['lru_size']}"
+            )
 
     def test_large_batch_memory_stability(self):
         """测试大批量解析的内存稳定性"""

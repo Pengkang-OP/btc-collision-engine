@@ -178,7 +178,9 @@ class TestGPUAutoConfigurator(unittest.TestCase):
         self.assertTrue(config["use_uint32_workaround"], "Intel Arc 应启用uint32 workaround")
         self.assertFalse(config["use_fast_math"], "Intel Arc 应禁用快速数学")
         self.assertEqual(
-            config["batch_size"], 2097152, "Intel Arc A770(≥15GB) 应使用2097152批次(v4.2.3优化: 2M)",
+            config["batch_size"],
+            2097152,
+            "Intel Arc A770(≥15GB) 应使用2097152批次(v4.2.3优化: 2M)",
         )
 
     def test_configure_for_device_amd_full_vendor_name(self):

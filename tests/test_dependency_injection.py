@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""测试依赖注入修复 - 验证空指针问题已解决
-"""
+"""测试依赖注入修复 - 验证空指针问题已解决"""
 
 import os
 import pathlib

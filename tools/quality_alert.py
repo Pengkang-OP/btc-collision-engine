@@ -9,7 +9,6 @@
 """
 
 import sys
-from pathlib import Path
 
 # 修复Windows控制台编码问题
 from utf8_helper import setup_windows_utf8
@@ -92,10 +91,7 @@ class QualityAlertSystem:
 
         for i, alert in enumerate(alerts, 1):
             severity = alert["severity"]
-            if severity == "ERROR":
-                icon = "❌"
-            else:
-                icon = "⚠️"
+            icon = "❌" if severity == "ERROR" else "⚠️"
 
             print(f"\n{i}. {icon} [{severity}] {alert['type']}")
             print(f"   {alert['message']}")

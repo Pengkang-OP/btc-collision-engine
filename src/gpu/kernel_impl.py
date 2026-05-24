@@ -174,7 +174,6 @@ def get_gpu_optimizer() -> Any | None:
         return None
 
 
-
 class GPUKernel(GPUKernelProtocol):
     """OpenCL GPU 计算内核包装 - 优化版本
 
@@ -224,7 +223,10 @@ class GPUKernel(GPUKernelProtocol):
     MATCH_BUFFER_SIZE_FACTOR = 4  # 每个匹配标志4字节（int32）
 
     def __init__(
-        self, device: GPUDevice, max_batch_size: int | None = None, program: Any | None = None,
+        self,
+        device: GPUDevice,
+        max_batch_size: int | None = None,
+        program: Any | None = None,
     ) -> None:
         """初始化GPUKernel
 
@@ -607,7 +609,9 @@ class GPUKernel(GPUKernelProtocol):
 
             # 从二进制加载程序
             self._program = cl.Program(
-                self.device.context, [self.device.device], [cached_binary],
+                self.device.context,
+                [self.device.device],
+                [cached_binary],
             ).build()
 
             logger.info("成功加载内核缓存: %s", cache_file)
@@ -777,7 +781,9 @@ class GPUKernel(GPUKernelProtocol):
         else:
             # 直接分配（回退模式）
             self._match_buf = cl.Buffer(
-                self.device.context, cl.mem_flags.WRITE_ONLY, size=match_buf_size,
+                self.device.context,
+                cl.mem_flags.WRITE_ONLY,
+                size=match_buf_size,
             )
             logger.debug("直接分配匹配缓冲区: %s字节", match_buf_size)
 
@@ -1010,7 +1016,9 @@ class GPUKernel(GPUKernelProtocol):
         # OPT-3: 异步读取匹配结果（非阻塞，通过返回的 event 同步）
         # 使用 match_flags[:num_keys] 视图而非整个数组，减少主机内存拷贝
         return cl.enqueue_copy(
-            self.device.queue, self._match_flags[:num_keys], self._match_buf,
+            self.device.queue,
+            self._match_flags[:num_keys],
+            self._match_buf,
         )
 
     def _wait_for_completion(self, read_event, timeout_seconds: float = 30) -> bool:
@@ -1269,7 +1277,9 @@ class GPUKernel(GPUKernelProtocol):
             from ..utils.logger import AsyncFileHandler
 
             self._async_log_handler = AsyncFileHandler(
-                log_file, max_bytes=max_bytes, backup_count=backup_count,
+                log_file,
+                max_bytes=max_bytes,
+                backup_count=backup_count,
             )
             self._async_log_handler.setLevel(logging.DEBUG)
 

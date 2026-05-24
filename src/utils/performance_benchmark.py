@@ -106,7 +106,8 @@ class PerformanceBenchmark:
 
             # 测试批量SHA256
             result = BenchmarkResult(
-                f"SIMD_SHA256_{batch_size}", {"batch_size": batch_size, "operation": "SHA256"},
+                f"SIMD_SHA256_{batch_size}",
+                {"batch_size": batch_size, "operation": "SHA256"},
             )
             result.start()
 
@@ -122,7 +123,8 @@ class PerformanceBenchmark:
 
             # 测试批量Hash160
             result = BenchmarkResult(
-                f"SIMD_HASH160_{batch_size}", {"batch_size": batch_size, "operation": "Hash160"},
+                f"SIMD_HASH160_{batch_size}",
+                {"batch_size": batch_size, "operation": "Hash160"},
             )
             result.start()
 
@@ -182,12 +184,14 @@ class PerformanceBenchmark:
 
             # 启动引擎
             cast("Any", engine).start(
-                generator_func=generate_keys, address_generator=MockAddressGenerator(),
+                generator_func=generate_keys,
+                address_generator=MockAddressGenerator(),
             )
 
             # 提交任务并测试
             result = BenchmarkResult(
-                f"Multiprocess_{num_workers}", {"num_workers": num_workers, "batch_size": 10000},
+                f"Multiprocess_{num_workers}",
+                {"num_workers": num_workers, "batch_size": 10000},
             )
             result.start()
 
@@ -237,7 +241,8 @@ class PerformanceBenchmark:
         # 测试1: 传统方式（循环）
         print(f"\n传统方式（循环）- {batch_size:,}个元素")
         result_traditional = BenchmarkResult(
-            "Traditional_Loop", {"method": "loop", "batch_size": batch_size},
+            "Traditional_Loop",
+            {"method": "loop", "batch_size": batch_size},
         )
         result_traditional.start()
 
@@ -254,7 +259,8 @@ class PerformanceBenchmark:
         # 测试2: SIMD优化（列表推导式）
         print(f"\nSIMD优化（列表推导式）- {batch_size:,}个元素")
         result_simd = BenchmarkResult(
-            "SIMD_ListComp", {"method": "list_comprehension", "batch_size": batch_size},
+            "SIMD_ListComp",
+            {"method": "list_comprehension", "batch_size": batch_size},
         )
         result_simd.start()
 

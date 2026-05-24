@@ -8,7 +8,6 @@ import hashlib
 import json
 import os
 import pathlib
-import threading
 
 # ============================================================================
 # crypto_backend.py generate_public_key_const_time 不存在

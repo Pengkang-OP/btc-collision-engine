@@ -74,13 +74,26 @@ class GPUMemoryPool:
     """
 
     __slots__ = (
-        "_context", "_max_buffers", "_max_memory_bytes", "_enable_dynamic_adjustment",
-        "_pool", "_type_pools", "_lock",
-        "_total_allocated", "_total_reused", "_current_memory", "_allocation_count",
-        "_preallocated_sizes", "_access_times", "_buf_by_id",
-        "_buf_size_by_id", "_buf_type_by_id",
-        "_memory_usage_history", "_allocation_patterns",
-        "_last_adjustment_time", "_adjustment_interval",
+        "_context",
+        "_max_buffers",
+        "_max_memory_bytes",
+        "_enable_dynamic_adjustment",
+        "_pool",
+        "_type_pools",
+        "_lock",
+        "_total_allocated",
+        "_total_reused",
+        "_current_memory",
+        "_allocation_count",
+        "_preallocated_sizes",
+        "_access_times",
+        "_buf_by_id",
+        "_buf_size_by_id",
+        "_buf_type_by_id",
+        "_memory_usage_history",
+        "_allocation_patterns",
+        "_last_adjustment_time",
+        "_adjustment_interval",
     )
 
     def __init__(
@@ -142,9 +155,10 @@ class GPUMemoryPool:
         self._adjustment_interval = 60  # 60秒调整一次
 
         logger.info(
-            "GPU内存池初始化: max_buffers=%s, max_memory=%sMB, "
-            "dynamic_adjustment=%s",
-            max_buffers, max_memory_mb, enable_dynamic_adjustment,
+            "GPU内存池初始化: max_buffers=%s, max_memory=%sMB, dynamic_adjustment=%s",
+            max_buffers,
+            max_memory_mb,
+            enable_dynamic_adjustment,
         )
 
     def allocate(self, size: int, flags: Any | None = None, buffer_type: str = "generic") -> Any:
@@ -470,7 +484,8 @@ class GPUMemoryPool:
             # 如果平均内存使用超过最大内存的70%，尝试扩展内存池
             if avg_memory > self._max_memory_bytes / (1024 * 1024) * 0.7:
                 new_max_memory = min(
-                    self._max_memory_bytes * 1.5, 2 * 1024 * 1024 * 1024,
+                    self._max_memory_bytes * 1.5,
+                    2 * 1024 * 1024 * 1024,
                 )  # 最多2GB
                 if new_max_memory > self._max_memory_bytes:
                     self._max_memory_bytes = int(new_max_memory)
@@ -482,7 +497,9 @@ class GPUMemoryPool:
             if self._allocation_count > 100:
                 # 找出最常用的缓冲区大小
                 top_sizes = sorted(
-                    self._allocation_patterns.items(), key=lambda x: x[1], reverse=True,
+                    self._allocation_patterns.items(),
+                    key=lambda x: x[1],
+                    reverse=True,
                 )[:5]
                 if top_sizes:
                     logger.debug("最常用的缓冲区大小: %s", top_sizes)
@@ -634,7 +651,10 @@ class GPUMemoryPool:
                             _err = type(e).__name__
                             logger.debug(
                                 "释放%s缓冲区异常 (size=%s): %s: %s",
-                                buffer_type, size, _err, e,
+                                buffer_type,
+                                size,
+                                _err,
+                                e,
                             )
 
             # 清空所有池
@@ -655,7 +675,10 @@ class GPUMemoryPool:
 
     @classmethod
     def create_proportional_pools(
-        cls, devices: list[dict], contexts: list | None = None, total_pool_mb: int = 512,
+        cls,
+        devices: list[dict],
+        contexts: list | None = None,
+        total_pool_mb: int = 512,
     ) -> dict[int, "GPUMemoryPool"]:
         """根据GPU显存按比例创建内存池
 
@@ -887,9 +910,7 @@ class GlobalGPUMemoryManager:
         interval = (
             interval_seconds if interval_seconds is not None else self.DEFAULT_AUTO_CLEANUP_INTERVAL
         )
-        lru_timeout = (
-            lru_idle_timeout if lru_idle_timeout is not None else self.DEFAULT_LRU_IDLE_TIMEOUT
-        )
+        lru_timeout = lru_idle_timeout if lru_idle_timeout is not None else self.DEFAULT_LRU_IDLE_TIMEOUT
         start_cleanup_thread(
             self._cleanup_state,
             self._auto_cleanup_loop,

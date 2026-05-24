@@ -51,13 +51,6 @@ def main():
         # 检查异步关键字
         recent_content = "".join(lines[-100:])
 
-        async_keywords = {
-            "GPU异步执行已启用": "异步配置" in recent_content,
-            "创建双队列": "双队列" in recent_content,
-            "异步执行器已初始化": "异步执行器" in recent_content,
-            "使用GPU异步执行模式": "异步模式" in recent_content,
-        }
-
         print("异步优化状态:")
         print("-" * 80)
 

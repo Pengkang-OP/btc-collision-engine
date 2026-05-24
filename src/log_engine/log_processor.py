@@ -1,4 +1,5 @@
 """Log processor for filtering and transforming log entries."""
+
 import logging
 import re
 
@@ -39,10 +40,12 @@ class SensitiveDataFilter(logging.Filter):
 
         """
         if hasattr(record, "msg") and isinstance(
-            record.msg, str,
+            record.msg,
+            str,
         ):
             for pattern, mask in self._patterns:
                 record.msg = pattern.sub(
-                    mask, record.msg,
+                    mask,
+                    record.msg,
                 )
         return True

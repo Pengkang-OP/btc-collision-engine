@@ -27,12 +27,8 @@ class Base58:
     BASE = len(alphabet)
 
     # Precomputed lookup tables (O(1) vs O(n) index())
-    _ENCODE_TABLE = {
-        i: c for i, c in enumerate(alphabet)
-    }
-    _DECODE_TABLE = {
-        c: i for i, c in enumerate(alphabet)
-    }
+    _ENCODE_TABLE = {i: c for i, c in enumerate(alphabet)}
+    _DECODE_TABLE = {c: i for i, c in enumerate(alphabet)}
 
     # Public alias for external code that imports `ALPHABET`
     ALPHABET = alphabet
@@ -106,17 +102,15 @@ class Base58:
                     f"Invalid Base58 character: '{c}'",
                 )
             # O(1) lookup via precomputed table
-            num = (
-                num * Base58.BASE
-                + Base58._DECODE_TABLE[c]
-            )
+            num = num * Base58.BASE + Base58._DECODE_TABLE[c]
 
         # Convert integer to bytes
         result = (
             b""
             if num == 0
             else num.to_bytes(
-                (num.bit_length() + 7) // 8, "big",
+                (num.bit_length() + 7) // 8,
+                "big",
             )
         )
 
@@ -125,7 +119,8 @@ class Base58:
 
     @staticmethod
     def check_encode(
-        version: int, payload: bytes,
+        version: int,
+        payload: bytes,
     ) -> str:
         """Base58Check encode.
 
@@ -183,9 +178,7 @@ class Base58:
         # Minimum length check
         if len(data) < 5:
             raise ValueError(
-                "Base58Check data too short "
-                "(min 5 bytes: 1 version + "
-                "0+ payload + 4 checksum)",
+                "Base58Check data too short (min 5 bytes: 1 version + 0+ payload + 4 checksum)",
             )
 
         # Split version, payload, and checksum
@@ -199,8 +192,7 @@ class Base58:
         )[:4]
         if checksum != expected_checksum:
             raise ValueError(
-                "Base58Check checksum verification "
-                "failed",
+                "Base58Check checksum verification failed",
             )
 
         return version, payload

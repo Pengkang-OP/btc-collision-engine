@@ -6,7 +6,6 @@
 """
 
 import threading
-import time
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
@@ -15,7 +14,6 @@ from src.cli.engine_runner import (
     _compute_range,
     _print_config_info,
 )
-
 
 # ============================================================================
 # _compute_range 测试
@@ -77,29 +75,31 @@ class TestPrintConfigInfo:
     """配置信息打印测试 — 使用 print() 非 CLIOutput"""
 
     def test_random_mode_output(self, capsys):
-        args = Mock(mode="random", use_gpu=False, checkpoint=False, dedup=False,
-                    workers="auto", duration=None)
+        args = Mock(
+            mode="random", use_gpu=False, checkpoint=False, dedup=False, workers="auto", duration=None
+        )
         _print_config_info(args, {"addr1", "addr2"}, None, None, None)
         captured = capsys.readouterr().out
         assert "random" in captured
 
     def test_range_mode_with_range(self, capsys):
-        args = Mock(mode="range", use_gpu=False, checkpoint=True, dedup=False,
-                    workers=4, duration=None)
+        args = Mock(mode="range", use_gpu=False, checkpoint=True, dedup=False, workers=4, duration=None)
         _print_config_info(args, {"addr1"}, "0", "FF", 256)
         captured = capsys.readouterr().out
         assert "range" in captured
 
     def test_gpu_mode(self, capsys):
-        args = Mock(mode="random", use_gpu=True, checkpoint=False, dedup=False,
-                    workers="auto", duration=None)
+        args = Mock(
+            mode="random", use_gpu=True, checkpoint=False, dedup=False, workers="auto", duration=None
+        )
         _print_config_info(args, {"addr1"}, None, None, None)
         captured = capsys.readouterr().out
         assert "random" in captured
 
     def test_duration_output(self, capsys):
-        args = Mock(mode="random", use_gpu=False, checkpoint=False, dedup=False,
-                    workers="auto", duration=3600)
+        args = Mock(
+            mode="random", use_gpu=False, checkpoint=False, dedup=False, workers="auto", duration=3600
+        )
         _print_config_info(args, {"addr1"}, None, None, None)
         captured = capsys.readouterr().out
         assert "3600" in captured
@@ -129,7 +129,11 @@ class TestSetupAndStartEngine:
             patch("signal.signal"),
         ):
             engine, engine_type, alert_system, stop_event = _setup_and_start_engine(
-                args, {"addr1"}, {}, None, None,
+                args,
+                {"addr1"},
+                {},
+                None,
+                None,
             )
 
             assert engine_type == "CPU"
@@ -151,7 +155,11 @@ class TestSetupAndStartEngine:
             patch("signal.signal"),
         ):
             engine, engine_type, _, _ = _setup_and_start_engine(
-                args, {"addr1"}, {"gpu": True}, None, None,
+                args,
+                {"addr1"},
+                {"gpu": True},
+                None,
+                None,
             )
 
             assert engine_type == "GPU"
@@ -175,6 +183,7 @@ class TestSetupAndStartEngine:
 
     def test_stop_event_is_threading_event(self):
         import threading
+
         from src.cli.engine_runner import _setup_and_start_engine
 
         args = Mock(use_gpu=False, mode="random", checkpoint=False, dedup=False)
@@ -188,12 +197,17 @@ class TestSetupAndStartEngine:
             patch("signal.signal"),
         ):
             _, _, _, stop_event = _setup_and_start_engine(
-                args, {"addr1"}, {}, None, None,
+                args,
+                {"addr1"},
+                {},
+                None,
+                None,
             )
             assert isinstance(stop_event, threading.Event)
 
     def test_signal_handlers_registered(self):
         import signal as _signal
+
         from src.cli.engine_runner import _setup_and_start_engine
 
         args = Mock(use_gpu=False, mode="random", checkpoint=False, dedup=False)
@@ -254,7 +268,11 @@ class TestRunCollisionLoop:
 
         engine = self._make_mock_engine([True, False])
         stats = MagicMock()
-        stats.get.side_effect = lambda k, d=0: {"total_checked": 1000, "speed": 500, "matches_found": 0}.get(k, d)
+        stats.get.side_effect = lambda k, d=0: {
+            "total_checked": 1000,
+            "speed": 500,
+            "matches_found": 0,
+        }.get(k, d)
         engine.get_stats.return_value = stats
 
         args = Mock(duration=None, mode="random")

@@ -64,7 +64,9 @@ class TestKeyCollisionEngineContextManager(unittest.TestCase):
     def test_context_manager_enter_exit(self):
         """with语句进入/退出引擎"""
         with KeyCollisionEngine(
-            targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False,
+            targets={"1TestAddr"},
+            max_workers=1,
+            data_logging_enabled=False,
         ) as engine:
             self.assertFalse(engine.is_running())
             engine.start(mode="random")

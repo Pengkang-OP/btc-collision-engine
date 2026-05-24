@@ -19,7 +19,8 @@ def paginate(
     """
     total = len(items)
     total_pages = max(
-        1, (total + page_size - 1) // page_size,
+        1,
+        (total + page_size - 1) // page_size,
     )
     page = max(1, min(page, total_pages))
     start = (page - 1) * page_size
@@ -43,7 +44,4 @@ def format_page_header(
         Formatted header
 
     """
-    return (
-        f"=== {heading} "
-        f"(Page {page}/{total_pages}) ==="
-    )
+    return f"=== {heading} (Page {page}/{total_pages}) ==="

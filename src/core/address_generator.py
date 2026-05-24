@@ -109,7 +109,9 @@ class BaseAddressGenerator(ABC):
 
     @abstractmethod
     def private_key_to_public_key(
-        self, private_key: bytes, compressed: bool = True,
+        self,
+        private_key: bytes,
+        compressed: bool = True,
     ) -> bytes:
         """Derive public key from private key (subclass must implement).
 
@@ -124,7 +126,8 @@ class BaseAddressGenerator(ABC):
         ...
 
     def public_key_to_hash160(
-        self, public_key: bytes,
+        self,
+        public_key: bytes,
     ) -> bytes:
         """Compute Hash160 from public key (without full address).
 
@@ -142,7 +145,8 @@ class BaseAddressGenerator(ABC):
         return HashUtils.hash160(public_key)
 
     def public_key_to_address(
-        self, public_key: bytes,
+        self,
+        public_key: bytes,
     ) -> str:
         """Generate Bitcoin address from public key.
 
@@ -176,13 +180,15 @@ class BaseAddressGenerator(ABC):
 
         """
         public_key = self.private_key_to_public_key(
-            private_key, compressed,
+            private_key,
+            compressed,
         )
         address = self.public_key_to_address(public_key)
         return address, public_key, private_key
 
     def generate_private_key(
-        self, max_retries: int = 100,
+        self,
+        max_retries: int = 100,
     ) -> bytes:
         """Generate random private key.
 
@@ -210,8 +216,7 @@ class BaseAddressGenerator(ABC):
 
                 if 1 <= key_int < Secp256k1.N:
                     logger.debug(
-                        f"Private key generated successfully "
-                        f"(attempt {attempt + 1}/{max_retries})",
+                        f"Private key generated successfully (attempt {attempt + 1}/{max_retries})",
                     )
                     return private_key
             except Exception as e:
@@ -219,19 +224,18 @@ class BaseAddressGenerator(ABC):
                 # TypeError/OverflowError due to low system entropy
                 # Other exceptions (e.g. OSError) also logged
                 logger.error(
-                    "Error generating private key "
-                    "(attempt %d/%d): %s",
+                    "Error generating private key (attempt %d/%d): %s",
                     attempt + 1,
                     max_retries,
                     type(e).__name__,
                 )
 
         logger.error(
-            "Private key generation failed: exceeded max retries %s", max_retries,
+            "Private key generation failed: exceeded max retries %s",
+            max_retries,
         )
         raise KeyGenerationError(
-            f"Cannot generate valid private key within "
-            f"{max_retries} attempts",
+            f"Cannot generate valid private key within {max_retries} attempts",
             error_code=1001,
             context={"max_retries": max_retries},
         )
@@ -289,17 +293,18 @@ class P2PKHAddressGenerator(BaseAddressGenerator):
                     stacklevel=2,
                 )
                 logger.info(
-                    "Tip: Install coincurve for 3-5x performance "
-                    "boost (pip install coincurve>=18.0.0)",
+                    "Tip: Install coincurve for 3-5x performance boost (pip install coincurve>=18.0.0)",
                 )
         except ImportError as e:
             # Silently fail, does not affect functionality
             logger.debug(
-                "coincurve not available (will use pure Python): %s", e,
+                "coincurve not available (will use pure Python): %s",
+                e,
             )
 
     def generate_private_key(
-        self, max_retries: int = 100,
+        self,
+        max_retries: int = 100,
     ) -> bytes:
         """Generate random private key (delegates to base)"""
         return super().generate_private_key(max_retries)
@@ -324,20 +329,22 @@ class P2PKHAddressGenerator(BaseAddressGenerator):
             from .crypto_backend import crypto_manager
 
             return crypto_manager.generate_public_key(
-                private_key, compressed,
+                private_key,
+                compressed,
             )
         except (ImportError, AttributeError) as e:
             # Fall back to pure Python implementation
             logger.debug(
-                f"Crypto backend unavailable, using pure Python: "
-                f"{type(e).__name__}",
+                f"Crypto backend unavailable, using pure Python: {type(e).__name__}",
             )
             return self.ec.generate_public_key(
-                private_key, compressed,
+                private_key,
+                compressed,
             )
 
     def public_key_to_address(
-        self, public_key: bytes,
+        self,
+        public_key: bytes,
     ) -> str:
         """Generate Bitcoin address from public key (delegates to base)"""
         return super().public_key_to_address(public_key)
@@ -373,32 +380,30 @@ class P2PKHAddressGenerator(BaseAddressGenerator):
             private_key = self.generate_private_key()
         elif len(private_key) != 32:
             raise ValueError(
-                f"Private key length must be 32 bytes, "
-                f"got {len(private_key)} bytes",
+                f"Private key length must be 32 bytes, got {len(private_key)} bytes",
             )
         else:
             # Validate private key in valid range [1, N)
             key_int = int.from_bytes(private_key, "big")
             if key_int == 0:
                 raise ValueError(
-                    "Private key cannot be zero, "
-                    "must be in range [1, N)",
+                    "Private key cannot be zero, must be in range [1, N)",
                 )
             if key_int >= Secp256k1.N:
                 raise ValueError(
-                    f"Private key exceeds curve order N = "
-                    f"{Secp256k1.N}. "
-                    f"Key must be in range [1, N)",
+                    f"Private key exceeds curve order N = {Secp256k1.N}. Key must be in range [1, N)",
                 )
 
         # Generate compressed public key
         compressed_pk = self.private_key_to_public_key(
-            private_key, compressed=True,
+            private_key,
+            compressed=True,
         )
 
         # Generate uncompressed public key
         uncompressed_pk = self.private_key_to_public_key(
-            private_key, compressed=False,
+            private_key,
+            compressed=False,
         )
 
         # Generate address

@@ -13,7 +13,6 @@ import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 # 修复Windows控制台编码问题 - 使用共享模块`nfrom tools.utf8_helper import setup_windows_utf8`nsetup_windows_utf8()
 
@@ -28,7 +27,7 @@ class HeadingInfo:
     original_line: str
 
 
-def extract_headings(content: str) -> List[HeadingInfo]:
+def extract_headings(content: str) -> list[HeadingInfo]:
     """提取文档中的所有标题"""
     headings = []
     lines = content.split("\n")
@@ -43,7 +42,7 @@ def extract_headings(content: str) -> List[HeadingInfo]:
     return headings
 
 
-def detect_heading_jumps(headings: List[HeadingInfo]) -> List[Tuple[int, int, int]]:
+def detect_heading_jumps(headings: list[HeadingInfo]) -> list[tuple[int, int, int]]:
     """检测标题层级跳跃
 
     Returns:
@@ -62,7 +61,7 @@ def detect_heading_jumps(headings: List[HeadingInfo]) -> List[Tuple[int, int, in
     return jumps
 
 
-def fix_heading_jumps(content: str, dry_run: bool = False) -> Tuple[str, int]:
+def fix_heading_jumps(content: str, dry_run: bool = False) -> tuple[str, int]:
     """修复标题层级跳跃
 
     Returns:
@@ -77,7 +76,7 @@ def fix_heading_jumps(content: str, dry_run: bool = False) -> Tuple[str, int]:
     # 从后向前修复，避免行号变化影响
     for prev_level, curr_level, line_num in reversed(jumps):
         # 需要插入缺失的层级
-        missing_levels = list(range(prev_level + 1, curr_level))
+        list(range(prev_level + 1, curr_level))
 
         if not dry_run:
             # 获取当前标题行
@@ -102,7 +101,7 @@ def fix_heading_jumps(content: str, dry_run: bool = False) -> Tuple[str, int]:
         return content, len(jumps)
 
 
-def analyze_file(file_path: Path) -> Dict:
+def analyze_file(file_path: Path) -> dict:
     """分析单个文件的标题层级问题"""
     content = file_path.read_text(encoding="utf-8")
     headings = extract_headings(content)

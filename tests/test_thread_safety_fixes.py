@@ -172,7 +172,7 @@ class TestThreadSafetyFixes:
         def worker_error_generator(thread_id):
             """模拟工作线程记录错误"""
             try:
-                for i in range(iterations):
+                for _i in range(iterations):
                     # 直接调用record_worker_error（无if检查，验证M1修复）
                     stats.record_worker_error()
             except Exception as e:
@@ -254,7 +254,9 @@ class TestThreadSafetyFixes:
 
             if should_log:
                 engine.data_logger.record_error(
-                    error_type="test_error", message=f"测试错误 {i}", context={"iteration": i},
+                    error_type="test_error",
+                    message=f"测试错误 {i}",
+                    context={"iteration": i},
                 )
 
         elapsed = time.time() - start_time

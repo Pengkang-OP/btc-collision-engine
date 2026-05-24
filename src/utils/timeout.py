@@ -54,7 +54,8 @@ def _terminate_thread(thread_handle: int, exit_code: int = 0) -> bool:
     try:
         kernel32 = ctypes.windll.kernel32
         result = kernel32.TerminateThread(
-            ctypes.c_void_p(thread_handle), ctypes.c_ulong(exit_code),
+            ctypes.c_void_p(thread_handle),
+            ctypes.c_ulong(exit_code),
         )
         return bool(result)
     except (OSError, ValueError, AttributeError):
@@ -108,12 +109,12 @@ def _execute_with_thread_timeout(
     thread.join(timeout=timeout)
 
     if thread.is_alive():
-        thread_info = (
-            f"name={thread.name}, ident={thread.ident}, "
-            f"native_id={thread.native_id}"
-        )
+        thread_info = f"name={thread.name}, ident={thread.ident}, native_id={thread.native_id}"
         logger.warning(
-            "回调执行超时 (%s秒) - 回调: %s - 线程: %s", timeout, callback_name, thread_info,
+            "回调执行超时 (%s秒) - 回调: %s - 线程: %s",
+            timeout,
+            callback_name,
+            thread_info,
         )
         return False
 
@@ -185,8 +186,7 @@ def _execute_with_sigalrm_timeout(
                 return False
             except Exception as e:
                 logger.warning(
-                    f"回调执行异常 - 回调: {callback_name} - "
-                    f"异常: {type(e).__name__}: {e}",
+                    f"回调执行异常 - 回调: {callback_name} - 异常: {type(e).__name__}: {e}",
                 )
                 return False
             finally:
@@ -197,7 +197,9 @@ def _execute_with_sigalrm_timeout(
             if retry_count >= max_retries:
                 logger.warning(
                     "SIGALRM 超时执行重试耗尽 (%s次) - 回调: %s - 错误: %s",
-                    max_retries, callback_name, e,
+                    max_retries,
+                    callback_name,
+                    e,
                 )
                 return False
             time.sleep(0.1)

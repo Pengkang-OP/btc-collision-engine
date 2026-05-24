@@ -17,13 +17,16 @@ def get_gpu_devices():
     """获取 GPU 设备信息"""
     try:
         import pyopencl as cl
+
         devices = []
         for platform in cl.get_platforms():
             for device in platform.get_devices():
-                devices.append({
-                    "name": device.name.strip(),
-                    "platform": platform.name.strip(),
-                })
+                devices.append(
+                    {
+                        "name": device.name.strip(),
+                        "platform": platform.name.strip(),
+                    }
+                )
         return devices
     except ImportError:
         return []
@@ -44,6 +47,7 @@ def get_performance(engine=None):
 
     try:
         import psutil
+
         proc = psutil.Process()
         mem = proc.memory_info()
         data["memory_rss_mb"] = round(mem.rss / 1024 / 1024, 2)
@@ -64,12 +68,11 @@ def get_performance(engine=None):
 
 def main():
     parser = argparse.ArgumentParser(description="性能衰减曲线监控")
-    parser.add_argument("--duration", type=int, default=3600,
-                        help="监控持续时间（秒），默认 3600 (1 小时)")
-    parser.add_argument("--interval", type=int, default=60,
-                        help="采样间隔（秒），默认 60")
-    parser.add_argument("--output", type=str, default=None,
-                        help="输出 CSV 文件路径")
+    parser.add_argument(
+        "--duration", type=int, default=3600, help="监控持续时间（秒），默认 3600 (1 小时)"
+    )
+    parser.add_argument("--interval", type=int, default=60, help="采样间隔（秒），默认 60")
+    parser.add_argument("--output", type=str, default=None, help="输出 CSV 文件路径")
     args = parser.parse_args()
 
     output_path = args.output or f"performance_decay_{int(time.time())}.csv"
@@ -91,9 +94,14 @@ def main():
     print("-" * 80)
 
     fieldnames = [
-        "timestamp", "speed_keys_per_sec", "total_checked",
-        "matches", "elapsed_seconds", "memory_rss_mb",
-        "memory_vms_mb", "cpu_percent",
+        "timestamp",
+        "speed_keys_per_sec",
+        "total_checked",
+        "matches",
+        "elapsed_seconds",
+        "memory_rss_mb",
+        "memory_vms_mb",
+        "cpu_percent",
     ]
 
     with open(output_path, "w", newline="", encoding="utf-8") as f:
@@ -109,11 +117,13 @@ def main():
             f.flush()
 
             sample_count += 1
-            print(f"{data['timestamp']:<25} "
-                  f"{data['speed_keys_per_sec']:<15.0f} "
-                  f"{data['total_checked']:<15} "
-                  f"{data['memory_rss_mb']:<12.2f} "
-                  f"{data['cpu_percent']:<8.1f}")
+            print(
+                f"{data['timestamp']:<25} "
+                f"{data['speed_keys_per_sec']:<15.0f} "
+                f"{data['total_checked']:<15} "
+                f"{data['memory_rss_mb']:<12.2f} "
+                f"{data['cpu_percent']:<8.1f}"
+            )
 
             # 等待下一个采样间隔
             time.sleep(args.interval)
@@ -123,12 +133,14 @@ def main():
     print(f"   数据已保存至: {output_path}")
     print()
     print("使用以下命令生成图表:")
-    print(f"   python -c \"import pandas as pd; import matplotlib.pyplot as plt; "
-          f"df = pd.read_csv('{output_path}'); "
-          f"df['elapsed'] = df['elapsed_seconds']; "
-          f"plt.plot(df['elapsed'], df['speed_keys_per_sec']); "
-          f"plt.xlabel('Time (s)'); plt.ylabel('Speed (keys/s)'); "
-          f"plt.title('Performance Decay Curve'); plt.savefig('decay_curve.png')\"")
+    print(
+        f'   python -c "import pandas as pd; import matplotlib.pyplot as plt; '
+        f"df = pd.read_csv('{output_path}'); "
+        f"df['elapsed'] = df['elapsed_seconds']; "
+        f"plt.plot(df['elapsed'], df['speed_keys_per_sec']); "
+        f"plt.xlabel('Time (s)'); plt.ylabel('Speed (keys/s)'); "
+        f"plt.title('Performance Decay Curve'); plt.savefig('decay_curve.png')\""
+    )
 
 
 if __name__ == "__main__":

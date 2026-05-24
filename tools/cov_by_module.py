@@ -187,7 +187,7 @@ def main():
 
         mod_total_stmts = 0
         mod_total_miss = 0
-        for fpath, (stmts, miss, cover) in cov_data.items():
+        for fpath, (stmts, miss, _cover) in cov_data.items():
             if f"src/{mod_name}/" in fpath or f"src\\{mod_name}\\" in fpath:
                 mod_total_stmts += stmts
                 mod_total_miss += miss

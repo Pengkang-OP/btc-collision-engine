@@ -70,7 +70,7 @@ class TestConcurrentAccess:
         def check_dedup(thread_id):
             barrier.wait()
             thread_results = []
-            for i in range(checks_per_thread):
+            for _i in range(checks_per_thread):
                 pk = secrets.token_bytes(32)
                 result = dedup.check_and_add(pk)
                 thread_results.append(result)

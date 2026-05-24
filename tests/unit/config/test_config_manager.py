@@ -51,7 +51,8 @@ class TestConfigManagerBasic(unittest.TestCase):
         self.assertEqual(mgr.get("logging.level"), "DEBUG")
         # 默认值应该保留
         self.assertEqual(
-            mgr.get("logging.format"), "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            mgr.get("logging.format"),
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         )
 
     def test_save_config_to_file(self):

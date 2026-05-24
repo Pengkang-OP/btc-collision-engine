@@ -75,7 +75,9 @@ class TestPerformanceOptimizer:
 
         # 先创建配置文件(必需)
         profile = optimizer.create_optimized_profile(  # noqa: F841
-            device_name="Test GPU", vendor_str="NVIDIA Corporation", global_mem_size=8 * 1024**3,
+            device_name="Test GPU",
+            vendor_str="NVIDIA Corporation",
+            global_mem_size=8 * 1024**3,
         )
 
         # 记录足够的性能数据(至少3个)，执行时间需超过 slow_execution_threshold_ms (1000ms)
@@ -156,11 +158,15 @@ class TestPerformanceOptimizer:
         optimizer = GPUPerformanceOptimizer()
         # 小显存（1GB）
         profile_small = optimizer.create_optimized_profile(
-            device_name="Test GPU", vendor_str="Test", global_mem_size=1 * 1024**3,
+            device_name="Test GPU",
+            vendor_str="Test",
+            global_mem_size=1 * 1024**3,
         )
         # 大显存（16GB）
         profile_large = optimizer.create_optimized_profile(
-            device_name="Test GPU", vendor_str="Test", global_mem_size=16 * 1024**3,
+            device_name="Test GPU",
+            vendor_str="Test",
+            global_mem_size=16 * 1024**3,
         )
         assert profile_large.max_batch_size > profile_small.max_batch_size
 
@@ -185,7 +191,9 @@ class TestPerformanceOptimizer:
         """测试优化报告生成"""
         optimizer = GPUPerformanceOptimizer()
         optimizer.create_optimized_profile(
-            device_name="NVIDIA RTX 3080", vendor_str="NVIDIA", global_mem_size=10 * 1024**3,
+            device_name="NVIDIA RTX 3080",
+            vendor_str="NVIDIA",
+            global_mem_size=10 * 1024**3,
         )
         for _ in range(5):
             optimizer.record_performance(

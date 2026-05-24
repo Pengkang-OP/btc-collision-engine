@@ -1,5 +1,4 @@
-"""GPU性能监控模块单元测试
-"""
+"""GPU性能监控模块单元测试"""
 
 import time
 
@@ -126,7 +125,9 @@ class TestGPUPerformanceMonitor:
         monitor = GPUPerformanceMonitor()
 
         monitor.record_kernel_metrics(
-            batch_size=10000, execution_time_ms=50.0, memory_allocated_mb=128.0,
+            batch_size=10000,
+            execution_time_ms=50.0,
+            memory_allocated_mb=128.0,
         )
 
         assert monitor._total_batches == 1
@@ -139,15 +140,21 @@ class TestGPUPerformanceMonitor:
 
         # 记录3个批次
         monitor.record_kernel_metrics(
-            batch_size=10000, execution_time_ms=50.0, memory_allocated_mb=128.0,
+            batch_size=10000,
+            execution_time_ms=50.0,
+            memory_allocated_mb=128.0,
         )
 
         monitor.record_kernel_metrics(
-            batch_size=20000, execution_time_ms=80.0, memory_allocated_mb=256.0,
+            batch_size=20000,
+            execution_time_ms=80.0,
+            memory_allocated_mb=256.0,
         )
 
         monitor.record_kernel_metrics(
-            batch_size=15000, execution_time_ms=60.0, memory_allocated_mb=192.0,
+            batch_size=15000,
+            execution_time_ms=60.0,
+            memory_allocated_mb=192.0,
         )
 
         assert monitor._total_batches == 3
@@ -161,7 +168,9 @@ class TestGPUPerformanceMonitor:
         assert monitor.get_current_throughput() == 0.0
 
         monitor.record_kernel_metrics(
-            batch_size=10000, execution_time_ms=50.0, memory_allocated_mb=128.0,
+            batch_size=10000,
+            execution_time_ms=50.0,
+            memory_allocated_mb=128.0,
         )
 
         throughput = monitor.get_current_throughput()
@@ -172,9 +181,11 @@ class TestGPUPerformanceMonitor:
         monitor = GPUPerformanceMonitor()
 
         # 记录多个批次
-        for i in range(5):
+        for _i in range(5):
             monitor.record_kernel_metrics(
-                batch_size=10000, execution_time_ms=50.0, memory_allocated_mb=128.0,
+                batch_size=10000,
+                execution_time_ms=50.0,
+                memory_allocated_mb=128.0,
             )
 
         avg = monitor.get_average_throughput(window_seconds=60.0)
@@ -185,7 +196,10 @@ class TestGPUPerformanceMonitor:
         monitor = GPUPerformanceMonitor()
 
         monitor.record_memory_metrics(
-            used_memory_mb=1024.0, total_memory_mb=8192.0, allocation=True, pool_hit=True,
+            used_memory_mb=1024.0,
+            total_memory_mb=8192.0,
+            allocation=True,
+            pool_hit=True,
         )
 
         memory = monitor.get_memory_usage()
@@ -199,9 +213,11 @@ class TestGPUPerformanceMonitor:
         monitor.start()
 
         # 记录一些指标
-        for i in range(10):
+        for _i in range(10):
             monitor.record_kernel_metrics(
-                batch_size=10000, execution_time_ms=50.0, memory_allocated_mb=128.0,
+                batch_size=10000,
+                execution_time_ms=50.0,
+                memory_allocated_mb=128.0,
             )
 
         report = monitor.get_performance_report()
@@ -248,7 +264,9 @@ class TestGPUPerformanceMonitor:
         monitor = GPUPerformanceMonitor()
 
         monitor.record_kernel_metrics(
-            batch_size=10000, execution_time_ms=50.0, memory_allocated_mb=128.0,
+            batch_size=10000,
+            execution_time_ms=50.0,
+            memory_allocated_mb=128.0,
         )
 
         json_data = monitor.export_metrics(format="json")
@@ -261,7 +279,9 @@ class TestGPUPerformanceMonitor:
         monitor = GPUPerformanceMonitor()
 
         monitor.record_kernel_metrics(
-            batch_size=10000, execution_time_ms=50.0, memory_allocated_mb=128.0,
+            batch_size=10000,
+            execution_time_ms=50.0,
+            memory_allocated_mb=128.0,
         )
 
         csv_data = monitor.export_metrics(format="csv")

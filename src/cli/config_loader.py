@@ -38,7 +38,8 @@ class ConfigLoader:
     """
 
     def load(
-        self, filepath: str | Path,
+        self,
+        filepath: str | Path,
     ) -> dict:
         """Load configuration from JSON file.
 

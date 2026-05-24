@@ -58,14 +58,11 @@ class CheckpointManager:
         return self.should_save()
 
     def should_save(self) -> bool:
-        return (
-            self._dirty
-            and time.time() - self._last_save
-            >= self._interval
-        )
+        return self._dirty and time.time() - self._last_save >= self._interval
 
     def save(
-        self, state: dict,
+        self,
+        state: dict,
     ) -> None:
         """Save checkpoint with state data.
 
@@ -91,8 +88,7 @@ class CheckpointManager:
             raw = self.filepath.read_bytes()
             if len(raw) > self._max_size:
                 raise CheckpointError(
-                    f"Checkpoint too large: "
-                    f"{len(raw)} bytes",
+                    f"Checkpoint too large: {len(raw)} bytes",
                 )
             data = fast_loads(raw.decode("utf-8"))
             if data.get("version") != CHECKPOINT_VERSION:
@@ -115,7 +111,8 @@ class CheckpointManager:
             CheckpointError,
         ) as e:
             logger.error(
-                "Failed to load checkpoint: %s", e,
+                "Failed to load checkpoint: %s",
+                e,
             )
             return None
 

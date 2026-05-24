@@ -1,4 +1,5 @@
 """Advanced CLI features for power users."""
+
 import logging
 from pathlib import Path
 from typing import Any

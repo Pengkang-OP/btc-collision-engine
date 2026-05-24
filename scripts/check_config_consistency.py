@@ -7,10 +7,9 @@
 import copy
 import json
 import sys
-from pathlib import Path
 from typing import Any
 
-from src.config.config_manager import ConfigManager — 需 sys.path 前置
+from src.config.config_manager import ConfigManager  # 需 sys.path 前置
 
 
 class ConfigFixer:
@@ -198,7 +197,7 @@ def main():
     if args.save and not args.dry_run:
         print("\n📤 保存配置到文件...")
         try:
-            config_file = project_root / "config.json"
+            config_file = Path(__file__).resolve().parent.parent / "config.json"
             with open(config_file, "w", encoding="utf-8") as f:
                 json.dump(ConfigManager.DEFAULT_CONFIG, f, ensure_ascii=False, indent=2)
             print(f"✅ 配置已保存到 {config_file}")

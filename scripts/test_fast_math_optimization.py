@@ -5,7 +5,6 @@
 """
 
 import os
-import sys
 import time
 
 # 添加项目根目录到路径

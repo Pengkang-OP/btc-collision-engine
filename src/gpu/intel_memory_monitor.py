@@ -68,11 +68,23 @@ class IntelMemoryMonitor:
     EMERGENCY_THRESHOLD = 0.95
 
     __slots__ = (
-        "total_memory", "safe_usage_ratio", "safe_limit",
-        "warning_limit", "critical_limit", "emergency_limit",
-        "_warning_ratio", "_critical_ratio", "_emergency_ratio",
-        "current_usage", "peak_usage", "total_allocations", "total_deallocations",
-        "_history", "_max_history", "_allocation_sizes", "_leak_detection_window",
+        "total_memory",
+        "safe_usage_ratio",
+        "safe_limit",
+        "warning_limit",
+        "critical_limit",
+        "emergency_limit",
+        "_warning_ratio",
+        "_critical_ratio",
+        "_emergency_ratio",
+        "current_usage",
+        "peak_usage",
+        "total_allocations",
+        "total_deallocations",
+        "_history",
+        "_max_history",
+        "_allocation_sizes",
+        "_leak_detection_window",
     )
 
     def __init__(

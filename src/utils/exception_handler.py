@@ -29,7 +29,10 @@ class ExceptionHandler:
 
     @staticmethod
     def handle_engine_error(
-        engine_type: str, error: Exception, stats: Any = None, context: str = "",
+        engine_type: str,
+        error: Exception,
+        stats: Any = None,
+        context: str = "",
     ) -> None:
         """统一处理引擎错误
 
@@ -81,7 +84,11 @@ class ExceptionHandler:
         else:
             # 未知错误 — 使用 error 级别而非 exception 以避免堆栈泄露私钥上下文
             logger.error(
-                "%s引擎%s未知错误: %s: %s", engine_type, context, type(error).__name__, str(error),
+                "%s引擎%s未知错误: %s: %s",
+                engine_type,
+                context,
+                type(error).__name__,
+                str(error),
             )
             record_func = getattr(stats, "record_worker_error", None)
             if record_func and callable(record_func):
@@ -143,7 +150,10 @@ class ExceptionHandler:
         else:
             # 未知错误：记录异常类型和消息，帮助诊断（如 OpenCL LogicError 等非标准异常）
             logger.error(
-                "GPU %s失败(未知错误): %s: %s", mode, type(error).__name__, str(error),
+                "GPU %s失败(未知错误): %s: %s",
+                mode,
+                type(error).__name__,
+                str(error),
             )
             logger.debug("详细堆栈:", exc_info=True)
             record_func = getattr(stats, "record_gpu_error", None)

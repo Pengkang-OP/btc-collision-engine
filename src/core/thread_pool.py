@@ -76,12 +76,16 @@ def _validate_worker_count(count: int) -> int:
         return cpu_count
     if count > DEFAULT_MAX_WORKERS:
         logger.warning(
-            "Thread count %s exceeds maximum %s, auto-corrected", count, DEFAULT_MAX_WORKERS,
+            "Thread count %s exceeds maximum %s, auto-corrected",
+            count,
+            DEFAULT_MAX_WORKERS,
         )
         return DEFAULT_MAX_WORKERS
     if count < DEFAULT_MIN_WORKERS:
         logger.warning(
-            "Thread count %s below minimum %s, auto-corrected", count, DEFAULT_MIN_WORKERS,
+            "Thread count %s below minimum %s, auto-corrected",
+            count,
+            DEFAULT_MIN_WORKERS,
         )
         return DEFAULT_MIN_WORKERS
     return count
@@ -104,7 +108,8 @@ class WorkStealingThreadPool:
     """
 
     def __init__(
-        self, num_threads: int | None = None,
+        self,
+        num_threads: int | None = None,
         enable_work_stealing: bool = True,
     ) -> None:
         """Initialize thread pool.
@@ -121,12 +126,8 @@ class WorkStealingThreadPool:
         self.enable_work_stealing = enable_work_stealing
 
         # Per-thread task queues
-        self._queues: list[deque] = [
-            deque() for _ in range(self.num_threads)
-        ]
-        self._queue_locks = [
-            threading.Lock() for _ in range(self.num_threads)
-        ]
+        self._queues: list[deque] = [deque() for _ in range(self.num_threads)]
+        self._queue_locks = [threading.Lock() for _ in range(self.num_threads)]
 
         # Thread management
         self._threads: list[threading.Thread] = []
@@ -148,9 +149,7 @@ class WorkStealingThreadPool:
         self._start_time: float | None = None
 
         logger.info(
-            f"Thread pool initialized: "
-            f"threads={self.num_threads}, "
-            f"work_stealing={enable_work_stealing}",
+            f"Thread pool initialized: threads={self.num_threads}, work_stealing={enable_work_stealing}",
         )
 
     def start(self) -> None:
@@ -185,7 +184,9 @@ class WorkStealingThreadPool:
                 thread.join(timeout=timeout)
                 if thread.is_alive():
                     logger.warning(
-                        "Thread Worker-%s did not stop within %ss timeout", i, timeout,
+                        "Thread Worker-%s did not stop within %ss timeout",
+                        i,
+                        timeout,
                     )
 
         self._threads.clear()
@@ -250,12 +251,12 @@ class WorkStealingThreadPool:
                 with self._stats_lock:
                     self._tasks_failed += 1
                 logger.error(
-                    f"Task failed (thread {thread_id}): "
-                    f"{type(e).__name__}: {e}",
+                    f"Task failed (thread {thread_id}): {type(e).__name__}: {e}",
                 )
 
     def _get_task(
-        self, thread_id: int,
+        self,
+        thread_id: int,
     ) -> tuple | None:
         """Get a task (local queue first, then steal).
 
@@ -281,7 +282,8 @@ class WorkStealingThreadPool:
         return None
 
     def _steal_work(
-        self, thief_id: int,
+        self,
+        thief_id: int,
     ) -> tuple | None:
         """Work stealing algorithm.
 
@@ -322,25 +324,21 @@ class WorkStealingThreadPool:
                 "tasks_completed": self._tasks_completed,
                 "tasks_failed": self._tasks_failed,
                 "tasks_stolen": self._tasks_stolen,
-                "tasks_pending": (
-                    self._tasks_submitted - self._tasks_completed
+                "tasks_pending": (self._tasks_submitted - self._tasks_completed),
+                "steal_rate": self._tasks_stolen
+                / max(
+                    self._tasks_completed + self._tasks_failed,
+                    1,
                 ),
-                "steal_rate": self._tasks_stolen / max(
-                    self._tasks_completed + self._tasks_failed, 1,
+                "failure_rate": self._tasks_failed
+                / max(
+                    self._tasks_completed + self._tasks_failed,
+                    1,
                 ),
-                "failure_rate": self._tasks_failed / max(
-                    self._tasks_completed + self._tasks_failed, 1,
-                ),
-                "active_threads": sum(
-                    1 for t in self._threads if t.is_alive()
-                ),
+                "active_threads": sum(1 for t in self._threads if t.is_alive()),
                 "per_thread_tasks": self._thread_tasks.copy(),
                 "per_thread_idle": self._thread_idle_cycles.copy(),
-                "uptime_seconds": (
-                    time.time() - self._start_time
-                    if self._start_time
-                    else 0
-                ),
+                "uptime_seconds": (time.time() - self._start_time if self._start_time else 0),
             }
 
     def health_check(self) -> dict:
@@ -363,8 +361,7 @@ class WorkStealingThreadPool:
             # Detect dead threads
             if self._threads and active < self.num_threads:
                 issues.append(
-                    f"Dead threads: "
-                    f"{self.num_threads - active} threads terminated",
+                    f"Dead threads: {self.num_threads - active} threads terminated",
                 )
                 status = "degraded"
 
@@ -383,11 +380,10 @@ class WorkStealingThreadPool:
                         )
 
             # Detect high failure rate
-            if (
-                self._tasks_completed + self._tasks_failed > 100
-            ):
+            if self._tasks_completed + self._tasks_failed > 100:
                 fail_rate = self._tasks_failed / max(
-                    self._tasks_completed + self._tasks_failed, 1,
+                    self._tasks_completed + self._tasks_failed,
+                    1,
                 )
                 if fail_rate > 0.1:
                     issues.append(
@@ -414,7 +410,8 @@ class TaskBatch:
     """
 
     def __init__(
-        self, pool: WorkStealingThreadPool,
+        self,
+        pool: WorkStealingThreadPool,
     ) -> None:
         """Initialize batch task executor.
 
@@ -426,7 +423,10 @@ class TaskBatch:
         self._futures: list[Future] = []
 
     def submit(
-        self, fn: Callable, *args, **kwargs,
+        self,
+        fn: Callable,
+        *args,
+        **kwargs,
     ) -> None:
         """Submit a task to the batch"""
         future = self._pool.submit(fn, *args, **kwargs)
@@ -479,7 +479,8 @@ class GlobalThreadPoolManager:
         return cls._instance
 
     def initialize(
-        self, num_threads: int | None = None,
+        self,
+        num_threads: int | None = None,
     ) -> None:
         """P3-8 enhanced: Initialize global thread pool
         (supports config input).
@@ -501,8 +502,7 @@ class GlobalThreadPoolManager:
                 self._initialized = True
                 self._shutdown_complete = False
                 logger.info(
-                    f"Global thread pool initialized: "
-                    f"{self._pool.num_threads} threads",
+                    f"Global thread pool initialized: {self._pool.num_threads} threads",
                 )
 
     def get_pool(
@@ -526,12 +526,12 @@ class GlobalThreadPoolManager:
             health = self._pool.health_check()
             if health["issues"]:
                 logger.warning(
-                    "Issues detected during thread pool "
-                    f"shutdown: {', '.join(health['issues'])}",
+                    f"Issues detected during thread pool shutdown: {', '.join(health['issues'])}",
                 )
 
     def resize(
-        self, new_num_threads: int,
+        self,
+        new_num_threads: int,
     ) -> bool:
         """P3-8 new: Adjust thread count at runtime
         (scale down only, does not kill active threads).
@@ -559,9 +559,7 @@ class GlobalThreadPoolManager:
 
         if new_num_threads >= self._pool.num_threads:
             logger.info(
-                f"No resize needed: "
-                f"current={self._pool.num_threads}, "
-                f"requested={new_num_threads}",
+                f"No resize needed: current={self._pool.num_threads}, requested={new_num_threads}",
             )
             return False
 

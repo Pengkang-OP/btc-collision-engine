@@ -24,6 +24,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+
 def run_bandit_scan(severity="medium", format_type="json"):
     """运行bandit安全扫描"""
     cmd = [
