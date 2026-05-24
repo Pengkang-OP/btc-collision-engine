@@ -5,6 +5,11 @@ title BTC Collision Engine
 rem ============================================================
 rem  BTC Collision Engine - 统一启动入口 (v5.1.0)
 rem  首次运行前请先执行 install.bat 安装依赖
+rem
+rem  用法:
+rem     start.bat                  → 交互式菜单
+rem     start.bat --help           → 直接透传给 CLI
+rem     start.bat -t <地址> ...    → 直接透传给 CLI
 rem ============================================================
 
 rem ── 切换到脚本所在目录 ──────────────────────────────────────
@@ -26,14 +31,24 @@ rem ── 选择 Python (优先 venv) ─────────────�
 set "PYAPP=python"
 if exist "venv\Scripts\python.exe" set "PYAPP=venv\Scripts\python.exe"
 
-rem ── 启动交互菜单 (版本检查由 Python 负责) ────────────────────
+rem ── 有参数 → 直接透传给 CLI；无参数 → 交互菜单 ──────────────
+if not "%~1"=="" goto :direct_cli
+
+rem ── 交互菜单模式 ────────────────────────────────────────────
 echo.
 echo [INFO] 正在启动 BTC Collision Engine...
 echo.
 "%PYAPP%" "start_menu.py"
 set "EXIT_CODE=!errorlevel!"
+goto :exit_handle
+
+rem ── 直接 CLI 模式 ───────────────────────────────────────────
+:direct_cli
+"%PYAPP%" "key_collision_cli.py" %*
+set "EXIT_CODE=!errorlevel!"
 
 rem ── 退出处理 ────────────────────────────────────────────────
+:exit_handle
 if !EXIT_CODE! neq 0 (
     echo.
     echo [ERROR] 引擎退出码: !EXIT_CODE!

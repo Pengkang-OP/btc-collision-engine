@@ -1,0 +1,196 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://btc-collision-engine/config.schema.json",
+  "title": "BTC Collision Engine Configuration Schema",
+  "description": "验证 config.json 的结构、类型和取值范围。所有以 _comment 开头的字段会被自动忽略。",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "配置文件版本号"
+    },
+    "engine": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "mode": { "type": "string", "enum": ["random", "sequential", "range", "brute_force"] },
+        "batch_size": { "type": "integer", "minimum": 1, "maximum": 16777216 },
+        "max_threads": { "type": "integer", "minimum": 1, "maximum": 1024 },
+        "checkpoint_interval": { "type": "integer", "minimum": -1 }
+      }
+    },
+    "collision": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "max_workers": {
+          "oneOf": [
+            { "type": "integer", "minimum": 1 },
+            { "type": "null" }
+          ]
+        },
+        "progress_interval": { "type": "integer", "minimum": 1 },
+        "checkpoint_interval": { "type": "integer", "minimum": 1 },
+        "dedup_max_size": { "type": "integer", "minimum": 1 },
+        "use_performance_optimization": { "type": "boolean" },
+        "precomputed_window_size": { "type": "integer", "minimum": 1, "maximum": 16 },
+        "use_simd_hash": { "type": "boolean" },
+        "use_memory_pool": { "type": "boolean" },
+        "use_gpu_memory_pool": { "type": "boolean" }
+      }
+    },
+    "logging": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "level": { "type": "string", "enum": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] },
+        "format": { "type": "string" },
+        "file": { "type": "string" },
+        "max_bytes": { "type": "integer", "minimum": 1 },
+        "backup_count": { "type": "integer", "minimum": 0 },
+        "enable_console": { "type": "boolean" },
+        "enable_file": { "type": "boolean" },
+        "rotation_type": { "type": "string", "enum": ["size", "time"] },
+        "rotation_when": { "type": "string" },
+        "rotation_interval": { "type": "integer", "minimum": 1 },
+        "compress_backups": { "type": "boolean" }
+      }
+    },
+    "gpu": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "use_gpu": { "type": "boolean" },
+        "device_index": { "type": "integer", "minimum": -1 },
+        "batch_size": { "type": "integer", "minimum": 1, "maximum": 16777216 },
+        "auto_detect": { "type": "boolean" },
+        "memory_usage_ratio": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+        "enable_vendor_optimizations": { "type": "boolean" },
+        "queue_depth": { "type": "integer", "minimum": 1, "maximum": 64 },
+        "use_new_module": { "type": "boolean" },
+        "async_execution": { "type": "boolean" },
+        "seed_prefetch_size": { "type": "integer", "minimum": 1, "maximum": 64 },
+        "timeout_protection": { "type": "boolean" },
+        "base_timeout_seconds": { "type": "number", "minimum": 1 },
+        "max_error_retries": { "type": "integer", "minimum": 1 },
+        "gpu_memory_pool": { "type": "boolean" },
+        "max_buffers": { "type": "integer", "minimum": 1 },
+        "max_memory_mb": { "type": "integer", "minimum": 1 },
+        "mode": { "type": "string", "enum": ["auto", "single", "multi"] },
+        "device_indices": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": -1 }
+        },
+        "load_balancing": { "type": "string", "enum": ["performance", "equal"] },
+        "auto_tuning": { "type": "boolean" },
+        "work_group_size": { "type": "integer", "minimum": 64, "maximum": 2048 },
+        "use_fast_math": { "type": "boolean" },
+        "use_uint32_workaround": { "type": "boolean" },
+        "compiler_flags": { "type": "string" },
+        "driver_check": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "require_minimum_version": { "type": "boolean" },
+            "warn_on_unstable": { "type": "boolean" },
+            "auto_fallback_conservative": { "type": "boolean" }
+          }
+        },
+        "per_device_config": { "type": "object", "additionalProperties": true },
+        "use_async_logging": { "type": "boolean" },
+        "async_log_file": { "type": "string" },
+        "async_log_max_bytes": { "type": "integer", "minimum": 1 },
+        "async_log_backup_count": { "type": "integer", "minimum": 0 },
+        "check_uncompressed": {
+          "oneOf": [
+            { "type": "boolean" },
+            { "type": "null" }
+          ]
+        },
+        "key_generation_strategy": {
+          "type": "string",
+          "enum": ["PRNG_SEED", "SEQUENTIAL_UINT32", "PRNG_STREAM"]
+        }
+      }
+    },
+    "monitoring": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "collection_interval": { "type": "integer", "minimum": 1 },
+        "storage_dir": { "type": "string" },
+        "history_max_size": { "type": "integer", "minimum": 1 },
+        "error_max_size": { "type": "integer", "minimum": 1 },
+        "anomaly_thresholds": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "auto_cleanup": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "max_age_days": { "type": "integer", "minimum": 1 }
+          }
+        }
+      }
+    },
+    "optimization": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "uint32_workaround": { "type": "boolean" },
+        "disable_async_transfer": { "type": "boolean" },
+        "conservative_memory_policy": { "type": "boolean" },
+        "adaptive_timeout": { "type": "boolean" }
+      }
+    },
+    "performance_monitoring": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "track_slow_operations": { "type": "boolean" },
+        "slow_threshold_ms": { "type": "integer", "minimum": 1 },
+        "max_records": { "type": "integer", "minimum": 1 },
+        "log_level": { "type": "string", "enum": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] }
+      }
+    },
+    "crypto": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "backend": { "type": "string", "enum": ["auto", "pure_python", "pure_python_const_time", "openssl", "coincurve", "ecdsa"] },
+        "constant_time": { "type": "boolean" },
+        "verify_checksums": { "type": "boolean" },
+        "strict_wif_validation": { "type": "boolean" },
+        "use_gpu": { "type": "boolean" },
+        "gpu_device_index": { "type": "integer", "minimum": -1 },
+        "gpu_batch_size": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "i18n": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "language": { "type": "string" },
+        "fallback_language": { "type": "string" }
+      }
+    },
+    "gui": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "theme": { "type": "string" },
+        "font": { "type": "string" },
+        "font_size": { "type": "integer", "minimum": 8, "maximum": 72 },
+        "window_width": { "type": "integer", "minimum": 400 },
+        "window_height": { "type": "integer", "minimum": 300 }
+      }
+    }
+  }
+}

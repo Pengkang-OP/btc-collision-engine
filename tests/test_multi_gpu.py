@@ -205,23 +205,10 @@ class TestGPUAutoConfigurator(unittest.TestCase):
 
 
 class TestGPUConfigValidator(unittest.TestCase):
-# GPUConfigValidator 模块已移除 — TestGPUConfigValidator 已删除
+    """v5.2.1: GPUConfigValidator 模块已移除 - 测试跳过"""
 
-
-        self.assertTrue(any("模式" in err or "mode" in err for err in errors))
-
-    def test_suggest_config_multi(self):
-        """测试多GPU配置建议"""
-        devices = [
-            {"global_index": 0, "vendor": "nvidia", "global_mem_gb": 6.0, "score": 61.2},
-            {"global_index": 1, "vendor": "intel", "global_mem_gb": 16.0, "score": 167.04},
-        ]
-
-        config = self.validator.suggest_config(devices, mode="multi")
-
-        self.assertEqual(config["mode"], "multi")
-        self.assertEqual(config["device_indices"], [0, 1])
-        self.assertEqual(config["load_balancing"], "performance")
+    def test_dummy(self):
+        pass  # placeholder to satisfy unittest collection
 
 
 if __name__ == "__main__":

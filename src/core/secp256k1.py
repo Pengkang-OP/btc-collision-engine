@@ -422,8 +422,10 @@ class EllipticCurve:
 
         x1, y1 = p1.x, p1.y
         x2, y2 = p2.x, p2.y
-        assert x1 is not None and y1 is not None
-        assert x2 is not None and y2 is not None
+        if x1 is None or y1 is None:
+            raise RuntimeError("Point p1 has None coordinates after is_infinity check")
+        if x2 is None or y2 is None:
+            raise RuntimeError("Point p2 has None coordinates after is_infinity check")
         p = self.curve.P
 
         # 如果x相同但y不同（互为逆元），返回无穷远点
@@ -470,7 +472,8 @@ class EllipticCurve:
         if point.is_infinity:
             return True  # 无穷远点被认为在曲线上
 
-        assert point.x is not None and point.y is not None, "is_infinity 检查后坐标不应为 None"
+        if point.x is None or point.y is None:
+            raise RuntimeError("is_infinity check后坐标不应为 None")
 
         # 验证 y² ≡ x³ + ax + b (mod p)
         left_side = pow(point.y, 2, self.curve.P)
@@ -707,9 +710,8 @@ class EllipticCurve:
             raise ValueError("生成的公钥为无穷远点，私钥无效")
 
         # 转换为字节串
-        assert public_point.x is not None and public_point.y is not None, (
-            "is_infinity 检查后坐标不应为 None"
-        )
+        if public_point.x is None or public_point.y is None:
+            raise RuntimeError("is_infinity check后坐标不应为 None")
         x_bytes = public_point.x.to_bytes(32, "big")
 
         if compressed:

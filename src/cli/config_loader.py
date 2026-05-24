@@ -32,7 +32,10 @@ def load_config_with_validation(config_file: str | None = None) -> dict[str, Any
 
 
 class ConfigLoader:
-    """Loads and validates configuration files."""
+    """Legacy config loader — prefer load_config_with_validation() using ConfigManager.
+
+    Kept for backward compatibility with external scripts.
+    """
 
     def load(
         self, filepath: str | Path,
@@ -44,32 +47,16 @@ class ConfigLoader:
 
         Returns:
             Configuration dictionary
-
         """
         path = Path(filepath)
         if not path.exists():
-            logger.error(
-                "Config file not found: %s", path,
-            )
+            logger.error("Config file not found: %s", path)
             return {}
         with Path(path).open() as f:
             return json.load(f)
 
-    def merge(
-        self,
-        base: dict,
-        override: dict,
-    ) -> dict:
-        """Merge configurations, override taking precedence.
-
-        Args:
-            base: Base configuration
-            override: Override configuration
-
-        Returns:
-            Merged configuration
-
-        """
+    def merge(self, base: dict, override: dict) -> dict:
+        """Merge configurations, override taking precedence."""
         result = dict(base)
         result.update(override)
         return result

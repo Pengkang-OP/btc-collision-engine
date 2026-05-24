@@ -19,6 +19,7 @@ References:
 
 """
 
+import threading
 from typing import Any
 
 # Import logging configuration
@@ -270,11 +271,12 @@ class PrecomputedTableManager:
     """Precomputed table manager.
 
     Manages precomputed table instances for different window sizes,
-    providing caching and reuse.
+    providing caching and reuse. Thread-safe via internal lock.
     """
 
     _instance = None
     _tables: dict[int, "PrecomputedPointTable"] = {}
+    _lock = threading.Lock()
 
     def __new__(
         cls,
@@ -289,7 +291,7 @@ class PrecomputedTableManager:
         window_size: int = 8,
         ec: Any = None,
     ) -> PrecomputedPointTable:
-        """Get or create precomputed table.
+        """Get or create precomputed table (thread-safe).
 
         Args:
             window_size: Window size
@@ -299,16 +301,18 @@ class PrecomputedTableManager:
             PrecomputedPointTable instance
 
         """
-        if window_size not in self._tables:
-            self._tables[window_size] = (
-                PrecomputedPointTable(window_size, ec)
-            )
-        return self._tables[window_size]
+        with self._lock:
+            if window_size not in self._tables:
+                self._tables[window_size] = (
+                    PrecomputedPointTable(window_size, ec)
+                )
+            return self._tables[window_size]
 
     def clear_cache(self) -> None:
-        """Clear all precomputed table caches"""
-        self._tables.clear()
-        logger.info("Precomputed table cache cleared")
+        """Clear all precomputed table caches (thread-safe)."""
+        with self._lock:
+            self._tables.clear()
+            logger.info("Precomputed table cache cleared")
 
 
 # Global manager instance

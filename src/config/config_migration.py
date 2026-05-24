@@ -32,7 +32,7 @@ def migrate_config_file(config_path: str | None = None) -> bool:
         return False
 
     try:
-        with open(src, "r", encoding="utf-8") as f:
+        with open(src, encoding="utf-8") as f:
             config = json.load(f)
     except (json.JSONDecodeError, OSError) as e:
         logger.error("无法读取配置文件: %s — %s", src, e)

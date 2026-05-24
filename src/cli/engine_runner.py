@@ -5,7 +5,6 @@ import threading
 import time
 from typing import Any
 
-
 from ..i18n import _t
 from ..monitoring.alert_system import AlertSystem
 from ..utils import get_configured_logger
@@ -72,17 +71,29 @@ def _setup_and_start_engine(
         (engine, engine_type, alert_system, stop_event)
     """
     use_gpu = getattr(args, "use_gpu", False) or getattr(args, "multi_gpu", False)
+    is_multi_gpu = getattr(args, "multi_gpu", False)
 
     if use_gpu:
-        from ..gpu.facade import GPUFacade
+        if is_multi_gpu:
+            from ..gpu.multi_gpu_engine import MultiGPUCollisionEngine
 
-        engine = GPUFacade(
-            targets=list(targets),
-            config=config,
-            checkpoint_enabled=getattr(args, "checkpoint", False),
-            dedup_enabled=getattr(args, "dedup", False),
-        )
-        engine_type = "GPU"
+            engine = MultiGPUCollisionEngine(config=config)
+            engine._targets = list(targets)
+            # 从 args 获取多 GPU 配置
+            gpu_count = getattr(args, "gpu_count", 2)
+            gpu_indices = getattr(args, "gpu_indices", None)
+            engine.initialize(device_count=gpu_count, device_indices=gpu_indices)
+            engine_type = "MultiGPU"
+        else:
+            from ..gpu.facade import GPUFacade
+
+            engine = GPUFacade(
+                targets=list(targets),
+                config=config,
+                checkpoint_enabled=getattr(args, "checkpoint", False),
+                dedup_enabled=getattr(args, "dedup", False),
+            )
+            engine_type = "GPU"
     else:
         from ..collision.key_collision_engine import KeyCollisionEngine
 
@@ -109,7 +120,13 @@ def _setup_and_start_engine(
     signal.signal(signal.SIGTERM, _sig_handler)
 
     # 启动引擎
-    engine.start()
+    if is_multi_gpu:
+        # v5.2.1: random 模式传大 total_keys 使 worker 持续运行
+        mode = getattr(args, "mode", "random")
+        total_keys = 2**31
+        engine.start(targets=set(targets), mode=mode, total_keys=total_keys)
+    else:
+        engine.start()
     logger.info("%s 引擎已启动", engine_type)
 
     return engine, engine_type, alert_system, stop_event

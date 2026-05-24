@@ -399,7 +399,8 @@ class GPUPerformanceOptimizer:
         adjustments: dict[str, Any] = {}
         new_batch_size = current_batch_size
         profile = self._current_profile
-        assert profile is not None  # mypy: narrow from None
+        if profile is None:
+            raise RuntimeError("GPUPerformanceOptimizer._current_profile is None when calculating optimal batch size")
 
         gpu_utilization = 0.0
         if engine is not None:

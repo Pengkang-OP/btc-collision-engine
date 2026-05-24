@@ -1,8 +1,0 @@
-2026-05-24 03:09:24,085 - GPUDevice - INFO - 检测到 2 个GPU设备
-Total devices: 2
-Device[0]: NVIDIA GeForce GTX 1660 Ti
-  vendor=NVIDIA Corporation  platform=NVIDIA CUDA  mem=6.0GB  type=Unknown
-  opencl_device=<pyopencl.Device 'NVIDIA GeForce GTX 1660 Ti' on 'NVIDIA CUDA' at 0x1146f41e1f0>
-Device[1]: Intel(R) Arc(TM) A770 Graphics
-  vendor=Intel(R) Corporation  platform=Intel(R) OpenCL Graphics  mem=15.6GB  type=Unknown
-  opencl_device=<pyopencl.Device 'Intel(R) Arc(TM) A770 Graphics' on 'Intel(R) OpenCL Graphics' at 0x1146f0c7b70>

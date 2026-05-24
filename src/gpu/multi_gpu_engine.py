@@ -514,7 +514,8 @@ class MultiGPUCollisionEngine:
                 self._all_matches = []
 
             # 分配任务
-            assert self.load_balancer is not None
+            if self.load_balancer is None:
+                raise RuntimeError("MultiGPUEngine.load_balancer is None when distributing tasks")
             key_ranges = self.load_balancer.assign_all_key_ranges(total_keys)
 
             # 创建工作器

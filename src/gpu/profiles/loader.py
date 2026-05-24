@@ -181,6 +181,14 @@ class GPUProfileLoader:
         "tensor_core_ready",
     }
 
+    # ---- 合法已知问题枚举 ----
+    _VALID_KNOWN_ISSUES: set[str] = {
+        "global_char_hang_bug",
+    }
+
+    # ---- 驱动版本正则 (major.minor.patch[.build]) ----
+    _DRIVER_VERSION_RE = r"^\d+\.\d+\.\d+(?:\.\d+)?$"
+
     @staticmethod
     def _validate_profile_models(profile: dict[str, Any], errors: list[str]) -> None:
         """验证 models 字段"""
@@ -246,6 +254,92 @@ class GPUProfileLoader:
             elif not (0.0 < eff <= 1.0):
                 warnings.append(f"memory_efficiency ({eff}) 不在合理范围 (0.0, 1.0]")
 
+    @staticmethod
+    def _validate_profile_queue_depth(
+        profile: dict[str, Any], errors: list[str],
+    ) -> None:
+        """验证 queue_depth 可选字段"""
+        if "queue_depth" not in profile:
+            return
+        qd = profile["queue_depth"]
+        if not isinstance(qd, int) or isinstance(qd, bool):
+            errors.append(f"queue_depth类型错误: 期望int, 得到{type(qd).__name__}")
+        elif not (1 <= qd <= 64):
+            errors.append(f"queue_depth ({qd}) 超出合理范围 [1, 64]")
+
+    @staticmethod
+    def _validate_profile_timeout(
+        profile: dict[str, Any], errors: list[str],
+    ) -> None:
+        """验证 timeout_seconds 可选字段"""
+        if "timeout_seconds" not in profile:
+            return
+        ts = profile["timeout_seconds"]
+        if not isinstance(ts, (int, float)) or isinstance(ts, bool):
+            errors.append(f"timeout_seconds类型错误: 期望int/float, 得到{type(ts).__name__}")
+        elif ts <= 0:
+            errors.append(f"timeout_seconds ({ts}) 必须为正数")
+
+    @staticmethod
+    def _validate_profile_known_issues(
+        profile: dict[str, Any], errors: list[str], warnings: list[str],
+    ) -> None:
+        """验证 known_issues 可选字段"""
+        if "known_issues" not in profile:
+            return
+        ki = profile["known_issues"]
+        if not isinstance(ki, list):
+            errors.append(f"known_issues类型错误: 期望list, 得到{type(ki).__name__}")
+            return
+        if not all(isinstance(issue, str) for issue in ki):
+            errors.append("known_issues列表中的元素必须为字符串")
+            return
+
+        invalid_issues = set(ki) - GPUProfileLoader._VALID_KNOWN_ISSUES
+        if invalid_issues:
+            warnings.append(f"未知的已知问题: {invalid_issues}")
+
+    @staticmethod
+    def _validate_profile_driver_versions(
+        profile: dict[str, Any], errors: list[str], warnings: list[str],
+    ) -> None:
+        """验证 min_driver_version / recommended_driver_version 可选字段"""
+        import re
+
+        def _check_drv(key: str) -> str | None:
+            value = profile.get(key)
+            if value is None:
+                return None
+            if not isinstance(value, str):
+                errors.append(f"{key}类型错误: 期望str, 得到{type(value).__name__}")
+                return None
+            if not re.match(GPUProfileLoader._DRIVER_VERSION_RE, value):
+                errors.append(
+                    f"{key}格式无效: '{value}' "
+                    f"(期望 X.Y.Z[.W] 如 '31.0.101.0')",
+                )
+                return None
+            return value
+
+        min_ver = _check_drv("min_driver_version")
+        rec_ver = _check_drv("recommended_driver_version")
+
+        # 跨字段依赖: recommended >= min
+        if min_ver is not None and rec_ver is not None:
+            try:
+                min_parts = [int(x) for x in min_ver.split(".")]
+                rec_parts = [int(x) for x in rec_ver.split(".")]
+                max_len = max(len(min_parts), len(rec_parts))
+                min_parts += [0] * (max_len - len(min_parts))
+                rec_parts += [0] * (max_len - len(rec_parts))
+                if rec_parts < min_parts:
+                    errors.append(
+                        f"recommended_driver_version ({rec_ver}) < "
+                        f"min_driver_version ({min_ver})",
+                    )
+            except (ValueError, TypeError):
+                pass  # 格式错误已由 _check_drv 报告
+
     def _validate_profile(self, profile: dict[str, Any], profile_path: str) -> bool:
         """验证GPU配置文件的合法性
 
@@ -255,6 +349,10 @@ class GPUProfileLoader:
         - 数值关系合法性 (max_batch_size >= recommended_batch_size)
         - optimizations枚举值有效性
         - memory_efficiency范围合理性
+        - queue_depth范围合理性 [1, 64]
+        - timeout_seconds正数检查
+        - known_issues枚举白名单验证
+        - driver_version格式与版本比较验证
 
         Args:
             profile: 配置字典
@@ -285,6 +383,10 @@ class GPUProfileLoader:
         self._validate_profile_batch_sizes(profile, errors)
         self._validate_profile_optimizations(profile, errors, warnings)
         self._validate_profile_optional_fields(profile, errors, warnings)
+        self._validate_profile_queue_depth(profile, errors)
+        self._validate_profile_timeout(profile, errors)
+        self._validate_profile_known_issues(profile, errors, warnings)
+        self._validate_profile_driver_versions(profile, errors, warnings)
 
         if errors:
             for error in errors:

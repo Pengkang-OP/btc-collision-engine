@@ -597,5 +597,6 @@ def get_thread_pool() -> WorkStealingThreadPool:
     if pool is None:
         thread_pool_manager.initialize()
         pool = thread_pool_manager.get_pool()
-    assert pool is not None
+    if pool is None:
+        raise RuntimeError("Thread pool is None after initialization")
     return pool

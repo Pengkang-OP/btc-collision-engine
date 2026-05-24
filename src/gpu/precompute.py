@@ -121,11 +121,11 @@ def generate_secp256k1_precomp_table() -> np.ndarray:
     _ref_p = _Secp256k1.P  # noqa: N806
     _ref_gx = _Secp256k1.Gx  # noqa: N806
     _ref_gy = _Secp256k1.Gy  # noqa: N806
-    if _P != _ref_p:
+    if _ref_p != _P:
         raise RuntimeError(f"p 参数不一致: precompute.P=0x{_P:X}, secp256k1.P=0x{_ref_p:X}")
-    if _GX != _ref_gx:
+    if _ref_gx != _GX:
         raise RuntimeError(f"Gx 参数不一致: precompute.Gx=0x{_GX:X}, secp256k1.Gx=0x{_ref_gx:X}")
-    if _GY != _ref_gy:
+    if _ref_gy != _GY:
         raise RuntimeError(f"Gy 参数不一致: precompute.Gy=0x{_GY:X}, secp256k1.Gy=0x{_ref_gy:X}")
 
     # 验证 1G

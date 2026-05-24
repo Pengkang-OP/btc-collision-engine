@@ -1,6 +1,5 @@
 """Statistics reporting utilities for CLI."""
 import json
-import time
 from typing import Any
 
 from ..utils import get_configured_logger
@@ -22,16 +21,33 @@ def _print_final_summary(engine: Any, engine_type: str, args: Any) -> None:
     print("=" * 64)
 
     try:
-        stats = engine.get_stats()
-        if stats:
-            print(f"  总检查私钥:    {stats.get('total_checked', 0):,}")
-            print(f"  平均速度:      {stats.get('avg_speed', stats.get('speed', 0)):,.0f} keys/s")
-            print(f"  命中次数:      {stats.get('matches_found', 0)}")
-            elapsed = stats.get('elapsed', 0)
-            if elapsed > 0:
-                print(f"  运行时长:      {elapsed:.1f}s")
+        # v5.2.1: MultiGPU uses get_combined_stats() instead of get_stats()
+        if engine_type == "MultiGPU" and hasattr(engine, "get_combined_stats"):
+            stats = engine.get_combined_stats()
+            if stats:
+                total = stats.get("total_keys_checked", 0)
+                speed = stats.get("combined_throughput", 0)
+                matches = stats.get("total_matches", 0)
+                elapsed = stats.get("elapsed_time", 0)
+                print(f"  总检查私钥:    {total:,}")
+                print(f"  总吞吐量:      {speed:,.0f} keys/s")
+                print(f"  命中次数:      {matches}")
+                print(f"  GPU 数量:      {stats.get('device_count', 0)}")
+                if elapsed > 0:
+                    print(f"  运行时长:      {elapsed:.1f}s")
+            else:
+                print("  (无法获取统计信息)")
         else:
-            print("  (无法获取统计信息)")
+            stats = engine.get_stats()
+            if stats:
+                print(f"  总检查私钥:    {stats.get('total_checked', 0):,}")
+                print(f"  平均速度:      {stats.get('avg_speed', stats.get('speed', 0)):,.0f} keys/s")
+                print(f"  命中次数:      {stats.get('matches_found', 0)}")
+                elapsed = stats.get('elapsed', 0)
+                if elapsed > 0:
+                    print(f"  运行时长:      {elapsed:.1f}s")
+            else:
+                print("  (无法获取统计信息)")
     except Exception as e:
         logger.debug("Failed to get final stats: %s", e)
         print("  (统计信息获取失败)")

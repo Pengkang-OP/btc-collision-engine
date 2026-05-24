@@ -32,8 +32,14 @@ import threading
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Optional, cast
+from typing import Any, cast
 
+# 跨包依赖
+from ...gpu.device import GPUDeviceDetector
+from ...gpu.device_manager import GPUDeviceManager
+from ...gpu.engine_monitor import GPUEngineMonitor
+from ...gpu.search_mode_coordinator import SearchModeCoordinator
+from ...monitoring.data_logger import DataLogger
 from ...utils.timeout import invoke_with_timeout
 
 # 回调类型
@@ -45,13 +51,6 @@ from ._scheduler import GPUBatchScheduler
 from .core import CollisionCore
 from .monitoring import PerformanceMonitoringPipeline
 from .vendor_strategy import VendorOptimizationFactory  # noqa: F401 # 保留供测试 patch 目标
-
-# 跨包依赖
-from ...gpu.device import GPUDeviceDetector
-from ...gpu.device_manager import GPUDeviceManager
-from ...gpu.engine_monitor import GPUEngineMonitor
-from ...gpu.search_mode_coordinator import SearchModeCoordinator
-from ...monitoring.data_logger import DataLogger
 
 # GPU 常量
 UINT32_MAX = 0xFFFFFFFF
@@ -648,7 +647,8 @@ class GPUCollisionEngine(BaseCollisionEngine):
 
         调用方（stop()）保证 self.stats 非 None，此处不做重复检查。
         """
-        assert self.stats is not None  # 文档有保证
+        if self.stats is None:
+            raise RuntimeError("GPUCollisionEngine.stats is None when publishing stop events")
         stop_event = EngineStopEvent(
             reason="user_request",
         )
@@ -925,38 +925,46 @@ class GPUCollisionEngine(BaseCollisionEngine):
 
     def _random_search(self) -> None:
         """随机碰撞模式"""
-        assert self._random_search_mode is not None
+        if self._random_search_mode is None:
+            raise RuntimeError("GPUCollisionEngine._random_search_mode is None when calling _random_search()")
         self._random_search_mode.execute()
 
     def _start_range_scan(self) -> None:
         """启动范围扫描"""
-        assert self._range_start is not None
-        assert self._range_end is not None
+        if self._range_start is None:
+            raise RuntimeError("GPUCollisionEngine._range_start is None when calling _start_range_scan()")
+        if self._range_end is None:
+            raise RuntimeError("GPUCollisionEngine._range_end is None when calling _start_range_scan()")
         self._range_scan(self._range_start, self._range_end)
 
     def _start_brute_force(self):
         """启动暴力穷举"""
-        assert self._range_start is not None
+        if self._range_start is None:
+            raise RuntimeError("GPUCollisionEngine._range_start is None when calling _start_brute_force()")
         return self._brute_force(self._range_start)
 
     def _random_search_sync(self):
         """同步执行版本"""
-        assert self._random_search_mode is not None
+        if self._random_search_mode is None:
+            raise RuntimeError("GPUCollisionEngine._random_search_mode is None when calling _random_search_sync()")
         return self._random_search_mode._execute_sync()
 
     def _random_search_async(self):
         """异步执行版本(双缓冲优化)"""
-        assert self._random_search_mode is not None
+        if self._random_search_mode is None:
+            raise RuntimeError("GPUCollisionEngine._random_search_mode is None when calling _random_search_async()")
         return self._random_search_mode._execute_async()
 
     def _calculate_key_gen_timeout(self, batch_size: int) -> float:
         """异步私钥生成超时计算"""
-        assert self._random_search_mode is not None
+        if self._random_search_mode is None:
+            raise RuntimeError("GPUCollisionEngine._random_search_mode is None when calling _calculate_key_gen_timeout()")
         return cast("float", self._random_search_mode._calculate_key_gen_timeout(batch_size))
 
     def _start_async_key_generation(self, batch_size: int) -> tuple[threading.Thread, list[Any]]:
         """启动异步私钥生成线程"""
-        assert self._random_search_mode is not None
+        if self._random_search_mode is None:
+            raise RuntimeError("GPUCollisionEngine._random_search_mode is None when calling _start_async_key_generation()")
         return cast(
             "tuple[threading.Thread, list[Any]]",
             self._random_search_mode._start_async_key_generation(batch_size),
@@ -966,7 +974,8 @@ class GPUCollisionEngine(BaseCollisionEngine):
         self, gen_thread: threading.Thread, gen_result: list[Any], batch_num: int,
     ) -> bytes:
         """等待异步私钥生成完成"""
-        assert self._random_search_mode is not None
+        if self._random_search_mode is None:
+            raise RuntimeError("GPUCollisionEngine._random_search_mode is None when calling _wait_for_async_key_generation()")
         return cast(
             "bytes",
             self._random_search_mode._wait_for_async_key_generation(
@@ -976,12 +985,14 @@ class GPUCollisionEngine(BaseCollisionEngine):
 
     def _range_scan(self, start: int, end: int):
         """范围扫描模式"""
-        assert self._range_scan_mode is not None
+        if self._range_scan_mode is None:
+            raise RuntimeError("GPUCollisionEngine._range_scan_mode is None when calling _range_scan()")
         return self._range_scan_mode.execute(start, end)
 
     def _brute_force(self, start: int):
         """暴力穷举模式"""
-        assert self._brute_force_mode is not None
+        if self._brute_force_mode is None:
+            raise RuntimeError("GPUCollisionEngine._brute_force_mode is None when calling _brute_force()")
         return self._brute_force_mode.execute(start)
 
     def _execute_batch_loop(
@@ -991,7 +1002,8 @@ class GPUCollisionEngine(BaseCollisionEngine):
         stop_condition_fn: Callable[[], bool] | None = None,
     ) -> int:
         """通用批处理执行循环"""
-        assert self._brute_force_mode is not None
+        if self._brute_force_mode is None:
+            raise RuntimeError("GPUCollisionEngine._brute_force_mode is None when calling _execute_batch_loop()")
         return cast(
             "int",
             self._brute_force_mode._execute_batch_loop(

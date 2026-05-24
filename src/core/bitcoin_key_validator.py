@@ -10,7 +10,6 @@ Strictly validates against Bitcoin Core specification:
 """
 
 import hmac
-import time
 from enum import Enum
 from typing import Any
 
@@ -19,92 +18,6 @@ from .base58 import Base58
 from .hash_utils import HashUtils
 from .secp256k1 import ECPoint, EllipticCurve, Secp256k1
 from .wif import WIF
-
-
-class WIFEncoder:
-    """WIF (Wallet Import Format) encoder - compliant with Bitcoin Core spec
-
-    Independent WIF encode/decode implementation with testnet support.
-    Note: This implementation overlaps with src.core.wif.WIF;
-    prefer using WIF class.
-    - Mainnet compressed WIF: 'K'/'L' prefix (52 chars)
-    - Mainnet uncompressed WIF: '5' prefix (51 chars)
-    - Testnet compressed WIF: 'c' prefix
-    - Testnet uncompressed WIF: '9' prefix
-    """
-
-    MAINNET_VERSION = 0x80
-    TESTNET_VERSION = 0xEF
-
-    @staticmethod
-    def encode(private_key: bytes, compressed: bool = True, testnet: bool = False) -> str:
-        """Encode 32-byte private key to WIF format.
-
-        Args:
-            private_key: 32-byte private key
-            compressed: Generate compressed WIF (K/L prefix) or uncompressed (5 prefix)
-            testnet: Use testnet version byte (0xEF)
-
-        Returns:
-            WIF encoded string
-
-        Raises:
-            ValueError: When private key length is not 32 bytes
-
-        """
-        if not isinstance(private_key, bytes):
-            raise ValueError("Private key must be bytes")
-        if len(private_key) != 32:
-            raise ValueError("Private key length must be 32 bytes")
-
-        # Version byte: mainnet 0x80, testnet 0xEF
-        version = WIFEncoder.TESTNET_VERSION if testnet else WIFEncoder.MAINNET_VERSION
-        data = bytes([version]) + private_key
-        if compressed:
-            data += bytes([0x01])  # Compressed flag
-        # Checksum: first 4 bytes of double SHA256
-        checksum = HashUtils.double_sha256(data)[:4]
-        return Base58.encode(data + checksum)
-
-    @staticmethod
-    def decode(wif: str) -> tuple[bytes, bool, bool]:
-        """Decode WIF to private key.
-
-        Args:
-            wif: WIF encoded string
-
-        Returns:
-            (private_key, is_compressed, is_testnet) tuple
-
-        Raises:
-            ValueError: When WIF format is invalid or checksum verification fails
-
-        """
-        if not isinstance(wif, str):
-            raise ValueError("WIF must be a string")
-
-        raw = Base58.decode(wif)
-        if len(raw) < 5:
-            raise ValueError(f"WIF data too short: {len(raw)} bytes")
-
-        # Checksum verification
-        payload, checksum = raw[:-4], raw[-4:]
-        expected = HashUtils.double_sha256(payload)[:4]
-        if checksum != expected:
-            raise ValueError("WIF checksum verification failed")
-
-        version = payload[0]
-        if version not in (WIFEncoder.MAINNET_VERSION, WIFEncoder.TESTNET_VERSION):
-            raise ValueError(f"Invalid WIF version byte: 0x{version:02x}")
-
-        is_testnet = version == WIFEncoder.TESTNET_VERSION
-        key_data = payload[1:]
-
-        if len(key_data) == 33 and key_data[-1] == 0x01:
-            return key_data[:-1], True, is_testnet  # Compressed
-        if len(key_data) == 32:
-            return key_data, False, is_testnet  # Uncompressed
-        raise ValueError(f"Invalid WIF payload length: {len(key_data)}")
 
 
 class KeyValidationConstants:
@@ -318,7 +231,8 @@ class BitcoinKeyValidator:
             result.add_detail("public_key_point_y", f"{public_key_point.y:064x}")
 
             # 5. Serialize public key — after is_infinity check, x/y are guaranteed non-None
-            assert public_key_point.x is not None and public_key_point.y is not None
+            if public_key_point.x is None or public_key_point.y is None:
+                raise RuntimeError("Public key point has None coordinates after is_infinity check")
 
             if compressed:
                 # Compressed format: 33 bytes, 02 or 03 prefix
@@ -383,8 +297,10 @@ class BitcoinKeyValidator:
                 y_squared = (pow(x, 3, Secp256k1.P) + 7) % Secp256k1.P
                 y = pow(y_squared, (Secp256k1.P + 1) // 4, Secp256k1.P)
 
-                # Determine y based on prefix
-                if public_key[0] == 0x03 and y % 2 == 0:  # y is odd
+                # Determine y based on prefix: 0x02 = even, 0x03 = odd
+                # pow() may return either parity; flip if mismatch
+                expect_even = (public_key[0] == 0x02)
+                if (y % 2 == 0) != expect_even:
                     y = Secp256k1.P - y
 
                 point = ECPoint(x, y)
@@ -802,6 +718,8 @@ class BitcoinKeyValidator:
 
         Returns complete validation report.
         """
+        import time
+
         report: dict[str, Any] = {
             "timestamp": time.time(),
             "steps": {},
@@ -810,7 +728,7 @@ class BitcoinKeyValidator:
             "warnings": [],
         }
 
-        # Step 1: Validate private key
+        # Step1: Validate private key
         pk_result = self.validate_private_key(private_key)
         report["steps"]["private_key_validation"] = pk_result.to_dict()
         if not pk_result.success:
@@ -818,7 +736,7 @@ class BitcoinKeyValidator:
             report["errors"].extend(pk_result.errors)
             return report
 
-        # Step 2: Generate compressed public key
+        # Step2: Generate compressed public key
         pub_comp_result, public_key_compressed = self.generate_public_key(
             private_key, compressed=True,
         )
@@ -828,7 +746,7 @@ class BitcoinKeyValidator:
             report["errors"].extend(pub_comp_result.errors)
             return report
 
-        # Step 3: Generate uncompressed public key
+        # Step3: Generate uncompressed public key
         pub_uncomp_result, public_key_uncompressed = self.generate_public_key(
             private_key, compressed=False,
         )
@@ -838,7 +756,7 @@ class BitcoinKeyValidator:
             report["errors"].extend(pub_uncomp_result.errors)
             return report
 
-        # Step 4: Generate P2PKH address
+        # Step4: Generate P2PKH address
         addr_result, address = self.generate_address(
             public_key_compressed, AddressType.P2PKH,
         )
@@ -848,7 +766,7 @@ class BitcoinKeyValidator:
             report["errors"].extend(addr_result.errors)
             return report
 
-        # Step 5: Generate compressed WIF
+        # Step5: Generate compressed WIF
         wif_comp_result, wif_compressed = self.private_key_to_wif(
             private_key, compressed=True,
         )
@@ -858,7 +776,7 @@ class BitcoinKeyValidator:
             report["errors"].extend(wif_comp_result.errors)
             return report
 
-        # Step 6: Generate uncompressed WIF
+        # Step6: Generate uncompressed WIF
         wif_uncomp_result, wif_uncompressed = self.private_key_to_wif(
             private_key, compressed=False,
         )
@@ -868,7 +786,7 @@ class BitcoinKeyValidator:
             report["errors"].extend(wif_uncomp_result.errors)
             return report
 
-        # Step 7: Address match verification
+        # Step7: Address match verification
         match_result = self.verify_address_match(address, target_addresses)
         report["steps"]["address_match"] = match_result.to_dict()
 

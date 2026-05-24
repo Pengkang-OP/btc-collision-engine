@@ -148,7 +148,8 @@ class LoggingConfig:
 
     def _ensure_log_directory(self) -> None:
         """确保日志目录存在（相对路径基于项目根目录）"""
-        assert self._config is not None
+        if self._config is None:
+            raise RuntimeError("LoggingConfig._ensure_log_directory(): self._config is None")
         log_file = self._config.get("file")
         if not log_file:
             from .log_platform_adapter import ensure_log_directory
@@ -214,7 +215,8 @@ class LoggingConfig:
 
     def _setup_root_logger(self) -> None:
         """配置根日志记录器"""
-        assert self._config is not None
+        if self._config is None:
+            raise RuntimeError("LoggingConfig._setup_root_logger(): self._config is None")
         level = self._config.get("level", "INFO")
         format_str = self._config.get("format", self.DEFAULT_CONFIG["format"])
 
@@ -248,7 +250,8 @@ class LoggingConfig:
         self, log_file: str, format_str: str,
     ) -> logging.Handler | None:
         """创建文件处理器"""
-        assert self._config is not None
+        if self._config is None:
+            raise RuntimeError("LoggingConfig._create_file_handler(): self._config is None")
         rotation_type = self._config.get("rotation_type", "size")
         level = self._config.get("level", "INFO")
 
@@ -397,7 +400,8 @@ class LoggingConfig:
         """获取当前配置"""
         if not self._initialized:
             self.init()
-        assert self._config is not None
+        if self._config is None:
+            raise RuntimeError("LoggingConfig.get_config(): self._config is None after init()")
         return self._config.copy()
 
     def get_logger(self, name: str) -> logging.Logger:

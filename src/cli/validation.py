@@ -1,22 +1,13 @@
 """CLI input validation utilities."""
 
 import argparse
-import os
 from pathlib import Path
-from typing import Any
+
+from .output import CLIOutput
 
 
 def validate_args(args: argparse.Namespace) -> bool:
-    """Validate parsed CLI arguments.
-
-    Args:
-        args: Parsed argument namespace
-
-    Returns:
-        True if valid, False otherwise
-    """
-    from src.cli.output import CLIOutput
-
+    """Validate parsed CLI arguments."""
     output = CLIOutput.get_instance()
 
     # Check: must have either -t or -f (unless it's a utility-only command)
@@ -32,28 +23,37 @@ def validate_args(args: argparse.Namespace) -> bool:
         output.error(f"无效模式: {mode}，有效值: random, range, brute_force")
         return False
 
-    # Range mode requires start/end
+    # Range/brute_force mode requires --start
     if mode in ("range", "brute_force"):
         start = getattr(args, "start", None)
-        end = getattr(args, "end", None)
-        if not start and mode == "range":
-            output.error("范围扫描模式需要指定 --start")
+        if not start:
+            output.error(f"{mode} 模式需要指定 --start (十六进制起始私钥)")
             return False
+
+        # --end only required for range mode
+        end = getattr(args, "end", None)
+        if mode == "range" and not end:
+            output.error("range 模式需要指定 --end (十六进制结束私钥)")
+            return False
+
+        # Validate hex format
+        try:
+            int(start, 16)
+        except (ValueError, TypeError):
+            output.error(f"--start 值不是合法的十六进制: {start}")
+            return False
+        if end:
+            try:
+                int(end, 16)
+            except (ValueError, TypeError):
+                output.error(f"--end 值不是合法的十六进制: {end}")
+                return False
 
     return True
 
 
 def validate_file_path(file_path: str) -> bool:
-    """Security check: validate file path for path traversal and existence.
-
-    Args:
-        file_path: File path to validate
-
-    Returns:
-        True if path is safe and exists, False otherwise
-    """
-    from src.cli.output import CLIOutput
-
+    """Security check: validate file path for path traversal and existence."""
     output = CLIOutput.get_instance()
 
     if not file_path or not isinstance(file_path, str):

@@ -19,6 +19,17 @@ from src.core.multi_format_generator import MultiFormatAddressGenerator
 from src.gpu.multi_format_multi_gpu_engine import create_multi_format_multi_gpu_engine
 
 
+@pytest.fixture
+def engine():
+    """创建多格式多GPU引擎实例作为测试 fixture"""
+    eng = create_multi_format_multi_gpu_engine()
+    yield eng
+    try:
+        eng.cleanup()
+    except Exception:
+        pass
+
+
 def test_format_manager():
     """测试1: 多格式目标管理器"""
     print("\n" + "=" * 80)
@@ -55,7 +66,6 @@ def test_format_manager():
     return manager
 
 
-@pytest.mark.skip(reason="Multi-format engine creation API changed")
 def test_engine_creation():
     """测试2: 引擎创建"""
     print("\n" + "=" * 80)
@@ -63,7 +73,7 @@ def test_engine_creation():
     print("=" * 80)
 
     # 使用工厂函数创建
-    engine = create_multi_format_multi_gpu_engine()()
+    engine = create_multi_format_multi_gpu_engine()
 
     print(f"  引擎类型: {type(engine).__name__}")
     print(f"  目标管理器: {type(engine._format_manager).__name__}")
@@ -79,7 +89,6 @@ def test_engine_creation():
     return engine
 
 
-@pytest.mark.skip(reason="Multi-format matching API changed")
 def test_multi_format_matching(engine):
     """测试3: 多格式地址匹配"""
     print("\n" + "=" * 80)
@@ -139,7 +148,6 @@ def test_multi_format_matching(engine):
     return addresses
 
 
-@pytest.mark.skip(reason="Post-processing API changed")
 def test_post_processing(engine):
     """测试4: 后处理检查其他格式"""
     print("\n" + "=" * 80)
@@ -202,7 +210,6 @@ def test_post_processing(engine):
     print("\n✅ 测试4通过: 后处理检查其他格式")
 
 
-@pytest.mark.skip(reason="Format stats API changed")
 def test_format_stats(engine):
     """测试5: 格式统计"""
     print("\n" + "=" * 80)
@@ -244,7 +251,6 @@ def test_format_stats(engine):
     print("\n✅ 测试5通过: 格式统计")
 
 
-@pytest.mark.skip(reason="Integration scenario needs full engine setup")
 def test_integration_scenario():
     """测试6: 集成场景测试"""
     print("\n" + "=" * 80)
@@ -252,7 +258,7 @@ def test_integration_scenario():
     print("=" * 80)
 
     # 创建引擎
-    engine = create_multi_format_multi_gpu_engine()()
+    engine = create_multi_format_multi_gpu_engine()
 
     # 场景: 用户有多个格式的目标地址
     print("\n场景: 用户导入多个格式的目标地址")
@@ -310,9 +316,9 @@ def main():
         # 运行所有测试
         test_format_manager()
         test_engine_creation()
-        test_multi_format_matching(create_multi_format_multi_gpu_engine()())
-        test_post_processing(create_multi_format_multi_gpu_engine()())
-        test_format_stats(create_multi_format_multi_gpu_engine()())
+        test_multi_format_matching(create_multi_format_multi_gpu_engine())
+        test_post_processing(create_multi_format_multi_gpu_engine())
+        test_format_stats(create_multi_format_multi_gpu_engine())
         test_integration_scenario()
 
         print("\n" + "=" * 80)
