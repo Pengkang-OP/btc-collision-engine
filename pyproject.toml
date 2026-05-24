@@ -125,10 +125,12 @@ ignore_errors = true
 
 [[tool.mypy.overrides]]
 module = [
-    "src.web.dashboard",        # Flask 条件导入 no-redef
-    "src.gpu.worker",           # 条件导入后置 sys.path
-    "src.utils.platform_check", # geteuid Unix 专用
-    "src.utils.timeout",        # ITIMER_REAL/SIGALRM Unix 专用
+    "src.web.dashboard",              # Flask 条件导入 no-redef
+    "src.gpu.worker",                 # 条件导入后置 sys.path
+    "src.utils.platform_check",       # geteuid Unix 专用
+    "src.utils.timeout",              # ITIMER_REAL/SIGALRM Unix 专用
+    "src.core.secure_key_manager",    # ctypes.WinDLL/get_last_error Windows 专用
+    "src.utils.log_platform_adapter", # ctypes.windll Windows 专用
 ]
 disable_error_code = ["attr-defined", "no-redef"]
 
