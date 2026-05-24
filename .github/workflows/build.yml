@@ -173,15 +173,19 @@ jobs:
       - name: 验证构建通过
         run: |
           FAILED=0
-          for job in build-package install-test docker-build; do
-            RESULT="${{ needs.${job}.result }}"
-            if [ "$RESULT" != "success" ]; then
-              echo "❌ $job 未通过: $RESULT"
+          check_job() {
+            local job_name="$1"
+            local job_result="$2"
+            if [ "$job_result" != "success" ]; then
+              echo "❌ $job_name 未通过: $job_result"
               FAILED=1
             else
-              echo "✅ $job 通过"
+              echo "✅ $job_name 通过"
             fi
-          done
+          }
+          check_job build-package "${{ needs.build-package.result }}"
+          check_job install-test "${{ needs.install-test.result }}"
+          check_job docker-build "${{ needs.docker-build.result }}"
           if [ $FAILED -eq 1 ]; then
             echo "⛔ 构建验证未通过！"
             exit 1
