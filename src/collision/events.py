@@ -21,6 +21,12 @@ class EventType(Enum):
 class EngineEvent:
     """Base class for engine events."""
 
+    def to_dict(self) -> dict[str, Any]:
+        """Convert event to dictionary representation."""
+        from dataclasses import asdict
+
+        return asdict(self)
+
 
 @dataclass
 class EngineStartEvent(EngineEvent):
@@ -127,3 +133,4 @@ class CollisionEvent(EngineEvent):
     address: str = ""
     wif: str = ""
     target_address: str = ""
+    event_type: str | None = None
