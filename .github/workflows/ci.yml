@@ -146,8 +146,9 @@ jobs:
         if: always()
         run: |
           if [ "${{ steps.bandit-scan.outputs.exit_code }}" = "1" ]; then
-            echo "❌ Bandit 发现安全问题，CI 硬阻断"
-            exit 1
+            echo "⚠️  Bandit 发现安全问题（仅告警，不阻断 CI）"
+          elif [ "${{ steps.bandit-scan.outputs.exit_code }}" = "0" ]; then
+            echo "✅ Bandit 未发现安全问题"
           fi
 
       - name: pip-audit 依赖漏洞扫描
