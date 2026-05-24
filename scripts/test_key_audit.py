@@ -3,7 +3,9 @@
 
 import os
 import sys
+from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from src.utils.key_audit import (  # 需 sys.path 前置
     KeyAuditLevel,
     KeyAuditLogger,
