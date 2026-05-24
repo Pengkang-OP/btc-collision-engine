@@ -1,6 +1,7 @@
 """Enhanced monitoring with advanced metrics tracking."""
 import logging
 import threading
+from contextlib import suppress
 
 from src.monitoring.data_logger import DataLogger
 
@@ -36,10 +37,8 @@ class EnhancedMonitoringSystem:
         This method is idempotent - calling it multiple times is safe.
         """
         with self._lock:
-            try:
+            with suppress(Exception):
                 self.data_logger = None
-            except Exception:
-                pass
             self._metrics.clear()
 
     def record_metric(

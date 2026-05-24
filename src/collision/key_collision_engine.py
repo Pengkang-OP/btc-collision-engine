@@ -55,7 +55,7 @@ from .types import CompleteCallback, MatchCallback, ProgressCallback
 logger = get_configured_logger("KeyCollisionEngine")
 sampled_logger = get_sampled_logger("KeyCollisionEngine.sampled", sample_rate=1000)
 
-from ._engine_constants import (
+from ._engine_constants import (  # noqa: E402
     BATCH_SIZE,
     BATCH_TUNE_1_2_CORE,
     BATCH_TUNE_4_CORE,
@@ -1947,7 +1947,9 @@ class KeyCollisionEngine(BaseCollisionEngine):
         self._thread = threading.Thread(target=target_fn, daemon=True)
         self._thread.start()
 
-    def start(self, mode: str = "random", resume: bool = False, max_keys: int | None = None, **kwargs) -> None:
+    def start(  # noqa: E501
+        self, mode: str = "random", resume: bool = False, max_keys: int | None = None, **kwargs
+    ) -> None:
         """在后台线程启动对撞
         Args:
             mode: "random", "range", "brute_force"

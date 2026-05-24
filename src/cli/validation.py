@@ -1,6 +1,7 @@
 """CLI input validation utilities."""
 
 import argparse
+from contextlib import suppress
 from pathlib import Path
 
 from .output import CLIOutput
@@ -70,11 +71,8 @@ def validate_file_path(file_path: str) -> bool:
     # Check for path traversal attempts
     project_root = _get_project_root()
     if project_root:
-        try:
+        with suppress(ValueError):
             resolved.relative_to(project_root)
-        except ValueError:
-            # File outside project root - warn but still allow
-            pass
 
     return True
 

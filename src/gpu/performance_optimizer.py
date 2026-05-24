@@ -400,7 +400,7 @@ class GPUPerformanceOptimizer:
         new_batch_size = current_batch_size
         profile = self._current_profile
         if profile is None:
-            raise RuntimeError("GPUPerformanceOptimizer._current_profile is None when calculating optimal batch size")
+            raise RuntimeError("_current_profile not set for batch size calculation")
 
         gpu_utilization = 0.0
         if engine is not None:

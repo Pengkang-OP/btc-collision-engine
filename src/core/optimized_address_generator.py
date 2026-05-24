@@ -153,10 +153,12 @@ class OptimizedP2PKHAddressGenerator(P2PKHAddressGenerator):
             20-byte Hash160 value
 
         """
-        if self.use_simd_hash and self._batch_optimizer is not None:
-            # Use batch optimizer for potential SIMD acceleration
-            if hasattr(self._batch_optimizer, "batch_hash160"):
-                return self._batch_optimizer.batch_hash160([public_key])[0]
+        if (
+            self.use_simd_hash
+            and self._batch_optimizer is not None
+            and hasattr(self._batch_optimizer, "batch_hash160")
+        ):
+            return self._batch_optimizer.batch_hash160([public_key])[0]
 
         # Fall back to standard HashUtils
         return HashUtils.hash160(public_key)

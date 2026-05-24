@@ -5,6 +5,7 @@
 import logging
 import threading
 from collections.abc import Callable
+from contextlib import suppress
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -69,12 +70,10 @@ class EventBus:
         """
         with self._lock:
             if event_type in self._subscribers:
-                try:
-                    self._subscribers[
-                        event_type
-                    ].remove(handler)
-                except ValueError:
-                    pass  # handler was not subscribed, no-op
+                    with suppress(ValueError):
+                        self._subscribers[
+                            event_type
+                        ].remove(handler)
 
     def publish(self, event: Any) -> None:
         """Publish an event to all subscribers.

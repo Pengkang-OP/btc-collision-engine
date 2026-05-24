@@ -155,7 +155,8 @@ class IntelGPUVendor(GPUVendorBase):
                 # 检查是否为推荐版本
                 if (major, minor, build, revision) < (31, 0, 101, 4500):
                     _rate_logger.warning(
-                        "[WARN] Intel驱动 %s 较旧, 建议更新到 31.0.101.4500+ 以提升稳定性", driver_version,
+                        "[WARN] Intel驱动 %s 较旧, 建议更新到 31.0.101.4500+ 以提升稳定性",
+                        driver_version,
                         key=f"intel_driver_old_{driver_version}",
                     )
                 else:
