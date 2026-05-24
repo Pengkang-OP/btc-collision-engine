@@ -16,20 +16,17 @@ from src.collision.gpu.engine import GPUCollisionEngine
 
 def example_1_basic_gpu_monitoring():
     """示例1: 基本GPU监控"""
-    print("="*80)
+    print("=" * 80)
     print("示例1: 基本GPU监控")
-    print("="*80)
+    print("=" * 80)
 
     if not GPUCollisionEngine.is_gpu_available():
         print("❌ GPU不可用,跳过示例")
         return
 
     # 创建GPU引擎
-    targets = {'1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'}
-    engine = GPUCollisionEngine(
-        targets=targets,
-        batch_size=100000
-    )
+    targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
+    engine = GPUCollisionEngine(targets=targets, batch_size=100000)
 
     # 获取GPU监控器(已自动启动)
     monitor = engine.gpu_performance_monitor
@@ -45,7 +42,7 @@ def example_1_basic_gpu_monitoring():
 
     # 启动引擎(短时间运行)
     print("🚀 启动GPU引擎(运行5秒)...")
-    engine.start(mode='random')
+    engine.start(mode="random")
 
     # 等待5秒收集数据
     time.sleep(5)
@@ -73,19 +70,16 @@ def example_1_basic_gpu_monitoring():
 
 def example_2_real_time_monitoring():
     """示例2: 实时监控GPU指标"""
-    print("="*80)
+    print("=" * 80)
     print("示例2: 实时监控GPU指标")
-    print("="*80)
+    print("=" * 80)
 
     if not GPUCollisionEngine.is_gpu_available():
         print("❌ GPU不可用,跳过示例")
         return
 
-    targets = {'1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'}
-    engine = GPUCollisionEngine(
-        targets=targets,
-        batch_size=50000
-    )
+    targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
+    engine = GPUCollisionEngine(targets=targets, batch_size=50000)
 
     monitor = engine.gpu_performance_monitor
 
@@ -95,14 +89,13 @@ def example_2_real_time_monitoring():
 
     # 注册性能退化回调
     def on_degradation(metrics, ratio):
-        print(f"\n⚠️ 性能退化告警: 当前={metrics.keys_per_second:,.0f} keys/s, "
-              f"退化率={ratio:.2%}")
+        print(f"\n⚠️ 性能退化告警: 当前={metrics.keys_per_second:,.0f} keys/s, 退化率={ratio:.2%}")
 
     monitor.on_degradation(on_degradation)
 
     # 启动引擎
     print("🚀 启动GPU引擎(运行10秒,每2秒显示指标)...")
-    engine.start(mode='random')
+    engine.start(mode="random")
 
     # 实时监控
     for i in range(5):
@@ -112,10 +105,12 @@ def example_2_real_time_monitoring():
         throughput = monitor.get_current_throughput()
         memory = monitor.get_memory_usage()
 
-        print(f"\n[{i*2+2}s] GPU指标:")
+        print(f"\n[{i * 2 + 2}s] GPU指标:")
         print(f"  当前吞吐量: {throughput:,.0f} keys/s")
-        print(f"  显存使用: {memory['used_mb']:.1f}MB / {memory['total_mb']:.0f}MB "
-              f"({memory['usage_percent']:.1f}%)")
+        print(
+            f"  显存使用: {memory['used_mb']:.1f}MB / {memory['total_mb']:.0f}MB "
+            f"({memory['usage_percent']:.1f}%)"
+        )
         print(f"  内存池命中率: {memory['pool_hit_rate']:.1f}%")
 
     # 停止引擎
@@ -123,7 +118,7 @@ def example_2_real_time_monitoring():
 
     # 导出指标数据
     print("\n📤 导出GPU指标数据(JSON格式,前1000字符):")
-    json_data = monitor.export_metrics(format='json')
+    json_data = monitor.export_metrics(format="json")
     print(json_data[:1000])
     print("...")
     print()
@@ -131,9 +126,9 @@ def example_2_real_time_monitoring():
 
 def example_3_memory_tracking():
     """示例3: 显存使用跟踪"""
-    print("="*80)
+    print("=" * 80)
     print("示例3: 显存使用跟踪")
-    print("="*80)
+    print("=" * 80)
 
     if not GPUCollisionEngine.is_gpu_available():
         print("❌ GPU不可用,跳过示例")
@@ -150,10 +145,7 @@ def example_3_memory_tracking():
 
     # 分配128MB
     monitor.record_memory_metrics(
-        used_memory_mb=128.0,
-        total_memory_mb=8192.0,
-        allocation=True,
-        pool_hit=False
+        used_memory_mb=128.0, total_memory_mb=8192.0, allocation=True, pool_hit=False
     )
     print(f"  分配128MB后: {monitor.get_memory_usage()}")
 
@@ -162,16 +154,13 @@ def example_3_memory_tracking():
         used_memory_mb=384.0,
         total_memory_mb=8192.0,
         allocation=True,
-        pool_hit=True  # 命中内存池
+        pool_hit=True,  # 命中内存池
     )
     print(f"  分配256MB后: {monitor.get_memory_usage()}")
 
     # 释放128MB
     monitor.record_memory_metrics(
-        used_memory_mb=256.0,
-        total_memory_mb=8192.0,
-        allocation=False,
-        pool_hit=False
+        used_memory_mb=256.0, total_memory_mb=8192.0, allocation=False, pool_hit=False
     )
     print(f"  释放128MB后: {monitor.get_memory_usage()}")
 
@@ -189,9 +178,9 @@ def example_3_memory_tracking():
 
 def example_4_comparison_cpu_vs_gpu():
     """示例4: CPU vs GPU性能对比"""
-    print("="*80)
+    print("=" * 80)
     print("示例4: CPU vs GPU性能对比")
-    print("="*80)
+    print("=" * 80)
 
     if not GPUCollisionEngine.is_gpu_available():
         print("❌ GPU不可用,跳过示例")
@@ -199,20 +188,18 @@ def example_4_comparison_cpu_vs_gpu():
 
     from src.collision.key_collision_engine import KeyCollisionEngine
 
-    targets = {'1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'}
+    targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
 
     # 测试CPU性能
     print("\n🔵 测试CPU引擎(5秒)...")
     cpu_monitor = None
     cpu_monitor.start()
 
-    cpu_engine = KeyCollisionEngine(
-        targets=targets,
-        use_performance_optimization=True
-    )
+    cpu_engine = KeyCollisionEngine(targets=targets, use_performance_optimization=True)
 
     # 手动生成一些地址
     import secrets
+
     start_time = time.time()
     count = 0
     while time.time() - start_time < 5:
@@ -220,25 +207,18 @@ def example_4_comparison_cpu_vs_gpu():
         cpu_engine.generator.generate_from_private_key(pk)
         count += 1
 
-    cpu_monitor.record_metrics(
-        addresses_generated=count,
-        elapsed_time=5.0,
-        optimization_enabled=True
-    )
+    cpu_monitor.record_metrics(addresses_generated=count, elapsed_time=5.0, optimization_enabled=True)
 
     cpu_speed = cpu_monitor.get_average_speed(window_seconds=5.0)
     print(f"  CPU速度: {cpu_speed:,.0f} addresses/s")
 
     # 测试GPU性能
     print("\n🟢 测试GPU引擎(5秒)...")
-    gpu_engine = GPUCollisionEngine(
-        targets=targets,
-        batch_size=100000
-    )
+    gpu_engine = GPUCollisionEngine(targets=targets, batch_size=100000)
 
     gpu_monitor = gpu_engine.gpu_performance_monitor
 
-    gpu_engine.start(mode='random')
+    gpu_engine.start(mode="random")
     time.sleep(5)
     gpu_engine.stop()
 
@@ -252,17 +232,20 @@ def example_4_comparison_cpu_vs_gpu():
         speedup = gpu_speed / cpu_speed
         print("\n📊 性能对比:")
         print(f"  GPU加速比: {speedup:.2f}x")
-        print(f"  GPU比CPU快: {(speedup-1)*100:.0f}%")
+        print(f"  GPU比CPU快: {(speedup - 1) * 100:.0f}%")
 
     print()
 
 
 if __name__ == "__main__":
     import logging
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
 
     print("GPU性能监控使用示例")
-    print("="*80)
+    print("=" * 80)
     print()
 
     try:
@@ -285,5 +268,5 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"示例4失败: {e}")
 
-    print("="*80)
+    print("=" * 80)
     print("所有示例完成!")

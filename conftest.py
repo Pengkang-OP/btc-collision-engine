@@ -31,8 +31,9 @@ def _apply_python314_capture_patch():
     保留为防御性保护，待确认长期无触发后可移除。
     """
     try:
-        import _pytest.capture as capture_mod
         import tempfile
+
+        import _pytest.capture as capture_mod
 
         # 补丁1: FDCapture.snap() - 安全处理已关闭的 tmpfile
         _orig_fdcapture_snap = capture_mod.FDCapture.snap
@@ -90,7 +91,7 @@ def _apply_python314_capture_patch():
                 )
                 # 同时更新 syscapture 的 tmpfile 引用
                 patchsysdict = {0: "stdin", 1: "stdout", 2: "stderr"}
-                if hasattr(self, 'syscapture') and self.targetfd in patchsysdict:
+                if hasattr(self, "syscapture") and self.targetfd in patchsysdict:
                     self.syscapture.tmpfile = self.tmpfile
                 # 更新 state 以允许 resume 被调用
                 self._state = "suspended"
@@ -119,11 +120,11 @@ def _apply_python314_logging_patch():
             """Python 3.14 兼容的 emit: 若 stream 已关闭则静默跳过。"""
             try:
                 stream = self.stream
-                if stream is not None and hasattr(stream, 'closed') and stream.closed:
+                if stream is not None and hasattr(stream, "closed") and stream.closed:
                     return
                 _orig_emit(self, record)
             except ValueError as e:
-                if 'I/O operation on closed file' in str(e):
+                if "I/O operation on closed file" in str(e):
                     # Python 3.14: stream 已关闭，静默忽略
                     return
                 raise
@@ -149,10 +150,10 @@ def _apply_pyopencl_editable_install_fix():
         import pyopencl._cl  # noqa: F401
         import pyopencl.cache  # noqa: F401
         import pyopencl.characterize  # noqa: F401
-        import pyopencl.tools  # noqa: F401
-        import pyopencl.version  # noqa: F401
         import pyopencl.cl  # noqa: F401
         import pyopencl.compyte  # noqa: F401
+        import pyopencl.tools  # noqa: F401
+        import pyopencl.version  # noqa: F401
     except ImportError:
         pass
 
