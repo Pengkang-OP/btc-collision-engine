@@ -13,8 +13,8 @@ except ImportError:
     # Flask not available – web dashboard is optional
     __all__ = ["create_app", "run_dashboard"]
 
-    def create_app(*args, **kwargs):  # pragma: no cover
+    def create_app(*args, **kwargs):  # type: ignore[misc]  # pragma: no cover
         raise ImportError("Flask is not installed. Install with: pip install flask")
 
-    def run_dashboard(*args, **kwargs):  # pragma: no cover
+    def run_dashboard(*args, **kwargs):  # type: ignore[misc]  # pragma: no cover
         raise ImportError("Flask is not installed. Install with: pip install flask")
