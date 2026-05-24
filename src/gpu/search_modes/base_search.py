@@ -101,7 +101,7 @@ class BaseSearchMode:
             logger.warning("GPU内存不足，尝试缩减batch_size")
             with engine._batch_size_lock:
                 if engine._batch_size is None:
-                    raise RuntimeError("GPUSearchMode: engine._batch_size is None when adjusting batch size")
+                    raise RuntimeError("engine._batch_size not set")
                 engine._batch_size = max(engine._batch_size // 2, 1024)
                 logger.info(f"batch_size已缩减至 {engine._batch_size}")
             return None  # continue

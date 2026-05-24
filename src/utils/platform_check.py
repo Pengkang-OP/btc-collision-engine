@@ -61,16 +61,16 @@ class PlatformChecker:
 
     def print_report(self):
         """Print platform check report."""
-        print(f"\n{'='*60}")
-        print("  跨平台兼容性检查")
-        print(f"{'='*60}")
+        print(f"\n{'='*60}")  # noqa: T201
+        print("  跨平台兼容性检查")  # noqa: T201
+        print(f"{'='*60}")  # noqa: T201
         for passed, msg in self._results:
             status = "[OK]" if passed else "[WARN]"
-            print(f"  {status}  {msg}")
+            print(f"  {status}  {msg}")  # noqa: T201
         all_passed = all(p for p, _ in self._results)
-        print(f"{'='*60}")
-        print(f"  结果: {'全部通过' if all_passed else '存在警告'}")
-        print(f"{'='*60}\n")
+        print(f"{'='*60}")  # noqa: T201
+        print(f"  结果: {'全部通过' if all_passed else '存在警告'}")  # noqa: T201
+        print(f"{'='*60}\n")  # noqa: T201
 
     def generate_report(self) -> dict:
         """Generate a structured report dict."""

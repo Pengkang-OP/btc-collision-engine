@@ -488,7 +488,7 @@ class ErrorRecoveryManager:
                 self._retry_history.clear()
             logger.info(f"[{self.name}] 重试历史已重置")
 
-    def recoverable(
+    def recoverable(  # noqa: C901
         self,
         max_retries: int = 3,
         delay: float = 1.0,
@@ -527,7 +527,7 @@ class ErrorRecoveryManager:
                         result = func(*args, **kwargs)
                         if resolved_category is not None and attempt > 0:
                             if last_exception is None:
-                                raise RuntimeError("error_recovery: last_exception is None when recording retry")
+                                raise RuntimeError("last_exception not set for retry recording")
                             manager.record_retry(
                                 resolved_category, last_exception, attempt, True,
                             )

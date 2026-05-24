@@ -831,7 +831,9 @@ class AmdGPUOptimizer:
 
         except (ValueError, TypeError) as e:
             self._logger.warning(
-                f"[WARN] AMD Wavefront 验证参数异常（非致命）: {type(e).__name__}\n   Wavefront 对齐将跳过",
+                "[WARN] AMD Wavefront 验证参数异常（非致命）: %s\n"
+                "   Wavefront 对齐将跳过",
+                type(e).__name__,
                 exc_info=True,
             )
             self._wavefront_result = {}
@@ -870,7 +872,9 @@ class AmdGPUOptimizer:
 
         except (ValueError, KeyError, TypeError) as e:
             self._logger.warning(
-                f"[WARN] AMD 显存优化配置数据异常（非致命）: {type(e).__name__}\n   显存配置将使用保守默认值",
+                "[WARN] AMD 显存优化配置数据异常（非致命）: %s\n"
+                "   显存配置将使用保守默认值",
+                type(e).__name__,
                 exc_info=True,
             )
             self._memory_config = {
@@ -883,7 +887,9 @@ class AmdGPUOptimizer:
             result["memory"] = self._memory_config
         except Exception as e:
             self._logger.warning(
-                f"[WARN] AMD 显存优化配置失败（非致命）: {type(e).__name__}\n   显存配置将使用保守默认值",
+                "[WARN] AMD 显存优化配置失败（非致命）: %s\n"
+                "   显存配置将使用保守默认值",
+                type(e).__name__,
                 exc_info=True,
             )
             self._memory_config = {

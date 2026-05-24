@@ -210,7 +210,7 @@ class AdaptivePipelineController:
     # 自适应评估与调整（每 N 批次调用一次）
     # ------------------------------------------------------------------
 
-    def evaluate_and_adjust(self) -> dict[str, Any]:
+    def evaluate_and_adjust(self) -> dict[str, Any]:  # noqa: C901
         """评估当前管道状态并输出调整指令
 
         Returns:

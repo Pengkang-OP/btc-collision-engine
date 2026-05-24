@@ -926,45 +926,45 @@ class GPUCollisionEngine(BaseCollisionEngine):
     def _random_search(self) -> None:
         """随机碰撞模式"""
         if self._random_search_mode is None:
-            raise RuntimeError("GPUCollisionEngine._random_search_mode is None when calling _random_search()")
+            raise RuntimeError("_random_search_mode not set")
         self._random_search_mode.execute()
 
     def _start_range_scan(self) -> None:
         """启动范围扫描"""
         if self._range_start is None:
-            raise RuntimeError("GPUCollisionEngine._range_start is None when calling _start_range_scan()")
+            raise RuntimeError("_range_start not set")
         if self._range_end is None:
-            raise RuntimeError("GPUCollisionEngine._range_end is None when calling _start_range_scan()")
+            raise RuntimeError("_range_end not set")
         self._range_scan(self._range_start, self._range_end)
 
     def _start_brute_force(self):
         """启动暴力穷举"""
         if self._range_start is None:
-            raise RuntimeError("GPUCollisionEngine._range_start is None when calling _start_brute_force()")
+            raise RuntimeError("_range_start not set for brute_force")
         return self._brute_force(self._range_start)
 
     def _random_search_sync(self):
         """同步执行版本"""
         if self._random_search_mode is None:
-            raise RuntimeError("GPUCollisionEngine._random_search_mode is None when calling _random_search_sync()")
+            raise RuntimeError("_random_search_mode not set for sync")
         return self._random_search_mode._execute_sync()
 
     def _random_search_async(self):
         """异步执行版本(双缓冲优化)"""
         if self._random_search_mode is None:
-            raise RuntimeError("GPUCollisionEngine._random_search_mode is None when calling _random_search_async()")
+            raise RuntimeError("_random_search_mode not set for async")
         return self._random_search_mode._execute_async()
 
     def _calculate_key_gen_timeout(self, batch_size: int) -> float:
         """异步私钥生成超时计算"""
         if self._random_search_mode is None:
-            raise RuntimeError("GPUCollisionEngine._random_search_mode is None when calling _calculate_key_gen_timeout()")
+            raise RuntimeError("_random_search_mode not set for key_gen_timeout")
         return cast("float", self._random_search_mode._calculate_key_gen_timeout(batch_size))
 
     def _start_async_key_generation(self, batch_size: int) -> tuple[threading.Thread, list[Any]]:
         """启动异步私钥生成线程"""
         if self._random_search_mode is None:
-            raise RuntimeError("GPUCollisionEngine._random_search_mode is None when calling _start_async_key_generation()")
+            raise RuntimeError("_random_search_mode not set for async_key_gen")
         return cast(
             "tuple[threading.Thread, list[Any]]",
             self._random_search_mode._start_async_key_generation(batch_size),
@@ -975,7 +975,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
     ) -> bytes:
         """等待异步私钥生成完成"""
         if self._random_search_mode is None:
-            raise RuntimeError("GPUCollisionEngine._random_search_mode is None when calling _wait_for_async_key_generation()")
+            raise RuntimeError("_random_search_mode not set for wait_async")
         return cast(
             "bytes",
             self._random_search_mode._wait_for_async_key_generation(
@@ -992,7 +992,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
     def _brute_force(self, start: int):
         """暴力穷举模式"""
         if self._brute_force_mode is None:
-            raise RuntimeError("GPUCollisionEngine._brute_force_mode is None when calling _brute_force()")
+            raise RuntimeError("_brute_force_mode not set")
         return self._brute_force_mode.execute(start)
 
     def _execute_batch_loop(
@@ -1003,7 +1003,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
     ) -> int:
         """通用批处理执行循环"""
         if self._brute_force_mode is None:
-            raise RuntimeError("GPUCollisionEngine._brute_force_mode is None when calling _execute_batch_loop()")
+            raise RuntimeError("_brute_force_mode not set for _execute_batch_loop")
         return cast(
             "int",
             self._brute_force_mode._execute_batch_loop(

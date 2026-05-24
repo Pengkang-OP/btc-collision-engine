@@ -423,7 +423,9 @@ class AsyncGPUExecutor:
             self._seed_buffer_pool.append(seed_buf)
         self.seed_buffer = self._seed_buffer_pool[0]
         logger.info(
-            f"种子缓冲区池已创建: {self.queue_depth} × 32字节（PRNG模式，节省约{num_keys * 32 / 1024 / 1024}MB)",
+            "种子缓冲区池已创建: %d × 32字节（PRNG模式，节省约%dMB）",
+            self.queue_depth,
+            int(num_keys * 32 / 1024 / 1024),
         )
 
         # 创建 queue_depth 个缓冲区构成缓冲区池
@@ -1340,10 +1342,8 @@ class AsyncGPUExecutor:
             except Exception:
                 pass
             excess_seed = seed_pool.pop()
-            try:
+            with suppress(Exception):
                 excess_seed.release()
-            except Exception:
-                pass
             logger.debug(f"[自适应] 释放多余缓冲区 #{len(buf_pool) + 1}")
 
     def _on_adaptive_batch_size_change(self, new_size: int) -> None:
@@ -1377,12 +1377,10 @@ class AsyncGPUExecutor:
             self._prefetch_events.clear()
         self._wait_pending_event()
         # 释放 seed_buffer 池（v5.1.1: per-batch 独立 seed_buffer）
-        for idx, sbuf in enumerate(getattr(self, "_seed_buffer_pool", [])):
+        for _, sbuf in enumerate(getattr(self, "_seed_buffer_pool", [])):
             if sbuf is not None:
-                try:
+                with suppress(Exception):
                     sbuf.release()
-                except Exception:
-                    pass
         self._seed_buffer_pool = []
         self.seed_buffer = None
 

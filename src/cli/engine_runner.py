@@ -45,7 +45,8 @@ def _print_config_info(
     print(f"  模式: {getattr(args, 'mode', 'random')}")
     print(f"  目标地址数: {len(targets)}")
     print(f"  工作线程: {getattr(args, 'workers', 'auto')}")
-    print(f"  GPU: {'是' if getattr(args, 'use_gpu', False) or getattr(args, 'multi_gpu', False) else '否'}")
+    use_gpu = getattr(args, 'use_gpu', False) or getattr(args, 'multi_gpu', False)
+    print(f"  GPU: {'是' if use_gpu else '否'}")
     print(f"  断点续传: {'是' if getattr(args, 'checkpoint', False) else '否'}")
     print(f"  去重: {'是' if getattr(args, 'dedup', False) else '否'}")
     if start_val and end_val:
