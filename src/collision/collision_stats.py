@@ -25,6 +25,16 @@ class StatsSnapshot:
     throughput: float = 0.0
     matches: list[dict] = field(default_factory=list)
 
+    @property
+    def total_checked(self) -> int:
+        """Alias for total_keys_checked (backward compat)."""
+        return self.total_keys_checked
+
+    @property
+    def speed(self) -> float:
+        """Alias for throughput (backward compat)."""
+        return self.throughput
+
 
 # 常量定义 - 消除魔法数字 (CODE-3修复)
 DEFAULT_PROGRESS_INTERVAL_COUNT = 1000  # 每N次检测触发一次进度回调
@@ -48,6 +58,7 @@ class CollisionStats:
         self._gpu_errors: int = 0
         self._worker_errors: int = 0
         self._resource_errors: int = 0
+        self._wif_encode_errors: int = 0
         self._total_range: int = 0
 
     def record_key(self) -> None:
@@ -146,6 +157,32 @@ class CollisionStats:
         """
         with self._lock:
             self._worker_errors += 1
+
+    def record_wif_encode_error(self) -> None:
+        """Record a WIF encoding error."""
+        with self._lock:
+            self._wif_encode_errors += 1
+
+    @property
+    def wif_encode_errors(self) -> int:
+        """Get WIF encode error count."""
+        with self._lock:
+            return self._wif_encode_errors
+
+    @wif_encode_errors.setter
+    def wif_encode_errors(self, value: int) -> None:
+        """Set WIF encode error count."""
+        with self._lock:
+            self._wif_encode_errors = value
+
+    def error_summary(self) -> str:
+        """Return a human-readable error summary."""
+        return (
+            f"Errors: GPU={self.gpu_errors}, "
+            f"Worker={self.worker_errors}, "
+            f"WIF={self.wif_encode_errors}, "
+            f"Resource={self.resource_errors}"
+        )
 
     def get_throughput(self) -> float:
         elapsed = max(time.time() - self._start_time, 0.001)
@@ -318,8 +355,14 @@ class CollisionStats:
     def reset(self) -> None:
         with self._lock:
             self._total_keys = 0
+            self._total_batches = 0
             self._total_matches = 0
             self._total_errors = 0
+            self._gpu_errors = 0
+            self._worker_errors = 0
+            self._resource_errors = 0
+            self._wif_encode_errors = 0
+            self.matches.clear()
             self._start_time = time.time()
 
     def format_elapsed(self) -> str:
