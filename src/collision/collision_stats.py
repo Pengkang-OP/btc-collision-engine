@@ -48,6 +48,7 @@ class CollisionStats:
         self._gpu_errors: int = 0
         self._worker_errors: int = 0
         self._resource_errors: int = 0
+        self._total_range: int = 0
 
     def record_key(self) -> None:
         with self._lock:
@@ -56,6 +57,23 @@ class CollisionStats:
     def record_keys(self, count: int) -> None:
         with self._lock:
             self._total_keys += count
+
+    def increment(self, delta: int) -> None:
+        """Increment total keys checked by delta.
+
+        Args:
+            delta: Non-negative integer to add to total_checked
+
+        Raises:
+            ValueError: If delta is negative
+            TypeError: If delta is not an int
+        """
+        if not isinstance(delta, int):
+            raise TypeError(f"delta must be an int, got {type(delta).__name__}")
+        if delta < 0:
+            raise ValueError("delta must be non-negative")
+        with self._lock:
+            self._total_keys += delta
 
     def set_total_batches(self, batch_num: int) -> None:
         """Set total batch count (called by GPU search modes).
@@ -171,6 +189,8 @@ class CollisionStats:
                 self._total_keys = total_checked
             elif "total_range" in kwargs:
                 self._total_keys = kwargs["total_range"]
+            if "total_range" in kwargs:
+                self._total_range = kwargs["total_range"]
 
     @property
     def total_checked(self) -> int:
@@ -242,6 +262,41 @@ class CollisionStats:
     def avg_speed(self) -> float:
         """Get average speed (keys per second)."""
         return self.get_throughput()
+
+    @property
+    def speed(self) -> float:
+        """Alias for avg_speed for backward compatibility."""
+        return self.avg_speed
+
+    @property
+    def elapsed(self) -> float:
+        """Get elapsed time in seconds since start_time."""
+        return max(time.time() - self._start_time, 0.0)
+
+    @property
+    def _match_count(self) -> int:
+        """Backward-compatible accessor for match count (internal)."""
+        with self._lock:
+            return self._total_matches
+
+    @property
+    def eta_seconds(self) -> float:
+        """Estimated time to completion in seconds.
+
+        Returns:
+            -1.0 if total_range is not set or is 0 (infinite),
+            0.0 if remaining work <= 0,
+            otherwise remaining / throughput.
+        """
+        throughput = self.avg_speed
+        remaining = self._total_range - self._total_keys
+        if self._total_range <= 0:
+            return -1.0
+        if remaining <= 0:
+            return 0.0
+        if throughput <= 0:
+            return float("inf")
+        return remaining / throughput
 
     def get(self, key: str, default: Any = None) -> Any:
         """Dict-like access for backward compatibility with stats consumers.
