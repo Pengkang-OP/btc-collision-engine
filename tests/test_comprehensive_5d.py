@@ -81,7 +81,7 @@ class TestMultiModeNormalFlow:
 
         # 数据断言
         assert stats.speed == 0.0
-        assert stats.elapsed == 0.0
+        assert 0 <= stats.elapsed < 0.1  # 初始化后经过微秒级时间
 
         # 副作用断言
         assert isinstance(stats._lock, type(threading.Lock()))

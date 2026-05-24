@@ -25,7 +25,8 @@ class EngineEvent:
         """Convert event to dictionary representation."""
         from dataclasses import asdict
 
-        return asdict(self)
+        # All concrete subclasses are @dataclass; EngineEvent is just a base
+        return asdict(self)  # type: ignore[call-overload]
 
 
 @dataclass
