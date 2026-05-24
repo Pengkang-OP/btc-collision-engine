@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Simple Python launcher for BTC Collision Engine"""
+
 import os
-import sys
 import subprocess
+import sys
+
 
 def main():
     # Change to script directory
@@ -36,6 +38,7 @@ def main():
     except Exception as e:
         print(f"\nError: {e}")
         input("\nPress Enter to exit...")
+
 
 if __name__ == "__main__":
     main()

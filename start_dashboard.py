@@ -13,9 +13,6 @@ BTC 碰撞引擎的 Web 监控仪表板快速启动入口。
     pip install flask
 """
 
-import sys
-import os
-
 from src.web.dashboard import main
 
 if __name__ == "__main__":

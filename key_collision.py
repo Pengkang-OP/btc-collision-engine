@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 比特币私钥碰撞引擎 - 向后兼容模块
 
@@ -15,20 +14,21 @@ v5.0.0: 已移除 _LegacyTargetResolver 回退路径和 CollisionCLI 旧版 CLI�
 版本: v5.0.0
 """
 
+import hashlib
+import json
+import logging
 import os
-import time
 import secrets
 import threading
-import logging
-import json
-import hashlib
+import time
 import warnings  # 新增：用于弃用警告
 from datetime import datetime
-from typing import Set, List, Dict, Optional, Callable, Tuple
+from typing import Callable, Dict, List, Optional, Set, Tuple
 
 # 尝试导入coincurve以提升性能
 try:
     import coincurve
+
     COINCURVE_AVAILABLE = True
     logging.debug("coincurve库已加载，将使用高性能加密后端")
 except ImportError:
@@ -38,9 +38,15 @@ except ImportError:
 # 尝试导入 p2pkh_simulator（旧版第一方模拟器，可选）
 try:
     from p2pkh_simulator import (
-        Secp256k1, ECPoint, EllipticCurve, HashUtils, Base58, WIF,
+        WIF,
+        Base58,
+        ECPoint,
+        EllipticCurve,
+        HashUtils,
         P2PKHAddressGenerator,
+        Secp256k1,
     )
+
     P2PKH_SIMULATOR_AVAILABLE = True
 except ImportError:
     P2PKH_SIMULATOR_AVAILABLE = False
@@ -55,6 +61,7 @@ except ImportError:
 # 导入监控系统
 try:
     from src.monitoring import MonitoringSystem
+
     MONITORING_AVAILABLE = True
 except ImportError:
     MONITORING_AVAILABLE = False
@@ -63,6 +70,7 @@ except ImportError:
 # 条件导入新GPU引擎
 try:
     from src.collision.gpu.engine import GPUCollisionEngine as _GPUCollisionEngine
+
     GPU_ENGINE_AVAILABLE = True
 except ImportError:
     GPU_ENGINE_AVAILABLE = False
@@ -71,6 +79,7 @@ except ImportError:
 # 条件导入多GPU引擎
 try:
     from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine as _MultiGPUCollisionEngine
+
     MULTI_GPU_ENGINE_AVAILABLE = True
 except ImportError:
     MULTI_GPU_ENGINE_AVAILABLE = False
@@ -124,11 +133,11 @@ class CollisionStats:
     """对撞统计数据"""
 
     def __init__(self):
-        self.total_checked: int = 0       # 已检测总数
-        self.speed: float = 0.0           # 每秒检测速率
-        self.elapsed: float = 0.0         # 已运行时间(秒)
-        self.start_time: float = 0.0      # 开始时间戳
-        self.matches: List[Dict] = []     # 匹配结果列表
+        self.total_checked: int = 0  # 已检测总数
+        self.speed: float = 0.0  # 每秒检测速率
+        self.elapsed: float = 0.0  # 已运行时间(秒)
+        self.start_time: float = 0.0  # 开始时间戳
+        self.matches: List[Dict] = []  # 匹配结果列表
         self._progress_percent: float = 0.0  # 进度百分比(范围扫描模式)
         # 每个match: {"private_key_hash": str, "address": str, "timestamp": float}
 
@@ -141,11 +150,7 @@ class CollisionStats:
     def add_match(self, private_key: bytes, address: str):
         """记录一个匹配结果（安全：仅存储私钥哈希，不存储明文私钥）"""
         private_key_hash = hashlib.sha256(private_key).hexdigest()
-        match_info = {
-            "private_key_hash": private_key_hash,
-            "address": address,
-            "timestamp": time.time()
-        }
+        match_info = {"private_key_hash": private_key_hash, "address": address, "timestamp": time.time()}
         self.matches.append(match_info)
 
     def format_elapsed(self) -> str:
@@ -194,9 +199,16 @@ class CheckpointManager:
             sanitized.append(safe)
         return sanitized
 
-    def save(self, mode: str, targets: set, current_position: int,
-             total_checked: int, matches: list,
-             range_start: int = None, range_end: int = None):
+    def save(
+        self,
+        mode: str,
+        targets: set,
+        current_position: int,
+        total_checked: int,
+        matches: list,
+        range_start: int = None,
+        range_end: int = None,
+    ):
         """保存断点到 JSON 文件
 
         安全说明: 私钥信息不会保存到断点文件，仅保存地址和时间戳用于统计。
@@ -210,10 +222,10 @@ class CheckpointManager:
             "total_checked": total_checked,
             "matches": self._sanitize_matches(matches),
             "range_start": range_start,
-            "range_end": range_end
+            "range_end": range_end,
         }
         try:
-            with open(self.filepath, 'w', encoding='utf-8') as f:
+            with open(self.filepath, "w", encoding="utf-8") as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
             self._last_save_time = time.time()
             logging.info(f"断点已保存: {self.filepath}")
@@ -223,7 +235,7 @@ class CheckpointManager:
     def load(self) -> Optional[Dict]:
         """从文件加载断点，文件不存在或格式错误返回 None"""
         try:
-            with open(self.filepath, 'r', encoding='utf-8') as f:
+            with open(self.filepath, encoding="utf-8") as f:
                 data = json.load(f)
             if data.get("version") != 1:
                 logging.warning("断点文件版本不兼容")
@@ -299,7 +311,7 @@ class DeduplicationFilter:
             "tracked": len(self._seen),
             "duplicates_found": self.duplicates_found,
             "resets": self.resets,
-            "max_size": self.max_size
+            "max_size": self.max_size,
         }
 
     def reset(self):
@@ -322,15 +334,18 @@ class KeyCollisionEngine:
         key_collision.py 中的旧版保留仅为向后兼容，v6.0 将移除。
     """
 
-    def __init__(self, targets: Set[str],
-                 on_progress: Optional[Callable] = None,
-                 on_match: Optional[Callable] = None,
-                 on_complete: Optional[Callable] = None,
-                 checkpoint_enabled: bool = False,
-                 dedup_enabled: bool = False,
-                 dedup_max_size: int = 1_000_000,
-                 checkpoint_interval: int = 30,
-                 monitoring_enabled: bool = True):
+    def __init__(
+        self,
+        targets: Set[str],
+        on_progress: Optional[Callable] = None,
+        on_match: Optional[Callable] = None,
+        on_complete: Optional[Callable] = None,
+        checkpoint_enabled: bool = False,
+        dedup_enabled: bool = False,
+        dedup_max_size: int = 1_000_000,
+        checkpoint_interval: int = 30,
+        monitoring_enabled: bool = True,
+    ):
         """
         Args:
             targets: 目标地址集合 (set, O(1)查找)
@@ -348,9 +363,9 @@ class KeyCollisionEngine:
             "KeyCollisionEngine in key_collision.py is deprecated since v5.0.0. "
             "Use src.collision.key_collision_engine.KeyCollisionEngine instead.",
             DeprecationWarning,
-            stacklevel=2
+            stacklevel=2,
         )
-        
+
         self.targets = targets
         self.on_progress = on_progress
         self.on_match = on_match
@@ -372,8 +387,7 @@ class KeyCollisionEngine:
         self.logger = logging.getLogger("KeyCollisionEngine")
         # 断点管理器
         self.checkpoint_mgr = (
-            CheckpointManager(auto_save_interval=checkpoint_interval)
-            if checkpoint_enabled else None
+            CheckpointManager(auto_save_interval=checkpoint_interval) if checkpoint_enabled else None
         )
         # 去重过滤器
         self.dedup_filter = DeduplicationFilter(max_size=dedup_max_size, enabled=dedup_enabled)
@@ -397,7 +411,7 @@ class KeyCollisionEngine:
         if COINCURVE_AVAILABLE:
             try:
                 public_key = coincurve.PrivateKey(private_key).public_key.format(compressed=True)
-                hash160 = hashlib.new('ripemd160', hashlib.sha256(public_key).digest()).digest()
+                hash160 = hashlib.new("ripemd160", hashlib.sha256(public_key).digest()).digest()
                 return Base58.check_encode(0x00, hash160)
             except Exception:
                 pass
@@ -411,7 +425,7 @@ class KeyCollisionEngine:
         返回 (private_key, address) 如果匹配，否则 None。"""
         # 生成随机私钥
         private_key = secrets.token_bytes(32)
-        k = int.from_bytes(private_key, 'big')
+        k = int.from_bytes(private_key, "big")
 
         # 验证范围
         if k < 1 or k >= Secp256k1.N:
@@ -427,10 +441,11 @@ class KeyCollisionEngine:
     def _save_checkpoint(self, count: int):
         """辅助方法：保存当前断点（私钥信息经 CheckpointManager 脱敏后写入）"""
         if self.checkpoint_mgr and self.checkpoint_mgr.should_auto_save():
-            matches_list = [
-                {"address": m["address"], "timestamp": m["timestamp"]}
-                for m in self.stats.matches
-            ] if hasattr(self.stats, 'matches') else []
+            matches_list = (
+                [{"address": m["address"], "timestamp": m["timestamp"]} for m in self.stats.matches]
+                if hasattr(self.stats, "matches")
+                else []
+            )
             self.checkpoint_mgr.save(
                 mode=self._current_mode,
                 targets=self.targets,
@@ -438,7 +453,7 @@ class KeyCollisionEngine:
                 total_checked=count,
                 matches=matches_list,
                 range_start=self._range_start,
-                range_end=self._range_end
+                range_end=self._range_end,
             )
 
     def random_search(self):
@@ -454,7 +469,7 @@ class KeyCollisionEngine:
         while not self._stop_event.is_set():
             # 生成随机私钥
             private_key = secrets.token_bytes(32)
-            k = int.from_bytes(private_key, 'big')
+            k = int.from_bytes(private_key, "big")
             if k < 1 or k >= Secp256k1.N:
                 continue
 
@@ -510,7 +525,7 @@ class KeyCollisionEngine:
                 continue
 
             # 生成私钥
-            private_key = k.to_bytes(32, 'big')
+            private_key = k.to_bytes(32, "big")
 
             # 生成地址
             address = self._generate_address(private_key)
@@ -559,7 +574,7 @@ class KeyCollisionEngine:
                 continue
 
             # 生成私钥
-            private_key = k.to_bytes(32, 'big')
+            private_key = k.to_bytes(32, "big")
 
             # 生成地址
             address = self._generate_address(private_key)
@@ -588,10 +603,11 @@ class KeyCollisionEngine:
         self.stats.update(count)
         # 最终断点保存
         if self.checkpoint_mgr:
-            matches_list = [
-                {"address": m["address"], "timestamp": m["timestamp"]}
-                for m in self.stats.matches
-            ] if hasattr(self.stats, 'matches') else []
+            matches_list = (
+                [{"address": m["address"], "timestamp": m["timestamp"]} for m in self.stats.matches]
+                if hasattr(self.stats, "matches")
+                else []
+            )
             self.checkpoint_mgr.save(
                 mode=self._current_mode,
                 targets=self.targets,
@@ -599,7 +615,7 @@ class KeyCollisionEngine:
                 total_checked=self.stats.total_checked,
                 matches=matches_list,
                 range_start=self._range_start,
-                range_end=self._range_end
+                range_end=self._range_end,
             )
         if self.on_complete:
             self.on_complete(self.stats)
@@ -613,31 +629,31 @@ class KeyCollisionEngine:
             return None
 
         # 恢复统计数据
-        self.stats.total_checked = data.get('total_checked', 0)
-        self.stats.matches = data.get('matches', [])
+        self.stats.total_checked = data.get("total_checked", 0)
+        self.stats.matches = data.get("matches", [])
 
         # 恢复目标（如果当前没有目标）
-        if not self.targets and data.get('targets'):
-            self.targets = set(data['targets'])
+        if not self.targets and data.get("targets"):
+            self.targets = set(data["targets"])
 
         return data
 
     def start_from_checkpoint(self, data: Dict):
         """根据断点数据启动对撞"""
-        mode = data.get('mode', 'random')
-        if mode == 'range':
+        mode = data.get("mode", "random")
+        if mode == "range":
             self.start(
-                mode='range',
-                start=data.get('current_position', 1),
-                end=data.get('range_end', 2 ** 32),
+                mode="range",
+                start=data.get("current_position", 1),
+                end=data.get("range_end", 2**32),
             )
-        elif mode == 'brute_force':
+        elif mode == "brute_force":
             self.start(
-                mode='brute_force',
-                start=data.get('current_position', 1),
+                mode="brute_force",
+                start=data.get("current_position", 1),
             )
-        elif mode == 'random':
-            self.start(mode='random')
+        elif mode == "random":
+            self.start(mode="random")
 
     def start(self, mode: str = "random", resume: bool = False, **kwargs):
         """在后台线程启动对撞
@@ -660,15 +676,15 @@ class KeyCollisionEngine:
                 checkpoint_mode = checkpoint.get("mode", mode)
                 if checkpoint_mode == "range":
                     # 从断点继续范围扫描
-                    range_start = checkpoint.get("current_position", kwargs.get('start', 1))
-                    range_end = checkpoint.get("range_end", kwargs.get('end', 2**32))
-                    kwargs['start'] = range_start
-                    kwargs['end'] = range_end
+                    range_start = checkpoint.get("current_position", kwargs.get("start", 1))
+                    range_end = checkpoint.get("range_end", kwargs.get("end", 2**32))
+                    kwargs["start"] = range_start
+                    kwargs["end"] = range_end
                     mode = "range"
                 elif checkpoint_mode == "brute_force":
                     # 从断点继续暴力穷举
-                    start_pos = checkpoint.get("current_position", kwargs.get('start', 1))
-                    kwargs['start'] = start_pos
+                    start_pos = checkpoint.get("current_position", kwargs.get("start", 1))
+                    kwargs["start"] = start_pos
                     mode = "brute_force"
                 elif checkpoint_mode == "random":
                     # 随机模式直接启动，恢复统计数据
@@ -684,14 +700,16 @@ class KeyCollisionEngine:
         if mode == "random":
             target_fn = self.random_search
         elif mode == "range":
+
             def _range_scan_target():
-                return self.range_scan(
-                    kwargs.get('start', 1), kwargs.get('end', 2 ** 32)
-                )
+                return self.range_scan(kwargs.get("start", 1), kwargs.get("end", 2**32))
+
             target_fn = _range_scan_target
         elif mode == "brute_force":
+
             def _brute_force_target():
-                return self.brute_force(kwargs.get('start', 1))
+                return self.brute_force(kwargs.get("start", 1))
+
             target_fn = _brute_force_target
         else:
             raise ValueError(f"未知模式: {mode}")
@@ -710,10 +728,11 @@ class KeyCollisionEngine:
             self._thread.join(timeout=5)
         # 保存最终断点
         if self.checkpoint_mgr:
-            matches_list = [
-                {"address": m["address"], "timestamp": m["timestamp"]}
-                for m in self.stats.matches
-            ] if hasattr(self.stats, 'matches') else []
+            matches_list = (
+                [{"address": m["address"], "timestamp": m["timestamp"]} for m in self.stats.matches]
+                if hasattr(self.stats, "matches")
+                else []
+            )
             self.checkpoint_mgr.save(
                 mode=self._current_mode,
                 targets=self.targets,
@@ -721,7 +740,7 @@ class KeyCollisionEngine:
                 total_checked=self.stats.total_checked,
                 matches=matches_list,
                 range_start=self._range_start,
-                range_end=self._range_end
+                range_end=self._range_end,
             )
         # 停止监控系统
         if self.monitoring_enabled and self.monitoring_system:
@@ -764,6 +783,7 @@ else:
         def get_device_info() -> dict:
             """返回 GPU 设备信息"""
             return {}
+
 
 # 多GPU引擎导出
 if MULTI_GPU_ENGINE_AVAILABLE:

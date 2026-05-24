@@ -5,7 +5,7 @@
 
 import sys
 
-sys.path.insert(0, 'src')
+sys.path.insert(0, "src")
 
 print("=" * 80)
 print("快速演示: 多格式多GPU引擎")
@@ -24,10 +24,8 @@ targets = [
     # P2PKH格式
     "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH",
     "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",  # Satoshi的地址
-
     # Bech32格式
     "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
-
     # Taproot格式
     "bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jj0",
 ]
@@ -77,11 +75,11 @@ for i in range(3):
     is_match, matches = engine.check_match_all(test_key)
 
     if is_match:
-        print(f"   私钥 {i+1}: 🎉 找到匹配!")
+        print(f"   私钥 {i + 1}: 🎉 找到匹配!")
         for addr, fmt in matches:
             print(f"      {fmt}: {addr}")
     else:
-        print(f"   私钥 {i+1}: 无匹配 (正常)")
+        print(f"   私钥 {i + 1}: 无匹配 (正常)")
 
 # 6. 清理
 print("\n6. 清理...")

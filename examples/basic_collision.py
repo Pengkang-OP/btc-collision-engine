@@ -81,12 +81,14 @@ def main():
             # 检查是否匹配
             if hash160 in target_hash160_set:
                 elapsed = time.time() - start_time
-                matches.append({
-                    "private_key": private_key.hex(),
-                    "address": address,
-                    "elapsed": elapsed,
-                    "checked_count": checked,
-                })
+                matches.append(
+                    {
+                        "private_key": private_key.hex(),
+                        "address": address,
+                        "elapsed": elapsed,
+                        "checked_count": checked,
+                    }
+                )
                 print(f"\n  [!!] 发现匹配！地址: {address}")
                 print(f"       私钥: {private_key.hex()}")
 
@@ -96,7 +98,7 @@ def main():
                 speed = checked / elapsed if elapsed > 0 else 0
                 print(
                     f"  [{elapsed:.1f}s] 已检查: {checked:,} | "
-                    f"速度: {speed/1000:.1f}K/s | 匹配: {len(matches)}"
+                    f"速度: {speed / 1000:.1f}K/s | 匹配: {len(matches)}"
                 )
 
     except KeyboardInterrupt:
@@ -111,7 +113,7 @@ def main():
     print("-" * 60)
     print(f"  总检查数: {checked:,}")
     print(f"  运行时间: {elapsed:.2f} 秒")
-    print(f"  平均速度: {speed/1000:.1f}K/s")
+    print(f"  平均速度: {speed / 1000:.1f}K/s")
     print(f"  发现匹配: {len(matches)} 个")
     print("=" * 60)
 

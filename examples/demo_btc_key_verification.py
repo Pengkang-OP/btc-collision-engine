@@ -9,7 +9,6 @@
     python examples/demo_btc_key_verification.py
 """
 
-import json
 import os
 import sys
 
@@ -34,7 +33,7 @@ def example_basic_verification():
     targets = {
         "p2pkh": "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH",
         "p2sh": "3LRW7jeCvQCRdPF8S3yUCfRAx4eqXFmdcr",
-        "bech32": "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+        "bech32": "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
     }
 
     report = verifier.verify_private_key(private_key, targets)
@@ -110,16 +109,13 @@ def example_batch_verification():
                 "p2pkh": "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH",
                 "p2sh": "3LRW7jeCvQCRdPF8S3yUCfRAx4eqXFmdcr",
                 "bech32": "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
-            }
+            },
         },
     ]
 
     for i, case in enumerate(test_cases, 1):
         print(f"\n测试用例 #{i}:")
-        results = verifier.batch_verify_addresses(
-            case["private_key"],
-            case["targets"]
-        )
+        results = verifier.batch_verify_addresses(case["private_key"], case["targets"])
 
         print(f"  私钥哈希: {results['private_key_hash']}")
         for fmt, result in results["verification_results"].items():
@@ -138,7 +134,6 @@ def example_json_output():
     print("示例5: JSON格式输出")
     print("=" * 70)
 
-
     verifier = BTCKeyAddressVerifier(verbose=False)
     report = verifier.generate_random_verification()
 
@@ -149,7 +144,9 @@ def example_json_output():
     print("-" * 40)
     print(f"私钥 (哈希): {report_dict['private_key']['hex'][:16]}...")
     print(f"压缩公钥: {report_dict['public_key']['compressed'][:40]}...")
-    print(f"公钥坐标: ({report_dict['public_key']['x'][:16]}..., {report_dict['public_key']['y'][:16]}...)")
+    print(
+        f"公钥坐标: ({report_dict['public_key']['x'][:16]}..., {report_dict['public_key']['y'][:16]}...)"
+    )
     print(f"在曲线上: {report_dict['public_key']['on_curve']}")
 
     print("\n生成地址:")
@@ -174,14 +171,24 @@ def example_taproot_verification():
     taproot_result = report.address_results[AddressFormat.BECH32M]
     print(f"\nTaproot地址: {taproot_result.generated_address}")
     print(f"地址格式有效: {taproot_result.is_valid_format}")
-    print(f"起始字符验证: {'bc1p' if taproot_result.generated_address.startswith('bc1p') else 'INVALID'}")
+    print(
+        f"起始字符验证: {'bc1p' if taproot_result.generated_address.startswith('bc1p') else 'INVALID'}"
+    )
 
     # 显示转换步骤
     print("\n转换步骤:")
     for step in taproot_result.steps:
         print(f"  {step.name}:")
-        print(f"    输入: {step.input_data[:60]}..." if len(step.input_data) > 60 else f"    输入: {step.input_data}")
-        print(f"    输出: {step.output_data[:60]}..." if len(step.output_data) > 60 else f"    输出: {step.output_data}")
+        print(
+            f"    输入: {step.input_data[:60]}..."
+            if len(step.input_data) > 60
+            else f"    输入: {step.input_data}"
+        )
+        print(
+            f"    输出: {step.output_data[:60]}..."
+            if len(step.output_data) > 60
+            else f"    输出: {step.output_data}"
+        )
 
 
 def main():
@@ -206,6 +213,7 @@ def main():
         # 演示脚本顶层兜底: 捕获常见异常类型, 打印完整堆栈便于诊断
         print(f"\n错误: {e}")
         import traceback
+
         traceback.print_exc()
 
 

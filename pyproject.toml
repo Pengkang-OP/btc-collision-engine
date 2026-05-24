@@ -307,6 +307,23 @@ ignore = ["E203"]
     "B007", # 未使用循环变量可接受
     "E741", # 工具脚本中 l 变量可接受
 ] # 运维工具：豁免常见模式
+# ── 示例代码允许 print() ──────────────────────────
+"examples/**/*.py" = [
+    "T201", # demo/示例代码：print 输出合法
+    "W293", # 空白行尾空格可接受
+    "E501", # demo 代码：长行可读性优先
+    "E402", # sys.path 操作需在 import 之前
+]
+# ── 根目录入口脚本允许 print() ──────────────────────────
+"start.py" = ["T201"]
+"start_menu.py" = ["T201", "C901", "SIM105", "UP036"] # CLI 菜单：复杂度+print+版本块合法
+"key_collision_cli.py" = ["T201"]
+"key_collision.py" = [
+    "E501",  # CLI 入口：长行可读性优先
+    "UP006", # 保留 List/Dict/Set/Tuple 保持旧 Python 兼容
+    "UP035", # 保留 typing 导入保持旧 Python 兼容
+]
+"conftest.py" = ["SIM115"] # pytest fixture 中直接 open() 合法
 
 # ── 个别文件豁免 ──────────────────────────────────────────
 "tests/test_multi_format_conversion.py" = [

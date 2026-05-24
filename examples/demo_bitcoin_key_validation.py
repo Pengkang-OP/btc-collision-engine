@@ -14,10 +14,11 @@ import os
 import sys
 
 # Windows UTF-8支持
-if sys.platform == 'win32':
+if sys.platform == "win32":
     import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
 
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -67,26 +68,26 @@ def demo_private_key_validation():
 
     # 测试1: 有效私钥（私钥=1）
     print("\n🔑 测试1: 最小有效私钥（k=1）")
-    private_key = b'\x00' * 31 + b'\x01'
+    private_key = b"\x00" * 31 + b"\x01"
     result = validator.validate_private_key(private_key)
     print_result("私钥验证", result)
 
     # 测试2: 随机有效私钥
     print("\n🔑 测试2: 随机有效私钥")
-    k = int.from_bytes(secrets.token_bytes(32), 'big') % (Secp256k1.N - 1) + 1
-    private_key = k.to_bytes(32, 'big')
+    k = int.from_bytes(secrets.token_bytes(32), "big") % (Secp256k1.N - 1) + 1
+    private_key = k.to_bytes(32, "big")
     result = validator.validate_private_key(private_key)
     print_result("私钥验证", result)
 
     # 测试3: 无效私钥（0）
     print("\n🔑 测试3: 无效私钥（k=0）")
-    private_key = b'\x00' * 32
+    private_key = b"\x00" * 32
     result = validator.validate_private_key(private_key)
     print_result("私钥验证", result)
 
     # 测试4: 无效私钥（>= N）
     print("\n🔑 测试4: 无效私钥（k >= N）")
-    private_key = Secp256k1.N.to_bytes(32, 'big')
+    private_key = Secp256k1.N.to_bytes(32, "big")
     result = validator.validate_private_key(private_key)
     print_result("私钥验证", result)
 
@@ -96,7 +97,7 @@ def demo_public_key_generation():
     print_section("2. 公钥生成（secp256k1椭圆曲线）")
 
     validator = BitcoinKeyValidator()
-    private_key = b'\x00' * 31 + b'\x01'  # 私钥=1
+    private_key = b"\x00" * 31 + b"\x01"  # 私钥=1
 
     # 测试1: 生成压缩公钥
     print("\n🔐 测试1: 生成压缩公钥（33字节）")
@@ -133,7 +134,7 @@ def demo_address_generation():
     print_section("3. 地址生成（P2PKH/P2SH/Bech32）")
 
     validator = BitcoinKeyValidator()
-    private_key = b'\x00' * 31 + b'\x01'
+    private_key = b"\x00" * 31 + b"\x01"
     _, public_key = validator.generate_public_key(private_key, compressed=True)
 
     # 测试1: 生成P2PKH地址
@@ -152,6 +153,7 @@ def demo_address_generation():
     # 测试3: 验证Base58Check校验和
     print("\n📍 测试3: Base58Check校验和验证")
     from src.core.base58 import Base58
+
     try:
         version, payload = Base58.check_decode(address)
         print(f"  版本字节: 0x{version:02x}")
@@ -166,7 +168,7 @@ def demo_wif_encoding():
     print_section("4. WIF编码（Wallet Import Format）")
 
     validator = BitcoinKeyValidator()
-    private_key = b'\x00' * 31 + b'\x01'
+    private_key = b"\x00" * 31 + b"\x01"
 
     # 测试1: 压缩WIF
     print("\n💼 测试1: 压缩WIF编码（52字符，以'K'或'L'开头）")
@@ -188,6 +190,7 @@ def demo_wif_encoding():
     print("\n💼 测试3: WIF解码验证")
     # 运行时动态生成WIF，不硬编码
     from src.core.wif import WIF
+
     wif = WIF.encode(private_key, compressed=True)
     result, decoded_key, compressed = validator.wif_to_private_key(wif)
     print_result("WIF解码", result)
@@ -205,10 +208,7 @@ def demo_address_matching():
     # 测试1: 地址匹配
     print("\n🎯 测试1: 地址匹配成功")
     address = "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"
-    targets = {
-        "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH",
-        "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
-    }
+    targets = {"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH", "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
     result = validator.verify_address_match(address, targets)
     print_result("地址匹配", result)
     print(f"  匹配结果: {'✅ 找到匹配' if result.details.get('match') else '❌ 未匹配'}")
@@ -216,10 +216,7 @@ def demo_address_matching():
     # 测试2: 地址不匹配
     print("\n🎯 测试2: 地址不匹配")
     address = "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"
-    targets = {
-        "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
-        "12c6DSiU4Rq3P4ZxziKxzrL5LmMBrzjrJX"
-    }
+    targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", "12c6DSiU4Rq3P4ZxziKxzrL5LmMBrzjrJX"}
     result = validator.verify_address_match(address, targets)
     print_result("地址匹配", result)
     print(f"  匹配结果: {'✅ 找到匹配' if result.details.get('match') else '❌ 未匹配'}")
@@ -236,7 +233,7 @@ def demo_full_validation_chain():
     print_section("6. 完整验证链（私钥→公钥→地址→WIF→匹配）")
 
     validator = BitcoinKeyValidator()
-    private_key = b'\x00' * 31 + b'\x01'
+    private_key = b"\x00" * 31 + b"\x01"
     target_addresses = {"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"}
 
     print("\n🔗 执行完整验证链...")
@@ -247,26 +244,26 @@ def demo_full_validation_chain():
     print(f"  步骤数: {len(report['steps'])}")
 
     print("\n📋 各步骤结果:")
-    for step_name, step_result in report['steps'].items():
-        status = '✅' if step_result['success'] else '❌'
+    for step_name, step_result in report["steps"].items():
+        status = "✅" if step_result["success"] else "❌"
         print(f"  {status} {step_name}: {'通过' if step_result['success'] else '失败'}")
 
     print("\n📦 摘要信息:")
-    summary = report['summary']
+    summary = report["summary"]
     print(f"  私钥: {summary['private_key_hex']}")
     print(f"  公钥（压缩）: {summary['public_key_compressed']}")
     print(f"  地址: {summary['address']}")
     print(f"  WIF（压缩）: {summary['wif_compressed']}")
     print(f"  地址匹配: {'✅ 是' if summary['address_match'] else '❌ 否'}")
 
-    if report['errors']:
+    if report["errors"]:
         print("\n❌ 错误:")
-        for error in report['errors']:
+        for error in report["errors"]:
             print(f"    {error}")
 
-    if report['warnings']:
+    if report["warnings"]:
         print("\n⚠️  警告:")
-        for warning in report['warnings']:
+        for warning in report["warnings"]:
             print(f"    {warning}")
 
 
@@ -292,6 +289,7 @@ def main():
     except Exception as e:
         print(f"\n❌ 演示失败: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

@@ -4,11 +4,11 @@
 通过现有 i18n 系统实现中/英文自动切换，替代 start.bat 中的硬编码菜单。
 """
 
-from pathlib import Path
 import os
 import shutil
 import subprocess
 import sys
+from pathlib import Path
 
 # ── 确保 src/ 在 sys.path 中以支持直接运行 ────────────────────────
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -111,8 +111,9 @@ _FALLBACK_EN = {
 }
 
 try:
+    from src.i18n import _t as _i18n_t
+    from src.i18n import set_language
     from src.i18n.language_detector import LanguageDetector
-    from src.i18n import _t as _i18n_t, set_language
 
     _lang = LanguageDetector.detect()
     set_language(_lang)
@@ -133,6 +134,7 @@ except Exception:
 
 
 # ── 辅助函数 ──────────────────────────────────────────────────────
+
 
 def _clear_screen() -> None:
     print("\033[H\033[J", end="")
@@ -158,6 +160,7 @@ def _venv_python() -> str:
 
 
 # ── 清理子菜单 ────────────────────────────────────────────────────
+
 
 def cleanup_menu() -> bool:
     """清理子菜单，返回 True 表示留在子菜单，False 返回主菜单。"""
@@ -256,6 +259,7 @@ def cleanup_menu() -> bool:
 
 # ── 主菜单 ────────────────────────────────────────────────────────
 
+
 def monitoring_menu() -> bool:
     """监控子菜单，返回 True 留子菜单，False 返回主菜单。"""
     while True:
@@ -291,21 +295,24 @@ def monitoring_menu() -> bool:
             print(_t("menu.monitor_starting_cpu"))
             subprocess.run(
                 [sys.executable, "start_monitoring.py", "--mode", "cpu"],
-                cwd=_SCRIPT_DIR, check=False,
+                cwd=_SCRIPT_DIR,
+                check=False,
             )
             _wait_key()
         elif choice == "2":
             print(_t("menu.monitor_starting_gpu"))
             subprocess.run(
                 [sys.executable, "start_monitoring.py", "--mode", "gpu"],
-                cwd=_SCRIPT_DIR, check=False,
+                cwd=_SCRIPT_DIR,
+                check=False,
             )
             _wait_key()
         elif choice == "3":
             print(_t("menu.monitor_starting_report"))
             subprocess.run(
                 [sys.executable, "start_monitoring.py", "--mode", "cpu", "--report"],
-                cwd=_SCRIPT_DIR, check=False,
+                cwd=_SCRIPT_DIR,
+                check=False,
             )
             _wait_key()
         elif choice == "0":
@@ -325,8 +332,9 @@ def _show_banner() -> None:
     print("=" * 64)
     print()
     print(_t("menu.system_status"))
-    if os.path.isfile(os.path.join(_SCRIPT_DIR, "venv", "Scripts", "activate.bat")) or \
-       os.path.isfile(os.path.join(_SCRIPT_DIR, "venv", "bin", "activate")):
+    if os.path.isfile(os.path.join(_SCRIPT_DIR, "venv", "Scripts", "activate.bat")) or os.path.isfile(
+        os.path.join(_SCRIPT_DIR, "venv", "bin", "activate")
+    ):
         print(_t("menu.venv_found"))
     else:
         print(_t("menu.venv_not_found"))
@@ -361,6 +369,7 @@ def main() -> None:
     # 初始化日志安全过滤器（防止私钥泄露到日志文件）
     try:
         from src.utils.logging_config import _setup_security_filter
+
         _setup_security_filter()
     except Exception:
         pass  # 安全过滤器初始化失败不阻止菜单运行
