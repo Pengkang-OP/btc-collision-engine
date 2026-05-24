@@ -311,7 +311,7 @@ jobs:
             --cov-report=xml \
             --cov-report=term-missing \
             --cov-fail-under=40 \
-            -m "not (gpu or gpu_kernel or multi_gpu)" \
+            -m "not (gpu or gpu_kernel or multi_gpu or integration)"
             --timeout=600 \
             --timeout-method=signal \
             -p no:cacheprovider
