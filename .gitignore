@@ -47,8 +47,7 @@ test_results.log
 
 # --- 运行时数据 ---
 test_matches/
-test_data/*
-!test_data/test_env_use.json
+test_data/
 test_results/
 /checkpoint.json
 /targets.lock
@@ -181,6 +180,10 @@ bandit-report*.json
 *.bak
 *.cache
 *.pid
+tmp/
+
+# --- 测试运行时残留 ---
+tests/logs/
 
 # --- 临时 HTML（非 docs 目录）---
 *.html
