@@ -1,12 +1,8 @@
 """异常处理类单元测试 - CollisionError及其子类"""
 
-import os
-import sys
 import unittest
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from src.utils.exceptions import (  # noqa: E402
+from src.utils.exceptions import (
     AddressGenerationError,
     CheckpointError,
     CollisionError,
@@ -325,7 +321,7 @@ class TestExceptionIntegration(unittest.TestCase):
                 raise ValueError("Root cause")
             except ValueError as e:
                 raise ConfigError(
-                    "Configuration failed", original_error=e, context={"config_key": "test"}
+                    "Configuration failed", original_error=e, context={"config_key": "test"},
                 ) from e
         except ConfigError as e:
             self.assertEqual(e.error_code, 1003)

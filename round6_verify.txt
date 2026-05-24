@@ -1,0 +1,276 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.10, pytest-9.0.3, pluggy-1.6.0 -- C:\Users\pengk\AppData\Local\Microsoft\WindowsApps\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\python.exe
+cachedir: .pytest_cache
+hypothesis profile 'default'
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: f:\Qoder\btc-collision-engine
+configfile: pytest.ini
+plugins: hypothesis-6.152.9, pyfakefs-6.2.0, benchmark-5.2.3, cov-7.1.0, timeout-2.4.0, xdist-3.8.0
+collecting ... collected 103 items
+
+tests/unit/crypto/test_address_matching_flow.py::TestTargetResolverFormatDetection::test_detect_p2pkh_address 
+------------------------------- live log setup --------------------------------
+2026-05-23 23:47:33 [ WARNING] CryptoBackend: PurePythonBackend: 非恒定时间模式 - 不推荐用于生产环境，建议安装 coincurve 或 cryptography
+2026-05-23 23:47:34 [ WARNING] src.utils.logging_config: 日志系统已被初始化，重复调用被忽略
+PASSED                                                                   [  0%]
+tests/unit/crypto/test_address_matching_flow.py::TestTargetResolverFormatDetection::test_detect_p2sh_address PASSED [  1%]
+tests/unit/crypto/test_address_matching_flow.py::TestTargetResolverFormatDetection::test_detect_bech32_address PASSED [  2%]
+tests/unit/crypto/test_address_matching_flow.py::TestTargetResolverFormatDetection::test_detect_taproot_address PASSED [  3%]
+tests/unit/crypto/test_address_matching_flow.py::TestTargetResolverFormatDetection::test_detect_wif_uncompressed PASSED [  4%]
+tests/unit/crypto/test_address_matching_flow.py::TestTargetResolverFormatDetection::test_detect_wif_compressed_k PASSED [  5%]
+tests/unit/crypto/test_address_matching_flow.py::TestTargetResolverFormatDetection::test_detect_wif_compressed_l PASSED [  6%]
+tests/unit/crypto/test_address_matching_flow.py::TestTargetResolverFormatDetection::test_detect_compressed_public_key PASSED [  7%]
+tests/unit/crypto/test_address_matching_flow.py::TestTargetResolverFormatDetection::test_detect_uncompressed_public_key PASSED [  8%]
+tests/unit/crypto/test_address_matching_flow.py::TestTargetResolverFormatDetection::test_detect_hash160 PASSED [  9%]
+tests/unit/crypto/test_address_matching_flow.py::TestTargetResolverFormatDetection::test_detect_unknown_format PASSED [ 10%]
+tests/unit/crypto/test_address_matching_flow.py::TestTargetResolverAddressConversion::test_resolve_p2pkh_valid PASSED [ 11%]
+tests/unit/crypto/test_address_matching_flow.py::TestTargetResolverAddressConversion::test_resolve_p2pkh_invalid_checksum PASSED [ 12%]
+tests/unit/crypto/test_address_matching_flow.py::TestTargetResolverAddressConversion::test_resolve_with_cache_hit PASSED [ 13%]
+tests/unit/crypto/test_address_matching_flow.py::TestTargetResolverAddressConversion::test_resolve_batch PASSED [ 14%]
+tests/unit/crypto/test_address_matching_flow.py::TestTargetResolverAddressConversion::test_resolve_multiple_alias PASSED [ 15%]
+tests/unit/crypto/test_address_matching_flow.py::TestAddressMatcherStrategies::test_hash_set_strategy PASSED [ 16%]
+tests/unit/crypto/test_address_matching_flow.py::TestAddressMatcherStrategies::test_bloom_filter_strategy 
+-------------------------------- live log call --------------------------------
+2026-05-23 23:47:34 [   ERROR] AddressMatcher: 布隆过滤器初始化失败: name 'BloomFilter' is not defined, 回退到 hash_set 策略
+Traceback (most recent call last):
+  File "f:\Qoder\btc-collision-engine\src\collision\targets\matcher.py", line 85, in _init_bloom_filter
+    self._bloom = BloomFilter(capacity=capacity, error_rate=error_rate)
+                  ^^^^^^^^^^^
+NameError: name 'BloomFilter' is not defined
+FAILED                                                                   [ 17%]
+tests/unit/crypto/test_address_matching_flow.py::TestAddressMatcherStrategies::test_trie_strategy PASSED [ 18%]
+tests/unit/crypto/test_address_matching_flow.py::TestAddressMatcherStrategies::test_add_target PASSED [ 19%]
+tests/unit/crypto/test_address_matching_flow.py::TestAddressMatcherStrategies::test_add_targets_batch PASSED [ 20%]
+tests/unit/crypto/test_address_matching_flow.py::TestAddressMatcherStrategies::test_remove_target PASSED [ 21%]
+tests/unit/crypto/test_address_matching_flow.py::TestAddressMatcherStrategies::test_clear_all_targets PASSED [ 22%]
+tests/unit/crypto/test_address_matching_flow.py::TestAddressMatcherStrategies::test_contains_operator PASSED [ 23%]
+tests/unit/crypto/test_address_matching_flow.py::TestAddressMatcherStrategies::test_invalid_strategy PASSED [ 24%]
+tests/unit/crypto/test_address_matching_flow.py::TestAddressMatcherStrategies::test_input_type_validation PASSED [ 25%]
+tests/unit/crypto/test_address_matching_flow.py::TestContinuousMatcher::test_check_single_address_match SKIPPEDddress/get_statistics等不存在的方法) [ 26%]
+tests/unit/crypto/test_address_matching_flow.py::TestContinuousMatcher::test_check_single_address_no_match SKIPPEDddress/get_statistics等不存在的方法) [ 27%]
+tests/unit/crypto/test_address_matching_flow.py::TestContinuousMatcher::test_check_single_address_missing_hash160 SKIPPEDddress/get_statistics等不存在的方法) [ 28%]
+tests/unit/crypto/test_address_matching_flow.py::TestContinuousMatcher::test_check_address_batch SKIPPEDddress/get_statistics等不存在的方法) [ 29%]
+tests/unit/crypto/test_address_matching_flow.py::TestContinuousMatcher::test_get_statistics SKIPPEDddress/get_statistics等不存在的方法) [ 30%]
+tests/unit/crypto/test_address_matching_flow.py::TestContinuousMatcher::test_reset_statistics SKIPPEDddress/get_statistics等不存在的方法) [ 31%]
+tests/unit/crypto/test_address_matching_flow.py::TestContinuousMatcher::test_thread_safety SKIPPEDddress/get_statistics等不存在的方法) [ 32%]
+tests/unit/crypto/test_address_matching_flow.py::TestBitcoinKeyValidatorSecurity::test_verify_address_match_success PASSED [ 33%]
+tests/unit/crypto/test_address_matching_flow.py::TestBitcoinKeyValidatorSecurity::test_verify_address_match_failure PASSED [ 33%]
+tests/unit/crypto/test_address_matching_flow.py::TestBitcoinKeyValidatorSecurity::test_hmac_compare_digest_usage PASSED [ 34%]
+tests/unit/crypto/test_address_matching_flow.py::TestBitcoinKeyValidatorSecurity::test_validate_address_p2pkh PASSED [ 35%]
+tests/unit/crypto/test_address_matching_flow.py::TestBitcoinKeyValidatorSecurity::test_validate_address_p2sh PASSED [ 36%]
+tests/unit/crypto/test_address_matching_flow.py::TestEndToEndMatchingFlow::test_full_matching_workflow PASSED [ 37%]
+tests/unit/crypto/test_address_matching_flow.py::TestEndToEndMatchingFlow::test_batch_resolution_and_matching PASSED [ 38%]
+tests/unit/crypto/test_address_matching_flow.py::TestEndToEndMatchingFlow::test_cache_optimization_in_workflow PASSED [ 39%]
+tests/unit/crypto/test_address_matching_flow.py::TestEndToEndMatchingFlow::test_load_targets_from_file PASSED [ 40%]
+tests/unit/crypto/test_address_matching_flow.py::TestEndToEndMatchingFlow::test_security_path_traversal_protection 
+-------------------------------- live log call --------------------------------
+2026-05-23 23:47:35 [   ERROR] TargetResolver: 文件不存在: F:\etc\passwd
+PASSED                                                                   [ 41%]
+tests/unit/crypto/test_address_matching_flow.py::TestPerformanceOptimization::test_o1_lookup_performance PASSED [ 42%]
+tests/unit/crypto/test_address_matching_flow.py::TestPerformanceOptimization::test_batch_vs_single_performance PASSED [ 43%]
+tests/unit/crypto/test_address_matching_flow.py::TestEdgeCases::test_empty_target_set PASSED [ 44%]
+tests/unit/crypto/test_address_matching_flow.py::TestEdgeCases::test_duplicate_addresses PASSED [ 45%]
+tests/unit/crypto/test_address_matching_flow.py::TestEdgeCases::test_large_target_set PASSED [ 46%]
+tests/unit/crypto/test_address_matching_flow.py::TestEdgeCases::test_concurrent_access PASSED [ 47%]
+tests/unit/crypto/test_address_import.py::TestAddressImport::test_import_from_text_file 
+-------------------------------- live log call --------------------------------
+2026-05-23 23:47:35 [   ERROR] AddressStorage: JSON保存失败: type object 'EncodingUtils' has no attribute 'write_file'
+2026-05-23 23:47:35 [   ERROR] AddressStorage: 地址导入失败: 保存操作失败
+FAILED                                                                   [ 48%]
+tests/unit/crypto/test_address_import.py::TestAddressImport::test_import_from_json_file 
+-------------------------------- live log call --------------------------------
+2026-05-23 23:47:35 [   ERROR] AddressStorage: 读取JSON源文件失败: type object 'EncodingUtils' has no attribute 'read_file'
+2026-05-23 23:47:35 [ WARNING] AddressStorage: 地址导入完成: 没有有效地址
+FAILED                                                                   [ 49%]
+tests/unit/crypto/test_address_import.py::TestAddressImport::test_import_from_csv_file 
+-------------------------------- live log call --------------------------------
+2026-05-23 23:47:35 [   ERROR] AddressStorage: 读取CSV源文件失败: type object 'EncodingUtils' has no attribute 'read_file'
+2026-05-23 23:47:35 [ WARNING] AddressStorage: 地址导入完成: 没有有效地址
+FAILED                                                                   [ 50%]
+tests/unit/crypto/test_address_import.py::TestAddressImport::test_import_without_validation 
+-------------------------------- live log call --------------------------------
+2026-05-23 23:47:35 [   ERROR] AddressStorage: JSON保存失败: type object 'EncodingUtils' has no attribute 'write_file'
+2026-05-23 23:47:35 [   ERROR] AddressStorage: 地址导入失败: 保存操作失败
+FAILED                                                                   [ 51%]
+tests/unit/crypto/test_address_import.py::TestAddressImport::test_import_nonexistent_file PASSED [ 52%]
+tests/unit/crypto/test_address_import.py::TestAddressImport::test_import_with_progress_callback 
+-------------------------------- live log call --------------------------------
+2026-05-23 23:47:35 [   ERROR] AddressStorage: JSON保存失败: type object 'EncodingUtils' has no attribute 'write_file'
+2026-05-23 23:47:35 [   ERROR] AddressStorage: 地址导入失败: 保存操作失败
+FAILED                                                                   [ 53%]
+tests/unit/crypto/test_address_import.py::TestAddressImport::test_import_sqlite_format PASSED [ 54%]
+tests/unit/crypto/test_key_generator.py::TestSecureKeyGeneratorInit::test_init_custom_config PASSED [ 55%]
+tests/unit/crypto/test_key_generator.py::TestSecureKeyGeneratorInit::test_init_default_config PASSED [ 56%]
+tests/unit/crypto/test_key_generator.py::TestSecureKeyGeneratorInit::test_init_entropy_config_disabled PASSED [ 57%]
+tests/unit/crypto/test_key_generator.py::TestSecureKeyGeneratorInit::test_init_entropy_config_enabled PASSED [ 58%]
+tests/unit/crypto/test_key_generator.py::TestSecureKeyGeneratorInit::test_init_stats_initialized PASSED [ 59%]
+tests/unit/crypto/test_key_generator.py::TestSecureKeyGeneratorInit::test_init_with_none_config PASSED [ 60%]
+tests/unit/crypto/test_key_generator.py::TestGenerateBatch::test_generate_batch_all_keys_invalid_raises FAILED [ 61%]
+tests/unit/crypto/test_key_generator.py::TestGenerateBatch::test_generate_batch_exception_handling 
+-------------------------------- live log call --------------------------------
+2026-05-23 23:47:36 [   ERROR] SecureKeyGenerator: Failed to generate key 1: 模拟CSPRNG故障
+PASSED                                                                   [ 62%]
+tests/unit/crypto/test_key_generator.py::TestGenerateBatch::test_generate_batch_negative_count PASSED [ 63%]
+tests/unit/crypto/test_key_generator.py::TestGenerateBatch::test_generate_batch_single_key PASSED [ 64%]
+tests/unit/crypto/test_key_generator.py::TestGenerateBatch::test_generate_batch_updates_statistics PASSED [ 65%]
+tests/unit/crypto/test_key_generator.py::TestGenerateBatch::test_generate_batch_valid_keys PASSED [ 66%]
+tests/unit/crypto/test_key_generator.py::TestGenerateBatch::test_generate_batch_with_rate_limit PASSED [ 66%]
+tests/unit/crypto/test_key_generator.py::TestGenerateBatch::test_generate_batch_zero_count FAILED [ 67%]
+tests/unit/crypto/test_key_generator.py::TestGenerateSingle::test_generate_single_max_attempts_exceeded FAILED [ 68%]
+tests/unit/crypto/test_key_generator.py::TestGenerateSingle::test_generate_single_second_attempt_succeeds PASSED [ 69%]
+tests/unit/crypto/test_key_generator.py::TestGenerateSingle::test_generate_single_updates_total PASSED [ 70%]
+tests/unit/crypto/test_key_generator.py::TestGenerateSingle::test_generate_single_valid PASSED [ 71%]
+tests/unit/crypto/test_key_generator.py::TestIsValidPrivateKey::test_key_above_n_rejected PASSED [ 72%]
+tests/unit/crypto/test_key_generator.py::TestIsValidPrivateKey::test_key_equal_to_n_rejected PASSED [ 73%]
+tests/unit/crypto/test_key_generator.py::TestIsValidPrivateKey::test_valid_key_large PASSED [ 74%]
+tests/unit/crypto/test_key_generator.py::TestIsValidPrivateKey::test_valid_key_passes PASSED [ 75%]
+tests/unit/crypto/test_key_generator.py::TestIsValidPrivateKey::test_wrong_length_too_long PASSED [ 76%]
+tests/unit/crypto/test_key_generator.py::TestIsValidPrivateKey::test_wrong_length_too_short PASSED [ 77%]
+tests/unit/crypto/test_key_generator.py::TestIsValidPrivateKey::test_zero_key_rejected PASSED [ 78%]
+tests/unit/crypto/test_key_generator.py::TestStatistics::test_get_statistics_after_generation PASSED [ 79%]
+tests/unit/crypto/test_key_generator.py::TestStatistics::test_get_statistics_initial PASSED [ 80%]
+tests/unit/crypto/test_key_generator.py::TestStatistics::test_reset_statistics PASSED [ 81%]
+tests/unit/crypto/test_key_generator.py::TestStatistics::test_reset_statistics_then_regenerate PASSED [ 82%]
+tests/unit/crypto/test_key_generator.py::TestEntropyCheck::test_entropy_check_disabled_skips PASSED [ 83%]
+tests/unit/crypto/test_key_generator.py::TestEntropyCheck::test_entropy_check_exception_handling PASSED [ 84%]
+tests/unit/crypto/test_key_generator.py::TestEntropyCheck::test_entropy_windows_first_check_logs_platform PASSED [ 85%]
+tests/unit/crypto/test_key_generator.py::TestEntropyCheck::test_entropy_windows_no_file PASSED [ 86%]
+tests/unit/crypto/test_key_generator_entropy.py::TestEntropyHealthCheck::test_entropy_boundary_1000 PASSED [ 87%]
+tests/unit/crypto/test_key_generator_entropy.py::TestEntropyHealthCheck::test_entropy_boundary_1999 PASSED [ 88%]
+tests/unit/crypto/test_key_generator_entropy.py::TestEntropyHealthCheck::test_entropy_boundary_2000 PASSED [ 89%]
+tests/unit/crypto/test_key_generator_entropy.py::TestEntropyHealthCheck::test_entropy_boundary_999 FAILED [ 90%]
+tests/unit/crypto/test_key_generator_entropy.py::TestEntropyHealthCheck::test_entropy_file_invalid_data PASSED [ 91%]
+tests/unit/crypto/test_key_generator_entropy.py::TestEntropyHealthCheck::test_entropy_file_not_exists PASSED [ 92%]
+tests/unit/crypto/test_key_generator_entropy.py::TestEntropyHealthCheck::test_entropy_file_read_error PASSED [ 93%]
+tests/unit/crypto/test_key_generator_entropy.py::TestEntropyHealthCheck::test_generate_batch_with_high_entropy PASSED [ 94%]
+tests/unit/crypto/test_key_generator_entropy.py::TestEntropyHealthCheck::test_generate_batch_with_low_entropy 
+-------------------------------- live log call --------------------------------
+2026-05-23 23:47:36 [ WARNING] SecureKeyGenerator: Low entropy health, generated keys may have security risks
+PASSED                                                                   [ 95%]
+tests/unit/crypto/test_key_generator_entropy.py::TestEntropyHealthCheck::test_high_entropy_linux PASSED [ 96%]
+tests/unit/crypto/test_key_generator_entropy.py::TestEntropyHealthCheck::test_low_entropy_linux FAILED [ 97%]
+tests/unit/crypto/test_key_generator_entropy.py::TestEntropyHealthCheck::test_medium_entropy_linux PASSED [ 98%]
+tests/unit/crypto/test_key_generator_entropy.py::TestEntropyHealthCheck::test_multiple_low_entropy_warnings FAILED [ 99%]
+tests/unit/crypto/test_key_generator_entropy.py::TestEntropyHealthCheck::test_very_high_entropy_linux PASSED [100%]
+[conftest] 检测到 pytest-cov 激活，跳过强制退出以保留覆盖率输出
+
+
+================================== FAILURES ===================================
+___________ TestAddressMatcherStrategies.test_bloom_filter_strategy ___________
+tests\unit\crypto\test_address_matching_flow.py:219: in test_bloom_filter_strategy
+    assert stats["strategy"] == "bloom_filter"
+E   AssertionError: assert 'hash_set' == 'bloom_filter'
+E     
+E     - bloom_filter
+E     + hash_set
+---------------------------- Captured stdout call -----------------------------
+2026-05-23 23:47:34,926 - AddressMatcher - ERROR - 布隆过滤器初始化失败: name 'BloomFilter' is not defined, 回退到 hash_set 策略
+Traceback (most recent call last):
+  File "f:\Qoder\btc-collision-engine\src\collision\targets\matcher.py", line 85, in _init_bloom_filter
+    self._bloom = BloomFilter(capacity=capacity, error_rate=error_rate)
+                  ^^^^^^^^^^^
+NameError: name 'BloomFilter' is not defined
+------------------------------ Captured log call ------------------------------
+ERROR    AddressMatcher:matcher.py:97 布隆过滤器初始化失败: name 'BloomFilter' is not defined, 回退到 hash_set 策略
+Traceback (most recent call last):
+  File "f:\Qoder\btc-collision-engine\src\collision\targets\matcher.py", line 85, in _init_bloom_filter
+    self._bloom = BloomFilter(capacity=capacity, error_rate=error_rate)
+                  ^^^^^^^^^^^
+NameError: name 'BloomFilter' is not defined
+________________ TestAddressImport.test_import_from_text_file _________________
+tests\unit\crypto\test_address_import.py:39: in test_import_from_text_file
+    assert result["success"] is True
+E   assert False is True
+---------------------------- Captured stdout call -----------------------------
+2026-05-23 23:47:35,796 - AddressStorage - ERROR - JSON保存失败: type object 'EncodingUtils' has no attribute 'write_file'
+2026-05-23 23:47:35,797 - AddressStorage - ERROR - 地址导入失败: 保存操作失败
+------------------------------ Captured log call ------------------------------
+ERROR    AddressStorage:storage.py:157 JSON保存失败: type object 'EncodingUtils' has no attribute 'write_file'
+ERROR    AddressStorage:storage.py:569 地址导入失败: 保存操作失败
+________________ TestAddressImport.test_import_from_json_file _________________
+tests\unit\crypto\test_address_import.py:82: in test_import_from_json_file
+    assert result["success"] is True
+E   assert False is True
+---------------------------- Captured stdout call -----------------------------
+2026-05-23 23:47:35,807 - AddressStorage - ERROR - 读取JSON源文件失败: type object 'EncodingUtils' has no attribute 'read_file'
+2026-05-23 23:47:35,808 - AddressStorage - WARNING - 地址导入完成: 没有有效地址
+------------------------------ Captured log call ------------------------------
+ERROR    AddressStorage:storage.py:609 读取JSON源文件失败: type object 'EncodingUtils' has no attribute 'read_file'
+WARNING  AddressStorage:storage.py:572 地址导入完成: 没有有效地址
+_________________ TestAddressImport.test_import_from_csv_file _________________
+tests\unit\crypto\test_address_import.py:110: in test_import_from_csv_file
+    assert result["success"] is True
+E   assert False is True
+---------------------------- Captured stdout call -----------------------------
+2026-05-23 23:47:35,817 - AddressStorage - ERROR - 读取CSV源文件失败: type object 'EncodingUtils' has no attribute 'read_file'
+2026-05-23 23:47:35,817 - AddressStorage - WARNING - 地址导入完成: 没有有效地址
+------------------------------ Captured log call ------------------------------
+ERROR    AddressStorage:storage.py:652 读取CSV源文件失败: type object 'EncodingUtils' has no attribute 'read_file'
+WARNING  AddressStorage:storage.py:572 地址导入完成: 没有有效地址
+______________ TestAddressImport.test_import_without_validation _______________
+tests\unit\crypto\test_address_import.py:135: in test_import_without_validation
+    assert result["success"] is True
+E   assert False is True
+---------------------------- Captured stdout call -----------------------------
+2026-05-23 23:47:35,832 - AddressStorage - ERROR - JSON保存失败: type object 'EncodingUtils' has no attribute 'write_file'
+2026-05-23 23:47:35,833 - AddressStorage - ERROR - 地址导入失败: 保存操作失败
+------------------------------ Captured log call ------------------------------
+ERROR    AddressStorage:storage.py:157 JSON保存失败: type object 'EncodingUtils' has no attribute 'write_file'
+ERROR    AddressStorage:storage.py:569 地址导入失败: 保存操作失败
+____________ TestAddressImport.test_import_with_progress_callback _____________
+tests\unit\crypto\test_address_import.py:179: in test_import_with_progress_callback
+    assert result["success"] is True
+E   assert False is True
+---------------------------- Captured stdout call -----------------------------
+2026-05-23 23:47:35,852 - AddressStorage - ERROR - JSON保存失败: type object 'EncodingUtils' has no attribute 'write_file'
+2026-05-23 23:47:35,852 - AddressStorage - ERROR - 地址导入失败: 保存操作失败
+------------------------------ Captured log call ------------------------------
+ERROR    AddressStorage:storage.py:157 JSON保存失败: type object 'EncodingUtils' has no attribute 'write_file'
+ERROR    AddressStorage:storage.py:569 地址导入失败: 保存操作失败
+________ TestGenerateBatch.test_generate_batch_all_keys_invalid_raises ________
+tests\unit\crypto\test_key_generator.py:122: in test_generate_batch_all_keys_invalid_raises
+    self.assertIn("无法生成任何有效私钥", str(ctx.exception))
+E   AssertionError: '无法生成任何有效私钥' not found in 'Cannot generate any valid private keys (requested 5). This may indicate severe system entropy depletion or CSPRNG failure.'
+______________ TestGenerateBatch.test_generate_batch_zero_count _______________
+tests\unit\crypto\test_key_generator.py:100: in test_generate_batch_zero_count
+    self.assertIn("大于0", str(ctx.exception))
+E   AssertionError: '大于0' not found in 'Generation count must be greater than 0'
+________ TestGenerateSingle.test_generate_single_max_attempts_exceeded ________
+tests\unit\crypto\test_key_generator.py:182: in test_generate_single_max_attempts_exceeded
+    self.assertIn("超过最大尝试次数", str(ctx.exception))
+E   AssertionError: '超过最大尝试次数' not found in 'Failed to generate valid private key (exceeded max attempts)'
+______________ TestEntropyHealthCheck.test_entropy_boundary_999 _______________
+tests\unit\crypto\test_key_generator_entropy.py:135: in test_entropy_boundary_999
+    self.assertFalse(result)
+E   AssertionError: True is not false
+________________ TestEntropyHealthCheck.test_low_entropy_linux ________________
+tests\unit\crypto\test_key_generator_entropy.py:32: in test_low_entropy_linux
+    self.assertFalse(result)
+E   AssertionError: True is not false
+__________ TestEntropyHealthCheck.test_multiple_low_entropy_warnings __________
+tests\unit\crypto\test_key_generator_entropy.py:117: in test_multiple_low_entropy_warnings
+    self.assertEqual(self.key_gen.stats.get("low_entropy_count", 0), 3)
+E   AssertionError: 0 != 3
+============================== warnings summary ===============================
+C:\Users\pengk\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\_hypothesis_pytestplugin.py:481
+  C:\Users\pengk\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\_hypothesis_pytestplugin.py:481: UserWarning: Skipping collection of '.hypothesis' directory - this usually means you've explicitly set the `norecursedirs` pytest config option, replacing rather than extending the default ignores.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/unit/crypto/test_address_matching_flow.py::TestAddressMatcherStrategies::test_bloom_filter_strategy - AssertionError: assert 'hash_set' == 'bloom_filter'
+  
+  - bloom_filter
+  + hash_set
+FAILED tests/unit/crypto/test_address_import.py::TestAddressImport::test_import_from_text_file - assert False is True
+FAILED tests/unit/crypto/test_address_import.py::TestAddressImport::test_import_from_json_file - assert False is True
+FAILED tests/unit/crypto/test_address_import.py::TestAddressImport::test_import_from_csv_file - assert False is True
+FAILED tests/unit/crypto/test_address_import.py::TestAddressImport::test_import_without_validation - assert False is True
+FAILED tests/unit/crypto/test_address_import.py::TestAddressImport::test_import_with_progress_callback - assert False is True
+FAILED tests/unit/crypto/test_key_generator.py::TestGenerateBatch::test_generate_batch_all_keys_invalid_raises - AssertionError: '无法生成任何有效私钥' not found in 'Cannot generate any valid private keys (requested 5). This may indicate severe system entropy depletion or CSPRNG failure.'
+FAILED tests/unit/crypto/test_key_generator.py::TestGenerateBatch::test_generate_batch_zero_count - AssertionError: '大于0' not found in 'Generation count must be greater than 0'
+FAILED tests/unit/crypto/test_key_generator.py::TestGenerateSingle::test_generate_single_max_attempts_exceeded - AssertionError: '超过最大尝试次数' not found in 'Failed to generate valid private key (exceeded max attempts)'
+FAILED tests/unit/crypto/test_key_generator_entropy.py::TestEntropyHealthCheck::test_entropy_boundary_999 - AssertionError: True is not false
+FAILED tests/unit/crypto/test_key_generator_entropy.py::TestEntropyHealthCheck::test_low_entropy_linux - AssertionError: True is not false
+FAILED tests/unit/crypto/test_key_generator_entropy.py::TestEntropyHealthCheck::test_multiple_low_entropy_warnings - AssertionError: 0 != 3
+============= 12 failed, 84 passed, 7 skipped, 1 warning in 5.65s =============

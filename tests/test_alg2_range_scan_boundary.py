@@ -8,16 +8,12 @@
 5. 范围切分不重叠验证
 """
 
-import os
-import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+from unittest.mock import Mock
 
-from unittest.mock import Mock  # noqa: E402
+import pytest
 
-import pytest  # noqa: E402
-
-from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
+from src.collision.key_collision_engine import KeyCollisionEngine
 
 
 class TestGenerateSequentialKeysBoundary:
@@ -342,7 +338,7 @@ class TestCLIValidationBoundary:
     """CLI 参数验证边界测试"""
 
     def test_range_start_greater_equal_end_rejected(self):
-        """start >= end 被拒绝"""
+        """Start >= end 被拒绝"""
         from unittest.mock import Mock
 
         from src.cli.validation import validate_args
@@ -377,7 +373,7 @@ class TestCLIValidationBoundary:
         assert result is False, "start>=end 应被拒绝"
 
     def test_range_start_less_than_one_rejected(self):
-        """start < 1 被拒绝"""
+        """Start < 1 被拒绝"""
         from unittest.mock import Mock
 
         from src.cli.validation import validate_args

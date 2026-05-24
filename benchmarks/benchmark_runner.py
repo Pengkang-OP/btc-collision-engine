@@ -26,15 +26,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-# 将项目根目录加入路径
-_ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(_ROOT))
-
-from src.collision.deduplication_filter import (  # noqa: E402
+from src.collision.deduplication_filter import (
     DeduplicationFilter,
 )
-from src.core.address_generator import P2PKHAddressGenerator  # noqa: E402
-from src.core.base58 import Base58  # noqa: E402
+from src.core.address_generator import P2PKHAddressGenerator
+from src.core.base58 import Base58
 
 # ──────────────────────────────────────────────
 # 基准测试结果数据结构

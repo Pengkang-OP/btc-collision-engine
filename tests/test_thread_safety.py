@@ -1,10 +1,10 @@
-"""
-线程安全验证测试
+"""线程安全验证测试
 
 验证多线程环境下的锁顺序和竞态条件防护。
 """
 import threading
 import time
+
 import pytest
 
 from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine

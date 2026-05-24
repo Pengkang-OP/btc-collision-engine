@@ -1,16 +1,11 @@
 #!/usr/bin/env python3
-"""
-UTF-8编码支持单元测试
+"""UTF-8编码支持单元测试
 
 测试Windows控制台UTF-8编码修复的正确性和跨平台兼容性
 """
 
-import os
 import sys
 import unittest
-
-# 添加项目根目录到路径
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 class TestUTF8Helper(unittest.TestCase):
@@ -59,17 +54,17 @@ class TestUTF8HelperMock(unittest.TestCase):
 
     def test_windows_api_called_on_windows(self):
         """测试Windows平台调用Windows API"""
-        import unittest.mock as mock
+        from unittest import mock
 
         from tools import utf8_helper
 
         with mock.patch.object(utf8_helper.sys, "platform", "win32"):
             with mock.patch.object(utf8_helper, "is_utf8_setup_needed", return_value=True):
                 with mock.patch.object(
-                    utf8_helper.ctypes.windll.kernel32, "SetConsoleOutputCP"
+                    utf8_helper.ctypes.windll.kernel32, "SetConsoleOutputCP",
                 ) as mock_output:
                     with mock.patch.object(
-                        utf8_helper.ctypes.windll.kernel32, "SetConsoleCP"
+                        utf8_helper.ctypes.windll.kernel32, "SetConsoleCP",
                     ) as mock_input:
                         with mock.patch.object(utf8_helper.io, "TextIOWrapper"):
                             utf8_helper.setup_windows_utf8()
@@ -79,7 +74,7 @@ class TestUTF8HelperMock(unittest.TestCase):
 
     def test_windows_api_not_called_on_linux(self):
         """测试Linux平台不调用Windows API"""
-        import unittest.mock as mock
+        from unittest import mock
 
         from tools import utf8_helper
 
@@ -97,7 +92,7 @@ class TestUTF8HelperMock(unittest.TestCase):
 
     def test_handles_api_failure_gracefully(self):
         """测试API调用失败时不抛出异常并记录日志"""
-        import unittest.mock as mock
+        from unittest import mock
 
         from tools import utf8_helper
 
@@ -117,7 +112,7 @@ class TestUTF8HelperMock(unittest.TestCase):
 
     def test_handles_wrapper_failure_gracefully(self):
         """测试TextIOWrapper创建失败时不抛出异常"""
-        import unittest.mock as mock
+        from unittest import mock
 
         from tools import utf8_helper
 
@@ -126,7 +121,7 @@ class TestUTF8HelperMock(unittest.TestCase):
                 with mock.patch.object(utf8_helper.ctypes.windll.kernel32, "SetConsoleOutputCP"):
                     with mock.patch.object(utf8_helper.ctypes.windll.kernel32, "SetConsoleCP"):
                         with mock.patch.object(
-                            utf8_helper.io, "TextIOWrapper", side_effect=OSError("IO Error")
+                            utf8_helper.io, "TextIOWrapper", side_effect=OSError("IO Error"),
                         ):
                             with mock.patch.object(utf8_helper.logger, "debug") as mock_log:
                                 result = utf8_helper.setup_windows_utf8()
@@ -139,7 +134,7 @@ class TestUTF8HelperAuxiliary(unittest.TestCase):
 
     def test_is_utf8_setup_needed_returns_true_when_gbk(self):
         """测试GBK编码时需要设置UTF-8"""
-        import unittest.mock as mock
+        from unittest import mock
 
         from tools import utf8_helper
 
@@ -149,7 +144,7 @@ class TestUTF8HelperAuxiliary(unittest.TestCase):
 
     def test_is_utf8_setup_needed_returns_false_when_utf8(self):
         """测试UTF-8编码时不需要设置"""
-        import unittest.mock as mock
+        from unittest import mock
 
         from tools import utf8_helper
 
@@ -159,7 +154,7 @@ class TestUTF8HelperAuxiliary(unittest.TestCase):
 
     def test_is_utf8_setup_needed_returns_false_on_linux(self):
         """测试Linux平台不需要设置"""
-        import unittest.mock as mock
+        from unittest import mock
 
         from tools import utf8_helper
 
@@ -168,7 +163,7 @@ class TestUTF8HelperAuxiliary(unittest.TestCase):
 
     def test_get_console_encoding_returns_encoding(self):
         """测试获取控制台编码"""
-        import unittest.mock as mock
+        from unittest import mock
 
         from tools import utf8_helper
 
@@ -180,7 +175,7 @@ class TestUTF8HelperAuxiliary(unittest.TestCase):
 
     def test_get_console_encoding_returns_none(self):
         """测试无法获取编码时返回默认值"""
-        import unittest.mock as mock
+        from unittest import mock
 
         from tools import utf8_helper
 

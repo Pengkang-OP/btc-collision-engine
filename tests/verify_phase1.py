@@ -11,13 +11,7 @@
 创建日期: 2026-04-29
 """
 
-import os
 import sys
-
-# 添加项目根目录到路径
-project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
 
 
 def test_module_imports():
@@ -62,7 +56,6 @@ def test_no_circular_dependency():
 
     # 尝试导入
     try:
-        pass
 
         print("  ✅ 无循环依赖检测通过\n")
         return True
@@ -216,9 +209,8 @@ def main():
     if passed == total:
         print("\n🎉 所有测试通过！Phase 1 实施成功！\n")
         return 0
-    else:
-        print(f"\n⚠️  {total - passed} 个测试失败，请检查错误\n")
-        return 1
+    print(f"\n⚠️  {total - passed} 个测试失败，请检查错误\n")
+    return 1
 
 
 if __name__ == "__main__":

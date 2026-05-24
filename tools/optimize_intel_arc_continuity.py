@@ -20,9 +20,6 @@ Intel Arc A770 GPU运算连续性优化方案
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-
 def apply_intel_arc_continuity_optimizations(engine):
     """应用Intel Arc GPU运算连续性优化
 

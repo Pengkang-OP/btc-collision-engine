@@ -42,6 +42,7 @@ def _get_memory_gb(device: dict) -> float:
 
     Returns:
         显存大小(GB)，如果无法获取则返回0
+
     """
     if not isinstance(device, dict):
         logger.error(f"device参数类型错误: 期望dict, 实际{type(device)}")
@@ -84,6 +85,8 @@ class GPUAutoConfigurator:
         # 获取特定厂商配置
         nvidia_config = configurator.get_nvidia_config(device_info)
     """
+
+    __slots__ = ("_config_cache",)
 
     # NVIDIA GPU配置模板
     NVIDIA_CONFIG = {
@@ -145,13 +148,14 @@ class GPUAutoConfigurator:
 
         Returns:
             优化配置字典
+
         """
         vendor = device.get("vendor", "unknown")
         device_key = f"{vendor}_{device.get('name', 'unknown')}"
 
         # 检查缓存
         if device_key in self._config_cache:
-            logger.debug(f"使用缓存配置: {device_key}")
+            logger.debug("使用缓存配置: %s", device_key)
             return self._config_cache[device_key].copy()
 
         # 根据厂商生成配置（兼容完整厂商名称如 'Intel(R) Corporation'）
@@ -172,7 +176,7 @@ class GPUAutoConfigurator:
         self._config_cache[device_key] = config.copy()
 
         logger.info(
-            f"设备配置已生成: {device.get('name')} (厂商={vendor}, 批次={config['batch_size']:,})"
+            f"设备配置已生成: {device.get('name')} (厂商={vendor}, 批次={config['batch_size']:,})",
         )
 
         return config
@@ -212,7 +216,10 @@ class GPUAutoConfigurator:
         recommended_wgs = 256
         adjusted_wgs = _align_work_group_size(recommended_wgs, max_wgs, 32)
         if adjusted_wgs != recommended_wgs:
-            logger.info(f"[NVIDIA] wgs: {recommended_wgs}->{adjusted_wgs} (max={max_wgs}, align=32)")
+            logger.info(
+                "[NVIDIA] wgs: %s->%s (max=%s, align=32)",
+                recommended_wgs, adjusted_wgs, max_wgs,
+            )
         config["work_group_size"] = adjusted_wgs
 
         return config
@@ -243,7 +250,7 @@ class GPUAutoConfigurator:
         recommended_wgs = 256
         adjusted_wgs = _align_work_group_size(recommended_wgs, max_wgs, 64)
         if adjusted_wgs != recommended_wgs:
-            logger.info(f"[AMD] wgs: {recommended_wgs}->{adjusted_wgs} (max={max_wgs}, align=64)")
+            logger.info("[AMD] wgs: %s->%s (max=%s, align=64)", recommended_wgs, adjusted_wgs, max_wgs)
         config["work_group_size"] = adjusted_wgs
 
         return config
@@ -281,7 +288,10 @@ class GPUAutoConfigurator:
         max_wgs = device.get("max_work_group_size", 1024)
         adjusted_wgs = _align_work_group_size(recommended_wgs, max_wgs, 32)
         if adjusted_wgs != recommended_wgs:
-            logger.info(f"[Intel Arc] wgs: {recommended_wgs}->{adjusted_wgs} (max={max_wgs}, align=32)")
+            logger.info(
+                "[Intel Arc] wgs: %s->%s (max=%s, align=32)",
+                recommended_wgs, adjusted_wgs, max_wgs,
+            )
         config["work_group_size"] = adjusted_wgs
 
         return config
@@ -308,7 +318,7 @@ class GPUAutoConfigurator:
         adjusted_wgs = _align_work_group_size(recommended_wgs, max_wgs, 32)
         if adjusted_wgs != recommended_wgs:
             logger.info(
-                f"[Unknown GPU] wgs: {recommended_wgs}->{adjusted_wgs} (max={max_wgs}, align=32)"
+                "[Unknown GPU] wgs: %s->%s (max=%s, align=32)", recommended_wgs, adjusted_wgs, max_wgs,
             )
         config["work_group_size"] = adjusted_wgs
 
@@ -323,6 +333,7 @@ class GPUAutoConfigurator:
 
         Returns:
             调整后的配置
+
         """
         # v4.2.1修复: 使用统一的显存获取方法
         memory_gb = _get_memory_gb(device)
@@ -369,6 +380,7 @@ class GPUAutoConfigurator:
 
         Returns:
             (is_valid, warnings) 元组
+
         """
         warnings = []
 
@@ -404,6 +416,7 @@ class GPUAutoConfigurator:
 
         Returns:
             格式化字符串
+
         """
         lines = [
             "GPU配置详情:",
@@ -434,6 +447,7 @@ def get_gpu_configurator() -> GPUAutoConfigurator:
 
     Returns:
         GPUAutoConfigurator实例
+
     """
     global _configurator_instance
 

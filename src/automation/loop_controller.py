@@ -1,30 +1,29 @@
-"""
-闭环控制器
+"""闭环控制器
 ==========
 协调各模块，异常自动触发反馈回路，形成严格的闭环管控
 """
 
-import sys
+import threading
+from collections.abc import Callable
+from datetime import datetime
 from pathlib import Path
+from typing import Any
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
-
-import threading  # noqa: E402
-from collections.abc import Callable  # noqa: E402
-from datetime import datetime  # noqa: E402
-from typing import Any  # noqa: E402
-
-from .audit import AuditModule  # noqa: E402
-from .auto_test import AutoTestModule  # noqa: E402
-from .data_analysis import DataAnalysisModule  # noqa: E402
-from .models import (  # noqa: E402
-    AnalysisReport, AuditResult, LoopState, Severity, SystemStatus, TestSuiteResult,
+from .audit import AuditModule
+from .auto_test import AutoTestModule
+from .data_analysis import DataAnalysisModule
+from .models import (
+    AnalysisReport,
+    AuditResult,
+    LoopState,
+    Severity,
+    SystemStatus,
+    TestSuiteResult,
 )
 
 
 class LoopController:
-    """
-    闭环控制器
+    """闭环控制器
     协调分析->测试->审核的完整流程
     异常自动触发反馈回路
 
@@ -65,8 +64,7 @@ class LoopController:
         self._phase_failures: dict[str, int] = {"analysis": 0, "test": 0, "audit": 0}
 
     def run(self) -> AuditResult:
-        """
-        执行完整的闭环流程
+        """执行完整的闭环流程
         分析 -> 测试 -> 审核 -> (异常则反馈回路)
 
         v4.3.1: 阶段失败不再硬中断，而是重试下一轮迭代。
@@ -131,24 +129,23 @@ class LoopController:
                     print("\n[PASS] Audit passed!")
                     self._set_phase(SystemStatus.PASSED)
                     break
-                else:
-                    block_count = audit_result.block_count
-                    print(f"\n[WARN] Audit rejected ({block_count} blocking issues)")
+                block_count = audit_result.block_count
+                print(f"\n[WARN] Audit rejected ({block_count} blocking issues)")
 
-                    if self.on_audit_complete:
-                        self.on_audit_complete(audit_result)
+                if self.on_audit_complete:
+                    self.on_audit_complete(audit_result)
 
-                    if not self.state.can_retry():
-                        print(f"[FAIL] Max retries reached ({self.max_iterations})")
-                        self._set_phase(SystemStatus.FAILED)
-                        break
+                if not self.state.can_retry():
+                    print(f"[FAIL] Max retries reached ({self.max_iterations})")
+                    self._set_phase(SystemStatus.FAILED)
+                    break
 
-                    self.state.increment_retry()
-                    self._set_phase(SystemStatus.RETRYING)
-                    self._execute_feedback_loop(audit_result)
+                self.state.increment_retry()
+                self._set_phase(SystemStatus.RETRYING)
+                self._execute_feedback_loop(audit_result)
 
             except Exception as e:
-                print(f"[ERROR] Loop execution error: {str(e)}")
+                print(f"[ERROR] Loop execution error: {e!s}")
                 self.state.current_phase = SystemStatus.FAILED
                 break
 
@@ -188,7 +185,7 @@ class LoopController:
             return report
 
         except Exception as e:
-            print(f"   [ERROR] Analysis failed: {str(e)}")
+            print(f"   [ERROR] Analysis failed: {e!s}")
             return None
 
     def _run_test_phase(self, analysis_report: AnalysisReport) -> TestSuiteResult | None:
@@ -203,7 +200,7 @@ class LoopController:
             print(f"   Total: {results.total}")
             print(
                 f"   Passed: {results.passed} | Failed: {results.failed} "
-                f"| Skipped: {results.skipped} | Errors: {results.errors}"
+                f"| Skipped: {results.skipped} | Errors: {results.errors}",
             )
             print(f"   Pass rate: {results.pass_rate:.1f}%")
             print(f"   Duration: {results.duration:.2f}s")
@@ -218,11 +215,11 @@ class LoopController:
             return results
 
         except Exception as e:
-            print(f"   [ERROR] Test failed: {str(e)}")
+            print(f"   [ERROR] Test failed: {e!s}")
             return None
 
     def _run_audit_phase(
-        self, test_results: TestSuiteResult, analysis_report: AnalysisReport
+        self, test_results: TestSuiteResult, analysis_report: AnalysisReport,
     ) -> AuditResult | None:
         """执行审核阶段"""
         print("\n[Phase 3] Audit Module")
@@ -251,7 +248,7 @@ class LoopController:
             return result
 
         except Exception as e:
-            print(f"   [ERROR] Audit failed: {str(e)}")
+            print(f"   [ERROR] Audit failed: {e!s}")
             return None
 
     def _execute_feedback_loop(self, audit_result: AuditResult):
@@ -329,7 +326,7 @@ class LoopController:
 
         from src.utils.fast_json import fast_dump
 
-        with open(filepath, "w", encoding="utf-8") as f:
+        with Path(filepath).open("w", encoding="utf-8") as f:
             fast_dump(report, f, ensure_ascii=False, indent=2)
 
 

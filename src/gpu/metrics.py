@@ -35,6 +35,7 @@ class GPUMetricsCollector:
     Attributes:
         _lock: 线程安全锁
         _created_at: 收集器创建时间戳
+
     """
 
     # 直方图桶边界（秒）：用于内核延迟分布
@@ -50,6 +51,15 @@ class GPUMetricsCollector:
         0.5,
         1.0,
         float("inf"),
+    )
+
+    __slots__ = (
+        "_lock", "_created_at",
+        "_keys_checked_total", "_matches_found_total", "_errors_total",
+        "_recovery_events_total",
+        "_throughput", "_memory_usage_bytes", "_device_active",
+        "_kernel_latency_buckets", "_kernel_latency_sum", "_kernel_latency_count",
+        "_pool_hits", "_pool_misses",
     )
 
     def __init__(self) -> None:
@@ -70,7 +80,7 @@ class GPUMetricsCollector:
         # --- Histograms ---
         # kernel latency: device_idx -> List[bucket_counts]
         self._kernel_latency_buckets: dict[int, list[int]] = defaultdict(
-            lambda: [0] * len(self.KERNEL_LATENCY_BUCKETS)
+            lambda: [0] * len(self.KERNEL_LATENCY_BUCKETS),
         )
         self._kernel_latency_sum: dict[int, float] = defaultdict(float)
         self._kernel_latency_count: dict[int, int] = defaultdict(int)
@@ -124,6 +134,7 @@ class GPUMetricsCollector:
         Args:
             device_idx: GPU 设备索引
             latency_sec: 单次内核调用耗时（秒）
+
         """
         with self._lock:
             self._kernel_latency_sum[device_idx] += latency_sec
@@ -141,6 +152,7 @@ class GPUMetricsCollector:
         Args:
             device_idx: GPU 设备索引
             hit: True=命中, False=未命中
+
         """
         with self._lock:
             if hit:
@@ -211,6 +223,7 @@ class GPUMetricsCollector:
 
         Returns:
             Prometheus text exposition format 字符串
+
         """
         with self._lock:
             lines = []
@@ -238,7 +251,7 @@ class GPUMetricsCollector:
 
             lines.append("# HELP gpu_throughput_keys_per_sec Current throughput per device.")
             lines.append("# TYPE gpu_throughput_keys_per_sec gauge")
-            for dev, val in sorted(self._throughput.items()):  # type: ignore[assignment]
+            for dev, val in sorted(self._throughput.items()):
                 lines.append(f'gpu_throughput_keys_per_sec{{device="{dev}"}} {val:.1f}')
 
             lines.append("# HELP gpu_memory_usage_bytes GPU memory usage per device.")
@@ -261,7 +274,7 @@ class GPUMetricsCollector:
                     boundary = self.KERNEL_LATENCY_BUCKETS[i]
                     le_str = f"{boundary:.3f}" if boundary != float("inf") else "+Inf"
                     lines.append(
-                        f'gpu_kernel_latency_seconds_bucket{{device="{dev}",le="{le_str}"}} {cnt}'
+                        f'gpu_kernel_latency_seconds_bucket{{device="{dev}",le="{le_str}"}} {cnt}',
                     )
                 lines.append(f'gpu_kernel_latency_seconds_sum{{device="{dev}"}} {s:.6f}')
                 lines.append(f'gpu_kernel_latency_seconds_count{{device="{dev}"}} {c}')
@@ -278,7 +291,7 @@ class GPUMetricsCollector:
             lines.append("# HELP gpu_metrics_collector_uptime_seconds Collector uptime.")
             lines.append("# TYPE gpu_metrics_collector_uptime_seconds gauge")
             lines.append(
-                f"gpu_metrics_collector_uptime_seconds {time.time() - self._created_at:.1f}"
+                f"gpu_metrics_collector_uptime_seconds {time.time() - self._created_at:.1f}",
             )
 
             lines.append("")  # 末尾换行
@@ -289,6 +302,7 @@ class GPUMetricsCollector:
 
         Returns:
             结构化指标字典，适合日志/API 使用
+
         """
         with self._lock:
             return {

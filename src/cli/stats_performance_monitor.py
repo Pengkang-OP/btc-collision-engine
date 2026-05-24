@@ -14,12 +14,13 @@ class StatsPerformanceMonitor:
         self._total_keys = 0
 
     def record_keys(
-        self, count: int
+        self, count: int,
     ) -> None:
         """Record key processing.
 
         Args:
             count: Keys processed
+
         """
         self._total_keys += count
 
@@ -28,9 +29,10 @@ class StatsPerformanceMonitor:
 
         Returns:
             Formatted report string
+
         """
         elapsed = max(
-            time.time() - self._start_time, 0.001
+            time.time() - self._start_time, 0.001,
         )
         throughput = self._total_keys / elapsed
         return (

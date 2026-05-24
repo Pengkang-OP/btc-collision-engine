@@ -123,6 +123,7 @@ class GPUDeviceScorer:
 
         Returns:
             评分(越高越好)
+
         """
         # 1. 显存分数 (主因素)
         memory_gb = device.get("global_mem_gb", 0.0)
@@ -162,7 +163,7 @@ class GPUDeviceScorer:
             f"cache={cache_bonus:.1f} + lmem={local_mem_bonus:.1f} + "
             f"gen={generation_bonus:.1f} = {raw_score:.1f}, "
             f"vendor_factor={vendor_factor:.2f}, "
-            f"final={final_score:.1f} (Tier: {self.get_tier(final_score)})"
+            f"final={final_score:.1f} (Tier: {self.get_tier(final_score)})",
         )
 
         return final_score
@@ -184,6 +185,7 @@ class GPUDeviceScorer:
 
         Returns:
             相对性能权重值 (含厂商系数)
+
         """
         # 负载均衡专用权重：memory:compute ≈ 6.0 : 0.1 = 60:1
         # 与旧版 load_balancer._calculate_performance_weights 保持一致
@@ -218,6 +220,7 @@ class GPUDeviceScorer:
 
         Returns:
             等级标识 ('S'/'A'/'B'/'C'/'D')
+
         """
         for tier, threshold, _ in self.TIER_THRESHOLDS:
             if score >= threshold:
@@ -232,6 +235,7 @@ class GPUDeviceScorer:
 
         Returns:
             等级描述字符串
+
         """
         for tier, threshold, desc in self.TIER_THRESHOLDS:
             if score >= threshold:
@@ -246,6 +250,7 @@ class GPUDeviceScorer:
 
         Returns:
             按评分降序排列的设备列表 (会添加 'score' 和 'tier' 字段)
+
         """
         for device in devices:
             score = self.score(device)
@@ -262,6 +267,7 @@ class GPUDeviceScorer:
 
         Returns:
             最佳设备信息，无设备时返回 None
+
         """
         if not devices:
             return None
@@ -277,6 +283,7 @@ class GPUDeviceScorer:
 
         Returns:
             设备索引 -> 归一化权重 (总和为1.0)
+
         """
         raw_weights: dict[int, float] = {}
 
@@ -288,10 +295,9 @@ class GPUDeviceScorer:
         total = sum(raw_weights.values())
         if total > 0:
             return {idx: w / total for idx, w in raw_weights.items()}
-        else:
-            # 降级为平均分配
-            n = len(raw_weights)
-            return {idx: 1.0 / n for idx in raw_weights}
+        # 降级为平均分配
+        n = len(raw_weights)
+        return dict.fromkeys(raw_weights, 1.0 / n)
 
     def compare_devices(self, device_a: dict[str, Any], device_b: dict[str, Any]) -> str:
         """比较两个设备的性能
@@ -302,6 +308,7 @@ class GPUDeviceScorer:
 
         Returns:
             比较结果字符串
+
         """
         score_a = self.score(device_a)
         score_b = self.score(device_b)
@@ -312,11 +319,10 @@ class GPUDeviceScorer:
         if score_a > score_b:
             ratio = score_a / max(score_b, 0.01)
             return f"{name_a} 优于 {name_b} ({ratio:.1f}x)"
-        elif score_b > score_a:
+        if score_b > score_a:
             ratio = score_b / max(score_a, 0.01)
             return f"{name_b} 优于 {name_a} ({ratio:.1f}x)"
-        else:
-            return f"{name_a} 与 {name_b} 性能相当"
+        return f"{name_a} 与 {name_b} 性能相当"
 
     def format_score_report(self, device: dict[str, Any]) -> str:
         """格式化单个设备的评分报告
@@ -326,6 +332,7 @@ class GPUDeviceScorer:
 
         Returns:
             格式化报告字符串
+
         """
         name = device.get("name", "Unknown")
         vendor = device.get("vendor", "unknown").upper()
@@ -363,6 +370,7 @@ class GPUDeviceScorer:
 
         Returns:
             世代附加分
+
         """
         # 优先使用预识别的 model
         if model and vendor in self.GENERATION_BONUS:
@@ -391,6 +399,7 @@ class GPUDeviceScorer:
 
         Returns:
             型号标识字符串或 None
+
         """
         return self._identify_model(device_name, vendor)
 
@@ -468,6 +477,7 @@ class GPUDeviceScorer:
 
         Returns:
             型号标识字符串，无法识别时返回 None
+
         """
         cache_key = f"{vendor}:{device_name}"
         if cache_key in self._model_cache:
@@ -499,6 +509,7 @@ def get_gpu_scorer() -> GPUDeviceScorer:
 
     Returns:
         GPUDeviceScorer实例
+
     """
     global _scorer_instance
     if _scorer_instance is None:

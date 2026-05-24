@@ -5,6 +5,7 @@
 
 import json
 import os
+import pathlib
 from typing import Any
 
 # 统一日志获取
@@ -16,12 +17,14 @@ logger = get_configured_logger("GPUProfileLoader")
 class GPUProfileLoader:
     """GPU型号配置加载器"""
 
+    __slots__ = ("profile_file", "profiles")
+
     def __init__(self, profile_file: str | None = None) -> None:
-        """
-        初始化加载器
+        """初始化加载器
 
         Args:
             profile_file: JSON配置文件路径,None则使用默认路径
+
         """
         if profile_file is None:
             # 使用当前文件同目录下的gpu_profiles.json
@@ -34,36 +37,35 @@ class GPUProfileLoader:
     def _load_profiles(self):
         """加载JSON配置文件"""
         try:
-            if not os.path.exists(self.profile_file):
+            if not pathlib.Path(self.profile_file).exists():
                 logger.warning(f"GPU配置文件不存在: {self.profile_file}")
                 self.profiles = {}
                 return
 
-            with open(self.profile_file, encoding="utf-8") as f:
+            with pathlib.Path(self.profile_file).open(encoding="utf-8") as f:
                 data = json.load(f)
 
             # 版本检查
             version = data.get("_version", "1.0")
             if version != "1.0":
                 logger.warning(
-                    f"不支持的配置文件版本: {version}, 当前支持1.0。可能导致配置加载错误"
+                    "不支持的配置文件版本: %s, 当前支持1.0。可能导致配置加载错误", version,
                 )
 
             self.profiles = data
 
             vendor_count = len([k for k in self.profiles if not k.startswith("_")])
-            logger.info(f"GPU型号数据库加载成功: {vendor_count} 个厂商 (版本 {version})")
+            logger.info("GPU型号数据库加载成功: %s 个厂商 (版本 %s)", vendor_count, version)
 
         except json.JSONDecodeError as e:
-            logger.error(f"GPU配置文件JSON格式错误: {e}")
+            logger.error("GPU配置文件JSON格式错误: %s", e)
             self.profiles = {}
         except Exception as e:
-            logger.error(f"加载GPU配置文件失败: {e}")
+            logger.error("加载GPU配置文件失败: %s", e)
             self.profiles = {}
 
     def get_profile(self, vendor: str, model_name: str) -> dict[str, Any] | None:
-        """
-        根据厂商和型号获取配置
+        """根据厂商和型号获取配置
 
         Args:
             vendor: 厂商名称(nvidia/amd/intel)
@@ -71,11 +73,12 @@ class GPUProfileLoader:
 
         Returns:
             配置字典,如果未找到则返回None
+
         """
         vendor = vendor.lower()
 
         if vendor not in self.profiles:
-            logger.debug(f"未知厂商: {vendor}")
+            logger.debug("未知厂商: %s", vendor)
             return None
 
         vendor_data = self.profiles[vendor]
@@ -89,7 +92,7 @@ class GPUProfileLoader:
             # 确保arch_data是字典（架构层级）
             if not isinstance(arch_data, dict):
                 logger.warning(
-                    f"跳过无效的架构配置 {vendor}/{arch_name}: 期望dict, 得到{type(arch_data).__name__}"
+                    f"跳过无效的架构配置 {vendor}/{arch_name}: 期望dict, 得到{type(arch_data).__name__}",
                 )
                 continue
 
@@ -102,28 +105,31 @@ class GPUProfileLoader:
                 if not isinstance(series_data, dict):
                     _type_name = type(series_data).__name__
                     logger.warning(
-                        f"跳过无效系列配置 {vendor}/{arch_name}/{series_name}: 期望dict, 得{_type_name}"
+                        "跳过无效系列配置 %s/%s/%s: 期望dict, 得%s",
+                        vendor, arch_name, series_name, _type_name,
                     )
                     continue
 
                 # 验证配置合法性
                 if not self._validate_profile(series_data, f"{vendor}/{arch_name}/{series_name}"):
-                    logger.warning(f"配置验证失败: {vendor}/{arch_name}/{series_name}")
+                    logger.warning("配置验证失败: %s/%s/%s", vendor, arch_name, series_name)
                     continue
 
                 # 检查型号是否在列表中
                 models = series_data.get("models", [])
                 if self._match_model(model_name, models):
-                    logger.info(f"匹配GPU型号: {model_name} -> {vendor}/{arch_name}/{series_name}")
+                    logger.info(
+                        "匹配GPU型号: %s -> %s/%s/%s",
+                        model_name, vendor, arch_name, series_name,
+                    )
                     return series_data
 
         # 未找到具体型号,返回厂商默认配置
-        logger.warning(f"未找到型号 {model_name} 的配置,使用厂商默认配置")
+        logger.warning("未找到型号 %s 的配置,使用厂商默认配置", model_name)
         return self.get_default_profile(vendor)
 
     def _match_model(self, model_name: str, model_list: list[str]) -> bool:
-        """
-        模糊匹配型号名称
+        """模糊匹配型号名称
 
         Args:
             model_name: 要匹配的型号名称
@@ -131,6 +137,7 @@ class GPUProfileLoader:
 
         Returns:
             是否匹配成功
+
         """
         model_lower = model_name.lower()
 
@@ -204,7 +211,7 @@ class GPUProfileLoader:
             errors.append(f"max_batch_size ({max_batch}) < recommended_batch_size ({rec_batch})")
 
     def _validate_profile_optimizations(
-        self, profile: dict[str, Any], errors: list[str], warnings: list[str]
+        self, profile: dict[str, Any], errors: list[str], warnings: list[str],
     ) -> None:
         """验证 optimizations 字段（如果存在）"""
         if "optimizations" not in profile:
@@ -222,14 +229,14 @@ class GPUProfileLoader:
 
     @staticmethod
     def _validate_profile_optional_fields(
-        profile: dict[str, Any], errors: list[str], warnings: list[str]
+        profile: dict[str, Any], errors: list[str], warnings: list[str],
     ) -> None:
         """验证可选字段：compute_capability, memory_efficiency"""
         if "compute_capability" in profile:
             cc = profile["compute_capability"]
             if not isinstance(cc, (str, int, float)):
                 errors.append(
-                    f"compute_capability类型错误: 期望str/int/float, 得到{type(cc).__name__}"
+                    f"compute_capability类型错误: 期望str/int/float, 得到{type(cc).__name__}",
                 )
 
         if "memory_efficiency" in profile:
@@ -240,8 +247,7 @@ class GPUProfileLoader:
                 warnings.append(f"memory_efficiency ({eff}) 不在合理范围 (0.0, 1.0]")
 
     def _validate_profile(self, profile: dict[str, Any], profile_path: str) -> bool:
-        """
-        验证GPU配置文件的合法性
+        """验证GPU配置文件的合法性
 
         验证内容包括:
         - 必需字段存在性 (models, recommended_batch_size, max_batch_size)
@@ -261,6 +267,7 @@ class GPUProfileLoader:
             - 验证失败时会记录ERROR级别日志
             - 发现问题时会记录WARNING级别日志
             - 该方法会收集所有错误后统一报告，而非快速失败
+
         """
         errors: list[str] = []
         warnings: list[str] = []
@@ -271,7 +278,7 @@ class GPUProfileLoader:
 
         if errors:
             for error in errors:
-                logger.error(f"配置 {profile_path}: {error}")
+                logger.error("配置 %s: %s", profile_path, error)
             return False
 
         self._validate_profile_models(profile, errors)
@@ -281,12 +288,12 @@ class GPUProfileLoader:
 
         if errors:
             for error in errors:
-                logger.error(f"配置 {profile_path}: {error}")
+                logger.error("配置 %s: %s", profile_path, error)
             return False
 
         if warnings:
             for warning in warnings:
-                logger.warning(f"配置 {profile_path}: {warning}")
+                logger.warning("配置 %s: %s", profile_path, warning)
 
         return True
 
@@ -295,26 +302,24 @@ class GPUProfileLoader:
         # 移除常见前缀
         prefixes = ["nvidia ", "amd ", "intel ", "geforce ", "radeon ", "arc "]
         for prefix in prefixes:
-            if name.startswith(prefix):
-                name = name[len(prefix) :]
+            name = name.removeprefix(prefix)
 
         # 移除常见后缀
         suffixes = [" graphics", " gpu"]
         for suffix in suffixes:
-            if name.endswith(suffix):
-                name = name[: -len(suffix)]
+            name = name.removesuffix(suffix)
 
         return name.strip()
 
     def get_default_profile(self, vendor: str) -> dict[str, Any] | None:
-        """
-        获取厂商的默认配置
+        """获取厂商的默认配置
 
         Args:
             vendor: 厂商名称
 
         Returns:
             默认配置字典
+
         """
         vendor = vendor.lower()
 
@@ -334,14 +339,14 @@ class GPUProfileLoader:
         return [k for k in self.profiles if not k.startswith("_")]
 
     def get_vendor_architectures(self, vendor: str) -> list[str]:
-        """
-        获取厂商的所有架构世代
+        """获取厂商的所有架构世代
 
         Args:
             vendor: 厂商名称
 
         Returns:
             架构名称列表
+
         """
         vendor = vendor.lower()
 

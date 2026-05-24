@@ -15,10 +15,6 @@ import sys
 import time
 from pathlib import Path
 
-# 添加项目根目录到路径
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-
 def print_header(title: str):
     """打印标题"""
     print(f"\n{'=' * 80}")

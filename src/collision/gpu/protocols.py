@@ -74,7 +74,7 @@ class GPUKernel:
     """GPU内核封装"""
 
     def __init__(
-        self, kernel_obj: Any = None, name: str = "", context: GPUContext | None = None
+        self, kernel_obj: Any = None, name: str = "", context: GPUContext | None = None,
     ) -> None:
         self.kernel_obj = kernel_obj  # 底层内核对象（cl.Kernel等）
         self.name = name
@@ -101,6 +101,7 @@ class IGPUDeviceManager(Protocol):
 
         Returns:
             GPU设备列表
+
         """
         ...
 
@@ -112,6 +113,7 @@ class IGPUDeviceManager(Protocol):
 
         Returns:
             GPU设备实例
+
         """
         ...
 
@@ -123,6 +125,7 @@ class IGPUDeviceManager(Protocol):
 
         Returns:
             GPU上下文实例
+
         """
         ...
 
@@ -143,11 +146,12 @@ class IKernelExecutor(Protocol):
 
         Returns:
             GPU内核实例
+
         """
         ...
 
     def execute_batch(
-        self, kernel: GPUKernel, seed: bytes, batch_size: int, stop_event: Any = None
+        self, kernel: GPUKernel, seed: bytes, batch_size: int, stop_event: Any = None,
     ) -> tuple[list[MatchResult], float]:
         """执行单个批次
 
@@ -159,6 +163,7 @@ class IKernelExecutor(Protocol):
 
         Returns:
             (匹配结果列表, 执行时间ms)
+
         """
         ...
 
@@ -172,6 +177,7 @@ class IAsyncExecutionPipeline(Protocol):
         Args:
             kernel: GPU内核
             batch_size: 批次大小
+
         """
         ...
 
@@ -180,6 +186,7 @@ class IAsyncExecutionPipeline(Protocol):
 
         Returns:
             是否就绪
+
         """
         ...
 
@@ -192,6 +199,7 @@ class IAsyncExecutionPipeline(Protocol):
 
         Returns:
             (匹配结果列表, 执行时间ms)
+
         """
         ...
 
@@ -218,6 +226,7 @@ class IMonitoringPipeline(Protocol):
             batch_size: 批次大小
             execution_time_ms: 执行时间(毫秒)
             **metrics: 其他指标
+
         """
         ...
 
@@ -235,6 +244,7 @@ class ICollisionCore(Protocol):
         Args:
             mode: 碰撞模式 (random/range/brute_force)
             **kwargs: 其他参数
+
         """
         ...
 
@@ -260,6 +270,7 @@ class ICollisionCore(Protocol):
         Args:
             matches: 匹配结果列表
             batch_size: 批次大小
+
         """
         ...
 
@@ -268,6 +279,7 @@ class ICollisionCore(Protocol):
 
         Returns:
             统计信息字典
+
         """
         ...
 
@@ -330,6 +342,7 @@ class VendorOptimizationStrategy(Protocol):
 
         Returns:
             优化后的组件字典
+
         """
         ...
 
@@ -338,5 +351,6 @@ class VendorOptimizationStrategy(Protocol):
 
         Returns:
             监控组件字典
+
         """
         ...

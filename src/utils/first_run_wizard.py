@@ -101,7 +101,7 @@ class FirstRunWizard:
         full_msg = f"{message} [{default}]: " if default else f"{message}: "
         try:
             val = input(full_msg).strip()
-            return val if val else default
+            return val or default
         except (KeyboardInterrupt, EOFError):
             print("\n[向导中止]")
             sys.exit(0)
@@ -204,9 +204,9 @@ class FirstRunWizard:
         _has_sep = "\\" in user_input or "/" in user_input
         # 以常见文件扩展名结尾
         _has_ext = bool(re.search(r"\.[a-zA-Z0-9]{1,5}$", user_input))
-        is_file_path = os.path.isfile(user_input) or _win_abs or _unix_abs or _has_sep or _has_ext
+        is_file_path = Path(user_input).is_file() or _win_abs or _unix_abs or _has_sep or _has_ext
         if is_file_path:
-            if os.path.isfile(user_input):
+            if Path(user_input).is_file():
                 print(f"  已识别为地址文件: {user_input}")
             else:
                 # 尝试自动修正常见问题
@@ -239,12 +239,12 @@ class FirstRunWizard:
         # 场景1：去掉一层重复扩展名（如 .txt.txt → .txt）
         if p.suffix and p.stem.endswith(p.suffix):
             candidate = str(p.with_name(p.stem))  # 去掉最外层后缀
-            if os.path.isfile(candidate):
+            if Path(candidate).is_file():
                 return candidate
         # 场景2：文件名本身不含扩展名，尝试追加 .txt
         if not p.suffix:
             candidate = path + ".txt"
-            if os.path.isfile(candidate):
+            if Path(candidate).is_file():
                 return candidate
         return None
 
@@ -283,7 +283,7 @@ class FirstRunWizard:
             print(f"  GPU 模式已启用，CPU 辅助线程默认使用 {workers} 个")
         else:
             raw = self._prompt(
-                f"  CPU 工作线程数（默认: {cpu_count}，建议不超过 CPU 核数）", str(cpu_count)
+                f"  CPU 工作线程数（默认: {cpu_count}，建议不超过 CPU 核数）", str(cpu_count),
             )
             try:
                 workers = int(raw)
@@ -305,14 +305,14 @@ class FirstRunWizard:
             if self.example_path.exists():
                 shutil.copy2(self.example_path, self.config_path)
                 # 合并向导配置
-                with open(self.config_path, encoding="utf-8") as f:
+                with Path(self.config_path).open(encoding="utf-8") as f:
                     base = json.load(f)
                 # 深度合并
                 self._deep_merge(base, config)
-                with open(self.config_path, "w", encoding="utf-8") as f:
+                with Path(self.config_path).open("w", encoding="utf-8") as f:
                     json.dump(base, f, indent=2, ensure_ascii=False)
             else:
-                with open(self.config_path, "w", encoding="utf-8") as f:
+                with Path(self.config_path).open("w", encoding="utf-8") as f:
                     json.dump(config, f, indent=2, ensure_ascii=False)
             return True
         except Exception as exc:

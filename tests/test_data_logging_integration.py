@@ -1,21 +1,18 @@
 #!/usr/bin/env python3
-"""
-数据日志集成竞态条件测试
+"""数据日志集成竞态条件测试
 
 验证优化后的代码在并发场景下的正确性。
 """
 
 import logging
 import os
+import pathlib
 import sys
 import threading
 import time
 
-# 添加项目根目录到路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
-from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
-from src.utils import init_logging  # noqa: E402
+from src.collision.key_collision_engine import KeyCollisionEngine
+from src.utils import init_logging
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +26,7 @@ def test_stats_consistency():
     targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
 
     engine = KeyCollisionEngine(
-        targets=targets, max_workers=4, data_logging_enabled=True, data_logging_interval=1
+        targets=targets, max_workers=4, data_logging_enabled=True, data_logging_interval=1,
     )
 
     # 在后台线程运行
@@ -125,7 +122,7 @@ def test_error_logging_rate_limit():
     targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
 
     engine = KeyCollisionEngine(
-        targets=targets, max_workers=2, data_logging_enabled=True, data_logging_interval=1
+        targets=targets, max_workers=2, data_logging_enabled=True, data_logging_interval=1,
     )
 
     def run_engine():
@@ -134,10 +131,10 @@ def test_error_logging_rate_limit():
     # 记录测试开始前的错误日志条数（避免历史遗留数据干扰断言）
     error_log_file = os.path.join("data_logs", "error_log.json")
     baseline_error_count = 0
-    if os.path.exists(error_log_file):
+    if pathlib.Path(error_log_file).exists():
         import json
 
-        with open(error_log_file, encoding="utf-8") as f:
+        with pathlib.Path(error_log_file).open(encoding="utf-8") as f:
             try:
                 existing_errors = json.load(f)
                 baseline_error_count = len(existing_errors)
@@ -158,10 +155,10 @@ def test_error_logging_rate_limit():
     print(f"  运行时间: {stats.elapsed:.2f}秒")
 
     # 检查错误日志文件新增记录数
-    if os.path.exists(error_log_file):
+    if pathlib.Path(error_log_file).exists():
         import json
 
-        with open(error_log_file, encoding="utf-8") as f:
+        with pathlib.Path(error_log_file).open(encoding="utf-8") as f:
             errors = json.load(f)
         new_error_count = len(errors) - baseline_error_count
         print(f"  本次测试新增错误数: {new_error_count}")
@@ -184,7 +181,7 @@ def test_cpu_cache_mechanism():
     targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
 
     engine = KeyCollisionEngine(
-        targets=targets, max_workers=4, data_logging_enabled=True, data_logging_interval=1
+        targets=targets, max_workers=4, data_logging_enabled=True, data_logging_interval=1,
     )
 
     def run_engine():
@@ -214,7 +211,7 @@ def test_cpu_cache_mechanism():
     try:
         engine.stop()
     except (RuntimeError, OSError) as e:
-        logger.debug(f"stop竞态（预期内）: {e}")  # 忽略 stop 时的内部竞态错误（不影响测试验证逻辑）
+        logger.debug("stop竞态（预期内）: %s", e)  # 忽略 stop 时的内部竞态错误（不影响测试验证逻辑）
     thread.join(timeout=5)
 
     # 使用 stop 前的快照数据做验证
@@ -267,10 +264,10 @@ def test_data_save_frequency():
 
     # 检查历史数据文件
     history_file = os.path.join("data_logs", "history_data.json")
-    if os.path.exists(history_file):
+    if pathlib.Path(history_file).exists():
         import json
 
-        with open(history_file, encoding="utf-8") as f:
+        with pathlib.Path(history_file).open(encoding="utf-8") as f:
             history = json.load(f)
         print("\n数据保存频率测试结果:")
         print(f"  总检查数: {stats.total_checked:,}")

@@ -18,9 +18,6 @@ import time
 from pathlib import Path
 from typing import Any
 
-# 添加项目根目录到路径
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
 from src.collision.gpu.engine import GPUCollisionEngine
 from src.gpu.device import GPUDeviceDetector
 

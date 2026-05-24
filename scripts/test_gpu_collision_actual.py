@@ -9,12 +9,8 @@ import sys
 import time
 from pathlib import Path
 
-# 添加项目根目录
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
-
-from src.collision.collision_stats import CollisionStats  # noqa: E402
-from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
+from src.collision.collision_stats import CollisionStats
+from src.collision.gpu.engine import GPUCollisionEngine
 
 
 def main():  # noqa: C901

@@ -13,6 +13,7 @@ def format_table(
 
     Returns:
         Formatted table string
+
     """
     if not headers:
         return ""
@@ -22,7 +23,7 @@ def format_table(
         for i, cell in enumerate(row):
             if i < len(col_widths):
                 col_widths[i] = max(
-                    col_widths[i], len(str(cell))
+                    col_widths[i], len(str(cell)),
                 )
 
     sep = "+" + "+".join(
@@ -44,7 +45,7 @@ def format_table(
             + " | ".join(
                 str(c).ljust(w)
                 for c, w in zip(
-                    row, col_widths
+                    row, col_widths,
                 )
             )
             + " |"
@@ -56,7 +57,7 @@ def format_table(
 
 
 def truncate_middle(
-    s: str, max_len: int = 40
+    s: str, max_len: int = 40,
 ) -> str:
     """Truncate string in the middle if too long.
 
@@ -66,6 +67,7 @@ def truncate_middle(
 
     Returns:
         Truncated string with '...' in middle if needed
+
     """
     if len(s) <= max_len:
         return s

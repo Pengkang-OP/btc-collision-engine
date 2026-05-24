@@ -10,6 +10,7 @@ Provides detailed log collection rule configuration supporting:
 import json
 import logging
 import os
+import pathlib
 import re
 from contextlib import suppress
 from dataclasses import dataclass, field
@@ -107,11 +108,11 @@ class LogCollectionRuleManager:
     """日志收集规则管理器"""
 
     def __init__(self, config_file: str | None = None) -> None:
-        """
-        初始化规则管理器
+        """初始化规则管理器
 
         Args:
             config_file: 规则配置文件路径
+
         """
         self.rules: list[LogCollectionRule] = []
         self.config_file = config_file
@@ -125,8 +126,8 @@ class LogCollectionRuleManager:
             return
 
         try:
-            if os.path.exists(self.config_file):
-                with open(self.config_file, encoding="utf-8") as f:
+            if pathlib.Path(self.config_file).exists():
+                with pathlib.Path(self.config_file).open(encoding="utf-8") as f:
                     data = json.load(f)
                     if isinstance(data, list):
                         self.rules = [LogCollectionRule.from_dict(rule_data) for rule_data in data]
@@ -141,7 +142,8 @@ class LogCollectionRuleManager:
                 self.save_rules()
         except Exception as e:
             # 加载失败，使用默认规则
-            print(f"加载日志收集规则失败: {e}")
+            _logger = logging.getLogger(__name__)
+            _logger.warning("加载日志收集规则失败: %s", e)
             self._load_default_rules()
 
     def _load_default_rules(self) -> None:
@@ -194,15 +196,16 @@ class LogCollectionRuleManager:
         try:
             # 确保目录存在
             config_dir = os.path.dirname(self.config_file)
-            if config_dir and not os.path.exists(config_dir):
-                os.makedirs(config_dir, mode=0o750, exist_ok=True)
+            if config_dir and not pathlib.Path(config_dir).exists():
+                pathlib.Path(config_dir).mkdir(mode=0o750, exist_ok=True, parents=True)
 
             # 保存规则
             rules_data = [rule.to_dict() for rule in self.rules]
-            with open(self.config_file, "w", encoding="utf-8") as f:
+            with pathlib.Path(self.config_file).open("w", encoding="utf-8") as f:
                 json.dump({"rules": rules_data}, f, ensure_ascii=False, indent=2)
         except Exception as e:
-            print(f"保存日志收集规则失败: {e}")
+            _save_logger = logging.getLogger(__name__)
+            _save_logger.warning("保存日志收集规则失败: %s", e)
 
     def add_rule(self, rule: LogCollectionRule) -> None:
         """添加规则"""
@@ -280,14 +283,14 @@ _rule_manager: LogCollectionRuleManager | None = None
 
 
 def get_rule_manager(config_file: str | None = None) -> LogCollectionRuleManager:
-    """
-    获取规则管理器实例
+    """获取规则管理器实例
 
     Args:
         config_file: 规则配置文件路径
 
     Returns:
         规则管理器实例
+
     """
     global _rule_manager
     if _rule_manager is None:
@@ -296,18 +299,17 @@ def get_rule_manager(config_file: str | None = None) -> LogCollectionRuleManager
 
 
 def init_log_collection_rules(config_file: str | None = None) -> None:
-    """
-    初始化日志收集规则
+    """初始化日志收集规则
 
     Args:
         config_file: 规则配置文件路径
+
     """
     get_rule_manager(config_file)
 
 
 def get_matching_rules(module_name: str, level: str, message: str) -> list[LogCollectionRule]:
-    """
-    获取匹配的日志收集规则
+    """获取匹配的日志收集规则
 
     Args:
         module_name: 模块名称
@@ -316,14 +318,14 @@ def get_matching_rules(module_name: str, level: str, message: str) -> list[LogCo
 
     Returns:
         匹配的规则列表
+
     """
     rule_manager = get_rule_manager()
     return rule_manager.get_matching_rules(module_name, level, message)
 
 
 def get_effective_rule(module_name: str, level: str, message: str) -> LogCollectionRule | None:
-    """
-    获取最有效的日志收集规则
+    """获取最有效的日志收集规则
 
     Args:
         module_name: 模块名称
@@ -332,6 +334,7 @@ def get_effective_rule(module_name: str, level: str, message: str) -> LogCollect
 
     Returns:
         最有效的规则
+
     """
     rule_manager = get_rule_manager()
     return rule_manager.get_effective_rule(module_name, level, message)

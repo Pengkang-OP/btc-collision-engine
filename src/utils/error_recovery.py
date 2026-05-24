@@ -230,20 +230,21 @@ def retry_on_error(
                         f"{func.__name__} 第{attempt + 1}次重试 "
                         f"(错误: {type(e).__name__}: "
                         f"{_sanitize_error_message(str(e))}, "
-                        f"延迟: {sleep_time:.2f}s)"
+                        f"延迟: {sleep_time:.2f}s)",
                     )
 
                     if on_retry:
                         try:
                             on_retry(e, attempt + 1, sleep_time)
                         except Exception as cb_err:
-                            logger.debug(f"重试回调异常: {cb_err}")
+                            logger.debug("重试回调异常: %s", cb_err)
 
                     time.sleep(sleep_time)
 
-            raise last_exception  # type: ignore[misc]
+            assert last_exception is not None
+            raise last_exception
 
-        return wrapper  # type: ignore[return-value]
+        return wrapper
 
     return decorator
 
@@ -368,7 +369,7 @@ class ErrorRecoveryManager:
             return self._fallbacks.get(category)
 
     def record_retry(
-        self, category: RecoverableErrorCategory, error: Exception, attempt: int, success: bool
+        self, category: RecoverableErrorCategory, error: Exception, attempt: int, success: bool,
     ) -> None:
         record = RetryRecord(
             error_type=type(error).__name__,
@@ -524,9 +525,10 @@ class ErrorRecoveryManager:
                     try:
                         result = func(*args, **kwargs)
                         if resolved_category is not None and attempt > 0:
+                            assert last_exception is not None
                             manager.record_retry(
-                                resolved_category, last_exception, attempt, True
-                            )  # type: ignore[arg-type]
+                                resolved_category, last_exception, attempt, True,
+                            )
                         return result
                     except Exception as e:
                         last_exception = e
@@ -543,7 +545,7 @@ class ErrorRecoveryManager:
                         if manager.is_category_disabled(resolved_category):
                             logger.debug(
                                 f"[{manager.name}] {func.__name__} "
-                                f"类别 {resolved_category.value} 已禁用，跳过重试"
+                                f"类别 {resolved_category.value} 已禁用，跳过重试",
                             )
                             raise
 
@@ -557,14 +559,15 @@ class ErrorRecoveryManager:
                             f"[{manager.name}] {func.__name__} 第{attempt + 1}次重试 "
                             f"({resolved_category.value}, {type(e).__name__}: "
                             f"{_sanitize_error_message(str(e))}, "
-                            f"延迟: {sleep_time:.2f}s)"
+                            f"延迟: {sleep_time:.2f}s)",
                         )
 
                         time.sleep(sleep_time)
 
+                assert last_exception is not None
                 manager.record_retry(
-                    resolved_category, last_exception, max_retries, False
-                )  # type: ignore[arg-type]
+                    resolved_category, last_exception, max_retries, False,
+                )
 
                 if resolved_category is not None:
                     fallback_ok, fallback_label = manager.execute_fallback(resolved_category)
@@ -573,16 +576,16 @@ class ErrorRecoveryManager:
                             result = func(*args, **kwargs)
                             logger.info(
                                 f"[{manager.name}] {func.__name__} "
-                                f"降级后重试成功 (方案: {fallback_label})"
+                                f"降级后重试成功 (方案: {fallback_label})",
                             )
                             return result
                         except Exception as fb_err:
                             logger.error(f"[{manager.name}] {func.__name__} 降级后重试也失败: {fb_err}")
                             raise fb_err
 
-                raise last_exception  # type: ignore[misc]
+                raise last_exception
 
-            return wrapper  # type: ignore[return-value]
+            return wrapper
 
         return decorator
 

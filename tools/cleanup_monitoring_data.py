@@ -11,9 +11,6 @@ import sys
 import time
 from datetime import datetime
 
-# 添加项目根目录到路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
 from src.utils import get_configured_logger
 
 logger = get_configured_logger("DataCleanup")

@@ -1,1 +1,0 @@
-"""Collision strategy plugin system."""

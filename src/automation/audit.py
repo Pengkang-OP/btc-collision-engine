@@ -1,20 +1,16 @@
-"""
-智能审核模块
+"""智能审核模块
 =============
 校验测试结果与业务规则，拦截异常并记录
 """
 
 import json
+import pathlib
 import re
-import sys
 import uuid
 from datetime import datetime
-from pathlib import Path
 from typing import Any
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
-
-from .models import (  # noqa: E402
+from .models import (
     AnalysisReport,
     AuditResult,
     AuditRule,
@@ -106,8 +102,7 @@ class AuditModule:
         analysis_report: AnalysisReport | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> AuditResult:
-        """
-        执行审核
+        """执行审核
         """
         audit_id = self._generate_audit_id()
 
@@ -117,7 +112,7 @@ class AuditModule:
 
             # 执行规则检查
             violations, warnings_list, passed_checks = self._check_rules(
-                metrics, test_results, analysis_report
+                metrics, test_results, analysis_report,
             )
 
             # 确定审核状态
@@ -132,7 +127,7 @@ class AuditModule:
                     category="Audit",
                     title="审计流程内部异常",
                     description=f"审计计算过程发生异常: {e}",
-                )
+                ),
             ]
             warnings_list = []
             passed_checks = 0
@@ -163,7 +158,7 @@ class AuditModule:
         return f"audit_{uuid.uuid4().hex[:12]}"
 
     def _compute_audit_metrics(
-        self, test_results: TestSuiteResult, analysis_report: AnalysisReport | None
+        self, test_results: TestSuiteResult, analysis_report: AnalysisReport | None,
     ) -> dict[str, Any]:
         """计算审核指标
 
@@ -299,7 +294,7 @@ class AuditModule:
                             description=f"规则违反: {rule.description}",
                             suggestions=[f"检查并修复: {rule.description}"],
                             metadata={"rule_id": rule.id, "condition": rule.condition},
-                        )
+                        ),
                     )
                 elif rule.action == "warn":
                     warnings.append(
@@ -311,7 +306,7 @@ class AuditModule:
                             description=f"警告: {rule.description}",
                             suggestions=[f"建议改进: {rule.description}"],
                             metadata={"rule_id": rule.id, "condition": rule.condition},
-                        )
+                        ),
                     )
             except Exception as e:
                 # 规则评估失败，记录但不阻塞
@@ -322,7 +317,7 @@ class AuditModule:
                         category="Audit",
                         title=f"规则评估异常: {rule.name}",
                         description=str(e),
-                    )
+                    ),
                 )
 
         return violations, warnings, passed_checks
@@ -379,7 +374,7 @@ class AuditModule:
         return {"passed": passed, "rule_id": rule.id}
 
     def _determine_status(
-        self, violations: list[Issue], warnings: list[Issue], passed_checks: int
+        self, violations: list[Issue], warnings: list[Issue], passed_checks: int,
     ) -> SystemStatus:
         """确定审核状态"""
         # 检查是否有阻塞性违规
@@ -433,7 +428,7 @@ class AuditModule:
             for r in self.rules
         ]
 
-        with open(filepath, "w", encoding="utf-8") as f:
+        with pathlib.Path(filepath).open("w", encoding="utf-8") as f:
             json.dump(rules_data, f, ensure_ascii=False, indent=2)
 
 

@@ -25,9 +25,14 @@ class CollisionStats:
         self._lock = threading.Lock()
         self._start_time = time.time()
         self._total_keys = 0
+        self._total_batches = 0
         self._total_matches = 0
         self._total_errors = 0
         self.matches: list = []
+        # Error counters by category
+        self._gpu_errors: int = 0
+        self._worker_errors: int = 0
+        self._resource_errors: int = 0
 
     def record_key(self) -> None:
         with self._lock:
@@ -36,6 +41,21 @@ class CollisionStats:
     def record_keys(self, count: int) -> None:
         with self._lock:
             self._total_keys += count
+
+    def set_total_batches(self, batch_num: int) -> None:
+        """Set total batch count (called by GPU search modes).
+
+        Args:
+            batch_num: Current batch number to record
+        """
+        with self._lock:
+            self._total_batches = batch_num
+
+    @property
+    def total_batches(self) -> int:
+        """Get total batches processed."""
+        with self._lock:
+            return self._total_batches
 
     def record_match(self) -> None:
         with self._lock:
@@ -72,9 +92,28 @@ class CollisionStats:
                 ),
             }
 
-    def record_error(self) -> None:
+    def record_error(self, error_type: str = "", error_msg: str = "") -> None:
+        """Record a general error with optional type/message."""
         with self._lock:
             self._total_errors += 1
+
+    def record_gpu_error(self, is_resource_error: bool = False) -> None:
+        """Record a GPU error, optionally classifying as resource error.
+
+        Called by ExceptionHandler.handle_gpu_error() via getattr.
+        """
+        with self._lock:
+            self._gpu_errors += 1
+            if is_resource_error:
+                self._resource_errors += 1
+
+    def record_worker_error(self) -> None:
+        """Record a worker engine error.
+
+        Called by ExceptionHandler.handle_engine_error() via getattr.
+        """
+        with self._lock:
+            self._worker_errors += 1
 
     def get_throughput(self) -> float:
         elapsed = max(time.time() - self._start_time, 0.001)
@@ -133,10 +172,58 @@ class CollisionStats:
             self._total_keys = value
 
     @property
+    def total_keys(self) -> int:
+        """Get total keys (alias for total_checked for engine_monitor compatibility)."""
+        with self._lock:
+            return self._total_keys
+
+    @total_keys.setter
+    def total_keys(self, value: int) -> None:
+        """Set total keys (alias for total_checked for engine_monitor compatibility)."""
+        with self._lock:
+            self._total_keys = value
+
+    @property
     def matches_found(self) -> int:
         """Get total matches found."""
         with self._lock:
             return self._total_matches
+
+    @property
+    def gpu_errors(self) -> int:
+        """Get GPU error count."""
+        with self._lock:
+            return self._gpu_errors
+
+    @gpu_errors.setter
+    def gpu_errors(self, value: int) -> None:
+        """Set GPU error count."""
+        with self._lock:
+            self._gpu_errors = value
+
+    @property
+    def worker_errors(self) -> int:
+        """Get worker error count."""
+        with self._lock:
+            return self._worker_errors
+
+    @worker_errors.setter
+    def worker_errors(self, value: int) -> None:
+        """Set worker error count."""
+        with self._lock:
+            self._worker_errors = value
+
+    @property
+    def resource_errors(self) -> int:
+        """Get resource error count."""
+        with self._lock:
+            return self._resource_errors
+
+    @resource_errors.setter
+    def resource_errors(self, value: int) -> None:
+        """Set resource error count."""
+        with self._lock:
+            self._resource_errors = value
 
     @property
     def avg_speed(self) -> float:
@@ -166,3 +253,36 @@ class CollisionStats:
             self._total_matches = 0
             self._total_errors = 0
             self._start_time = time.time()
+
+    def format_elapsed(self) -> str:
+        """Format elapsed time as human-readable string.
+
+        Returns:
+            Formatted string like "1h 2m 3s" or "45.2s"
+
+        """
+        elapsed = max(time.time() - self._start_time, 0.0)
+        hours = int(elapsed // 3600)
+        minutes = int((elapsed % 3600) // 60)
+        seconds = elapsed % 60
+        if hours > 0:
+            return f"{hours}h {minutes}m {seconds:.1f}s"
+        elif minutes > 0:
+            return f"{minutes}m {seconds:.1f}s"
+        else:
+            return f"{seconds:.1f}s"
+
+    def format_speed(self) -> str:
+        """Format average speed as human-readable string.
+
+        Returns:
+            Formatted string like "5,721 keys/s"
+
+        """
+        speed = self.avg_speed
+        if speed >= 1_000_000:
+            return f"{speed / 1_000_000:.2f}M keys/s"
+        elif speed >= 1_000:
+            return f"{speed:,.0f} keys/s"
+        else:
+            return f"{speed:.1f} keys/s"

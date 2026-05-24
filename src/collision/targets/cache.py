@@ -8,12 +8,21 @@
 """
 
 import threading
-from typing import Any
-
-from cachetools import LRUCache, TTLCache  # type: ignore[import-untyped]
+from typing import TYPE_CHECKING, Any
 
 # 导入日志配置
 from ...utils import get_configured_logger
+
+if TYPE_CHECKING:
+    from cachetools import LRUCache, TTLCache  # noqa: F401
+
+# 可选依赖: cachetools 提供 LRU/TTL 缓存，未安装时降级为 dict
+try:
+    from cachetools import LRUCache as _LRUCache
+    from cachetools import TTLCache as _TTLCache
+except ImportError:
+    _LRUCache = dict  # type: ignore[assignment,misc]  # p: cachetools 可选依赖回退
+    _TTLCache = dict  # type: ignore[assignment,misc]  # p: cachetools 可选依赖回退
 
 # v4.2.1修复: Python的logging.Logger本身是线程安全的，无需ThreadSafeLogger包装
 logger = get_configured_logger("AddressCache")
@@ -38,10 +47,9 @@ class AddressCache:
     """
 
     def __init__(
-        self, lru_size: int = 10000, ttl_seconds: int = 3600, enable_stats: bool = True
+        self, lru_size: int = 10000, ttl_seconds: int = 3600, enable_stats: bool = True,
     ) -> None:
-        """
-        初始化地址缓存
+        """初始化地址缓存
 
         参数:
             lru_size: LRU缓存最大容量，默认10000条目
@@ -49,10 +57,10 @@ class AddressCache:
             enable_stats: 是否启用缓存统计，默认True
         """
         # 内存LRU缓存 - 用于持久化常用地址
-        self.lru_cache: LRUCache = LRUCache(maxsize=lru_size)
+        self.lru_cache: Any = _LRUCache(maxsize=lru_size) if _LRUCache is not dict else {}
 
         # TTL缓存 - 用于临时数据，自动过期
-        self.ttl_cache: TTLCache = TTLCache(maxsize=5000, ttl=ttl_seconds)
+        self.ttl_cache: Any = _TTLCache(maxsize=5000, ttl=ttl_seconds) if _TTLCache is not dict else {}
 
         # 缓存统计
         self.enable_stats = enable_stats
@@ -66,11 +74,10 @@ class AddressCache:
         self.lru_size = lru_size
         self.ttl_seconds = ttl_seconds
 
-        logger.info(f"AddressCache 初始化: LRU大小={lru_size}, TTL={ttl_seconds}秒")
+        logger.info("AddressCache 初始化: LRU大小=%s, TTL=%s秒", lru_size, ttl_seconds)
 
     def get(self, key: str, use_ttl: bool = False) -> str | None:
-        """
-        获取缓存的地址解析结果
+        """获取缓存的地址解析结果
 
         参数:
             key: 缓存键(原始输入字符串)
@@ -84,7 +91,7 @@ class AddressCache:
             try:
                 key = str(key)
             except Exception as e:
-                logger.error(f"缓存键类型转换失败: {key}, 错误={e}")
+                logger.error("缓存键类型转换失败: %s, 错误=%s", key, e)
                 return None
 
         with self._lock:
@@ -96,18 +103,16 @@ class AddressCache:
                         self.hits += 1
                     logger.debug(f"缓存命中: {key[:10]}...")
                     return value
-                else:
-                    if self.enable_stats:
-                        self.misses += 1
-                    logger.debug(f"缓存未命中: {key[:10]}...")
-                    return None
+                if self.enable_stats:
+                    self.misses += 1
+                logger.debug(f"缓存未命中: {key[:10]}...")
+                return None
             except Exception as e:
-                logger.error(f"缓存获取异常: {key}, 错误={e}")
+                logger.error("缓存获取异常: %s, 错误=%s", key, e)
                 return None
 
     def put(self, key: str, value: str, use_ttl: bool = False) -> None:
-        """
-        存入缓存
+        """存入缓存
 
         参数:
             key: 缓存键(原始输入字符串)
@@ -122,14 +127,14 @@ class AddressCache:
             try:
                 key = str(key)
             except Exception as e:
-                logger.error(f"缓存键类型转换失败: {key}, 错误={e}")
+                logger.error("缓存键类型转换失败: %s, 错误=%s", key, e)
                 return
 
         if not isinstance(value, str):
             try:
                 value = str(value)
             except Exception as e:
-                logger.error(f"缓存值类型转换失败: {value}, 错误={e}")
+                logger.error("缓存值类型转换失败: %s, 错误=%s", value, e)
                 return
 
         with self._lock:
@@ -141,7 +146,7 @@ class AddressCache:
 
                 logger.debug(f"缓存存入: {key[:10]}... -> {value[:10]}...")
             except Exception as e:
-                logger.error(f"缓存存入异常: {key}, 错误={e}")
+                logger.error("缓存存入异常: %s, 错误=%s", key, e)
 
     def clear(self) -> None:
         """清空所有缓存"""
@@ -153,13 +158,12 @@ class AddressCache:
                 old_misses = self.misses
                 self.hits = 0
                 self.misses = 0
-                logger.info(f"缓存已清空 (之前: 命中={old_hits}, 未命中={old_misses})")
+                logger.info("缓存已清空 (之前: 命中=%s, 未命中=%s)", old_hits, old_misses)
             except Exception as e:
-                logger.error(f"缓存清空异常: {e}")
+                logger.error("缓存清空异常: %s", e)
 
     def get_stats(self) -> dict[str, Any]:
-        """
-        获取缓存统计信息
+        """获取缓存统计信息
 
         返回:
             包含缓存统计信息的字典
@@ -181,11 +185,11 @@ class AddressCache:
                 }
             except (ZeroDivisionError, AttributeError) as e:
                 # 只捕获预期的异常类型
-                logger.warning(f"缓存统计计算异常: {e}")
+                logger.warning("缓存统计计算异常: %s", e)
                 return self._default_stats()
             except Exception as e:
                 # 其他异常向上抛出
-                logger.error(f"缓存统计未知异常: {e}")
+                logger.error("缓存统计未知异常: %s", e)
                 raise
 
     def _default_stats(self) -> dict[str, Any]:
@@ -214,14 +218,14 @@ class AddressCache:
                 key = str(key)
             except (TypeError, ValueError) as e:
                 # C类修复: 使用具体异常类型代替裸异常捕获
-                logger.debug(f"缓存键转换失败: {e}")
+                logger.debug("缓存键转换失败: %s", e)
                 return False
 
         with self._lock:
             try:
                 return key in self.lru_cache or key in self.ttl_cache
             except Exception as e:
-                logger.error(f"缓存包含检查异常: {key}, 错误={e}")
+                logger.error("缓存包含检查异常: %s, 错误=%s", key, e)
                 return False
 
     def __len__(self) -> int:
@@ -230,7 +234,7 @@ class AddressCache:
             try:
                 return len(self.lru_cache) + len(self.ttl_cache)
             except Exception as e:
-                logger.error(f"缓存长度获取异常: {e}")
+                logger.error("缓存长度获取异常: %s", e)
                 return 0
 
     def __bool__(self) -> bool:
@@ -246,4 +250,4 @@ class AddressCache:
                 f"ttl_size={stats['ttl_size']})"
             )
         except Exception as e:
-            return f"AddressCache(error={str(e)})"
+            return f"AddressCache(error={e!s})"

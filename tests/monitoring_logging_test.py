@@ -1,19 +1,13 @@
 #!/usr/bin/env python3
-"""
-测试监控和日志系统功能
+"""测试监控和日志系统功能
 
 此脚本用于测试监控系统和日志系统的功能，确保它们与修改后的资源释放逻辑兼容。
 """
 
-import os
-import sys
 import time
 
-# 添加项目根目录到Python路径
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-from src.monitoring.monitoring_system import MonitoringSystem  # noqa: E402
-from src.utils import get_configured_logger, init_logging  # noqa: E402
+from src.monitoring.monitoring_system import MonitoringSystem
+from src.utils import get_configured_logger, init_logging
 
 # 配置日志
 init_logging()
@@ -35,7 +29,7 @@ def test_logging_system():
     try:
         1 / 0  # noqa: B018  # 有意触发 ZeroDivisionError 测试异常日志
     except Exception as e:
-        logger.exception(f"测试异常日志: {e}")
+        logger.exception("测试异常日志: %s", e)
 
     logger.info("日志系统测试完成")
 
@@ -56,11 +50,11 @@ def test_monitoring_system():
 
     # 获取当前状态
     current_status = monitoring_system.get_current_status()
-    logger.info(f"监控系统当前状态: {current_status}")
+    logger.info("监控系统当前状态: %s", current_status)
 
     # 生成报告
     report = monitoring_system.generate_report()
-    logger.info(f"监控系统报告: {report}")
+    logger.info("监控系统报告: %s", report)
 
     # 停止监控系统
     monitoring_system.stop()
@@ -80,7 +74,7 @@ def main():
 
         logger.info("✅ 监控和日志系统测试成功")
     except Exception as e:
-        logger.error(f"❌ 测试过程中出现错误: {e}")
+        logger.error("❌ 测试过程中出现错误: %s", e)
         import traceback
 
         traceback.print_exc()

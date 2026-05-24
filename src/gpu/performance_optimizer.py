@@ -96,26 +96,27 @@ class GPUProfile:
             raise ValueError(f"work_group_size 必须 >= 1, 实际: {self.work_group_size}")
         if not 0.0 <= self.memory_usage_ratio <= 1.0:
             raise ValueError(
-                f"memory_usage_ratio 必须在 [0.0, 1.0], 实际: {self.memory_usage_ratio}"
+                f"memory_usage_ratio 必须在 [0.0, 1.0], 实际: {self.memory_usage_ratio}",
             )
         if self.min_batch_size < 1:
             raise ValueError(f"min_batch_size 必须 >= 1, 实际: {self.min_batch_size}")
         if self.min_batch_size > self.max_batch_size:
             raise ValueError(
-                f"min_batch_size ({self.min_batch_size}) 不能大于 max_batch_size ({self.max_batch_size})"
+                f"min_batch_size ({self.min_batch_size}) 不能大于 "
+                f"max_batch_size ({self.max_batch_size})",
             )
         # CR-04增强: 补充遗漏字段验证
         if not 0.0 <= self.error_rate_threshold <= 1.0:
             raise ValueError(
-                f"error_rate_threshold 必须在 [0.0, 1.0], 实际: {self.error_rate_threshold}"
+                f"error_rate_threshold 必须在 [0.0, 1.0], 实际: {self.error_rate_threshold}",
             )
         if self.slow_execution_threshold_ms <= 0:
             raise ValueError(
-                f"slow_execution_threshold_ms 必须 > 0, 实际: {self.slow_execution_threshold_ms}"
+                f"slow_execution_threshold_ms 必须 > 0, 实际: {self.slow_execution_threshold_ms}",
             )
         if self.slow_compile_threshold_ms <= 0:
             raise ValueError(
-                f"slow_compile_threshold_ms 必须 > 0, 实际: {self.slow_compile_threshold_ms}"
+                f"slow_compile_threshold_ms 必须 > 0, 实际: {self.slow_compile_threshold_ms}",
             )
         if self.batch_size_step < 1:
             raise ValueError(f"batch_size_step 必须 >= 1, 实际: {self.batch_size_step}")
@@ -126,7 +127,7 @@ class GPUProfile:
         if self.min_gpu_utilization_target > self.max_gpu_utilization_target:
             raise ValueError(
                 f"min_gpu_utilization_target ({self.min_gpu_utilization_target}) 不能大于"
-                f" max_gpu_utilization_target ({self.max_gpu_utilization_target})"
+                f" max_gpu_utilization_target ({self.max_gpu_utilization_target})",
             )
 
 
@@ -135,6 +136,18 @@ class GPUPerformanceOptimizer:
 
     根据性能监控数据动态调整GPU碰撞引擎参数。
     """
+
+    __slots__ = (
+        "_lock",
+        "_metrics_history",
+        "_current_profile",
+        "_vendor_profiles",
+        "_performance_degraded",
+        "_adjustment_count",
+        "_last_adjustment_time",
+        "_adjustment_cooldown_sec",
+        "_initial_batch_size",
+    )
 
     # P2-02修复: 提取魔法数字为类级别常量
     MAX_METRICS_HISTORY = 100  # 最大保留的性能指标记录数
@@ -210,15 +223,14 @@ class GPUPerformanceOptimizer:
             or "gtx" in name_lower
         ):
             return GPUVendor.NVIDIA
-        elif "amd" in vendor_lower or "amd" in name_lower or "radeon" in name_lower:
+        if "amd" in vendor_lower or "amd" in name_lower or "radeon" in name_lower:
             return GPUVendor.AMD
-        elif "intel" in vendor_lower or "intel" in name_lower:
+        if "intel" in vendor_lower or "intel" in name_lower:
             return GPUVendor.INTEL
-        else:
-            return GPUVendor.UNKNOWN
+        return GPUVendor.UNKNOWN
 
     def create_optimized_profile(
-        self, device_name: str, vendor_str: str, global_mem_size: int, compile_time_ms: float = 0.0
+        self, device_name: str, vendor_str: str, global_mem_size: int, compile_time_ms: float = 0.0,
     ) -> GPUProfile:
         """创建优化的GPU配置
 
@@ -230,6 +242,7 @@ class GPUPerformanceOptimizer:
 
         Returns:
             优化后的GPU配置
+
         """
         vendor = self.detect_vendor(device_name, vendor_str)
 
@@ -282,7 +295,7 @@ class GPUPerformanceOptimizer:
             f"GPU配置已优化: {device_name}, "
             f"batch_size={profile.max_batch_size}, "
             f"work_group={profile.work_group_size}, "
-            f"mem_ratio={profile.memory_usage_ratio}"
+            f"mem_ratio={profile.memory_usage_ratio}",
         )
 
         return profile
@@ -292,6 +305,7 @@ class GPUPerformanceOptimizer:
 
         Args:
             metrics: 性能指标数据
+
         """
         # 验证数据有效性
         if metrics.batch_execution_time_ms < 0:
@@ -322,6 +336,7 @@ class GPUPerformanceOptimizer:
 
         Returns:
             None 表示可以继续调整；否则返回 (batch_size, info) 用于提前返回
+
         """
         if not self._current_profile:
             return current_batch_size, {"action": "no_profile", "reason": "未创建配置文件"}
@@ -341,7 +356,7 @@ class GPUPerformanceOptimizer:
             if monitor is not None:
                 recent_count = monitor.get_recent_adjustments(seconds=60)
                 if recent_count >= self.MAX_ADJUSTMENTS_PER_MINUTE:
-                    logger.warning(f"batch_size调整过于频繁 ({recent_count}次/60秒)，暂停自动调整")
+                    logger.warning("batch_size调整过于频繁 (%s次/60秒)，暂停自动调整", recent_count)
                     return current_batch_size, {
                         "action": "rate_limited",
                         "reason": f"调整频率超限({recent_count}次/60秒)",
@@ -421,7 +436,7 @@ class GPUPerformanceOptimizer:
             }
             logger.warning(
                 f"性能下降(错误率{error_rate:.2%}, 时间{avg_execution_time:.0f}ms)，"
-                f"减小batch: {current_batch_size} -> {new_batch_size} (*{reduction_ratio})"
+                f"减小batch: {current_batch_size} -> {new_batch_size} (*{reduction_ratio})",
             )
 
         # 增长batch：性能良好 或 GPU利用率不足
@@ -442,7 +457,7 @@ class GPUPerformanceOptimizer:
                 "new_batch": new_batch_size,
             }
             logger.info(
-                f"性能良好，增大batch: {current_batch_size} -> {new_batch_size} (*{growth_ratio})"
+                "性能良好，增大batch: %s -> %s (*%s)", current_batch_size, new_batch_size, growth_ratio,
             )
 
         if new_batch_size != current_batch_size:
@@ -471,8 +486,8 @@ class GPUPerformanceOptimizer:
                 self.AGGRESSIVE_GROWTH_BASE * deficit_ratio,
             )
             logger.info(
-                f"GPU利用率不足({gpu_utilization*100:.1f}% < {min_target*100:.1f}%), "
-                f"激进增长: *{growth_ratio:.2f}"
+                f"GPU利用率不足({gpu_utilization * 100:.1f}% < {min_target * 100:.1f}%), "
+                f"激进增长: *{growth_ratio:.2f}",
             )
             return growth_ratio
         return strategy.get("growth_ratio", 1.20)
@@ -501,7 +516,7 @@ class GPUPerformanceOptimizer:
                 }
                 logger.info(
                     f"batch_size 恢复: {new_batch_size}->{recovery_batch} "
-                    f"(初始:{self._initial_batch_size})"
+                    f"(初始:{self._initial_batch_size})",
                 )
                 return recovery_batch
 
@@ -522,6 +537,7 @@ class GPUPerformanceOptimizer:
 
         Returns:
             (new_batch_size, adjustment_info)
+
         """
         result = self._analyze_check_readiness(current_batch_size, engine)
         if result is not None:
@@ -532,7 +548,7 @@ class GPUPerformanceOptimizer:
 
         with self._lock:
             return self._analyze_perform_adjustments(
-                current_batch_size, error_rate, engine, strategy, now
+                current_batch_size, error_rate, engine, strategy, now,
             )
 
     def get_optimization_report(self) -> dict[str, Any]:
@@ -600,7 +616,7 @@ class GPUPerformanceOptimizer:
             avg_compile = sum(compile_times) / len(compile_times)
             if avg_compile > profile.slow_compile_threshold_ms:
                 recommendations.append(
-                    f"内核编译时间较长({avg_compile:.0f}ms)，考虑使用内核缓存或预编译"
+                    f"内核编译时间较长({avg_compile:.0f}ms)，考虑使用内核缓存或预编译",
                 )
 
         # 检查错误率

@@ -1,5 +1,4 @@
-"""
-P1-3 修复验证：GPU内核 batch_check k>=N 验证
+"""P1-3 修复验证：GPU内核 batch_check k>=N 验证
 
 验证要点：
 1. batch_check 内核包含 uint256_cmp(&k, &n_val) >= 0 检查
@@ -8,13 +7,9 @@ P1-3 修复验证：GPU内核 batch_check k>=N 验证
 4. .cl 文件和 kernel.py 保持同步
 """
 
-import os
-import sys
 import unittest
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from src.gpu.kernel import OPENCL_KERNEL_SOURCE  # noqa: E402
+from src.gpu.kernel import OPENCL_KERNEL_SOURCE
 
 
 class TestP1_3_KeyRangeValidation(unittest.TestCase):
@@ -29,12 +24,12 @@ class TestP1_3_KeyRangeValidation(unittest.TestCase):
 
         # 检查包含 uint256_cmp 与 N 的比较
         self.assertIn(
-            "uint256_cmp(&k, &n_val) >= 0", source, "batch_check 应使用 uint256_cmp 检查 k >= N"
+            "uint256_cmp(&k, &n_val) >= 0", source, "batch_check 应使用 uint256_cmp 检查 k >= N",
         )
 
         # 检查 uint256_is_zero 和 k>=N 在同一条件中
         self.assertIn(
-            "uint256_is_zero(&k) || uint256_cmp(&k, &n_val) >= 0", source, "应组合检查 k==0 和 k>=N"
+            "uint256_is_zero(&k) || uint256_cmp(&k, &n_val) >= 0", source, "应组合检查 k==0 和 k>=N",
         )
 
         print("\n[P1-3-A ✓] batch_check: k>=N 验证代码存在")
@@ -90,7 +85,7 @@ class TestP1_3_KeyRangeValidation(unittest.TestCase):
         import re
 
         load_loops = re.findall(
-            r"for\s*\(\s*int\s+i\s*=\s*0\s*;\s*i\s*<\s*8\s*;\s*i\+\+\s*\)\s*n_val\.d\[i\]\s*=\s*SECP256K1_N\[i\]",  # noqa: E501
+            r"for\s*\(\s*int\s+i\s*=\s*0\s*;\s*i\s*<\s*8\s*;\s*i\+\+\s*\)\s*n_val\.d\[i\]\s*=\s*SECP256K1_N\[i\]",
             source,
         )
         # 应该有4处（kernel.py和.cl各两个内核）

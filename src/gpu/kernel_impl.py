@@ -186,6 +186,34 @@ class GPUKernel(GPUKernelProtocol):
     _seed_bytes_to_u32_be_array 统一至 gpu/seed_utils.py 导入。
     """
 
+    __slots__ = (
+        # === 设备 / 优化器 ===
+        "_device",
+        "gpu_optimizer",
+        # === 内核参数 ===
+        "_work_group_size",
+        "_max_batch_size",
+        "_local_mem_size",
+        # === 内核引用 / 编译 ===
+        "_program",
+        "_batch_kernel",
+        "_batch_kernel_local",
+        # === 缓冲区 ===
+        "_buffer_tracker",
+        "_seed_buf",
+        "_match_buf",
+        "_targets_buf",
+        "_precomp_buf",
+        "_match_flags",
+        # === 目标缓存 ===
+        "_target_hash160s",
+        "_targets_cached",
+        "_num_targets_cached",
+        "_check_uncompressed",
+        # === 日志 ===
+        "_async_log_handler",
+    )
+
     # 2*G 的期望坐标值（用于验证）
     EXPECTED_2G_X = 0xC6047F9441ED7D6D3045406E95C07CD85C778E4B8CEF3CA7ABAC09B95C709EE5
     EXPECTED_2G_Y = 0x1AE168FEA63DC339A3C58419466CEAEEF7F632653266D0E1236431A950CFE52A
@@ -460,7 +488,7 @@ class GPUKernel(GPUKernelProtocol):
         if match_flags[0] != 0:
             raise RuntimeError(f"GPU内核验证失败: 不应匹配虚拟目标,但match_flags[0]={match_flags[0]}")
 
-        logger.info("✅ GPU内核基础验证通过（虚拟目标不匹配）")
+        logger.info("[OK] GPU内核基础验证通过（虚拟目标不匹配）")
 
         # ===== ALG-3修复: 验证2 - 真实地址匹配测试 =====
         # 使用已知私钥和对应的Hash160进行测试
@@ -514,7 +542,7 @@ class GPUKernel(GPUKernelProtocol):
                     f"GPU内核增强验证失败: 私钥1应匹配{test_address},但match_flags[0]={_flag}",
                 )
 
-            logger.info("✅ GPU内核增强验证通过（私钥1匹配地址%s）", test_address)
+            logger.info("[OK] GPU内核增强验证通过（私钥1匹配地址%s）", test_address)
 
         except ImportError:
             logger.warning("ALG-3增强验证跳过: 无法导入地址生成器")
@@ -1000,10 +1028,12 @@ class GPUKernel(GPUKernelProtocol):
                 logger.error("超时监控线程异常: %s", e)
                 execution_completed[0] = False
 
+        # v5.2.1: 5ms polling interval — eliminates ~100ms dead time per batch on fast GPUs
+        _poll_interval = 0.005  # 5ms (was 100ms)
         monitor_thread = threading.Thread(target=timeout_monitor, daemon=True)
         monitor_thread.start()
         try:
-            max_iterations = int(timeout_seconds / 0.1) + 10
+            max_iterations = int(timeout_seconds / _poll_interval) + 50
             for _ in range(max_iterations):
                 try:
                     status = read_event.command_execution_status
@@ -1013,7 +1043,7 @@ class GPUKernel(GPUKernelProtocol):
                 except cl.Error:
                     execution_completed[0] = False
                     break
-                time.sleep(0.1)
+                time.sleep(_poll_interval)
         finally:
             timeout_event.set()
             monitor_thread.join(timeout=2.0)

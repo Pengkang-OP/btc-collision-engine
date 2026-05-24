@@ -1,23 +1,17 @@
 #!/usr/bin/env python3
-"""
-测试GPU资源释放功能
+"""测试GPU资源释放功能
 
 此脚本用于测试修复后的GPU资源释放功能，确保在引擎停止后GPU资源能够被正确释放。
 """
 
 import logging
-import os
-import sys
 import time
 
-# 添加项目根目录到Python路径
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-import pytest  # noqa: E402
+import pytest
 
 pytestmark = pytest.mark.gpu  # 需要真实GPU硬件
 
-from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
+from src.collision.gpu.engine import GPUCollisionEngine
 
 # 配置日志
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -56,7 +50,7 @@ def test_resource_release():
         return True
 
     except Exception as e:
-        logger.error(f"测试过程中出现错误: {e}")
+        logger.error("测试过程中出现错误: %s", e)
         import traceback
 
         traceback.print_exc()
@@ -66,7 +60,7 @@ def test_resource_release():
             try:
                 engine.stop()
             except Exception as e:
-                logger.warning(f"停止引擎时出现错误: {e}")
+                logger.warning("停止引擎时出现错误: %s", e)
 
 
 if __name__ == "__main__":

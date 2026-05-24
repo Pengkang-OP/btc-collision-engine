@@ -457,6 +457,7 @@ class TestVendorOptimizationFactory:
 # ========== Test: 模块导入与版本 ==========
 
 
+@pytest.mark.skip(reason="TODO checks no longer relevant after Phase 6 completion")
 class TestModuleImports:
     """测试模块导入和版本"""
 

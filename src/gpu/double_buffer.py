@@ -57,15 +57,15 @@ class DoubleBuffer:
     """
 
     __slots__ = (
-        "_context",
-        "_num_keys",
-        "_cl",
-        "_np",
-        "_enabled",
-        "_lock",
-        "_front_idx",
         "_back_idx",
         "_buffers",
+        "_cl",
+        "_context",
+        "_enabled",
+        "_front_idx",
+        "_lock",
+        "_np",
+        "_num_keys",
     )
 
     def __init__(
@@ -74,8 +74,7 @@ class DoubleBuffer:
         num_keys: int,
         enabled: bool | None = None,
     ) -> None:
-        """
-        初始化双缓冲
+        """初始化双缓冲
 
         Args:
             context: OpenCL 上下文
@@ -84,6 +83,7 @@ class DoubleBuffer:
                      None  = 从环境变量 BTC_GPU_DOUBLE_BUFFER 读取 (默认行为)
                      True  = 强制启用双缓冲
                      False = 强制禁用,降级为单缓冲模式
+
         """
         import numpy as np
         import pyopencl as cl
@@ -161,6 +161,7 @@ class DoubleBuffer:
 
         Returns:
             dict with keys "matches" (cl.Buffer) and "match_flags" (np.ndarray)
+
         """
         with self._lock:
             return self._buffers[self._front_idx]
@@ -173,6 +174,7 @@ class DoubleBuffer:
 
         Returns:
             dict with keys "matches" (cl.Buffer) and "match_flags" (np.ndarray)
+
         """
         with self._lock:
             return self._buffers[self._back_idx]
@@ -200,6 +202,7 @@ class DoubleBuffer:
 
         Args:
             buf: 目标缓冲区字典,None 则重置后端缓冲区
+
         """
         if buf is None:
             buf = self.get_back()
@@ -253,6 +256,7 @@ class DoubleBuffer:
 
         Returns:
             dict with keys: enabled, buffer_count, front_index, back_index, num_keys
+
         """
         return {
             "enabled": self._enabled,

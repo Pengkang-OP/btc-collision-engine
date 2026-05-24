@@ -36,14 +36,70 @@ class GPUFacade:
         ...     facade.stop()
     """
 
-    def __init__(self):
-        """初始化GPU外观类"""
+    __slots__ = (
+        "_driver_manager",
+        "_gpu_device",
+        "_collision_engine",
+        "_is_initialized",
+        "_targets",
+        "_mode",
+        "_config",
+        "_checkpoint_enabled",
+        "_dedup_enabled",
+    )
+
+    def __init__(
+        self, targets=None, use_gpu=True, checkpoint_enabled=False,
+        dedup_enabled=False, config=None,
+    ):
+        """初始化GPU外观类
+
+        Args:
+            targets: 目标地址集合/列表（供CLI兼容）
+            use_gpu: 是否使用GPU（兼容参数，始终为True）
+            checkpoint_enabled: 是否启用断点续传（兼容参数）
+            dedup_enabled: 是否启用去重（兼容参数）
+            config: 配置字典，可包含 gpu_device 等键
+        """
         self._driver_manager = None
         self._gpu_device = None
         self._collision_engine = None
         self._is_initialized = False
+        self._targets = list(targets) if targets else []
+        self._mode = "random"
+        self._config = config or {}
+        self._checkpoint_enabled = checkpoint_enabled
+        self._dedup_enabled = dedup_enabled
 
         logger.debug("GPUFacade已创建")
+
+    def start(self, mode="random", resume=False, max_keys=None, **kwargs):
+        """启动GPU碰撞（兼容 KeyCollisionEngine.start API）
+
+        Args:
+            mode: 碰撞模式 (random/sequential)
+            resume: 是否从断点恢复（兼容参数）
+            max_keys: 最大检查密钥数（兼容参数）
+        """
+        if not self._is_initialized:
+            device_index = 0
+            gpu_section: dict[str, Any] = {}
+            if isinstance(self._config, dict):
+                # v5.2.0: 优先读取嵌套 gpu.device_index，回退读扁平的 gpu_device
+                gpu_section = self._config.get("gpu", {})
+                if not isinstance(gpu_section, dict):
+                    gpu_section = {}
+                device_index = gpu_section.get("device_index", 0) or self._config.get("gpu_device", 0)
+            # v5.2.1: 优先 CLI 参数，其次 config 中的 gpu.batch_size，最后默认值
+            batch_size = kwargs.get("batch_size") or gpu_section.get("batch_size") or 1000000
+            self.initialize(device_index=device_index, batch_size=int(batch_size))
+
+        if not self._targets:
+            logger.error("GPU碰撞启动失败：未设置目标地址")
+            return
+
+        self._mode = mode
+        self.start_collision(self._targets, mode=mode, batch_size=kwargs.get("batch_size", 10000))
 
     def is_available(self) -> bool:
         """检查GPU是否可用
@@ -53,13 +109,13 @@ class GPUFacade:
 
         """
         try:
-            from .driver_manager import DriverManager
+            from .device import GPUDeviceDetector
 
-            self._driver_manager = DriverManager()
-            available = self._driver_manager.detect_gpu()
+            devices = GPUDeviceDetector.detect_devices()
+            available = len(devices) > 0
 
             if available:
-                logger.info("GPU可用")
+                logger.info(f"GPU可用，检测到 {len(devices)} 个设备")
             else:
                 logger.info("GPU不可用")
 
@@ -76,10 +132,11 @@ class GPUFacade:
             int: GPU数量
 
         """
-        if not self._driver_manager:
-            self.is_available()
-
-        return self._driver_manager.get_gpu_count() if self._driver_manager else 0
+        try:
+            from .device import GPUDeviceDetector
+            return len(GPUDeviceDetector.detect_devices())
+        except Exception:
+            return 0
 
     def list_devices(self) -> list[dict[str, Any]]:
         """列出所有可用GPU设备
@@ -88,10 +145,11 @@ class GPUFacade:
             设备信息列表
 
         """
-        if not self._driver_manager:
-            self.is_available()
-
-        return self._driver_manager.list_devices()
+        try:
+            from .device import GPUDeviceDetector
+            return GPUDeviceDetector.detect_devices()
+        except Exception:
+            return []
 
     def initialize(self, device_index: int = 0, batch_size: int = 1000000) -> bool:
         """初始化GPU设备
@@ -114,11 +172,23 @@ class GPUFacade:
             self._gpu_device = GPUDevice()  # GPUDevice.__init__() takes no args
             self._gpu_device.initialize(device_index=device_index)
 
-            # 创建碰撞引擎
+            # 创建碰撞引擎 (使用已保存的 targets)
             from ..collision.gpu.engine import GPUCollisionEngine
 
+            # v5.2.1: 提取 gpu 配置段，传递给引擎
+            gpu_cfg = {}
+            if isinstance(self._config, dict):
+                gpu_section = self._config.get("gpu", {})
+                if isinstance(gpu_section, dict):
+                    gpu_cfg = gpu_section
+
             self._collision_engine = GPUCollisionEngine(
-                gpu_device=self._gpu_device, device_index=device_index, batch_size=batch_size,
+                targets=set(self._targets) if self._targets else set(),
+                device_index=device_index,
+                batch_size=batch_size,
+                checkpoint_enabled=self._checkpoint_enabled,
+                dedup_enabled=self._dedup_enabled,
+                gpu_config=gpu_cfg,
             )
 
             self._is_initialized = True
@@ -150,7 +220,7 @@ class GPUFacade:
 
         try:
             # 设置目标
-            self._collision_engine.set_target_addresses(targets)
+            self._collision_engine.targets = set(targets)
 
             # 启动碰撞
             self._collision_engine.start(mode=mode, batch_size=batch_size)

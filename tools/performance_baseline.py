@@ -34,10 +34,6 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-# 添加项目根目录
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-
 class PerformanceBaseline:
     """性能基线管理器"""
 

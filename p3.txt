@@ -1,0 +1,7 @@
+2026-05-24 00:32:47,224 - CryptoBackend - WARNING - PurePythonBackend: ·Çºã¶¨Ê±¼äÄ£Ê½ - ²»ÍÆ¼öÓÃÓÚÉú²ú»·¾³£¬½¨Òé°²×° coincurve »ò cryptography
+2026-05-24 00:32:47,417 - CryptoBackend - INFO - Crypto backend initialization complete: available=['PURE_PYTHON', 'OPENSSL', 'COINCURVE', 'ECDSA'], current=coincurve (libsecp256k1)
+2026-05-24 00:32:47,417 - src.utils.logging_config - WARNING - ÈÕÖ¾ÏµÍ³ÒÑ±»³õÊ¼»¯£¬ÖØ¸´µ÷ÓÃ±»ºöÂÔ
+[INFO] ÈÕÖ¾°²È«¹ıÂËÆ÷ÒÑÆôÓÃ (ÏÔÊ½: 16, ×Ô¶¯·¢ÏÖ: 11, ×Ü¼Æ: 27)
+2026-05-24 00:32:47,425 - src.cli.commands - INFO - dry_run æ¨¡å¼: é¢„è§ˆå¾…æ¸…ç†æ–‡ä»¶ (clean_all ä¸æ”¯æŒ dry_run å‚æ•°)
+[é¢„è§ˆ] å°†æ¸…ç† data_logs/, logs/, temp/ ç›®å½•ä¸‹è¶…è¿‡ 7 å¤©çš„è¿‡æœŸæ–‡ä»¶
+[é¢„è§ˆ] å®é™…æ¸…ç†è¯·è¿è¡Œ: python key_collision_cli.py --cleanup

@@ -253,7 +253,7 @@ class TestValidationMonitor:
                     address=f"addr{i}",
                     valid=False,
                     validated=False,  # 未验证,触发告警
-                )
+                ),
             }
             monitor.check_and_report(results)
 

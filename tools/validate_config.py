@@ -30,12 +30,6 @@ import sys
 from typing import Any
 
 # ── 路径设置 ──────────────────────────────────────────────────────────
-# 确保项目根目录在 sys.path 中，无论从哪个目录运行脚本都能正确导入
-_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if _PROJECT_ROOT not in sys.path:
-    sys.path.insert(0, _PROJECT_ROOT)
-
-
 # ── 辅助函数 ──────────────────────────────────────────────────────────
 
 

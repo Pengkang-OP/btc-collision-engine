@@ -32,11 +32,14 @@ class GPUDeviceSelector:
         device = selector.get_device_info(0)
     """
 
+    __slots__ = ("_scorer", "_devices_cache", "_scores_cache")
+
     def __init__(self, scorer: GPUDeviceScorer | None = None) -> None:
         """初始化GPU设备选择器
 
         Args:
             scorer: GPU设备评分器，为None时使用全局单例
+
         """
         self._scorer = scorer or get_gpu_scorer()
         self._devices_cache: list[dict[str, Any]] | None = None
@@ -50,6 +53,7 @@ class GPUDeviceSelector:
 
         Returns:
             设备信息列表
+
         """
         # 使用缓存
         if not force_refresh and self._devices_cache:
@@ -83,7 +87,7 @@ class GPUDeviceSelector:
             return devices
 
         except Exception as e:
-            logger.error(f"GPU设备检测失败: {e}")
+            logger.error("GPU设备检测失败: %s", e)
             self._devices_cache = []
             return []
 
@@ -97,11 +101,12 @@ class GPUDeviceSelector:
 
         Returns:
             评分(越高越好)
+
         """
         return self._scorer.score(device)
 
     def select_best_device(
-        self, devices: list[dict[str, Any]] | None = None
+        self, devices: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any] | None:
         """自动选择评分最高的GPU设备
 
@@ -110,6 +115,7 @@ class GPUDeviceSelector:
 
         Returns:
             最佳设备信息,无设备时返回None
+
         """
         if devices is None:
             devices = self.detect_all_devices()
@@ -133,6 +139,7 @@ class GPUDeviceSelector:
 
         Returns:
             设备信息,不存在时返回None
+
         """
         devices = self.detect_all_devices()
 
@@ -140,7 +147,7 @@ class GPUDeviceSelector:
             if device.get("global_index") == device_idx:
                 return device
 
-        logger.warning(f"设备索引 {device_idx} 不存在")
+        logger.warning("设备索引 %s 不存在", device_idx)
         return None
 
     def format_device_info(self, device: dict, detailed: bool = False) -> str:
@@ -152,6 +159,7 @@ class GPUDeviceSelector:
 
         Returns:
             格式化后的字符串
+
         """
         name = device.get("name", "Unknown")
         vendor = device.get("vendor", "unknown").upper()
@@ -184,7 +192,7 @@ class GPUDeviceSelector:
                     f"  本地内存: {local_mem_kb:.0f} KB",
                     f"  推荐批次大小: {batch_size:,}",
                     f"  推荐工作组大小: {work_group_size}",
-                ]
+                ],
             )
 
         return "\n".join(lines)
@@ -197,6 +205,7 @@ class GPUDeviceSelector:
 
         Returns:
             格式化后的字符串
+
         """
         if devices is None:
             devices = self.detect_all_devices()
@@ -229,6 +238,7 @@ class GPUDeviceSelector:
 
         Raises:
             ValueError: 索引无效时
+
         """
         devices = self.detect_all_devices()
         available_indices = [d["global_index"] for d in devices]
@@ -264,6 +274,7 @@ class GPUDeviceSelector:
 
         Returns:
             推荐的批次大小
+
         """
         memory_gb = device.get("global_mem_gb", 0)
         vendor = device.get("vendor", "unknown")
@@ -296,6 +307,7 @@ class GPUDeviceSelector:
 
         Returns:
             推荐的工作组大小
+
         """
         max_work_group = device.get("max_work_group_size", 1024)
         vendor = device.get("vendor", "unknown")
@@ -304,10 +316,9 @@ class GPUDeviceSelector:
         if vendor == "nvidia":
             return int(min(512, max_work_group))
         # AMD/Intel适合中等工作组
-        elif vendor in ("amd", "intel"):
+        if vendor in ("amd", "intel"):
             return int(min(256, max_work_group))
-        else:
-            return int(min(256, max_work_group))
+        return int(min(256, max_work_group))
 
     def _enrich_device_info(self, raw_device: dict, global_idx: int) -> dict:
         """增强设备信息,添加评分所需的字段
@@ -318,6 +329,7 @@ class GPUDeviceSelector:
 
         Returns:
             增强后的设备信息
+
         """
         device_name = raw_device.get("name", "")
         vendor_str = raw_device.get("vendor", "")
@@ -371,6 +383,7 @@ def get_gpu_selector() -> GPUDeviceSelector:
 
     Returns:
         GPUDeviceSelector实例
+
     """
     global _selector_instance
 

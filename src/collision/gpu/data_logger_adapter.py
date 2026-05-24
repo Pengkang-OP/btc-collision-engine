@@ -44,6 +44,7 @@ class DataLoggerAdapter:
             engine: 引擎实例。若引擎有 data_logger 属性则复用；
                     否则创建独立的 DataLogger。
             config: 配置字典
+
         """
         self.config = config or {}
         self._logger: Any = None
@@ -62,7 +63,7 @@ class DataLoggerAdapter:
                 self._owns_logger = True
                 logger.debug("DataLoggerAdapter: 创建独立 DataLogger")
             except Exception as e:
-                logger.warning(f"创建 DataLogger 失败: {e}")
+                logger.warning("创建 DataLogger 失败: %s", e)
 
     def log_performance(self, data: dict[str, Any]) -> None:
         """记录性能数据（桥接方法）
@@ -78,6 +79,7 @@ class DataLoggerAdapter:
                 - match_count / matches (int): 映射到 matches_found
                 - gpu_errors (int)
                 - timestamp (float)
+
         """
         if not self._logger:
             return
@@ -87,7 +89,7 @@ class DataLoggerAdapter:
             speed = data.get("speed", data.get("keys_per_second", 0.0))
             total_checked = data.get("total_checked", data.get("batch_size", 0))
             matches_found = data.get(
-                "match_count", data.get("matches_found", data.get("matches", 0))
+                "match_count", data.get("matches_found", data.get("matches", 0)),
             )
             cpu_usage = data.get("cpu_usage", 0.0)
             memory_usage = data.get("memory_usage", 0.0)
@@ -103,11 +105,11 @@ class DataLoggerAdapter:
             )
 
             logger.debug(
-                f"性能数据已记录: speed={speed:.0f}/s, checked={total_checked}, matches={matches_found}"
+                f"性能数据已记录: speed={speed:.0f}/s, checked={total_checked}, matches={matches_found}",
             )
 
         except Exception as e:
-            logger.error(f"记录性能数据失败: {e}")
+            logger.error("记录性能数据失败: %s", e)
 
     def flush(self) -> None:
         """刷写缓冲数据到磁盘"""
@@ -116,13 +118,14 @@ class DataLoggerAdapter:
                 self._logger.flush()
                 logger.debug("数据日志缓冲已刷写")
             except Exception as e:
-                logger.error(f"刷写数据日志失败: {e}")
+                logger.error("刷写数据日志失败: %s", e)
 
     def get_stats(self) -> dict[str, Any]:
         """获取数据日志统计
 
         Returns:
             统计信息字典
+
         """
         if not self._logger:
             return {"status": "not_initialized"}
@@ -132,7 +135,7 @@ class DataLoggerAdapter:
                 return self._logger.get_statistics()
             return {"status": "no_stats_method"}
         except Exception as e:
-            logger.error(f"获取数据日志统计失败: {e}")
+            logger.error("获取数据日志统计失败: %s", e)
             return {"status": "error", "message": str(e)}
 
     def save_current_data(self) -> None:
@@ -141,7 +144,7 @@ class DataLoggerAdapter:
             try:
                 self._logger.save_current_data()
             except Exception as e:
-                logger.error(f"保存当前数据失败: {e}")
+                logger.error("保存当前数据失败: %s", e)
 
     def save_history_data(self) -> None:
         """持久化历史数据到磁盘"""
@@ -149,7 +152,7 @@ class DataLoggerAdapter:
             try:
                 self._logger.save_history_data()
             except Exception as e:
-                logger.error(f"保存历史数据失败: {e}")
+                logger.error("保存历史数据失败: %s", e)
 
     def cleanup(self) -> None:
         """清理资源
@@ -168,6 +171,7 @@ class DataLoggerAdapter:
 
         Returns:
             DataLogger 已初始化时返回 True
+
         """
         return self._logger is not None
 
@@ -176,5 +180,6 @@ class DataLoggerAdapter:
 
         Returns:
             底层 DataLogger 实例，或 None
+
         """
         return self._logger

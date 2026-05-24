@@ -6,8 +6,6 @@
 
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
-
 from src.core.multi_format_generator import MultiFormatAddressGenerator
 from src.collision.targets.format_aware_manager import FormatAwareTargetManager
 

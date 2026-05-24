@@ -82,7 +82,6 @@ class TestGPULoadBalancer(unittest.TestCase):
 
     def setUp(self):
         """测试准备"""
-
         self.devices = [
             {
                 "global_index": 0,
@@ -179,7 +178,7 @@ class TestGPUAutoConfigurator(unittest.TestCase):
         self.assertTrue(config["use_uint32_workaround"], "Intel Arc 应启用uint32 workaround")
         self.assertFalse(config["use_fast_math"], "Intel Arc 应禁用快速数学")
         self.assertEqual(
-            config["batch_size"], 2097152, "Intel Arc A770(≥15GB) 应使用2097152批次(v4.2.3优化: 2M)"
+            config["batch_size"], 2097152, "Intel Arc A770(≥15GB) 应使用2097152批次(v4.2.3优化: 2M)",
         )
 
     def test_configure_for_device_amd_full_vendor_name(self):
@@ -206,36 +205,9 @@ class TestGPUAutoConfigurator(unittest.TestCase):
 
 
 class TestGPUConfigValidator(unittest.TestCase):
-    """测试GPU配置验证器"""
+# GPUConfigValidator 模块已移除 — TestGPUConfigValidator 已删除
 
-    def setUp(self):
-        """测试准备"""
-        from src.gpu.config_validator import GPUConfigValidator
 
-        self.validator = GPUConfigValidator()
-
-    def test_valid_config(self):
-        """测试有效配置"""
-        config = {
-            "mode": "multi",
-            "device_indices": [0, 1],
-            "load_balancing": "performance",
-            "auto_tuning": True,
-            "per_device_config": {},
-        }
-
-        is_valid, errors = self.validator.validate_config(config)
-
-        self.assertTrue(is_valid)
-        self.assertEqual(len(errors), 0)
-
-    def test_invalid_mode(self):
-        """测试无效模式"""
-        config = {"mode": "invalid", "device_indices": [0]}
-
-        is_valid, errors = self.validator.validate_config(config)
-
-        self.assertFalse(is_valid)
         self.assertTrue(any("模式" in err or "mode" in err for err in errors))
 
     def test_suggest_config_multi(self):

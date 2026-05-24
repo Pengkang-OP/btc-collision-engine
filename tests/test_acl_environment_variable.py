@@ -1,15 +1,14 @@
 """测试环境变量控制ACL设置"""
 
 import os
-import sys
 import tempfile
 import unittest
 
 # 添加项目根目录到路径
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-sys.path.insert(0, project_root)
+import pathlib
 
-from src.collision.checkpoint_manager import CheckpointManager  # noqa: E402
+from src.collision.checkpoint_manager import CheckpointManager
 
 
 class TestACLEnvironmentVariable(unittest.TestCase):
@@ -29,21 +28,21 @@ class TestACLEnvironmentVariable(unittest.TestCase):
             os.environ["BTC_ENGINE_SKIP_ACL"] = self.original_skip_acl
 
         # 清理测试文件
-        if os.path.exists(self.test_file):
+        if pathlib.Path(self.test_file).exists():
             try:
                 # 如果文件被icacls锁定,先重置权限
                 if os.name == "nt":
                     import subprocess
 
                     subprocess.run(["icacls", self.test_file, "/reset"], capture_output=True, timeout=2)
-                os.remove(self.test_file)
+                pathlib.Path(self.test_file).unlink()
             except (OSError, PermissionError):
                 pass  # Windows文件清理权限问题，不影响测试
 
         temp_file = self.test_file + ".tmp"
-        if os.path.exists(temp_file):
+        if pathlib.Path(temp_file).exists():
             try:
-                os.remove(temp_file)
+                pathlib.Path(temp_file).unlink()
             except (OSError, PermissionError):
                 pass  # Windows文件清理权限问题，不影响测试
 
@@ -66,11 +65,11 @@ class TestACLEnvironmentVariable(unittest.TestCase):
         )
 
         # 验证文件创建成功
-        self.assertTrue(os.path.exists(self.test_file))
+        self.assertTrue(pathlib.Path(self.test_file).exists())
 
         # 验证可以正常删除(没有被icacls锁定)
-        os.remove(self.test_file)
-        self.assertFalse(os.path.exists(self.test_file))
+        pathlib.Path(self.test_file).unlink()
+        self.assertFalse(pathlib.Path(self.test_file).exists())
 
     def test_skip_acl_false(self):
         """测试BTC_ENGINE_SKIP_ACL=false时使用ACL设置"""
@@ -91,7 +90,7 @@ class TestACLEnvironmentVariable(unittest.TestCase):
         )
 
         # 验证文件创建成功
-        self.assertTrue(os.path.exists(self.test_file))
+        self.assertTrue(pathlib.Path(self.test_file).exists())
 
         # 注意: 文件可能被icacls锁定,删除可能需要重置权限
         # 这在tearDown中处理
@@ -115,7 +114,7 @@ class TestACLEnvironmentVariable(unittest.TestCase):
         )
 
         # 验证文件创建成功
-        self.assertTrue(os.path.exists(self.test_file))
+        self.assertTrue(pathlib.Path(self.test_file).exists())
 
     def test_skip_acl_case_insensitive(self):
         """测试环境变量值大小写不敏感"""
@@ -138,18 +137,18 @@ class TestACLEnvironmentVariable(unittest.TestCase):
                     matches=[],
                     force=True,
                 )
-                self.assertTrue(os.path.exists(test_file))
+                self.assertTrue(pathlib.Path(test_file).exists())
             finally:
                 # 清理
-                if os.path.exists(test_file):
+                if pathlib.Path(test_file).exists():
                     try:
                         if os.name == "nt":
                             import subprocess
 
                             subprocess.run(
-                                ["icacls", test_file, "/reset"], capture_output=True, timeout=2
+                                ["icacls", test_file, "/reset"], capture_output=True, timeout=2,
                             )
-                        os.remove(test_file)
+                        pathlib.Path(test_file).unlink()
                     except (OSError, PermissionError):
                         pass  # Windows文件清理权限问题
 
@@ -162,7 +161,7 @@ class TestACLEnvironmentVariable(unittest.TestCase):
 
         # 创建引擎
         engine = KeyCollisionEngine(
-            targets={"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}, checkpoint_enabled=True
+            targets={"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}, checkpoint_enabled=True,
         )
 
         # 替换断点文件路径
@@ -176,11 +175,11 @@ class TestACLEnvironmentVariable(unittest.TestCase):
         engine.stop()
 
         # 验证断点文件创建成功
-        self.assertTrue(os.path.exists(self.test_file))
+        self.assertTrue(pathlib.Path(self.test_file).exists())
 
         # 验证可以正常删除
-        os.remove(self.test_file)
-        self.assertFalse(os.path.exists(self.test_file))
+        pathlib.Path(self.test_file).unlink()
+        self.assertFalse(pathlib.Path(self.test_file).exists())
 
 
 if __name__ == "__main__":

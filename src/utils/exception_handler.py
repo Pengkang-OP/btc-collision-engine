@@ -29,10 +29,9 @@ class ExceptionHandler:
 
     @staticmethod
     def handle_engine_error(
-        engine_type: str, error: Exception, stats: Any = None, context: str = ""
+        engine_type: str, error: Exception, stats: Any = None, context: str = "",
     ) -> None:
-        """
-        统一处理引擎错误
+        """统一处理引擎错误
 
         参数:
             engine_type: 引擎类型 ("CPU" 或 "GPU")
@@ -46,24 +45,24 @@ class ExceptionHandler:
         # 分类处理
         if isinstance(error, (RuntimeError, ValueError)):
             # 可恢复的运行时错误
-            logger.warning(f"{engine_type}引擎{context}失败({error_type}): {error_msg}")
+            logger.warning("%s引擎%s失败(%s): %s", engine_type, context, error_type, error_msg)
             # 使用getattr替代hasattr避免竞态条件
             record_func = getattr(stats, "record_worker_error", None)
             if record_func and callable(record_func):
                 record_func()
         elif isinstance(error, KeyboardInterrupt):
             # 用户中断 - 使用 raise error from None 避免 RuntimeError
-            logger.info(f"{engine_type}引擎被用户中断")
+            logger.info("%s引擎被用户中断", engine_type)
             raise error from None  # 重新抛出,让上层处理
         elif isinstance(error, MemoryError):
             # 内存错误(严重)
-            logger.critical(f"{engine_type}引擎内存不足: {error_msg}")
+            logger.critical("%s引擎内存不足: %s", engine_type, error_msg)
             record_func = getattr(stats, "record_error", None)
             if record_func and callable(record_func):
                 record_func("memory_error", error_msg)
         elif isinstance(error, ImportError):
             # 模块导入错误（新增分类）
-            logger.error(f"{engine_type}引擎{context}模块导入失败: {error_msg}")
+            logger.error("%s引擎%s模块导入失败: %s", engine_type, context, error_msg)
             record_func = getattr(stats, "record_worker_error", None)
             if record_func and callable(record_func):
                 record_func()
@@ -82,7 +81,7 @@ class ExceptionHandler:
         else:
             # 未知错误 — 使用 error 级别而非 exception 以避免堆栈泄露私钥上下文
             logger.error(
-                "%s引擎%s未知错误: %s: %s", engine_type, context, type(error).__name__, str(error)
+                "%s引擎%s未知错误: %s: %s", engine_type, context, type(error).__name__, str(error),
             )
             record_func = getattr(stats, "record_worker_error", None)
             if record_func and callable(record_func):
@@ -90,8 +89,7 @@ class ExceptionHandler:
 
     @staticmethod
     def handle_gpu_error(mode: str, error: Exception, stats: Any = None) -> bool:
-        """
-        统一处理GPU错误(复用GPUDevice.handle_gpu_batch_error逻辑)
+        """统一处理GPU错误(复用GPUDevice.handle_gpu_batch_error逻辑)
 
         P3-6增强: 新增 MemoryError 分类，避免被归类为"未知错误"
 
@@ -128,7 +126,7 @@ class ExceptionHandler:
                 record_func(is_resource_error=is_resource_error)
         elif isinstance(error, MemoryError):
             # 内存不足(独立分类，便于监控告警)
-            logger.critical(f"GPU {mode}内存不足(MemoryError): {error}")
+            logger.critical("GPU %s内存不足(MemoryError): %s", mode, error)
             record_func = getattr(stats, "record_gpu_error", None)
             if record_func and callable(record_func):
                 record_func(is_resource_error=True)
@@ -143,8 +141,10 @@ class ExceptionHandler:
             if wif_err_func and callable(wif_err_func):
                 wif_err_func()
         else:
-            # 未知错误：仅记录错误消息，避免完整堆栈泄露调用上下文
-            logger.error(f"GPU {mode}失败(未知错误)")
+            # 未知错误：记录异常类型和消息，帮助诊断（如 OpenCL LogicError 等非标准异常）
+            logger.error(
+                "GPU %s失败(未知错误): %s: %s", mode, type(error).__name__, str(error),
+            )
             logger.debug("详细堆栈:", exc_info=True)
             record_func = getattr(stats, "record_gpu_error", None)
             if record_func and callable(record_func):
@@ -154,8 +154,7 @@ class ExceptionHandler:
 
     @staticmethod
     def handle_gpu_async_error(error: Exception, context: str = "") -> bool:
-        """
-        P3-6新增: 统一处理GPU异步执行错误
+        """P3-6新增: 统一处理GPU异步执行错误
 
         用于 async_executor.py 中的异步执行回退逻辑，
         区分 OpenCL 运行时错误与其他可恢复错误。
@@ -171,37 +170,34 @@ class ExceptionHandler:
 
         if isinstance(error, (RuntimeError, MemoryError)):
             # OpenCL 运行时/内存错误 → 可回退
-            logger.warning(f"GPU异步{context}OpenCL错误({error_type}): {error}")
+            logger.warning("GPU异步%sOpenCL错误(%s): %s", context, error_type, error)
             return True
-        elif isinstance(error, (ValueError, TypeError, IndexError)):
+        if isinstance(error, (ValueError, TypeError, IndexError)):
             # 数据/参数错误 → 可回退
-            logger.warning(f"GPU异步{context}数据异常({error_type}): {error}")
+            logger.warning("GPU异步%s数据异常(%s): %s", context, error_type, error)
             return True
-        elif isinstance(error, AttributeError):
+        if isinstance(error, AttributeError):
             # 对象状态异常 → 可回退
-            logger.warning(f"GPU异步{context}对象状态异常({error_type}): {error}")
+            logger.warning("GPU异步%s对象状态异常(%s): %s", context, error_type, error)
             return True
-        elif isinstance(error, (SystemExit, KeyboardInterrupt)):
+        if isinstance(error, (SystemExit, KeyboardInterrupt)):
             # 系统级异常 → 不回退，让其向上传播
-            logger.info(f"GPU异步{context}系统级异常({error_type}): {error}")
+            logger.info("GPU异步%s系统级异常(%s): %s", context, error_type, error)
             return False
-        else:
-            # 未知错误 → 根据错误消息判断是否可回退
-            error_msg = str(error).lower()
-            critical_keywords = ["fatal", "corruption", "segmentation", "access violation"]
-            if any(kw in error_msg for kw in critical_keywords):
-                # 严重错误 → 不回退，记录后向上传播
-                logger.error(f"GPU异步{context}严重未知异常({error_type}): {error}")
-                return False
-            else:
-                # 其他未知错误 → 回退到同步模式
-                logger.warning(f"GPU异步{context}未知异常({error_type}): {error}")
-                return True
+        # 未知错误 → 根据错误消息判断是否可回退
+        error_msg = str(error).lower()
+        critical_keywords = ["fatal", "corruption", "segmentation", "access violation"]
+        if any(kw in error_msg for kw in critical_keywords):
+            # 严重错误 → 不回退，记录后向上传播
+            logger.error("GPU异步%s严重未知异常(%s): %s", context, error_type, error)
+            return False
+        # 其他未知错误 → 回退到同步模式
+        logger.warning("GPU异步%s未知异常(%s): %s", context, error_type, error)
+        return True
 
     @staticmethod
     def handle_cl_resource_error(error: Exception, resource_type: str = "") -> bool:
-        """
-        P3-6新增: 分类处理OpenCL资源错误
+        """P3-6新增: 分类处理OpenCL资源错误
 
         根据错误消息关键字判断是否为资源耗尽型错误，
         为自动降批/重试策略提供决策依据。
@@ -238,8 +234,7 @@ class ExceptionHandler:
 
     @staticmethod
     def handle_gpu_cleanup_error(error: Exception, resource_name: str = "") -> None:
-        """
-        P3-6新增: 统一处理GPU资源清理错误
+        """P3-6新增: 统一处理GPU资源清理错误
 
         GPU资源清理（buffer释放、队列完成）时的错误处理。
         清理失败通常为非致命错误，使用 WARNING 级别。
@@ -249,34 +244,32 @@ class ExceptionHandler:
             resource_name: 资源名称("seed_buffer"/"precomp_buffer"/"compute_queue")
         """
         if isinstance(error, RuntimeError):
-            logger.warning(f"GPU清理{resource_name}OpenCL错误: {error}")
+            logger.warning("GPU清理%sOpenCL错误: %s", resource_name, error)
         elif isinstance(error, OSError):
-            logger.warning(f"GPU清理{resource_name}系统I/O错误: {error}")
+            logger.warning("GPU清理%s系统I/O错误: %s", resource_name, error)
         else:
             logger.warning(f"GPU清理{resource_name}失败: {type(error).__name__}: {error}")
 
     @staticmethod
     def handle_config_error(error: Exception, config_type: str = "") -> None:
-        """
-        统一处理配置错误
+        """统一处理配置错误
 
         参数:
             error: 捕获的异常
             config_type: 配置类型("ConfigManager"/"CryptoConfig"/"GPUConfig")
         """
         if isinstance(error, (FileNotFoundError, OSError)):
-            logger.warning(f"{config_type}配置文件不存在或无法读取: {error}")
+            logger.warning("%s配置文件不存在或无法读取: %s", config_type, error)
         elif isinstance(error, (ValueError, TypeError)):
-            logger.error(f"{config_type}配置值无效: {error}")
+            logger.error("%s配置值无效: %s", config_type, error)
         elif isinstance(error, PermissionError):
-            logger.error(f"{config_type}配置文件权限不足: {error}")
+            logger.error("%s配置文件权限不足: %s", config_type, error)
         else:
-            logger.exception(f"{config_type}配置加载未知错误")
+            logger.exception("%s配置加载未知错误", config_type)
 
     @staticmethod
     def handle_file_error(error: Exception, operation: str, filepath: str = "") -> None:
-        """
-        统一处理文件操作错误
+        """统一处理文件操作错误
 
         参数:
             error: 捕获的异常
@@ -284,10 +277,10 @@ class ExceptionHandler:
             filepath: 文件路径
         """
         if isinstance(error, FileNotFoundError):
-            logger.error(f"文件不存在({operation}): {filepath}")
+            logger.error("文件不存在(%s): %s", operation, filepath)
         elif isinstance(error, PermissionError):
-            logger.error(f"文件权限不足({operation}): {filepath}")
+            logger.error("文件权限不足(%s): %s", operation, filepath)
         elif isinstance(error, OSError):
             logger.error("文件I/O错误(%s): %s - %s", operation, filepath, error)
         else:
-            logger.exception(f"文件操作未知错误({operation}): {filepath}")
+            logger.exception("文件操作未知错误(%s): %s", operation, filepath)

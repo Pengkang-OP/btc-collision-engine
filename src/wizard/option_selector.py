@@ -5,7 +5,7 @@ class OptionSelector:
     """Handles option selection in the setup wizard."""
 
     def select(
-        self, options: list[dict], key: str
+        self, options: list[dict], key: str,
     ) -> str | None:
         """Select an option by key.
 
@@ -15,6 +15,7 @@ class OptionSelector:
 
         Returns:
             Selected option value or None
+
         """
         for opt in options:
             if opt.get("key") == key:

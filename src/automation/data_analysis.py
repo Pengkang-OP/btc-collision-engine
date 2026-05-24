@@ -1,5 +1,4 @@
-"""
-数据分析模块
+"""数据分析模块
 =============
 自动处理输入数据并生成深度分析报告
 """
@@ -9,20 +8,15 @@ import json
 import logging
 import os
 import re
-import sys
 import uuid
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from .models import AnalysisReport, Issue, Severity
+
 logger = logging.getLogger(__name__)
-
-# 添加项目路径
-project_root = Path(__file__).parent.parent.parent.parent
-sys.path.insert(0, str(project_root))
-
-from .models import AnalysisReport, Issue, Severity  # noqa: E402 — 需 sys.path 前置
 
 
 class DataAnalysisModule:
@@ -33,8 +27,7 @@ class DataAnalysisModule:
         self.analysis_cache: dict = {}
 
     def analyze(self, target_path: str | None = None) -> AnalysisReport:
-        """
-        执行完整的数据分析
+        """执行完整的数据分析
         """
         report_id = self._generate_report_id()
 
@@ -97,6 +90,7 @@ class DataAnalysisModule:
 
         Returns:
             {"structure": {...}, "metrics": {...}}
+
         """
         structure = {
             "total_files": 0,
@@ -128,8 +122,7 @@ class DataAnalysisModule:
             for py_file in py_files:
                 filepath = Path(root) / py_file
                 try:
-                    with open(filepath, encoding="utf-8") as f:
-                        content = f.read()
+                    content = Path(filepath).read_text(encoding="utf-8")
 
                     # 结构指标: AST 解析
                     tree = ast.parse(content)
@@ -153,7 +146,7 @@ class DataAnalysisModule:
                             metrics_data["import_counts"][match.group(1)] += 1
 
                 except (SyntaxError, ValueError) as e:
-                    logger.debug(f"AST解析失败: {filepath} - {e}")
+                    logger.debug("AST解析失败: %s - %s", filepath, e)
                 except (OSError, UnicodeDecodeError):
                     pass  # 忽略无法读取的文件
 
@@ -178,7 +171,7 @@ class DataAnalysisModule:
 
         requirements_file = self.project_root / "requirements.txt"
         if requirements_file.exists():
-            with open(requirements_file) as f:
+            with Path(requirements_file).open() as f:
                 deps["required"] = [
                     line.strip() for line in f if line.strip() and not line.startswith("#")
                 ]
@@ -202,8 +195,7 @@ class DataAnalysisModule:
                 for tf in test_files:
                     filepath = Path(root) / tf
                     try:
-                        with open(filepath, encoding="utf-8") as f:
-                            content = f.read()
+                        content = Path(filepath).read_text(encoding="utf-8")
 
                         # 统计测试函数
                         tree = ast.parse(content)
@@ -214,7 +206,7 @@ class DataAnalysisModule:
                         ]
                         coverage["test_cases"] += len(test_funcs)
                     except (SyntaxError, ValueError) as e:
-                        logger.debug(f"AST解析测试文件失败: {filepath} - {e}")
+                        logger.debug("AST解析测试文件失败: %s - %s", filepath, e)
 
         return coverage
 
@@ -232,7 +224,7 @@ class DataAnalysisModule:
             try:
                 from src.utils.fast_json import fast_load
 
-                with open(config_file) as f:
+                with Path(config_file).open() as f:
                     data = fast_load(f)
                 config["config_valid"] = True
                 config["keys"] = list(data.keys())
@@ -258,7 +250,7 @@ class DataAnalysisModule:
             if path.is_file():
                 analysis["size"] = path.stat().st_size
                 try:
-                    with open(path, encoding="utf-8") as f:
+                    with Path(path).open(encoding="utf-8") as f:
                         analysis["line_count"] = sum(1 for _ in f)
                 except (OSError, UnicodeDecodeError):
                     pass  # 忽略无法读取的文件
@@ -331,7 +323,7 @@ class DataAnalysisModule:
                     title="无Python文件",
                     description="项目中未找到Python源文件",
                     location="src/",
-                )
+                ),
             )
             issue_id += 1
 
@@ -346,7 +338,7 @@ class DataAnalysisModule:
                     title="测试覆盖不足",
                     description=f"测试文件数量不足: {test_files} < 5",
                     suggestions=["增加测试文件", "提高测试覆盖率"],
-                )
+                ),
             )
             issue_id += 1
 
@@ -361,7 +353,7 @@ class DataAnalysisModule:
                     description="config.json格式错误或无法解析",
                     location="config.json",
                     suggestions=["检查JSON格式", "参考config.example.json"],
-                )
+                ),
             )
             issue_id += 1
 
@@ -375,7 +367,7 @@ class DataAnalysisModule:
                     title="代码复杂度较高",
                     description="项目存在较高的代码复杂度，可能影响可维护性",
                     suggestions=["拆分大型模块", "简化复杂逻辑"],
-                )
+                ),
             )
             issue_id += 1
 
@@ -389,7 +381,7 @@ class DataAnalysisModule:
                     title="可维护性指数偏低",
                     description="项目可维护性需要改进",
                     suggestions=["重构大型文件", "添加文档注释"],
-                )
+                ),
             )
             issue_id += 1
 
@@ -404,7 +396,7 @@ class DataAnalysisModule:
                     title="存在超长文件",
                     description=f"最大文件长度: {max_length}行，建议拆分",
                     suggestions=["拆分超过2000行的文件", "按功能模块分离"],
-                )
+                ),
             )
             issue_id += 1
 

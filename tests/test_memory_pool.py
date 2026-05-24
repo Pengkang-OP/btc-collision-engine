@@ -92,7 +92,7 @@ class TestObjectPoolAcquireRelease(unittest.TestCase):
         self.assertEqual(pool._release_count, 3)
 
     def test_acquire_increments_count_in_lock(self):
-        """acquire 在锁内递增计数"""
+        """Acquire 在锁内递增计数"""
         pool = ObjectPool(lambda: _DummyObj(), initial_size=1, max_size=5)
         pool.acquire()
         self.assertEqual(pool._acquire_count, 1)
@@ -214,7 +214,7 @@ class TestObjectPoolAutoTune(unittest.TestCase):
         self.assertEqual(len(pool._pool), 5)
 
     def test_auto_tune_shrink_path_via_mock(self):
-        """auto_tune 缩容路径（mock shrink 避免死锁，覆盖 lines 298-301）"""
+        """auto_tune 缩容路径（覆盖 lines 334-349，内部 del _pool[target:]）"""
         pool = ObjectPool(lambda: _DummyObj(), initial_size=1, max_size=100)
         # 填充池超过阈值：current > initial_size * POOL_SHRINK_THRESHOLD_RATIO
         objs = []
@@ -223,11 +223,12 @@ class TestObjectPoolAutoTune(unittest.TestCase):
         for o in objs:
             pool.release(o)
         self.assertGreater(len(pool._pool), 1 * 3)  # 超过 3x 阈值
-        # Mock shrink 避免死锁，同时验证 auto_tune 调用了 shrink
-        with patch.object(ObjectPool, "shrink", return_value=10) as mock_shrink:
-            adjusted = pool.auto_tune()
-            self.assertTrue(adjusted)
-            mock_shrink.assert_called_once_with(pool._initial_size)
+        pre_size = len(pool._pool)
+        adjusted = pool.auto_tune()
+        self.assertTrue(adjusted)
+        # auto_tune 内部使用 del _pool[target:] 缩容到 initial_size
+        self.assertEqual(len(pool._pool), pool._initial_size)
+        self.assertLess(len(pool._pool), pre_size)
 
     def test_auto_tune_expand_blocked_by_memory(self):
         """扩展被内存限制阻止（new_max <= self._max_size 分支）"""
@@ -392,7 +393,7 @@ class TestGlobalPoolManagerAutoTuneAll(unittest.TestCase):
         self.assertTrue(adjusted)
 
     def test_auto_tune_all_psutil_not_available(self):
-        """psutil 不可用时的回退"""
+        """Psutil 不可用时的回退"""
         mgr = GlobalPoolManager()
         mgr.initialize()
         with patch("builtins.__import__", side_effect=ImportError("no psutil")):
@@ -402,7 +403,7 @@ class TestGlobalPoolManagerAutoTuneAll(unittest.TestCase):
 
     @patch("psutil.virtual_memory")
     def test_auto_tune_all_psutil_available(self, mock_vm):
-        """psutil 可用时使用系统内存"""
+        """Psutil 可用时使用系统内存"""
         mock_vm.return_value.available = 1024 * 1024 * 1024  # 1GB
         mgr = GlobalPoolManager()
         mgr.initialize()
@@ -456,28 +457,28 @@ class TestGlobalPoolManagerAutoCleanup(unittest.TestCase):
         """启动自动清理线程"""
         mgr = GlobalPoolManager()
         mgr.initialize()
-        self.assertIsNone(mgr._cleanup_state._cleanup_thread)
+        self.assertIsNone(mgr._cleanup_state.thread)
         mgr.start_auto_cleanup(interval_seconds=0.5)
-        self.assertIsNotNone(mgr._cleanup_state._cleanup_thread)
-        self.assertTrue(mgr._cleanup_state._cleanup_thread.is_alive())
+        self.assertIsNotNone(mgr._cleanup_state.thread)
+        self.assertTrue(mgr._cleanup_state.thread.is_alive())
 
     def test_start_auto_cleanup_idempotent(self):
         """重复启动不创建新线程"""
         mgr = GlobalPoolManager()
         mgr.start_auto_cleanup(interval_seconds=0.5)
-        first_thread = mgr._cleanup_state._cleanup_thread
+        first_thread = mgr._cleanup_state.thread
         mgr.start_auto_cleanup(interval_seconds=0.5)
-        self.assertIs(mgr._cleanup_state._cleanup_thread, first_thread)
+        self.assertIs(mgr._cleanup_state.thread, first_thread)
 
     def test_stop_auto_cleanup(self):
         """停止自动清理线程"""
         mgr = GlobalPoolManager()
         mgr.start_auto_cleanup(interval_seconds=0.5)
-        self.assertIsNotNone(mgr._cleanup_state._cleanup_thread)
-        self.assertTrue(mgr._cleanup_state._cleanup_thread.is_alive())
+        self.assertIsNotNone(mgr._cleanup_state.thread)
+        self.assertTrue(mgr._cleanup_state.thread.is_alive())
         mgr.stop_auto_cleanup(timeout=2.0)
-        # stop 成功后将 _cleanup_state._cleanup_thread 设为 None
-        self.assertIsNone(mgr._cleanup_state._cleanup_thread)
+        # stop 成功后将 _cleanup_state.thread 设为 None
+        self.assertIsNone(mgr._cleanup_state.thread)
 
     def test_stop_auto_cleanup_not_running(self):
         """未运行时停止不报错"""
@@ -488,17 +489,19 @@ class TestGlobalPoolManagerAutoCleanup(unittest.TestCase):
         """超时等待告警（覆盖 line 654）"""
         mgr = GlobalPoolManager()
         mgr.start_auto_cleanup(interval_seconds=3600)
+        # 保存线程引用（stop_auto_cleanup 会将 thread 设为 None）
+        thread = mgr._cleanup_state.thread
         # Patch is_alive 强制返回 True，模拟线程在超时后仍存活
-        original_is_alive = mgr._cleanup_state._cleanup_thread.is_alive
-        mgr._cleanup_state._cleanup_thread.is_alive = lambda: True
+        original_is_alive = thread.is_alive
+        thread.is_alive = lambda: True
         try:
             mgr.stop_auto_cleanup(timeout=0.001)
         finally:
-            mgr._cleanup_state._cleanup_thread.is_alive = original_is_alive
+            thread.is_alive = original_is_alive
             # 清理：发送停止信号并等待线程结束
-            mgr._cleanup_state._cleanup_stop_event.set()
-            if mgr._cleanup_state._cleanup_thread and mgr._cleanup_state._cleanup_thread.is_alive():
-                mgr._cleanup_state._cleanup_thread.join(timeout=2.0)
+            mgr._cleanup_state.stop_event.set()
+            if thread.is_alive():
+                thread.join(timeout=2.0)
 
     def test_auto_cleanup_loop_exception_handling(self):
         """自动清理循环异常处理"""
@@ -514,7 +517,7 @@ class TestGlobalPoolManagerAutoCleanup(unittest.TestCase):
             return False  # stop
 
         with patch.object(mgr, "auto_tune_all", side_effect=RuntimeError("tune error")):
-            with patch.object(mgr._cleanup_state, "_cleanup_stop_event") as mock_event:
+            with patch.object(mgr._cleanup_state, "stop_event") as mock_event:
                 mock_event.wait.side_effect = [False, True]  # run once then stop
                 mgr._auto_cleanup_loop(0.01)
         # Should not crash
@@ -525,7 +528,7 @@ class TestGlobalPoolManagerAutoCleanup(unittest.TestCase):
         mgr.initialize()
         with patch.object(mgr, "auto_tune_all", return_value=True):
             with patch.object(mgr, "shrink_all", return_value=3):
-                with patch.object(mgr._cleanup_state, "_cleanup_stop_event") as mock_event:
+                with patch.object(mgr._cleanup_state, "stop_event") as mock_event:
                     mock_event.wait.side_effect = [False, True]  # run once then stop
                     mgr._auto_cleanup_loop(0.01)
         # Should not crash

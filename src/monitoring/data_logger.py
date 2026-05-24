@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Bitcoin key collision detection data logging system.
+"""Bitcoin key collision detection data logging system.
 
 Provides comprehensive data logging including performance data,
 system status, engine information, and error records.
@@ -10,6 +9,7 @@ Supports data storage, rotation, and report generation.
 import copy
 import json
 import os
+import pathlib
 import shutil
 import statistics
 import sys
@@ -59,11 +59,11 @@ class DataLogger:
     _REC_MEM_THRESHOLD_MEDIUM_MB: int = 512
 
     def __init__(self, storage_dir: str | None = None) -> None:
-        """
-        初始化数据日志记录器
+        """初始化数据日志记录器
 
         Args:
             storage_dir: 数据存储目录（可选，默认使用data_logs）
+
         """
         # 使用统一配置
         self.storage_dir = DataStorageConfig.ensure_storage_dir(storage_dir)
@@ -130,10 +130,11 @@ class DataLogger:
         Args:
             filepath: 目标文件路径
             data: 要写入的数据
+
         """
         temp_file = filepath + ".tmp"
         try:
-            with open(temp_file, "w", encoding="utf-8") as f:
+            with pathlib.Path(temp_file).open("w", encoding="utf-8") as f:
                 fast_dump(data, f, ensure_ascii=False, indent=2)
                 f.flush()
                 os.fsync(f.fileno())  # 确保数据写入磁盘
@@ -145,57 +146,58 @@ class DataLogger:
             # 设置文件权限（仅所有者可读写，Windows 跳过）
             if os.name != "nt":
                 try:
-                    os.chmod(filepath, 0o600)
+                    pathlib.Path(filepath).chmod(0o600)
                 except (OSError, PermissionError) as e:
-                    self.logger.debug(f"设置文件权限失败: {e}")
+                    self.logger.debug("设置文件权限失败: %s", e)
         except Exception as e:
-            self.logger.error(f"原子写入失败: {e}")
+            self.logger.error("原子写入失败: %s", e)
             # 清理临时文件
             try:
-                if os.path.exists(temp_file):
-                    os.remove(temp_file)
+                if pathlib.Path(temp_file).exists():
+                    pathlib.Path(temp_file).unlink()
             except Exception as cleanup_error:
                 # A类修复: 资源清理失败添加DEBUG日志
-                self.logger.debug(f"清理临时文件失败（可忽略）: {cleanup_error}")
+                self.logger.debug("清理临时文件失败（可忽略）: %s", cleanup_error)
 
     def _initialize_files(self) -> None:
         """初始化数据文件"""
         try:
             # 初始化当前数据文件
-            if not os.path.exists(self.current_data_file):
-                with open(self.current_data_file, "w", encoding="utf-8") as f:
+            if not pathlib.Path(self.current_data_file).exists():
+                with pathlib.Path(self.current_data_file).open("w", encoding="utf-8") as f:
                     fast_dump({}, f)
                 if os.name != "nt":
-                    os.chmod(self.current_data_file, 0o600)
+                    pathlib.Path(self.current_data_file).chmod(0o600)
 
             # 初始化历史数据文件 (P0: 带schema_version)
-            if not os.path.exists(self.history_data_file):
+            if not pathlib.Path(self.history_data_file).exists():
                 init_data = {
                     "schema_version": self.HISTORY_SCHEMA_VERSION,
                     "data": [],
                 }
-                with open(self.history_data_file, "w", encoding="utf-8") as f:
+                with pathlib.Path(self.history_data_file).open("w", encoding="utf-8") as f:
                     fast_dump(init_data, f)
 
             # 初始化错误日志文件
-            if not os.path.exists(self.error_log_file):
-                with open(self.error_log_file, "w", encoding="utf-8") as f:
+            if not pathlib.Path(self.error_log_file).exists():
+                with pathlib.Path(self.error_log_file).open("w", encoding="utf-8") as f:
                     fast_dump([], f)
                 if os.name != "nt":
-                    os.chmod(self.error_log_file, 0o600)
+                    pathlib.Path(self.error_log_file).chmod(0o600)
 
             # 初始化性能日志文件
-            if not os.path.exists(self.performance_log_file):
-                with open(self.performance_log_file, "w", encoding="utf-8") as f:
+            if not pathlib.Path(self.performance_log_file).exists():
+                with pathlib.Path(self.performance_log_file).open("w", encoding="utf-8") as f:
                     f.write("# 性能日志 - 比特币密钥碰撞检测\n")
                     f.write(f"# 创建时间: {datetime.now().isoformat()}\n")
                     f.write(
-                        "# 格式: timestamp,speed,total_checked,matches,cpu_usage,memory_usage,threads,gpu_temp,gpu_mem,gpu_util\n"  # noqa: E501
+                        "# 格式: timestamp,speed,total_checked,matches,"
+                        "cpu_usage,memory_usage,threads,gpu_temp,gpu_mem,gpu_util\n",
                     )
                 if os.name != "nt":
-                    os.chmod(self.performance_log_file, 0o600)
+                    pathlib.Path(self.performance_log_file).chmod(0o600)
         except Exception as e:
-            self.logger.error(f"初始化数据文件失败: {e}")
+            self.logger.error("初始化数据文件失败: %s", e)
 
     def record_performance_data(
         self,
@@ -210,8 +212,7 @@ class DataLogger:
         gpu_memory_usage: float = 0.0,
         gpu_utilization: float = 0.0,
     ) -> None:
-        """
-        记录性能数据（添加数据验证）
+        """记录性能数据（添加数据验证）
 
         Args:
             speed: 每秒检测速率
@@ -223,41 +224,42 @@ class DataLogger:
             gpu_temperature: GPU温度(°C) (P1-2)
             gpu_memory_usage: GPU显存使用(MB) (P1-2)
             gpu_utilization: GPU利用率(%) (P1-2)
+
         """
         # 数据验证
         if not isinstance(speed, (int, float)) or speed < 0:
-            self.logger.warning(f"无效的速度值: {speed}，使用0代替")
+            self.logger.warning("无效的速度值: %s，使用0代替", speed)
             speed = 0.0
 
         if not isinstance(total_checked, int) or total_checked < 0:
-            self.logger.warning(f"无效的total_checked值: {total_checked}，使用0代替")
+            self.logger.warning("无效的total_checked值: %s，使用0代替", total_checked)
             total_checked = 0
 
         if not isinstance(matches_found, int) or matches_found < 0:
-            self.logger.warning(f"无效的matches_found值: {matches_found}，使用0代替")
+            self.logger.warning("无效的matches_found值: %s，使用0代替", matches_found)
             matches_found = 0
 
         if not isinstance(cpu_usage, (int, float)) or cpu_usage < 0:
-            self.logger.warning(f"无效的cpu_usage值: {cpu_usage}，使用0代替")
+            self.logger.warning("无效的cpu_usage值: %s，使用0代替", cpu_usage)
             cpu_usage = 0.0
 
         if not isinstance(memory_usage, (int, float)) or memory_usage < 0:
-            self.logger.warning(f"无效的memory_usage值: {memory_usage}，使用0代替")
+            self.logger.warning("无效的memory_usage值: %s，使用0代替", memory_usage)
             memory_usage = 0.0
 
         if not isinstance(thread_count, int) or thread_count < 0:
-            self.logger.warning(f"无效的thread_count值: {thread_count}，使用0代替")
+            self.logger.warning("无效的thread_count值: %s，使用0代替", thread_count)
             thread_count = 0
 
         # P1-2: GPU数据验证
         if not isinstance(gpu_temperature, (int, float)) or gpu_temperature < 0:
-            self.logger.warning(f"无效的gpu_temperature值: {gpu_temperature}，使用0代替")
+            self.logger.warning("无效的gpu_temperature值: %s，使用0代替", gpu_temperature)
             gpu_temperature = 0.0
         if not isinstance(gpu_memory_usage, (int, float)) or gpu_memory_usage < 0:
-            self.logger.warning(f"无效的gpu_memory_usage值: {gpu_memory_usage}，使用0代替")
+            self.logger.warning("无效的gpu_memory_usage值: %s，使用0代替", gpu_memory_usage)
             gpu_memory_usage = 0.0
         if not isinstance(gpu_utilization, (int, float)) or gpu_utilization < 0:
-            self.logger.warning(f"无效的gpu_utilization值: {gpu_utilization}，使用0代替")
+            self.logger.warning("无效的gpu_utilization值: %s，使用0代替", gpu_utilization)
             gpu_utilization = 0.0
 
         # 在锁内更新数据
@@ -298,13 +300,17 @@ class DataLogger:
 
         # 在锁外写入CSV日志 — v4.3.1: 批量化写入减少 I/O 频率
         try:
-            csv_line = f"{timestamp},{speed},{total_checked},{matches_found},{cpu_usage},{memory_usage},{thread_count},{gpu_temperature},{gpu_memory_usage},{gpu_utilization}\n"  # noqa: E501
+            csv_line = (
+                f"{timestamp},{speed},{total_checked},{matches_found},"
+                f"{cpu_usage},{memory_usage},{thread_count},"
+                f"{gpu_temperature},{gpu_memory_usage},{gpu_utilization}\n"
+            )
             if self._PERF_BATCH_ENABLED:
                 self._buffered_perf_write(csv_line)
             else:
                 self._direct_perf_write(csv_line)
         except Exception as e:
-            self.logger.error(f"写入性能日志失败: {e}")
+            self.logger.error("写入性能日志失败: %s", e)
 
         # 记录到标准日志
         self.logger.debug(f"性能数据: 速度={speed:.2f}/s, 总计={total_checked}, 匹配={matches_found}")
@@ -330,7 +336,7 @@ class DataLogger:
     def _direct_perf_write(self, csv_line: str) -> None:
         """直接写入性能日志（非批量化模式）"""
         self._rotate_perf_log_if_needed()
-        with open(self.performance_log_file, "a", encoding="utf-8") as f:
+        with pathlib.Path(self.performance_log_file).open("a", encoding="utf-8") as f:
             f.write(csv_line)
 
     def _flush_perf_buffer(self) -> None:
@@ -346,26 +352,26 @@ class DataLogger:
             return
         try:
             self._rotate_perf_log_if_needed()
-            with open(self.performance_log_file, "a", encoding="utf-8") as f:
+            with pathlib.Path(self.performance_log_file).open("a", encoding="utf-8") as f:
                 f.writelines(lines_to_write)
             self._record_pipeline_metric(
-                "performance_log", success=True, extra={"batched_lines": len(lines_to_write)}
+                "performance_log", success=True, extra={"batched_lines": len(lines_to_write)},
             )
         except Exception as e:
-            self.logger.error(f"批量写入性能日志失败: {e}")
+            self.logger.error("批量写入性能日志失败: %s", e)
             self._record_pipeline_metric("performance_log", success=False, error=str(e)[:200])
 
     def record_system_data(
-        self, os_name: str = "", python_version: str = "", pid: int = 0, uptime: float = 0.0
+        self, os_name: str = "", python_version: str = "", pid: int = 0, uptime: float = 0.0,
     ) -> None:
-        """
-        记录系统数据
+        """记录系统数据
 
         Args:
             os_name: 操作系统名称
             python_version: Python版本
             pid: 进程ID
             uptime: 系统运行时间(秒)
+
         """
         with self._lock:
             if not os_name:
@@ -388,7 +394,7 @@ class DataLogger:
             }
 
             self._current_data["system"] = system_data
-            self.logger.debug(f"系统数据: OS={os_name}, Python={python_version}, PID={pid}")
+            self.logger.debug("系统数据: OS=%s, Python=%s, PID=%s", os_name, python_version, pid)
 
     def record_engine_data(
         self,
@@ -398,8 +404,7 @@ class DataLogger:
         current_position: int = 0,
         additional_info: dict[str, Any] | None = None,
     ) -> None:
-        """
-        记录引擎状态数据
+        """记录引擎状态数据
 
         Args:
             mode: 对撞模式
@@ -407,6 +412,7 @@ class DataLogger:
             is_running: 引擎运行状态
             current_position: 当前位置
             additional_info: 额外信息
+
         """
         # 类型验证/强制转换（防御 Mock 对象等非标准输入）
         if not isinstance(mode, str):
@@ -437,7 +443,7 @@ class DataLogger:
                 engine_data.update(additional_info)
 
             self._current_data["engine"] = engine_data
-            self.logger.debug(f"引擎数据: 模式={mode}, 目标数={target_count}, 运行中={is_running}")
+            self.logger.debug("引擎数据: 模式=%s, 目标数=%s, 运行中=%s", mode, target_count, is_running)
 
     # P2-3: 在engine_data中记录去重效率
     def set_dedup_stats(self, skipped: int = 0, hit_rate: float = 0.0) -> None:
@@ -446,6 +452,7 @@ class DataLogger:
         Args:
             skipped: 去重跳过的密钥数量
             hit_rate: Bloom Filter命中率 (0.0-1.0)
+
         """
         with self._lock:
             if "engine" in self._current_data:
@@ -457,16 +464,15 @@ class DataLogger:
     def log_match(self, event) -> None:
         """Alias for record_match_event, called from event bus."""
         # Extract address from event object
-        addr = getattr(event, 'address', '') or getattr(event, 'target_address', '')
+        addr = getattr(event, "address", "") or getattr(event, "target_address", "")
         self.record_match_event(addr)
 
     def log_progress(self, event) -> None:
         """Called from event bus on progress events."""
-        pass
 
     def log_error(self, event) -> None:
         """Called from event bus on error events."""
-        msg = getattr(event, 'error_message', '') or str(getattr(event, 'exception', ''))
+        msg = getattr(event, "error_message", "") or str(getattr(event, "exception", ""))
         self.record_error(msg)
 
     def record_match_event(
@@ -484,6 +490,7 @@ class DataLogger:
             matched_address: 匹配到的BTC地址（仅地址，不含私钥）
             collision_mode: 碰撞模式("random"/"range_scan"/"brute_force")
             match_type: 匹配类型("address"/"hash160")
+
         """
         # 安全脱敏：只保留地址前6位+后4位用于日志审计
         if len(matched_address) > 10:
@@ -512,7 +519,10 @@ class DataLogger:
             # P1-1: 使用独立计数器，避免与record_performance_data赋值冲突
             self._match_event_count += 1
 
-        self.logger.info(f"碰撞匹配事件: 地址={safe_addr}, 模式={collision_mode}, 类型={match_type}")
+        self.logger.info(
+            "碰撞匹配事件: 地址=%s, 模式=%s, 类型=%s",
+            safe_addr, collision_mode, match_type,
+        )
 
     def record_error(
         self,
@@ -521,14 +531,14 @@ class DataLogger:
         exception: Exception | None = None,
         context: dict[str, Any] | None = None,
     ) -> None:
-        """
-        记录错误信息
+        """记录错误信息
 
         Args:
             error_type: 错误类型
             message: 错误消息
             exception: 异常对象
             context: 错误上下文信息
+
         """
         timestamp = time.time()
 
@@ -549,25 +559,25 @@ class DataLogger:
         # 在锁外执行文件I/O，避免阻塞高频路径（record_performance_data/save_history_data）
         try:
             errors = []
-            if os.path.exists(self.error_log_file):
-                with open(self.error_log_file, encoding="utf-8") as f:
+            if pathlib.Path(self.error_log_file).exists():
+                with pathlib.Path(self.error_log_file).open(encoding="utf-8") as f:
                     errors = fast_load(f)
 
             errors.append(error_record)
             errors = self._error_rotator.rotate(errors)
 
-            with open(self.error_log_file, "w", encoding="utf-8") as f:
+            with pathlib.Path(self.error_log_file).open("w", encoding="utf-8") as f:
                 fast_dump(errors, f, ensure_ascii=False, indent=2)
             self._record_pipeline_metric("record_error", success=True)
         except Exception as e:
-            self.logger.error(f"保存错误日志失败: {e}")
+            self.logger.error("保存错误日志失败: %s", e)
             self._record_pipeline_metric("record_error", success=False, error=str(e)[:200])
 
         # 记录到标准日志
         if exception:
-            self.logger.error(f"错误记录 [{error_type}]: {message} - {exception}")
+            self.logger.error("错误记录 [%s]: %s - %s", error_type, message, exception)
         else:
-            self.logger.error(f"错误记录 [{error_type}]: {message}")
+            self.logger.error("错误记录 [%s]: %s", error_type, message)
 
     def update_current_data_sections(
         self,
@@ -584,6 +594,7 @@ class DataLogger:
             performance: 性能数据子字典
             system: 系统数据子字典
             engine: 引擎数据子字典
+
         """
         with self._lock:
             if performance is not None:
@@ -617,7 +628,7 @@ class DataLogger:
             )
             os.close(temp_fd)
 
-            with open(temp_file, "w", encoding="utf-8") as f:
+            with pathlib.Path(temp_file).open("w", encoding="utf-8") as f:
                 fast_dump(save_data, f, ensure_ascii=False, indent=2)
                 f.flush()
                 os.fsync(f.fileno())
@@ -628,12 +639,12 @@ class DataLogger:
             else:
                 self._record_pipeline_metric("save_current_data", success=True)
         except Exception as e:
-            self.logger.error(f"保存当前数据失败: {e}")
+            self.logger.error("保存当前数据失败: %s", e)
             self._record_pipeline_metric("save_current_data", success=False, error=str(e)[:200])
         finally:
-            if temp_file and os.path.exists(temp_file):
+            if temp_file and pathlib.Path(temp_file).exists():
                 with suppress(OSError):
-                    os.remove(temp_file)
+                    pathlib.Path(temp_file).unlink()
 
     def _cleanup_stale_temp_files(self, max_age_seconds: int = 3600) -> None:
         """清理上次会话遗留的过期 .tmp 临时文件
@@ -645,6 +656,7 @@ class DataLogger:
 
         Args:
             max_age_seconds: 临时文件最大保留时间（秒），默认 1 小时
+
         """
         try:
             now = time.time()
@@ -660,13 +672,13 @@ class DataLogger:
                     if age < max_age_seconds:
                         continue
                     size = entry.stat().st_size
-                    os.remove(entry.path)
+                    pathlib.Path(entry.path).unlink()
                     removed += 1
                     freed += size
             if removed > 0:
                 self.logger.info(f"清理了 {removed} 个过期临时文件，释放 {freed / 1024 / 1024:.2f} MB")
         except Exception as e:
-            self.logger.debug(f"清理过期临时文件时出错（非致命）: {e}")
+            self.logger.debug("清理过期临时文件时出错（非致命）: %s", e)
 
     def _rotate_perf_log_if_needed(self) -> None:
         """检查 performance.log 大小，超过阈值时自动轮转
@@ -680,16 +692,16 @@ class DataLogger:
         """
         try:
             # 快速路径：锁外初步检查，避免不必要的锁竞争
-            if not os.path.exists(self.performance_log_file):
+            if not pathlib.Path(self.performance_log_file).exists():
                 return
-            if os.path.getsize(self.performance_log_file) < self._PERF_LOG_MAX_SIZE:
+            if pathlib.Path(self.performance_log_file).stat().st_size < self._PERF_LOG_MAX_SIZE:
                 return
 
             with self._lock:
                 # 双重检查：锁内再次确认（防止 TOCTOU 竞态）
-                if not os.path.exists(self.performance_log_file):
+                if not pathlib.Path(self.performance_log_file).exists():
                     return
-                size = os.path.getsize(self.performance_log_file)
+                size = pathlib.Path(self.performance_log_file).stat().st_size
                 if size < self._PERF_LOG_MAX_SIZE:
                     return
 
@@ -700,20 +712,21 @@ class DataLogger:
                         f"{self.performance_log_file}.{i - 1}" if i > 1 else self.performance_log_file
                     )
                     new_name = f"{self.performance_log_file}.{i}"
-                    if os.path.exists(old_name):
-                        os.replace(old_name, new_name)
+                    if pathlib.Path(old_name).exists():
+                        pathlib.Path(old_name).replace(new_name)
 
                 # 写入新文件头
-                with open(self.performance_log_file, "w", encoding="utf-8") as f:
+                with pathlib.Path(self.performance_log_file).open("w", encoding="utf-8") as f:
                     f.write("# 性能日志 - 比特币密钥碰撞检测 (轮转)\n")
                     f.write(f"# 轮转时间: {datetime.now().isoformat()}\n")
                     f.write(
-                        "# 格式: timestamp,speed,total_checked,matches,cpu_usage,memory_usage,threads,gpu_temp,gpu_mem,gpu_util\n"  # noqa: E501
+                        "# 格式: timestamp,speed,total_checked,matches,"
+                        "cpu_usage,memory_usage,threads,gpu_temp,gpu_mem,gpu_util\n",
                     )
 
                 self.logger.info(f"performance.log 达到 {size / 1024 / 1024:.1f} MB，已轮转")
         except Exception as e:
-            self.logger.warning(f"performance.log 轮转失败（非致命）: {e}")
+            self.logger.warning("performance.log 轮转失败（非致命）: %s", e)
 
     def _safe_file_replace(self, src: str, dst: str, max_retries: int = 3) -> bool:
         """安全的原子文件替换，带指数退避重试和回退机制
@@ -730,24 +743,25 @@ class DataLogger:
 
         Returns:
             True 如果替换成功，False 如果所有尝试都失败
+
         """
         delays = self._REPLACE_BACKOFF_DELAYS
 
         for attempt in range(max_retries):
             try:
-                os.replace(src, dst)
+                pathlib.Path(src).replace(dst)
                 return True
             except PermissionError:
                 if attempt < max_retries - 1:
                     delay = delays[min(attempt, len(delays) - 1)]
                     self.logger.warning(
-                        f"文件替换被拒绝 (尝试 {attempt + 1}/{max_retries})，{delay:.0f}s 后重试: {dst}"
+                        f"文件替换被拒绝 (尝试 {attempt + 1}/{max_retries})，{delay:.0f}s 后重试: {dst}",
                     )
                     time.sleep(delay)
                     continue
                 # 最后一次尝试失败，使用回退方案
                 self.logger.warning(
-                    f"原子替换全部失败 ({max_retries}/{max_retries})，回退到直接写入: {dst}"
+                    "原子替换全部失败 (%s/%s)，回退到直接写入: %s", max_retries, max_retries, dst,
                 )
                 return self._fallback_direct_write(src, dst)
             except OSError as e:
@@ -755,16 +769,17 @@ class DataLogger:
                     delay = delays[min(attempt, len(delays) - 1)]
                     _attempt = attempt + 1
                     self.logger.warning(
-                        f"文件替换失败 (尝试 {_attempt}/{max_retries}), {delay:.0f}s后重试: {e} - {dst}"
+                        f"文件替换失败 (尝试 {_attempt}/{max_retries}), {delay:.0f}s后重试: {e} - {dst}",
                     )
                     time.sleep(delay)
                     continue
-                # 最后一次尝试失败，也尝试回退方案
-                # （某些杀毒软件返回非标准 OSError 而非 PermissionError）
-                self.logger.warning(
-                    f"原子替换全部失败 ({max_retries}/{max_retries})，回退到直接写入: {e} - {dst}"
-                )
-                return self._fallback_direct_write(src, dst)
+            # 最后一次尝试失败，也尝试回退方案
+            # （某些杀毒软件返回非标准 OSError 而非 PermissionError）
+            self.logger.warning(
+                "原子替换全部失败 (%s/%s)，回退到直接写入: %s - %s",
+                max_retries, max_retries, e, dst,
+            )
+            return self._fallback_direct_write(src, dst)
 
         return False
 
@@ -780,11 +795,11 @@ class DataLogger:
 
         Returns:
             True 如果写入成功
+
         """
         try:
             # 读取临时文件内容
-            with open(src, encoding="utf-8") as f:
-                content = f.read()
+            content = pathlib.Path(src).read_text(encoding="utf-8")
 
             # 使用唯一临时文件名，避免并发竞争
             dst_fd, dst_tmp = tempfile.mkstemp(
@@ -794,14 +809,14 @@ class DataLogger:
             )
             os.close(dst_fd)
 
-            with open(dst_tmp, "w", encoding="utf-8") as f:
+            with pathlib.Path(dst_tmp).open("w", encoding="utf-8") as f:
                 f.write(content)
                 f.flush()
                 os.fsync(f.fileno())
 
             # 尝试替换
             try:
-                os.replace(dst_tmp, dst)
+                pathlib.Path(dst_tmp).replace(dst)
             except (PermissionError, OSError):
                 # 连替换都失败，使用新临时文件做最后一次原子替换尝试
                 # （避免直接 open(dst, "w") 的线程安全隐患）
@@ -812,36 +827,36 @@ class DataLogger:
                 )
                 os.close(dst_fd2)
                 try:
-                    with open(dst_tmp2, "w", encoding="utf-8") as f:
+                    with pathlib.Path(dst_tmp2).open("w", encoding="utf-8") as f:
                         f.write(content)
                         f.flush()
                         os.fsync(f.fileno())
                     try:
-                        os.replace(dst_tmp2, dst)
+                        pathlib.Path(dst_tmp2).replace(dst)
                     except (PermissionError, OSError):
                         # 绝对最后手段：直接覆盖（非原子但确保数据不丢失）
-                        with open(dst, "w", encoding="utf-8") as f:
+                        with pathlib.Path(dst).open("w", encoding="utf-8") as f:
                             f.write(content)
                             f.flush()
                             os.fsync(f.fileno())
                 finally:
                     # 清理第二级临时文件（无论成功或失败）
-                    if os.path.exists(dst_tmp2):
+                    if pathlib.Path(dst_tmp2).exists():
                         with suppress(OSError):
-                            os.remove(dst_tmp2)
+                            pathlib.Path(dst_tmp2).unlink()
                 # 清理第一级回退临时文件
-                if os.path.exists(dst_tmp):
+                if pathlib.Path(dst_tmp).exists():
                     with suppress(OSError):
-                        os.remove(dst_tmp)
+                        pathlib.Path(dst_tmp).unlink()
 
             # 清理源临时文件（回退路径下 src 不会被 os.replace 移动）
-            if os.path.exists(src):
+            if pathlib.Path(src).exists():
                 with suppress(OSError):
-                    os.remove(src)
+                    pathlib.Path(src).unlink()
 
             return True
         except Exception as e:
-            self.logger.error(f"回退直接写入也失败: {e}")
+            self.logger.error("回退直接写入也失败: %s", e)
             return False
 
     def save_history_data(self) -> None:
@@ -876,7 +891,7 @@ class DataLogger:
             self.logger.debug(f"版本化写入: {len(new_data)}条历史数据 (总计{len(existing)}条)")
             self._record_pipeline_metric("save_history_data", success=True, record_count=len(new_data))
         except Exception as e:
-            self.logger.error(f"保存历史数据失败: {e}")
+            self.logger.error("保存历史数据失败: %s", e)
             self._record_pipeline_metric("save_history_data", success=False, error=str(e)[:200])
             # 写入失败将数据放回缓冲区（使用 extendleft 保持顺序）
             with self._lock:
@@ -903,7 +918,7 @@ class DataLogger:
                 "data": compacted,
             }
             temp_file = self.history_data_file + ".compact.tmp"
-            with open(temp_file, "w", encoding="utf-8") as f:
+            with pathlib.Path(temp_file).open("w", encoding="utf-8") as f:
                 fast_dump(versioned, f, ensure_ascii=False, indent=2)
                 f.flush()
                 os.fsync(f.fileno())
@@ -914,14 +929,14 @@ class DataLogger:
             else:
                 self.logger.info(f"历史数据压缩: {len(history)} → {len(compacted)} 条")
         except Exception as e:
-            self.logger.error(f"历史数据压缩失败: {e}")
+            self.logger.error("历史数据压缩失败: %s", e)
             self._count_write_failure()
         finally:
             # 清理临时文件
             temp_file = self.history_data_file + ".compact.tmp"
-            if os.path.exists(temp_file):
+            if pathlib.Path(temp_file).exists():
                 with suppress(OSError):
-                    os.remove(temp_file)
+                    pathlib.Path(temp_file).unlink()
 
     def _load_history_with_recovery(self) -> list:
         """加载历史数据，带损坏恢复机制
@@ -930,28 +945,27 @@ class DataLogger:
         - 旧格式（无版本号）: 直接返回JSON数组
         - 新格式（v1.0+）: 返回 {"schema_version": ..., "data": [...]} 中的data
         """
-        if not os.path.exists(self.history_data_file):
+        if not pathlib.Path(self.history_data_file).exists():
             return []
 
         try:
-            with open(self.history_data_file, encoding="utf-8") as f:
+            with pathlib.Path(self.history_data_file).open(encoding="utf-8") as f:
                 data = fast_load(f)
             if isinstance(data, list):
                 # 旧格式（无版本号），直接返回
                 return data
-            elif isinstance(data, dict) and "data" in data:
+            if isinstance(data, dict) and "data" in data:
                 # 新格式（P0 schema_version）
                 version = data.get("schema_version", "unknown")
-                self.logger.debug(f"加载历史数据 (schema_version={version})")
+                self.logger.debug("加载历史数据 (schema_version=%s)", version)
                 return data["data"]
-            else:
-                self.logger.warning("历史数据格式错误，重置为空列表")
-                return []
+            self.logger.warning("历史数据格式错误，重置为空列表")
+            return []
         except json.JSONDecodeError as e:
-            self.logger.warning(f"历史数据JSON损坏，尝试恢复: {e}")
+            self.logger.warning("历史数据JSON损坏，尝试恢复: %s", e)
             return self._recover_history_data()
         except Exception as e:
-            self.logger.warning(f"读取历史数据失败: {e}")
+            self.logger.warning("读取历史数据失败: %s", e)
             return []
 
     @staticmethod
@@ -1008,17 +1022,16 @@ class DataLogger:
 
         try:
             # 防御性编程：检查文件大小，避免读取超大文件耗尽内存
-            file_size = os.path.getsize(self.history_data_file)
+            file_size = pathlib.Path(self.history_data_file).stat().st_size
             max_size = 10 * 1024 * 1024  # 10MB限制
             if file_size > max_size:
                 self.logger.warning(
                     f"历史文件过大({file_size / 1024 / 1024:.2f}MB)，"
-                    f"超过限制({max_size / 1024 / 1024:.0f}MB)，跳过恢复"
+                    f"超过限制({max_size / 1024 / 1024:.0f}MB)，跳过恢复",
                 )
                 return []
 
-            with open(self.history_data_file, encoding="utf-8") as f:
-                content = f.read()
+            content = pathlib.Path(self.history_data_file).read_text(encoding="utf-8")
 
             # P0: 尝试先解析版本化外层，提取内层数组用于字符级恢复
             try:
@@ -1035,7 +1048,7 @@ class DataLogger:
             return recovered
 
         except Exception as e:
-            self.logger.error(f"恢复历史数据失败: {e}")
+            self.logger.error("恢复历史数据失败: %s", e)
             return []
 
     def get_current_data(self) -> dict[str, Any]:
@@ -1050,11 +1063,11 @@ class DataLogger:
     def get_error_logs(self) -> list[dict[str, Any]]:
         """获取错误日志（从文件读取）"""
         try:
-            if os.path.exists(self.error_log_file):
-                with open(self.error_log_file, encoding="utf-8") as f:
+            if pathlib.Path(self.error_log_file).exists():
+                with pathlib.Path(self.error_log_file).open(encoding="utf-8") as f:
                     return fast_load(f)
         except Exception as e:
-            self.logger.error(f"读取错误日志失败: {e}")
+            self.logger.error("读取错误日志失败: %s", e)
         return []
 
     @property
@@ -1088,14 +1101,14 @@ class DataLogger:
             }
 
     def generate_report(self, report_type: str = "daily") -> dict[str, Any]:
-        """
-        生成报告
+        """生成报告
 
         Args:
             report_type: 报告类型 (daily, weekly, monthly)
 
         Returns:
             报告数据字典
+
         """
         # 在锁内获取必要数据
         with self._lock:
@@ -1138,11 +1151,9 @@ class DataLogger:
                 cpu_usages.append(d.get("cpu_usage", 0))
                 memory_usages.append(d.get("memory_usage", 0))
                 tc = d.get("total_checked", 0)
-                if tc > total_checked:
-                    total_checked = tc
+                total_checked = max(total_checked, tc)
                 mf = d.get("matches_found", 0)
-                if mf > matches_found:
-                    matches_found = mf
+                matches_found = max(matches_found, mf)
 
             report = {
                 "report_type": report_type,
@@ -1168,15 +1179,15 @@ class DataLogger:
             report_filename = f"report_{report_type}_{now.strftime('%Y%m%d_%H%M%S')}.json"
             report_path = os.path.join(self.storage_dir, report_filename)
 
-            with open(report_path, "w", encoding="utf-8") as f:
+            with pathlib.Path(report_path).open("w", encoding="utf-8") as f:
                 fast_dump(report, f, ensure_ascii=False, indent=2)
 
-            self.logger.info(f"{report_type}报告已生成: {report_path}")
+            self.logger.info("%s报告已生成: %s", report_type, report_path)
             self._auto_cleanup_if_needed()
             return report
 
         except Exception as e:
-            self.logger.error(f"生成报告失败: {e}")
+            self.logger.error("生成报告失败: %s", e)
             return {"error": str(e)}
 
     def _analyze_trends(self, data: list[dict[str, Any]]) -> dict[str, Any]:
@@ -1214,10 +1225,9 @@ class DataLogger:
                 threshold = 0.02  # 2%阈值
                 if normalized_slope > threshold:
                     return "increasing"
-                elif normalized_slope < -threshold:
+                if normalized_slope < -threshold:
                     return "decreasing"
-                else:
-                    return "stable"
+                return "stable"
             except (OverflowError, statistics.StatisticsError, ValueError):
                 # 降级：前半/后半均值比较
                 if len(values) < 2:
@@ -1226,10 +1236,9 @@ class DataLogger:
                 second_half_avg = statistics.mean(values[len(values) // 2 :])
                 if second_half_avg > first_half_avg * 1.05:
                     return "increasing"
-                elif second_half_avg < first_half_avg * 0.95:
+                if second_half_avg < first_half_avg * 0.95:
                     return "decreasing"
-                else:
-                    return "stable"
+                return "stable"
 
         return {
             "speed": {
@@ -1250,7 +1259,7 @@ class DataLogger:
         }
 
     def _generate_recommendations(
-        self, speeds: list[float], cpu_usages: list[float], memory_usages: list[float]
+        self, speeds: list[float], cpu_usages: list[float], memory_usages: list[float],
     ) -> list[str]:
         """生成优化建议"""
         recommendations = []
@@ -1320,8 +1329,8 @@ class DataLogger:
         except Exception as e:
             # 配置读取失败时静默回退到默认值
             self.logger.debug(
-                f"auto_cleanup配置回退: enabled={default_enabled},"
-                f" max_age_days={default_max_age_days}, 原因: {e}"
+                "auto_cleanup配置回退: enabled=%s, max_age_days=%s, 原因: %s",
+                default_enabled, default_max_age_days, e,
             )
             return default_enabled, default_max_age_days
 
@@ -1352,7 +1361,7 @@ class DataLogger:
 
         try:
             archive_dir = os.path.join(self.storage_dir, "archive")
-            os.makedirs(archive_dir, exist_ok=True)
+            pathlib.Path(archive_dir).mkdir(exist_ok=True, parents=True)
 
             cutoff_time = current_time - (max_age_days * 86400)
             moved_count = 0
@@ -1360,24 +1369,30 @@ class DataLogger:
             for filename in os.listdir(self.storage_dir):
                 if filename.startswith("report_") and filename.endswith(".json"):
                     filepath = os.path.join(self.storage_dir, filename)
-                    if os.path.isfile(filepath) and os.path.getmtime(filepath) < cutoff_time:
+                    if (
+                    pathlib.Path(filepath).is_file()
+                    and pathlib.Path(filepath).stat().st_mtime < cutoff_time
+                ):
                         dest = os.path.join(archive_dir, filename)
                         shutil.move(filepath, dest)
                         moved_count += 1
 
             if moved_count > 0:
-                self.logger.info(f"自动归档了 {moved_count} 个过期报告文件（保留期: {max_age_days} 天）")
+                self.logger.info(
+                "自动归档了 %s 个过期报告文件（保留期: %s 天）",
+                moved_count, max_age_days,
+            )
 
             self._last_cleanup_time = current_time
         except Exception as e:
-            self.logger.warning(f"自动清理报告文件时出错: {e}")
+            self.logger.warning("自动清理报告文件时出错: %s", e)
 
     def cleanup_old_data(self, max_age_days: int = 30) -> None:
-        """
-        清理旧数据
+        """清理旧数据
 
         Args:
             max_age_days: 数据最大保存天数
+
         """
         # 计算截止时间
         cutoff_time = time.time() - (max_age_days * 24 * 60 * 60)
@@ -1395,24 +1410,24 @@ class DataLogger:
                         "schema_version": self.HISTORY_SCHEMA_VERSION,
                         "data": cleaned_history,
                     }
-                    with open(self.history_data_file, "w", encoding="utf-8") as f:
+                    with pathlib.Path(self.history_data_file).open("w", encoding="utf-8") as f:
                         fast_dump(versioned, f, ensure_ascii=False, indent=2)
                     self.logger.info(f"清理了 {len(history) - len(cleaned_history)} 条过期历史数据")
 
             # 清理错误日志
-            if os.path.exists(self.error_log_file):
-                with open(self.error_log_file, encoding="utf-8") as f:
+            if pathlib.Path(self.error_log_file).exists():
+                with pathlib.Path(self.error_log_file).open(encoding="utf-8") as f:
                     errors = fast_load(f)
 
                 cleaned_errors = [e for e in errors if e.get("timestamp", 0) >= cutoff_time]
 
                 if len(cleaned_errors) != len(errors):
-                    with open(self.error_log_file, "w", encoding="utf-8") as f:
+                    with pathlib.Path(self.error_log_file).open("w", encoding="utf-8") as f:
                         fast_dump(cleaned_errors, f, ensure_ascii=False, indent=2)
                     self.logger.info(f"清理了 {len(errors) - len(cleaned_errors)} 条过期错误日志")
 
         except Exception as e:
-            self.logger.error(f"清理旧数据失败: {e}")
+            self.logger.error("清理旧数据失败: %s", e)
 
     def _record_pipeline_metric(
         self,
@@ -1432,6 +1447,7 @@ class DataLogger:
             record_count: 处理的记录数
             error: 错误信息 (失败时)
             extra: 额外上下文数据 (如 batched_lines 等)
+
         """
         now = time.time()
         with self._pipeline_lock:
@@ -1468,6 +1484,7 @@ class DataLogger:
             - recent_metrics: 最近 50 条管道操作记录
             - uptime_seconds: 管道运行时长
             - throughput: 最近 60s 内各操作吞吐量 (ops/min)
+
         """
         now = time.time()
         # 统一锁顺序: _lock → _pipeline_lock（与其他方法一致）
@@ -1538,7 +1555,7 @@ class DataLogger:
                 self._atomic_write_json(self.history_data_file, versioned)
                 self.logger.debug(f"flush: 写入 {len(pending_history)} 条历史数据")
             except Exception as e:
-                self.logger.error(f"flush 写入历史数据失败: {e}")
+                self.logger.error("flush 写入历史数据失败: %s", e)
                 # P1: 写入失败计数
                 self._count_write_failure()
                 # 写入失败则将数据放回缓冲区
@@ -1548,19 +1565,19 @@ class DataLogger:
         if pending_errors:
             try:
                 errors = []
-                if os.path.exists(self.error_log_file):
+                if pathlib.Path(self.error_log_file).exists():
                     try:
-                        with open(self.error_log_file, encoding="utf-8") as f:
+                        with pathlib.Path(self.error_log_file).open(encoding="utf-8") as f:
                             errors = fast_load(f)
                     except (json.JSONDecodeError, OSError) as e:
-                        self.logger.warning(f"读取错误日志文件失败，将覆盖: {e}")
+                        self.logger.warning("读取错误日志文件失败，将覆盖: %s", e)
                         errors = []
                 errors.extend(pending_errors)
                 errors = self._error_rotator.rotate(errors)
                 self._atomic_write_json(self.error_log_file, errors)
                 self.logger.debug(f"flush: 写入 {len(pending_errors)} 条错误数据")
             except Exception as e:
-                self.logger.error(f"flush 写入错误数据失败: {e}")
+                self.logger.error("flush 写入错误数据失败: %s", e)
                 # 写入失败则将数据放回缓冲区
                 with self._lock:
                     self._error_buffer.extendleft(reversed(pending_errors))
@@ -1578,7 +1595,8 @@ class DataLogger:
             # 超过3次写入失败触发告警
             if self._write_failure_count >= 3:
                 self.logger.warning(
-                    f"数据写入失败次数累积: {self._write_failure_count}次 （可能磁盘空间不足或权限问题）"
+                    f"数据写入失败次数累积: {self._write_failure_count}次 "
+                    f"（可能磁盘空间不足或权限问题）",
                 )
 
     def stop(self) -> None:
@@ -1589,5 +1607,5 @@ class DataLogger:
             self._record_pipeline_metric("stop", success=True)
             self.logger.info("数据记录器已停止，所有缓冲数据已写入")
         except Exception as e:
-            self.logger.error(f"数据记录器停止时刷写失败: {e}")
+            self.logger.error("数据记录器停止时刷写失败: %s", e)
             self._record_pipeline_metric("stop", success=False, error=str(e)[:200])

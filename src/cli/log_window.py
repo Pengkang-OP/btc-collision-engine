@@ -16,6 +16,7 @@ class LogWindow:
 
         Args:
             line: Log text
+
         """
         self._lines.append(line)
         if len(self._lines) > self._max_lines:
@@ -26,5 +27,6 @@ class LogWindow:
 
         Returns:
             Formatted window string
+
         """
         return "\n".join(self._lines[-20:])

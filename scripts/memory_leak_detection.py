@@ -11,12 +11,9 @@ import time
 
 import psutil
 
-# 添加项目根目录到Python路径
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))  # noqa: E501
-
-from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
-from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine  # noqa: E402
-from src.utils import get_configured_logger, init_logging  # noqa: E402
+from src.collision.gpu.engine import GPUCollisionEngine
+from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
+from src.utils import get_configured_logger, init_logging
 
 # 配置日志
 init_logging()

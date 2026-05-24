@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-CLI tool commands module.
+"""CLI tool commands module.
 
 包含:
 - _cmd_validate_addresses: 批量验证文件中所有比特币地址
@@ -13,6 +12,7 @@ import argparse
 import concurrent.futures
 import json
 import logging
+import string
 import sys
 from collections.abc import Callable
 from pathlib import Path
@@ -74,7 +74,7 @@ def _cmd_validate_addresses(file_path: str) -> None:
     # 读取文件
     lines = []
     try:
-        with open(target_path, encoding="utf-8", errors="replace") as f:
+        with Path(target_path).open(encoding="utf-8", errors="replace") as f:
             lines = f.readlines()
     except Exception as exc:
         logger.error(_t("errors.io_error", detail=str(exc)))
@@ -147,7 +147,10 @@ def _cmd_examples() -> None:
         {
             "title": "3. 断点续传（推荐）",
             "desc": "启用断点续传和去重，运行1小时后自动停止",
-            "cmd": "python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random --checkpoint --dedup --duration 3600",  # noqa: E501
+            "cmd": (
+                "python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa "
+                "-m random --checkpoint --dedup --duration 3600"
+            ),
         },
         {
             "title": "4. 从文件加载目标",
@@ -167,7 +170,10 @@ def _cmd_examples() -> None:
         {
             "title": "7. 范围扫描",
             "desc": "在指定私钥范围内搜索",
-            "cmd": "python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m range --start 1 --end FFFFFFFF",  # noqa: E501
+            "cmd": (
+                "python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa "
+                "-m range --start 1 --end FFFFFFFF"
+            ),
         },
         {
             "title": "8. 交互式向导",
@@ -206,8 +212,7 @@ def _cmd_examples() -> None:
     print("   ex      = --examples     (显示示例)")
     print("   rec     = --recommend    (参数推荐)")
     print(SEPARATOR_DASHED)
-    print("提示: Windows 用户也可双击 start.bat 启动菜单式快速入口")
-    print("      start_engine.bat 提供一键交互式向导")
+    print("提示: Windows 用户也可双击 start.bat 启动统一菜单入口")
     print(SEPARATOR_EQUAL)
 
 
@@ -229,7 +234,7 @@ def _cmd_config_check() -> None:
 
         # 验证JSON格式
         try:
-            with open(config_path, encoding="utf-8") as f:
+            with Path(config_path).open(encoding="utf-8") as f:
                 config = json.load(f)
             print("[OK] " + _t("cli.commands.json_valid"))
 
@@ -238,7 +243,7 @@ def _cmd_config_check() -> None:
 
             if missing_sections:
                 print(
-                    "[WARN] " + _t("cli.commands.missing_sections") + ": " + ", ".join(missing_sections)
+                    "[WARN] " + _t("cli.commands.missing_sections") + ": " + ", ".join(missing_sections),
                 )
             else:
                 print("[OK] " + _t("cli.commands.sections_complete"))
@@ -251,7 +256,7 @@ def _cmd_config_check() -> None:
             print("   - workers        : " + str(workers))
             print(
                 "   - perf_optimize  : "
-                + ("enabled" if collision_cfg.get("use_performance_optimization", True) else "disabled")
+                + ("enabled" if collision_cfg.get("use_performance_optimization", True) else "disabled"),
             )
             chk = collision_cfg.get("checkpoint_interval", engine_cfg.get("checkpoint_interval", 30))
             print("   - checkpoint_int : " + str(chk) + "s")
@@ -278,7 +283,7 @@ def _cmd_config_check() -> None:
 
     # 检查必要目录
     print("\n[INFO] " + _t("cli.commands.dir_check_title") + ":")
-    required_dirs = ["logs", "data_logs", "monitoring_data"]
+    required_dirs = ["logs", "data_logs"]
     for dir_name in required_dirs:
         dir_path = Path(dir_name)
         if dir_path.exists():
@@ -306,7 +311,6 @@ def _save_address_to_targets_file(address: str, output) -> None:
     # 使用文件锁实现跨进程安全
     lock_file = None
     try:
-        import os
         import sys
 
         # 根据平台选择文件锁实现
@@ -314,19 +318,19 @@ def _save_address_to_targets_file(address: str, output) -> None:
             import msvcrt
 
             # Windows: 使用独占锁
-            lock_file = open(lock_path, "w")  # noqa: SIM115 — 文件锁需保持打开
+            lock_file = Path(lock_path).open("w")  # noqa: SIM115 — 文件锁需保持打开
             msvcrt.locking(lock_file.fileno(), msvcrt.LK_LOCK, 1)
         else:
             import fcntl
 
             # Unix/Linux: 使用 flock
-            lock_file = open(lock_path, "w")  # noqa: SIM115 — 文件锁需保持打开
+            lock_file = Path(lock_path).open("w")  # noqa: SIM115 — 文件锁需保持打开
             fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
 
         # 读取已有地址
         if targets_path.exists():
             try:
-                with open(targets_path, encoding="utf-8-sig", errors="ignore") as f:
+                with Path(targets_path).open(encoding="utf-8-sig", errors="ignore") as f:
                     for line in f:
                         stripped = line.strip()
                         if stripped and not stripped.startswith("#"):
@@ -340,28 +344,26 @@ def _save_address_to_targets_file(address: str, output) -> None:
 
         # 将新地址追加到文件
         if not targets_path.exists():
-            with open(targets_path, "w", encoding="utf-8") as f:
+            with Path(targets_path).open("w", encoding="utf-8") as f:
                 f.write("# BTC 目标地址列表\n")
                 f.write("# 每行一个地址，支持 # 注释行\n")
                 f.write("# 支持 P2PKH (1开头)、P2SH (3开头)、Bech32 (bc1开头) 格式\n#\n")
 
         # 读取最新内容并追加新地址
-        with open(targets_path, encoding="utf-8") as f:
-            content = f.read()
+        content = Path(targets_path).read_text(encoding="utf-8")
 
         # 追加新地址
         content += address + "\n"
 
         # 写入临时文件
         temp_path = targets_path.with_suffix(".tmp")
-        with open(temp_path, "w", encoding="utf-8") as f:
-            f.write(content)
+        Path(temp_path).write_text(content, encoding="utf-8")
 
         # 原子替换
-        os.replace(temp_path, targets_path)
+        Path(temp_path).replace(targets_path)
 
         output.print(
-            "   [green][OK] 地址已保存到 targets.txt（共 " + str(len(existing) + 1) + " 条）[/green]"
+            "   [green][OK] 地址已保存到 targets.txt（共 " + str(len(existing) + 1) + " 条）[/green]",
         )
     except OSError as e:
         output.warning("无法写入 targets.txt: " + str(e))
@@ -388,7 +390,7 @@ def _scan_target_file_lines(target_file: str, max_scan: int = 50000) -> tuple[in
     truncated = False
     for enc in ("utf-8", "gbk", "latin-1"):
         try:
-            with open(target_file, encoding=enc, errors="ignore") as f:
+            with Path(target_file).open(encoding=enc, errors="ignore") as f:
                 for i, line in enumerate(f):
                     if i >= max_scan:
                         truncated = True
@@ -420,7 +422,7 @@ def _handle_missing_target_file(
         output.error("请输入 1、2 或 3")
     if choice == "1":
         try:
-            with open(target_file, "w", encoding="utf-8") as f:
+            with Path(target_file).open("w", encoding="utf-8") as f:
                 f.write("# 目标地址文件\n")
                 f.write("# 每行一个地址，支持 # 注释\n")
                 f.write("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\n")
@@ -431,11 +433,11 @@ def _handle_missing_target_file(
                     "cli.commands.addresses_loaded",
                     count="1",
                     path=Path(target_file).name,
-                )
+                ),
             )
             return [], target_file
         except Exception as e:
-            output.error(f"创建文件失败: {str(e)}")
+            output.error(f"创建文件失败: {e!s}")
             output.print("   [TIP] 请检查文件路径是否正确，以及是否有写入权限")
             return [], None
     elif choice == "2":
@@ -454,6 +456,7 @@ def _quick_start_select_target(compact: bool = False) -> tuple[list[str], str | 
 
     Args:
         compact: 紧凑模式，跳过详细帮助信息
+
     """
     output = CLIOutput.get_instance()
     output.print("\n[bold cyan]【步骤 1/4】[/bold cyan] " + _t("cli.commands.step1_title"))
@@ -500,18 +503,17 @@ def _quick_start_select_target(compact: bool = False) -> tuple[list[str], str | 
             try:
                 valid_count, truncated = _scan_target_file_lines(target_file)
             except Exception as e:
-                output.error(f"读取文件失败: {str(e)}")
+                output.error(f"读取文件失败: {e!s}")
                 output.print("   [TIP] 请检查文件路径是否正确，以及是否有读取权限")
                 return [], None
             if valid_count == 0:
                 output.warning(_t("cli.commands.no_valid_addresses", path=file_basename))
                 output.print("   " + _t("cli.commands.file_format_hint"))
                 return [], None
-            else:
-                count_display = f"{valid_count}+" if truncated else str(valid_count)
-                output.success(
-                    _t("cli.commands.addresses_loaded", count=count_display, path=file_basename)
-                )
+            count_display = f"{valid_count}+" if truncated else str(valid_count)
+            output.success(
+                _t("cli.commands.addresses_loaded", count=count_display, path=file_basename),
+            )
     else:
         output.error(_t("errors.invalid_input", detail=target_type))
         return [], None
@@ -524,6 +526,7 @@ def _quick_start_select_mode(compact: bool = False) -> tuple[str, str | None, st
 
     Args:
         compact: 紧凑模式，跳过详细帮助信息
+
     """
     output = CLIOutput.get_instance()
     output.print("\n[bold cyan]【步骤 2/4】[/bold cyan] " + _t("cli.commands.step2_title"))
@@ -557,7 +560,7 @@ def _quick_start_select_mode(compact: bool = False) -> tuple[str, str | None, st
     if mode in ["range", "brute_force"]:
         while True:
             start_key = input("   " + _t("cli.commands.input_start_key") + " (hex): ").strip() or "1"
-            if all(c in "0123456789abcdefABCDEF" for c in start_key):
+            if all(c in string.hexdigits for c in start_key):
                 break
             output.error("请输入有效的十六进制字符串")
         if mode == "range":
@@ -565,7 +568,7 @@ def _quick_start_select_mode(compact: bool = False) -> tuple[str, str | None, st
                 end_key = (
                     input("   " + _t("cli.commands.input_end_key") + " (hex): ").strip() or "FFFFFFFF"
                 )
-                if all(c in "0123456789abcdefABCDEF" for c in end_key):
+                if all(c in string.hexdigits for c in end_key):
                     break
                 output.error("请输入有效的十六进制字符串")
 
@@ -640,7 +643,7 @@ def _detect_gpu_devices() -> list[dict]:
         devices = GPUDeviceDetector.detect_devices()
         return devices
     except Exception as e:
-        logger.warning(f"GPU device detection failed: {e}")
+        logger.warning("GPU device detection failed: %s", e)
         return []
 
 
@@ -776,7 +779,7 @@ def _quick_start_select_gpu() -> list[str]:
     output.print("   3. " + _t("cli.commands.mode_multi_gpu"))
     while True:
         gpu_choice = input(
-            "   " + _t("cli.commands.step4_prompt") + f" (推荐: {default_choice}): "
+            "   " + _t("cli.commands.step4_prompt") + f" (推荐: {default_choice}): ",
         ).strip()
         if gpu_choice in ("1", "2", "3"):
             break
@@ -798,7 +801,7 @@ def _quick_run_scan_target(
     preview_addresses: list[str] = []
     max_preview = PREVIEW_CONFIG["max_preview_addresses"]
     try:
-        with open(target_file, encoding="utf-8") as f:
+        with Path(target_file).open(encoding="utf-8") as f:
             for line in f:
                 stripped = line.strip()
                 if stripped and not stripped.startswith("#"):
@@ -806,7 +809,7 @@ def _quick_run_scan_target(
                     if len(preview_addresses) < max_preview:
                         preview_addresses.append(stripped)
     except Exception as e:
-        output.error(f"读取文件失败: {str(e)}")
+        output.error(f"读取文件失败: {e!s}")
         return None
     if address_count == 0:
         output.warning(f"{target_file} 中没有有效的目标地址")
@@ -857,7 +860,7 @@ def _cmd_quick_run(executor: Callable[[], None] | None = None) -> None:
                     output.print(f"  {i}. {display_addr}")
                 if address_count > PREVIEW_CONFIG["max_preview_addresses"]:
                     output.print(
-                        f"  ... 及其他 {address_count - PREVIEW_CONFIG['max_preview_addresses']} 个地址"
+                        f"  ... 及其他 {address_count - PREVIEW_CONFIG['max_preview_addresses']} 个地址",
                     )
                 output.print("")
             cmd_parts: list[str] = ["python", "key_collision_cli.py", "-f", target_file]
@@ -963,6 +966,7 @@ def _cmd_quick_start(executor: Callable[[], None] | None = None, compact: bool =
     Args:
         executor: 执行器函数（可选）
         compact: 紧凑模式，跳过详细帮助信息
+
     """
     # 确保UTF-8输出
     PlatformUtils.ensure_utf8_output()
@@ -1026,7 +1030,7 @@ def _cmd_quick_start(executor: Callable[[], None] | None = None, compact: bool =
         elif "--use-gpu" in gpu_args:
             gpu_mode_name = "单 GPU 加速"
 
-        target_display = target_file if target_file else ", ".join(targets)
+        target_display = target_file or ", ".join(targets)
         config_summary = {
             "目标地址": target_display,
             "碰撞模式": mode_names.get(mode, mode),
@@ -1142,7 +1146,12 @@ def _handle_system_commands(args: argparse.Namespace) -> bool:
         try:
             from src.utils.platform_check import PlatformChecker
         except ImportError:
-            from ..utils.platform_check import PlatformChecker
+            try:
+                from ..utils.platform_check import PlatformChecker
+            except ImportError:
+                logger.error("PlatformChecker not available in platform_check module")
+                print("[ERROR] PlatformChecker 类未在 platform_check 中实现", file=sys.stderr)
+                sys.exit(1)
         platform_checker = PlatformChecker()
         all_passed, _ = platform_checker.run_all_checks()
         platform_checker.print_report()
@@ -1156,12 +1165,15 @@ def _handle_system_commands(args: argparse.Namespace) -> bool:
             from ..utils.data_cleanup import DataCleaner
         cleaner = DataCleaner()
         dry_run = getattr(args, "dry_run", False)
-        result = cleaner.clean_all(dry_run=dry_run)
-        total = result.get("files_removed", 0)
-        space_mb = result.get("space_freed_bytes", 0) / 1024 / 1024
-        action = _t("cli.main.cleanup_preview") if dry_run else _t("cli.main.cleanup_done")
-        tag = _t("cli.main.cleanup_preview_tag") if dry_run else _t("common.completed")
-        print(f"[{tag}] {action} {total} 个文件, 释放 {space_mb:.2f}MB")
+        if dry_run:
+            # DataCleaner.clean_all() directly removes files, no dry_run mode
+            # Preview: just list what would be cleaned
+            logger.info("dry_run 模式: 预览待清理文件 (clean_all 不支持 dry_run 参数)")
+            print("[预览] 将清理 data_logs/, logs/, temp/ 目录下超过 7 天的过期文件")
+            print("[预览] 实际清理请运行: python key_collision_cli.py --cleanup")
+        else:
+            total = cleaner.clean_all()
+            print(f"[完成] 清理完成: {total} 个文件")
         sys.exit(0)
 
     # --validate-addresses
@@ -1172,10 +1184,21 @@ def _handle_system_commands(args: argparse.Namespace) -> bool:
 
     # --migrate-config
     if getattr(args, "migrate_config", False):
-        from src.cli.config_migration import migrate_config_file
-
+        try:
+            from src.config.config_migration import migrate_config_file
+        except ImportError:
+            try:
+                from ..config.config_migration import migrate_config_file
+            except ImportError:
+                logger.error("config_migration module not available")
+                print("[ERROR] 配置迁移模块不可用", file=sys.stderr)
+                sys.exit(1)
         success = migrate_config_file()
-        sys.exit(0 if success else 1)
+        if success:
+            print("[完成] 配置已成功迁移至最新格式（原文件已备份）")
+        else:
+            print("[提示] 配置文件已是最新格式，无需迁移")
+        sys.exit(0 if success else 0)
 
     return False
 

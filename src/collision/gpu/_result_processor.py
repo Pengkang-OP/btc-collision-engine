@@ -38,6 +38,7 @@ class GPUResultProcessor:
 
         Args:
             engine: GPUCollisionEngine 实例引用
+
         """
         self._engine = engine
 
@@ -55,6 +56,7 @@ class GPUResultProcessor:
 
         Returns:
             True 表示回调执行成功，False 表示超时或异常
+
         """
         engine = self._engine
         on_match = engine.on_match
@@ -69,7 +71,7 @@ class GPUResultProcessor:
                 callback_name="on_match",
             )
         except Exception as e:
-            logger.error(f"匹配回调调用失败: {e}", exc_info=True)
+            logger.error("匹配回调调用失败: %s", e, exc_info=True)
             return False
 
     # ========== 匹配结果处理 ==========
@@ -89,6 +91,7 @@ class GPUResultProcessor:
         Args:
             private_keys: 私钥字节数组（完整 batch 的私钥数据）
             matches: GPU 返回的匹配列表 [{key_index, target_index}, ...]
+
         """
         engine = self._engine
         from ...core.wif import WIF
@@ -98,19 +101,19 @@ class GPUResultProcessor:
             # S-2修复: 添加边界检查，防止越界访问
             if key_idx * 32 + 32 > len(private_keys):
                 logger.warning(
-                    f"私钥索引越界: key_idx={key_idx}, private_keys长度={len(private_keys)}"
+                    f"私钥索引越界: key_idx={key_idx}, private_keys长度={len(private_keys)}",
                 )
                 continue
             private_key = private_keys[key_idx * 32 : (key_idx + 1) * 32]
             if engine.dedup_filter is not None and not engine.dedup_filter.check_and_add(
-                private_key
+                private_key,
             ):
                 continue
             target_idx = match["target_index"]
             # G1修复: 检查目标索引是否越界
             if target_idx >= len(engine._device_manager.target_list):
                 logger.warning(
-                    f"目标索引越界: {target_idx} >= {len(engine._device_manager.target_list)}，跳过匹配"
+                    f"目标索引越界: {target_idx} >= {len(engine._device_manager.target_list)}，跳过匹配",
                 )
                 continue
             address = engine._device_manager.target_list[target_idx]
@@ -145,8 +148,10 @@ class GPUResultProcessor:
         Args:
             seed: 32 字节随机种子
             matches: GPU 返回的匹配列表 [{key_index, target_index}, ...]
+
         """
         engine = self._engine
+        from ...core.secp256k1 import Secp256k1
         from ...core.wif import WIF
 
         seed_int = int.from_bytes(seed, "big")
@@ -156,18 +161,27 @@ class GPUResultProcessor:
             try:
                 key_int = (seed_int + key_idx) % (2**256)
             except (OverflowError, ValueError):
-                logger.warning(f"PRNG模式key_idx计算失败: key_idx={key_idx}, 跳过匹配")
+                logger.warning("PRNG模式key_idx计算失败: key_idx=%s, 跳过匹配", key_idx)
+                continue
+            # P1-3修复: 验证私钥范围 (1 <= k < N)，与 GPU 内核一致
+            # GPU 内核在 batch_check.cl:1240 中拒绝 k==0 或 k>=N 的私钥，
+            # 如果 GPU 端的验证被跳过，重建的私钥也应该是无效的，不应继续处理。
+            if key_int == 0 or key_int >= Secp256k1.N:
+                logger.warning(
+                    "PRNG模式恢复的私钥超出secp256k1有效范围: key_idx=%s, 跳过匹配",
+                    key_idx,
+                )
                 continue
             private_key = key_int.to_bytes(32, "big")
             if engine.dedup_filter is not None and not engine.dedup_filter.check_and_add(
-                private_key
+                private_key,
             ):
                 continue
             target_idx = match["target_index"]
             # G1修复: 检查目标索引是否越界
             if target_idx >= len(engine._device_manager.target_list):
                 logger.warning(
-                    f"目标索引越界: {target_idx} >= {len(engine._device_manager.target_list)}，跳过匹配"
+                    f"目标索引越界: {target_idx} >= {len(engine._device_manager.target_list)}，跳过匹配",
                 )
                 continue
             address = engine._device_manager.target_list[target_idx]

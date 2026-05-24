@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-P2SH和Bech32地址生成专项测试
+"""P2SH和Bech32地址生成专项测试
 
 测试BL-3/BR-1修复：添加P2SH和Bech32地址格式支持
 """
@@ -20,7 +19,7 @@ class TestP2SHAddressGeneration:
         """测试P2SH地址格式（以'3'开头）"""
         # 使用测试公钥（压缩格式）
         test_public_key = bytes.fromhex(
-            "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
+            "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
         )
 
         address = BitcoinKeyValidator.generate_p2sh_address(test_public_key)
@@ -35,7 +34,7 @@ class TestP2SHAddressGeneration:
     def test_p2sh_address_deterministic(self):
         """测试P2SH地址生成的确定性（相同公钥生成相同地址）"""
         test_public_key = bytes.fromhex(
-            "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
+            "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
         )
 
         address1 = BitcoinKeyValidator.generate_p2sh_address(test_public_key)
@@ -61,13 +60,13 @@ class TestP2SHAddressGeneration:
         """测试压缩和未压缩公钥生成不同的P2SH地址"""
         # 压缩公钥（33字节）
         compressed_key = bytes.fromhex(
-            "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
+            "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
         )
 
         # 未压缩公钥（65字节）
         uncompressed_key = bytes.fromhex(
             "0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
-            "483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+            "483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8",
         )
 
         address_compressed = BitcoinKeyValidator.generate_p2sh_address(compressed_key)
@@ -83,7 +82,7 @@ class TestP2SHAddressGeneration:
     def test_p2sh_address_validation(self):
         """测试P2SH地址的Base58Check校验"""
         test_public_key = bytes.fromhex(
-            "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
+            "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
         )
 
         address = BitcoinKeyValidator.generate_p2sh_address(test_public_key)
@@ -116,7 +115,7 @@ class TestBech32AddressGeneration:
         """测试Bech32地址格式（以'bc1'开头）"""
         # 使用测试公钥（压缩格式）
         test_public_key = bytes.fromhex(
-            "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
+            "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
         )
 
         address = BitcoinKeyValidator.generate_bech32_address(test_public_key)
@@ -131,7 +130,7 @@ class TestBech32AddressGeneration:
     def test_bech32_address_deterministic(self):
         """测试Bech32地址生成的确定性"""
         test_public_key = bytes.fromhex(
-            "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
+            "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
         )
 
         address1 = BitcoinKeyValidator.generate_bech32_address(test_public_key)
@@ -158,11 +157,11 @@ class TestBech32AddressGeneration:
         # 未压缩公钥（65字节）
         uncompressed_key = bytes.fromhex(
             "0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
-            "483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+            "483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8",
         )
 
         # Bech32应拒绝未压缩公钥
-        with pytest.raises(ValueError, match="Bech32地址仅支持压缩公钥"):
+        with pytest.raises(ValueError, match="Bech32 address only supports compressed public key"):
             BitcoinKeyValidator.generate_bech32_address(uncompressed_key)
 
         print("\n[OK] Bech32拒绝未压缩公钥验证通过")
@@ -170,7 +169,7 @@ class TestBech32AddressGeneration:
     def test_bech32_testnet_address(self):
         """测试Testnet Bech32地址生成（以'tb1'开头）"""
         test_public_key = bytes.fromhex(
-            "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
+            "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
         )
 
         # 生成testnet地址
@@ -185,7 +184,7 @@ class TestBech32AddressGeneration:
     def test_bech32_checksum_validation(self):
         """测试Bech32校验和验证"""
         test_public_key = bytes.fromhex(
-            "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
+            "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
         )
 
         address = BitcoinKeyValidator.generate_bech32_address(test_public_key)
@@ -225,7 +224,7 @@ class TestAddressTypeDetection:
         """测试识别P2SH地址（以'3'开头）"""
         # 使用生成的P2SH地址
         test_public_key = bytes.fromhex(
-            "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
+            "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
         )
         address = BitcoinKeyValidator.generate_p2sh_address(test_public_key)
 
@@ -246,7 +245,7 @@ class TestAddressTypeDetection:
         """测试识别Bech32地址（以'bc1'开头）"""
         # 使用生成的Bech32地址
         test_public_key = bytes.fromhex(
-            "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
+            "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
         )
         address = BitcoinKeyValidator.generate_bech32_address(test_public_key)
 
@@ -271,7 +270,7 @@ class TestAddressGenerationIntegration:
         """测试从同一私钥生成所有地址类型"""
         # 使用私钥（32字节）
         test_private_key = bytes.fromhex(
-            "0000000000000000000000000000000000000000000000000000000000000001"
+            "0000000000000000000000000000000000000000000000000000000000000001",
         )
 
         # 生成P2PKH地址（使用现有的P2PKHAddressGenerator）
@@ -305,7 +304,7 @@ class TestAddressGenerationIntegration:
         """测试已知的测试向量"""
         # 使用已知私钥
         known_private_key = bytes.fromhex(
-            "0000000000000000000000000000000000000000000000000000000000000001"
+            "0000000000000000000000000000000000000000000000000000000000000001",
         )
 
         # 生成P2PKH地址和公钥

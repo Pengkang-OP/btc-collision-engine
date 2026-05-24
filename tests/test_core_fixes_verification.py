@@ -8,15 +8,13 @@
 """
 
 import os
+import pathlib
 import sys
 import time
 import warnings
 
-# 添加项目根目录到路径
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-from src.core.secp256k1 import ECPoint, EllipticCurve, Secp256k1  # noqa: E402
-from src.utils.logger import (  # noqa: E402
+from src.core.secp256k1 import ECPoint, EllipticCurve, Secp256k1
+from src.utils.logger import (
     AsyncFileHandler,
     SampledLogger,
     setup_logger,
@@ -121,7 +119,7 @@ def test_async_logger():
         # 记录大量日志（测试非阻塞）
         start_time = time.time()
         for i in range(1000):
-            logger.debug(f"Async log message {i}")
+            logger.debug("Async log message %s", i)
         elapsed = time.time() - start_time
 
         print(f"[OK] 异步记录 1000 条日志耗时: {elapsed * 1000:.2f}ms")
@@ -135,16 +133,16 @@ def test_async_logger():
         async_handler.close()
 
         # 验证日志文件存在
-        assert os.path.exists(log_file), "日志文件未创建"
-        file_size = os.path.getsize(log_file)
+        assert pathlib.Path(log_file).exists(), "日志文件未创建"
+        file_size = pathlib.Path(log_file).stat().st_size
         print(f"[OK] 日志文件大小: {file_size} bytes")
 
         print("\n[OK] 测试 3 通过\n")
 
     finally:
         # 清理临时文件
-        if os.path.exists(log_file):
-            os.remove(log_file)
+        if pathlib.Path(log_file).exists():
+            pathlib.Path(log_file).unlink()
 
 
 def test_secp256k1_documentation():
@@ -217,9 +215,8 @@ def main():
     if failed == 0:
         print(f"\n[OK] 所有 {len(tests)} 个测试通过！")
         return 0
-    else:
-        print(f"\n[WARN] {failed} 个测试失败，请检查错误信息")
-        return 1
+    print(f"\n[WARN] {failed} 个测试失败，请检查错误信息")
+    return 1
 
 
 if __name__ == "__main__":

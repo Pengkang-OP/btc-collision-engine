@@ -1,0 +1,21 @@
+2026-05-24 00:30:41,450 - CryptoBackend - WARNING - PurePythonBackend: 非恒定时间模式 - 不推荐用于生产环境，建议安装 coincurve 或 cryptography
+2026-05-24 00:30:41,609 - CryptoBackend - INFO - Crypto backend initialization complete: available=['PURE_PYTHON', 'OPENSSL', 'COINCURVE', 'ECDSA'], current=coincurve (libsecp256k1)
+2026-05-24 00:30:41,610 - src.utils.logging_config - WARNING - 日志系统已被初始化，重复调用被忽略
+[INFO] 日志安全过滤器已启用 (显式: 16, 自动发现: 11, 总计: 27)
+[ERROR] 鍙傛暟閿欒: DataCleaner.clean_all() got an unexpected keyword argument 
+'dry_run'
+  鎻愮ず: 杩愯 --help 鏌ョ湅鍙傛暟璇存槑
+2026-05-24 00:30:41,620 - CLI - ERROR - CLI 杩愯閿欒: TypeError
+Traceback (most recent call last):
+  File "f:\Qoder\btc-collision-engine\src\cli\main.py", line 346, in main
+    _run_main()
+  File "f:\Qoder\btc-collision-engine\src\cli\main.py", line 242, in _run_main
+    if _dispatch_utility_commands(args, _run_main):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "f:\Qoder\btc-collision-engine\src\cli\commands.py", line 1190, in _dispatch_utility_commands
+    or _handle_system_commands(args)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "f:\Qoder\btc-collision-engine\src\cli\commands.py", line 1168, in _handle_system_commands
+    result = cleaner.clean_all(dry_run=dry_run)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: DataCleaner.clean_all() got an unexpected keyword argument 'dry_run'

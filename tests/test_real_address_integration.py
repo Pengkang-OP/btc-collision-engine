@@ -2,6 +2,7 @@
 """使用真实目标地址的集成测试"""
 
 import os
+import pathlib
 import time
 
 import pytest
@@ -19,14 +20,14 @@ class TestRealAddressIntegration:
         """设置测试环境"""
         # 加载真实目标地址
         self.address_file = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "valid_addresses.txt"
+            os.path.dirname(os.path.abspath(__file__)), "valid_addresses.txt",
         )
         self.targets = self._load_addresses()
 
     def _load_addresses(self):
         """从文件加载目标地址"""
         addresses = set()
-        with open(self.address_file) as f:
+        with pathlib.Path(self.address_file).open() as f:
             for line in f:
                 line = line.strip()
                 if line and not line.startswith("#"):

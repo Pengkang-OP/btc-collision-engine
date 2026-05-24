@@ -9,14 +9,10 @@ import sys
 import time
 from pathlib import Path
 
-# 添加项目根目录到路径
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from src.core.bigint_optimizer import get_bigint_optimizer  # noqa: E402
-from src.core.memory_pool import get_pool_manager  # noqa: E402
-from src.core.precomputed_table import get_precomputed_table  # noqa: E402
-from src.core.secp256k1 import ECPoint, Secp256k1  # noqa: E402
-from src.core.simd_hash import get_simd_hash_optimizer  # noqa: E402
+from src.core.memory_pool import get_pool_manager
+from src.core.precomputed_table import get_precomputed_table
+from src.core.secp256k1 import ECPoint, Secp256k1
+from src.core.simd_hash import get_simd_hash_optimizer
 
 
 def benchmark_precomputed_table(iterations=100):
@@ -53,45 +49,6 @@ def benchmark_precomputed_table(iterations=100):
 
     return speedup
 
-
-def benchmark_bigint_optimizer(iterations=100000):
-    """基准测试: 大整数优化性能
-
-    测试目的: 验证 gmpy2 多精度整数库在模乘、模逆等密码学运算上的性能优势。
-    规模选择: 100000 次迭代确保统计显著性，足以区分 gmpy2（C扩展）与纯 Python
-              整数运算的真实差距（通常 gmpy2 可达 2-10x 提升）。
-    """
-    print("\n" + "=" * 80)
-    print("基准测试2: 大整数优化")
-    print("=" * 80)
-
-    optimizer = get_bigint_optimizer()
-
-    a = 12345678901234567890123456789012345678
-    b = 98765432109876543210987654321098765432
-    m = Secp256k1.P
-
-    # 模乘法
-    start = time.perf_counter()
-    for _ in range(iterations):
-        _ = optimizer.mod_mul(a, b, m)
-    elapsed_opt = time.perf_counter() - start
-
-    # 纯Python对比
-    start = time.perf_counter()
-    for _ in range(iterations):
-        _ = (a * b) % m
-    elapsed_python = time.perf_counter() - start
-
-    speedup = elapsed_python / elapsed_opt
-
-    print(f"  后端: {optimizer.get_backend_name()}")
-    print(f"  迭代次数: {iterations}")
-    print(f"  优化版本: {elapsed_opt:.4f}s")
-    print(f"  纯Python: {elapsed_python:.4f}s")
-    print(f"  性能提升: {speedup:.2f}x", flush=True)
-
-    return speedup
 
 
 def benchmark_simd_hash(iterations=100000):
@@ -311,11 +268,6 @@ def main():
         print(f"  ❌ 测试失败: {e}")
         results["precomputed_table"] = 0
 
-    try:
-        results["bigint_optimizer"] = benchmark_bigint_optimizer(100000)
-    except Exception as e:  # noqa: BLE001 (基准测试容错)
-        print(f"  ❌ 测试失败: {e}")
-        results["bigint_optimizer"] = 0
 
     try:
         results["simd_hash"] = benchmark_simd_hash(100000)
@@ -348,7 +300,6 @@ def main():
 
     test_names = {
         "precomputed_table": "预计算点表",
-        "bigint_optimizer": "大整数优化",
         "simd_hash": "SIMD哈希",
         "memory_pool": "内存池",
         "batch_hash160": "批量Hash160",

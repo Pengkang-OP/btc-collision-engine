@@ -17,10 +17,6 @@ from utf8_helper import setup_windows_utf8
 
 setup_windows_utf8()
 
-# 添加项目根目录到路径
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
-
 # 导入重试工具
 from retry_helper import read_with_retry
 

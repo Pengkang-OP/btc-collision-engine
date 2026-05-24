@@ -1,19 +1,14 @@
 #!/usr/bin/env python3
-"""
-多格式比特币地址生成和匹配测试
+"""多格式比特币地址生成和匹配测试
 
 测试系统是否支持根据目标地址格式自动生成对应格式的地址。
 """
 
-import os
-import sys
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import secrets
 
-import secrets  # noqa: E402
-
-from src.collision.targets.format_aware_manager import FormatAwareTargetManager  # noqa: E402
-from src.core.multi_format_generator import AddressFormat, MultiFormatAddressGenerator  # noqa: E402
+from src.collision.targets.format_aware_manager import FormatAwareTargetManager
+from src.core.multi_format_generator import AddressFormat, MultiFormatAddressGenerator
 
 print("=" * 80)
 print("Multi-Format Bitcoin Address Generation and Matching Test")
@@ -46,7 +41,7 @@ for fmt, addr in addresses.items():
         expected_fmt = AddressFormat(fmt)
         match = detected_fmt == expected_fmt
         print(
-            f"  {fmt:10s}: {'✓' if match else '✗'} (expected={expected_fmt.value}, detected={detected_fmt.value})"
+            f"  {fmt:10s}: {'✓' if match else '✗'} (expected={expected_fmt.value}, detected={detected_fmt.value})",
         )
 
 # 2. 测试格式检测
@@ -124,7 +119,7 @@ for fmt in ["p2pkh", "p2sh", "bech32", "taproot"]:
         manager_test.add_target(addr)
         is_match, matched_addr, matched_fmt = manager_test.check_match(private_key_1)
         print(
-            f"  {fmt:10s}: {'✓ MATCHED' if is_match else '✗ NO MATCH'} - {matched_addr if is_match else ''}"
+            f"  {fmt:10s}: {'✓ MATCHED' if is_match else '✗ NO MATCH'} - {matched_addr if is_match else ''}",
         )
 
 # 5. 测试混合格式匹配
@@ -152,7 +147,7 @@ if is_match:
 print("\n[Test 6] Performance Test")
 print("-" * 80)
 
-import time  # noqa: E402
+import time
 
 # 生成1000个地址
 iterations = 1000

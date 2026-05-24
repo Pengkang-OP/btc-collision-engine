@@ -33,10 +33,13 @@ import sys
 import time
 from functools import wraps
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from flask import Flask, abort, jsonify, render_template_string, request
 
 try:
-    from flask import (  # type: ignore[import-not-found]
+    from flask import (
         Flask,
         abort,
         jsonify,
@@ -47,11 +50,11 @@ try:
     FLASK_AVAILABLE = True
 except ImportError:
     FLASK_AVAILABLE = False
-    Flask: Any = None  # type: ignore[no-redef]
-    jsonify: Any = None  # type: ignore[no-redef]
-    render_template_string: Any = None  # type: ignore[no-redef]
-    request: Any = None  # type: ignore[no-redef]
-    abort: Any = None  # type: ignore[no-redef]
+    Flask: "type[Flask] | None" = None
+    jsonify: "Any | None" = None
+    render_template_string: "Any | None" = None
+    request: "Any | None" = None
+    abort: "Any | None" = None
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +62,7 @@ logger = logging.getLogger(__name__)
 # API Key 认证
 # ──────────────────────────────────────────────────────────────────
 
-UNPROTECTED_ROUTES = {"health"}
+UNPROTECTED_ROUTES: frozenset[str] = frozenset({"health"})
 
 _api_key: str | None = None
 _api_key_required: bool = False
@@ -407,10 +410,10 @@ def _safe_read_json(path: Path) -> Any:
     if not path.exists():
         return None
     try:
-        with open(path, encoding="utf-8") as f:
+        with Path(path).open(encoding="utf-8") as f:
             return json.load(f)
     except (json.JSONDecodeError, OSError) as e:
-        logger.warning(f"读取 JSON 失败 {path}: {e}")
+        logger.warning("读取 JSON 失败 %s: %s", path, e)
         return None
 
 
@@ -466,12 +469,11 @@ def format_uptime(seconds: float) -> str:
     """格式化运行时间"""
     if seconds < 60:
         return f"{int(seconds)}秒"
-    elif seconds < 3600:
+    if seconds < 3600:
         return f"{int(seconds // 60)}分{int(seconds % 60)}秒"
-    else:
-        h = int(seconds // 3600)
-        m = int((seconds % 3600) // 60)
-        return f"{h}小时{m}分"
+    h = int(seconds // 3600)
+    m = int((seconds % 3600) // 60)
+    return f"{h}小时{m}分"
 
 
 def get_security_audit_data(data_dir: Path) -> dict[str, Any]:
@@ -485,6 +487,7 @@ def get_security_audit_data(data_dir: Path) -> dict[str, Any]:
 
     Returns:
         脱敏后的安全审计状态字典
+
     """
     audit_info: dict[str, Any] = {
         "security_filter_enabled": True,  # 默认已启用
@@ -514,7 +517,7 @@ def get_security_audit_data(data_dir: Path) -> dict[str, Any]:
         audit_info["total_key_operations"] = stats.get("total_operations", 0)
         audit_info["operations_by_type"] = stats.get("operations_by_type", {})
     except Exception as e:
-        logger.debug(f"无法获取 KeyAuditLogger 统计: {e}")
+        logger.debug("无法获取 KeyAuditLogger 统计: %s", e)
         audit_info["key_audit_active"] = False
 
     # 2. 读取 key_audit.log（如果有的话）获取最近审计事件
@@ -534,20 +537,20 @@ def get_security_audit_data(data_dir: Path) -> dict[str, Any]:
                     {
                         "level": "critical",
                         "message": f"检测到 {critical_count} 次严重级别密钥操作（最近记录）",
-                    }
+                    },
                 )
             if warning_count > 0:
                 audit_info["audit_alerts"].append(
                     {
                         "level": "warning",
                         "message": f"检测到 {warning_count} 次警告级别密钥操作（最近记录）",
-                    }
+                    },
                 )
 
             audit_info["has_critical_alert"] = critical_count > 0
             audit_info["has_warning_alert"] = warning_count > 0
         except Exception as e:
-            logger.warning(f"解析审计日志失败: {e}")
+            logger.warning("解析审计日志失败: %s", e)
 
     # 3. 检查 SecurityLogFilter 是否已初始化
     try:
@@ -581,7 +584,7 @@ def get_security_audit_data(data_dir: Path) -> dict[str, Any]:
                             f"加密后端不安全 (当前: {audit_info['crypto_backend_name']})，"
                             f"建议立即安装 coincurve 或 cryptography"
                         ),
-                    }
+                    },
                 )
                 audit_info["has_critical_alert"] = True
             elif security_level == "partial":
@@ -592,11 +595,11 @@ def get_security_audit_data(data_dir: Path) -> dict[str, Any]:
                             f"加密后端部分安全 (当前: {audit_info['crypto_backend_name']})，"
                             f"建议安装 coincurve 以获得完全恒定时间保护"
                         ),
-                    }
+                    },
                 )
                 audit_info["has_warning_alert"] = True
     except Exception as e:
-        logger.warning(f"无法获取加密后端安全信息: {e}")
+        logger.warning("无法获取加密后端安全信息: %s", e)
         # 获取失败时保持默认值，不影响 Dashboard 其他功能
 
     return audit_info
@@ -618,7 +621,7 @@ def _parse_audit_log_entries(log_path: Path, limit: int = 20) -> list[dict[str, 
 
     entries: list[dict[str, Any]] = []
     try:
-        with open(log_path, encoding="utf-8") as f:
+        with Path(log_path).open(encoding="utf-8") as f:
             lines = f.readlines()
     except OSError:
         return entries
@@ -676,27 +679,27 @@ def create_app(data_dir: Path | None = None, debug: bool = False) -> "Flask":
 
     Returns:
         Flask 应用实例
+
     """
     if not FLASK_AVAILABLE:
         raise ImportError("Flask 未安装。请运行: pip install flask")
 
     app = Flask(__name__)
-    app.config['DEBUG'] = debug  # 存储debug标志到app.config
+    app.config["DEBUG"] = debug  # 存储debug标志到app.config
     data_logs_dir = data_dir or _find_data_logs_dir()
 
     if _api_key_required:
         logger.info("Web 仪表板 API Key 认证已启用")
+    # 在生产环境（非debug模式）中使用 CRITICAL 级别
+    elif not debug:
+        logger.critical(
+            "⚠️ 生产环境安全警告: Web 仪表板未设置 API Key，所有端点可公开访问！"
+            "请通过 --api-key 参数或 DASHBOARD_API_KEY 环境变量设置密钥。",
+        )
     else:
-        # 在生产环境（非debug模式）中使用 CRITICAL 级别
-        if not debug:
-            logger.critical(
-                "⚠️ 生产环境安全警告: Web 仪表板未设置 API Key，所有端点可公开访问！"
-                "请通过 --api-key 参数或 DASHBOARD_API_KEY 环境变量设置密钥。"
-            )
-        else:
-            logger.warning(
-                "Web 仪表板未设置 API Key，所有端点可公开访问。请通过 --api-key 参数或 DASHBOARD_API_KEY 环境变量设置密钥。"
-            )
+        logger.warning(
+            "Web 仪表板未设置 API Key，所有端点可公开访问。请通过 --api-key 参数或 DASHBOARD_API_KEY 环境变量设置密钥。",
+        )
 
     # 从 web 包元数据获取版本号（避免硬编码和触发 OpenCL 初始化）
     try:
@@ -795,7 +798,7 @@ def create_app(data_dir: Path | None = None, debug: bool = False) -> "Flask":
                     "mode": stats.get("mode", ""),
                     "is_running": stats.get("is_running", False),
                 },
-            }
+            },
         )
 
     @app.route("/api/security-audit")
@@ -806,6 +809,7 @@ def create_app(data_dir: Path | None = None, debug: bool = False) -> "Flask":
         Returns:
             密钥操作统计、审计日志概述、安全过滤器状态、
             加密后端安全性验证、审计告警
+
         """
         audit_data = get_security_audit_data(data_logs_dir)
         return jsonify(audit_data)
@@ -835,9 +839,10 @@ def run_dashboard(
         debug: 是否开启调试模式
         use_reloader: 是否启用 Flask 自动重载 (开发模式，默认关闭)
         api_key: API 认证密钥 (None=不启用认证)
+
     """
     if not FLASK_AVAILABLE:
-        print("❌ Flask 未安装。请运行: pip install flask")
+        logger.error("Flask 未安装。请运行: pip install flask")
         sys.exit(1)
 
     set_api_key(api_key)
@@ -845,26 +850,24 @@ def run_dashboard(
     data_path = Path(data_dir) if data_dir else None
     app = create_app(data_dir=data_path)
 
-    auth_status = "已启用" if _api_key_required else "未启用 (公开访问)"  # noqa: F841
-    print(f"""
-╔══════════════════════════════════════════════════════╗
-║     BTC 碰撞引擎 - Web 监控仪表板 v4.2.1               ║
-╠══════════════════════════════════════════════════════╣
-║  本地访问: http://127.0.0.1:{port:<5}                  ║
-║  API Key:  {auth_status:<38}║
-║  API 端点:                                           ║
-║    GET /api/status         - 当前运行状态            ║
-║    GET /api/history        - 历史数据 (?limit=N)     ║
-║    GET /api/errors         - 错误日志 (?limit=N)     ║
-║    GET /api/report         - 日报告摘要              ║
-║    GET /api/security-audit - 安全审计状态            ║
-║    GET /health             - 健康检查                ║
-╚══════════════════════════════════════════════════════╝
-""")
+    auth_status = "已启用" if _api_key_required else "未启用 (公开访问)"
+    _startup_banner = (
+        "BTC 碰撞引擎 - Web 监控仪表板 v4.2.1",
+        f"本地访问: http://127.0.0.1:{port}",
+        f"API Key: {auth_status}",
+        "API 端点:",
+        "  GET /api/status         - 当前运行状态",
+        "  GET /api/history        - 历史数据 (?limit=N)",
+        "  GET /api/errors         - 错误日志 (?limit=N)",
+        "  GET /api/report         - 日报告摘要",
+        "  GET /api/security-audit - 安全审计状态",
+        "  GET /health             - 健康检查",
+    )
+    logger.info("\n".join(_startup_banner))
 
     # 安全: debug模式下强制绑定localhost，防止远程代码执行
     if debug and host not in ("127.0.0.1", "localhost"):
-        logger.warning(f"Debug 模式仅允许本地绑定，已自动将 host 从 {host} 改为 127.0.0.1")
+        logger.warning("Debug 模式仅允许本地绑定，已自动将 host 从 %s 改为 127.0.0.1", host)
         host = "127.0.0.1"
 
     app.run(host=host, port=port, debug=debug, use_reloader=use_reloader)

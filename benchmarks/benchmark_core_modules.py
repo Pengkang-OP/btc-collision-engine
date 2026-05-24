@@ -16,12 +16,9 @@ import traceback
 import warnings
 from pathlib import Path
 
-# 添加项目根目录到路径
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
-from src.core.secp256k1 import ECPoint, EllipticCurve, Secp256k1  # noqa: E402
-from src.utils import get_configured_logger, init_logging  # noqa: E402
-from src.utils.logger import AsyncFileHandler, SampledLogger, ThreadSafeLogger  # noqa: E402
+from src.core.secp256k1 import ECPoint, EllipticCurve, Secp256k1
+from src.utils import get_configured_logger, init_logging
+from src.utils.logger import AsyncFileHandler, SampledLogger, ThreadSafeLogger
 
 
 def benchmark_secp256k1_scalar_multiply(iterations=100):

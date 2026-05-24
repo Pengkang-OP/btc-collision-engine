@@ -6,11 +6,6 @@ import sys
 import time
 import traceback
 
-# 添加项目路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
-sys.path.insert(0, os.path.dirname(__file__))
-
-
 def run_test_file(test_file):
     """运行单个测试文件"""
     print(f"\n{'=' * 80}")

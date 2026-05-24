@@ -97,6 +97,11 @@ def create_mock_gpu_device(
     mock_device.global_mem_size = global_mem_size
     mock_device.max_compute_units = 40
     mock_device.max_work_group_size = 256
+    # AsyncGPUExecutor._detect_gpu_model() 需要 device_info dict
+    mock_device.device_info = {
+        "name": device_name,
+        "vendor": vendor,
+    }
 
     # 模拟设备初始化
     mock_device.initialize = Mock(return_value=True)
@@ -409,6 +414,34 @@ def mock_deduplication_filter() -> Any:
 
     filter_instance = DeduplicationFilter(max_size=10000)
     yield filter_instance
+
+
+@pytest.fixture(scope="function", autouse=True)
+def mock_crypto_backend_autouse() -> Generator[None, None, None]:
+    """自动 Mock 加密后端管理器，使所有引擎测试可用
+    
+    修补 CryptoBackendManager.current_backend 属性，确保测试环境中
+    引擎初始化时始终有可用的后端，避免 RuntimeError。
+    """
+    from src.core.crypto_backend import crypto_manager as _global_cm
+    from unittest.mock import Mock
+
+    mock_backend = Mock()
+    mock_backend.name = "mock_backend (test)"
+    mock_backend.is_constant_time.return_value = True
+    mock_backend.generate_public_key.return_value = b"\x02" + b"\x11" * 32
+    mock_backend.scalar_multiply.return_value = b"\x02" + b"\x22" * 32
+    mock_backend.verify_signature.return_value = True
+    mock_backend.get_performance_stats.return_value = {"keys_per_second": 100000}
+
+    # 保存原始的 _current_backend
+    original = _global_cm._CryptoBackendManager__current_backend if hasattr(_global_cm, '_CryptoBackendManager__current_backend') else _global_cm._current_backend
+    _global_cm._current_backend = mock_backend
+    
+    yield
+    
+    # 恢复
+    _global_cm._current_backend = original
 
 
 @pytest.fixture(scope="function")

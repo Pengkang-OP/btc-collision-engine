@@ -29,7 +29,10 @@ class PerformanceOptimizationPipeline:
         auto_tuner:          自动调优器实例
         benchmark_suite:     基准测试套件实例
         performance_reporter: 性能报告生成器实例
+
     """
+
+    __slots__ = ("auto_tuner", "benchmark_suite", "performance_reporter", "_logger")
 
     def __init__(
         self,
@@ -45,6 +48,7 @@ class PerformanceOptimizationPipeline:
             benchmark_suite:  GPUBenchmarkSuite 实例（可选）
             reporter:         PerformanceReportGenerator 实例（可选）
             logger_instance:  日志记录器（默认使用模块级 logger）
+
         """
         self.auto_tuner: GPUAutoTuner | None = auto_tuner
         self.benchmark_suite: GPUBenchmarkSuite | None = benchmark_suite
@@ -60,9 +64,10 @@ class PerformanceOptimizationPipeline:
 
         Args:
             device_info: GPU 设备信息字典
+
         """
         _name = device_info.get("name", "unknown")
-        self._logger.debug(f"PerformanceOptimizationPipeline.initialize called: device={_name}")
+        self._logger.debug("PerformanceOptimizationPipeline.initialize called: device=%s", _name)
 
     # ------------------------------------------------------------------
     # 批处理大小优化
@@ -79,6 +84,7 @@ class PerformanceOptimizationPipeline:
 
         Returns:
             推荐的 batch_size（整数）
+
         """
         if self.auto_tuner is None:
             return current_size
@@ -88,7 +94,7 @@ class PerformanceOptimizationPipeline:
             suggestion = tuner.suggest_batch_size(current_size, metrics)
             return int(suggestion) if suggestion else current_size
         except (AttributeError, TypeError, ValueError) as exc:
-            self._logger.debug(f"optimize_batch_size 委托失败，保持原值: {exc}")
+            self._logger.debug("optimize_batch_size 委托失败，保持原值: %s", exc)
             return current_size
 
     # ------------------------------------------------------------------
@@ -103,6 +109,7 @@ class PerformanceOptimizationPipeline:
 
         Returns:
             基准测试结果字典；若套件未初始化返回空字典
+
         """
         if not self.benchmark_suite:
             self._logger.warning("基准测试套件未初始化")
@@ -135,6 +142,7 @@ class PerformanceOptimizationPipeline:
 
         Returns:
             调优结果字典；若调优器未初始化返回空字典
+
         """
         if not self.auto_tuner:
             self._logger.warning("自动调优器未初始化")
@@ -153,7 +161,7 @@ class PerformanceOptimizationPipeline:
         optimal_size = results.get("optimal_batch_size")
         self._logger.info(
             f"调优完成！最优 batch_size: {optimal_size}, "
-            f"预期吞吐量: {results.get('expected_throughput', 0):,.0f} keys/s"
+            f"预期吞吐量: {results.get('expected_throughput', 0):,.0f} keys/s",
         )
         return results
 
@@ -182,6 +190,7 @@ class PerformanceOptimizationPipeline:
 
         Returns:
             报告文件路径；若报告器未初始化返回空字符串
+
         """
         if not self.performance_reporter:
             self._logger.warning("性能报告生成器未初始化")

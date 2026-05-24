@@ -4,6 +4,7 @@
 """
 
 import os
+import pathlib
 from typing import Any
 
 from src.utils.fast_json import fast_dump, fast_load
@@ -16,8 +17,7 @@ logger = get_configured_logger("GPUConfig")
 
 
 class GPUConfig:
-    """
-    GPU配置管理器
+    """GPU配置管理器
 
     负责:
     1. 加载和保存GPU配置
@@ -34,18 +34,20 @@ class GPUConfig:
         "enable_vendor_optimizations": True,
     }
 
+    __slots__ = ("config_file", "config", "profile_loader")
+
     def __init__(self, config_file: str | None = None) -> None:
-        """
-        初始化GPU配置
+        """初始化GPU配置
 
         Args:
             config_file: 配置文件路径
+
         """
         self.config_file = config_file
         self.config = self.DEFAULT_CONFIG.copy()
         self.profile_loader = GPUProfileLoader()
 
-        if config_file and os.path.exists(config_file):
+        if config_file and pathlib.Path(config_file).exists():
             self._load_config()
 
     def _load_config(self) -> None:
@@ -53,7 +55,7 @@ class GPUConfig:
         if self.config_file is None:
             return
         try:
-            with open(self.config_file, encoding="utf-8") as f:
+            with pathlib.Path(self.config_file).open(encoding="utf-8") as f:
                 user_config = fast_load(f)
 
             # 只加载gpu相关配置
@@ -62,20 +64,20 @@ class GPUConfig:
             else:
                 # 兼容旧格式
                 self.config.update(
-                    {k: v for k, v in user_config.items() if k.startswith("gpu_") or k == "use_gpu"}
+                    {k: v for k, v in user_config.items() if k.startswith("gpu_") or k == "use_gpu"},
                 )
 
             logger.info("GPU配置加载成功")
 
         except Exception as e:
-            logger.warning(f"加载GPU配置失败: {e}")
+            logger.warning("加载GPU配置失败: %s", e)
 
     def get_gpu_config(self) -> dict[str, Any]:
-        """
-        获取GPU配置
+        """获取GPU配置
 
         Returns:
             GPU配置字典
+
         """
         return {
             "use_gpu": self.config.get("use_gpu", True),
@@ -93,8 +95,7 @@ class GPUConfig:
         batch_size: int | None = None,
         **kwargs: Any,
     ) -> bool:
-        """
-        设置GPU配置
+        """设置GPU配置
 
         Args:
             use_gpu: 是否使用GPU
@@ -104,6 +105,7 @@ class GPUConfig:
 
         Returns:
             设置成功返回True
+
         """
         if use_gpu is not None:
             self.config["use_gpu"] = use_gpu
@@ -121,11 +123,11 @@ class GPUConfig:
         return True
 
     def get_gpu_device_info(self) -> list:
-        """
-        获取可用GPU设备列表
+        """获取可用GPU设备列表
 
         Returns:
             GPU设备信息列表
+
         """
         try:
             devices = GPUDeviceDetector.detect_devices()
@@ -144,27 +146,27 @@ class GPUConfig:
             ]
 
         except Exception as e:
-            logger.error(f"获取GPU设备信息失败: {e}")
+            logger.error("获取GPU设备信息失败: %s", e)
             return []
 
     def is_gpu_available(self) -> bool:
-        """
-        检查GPU是否可用
+        """检查GPU是否可用
 
         Returns:
             True如果GPU可用
+
         """
         return GPUDeviceDetector.is_gpu_available()
 
     def create_gpu_device(self, device_index: int | None = None) -> GPUDevice:
-        """
-        创建并初始化GPU设备
+        """创建并初始化GPU设备
 
         Args:
             device_index: 设备索引,None则使用配置中的值
 
         Returns:
             已初始化的GPUDevice实例
+
         """
         if device_index is None:
             device_index = int(self.config.get("gpu_device_index", -1))
@@ -175,14 +177,14 @@ class GPUConfig:
         return device
 
     def create_gpu_engine(self, targets: Any) -> Any:
-        """
-        创建GPU碰撞引擎
+        """创建GPU碰撞引擎
 
         Args:
             targets: 目标地址集合
 
         Returns:
             GPUCollisionEngine实例
+
         """
         try:
             from ..collision.gpu.engine import GPUCollisionEngine
@@ -196,49 +198,49 @@ class GPUConfig:
             )
 
         except ImportError as e:
-            logger.error(f"创建GPU引擎失败: {e}")
+            logger.error("创建GPU引擎失败: %s", e)
             raise RuntimeError("GPUCollisionEngine不可用") from e
 
     def save_config(self) -> bool:
-        """
-        保存配置到文件
+        """保存配置到文件
 
         Returns:
             保存成功返回True
+
         """
         if not self.config_file:
             return False
 
         try:
             # 确保目录存在
-            os.makedirs(os.path.dirname(self.config_file), exist_ok=True)
+            pathlib.Path(os.path.dirname(self.config_file)).mkdir(exist_ok=True, parents=True)
 
             # 读取现有配置
             existing_config = {}
-            if os.path.exists(self.config_file):
-                with open(self.config_file, encoding="utf-8") as f:
+            if pathlib.Path(self.config_file).exists():
+                with pathlib.Path(self.config_file).open(encoding="utf-8") as f:
                     existing_config = fast_load(f)
 
             # 更新GPU配置
             existing_config["gpu"] = self.config
 
             # 保存
-            with open(self.config_file, "w", encoding="utf-8") as f:
+            with pathlib.Path(self.config_file).open("w", encoding="utf-8") as f:
                 fast_dump(existing_config, f, indent=2, ensure_ascii=False)
 
             logger.info("GPU配置已保存")
             return True
 
         except Exception as e:
-            logger.error(f"保存GPU配置失败: {e}")
+            logger.error("保存GPU配置失败: %s", e)
             return False
 
     def validate(self) -> list:
-        """
-        验证配置
+        """验证配置
 
         Returns:
             错误信息列表
+
         """
         errors = []
 

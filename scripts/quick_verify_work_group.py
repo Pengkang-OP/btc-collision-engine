@@ -4,9 +4,7 @@
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
-from src.gpu.auto_config import GPUAutoConfigurator  # noqa: E402
+from src.gpu.auto_config import GPUAutoConfigurator
 
 # 创建模拟设备信息
 mock_device = {

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Multi-process collision engine for CPU-parallel collision detection.
+"""Multi-process collision engine for CPU-parallel collision detection.
 
 Distributes key generation and address matching across multiple CPU
 processes for improved throughput.
@@ -8,7 +7,6 @@ processes for improved throughput.
 
 import multiprocessing
 import queue
-import threading
 import time
 
 from ..utils import get_configured_logger
@@ -26,7 +24,7 @@ class MultiProcessCollisionEngine:
     def __init__(self, config: dict | None = None):
         self.config = config or {}
         self._num_workers = self.config.get(
-            "max_workers", multiprocessing.cpu_count()
+            "max_workers", multiprocessing.cpu_count(),
         )
         self._running = False
         self._task_queue: (
@@ -42,14 +40,14 @@ class MultiProcessCollisionEngine:
         self._start_time: float | None = None
         logger.info(
             f"Multi-process engine initialized: "
-            f"{self._num_workers} workers"
+            f"{self._num_workers} workers",
         )
 
     def start(self) -> None:
         """Start worker processes."""
         self._running = True
         self._task_queue = multiprocessing.Queue(
-            maxsize=1000
+            maxsize=1000,
         )
         self._result_queue = multiprocessing.Queue()
         self._start_time = time.time()
@@ -65,7 +63,7 @@ class MultiProcessCollisionEngine:
 
         logger.info(
             f"Started {self._num_workers} worker "
-            f"processes"
+            f"processes",
         )
 
     def stop(self) -> None:
@@ -83,32 +81,33 @@ class MultiProcessCollisionEngine:
         )
         logger.info(
             f"Multi-process engine stopped: "
-            f"{self._total_keys} keys in {elapsed:.1f}s"
+            f"{self._total_keys} keys in {elapsed:.1f}s",
         )
 
     def _worker_loop(
-        self, worker_id: int
+        self, worker_id: int,
     ) -> None:
         """Worker process main loop."""
         while self._running:
             try:
                 task = self._task_queue.get(
-                    timeout=1
+                    timeout=1,
                 )
                 self._process_task(
-                    worker_id, task
+                    worker_id, task,
                 )
             except queue.Empty:
                 continue
 
     def _process_task(
-        self, worker_id: int, task: bytes
+        self, worker_id: int, task: bytes,
     ) -> None:
         """Process a single task (private key).
 
         Args:
             worker_id: Worker process ID
             task: Private key bytes
+
         """
         self._result_queue.put(task)
 

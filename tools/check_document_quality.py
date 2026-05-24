@@ -23,10 +23,6 @@ from pathlib import Path
 from typing import Any
 
 # 修复Windows控制台编码问题 - 使用共享模块
-# 添加工具目录到路径
-_tools_dir = Path(__file__).parent
-if str(_tools_dir) not in sys.path:
-    sys.path.insert(0, str(_tools_dir))
 from utf8_helper import setup_windows_utf8
 
 setup_windows_utf8()

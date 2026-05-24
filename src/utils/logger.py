@@ -13,6 +13,7 @@ Provides enhanced logging features including:
 
 import logging
 import os
+import pathlib
 import platform
 import queue
 import sys
@@ -34,7 +35,7 @@ def _make_rotating_handler(filename: str, max_bytes: int, backup_count: int) -> 
             from .logging_config import SafeRotatingFileHandler
 
             return SafeRotatingFileHandler(
-                filename, maxBytes=max_bytes, backupCount=backup_count, encoding="utf-8"
+                filename, maxBytes=max_bytes, backupCount=backup_count, encoding="utf-8",
             )
     return RotatingFileHandler(filename, maxBytes=max_bytes, backupCount=backup_count, encoding="utf-8")
 
@@ -125,7 +126,7 @@ class PerformanceMonitor:
             self.logger.log(self.level, f"[Performance] {self.operation}: {elapsed_ms:.2f}ms")
         else:
             self.logger.error(
-                f"[Performance] {self.operation}: FAILED after {elapsed_ms:.2f}ms - {exc_val}"
+                f"[Performance] {self.operation}: FAILED after {elapsed_ms:.2f}ms - {exc_val}",
             )
 
     @property
@@ -156,13 +157,12 @@ class SampledLogger:
     _COUNTER_MAX = 10**9
 
     def __init__(
-        self, logger: logging.Logger, sample_rate: int = 100, max_per_second: float = 0.0
+        self, logger: logging.Logger, sample_rate: int = 100, max_per_second: float = 0.0,
     ) -> None:
-        """
-        参数:
-            logger: 底层日志记录器
-            sample_rate: 采样率（每N条记录1条，计数采样）
-            max_per_second: 每秒最多记录N条（时间限频），0表示不限制
+        """参数:
+        logger: 底层日志记录器
+        sample_rate: 采样率（每N条记录1条，计数采样）
+        max_per_second: 每秒最多记录N条（时间限频），0表示不限制
         """
         self.logger = logger
         self.sample_rate = sample_rate
@@ -192,12 +192,11 @@ class SampledLogger:
             self._last_log_time = current_time
             self._time_window_count = 1
             return True
-        else:
-            # 在同一秒窗口内，使用整数比较
-            if self._time_window_count < self._max_per_second_int:
-                self._time_window_count += 1
-                return True
-            return False
+        # 在同一秒窗口内，使用整数比较
+        if self._time_window_count < self._max_per_second_int:
+            self._time_window_count += 1
+            return True
+        return False
 
     def debug(self, msg: str, *args: Any, **kwargs: Any) -> None:
         with self._lock:
@@ -245,8 +244,7 @@ def setup_logger(
     backup_count: int = 5,
     use_color: bool = True,
 ) -> logging.Logger:
-    """
-    设置日志记录器（增强版）
+    """设置日志记录器（增强版）
 
     参数:
         name: 日志记录器名称
@@ -283,8 +281,8 @@ def setup_logger(
     if log_file:
         # 确保日志目录存在
         log_dir = os.path.dirname(log_file)
-        if log_dir and not os.path.exists(log_dir):
-            os.makedirs(log_dir, mode=0o750, exist_ok=True)
+        if log_dir and not pathlib.Path(log_dir).exists():
+            pathlib.Path(log_dir).mkdir(mode=0o750, exist_ok=True, parents=True)
 
         # 使用 SafeRotatingFileHandler 自动轮转（Windows 安全）
         file_handler: logging.FileHandler = _make_rotating_handler(log_file, max_bytes, backup_count)
@@ -303,6 +301,7 @@ def get_logger(name: str) -> logging.Logger:
 
     Returns:
         日志记录器 (Python 原生 Logger，本身已是线程安全)
+
     """
     logger = logging.getLogger(name)
     if not logger.handlers:
@@ -313,8 +312,7 @@ def get_logger(name: str) -> logging.Logger:
 
 
 def get_sampled_logger(name: str, sample_rate: int = 100, max_per_second: float = 0.0) -> SampledLogger:
-    """
-    获取采样日志记录器（用于高频操作）
+    """获取采样日志记录器（用于高频操作）
 
     注意: 使用此函数前应先调用 init_logging() 配置全局日志系统，
     以避免重复配置 handlers 导致日志重复输出。
@@ -334,8 +332,7 @@ def get_sampled_logger(name: str, sample_rate: int = 100, max_per_second: float 
 
 
 def log_performance(logger: logging.Logger, operation: str, level: str = "DEBUG") -> Callable:
-    """
-    性能监控装饰器工厂
+    """性能监控装饰器工厂
 
     使用示例:
         @log_performance(logger, "expensive_operation")
@@ -380,9 +377,8 @@ class AsyncLogger:
     _DROPPED_COUNT_MAX = 10**12
 
     def __init__(self, max_queue_size: int = 10000) -> None:
-        """
-        参数:
-            max_queue_size: 队列最大长度，超出时丢弃最旧日志
+        """参数:
+        max_queue_size: 队列最大长度，超出时丢弃最旧日志
         """
         self._queue: queue.Queue = queue.Queue(maxsize=max_queue_size)
         self._handler: logging.Handler | None = None
@@ -397,13 +393,14 @@ class AsyncLogger:
         self._started_at = time.time()
 
         _logger = logging.getLogger(__name__)
-        _logger.info(f"AsyncLogger 已初始化: max_queue_size={max_queue_size}")
+        _logger.info("AsyncLogger 已初始化: max_queue_size=%s", max_queue_size)
 
     def set_handler(self, handler: logging.Handler) -> None:
         """Q1修复: 设置底层日志处理器（替代直接访问私有属性）
 
         Args:
             handler: 底层日志处理器
+
         """
         self._handler = handler
 
@@ -446,8 +443,7 @@ class AsyncLogger:
         except queue.Full:
             # Q6修复: 添加丢弃计数上限，防止整数溢出
             self._dropped_count += 1
-            if self._dropped_count >= self._DROPPED_COUNT_MAX:
-                self._dropped_count = self._DROPPED_COUNT_MAX
+            self._dropped_count = min(self._DROPPED_COUNT_MAX, self._dropped_count)
             # G5修复 & M-7修复: 简化警告条件，使用更清晰的逻辑
             dropped = self._dropped_count
             # 在关键阈值点警告：1K, 5K, 10K, 50K, 100K, 500K, 1M, 之后每5M警告一次
@@ -463,7 +459,7 @@ class AsyncLogger:
         _logger.info(
             f"AsyncLogger 正在关闭: queue_size={self._queue.qsize()}, "
             f"dropped_count={self._dropped_count}, "
-            f"uptime={time.time() - self._started_at:.1f}s"
+            f"uptime={time.time() - self._started_at:.1f}s",
         )
         self._stop_event.set()
 
@@ -504,11 +500,10 @@ class AsyncFileHandler(logging.Handler):
     """
 
     def __init__(self, filename: str, max_bytes: int = 0, backup_count: int = 0) -> None:
-        """
-        参数:
-            filename: 日志文件路径
-            max_bytes: 单个文件最大字节数（0表示不轮转）
-            backup_count: 保留的备份文件数
+        """参数:
+        filename: 日志文件路径
+        max_bytes: 单个文件最大字节数（0表示不轮转）
+        backup_count: 保留的备份文件数
         """
         super().__init__()
 

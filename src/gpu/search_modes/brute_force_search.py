@@ -5,13 +5,10 @@
 """
 
 # 统一日志获取
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from ...utils import get_configured_logger
 from .base_search import BaseSearchMode
-
-if TYPE_CHECKING:
-    pass
 
 logger = get_configured_logger("BruteForceSearch")
 
@@ -28,6 +25,7 @@ class BruteForceSearchMode(BaseSearchMode):
 
         Args:
             start: 起始私钥整数值
+
         """
         engine = self.engine
         eng: Any = engine

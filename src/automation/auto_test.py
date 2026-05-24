@@ -1,23 +1,19 @@
-"""
-自动化测试模块
+"""自动化测试模块
 ===============
 基于分析结果执行全面的测试用例，确保功能与性能达标
 """
 
+import importlib
+import subprocess
 import sys
+import threading
+import time
+import traceback
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
-
-import importlib  # noqa: E402
-import subprocess  # noqa: E402
-import threading  # noqa: E402
-import time  # noqa: E402
-import traceback  # noqa: E402
-from concurrent.futures import ThreadPoolExecutor, as_completed  # noqa: E402
-from datetime import datetime  # noqa: E402
-
-from .models import AnalysisReport, TestCase, TestResult, TestSuiteResult  # noqa: E402
+from .models import AnalysisReport, TestCase, TestResult, TestSuiteResult
 
 
 class AutoTestModule:
@@ -162,7 +158,7 @@ class AutoTestModule:
                         test_name=tc.name,
                         status="error",
                         duration=0,
-                        message=f"测试执行异常: {str(e)}",
+                        message=f"测试执行异常: {e!s}",
                         error_details=traceback.format_exc(),
                     )
                     suite.results.append(error_result)
@@ -202,7 +198,7 @@ class AutoTestModule:
                     duration=duration,
                     message="测试通过",
                 )
-            elif isinstance(result, dict):
+            if isinstance(result, dict):
                 return TestResult(
                     test_id=test_case.id,
                     test_name=test_case.name,
@@ -211,14 +207,13 @@ class AutoTestModule:
                     message=result.get("message", ""),
                     metrics=result.get("metrics", {}),
                 )
-            else:
-                return TestResult(
-                    test_id=test_case.id,
-                    test_name=test_case.name,
-                    status="failed",
-                    duration=duration,
-                    message=str(result),
-                )
+            return TestResult(
+                test_id=test_case.id,
+                test_name=test_case.name,
+                status="failed",
+                duration=duration,
+                message=str(result),
+            )
 
         except Exception as e:
             duration = time.time() - start_time
@@ -227,7 +222,7 @@ class AutoTestModule:
                 test_name=test_case.name,
                 status="error",
                 duration=duration,
-                message=f"测试执行错误: {str(e)}",
+                message=f"测试执行错误: {e!s}",
                 error_details=traceback.format_exc(),
             )
 
@@ -238,7 +233,7 @@ class AutoTestModule:
         import json
 
         try:
-            with open(config_path) as f:
+            with Path(config_path).open() as f:
                 config = json.load(f)
 
             required_keys = ["workers", "checkpoint_interval"]
@@ -259,7 +254,7 @@ class AutoTestModule:
         except Exception as e:
             return {
                 "status": "failed",
-                "message": f"配置验证失败: {str(e)}",
+                "message": f"配置验证失败: {e!s}",
             }
 
     def test_cli_help(self) -> dict:
@@ -280,26 +275,26 @@ class AutoTestModule:
                     "message": "CLI帮助信息正常",
                     "metrics": {"output_length": len(result.stdout)},
                 }
-            else:
-                return {
-                    "status": "failed",
-                    "message": "CLI帮助信息异常",
-                    "metrics": {"stderr": result.stderr[:500]},
-                }
+            return {
+                "status": "failed",
+                "message": "CLI帮助信息异常",
+                "metrics": {"stderr": result.stderr[:500]},
+            }
         except Exception as e:
             return {
                 "status": "error",
-                "message": f"CLI测试执行失败: {str(e)}",
+                "message": f"CLI测试执行失败: {e!s}",
             }
 
     def test_crypto_backend_init(self) -> dict:
         """测试加密后端初始化"""
         try:
-            from src.core.crypto_backend import CryptoBackend
+            from src.core.crypto_backend import BackendProto, CryptoBackend
 
-            backend = CryptoBackend()  # type: ignore[abstract]
-            available = backend.get_available_backends()  # type: ignore[attr-defined]
-            current = backend.get_current_backend()  # type: ignore[attr-defined]
+            # 使用 BackendProto 类型标注，避免 [abstract] 警告
+            backend: BackendProto = CryptoBackend()
+            available = backend.get_available_backends()
+            current = backend.get_current_backend()
 
             if current:
                 return {
@@ -307,15 +302,14 @@ class AutoTestModule:
                     "message": f"加密后端初始化成功: {current}",
                     "metrics": {"available_backends": available, "current": current},
                 }
-            else:
-                return {
-                    "status": "failed",
-                    "message": "加密后端初始化失败",
-                }
+            return {
+                "status": "failed",
+                "message": "加密后端初始化失败",
+            }
         except Exception as e:
             return {
                 "status": "error",
-                "message": f"加密后端测试异常: {str(e)}",
+                "message": f"加密后端测试异常: {e!s}",
             }
 
     def test_logging_system(self) -> dict:
@@ -336,7 +330,7 @@ class AutoTestModule:
         except Exception as e:
             return {
                 "status": "error",
-                "message": f"日志系统测试异常: {str(e)}",
+                "message": f"日志系统测试异常: {e!s}",
             }
 
     def test_module_imports(self) -> dict:
@@ -356,7 +350,7 @@ class AutoTestModule:
                 importlib.import_module(module_name)
                 successful_imports.append(module_name)
             except Exception as e:
-                failed_imports.append(f"{module_name}: {str(e)}")
+                failed_imports.append(f"{module_name}: {e!s}")
 
         if failed_imports:
             return {
@@ -393,16 +387,15 @@ class AutoTestModule:
                     "message": f"大整数运算性能达标: {ops_per_sec:.1f} ops/sec",
                     "metrics": {"duration": duration, "ops_per_sec": ops_per_sec},
                 }
-            else:
-                return {
-                    "status": "failed",
-                    "message": f"大整数运算性能不达标: {ops_per_sec:.1f} ops/sec",
-                    "metrics": {"duration": duration, "ops_per_sec": ops_per_sec},
-                }
+            return {
+                "status": "failed",
+                "message": f"大整数运算性能不达标: {ops_per_sec:.1f} ops/sec",
+                "metrics": {"duration": duration, "ops_per_sec": ops_per_sec},
+            }
         except Exception as e:
             return {
                 "status": "error",
-                "message": f"性能测试异常: {str(e)}",
+                "message": f"性能测试异常: {e!s}",
             }
 
     def test_hash_performance(self, iterations: int = 10000) -> dict:
@@ -426,16 +419,15 @@ class AutoTestModule:
                     "message": f"哈希计算性能达标: {ops_per_sec:.0f} ops/sec",
                     "metrics": {"duration": duration, "ops_per_sec": ops_per_sec},
                 }
-            else:
-                return {
-                    "status": "warning",
-                    "message": f"哈希计算性能偏低: {ops_per_sec:.0f} ops/sec",
-                    "metrics": {"duration": duration, "ops_per_sec": ops_per_sec},
-                }
+            return {
+                "status": "warning",
+                "message": f"哈希计算性能偏低: {ops_per_sec:.0f} ops/sec",
+                "metrics": {"duration": duration, "ops_per_sec": ops_per_sec},
+            }
         except Exception as e:
             return {
                 "status": "error",
-                "message": f"哈希性能测试异常: {str(e)}",
+                "message": f"哈希性能测试异常: {e!s}",
             }
 
     def test_e2e_workflow(self, duration: int = 5) -> dict:
@@ -456,16 +448,15 @@ class AutoTestModule:
                     "message": "端到端工作流测试通过",
                     "metrics": {"output_preview": result.stdout[:200]},
                 }
-            else:
-                return {
-                    "status": "failed",
-                    "message": "端到端工作流测试失败",
-                    "metrics": {"stderr": result.stderr[:500]},
-                }
+            return {
+                "status": "failed",
+                "message": "端到端工作流测试失败",
+                "metrics": {"stderr": result.stderr[:500]},
+            }
         except Exception as e:
             return {
                 "status": "error",
-                "message": f"端到端测试异常: {str(e)}",
+                "message": f"端到端测试异常: {e!s}",
             }
 
     def test_checkpoint_feature(self) -> dict:
@@ -488,7 +479,7 @@ class AutoTestModule:
         except Exception as e:
             return {
                 "status": "error",
-                "message": f"断点续传测试异常: {str(e)}",
+                "message": f"断点续传测试异常: {e!s}",
             }
 
     def test_i18n_support(self, languages: list[str] | None = None) -> dict:
@@ -518,7 +509,7 @@ class AutoTestModule:
         except Exception as e:
             return {
                 "status": "error",
-                "message": f"i18n测试异常: {str(e)}",
+                "message": f"i18n测试异常: {e!s}",
             }
 
 

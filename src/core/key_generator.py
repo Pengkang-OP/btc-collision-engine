@@ -1,6 +1,6 @@
 """Secure private key generator - compliant with Bitcoin Core specification"""
 
-import os
+import pathlib
 import secrets
 import threading
 import time
@@ -15,8 +15,7 @@ logger = get_configured_logger("SecureKeyGenerator")
 
 
 class SecureKeyGenerator:
-    """
-    Secure private key generator - compliant with Bitcoin Core
+    """Secure private key generator - compliant with Bitcoin Core
     specification.
 
     Uses CSPRNG (Cryptographically Secure Pseudo-Random Number
@@ -33,13 +32,13 @@ class SecureKeyGenerator:
         >>> config = {'batch_size': 1000, 'rate_limit': 0}
         >>> generator = SecureKeyGenerator(config)
         >>> keys = generator.generate_batch(1000)
+
     """
 
     def __init__(
-        self, config: dict | None = None
+        self, config: dict | None = None,
     ) -> None:
-        """
-        Initialize private key generator.
+        """Initialize private key generator.
 
         Args:
             config: Configuration dictionary
@@ -50,6 +49,7 @@ class SecureKeyGenerator:
                   (default True)
                 - min_entropy_bits: Minimum entropy threshold
                   (default 1000)
+
         """
         config = config or {}
         self.batch_size = config.get("batch_size", 1000)
@@ -60,10 +60,10 @@ class SecureKeyGenerator:
 
         # P1-3 fix: entropy pool check configuration
         self.entropy_check_enabled = config.get(
-            "entropy_check_enabled", True
+            "entropy_check_enabled", True,
         )
         self.min_entropy_bits = config.get(
-            "min_entropy_bits", 1000
+            "min_entropy_bits", 1000,
         )
 
         # Statistics
@@ -92,6 +92,7 @@ class SecureKeyGenerator:
 
         Returns:
             bool: Whether entropy pool is healthy
+
         """
         if not self.entropy_check_enabled:
             return True
@@ -101,8 +102,8 @@ class SecureKeyGenerator:
             entropy_file = (
                 "/proc/sys/kernel/random/entropy_avail"
             )
-            if os.path.exists(entropy_file):
-                with open(entropy_file) as f:
+            if pathlib.Path(entropy_file).exists():
+                with pathlib.Path(entropy_file).open() as f:
                     entropy = int(f.read().strip())
 
                 self.stats["entropy_checks"] = (
@@ -113,13 +114,13 @@ class SecureKeyGenerator:
                     _entropy = entropy
                     _min_e = self.min_entropy_bits
                     logger.warning(
-                        f"System entropy low: {_entropy} bits "
-                        f"(<{_min_e}), "
-                        "recommend installing haveged/rng-tools"
+                        "System entropy low: %s bits (<%s), "
+                        "recommend installing haveged/rng-tools",
+                        _entropy, _min_e,
                     )
                     self.stats["low_entropy_count"] = (
                         self.stats.get(
-                            "low_entropy_count", 0
+                            "low_entropy_count", 0,
                         )
                         + 1
                     )
@@ -141,28 +142,25 @@ class SecureKeyGenerator:
                             "  sudo systemctl enable "
                             "rng-tools\n"
                             "  sudo systemctl start "
-                            "rng-tools"
+                            "rng-tools",
                         )
                         self.stats["warnings_issued"] = (
                             self.stats.get(
-                                "warnings_issued", 0
+                                "warnings_issued", 0,
                             )
                             + 1
                         )
 
                     return False
-                elif entropy < self.min_entropy_bits * 2:
+                if entropy < self.min_entropy_bits * 2:
                     logger.debug(
-                        f"System entropy moderate: "
-                        f"{entropy} bits"
+                        "System entropy moderate: %s bits", entropy,
                     )
                     return True
-                else:
-                    logger.debug(
-                        f"System entropy sufficient: "
-                        f"{entropy} bits"
-                    )
-                    return True
+                logger.debug(
+                    "System entropy sufficient: %s bits", entropy,
+                )
+                return True
 
             # Windows/macOS cannot check, assume healthy
             # These systems use CryptGenRandom/SecureRandom,
@@ -173,22 +171,21 @@ class SecureKeyGenerator:
 
                 system = platform.system()
                 logger.debug(
-                    f"{system} uses system-level CSPRNG "
-                    "(CryptGenRandom/SecureRandom), "
+                    "%s uses system-level CSPRNG (CryptGenRandom/SecureRandom), "
                     "not dependent on /dev/random entropy pool; "
-                    "security is OS-guaranteed"
+                    "security is OS-guaranteed",
+                    system,
                 )
                 self.stats["entropy_checks"] = 1
             return True
         except Exception as e:
-            logger.debug(f"Cannot check entropy: {e}")
+            logger.debug("Cannot check entropy: %s", e)
             return True  # Assume healthy if cannot check
 
     def generate_batch(
-        self, count: int
+        self, count: int,
     ) -> list[bytearray]:
-        """
-        Generate private keys in batch - returns mutable bytearray
+        """Generate private keys in batch - returns mutable bytearray
         for secure clearing after use.
 
         Callers should use
@@ -201,17 +198,18 @@ class SecureKeyGenerator:
         Returns:
             List of private keys (bytearray, mutable, supports
             clearing)
+
         """
         if count <= 0:
             raise ValueError(
-                "Generation count must be greater than 0"
+                "Generation count must be greater than 0",
             )
 
         # P1-3 fix: check entropy pool health
         if not self._check_entropy_health():
             logger.warning(
                 "Low entropy health, generated keys may "
-                "have security risks"
+                "have security risks",
             )
             # Log but don't block, to avoid performance impact
 
@@ -223,16 +221,16 @@ class SecureKeyGenerator:
                 # 1. Generate 32-byte random via CSPRNG,
                 #    store in mutable bytearray (supports clearing)
                 private_key = bytearray(
-                    secrets.token_bytes(32)
+                    secrets.token_bytes(32),
                 )
 
                 # 2. Validate private key (1 <= k < n)
                 if not self._is_valid_private_key(
-                    private_key
+                    private_key,
                 ):
                     logger.debug(
                         "Invalid private key generated, "
-                        "regenerating"
+                        "regenerating",
                     )
                     continue
 
@@ -248,7 +246,7 @@ class SecureKeyGenerator:
                     )
                     if elapsed < expected_time:
                         time.sleep(
-                            expected_time - elapsed
+                            expected_time - elapsed,
                         )
 
             except Exception as e:
@@ -284,17 +282,17 @@ class SecureKeyGenerator:
                 f"Cannot generate any valid private keys "
                 f"(requested {count}). This may indicate "
                 "severe system entropy depletion or CSPRNG "
-                "failure."
+                "failure.",
             )
 
         return private_keys
 
     def generate_single(self) -> bytes:
-        """
-        Generate a single private key.
+        """Generate a single private key.
 
         Returns:
             32-byte private key
+
         """
         max_attempts = 100
 
@@ -308,14 +306,16 @@ class SecureKeyGenerator:
 
         raise RuntimeError(
             "Failed to generate valid private key "
-            "(exceeded max attempts)"
+            "(exceeded max attempts)",
         )
 
+    # 别名：兼容测试中 generate_single_key 的调用
+    generate_single_key = generate_single
+
     def _is_valid_private_key(
-        self, key: bytes
+        self, key: bytes,
     ) -> bool:
-        """
-        Validate private key against secp256k1 curve
+        """Validate private key against secp256k1 curve
         specification.
 
         Args:
@@ -323,6 +323,7 @@ class SecureKeyGenerator:
 
         Returns:
             Whether valid
+
         """
         if len(key) != 32:
             return False
@@ -334,11 +335,11 @@ class SecureKeyGenerator:
         return 1 <= key_int < Secp256k1.N
 
     def get_statistics(self) -> dict:
-        """
-        Get generation statistics.
+        """Get generation statistics.
 
         Returns:
             Statistics dictionary
+
         """
         with self._lock:
             elapsed = (
@@ -363,10 +364,10 @@ class SecureKeyGenerator:
                 ),
                 "min_entropy_bits": self.min_entropy_bits,
                 "low_entropy_warnings": self.stats.get(
-                    "low_entropy_count", 0
+                    "low_entropy_count", 0,
                 ),
                 "entropy_checks": self.stats.get(
-                    "entropy_checks", 0
+                    "entropy_checks", 0,
                 ),
             }
 

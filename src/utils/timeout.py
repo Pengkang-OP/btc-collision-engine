@@ -37,8 +37,6 @@ logger = get_configured_logger("TimeoutProtection")
 class _TimeoutError(Exception):
     """超时异常，用于信号处理器抛出"""
 
-    pass
-
 
 # ============================================================================
 # 线程终止 API（Windows 专用，用于强制中断超时线程）
@@ -56,7 +54,7 @@ def _terminate_thread(thread_handle: int, exit_code: int = 0) -> bool:
     try:
         kernel32 = ctypes.windll.kernel32
         result = kernel32.TerminateThread(
-            ctypes.c_void_p(thread_handle), ctypes.c_ulong(exit_code)
+            ctypes.c_void_p(thread_handle), ctypes.c_ulong(exit_code),
         )
         return bool(result)
     except (OSError, ValueError, AttributeError):
@@ -89,6 +87,7 @@ def _execute_with_thread_timeout(
 
     Returns:
         True 表示执行成功，False 表示超时或异常
+
     """
     if kwargs is None:
         kwargs = {}
@@ -114,14 +113,14 @@ def _execute_with_thread_timeout(
             f"native_id={thread.native_id}"
         )
         logger.warning(
-            f"回调执行超时 ({timeout}秒) - 回调: {callback_name} - 线程: {thread_info}"
+            "回调执行超时 (%s秒) - 回调: %s - 线程: %s", timeout, callback_name, thread_info,
         )
         return False
 
     if exception[0]:
         logger.warning(
-            f"回调执行异常 - 回调: {callback_name} - " +
-            f"异常: {type(exception[0]).__name__}: {exception[0]}"
+            f"回调执行异常 - 回调: {callback_name} - "
+            f"异常: {type(exception[0]).__name__}: {exception[0]}",
         )
         return False
 
@@ -153,6 +152,7 @@ def _execute_with_sigalrm_timeout(
 
     Returns:
         True 表示执行成功，False 表示超时或异常
+
     """
     if kwargs is None:
         kwargs = {}
@@ -165,34 +165,39 @@ def _execute_with_sigalrm_timeout(
 
     while retry_count < max_retries:
         try:
-            old_handler = signal.signal(
-                signal.SIGALRM, _timeout_handler
-            )  # type: ignore[attr-defined]
-            _ = signal.setitimer(signal.ITIMER_REAL, timeout)  # type: ignore[attr-defined]
+            # 使用 getattr 避免 Windows 上 signal.SIGALRM/setitimer 不存在的类型错误
+            sigalrm = getattr(signal, "SIGALRM", None)
+            setitimer = getattr(signal, "setitimer", None)
+            if sigalrm is None or setitimer is None:
+                logger.warning("SIGALRM 超时不可用，回退到线程超时")
+                return _execute_with_thread_timeout(func, args, kwargs, timeout, callback_name)
+
+            old_handler = signal.signal(sigalrm, _timeout_handler)
+            setitimer(signal.ITIMER_REAL, timeout)
             try:
                 func(*args, **kwargs)
                 return True
             except _TimeoutError:
                 logger.warning(
-                    f"回调执行超时 ({timeout}秒) - 回调: {callback_name} - " +
-                    f"线程: {threading.current_thread().name}"
+                    f"回调执行超时 ({timeout}秒) - 回调: {callback_name} - "
+                    f"线程: {threading.current_thread().name}",
                 )
                 return False
             except Exception as e:
                 logger.warning(
-                    f"回调执行异常 - 回调: {callback_name} - " +
-                    f"异常: {type(e).__name__}: {e}"
+                    f"回调执行异常 - 回调: {callback_name} - "
+                    f"异常: {type(e).__name__}: {e}",
                 )
                 return False
             finally:
-                _ = signal.setitimer(signal.ITIMER_REAL, 0)  # type: ignore[attr-defined]
-                _ = signal.signal(signal.SIGALRM, old_handler)  # type: ignore[attr-defined]
+                setitimer(signal.ITIMER_REAL, 0.0)
+                signal.signal(signal.SIGALRM, old_handler)
         except (ValueError, OSError, AttributeError) as e:
             retry_count += 1
             if retry_count >= max_retries:
                 logger.warning(
-                    f"SIGALRM 超时执行重试耗尽 ({max_retries}次) - " +
-                    f"回调: {callback_name} - 错误: {e}"
+                    "SIGALRM 超时执行重试耗尽 (%s次) - 回调: %s - 错误: %s",
+                    max_retries, callback_name, e,
                 )
                 return False
             time.sleep(0.1)
@@ -227,19 +232,17 @@ def invoke_with_timeout(
 
     Returns:
         True 表示执行成功，False 表示超时或异常
+
     """
     if timeout <= 0:
         return False
 
     if os.name == "nt":
         return _execute_with_thread_timeout(func, args, kwargs, timeout, callback_name)
-    else:
-        try:
-            _ = signal.SIGALRM  # type: ignore[attr-defined]
-            _ = signal.setitimer  # type: ignore[attr-defined]
-            return _execute_with_sigalrm_timeout(func, args, kwargs, timeout, callback_name)
-        except AttributeError:
-            return _execute_with_thread_timeout(func, args, kwargs, timeout, callback_name)
+    # 使用 getattr 避免 Windows 上的类型检查错误
+    if hasattr(signal, "SIGALRM") and hasattr(signal, "setitimer"):
+        return _execute_with_sigalrm_timeout(func, args, kwargs, timeout, callback_name)
+    return _execute_with_thread_timeout(func, args, kwargs, timeout, callback_name)
 
 
 # ============================================================================
@@ -268,6 +271,7 @@ def with_timeout(seconds: float):
         ...     print(stats)
         >>>
         >>> my_handler(some_stats)  # 超时后记录 WARNING，不阻塞
+
     """
 
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
@@ -298,10 +302,10 @@ class TimeoutContext:
     """
 
     def __init__(self, seconds: float, name: str = "") -> None:
-        """
-        Args:
-            seconds: 超时时间（秒）
-            name: 上下文名称（用于日志）
+        """Args:
+        seconds: 超时时间（秒）
+        name: 上下文名称（用于日志）
+
         """
         self._seconds: float = seconds
         self._name: str = name or "unnamed"
@@ -321,15 +325,15 @@ class TimeoutContext:
 
         if exc_type is not None:
             logger.warning(
-                f"上下文执行异常 [{self._name}] {exc_type.__name__}: " +
-                f"{exc_val} (耗时 {elapsed_ms:.1f}ms)"
+                f"上下文执行异常 [{self._name}] {exc_type.__name__}: "
+                f"{exc_val} (耗时 {elapsed_ms:.1f}ms)",
             )
             return True
 
         if elapsed_ms > self._seconds * 1000:
             logger.warning(
-                f"上下文执行可能超时 [{self._name}] " +
-                f"(耗时 {elapsed_ms:.1f}ms, 阈值 {self._seconds * 1000:.0f}ms)"
+                f"上下文执行可能超时 [{self._name}] "
+                f"(耗时 {elapsed_ms:.1f}ms, 阈值 {self._seconds * 1000:.0f}ms)",
             )
 
         return True

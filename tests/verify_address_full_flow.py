@@ -1,17 +1,12 @@
-"""
-验证比特币地址全链路：导入 → 格式检测 → 密钥生成 → 地址生成 → 碰撞匹配
+"""验证比特币地址全链路：导入 → 格式检测 → 密钥生成 → 地址生成 → 碰撞匹配
 """
 
-import os
 import sys
-from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from src.collision.targets.format_aware_manager import FormatAwareTargetManager  # noqa: E402
-from src.collision.targets.matcher import AddressMatcher  # noqa: E402
-from src.collision.targets.resolver import TargetResolver  # noqa: E402
-from src.core.multi_format_generator import MultiFormatAddressGenerator  # noqa: E402
+from src.collision.targets.format_aware_manager import FormatAwareTargetManager
+from src.collision.targets.matcher import AddressMatcher
+from src.collision.targets.resolver import TargetResolver
+from src.core.multi_format_generator import MultiFormatAddressGenerator
 
 PASS = 0
 FAIL = 0
@@ -87,7 +82,7 @@ print("\n" + "=" * 70)
 print("3. WIF 编码 → 解析 → 地址闭环")
 print("=" * 70)
 
-from src.core.wif import WIF  # noqa: E402
+from src.core.wif import WIF
 
 # 编码: 私钥 → WIF
 wif_from_pk = WIF.encode(test_key_raw, compressed=True)
@@ -171,7 +166,8 @@ print("\n" + "=" * 70)
 print("6. 目标地址表文件导入")
 print("=" * 70)
 
-import tempfile  # noqa: E402
+import pathlib
+import tempfile
 
 # 创建临时目标文件
 with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False, encoding="utf-8") as f:
@@ -200,7 +196,7 @@ try:
                 f"过滤后仍有非 P2PKH 地址: {addr}",
             )
 finally:
-    os.unlink(temp_path)
+    pathlib.Path(temp_path).unlink()
 
 
 print("\n" + "=" * 70)

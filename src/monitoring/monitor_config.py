@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 @dataclass
 class MonitorConfig:
     """Configuration for monitoring system."""
+
     enabled: bool = True
     metrics_enabled: bool = True
     alerts_enabled: bool = True
@@ -16,5 +17,5 @@ class MonitorConfig:
     alert_threshold: float = 0.8
     alert_cooldown: int = 300
     notification_channels: list[str] = field(
-        default_factory=lambda: ["console", "log"]
+        default_factory=lambda: ["console", "log"],
     )

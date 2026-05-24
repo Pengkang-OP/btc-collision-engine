@@ -1,5 +1,4 @@
-"""
-模糊测试 (Fuzzing) - 基于 Hypothesis 框架 - 中优先级
+"""模糊测试 (Fuzzing) - 基于 Hypothesis 框架 - 中优先级
 
 覆盖范围：
 - 地址格式属性测试
@@ -13,11 +12,8 @@
     pytest tests/test_fuzzing.py -v --tb=short
 """
 
-import sys
 
 import pytest
-
-sys.path.insert(0, ".")
 
 HYPOTHESIS_AVAILABLE = False
 try:

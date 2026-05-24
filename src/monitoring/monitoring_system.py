@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Bitcoin private key collision engine monitoring system.
+"""Bitcoin private key collision engine monitoring system.
 
 该模块负责监控对撞引擎的运行状态、性能指标和异常情况，
 提供实时数据采集、分析和告警功能。
@@ -19,6 +18,8 @@ from typing import TYPE_CHECKING, Any, Optional  # noqa: F401
 
 if TYPE_CHECKING:
     from .log_monitoring_integrator import LogMonitoringIntegrator
+
+import pathlib
 
 import psutil
 
@@ -50,7 +51,10 @@ class MonitoringData:
         }
         self.system: dict[str, Any] = {
             "os": os.name,
-            "python_version": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",  # noqa: E501
+            "python_version": (
+                f"{sys.version_info.major}.{sys.version_info.minor}"
+                f".{sys.version_info.micro}"
+            ),
             "pid": os.getpid(),
             "uptime": 0.0,  # 系统运行时间
         }
@@ -86,7 +90,7 @@ class DataCollector:
         self._cpu_sample_lock = threading.Lock()
         self._cpu_sample_running = True
         self._cpu_sample_thread = threading.Thread(
-            target=self._background_cpu_sampling, daemon=True, name="cpu-sampler"
+            target=self._background_cpu_sampling, daemon=True, name="cpu-sampler",
         )
         self._cpu_sample_thread.start()
         logger.debug("后台CPU采样线程已启动")
@@ -137,7 +141,7 @@ class DataCollector:
 
             return performance_data
         except Exception as e:
-            logger.error(f"收集性能数据时出错: {e}")
+            logger.error("收集性能数据时出错: %s", e)
             return {
                 "cpu_usage": 0.0,
                 "memory_usage": 0.0,
@@ -213,13 +217,13 @@ class DataStorage:
         # 当有DataLogger委托时，跳过独立文件初始化（由DataLoader负责）
         if self._data_logger is None:
             # 初始化历史数据文件
-            if not os.path.exists(self.history_data_file):
-                with open(self.history_data_file, "w", encoding="utf-8") as f:
+            if not pathlib.Path(self.history_data_file).exists():
+                with pathlib.Path(self.history_data_file).open("w", encoding="utf-8") as f:
                     fast_dump([], f)
 
             # 初始化错误日志文件
-            if not os.path.exists(self.error_log_file):
-                with open(self.error_log_file, "w", encoding="utf-8") as f:
+            if not pathlib.Path(self.error_log_file).exists():
+                with pathlib.Path(self.error_log_file).open("w", encoding="utf-8") as f:
                     fast_dump([], f)
 
     def save_current_data(self, data: MonitoringData) -> None:
@@ -235,35 +239,35 @@ class DataStorage:
                 )
                 self._data_logger.save_current_data()
             except Exception as e:
-                logger.error(f"委托DataLogger保存当前数据失败: {e}")
+                logger.error("委托DataLogger保存当前数据失败: %s", e)
             return
 
         try:
             # 使用原子写入：先写临时文件，再重命名
             temp_file = self.current_data_file + ".tmp"
-            with open(temp_file, "w", encoding="utf-8") as f:
+            with pathlib.Path(temp_file).open("w", encoding="utf-8") as f:
                 fast_dump(data.to_dict(), f, ensure_ascii=False, indent=2)
                 f.flush()
                 os.fsync(f.fileno())  # 确保数据写入磁盘
 
             # 设置安全权限: 仅所有者可读写 (Unix only; Windows 通过 ACL 控制)
             if os.name != "nt":
-                os.chmod(temp_file, 0o600)
+                pathlib.Path(temp_file).chmod(0o600)
 
             # 原子替换
-            if os.path.exists(self.current_data_file):
-                os.replace(temp_file, self.current_data_file)
+            if pathlib.Path(self.current_data_file).exists():
+                pathlib.Path(temp_file).replace(self.current_data_file)
             else:
-                os.rename(temp_file, self.current_data_file)
+                pathlib.Path(temp_file).rename(self.current_data_file)
         except Exception as e:
-            logger.error(f"保存当前数据失败: {e}")
+            logger.error("保存当前数据失败: %s", e)
             # 清理临时文件
             try:
-                if os.path.exists(temp_file):
-                    os.remove(temp_file)
+                if pathlib.Path(temp_file).exists():
+                    pathlib.Path(temp_file).unlink()
             except Exception as cleanup_error:
                 # A类修复: 资源清理失败添加DEBUG日志
-                logger.debug(f"清理临时文件失败（可忽略）: {cleanup_error}")
+                logger.debug("清理临时文件失败（可忽略）: %s", cleanup_error)
 
     def save_history_data(self, data: MonitoringData) -> None:
         """保存历史数据（P0委托DataLogger或原子写入 + 数据恢复）"""
@@ -273,7 +277,7 @@ class DataStorage:
                 self._data_logger._history_buffer.append(data.to_dict())
                 # 缓冲区满时DataLogger自动刷写
             except Exception as e:
-                logger.error(f"委托DataLogger保存历史数据失败: {e}")
+                logger.error("委托DataLogger保存历史数据失败: %s", e)
             return
 
         try:
@@ -289,31 +293,30 @@ class DataStorage:
 
             # JSONL 写入，与 DataLogger 保持一致 (v4.3.1)
             temp_file = self.history_data_file + ".tmp"
-            with open(temp_file, "w", encoding="utf-8") as f:
-                for record_item in history:
-                    f.write(fast_dumps(record_item) + "\n")
+            with pathlib.Path(temp_file).open("w", encoding="utf-8") as f:
+                f.writelines(fast_dumps(record_item) + "\n" for record_item in history)
                 f.flush()
                 os.fsync(f.fileno())
 
             # 设置安全权限: 仅所有者可读写 (Unix only; Windows 通过 ACL 控制)
             if os.name != "nt":
-                os.chmod(temp_file, 0o600)
+                pathlib.Path(temp_file).chmod(0o600)
 
             # 原子替换
-            if os.path.exists(self.history_data_file):
-                os.replace(temp_file, self.history_data_file)
+            if pathlib.Path(self.history_data_file).exists():
+                pathlib.Path(temp_file).replace(self.history_data_file)
             else:
-                os.rename(temp_file, self.history_data_file)
+                pathlib.Path(temp_file).rename(self.history_data_file)
         except Exception as e:
-            logger.error(f"保存历史数据失败: {e}")
+            logger.error("保存历史数据失败: %s", e)
             # 清理临时文件
             try:
                 temp_file = self.history_data_file + ".tmp"
-                if os.path.exists(temp_file):
-                    os.remove(temp_file)
+                if pathlib.Path(temp_file).exists():
+                    pathlib.Path(temp_file).unlink()
             except Exception as cleanup_error:
                 # A类修复: 资源清理失败添加DEBUG日志
-                logger.debug(f"清理临时文件失败（可忽略）: {cleanup_error}")
+                logger.debug("清理临时文件失败（可忽略）: %s", cleanup_error)
 
     def compress_old_data(self, days_threshold: int = 7, sample_rate: float = 0.1) -> None:
         """P2-3修复: 压缩超过threshold天的历史数据
@@ -350,7 +353,7 @@ class DataStorage:
                     new_data.append(record)
 
             if not old_data:
-                logger.info(f"无超过{days_threshold}天的数据需要压缩")
+                logger.info("无超过%s天的数据需要压缩", days_threshold)
                 return
 
             # 采样压缩旧数据
@@ -360,45 +363,45 @@ class DataStorage:
             compressed_file = self.history_data_file.replace(".json", "_compressed.json")
             temp_file = compressed_file + ".tmp"
 
-            with open(temp_file, "w", encoding="utf-8") as f:
+            with pathlib.Path(temp_file).open("w", encoding="utf-8") as f:
                 for record in compressed_data:
                     f.write(fast_dumps(record) + "\n")
                 f.flush()
                 os.fsync(f.fileno())
 
-            if os.path.exists(compressed_file):
-                os.replace(temp_file, compressed_file)
+            if pathlib.Path(compressed_file).exists():
+                pathlib.Path(temp_file).replace(compressed_file)
             else:
-                os.rename(temp_file, compressed_file)
+                pathlib.Path(temp_file).rename(compressed_file)
 
             # 保留新数据 (v4.3.1: JSONL 格式)
             temp_file = self.history_data_file + ".tmp"
-            with open(temp_file, "w", encoding="utf-8") as f:
+            with pathlib.Path(temp_file).open("w", encoding="utf-8") as f:
                 for record in new_data:
                     f.write(fast_dumps(record) + "\n")
                 f.flush()
                 os.fsync(f.fileno())
 
-            if os.path.exists(self.history_data_file):
-                os.replace(temp_file, self.history_data_file)
+            if pathlib.Path(self.history_data_file).exists():
+                pathlib.Path(temp_file).replace(self.history_data_file)
             else:
-                os.rename(temp_file, self.history_data_file)
+                pathlib.Path(temp_file).rename(self.history_data_file)
 
             logger.info(
                 f"数据压缩完成: {len(old_data)}条旧数据 -> {len(compressed_data)}条 "
-                f"(采样率{sample_rate * 100:.0f}%), 保留{len(new_data)}条新数据"
+                f"(采样率{sample_rate * 100:.0f}%), 保留{len(new_data)}条新数据",
             )
 
         except Exception as e:
-            logger.error(f"压缩历史数据失败: {e}")
+            logger.error("压缩历史数据失败: %s", e)
             # 清理临时文件
             for temp_file in [compressed_file + ".tmp", self.history_data_file + ".tmp"]:
                 try:
-                    if os.path.exists(temp_file):
-                        os.remove(temp_file)
+                    if pathlib.Path(temp_file).exists():
+                        pathlib.Path(temp_file).unlink()
                 except Exception as cleanup_error:
                     # A类修复: 资源清理失败添加DEBUG日志
-                    logger.debug(f"清理临时文件失败（可忽略）: {cleanup_error}")
+                    logger.debug("清理临时文件失败（可忽略）: %s", cleanup_error)
 
     def _sample_data(self, data: list, sample_rate: float) -> list:
         """P2-3修复: 数据采样
@@ -449,14 +452,14 @@ class DataStorage:
                     context=error,
                 )
             except Exception as e:
-                logger.error(f"委托DataLogger保存错误记录失败: {e}")
+                logger.error("委托DataLogger保存错误记录失败: %s", e)
             return
 
         try:
             # 读取现有错误日志
             errors = []
-            if os.path.exists(self.error_log_file):
-                with open(self.error_log_file, encoding="utf-8") as f:
+            if pathlib.Path(self.error_log_file).exists():
+                with pathlib.Path(self.error_log_file).open(encoding="utf-8") as f:
                     errors = fast_load(f)
 
             # 添加新错误
@@ -471,30 +474,30 @@ class DataStorage:
 
             # 原子写入
             temp_file = self.error_log_file + ".tmp"
-            with open(temp_file, "w", encoding="utf-8") as f:
+            with pathlib.Path(temp_file).open("w", encoding="utf-8") as f:
                 fast_dump(errors, f, ensure_ascii=False, indent=2)
                 f.flush()
                 os.fsync(f.fileno())
 
             # 设置安全权限: 仅所有者可读写 (Unix only; Windows 通过 ACL 控制)
             if os.name != "nt":
-                os.chmod(temp_file, 0o600)
+                pathlib.Path(temp_file).chmod(0o600)
 
             # 原子替换
-            if os.path.exists(self.error_log_file):
-                os.replace(temp_file, self.error_log_file)
+            if pathlib.Path(self.error_log_file).exists():
+                pathlib.Path(temp_file).replace(self.error_log_file)
             else:
-                os.rename(temp_file, self.error_log_file)
+                pathlib.Path(temp_file).rename(self.error_log_file)
         except Exception as e:
-            logger.error(f"保存错误记录失败: {e}")
+            logger.error("保存错误记录失败: %s", e)
             # 清理临时文件
             try:
                 temp_file = self.error_log_file + ".tmp"
-                if os.path.exists(temp_file):
-                    os.remove(temp_file)
+                if pathlib.Path(temp_file).exists():
+                    pathlib.Path(temp_file).unlink()
             except Exception as cleanup_error:
                 # A类修复: 资源清理失败添加DEBUG日志
-                logger.debug(f"清理临时文件失败（可忽略）: {cleanup_error}")
+                logger.debug("清理临时文件失败（可忽略）: %s", cleanup_error)
 
     def get_current_data(self) -> dict[str, Any] | None:
         """获取当前数据
@@ -505,13 +508,13 @@ class DataStorage:
             try:
                 return self._data_logger.get_current_data()
             except Exception as e:
-                logger.error(f"DataLogger读取当前数据失败: {e}")
+                logger.error("DataLogger读取当前数据失败: %s", e)
         try:
-            if os.path.exists(self.current_data_file):
-                with open(self.current_data_file, encoding="utf-8") as f:
+            if pathlib.Path(self.current_data_file).exists():
+                with pathlib.Path(self.current_data_file).open(encoding="utf-8") as f:
                     return fast_load(f)
         except Exception as e:
-            logger.error(f"读取当前数据失败: {e}")
+            logger.error("读取当前数据失败: %s", e)
         return None
 
     def _load_history_with_recovery(self) -> list:
@@ -523,12 +526,11 @@ class DataStorage:
         if self._data_logger is not None:
             return self._data_logger._load_history_with_recovery()
 
-        if not os.path.exists(self.history_data_file):
+        if not pathlib.Path(self.history_data_file).exists():
             return []
 
         try:
-            with open(self.history_data_file, encoding="utf-8") as f:
-                raw = f.read()
+            raw = pathlib.Path(self.history_data_file).read_text(encoding="utf-8")
             if not raw.strip():
                 return []
 
@@ -557,17 +559,16 @@ class DataStorage:
 
         except json.JSONDecodeError as e:
             # JSON文件损坏，尝试恢复
-            logger.error(f"历史数据JSON损坏，尝试恢复: {e}")
+            logger.error("历史数据JSON损坏，尝试恢复: %s", e)
             return self._recover_history_data()
         except Exception as e:
-            logger.error(f"读取历史数据失败: {e}")
+            logger.error("读取历史数据失败: %s", e)
             return []
 
     def _recover_history_data(self) -> list:
         """尝试从损坏的JSON文件中恢复数据"""
         try:
-            with open(self.history_data_file, encoding="utf-8") as f:
-                content = f.read()
+            content = pathlib.Path(self.history_data_file).read_text(encoding="utf-8")
 
             # 尝试找到所有完整的JSON对象
             import re
@@ -588,7 +589,7 @@ class DataStorage:
             return recovered
 
         except Exception as e:
-            logger.error(f"恢复历史数据失败: {e}")
+            logger.error("恢复历史数据失败: %s", e)
             return []
 
     def get_history_data(self) -> list[dict[str, Any]]:
@@ -601,7 +602,7 @@ class DataStorage:
             try:
                 return self._data_logger.get_history_data()
             except Exception as e:
-                logger.error(f"DataLogger读取历史数据失败: {e}")
+                logger.error("DataLogger读取历史数据失败: %s", e)
         return self._load_history_with_recovery()
 
     def get_error_logs(self) -> list[dict[str, Any]]:
@@ -613,12 +614,12 @@ class DataStorage:
             try:
                 return self._data_logger.get_error_logs()
             except Exception as e:
-                logger.error(f"DataLogger读取错误日志失败: {e}")
+                logger.error("DataLogger读取错误日志失败: %s", e)
         try:
-            with open(self.error_log_file, encoding="utf-8") as f:
+            with pathlib.Path(self.error_log_file).open(encoding="utf-8") as f:
                 return fast_load(f)
         except Exception as e:
-            logger.error(f"读取错误日志失败: {e}")
+            logger.error("读取错误日志失败: %s", e)
             return []
 
 
@@ -635,11 +636,11 @@ class AnomalyDetector:
     """
 
     def __init__(self, storage: DataStorage | None = None) -> None:
-        """
-        初始化异常检测器
+        """初始化异常检测器
 
         Args:
             storage: 数据存储实例（可选），用于保存异常记录
+
         """
         # 使用依赖注入，storage变为可选
         self.storage = storage
@@ -658,6 +659,7 @@ class AnomalyDetector:
 
         Returns:
             异常列表
+
         """
         anomalies = []
 
@@ -675,7 +677,7 @@ class AnomalyDetector:
                     "value": speed,
                     "threshold": speed_threshold["min"],
                     "message": f"检测速率过低: {speed:.2f}/s",
-                }
+                },
             )
         elif speed > speed_threshold["max"]:
             anomalies.append(
@@ -685,7 +687,7 @@ class AnomalyDetector:
                     "value": speed,
                     "threshold": speed_threshold["max"],
                     "message": f"检测速率过高: {speed:.2f}/s",
-                }
+                },
             )
 
         # 检测CPU使用率异常
@@ -698,7 +700,7 @@ class AnomalyDetector:
                     "value": cpu_usage,
                     "threshold": self.thresholds["cpu_usage"]["max"],
                     "message": f"CPU使用率过高: {cpu_usage:.2f}%",
-                }
+                },
             )
 
         # 检测内存使用异常
@@ -711,7 +713,7 @@ class AnomalyDetector:
                     "value": memory_usage,
                     "threshold": self.thresholds["memory_usage"]["max"],
                     "message": f"内存使用过高: {memory_usage:.2f}MB",
-                }
+                },
             )
 
         # 检测引擎状态异常
@@ -724,7 +726,7 @@ class AnomalyDetector:
                     "value": 0,
                     "threshold": 1,
                     "message": "引擎运行但检测速率为0",
-                }
+                },
             )
 
         # 如果storage可用，保存异常记录（优化：批量保存）
@@ -742,6 +744,7 @@ class AnomalyDetector:
 
         Returns:
             趋势分析结果
+
         """
         if len(history_data) < 10:
             return {"message": "历史数据不足，无法分析趋势"}
@@ -825,11 +828,11 @@ class MonitoringAlertAdapter:
     """
 
     def __init__(self, storage: DataStorage | None = None) -> None:
-        """
-        初始化告警适配器
+        """初始化告警适配器
 
         Args:
             storage: 数据存储实例（可选），用于保存告警记录
+
         """
         self.storage = storage
         self.alert_history: list = []
@@ -843,6 +846,7 @@ class MonitoringAlertAdapter:
 
         Args:
             anomaly: 异常信息字典
+
         """
         alert = {
             "timestamp": time.time(),
@@ -877,10 +881,10 @@ class MonitoringAlertAdapter:
                         "level": alert["level"],
                         "message": alert["message"],
                         "alert_data": alert,
-                    }
+                    },
                 )
             except Exception as e:
-                logger.error(f"保存告警记录失败: {e}")
+                logger.error("保存告警记录失败: %s", e)
 
     def process_anomalies(self, anomalies: list[dict[str, Any]]) -> None:
         """处理异常列表并生成告警"""
@@ -924,14 +928,14 @@ class ReportGenerator:
     """
 
     def __init__(
-        self, storage: DataStorage | None = None, detector: AnomalyDetector | None = None
+        self, storage: DataStorage | None = None, detector: AnomalyDetector | None = None,
     ) -> None:
-        """
-        初始化报告生成器
+        """初始化报告生成器
 
         Args:
             storage: 数据存储实例（可选），用于读取历史数据和保存报告
             detector: 异常检测器实例（可选），用于趋势分析
+
         """
         # 使用依赖注入，参数变为可选
         self.storage = storage
@@ -942,6 +946,7 @@ class ReportGenerator:
 
         Returns:
             报告数据字典，如果依赖未初始化则返回错误信息
+
         """
         # 检查依赖是否已初始化
         if self.storage is None:
@@ -966,7 +971,7 @@ class ReportGenerator:
         # 如果系统跨时区部署，建议使用UTC时区：
         # from datetime import timezone
         # today = datetime.now(timezone.utc).date()
-        # today_start_ts = datetime.combine(today, datetime.min.time(), tzinfo=timezone.utc).timestamp() # noqa: E501
+        # today_start_ts = datetime.combine(today, datetime.min.time(), tzinfo=timezone.utc).timestamp()
         today = datetime.now().date()
         # 计算今天的开始时间戳（避免每次都调用datetime.fromtimestamp）
         today_start_ts = datetime.combine(today, datetime.min.time()).timestamp()
@@ -1000,7 +1005,7 @@ class ReportGenerator:
             try:
                 trends = self.detector.analyze_trends(today_data)
             except Exception as e:
-                logger.error(f"趋势分析失败: {e}")
+                logger.error("趋势分析失败: %s", e)
                 trends = {"error": f"趋势分析失败: {e}"}
         else:
             # 使用简单的默认趋势分析
@@ -1025,11 +1030,11 @@ class ReportGenerator:
         # 保存报告（如果storage可用）
         try:
             report_file = os.path.join(self.storage.storage_dir, f"report_{today.isoformat()}.json")
-            with open(report_file, "w", encoding="utf-8") as f:
+            with pathlib.Path(report_file).open("w", encoding="utf-8") as f:
                 fast_dump(report, f, ensure_ascii=False, indent=2)
-            logger.info(f"每日报告已生成: {report_file}")
+            logger.info("每日报告已生成: %s", report_file)
         except Exception as e:
-            logger.error(f"保存报告失败: {e}")
+            logger.error("保存报告失败: %s", e)
 
         return report
 
@@ -1068,6 +1073,7 @@ class ReportGenerator:
 
         Returns:
             趋势字符串："increasing", "decreasing", 或 "stable"
+
         """
         return calculate_trend(values)
 
@@ -1081,6 +1087,7 @@ class ReportGenerator:
 
         Returns:
             趋势分析结果
+
         """
         if len(data) < 2:
             return {"message": "数据点不足，无法分析趋势"}
@@ -1124,12 +1131,12 @@ class MonitoringSystem:
     """监控系统主类"""
 
     def __init__(self, engine: Any | None = None, collection_interval: int = 5) -> None:
-        """
-        初始化监控系统
+        """初始化监控系统
 
         Args:
             engine: 对撞引擎实例
             collection_interval: 数据采集间隔（秒）
+
         """
         self.engine = engine
         self.collection_interval = collection_interval
@@ -1146,14 +1153,14 @@ class MonitoringSystem:
 
         # 集成日志监控系统
         # LogMonitoringIntegrator 在 TYPE_CHECKING 块中导入
-        self.log_integrator: Optional[LogMonitoringIntegrator] = None
+        self.log_integrator: LogMonitoringIntegrator | None = None
         try:
             from .log_monitoring_integrator import get_log_monitoring_integrator
 
             self.log_integrator = get_log_monitoring_integrator()
             self.log_integrator.integrate_with_monitoring_system(self)
         except Exception as e:
-            logger.error(f"集成日志监控系统失败: {e}")
+            logger.error("集成日志监控系统失败: %s", e)
             self.log_integrator = None
 
         # 注册的组件
@@ -1176,15 +1183,15 @@ class MonitoringSystem:
         self._flush_interval = 60
 
     def register_component(self, name: str, component: Any) -> None:
-        """
-        注册组件
+        """注册组件
 
         Args:
             name: 组件名称
             component: 组件实例
+
         """
         self.components[name] = component
-        logger.info(f"组件 '{name}' 已注册到监控系统")
+        logger.info("组件 '%s' 已注册到监控系统", name)
 
     def start(self) -> None:
         """启动监控系统"""
@@ -1251,7 +1258,7 @@ class MonitoringSystem:
                 logger.debug(f"缓冲区已刷新(DataLogger): 批量写入{len(buffer_copy)}条历史数据")
                 return
             except Exception as e:
-                logger.warning(f"DataLogger委托批量写入失败，降级到直接写入: {e}")
+                logger.warning("DataLogger委托批量写入失败，降级到直接写入: %s", e)
         # 一次性批量写入: JSONL 追加写入，与 DataLogger 保持一致 (v4.3.1)
         try:
             history = self.storage._load_history_with_recovery()
@@ -1259,23 +1266,22 @@ class MonitoringSystem:
             if len(history) > 1000:
                 history = history[-1000:]
             temp_file = self.storage.history_data_file + ".tmp"
-            with open(temp_file, "w", encoding="utf-8") as f:
-                for record in history:
-                    f.write(fast_dumps(record) + "\n")
+            with pathlib.Path(temp_file).open("w", encoding="utf-8") as f:
+                f.writelines(fast_dumps(record) + "\n" for record in history)
                 f.flush()
                 os.fsync(f.fileno())
-            if os.path.exists(self.storage.history_data_file):
-                os.replace(temp_file, self.storage.history_data_file)
+            if pathlib.Path(self.storage.history_data_file).exists():
+                pathlib.Path(temp_file).replace(self.storage.history_data_file)
             else:
-                os.rename(temp_file, self.storage.history_data_file)
+                pathlib.Path(temp_file).rename(self.storage.history_data_file)
             logger.debug(f"缓冲区已刷新: 批量写入{len(buffer_copy)}条历史数据")
         except Exception as e:
-            logger.error(f"批量写入缓冲数据失败: {e}")
+            logger.error("批量写入缓冲数据失败: %s", e)
             # 清理临时文件
             try:
                 temp_file = self.storage.history_data_file + ".tmp"
-                if os.path.exists(temp_file):
-                    os.remove(temp_file)
+                if pathlib.Path(temp_file).exists():
+                    pathlib.Path(temp_file).unlink()
             except OSError:
                 logger.debug("清理临时文件失败: %s", temp_file)
 
@@ -1314,9 +1320,9 @@ class MonitoringSystem:
                     self.report_generator.generate_daily_report()
 
             except Exception as e:
-                error_info = {"type": "monitoring", "message": f"监控系统错误: {str(e)}"}
+                error_info = {"type": "monitoring", "message": f"监控系统错误: {e!s}"}
                 self.storage.save_error(error_info)
-                logger.error(f"监控系统错误: {e}")
+                logger.error("监控系统错误: %s", e)
 
             # 时间触发的缓冲刷写
             now = time.monotonic()

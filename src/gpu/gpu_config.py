@@ -96,6 +96,7 @@ class MultiGPUConfig:
         auto_rebalance: 是否启用自动重平衡
         auto_pause_on_critical: 严重异常时是否自动暂停 GPU
         per_device_config: 每个设备的独立配置覆盖
+
     """
 
     total_pool_mb: int = 512
@@ -119,6 +120,7 @@ class MultiGPUConfig:
 
         Returns:
             MultiGPUConfig 实例
+
         """
         if not d:
             return cls()
@@ -144,6 +146,7 @@ class WorkerConfig:
         batch_size: 批次大小 (None 表示自动计算)
         work_group_size: OpenCL 工作组大小
         max_memory_mb: 最大内存使用 (MB)
+
     """
 
     batch_size: int | None = None

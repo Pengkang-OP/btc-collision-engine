@@ -12,7 +12,7 @@
 import hashlib
 import logging
 import time
-from typing import Any
+from typing import Any, cast
 
 from .protocols import GPUContext, GPUDevice, GPUKernel, IKernelExecutor, MatchResult
 
@@ -32,6 +32,7 @@ class GPUKernelAdapter(IKernelExecutor):
 
         Args:
             config: 配置字典
+
         """
         self.config = config or {}
 
@@ -50,6 +51,7 @@ class GPUKernelAdapter(IKernelExecutor):
 
         Raises:
             RuntimeError: 内核编译失败
+
         """
         try:
             from ...gpu.kernel import OPENCL_KERNEL_SOURCE
@@ -88,16 +90,16 @@ class GPUKernelAdapter(IKernelExecutor):
             logger.info(
                 "GPU内核编译完成: "
                 f"work_group_size={getattr(kernel_impl, '_work_group_size', 'N/A')}, "
-                f"max_batch_size={getattr(kernel_impl, '_max_batch_size', 'N/A')}"
+                f"max_batch_size={getattr(kernel_impl, '_max_batch_size', 'N/A')}",
             )
             return kernel
 
         except Exception as e:
-            logger.error(f"GPU内核编译失败: {e}")
+            logger.error("GPU内核编译失败: %s", e)
             raise  # DEF-2修复: 直接重抛，保留内层已含重试次数的详细异常消息
 
     def execute_batch(
-        self, kernel: GPUKernel, seed: bytes, batch_size: int, stop_event: Any = None
+        self, kernel: GPUKernel, seed: bytes, batch_size: int, stop_event: Any = None,
     ) -> tuple[list[MatchResult], float]:
         """执行单个批次
 
@@ -112,6 +114,7 @@ class GPUKernelAdapter(IKernelExecutor):
 
         Raises:
             RuntimeError: 批次执行失败
+
         """
         if not kernel or not kernel.kernel_obj:
             raise RuntimeError("GPU内核未初始化")
@@ -124,7 +127,7 @@ class GPUKernelAdapter(IKernelExecutor):
 
             # 执行批次
             raw_matches = kernel_impl.run_batch(
-                seed=seed, batch_size=batch_size, stop_event=stop_event
+                seed=seed, batch_size=batch_size, stop_event=stop_event,
             )
 
             execution_time_ms = (time.time() - start_time) * 1000
@@ -140,7 +143,7 @@ class GPUKernelAdapter(IKernelExecutor):
 
         except Exception as e:
             execution_time_ms = (time.time() - start_time) * 1000
-            logger.error(f"GPU批次执行失败: {e}")
+            logger.error("GPU批次执行失败: %s", e)
             raise RuntimeError(f"GPU批次执行失败: {e}") from e
 
     def _convert_matches(self, raw_matches: list[dict]) -> list[MatchResult]:
@@ -151,21 +154,22 @@ class GPUKernelAdapter(IKernelExecutor):
 
         Returns:
             MatchResult格式列表
+
         """
         matches = []
 
         for match in raw_matches:
-            match_result: MatchResult = {  # type: ignore[typeddict-unknown-key]
+            match_result = cast(MatchResult, {
                 "address": match.get("address", ""),
                 "private_key": match.get("private_key", ""),
                 "private_key_hash": hashlib.sha256(
-                    str(match.get("private_key", "")).encode()
+                    str(match.get("private_key", "")).encode(),
                 ).hexdigest(),
                 "public_key": match.get("public_key", ""),
                 "hash160": match.get("hash160", ""),
                 "index": match.get("index", 0),
                 "seed": match.get("seed", ""),
-            }
+            })
             matches.append(match_result)
 
         return matches

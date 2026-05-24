@@ -7,7 +7,7 @@ class Translator:
     """Simple translation engine using JSON locale files."""
 
     def __init__(
-        self, locale_dir: str | Path = ""
+        self, locale_dir: str | Path = "",
     ):
         self._locale_dir = Path(locale_dir or (
             Path(__file__).parent / "locales"
@@ -19,14 +19,15 @@ class Translator:
 
         Args:
             lang: Language code (e.g. 'en', 'zh')
+
         """
         filepath = self._locale_dir / f"{lang}.json"
         if filepath.exists():
-            with open(filepath, encoding="utf-8") as f:
+            with Path(filepath).open(encoding="utf-8") as f:
                 self._translations = json.load(f)
 
     def translate(
-        self, key: str, default: str = ""
+        self, key: str, default: str = "",
     ) -> str:
         """Translate a key.
 
@@ -36,7 +37,8 @@ class Translator:
 
         Returns:
             Translated text
+
         """
         return self._translations.get(
-            key, default or key
+            key, default or key,
         )

@@ -74,7 +74,6 @@ class TestM3OptimizationBenchmark:
 
     def test_secure_key_manager_overhead_comparison(self):
         """对比优化前后的对象创建开销"""
-
         # 优化前：每个私钥创建新实例
         start = time.perf_counter()
         for _ in range(100):
@@ -106,7 +105,6 @@ class TestM3OptimizationBenchmark:
 
     def test_range_scan_with_m3_optimization(self):
         """测试范围扫描模式集成M3优化的性能"""
-
         engine = KeyCollisionEngine(targets=set(), max_workers=1)
 
         start = time.perf_counter()
@@ -183,7 +181,6 @@ class TestM3OptimizationComparison:
 
     def test_object_creation_overhead_reduction(self):
         """量化对象创建开销减少"""
-
         # 测量优化前的开销
         start = time.perf_counter()
         for _ in range(1000):
@@ -216,7 +213,6 @@ class TestM3OptimizationComparison:
 
     def test_batch_size_impact_on_performance(self):
         """测试不同批量大小对性能的影响"""
-
         batch_sizes = [10, 100, 1000, 5000]
         results = {}
 
@@ -231,7 +227,7 @@ class TestM3OptimizationComparison:
             results[batch_size] = per_key_time
 
             print(
-                f"批量大小 {batch_size:5d}: {elapsed * 1000:.2f}ms, 每私钥 {per_key_time * 1000:.4f}ms"
+                f"批量大小 {batch_size:5d}: {elapsed * 1000:.2f}ms, 每私钥 {per_key_time * 1000:.4f}ms",
             )
 
         # 分级检查：CI 环境放宽到 10x，本地保持严格 1.5x

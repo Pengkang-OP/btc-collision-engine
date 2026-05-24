@@ -6,9 +6,6 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-
 def check_async_enabled():
     """检查异步是否启用"""
     log_file = Path("logs/collision.log")

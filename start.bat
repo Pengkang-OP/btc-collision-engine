@@ -1,48 +1,57 @@
 @echo off
-setlocal
+setlocal enabledelayedexpansion
+title BTC Collision Engine
 
 rem ============================================================
-rem  BTC Collision Engine - 启动入口
-rem  注意：若无特殊需要，安装后首次运行应使用 install.bat
+rem  BTC Collision Engine - 统一启动入口 (v5.1.0)
+rem  首次运行前请先执行 install.bat 安装依赖
 rem ============================================================
 
-rem 切换到 bat 所在目录（使用绝对路径）
+rem ── 切换到脚本所在目录 ──────────────────────────────────────
 cd /d "%~dp0"
 
-rem ============================================================
-rem 检查 Python
-rem ============================================================
+rem ── UTF-8 编码 ──────────────────────────────────────────────
+chcp 65001 >nul 2>&1
+
+rem ── 确保运行时目录 ──────────────────────────────────────────
+for %%D in (logs data_logs) do (
+    if not exist "%%D" mkdir "%%D" >nul 2>&1
+)
+
+rem ── 检查 Python 是否可用 ────────────────────────────────────
 where python >nul 2>&1
-if errorlevel 1 (
-    echo [ERROR] Python 未安装或不在 PATH 中
-    echo         请安装 Python 3.9+ 并确保 "python" 命令可用
-    echo         下载: https://www.python.org/downloads/
-    pause
-    exit /b 1
-)
+if errorlevel 1 goto :no_python
 
-rem ============================================================
-rem 优先使用虚拟环境中的 Python（依赖完整）
-rem ============================================================
-if exist "%~dp0venv\Scripts\python.exe" (
-    set "PYAPP=%~dp0venv\Scripts\python.exe"
-) else (
-    set "PYAPP=python"
-)
+rem ── 选择 Python (优先 venv) ──────────────────────────────────
+set "PYAPP=python"
+if exist "venv\Scripts\python.exe" set "PYAPP=venv\Scripts\python.exe"
 
-echo [INFO] Starting...
+rem ── 启动交互菜单 (版本检查由 Python 负责) ────────────────────
+echo.
+echo [INFO] 正在启动 BTC Collision Engine...
+echo.
+"%PYAPP%" "start_menu.py"
+set "EXIT_CODE=!errorlevel!"
 
-rem ============================================================
-rem 启动交互菜单（直接执行，不显式超时等待 - 菜单自身接管输入）
-rem ============================================================
-"%PYAPP%" "%~dp0start_menu.py"
-
-rem ============================================================
-rem 菜单退出后的收尾
-rem ============================================================
-if errorlevel 1 (
+rem ── 退出处理 ────────────────────────────────────────────────
+if !EXIT_CODE! neq 0 (
     echo.
-    echo [ERROR] 启动出错，退出码: %errorlevel%
+    echo [ERROR] 引擎退出码: !EXIT_CODE!
+    echo [INFO] 请检查上方错误信息，确认依赖已安装
 )
-
+echo.
 pause
+exit /b !EXIT_CODE!
+
+rem ── Python 未找到 ───────────────────────────────────────────
+:no_python
+echo.
+echo ================================================================
+echo   [错误] 未找到 Python
+echo ================================================================
+echo.
+echo   请安装 Python 3.9+ 并添加到 PATH
+echo   下载: https://www.python.org/downloads/
+echo.
+pause
+exit /b 1

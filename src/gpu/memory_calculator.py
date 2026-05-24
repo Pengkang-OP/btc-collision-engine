@@ -56,6 +56,7 @@ class GPUMemoryCalculator:
 
         Returns:
             估算的显存需求（字节）
+
         """
         # 1. seed_buf（固定 32 字节，替代旧 batch_size * 32 私钥缓冲区）
         seed_buf_bytes = GPUMemoryCalculator.SEED_BUF_SIZE
@@ -87,13 +88,14 @@ class GPUMemoryCalculator:
 
         Returns:
             估算的显存需求（MB，浮点数）
+
         """
         total_bytes = GPUMemoryCalculator.calculate_batch_memory(batch_size, num_targets)
         return total_bytes / GPUMemoryCalculator.BYTES_PER_MB
 
     @staticmethod
     def estimate_max_batch_size(
-        available_memory: int, num_targets: int, memory_ratio: float = 0.7
+        available_memory: int, num_targets: int, memory_ratio: float = 0.7,
     ) -> int:
         """估算可用显存下的最大 batch_size
 
@@ -104,6 +106,7 @@ class GPUMemoryCalculator:
 
         Returns:
             估算的最大 batch_size（向下取整到 10000 的整数倍）
+
         """
         usable_memory = int(available_memory * memory_ratio)
 
@@ -115,7 +118,7 @@ class GPUMemoryCalculator:
             logger.warning(
                 f"可用显存 {available_memory / GPUMemoryCalculator.BYTES_PER_MB:.1f} MB "
                 "不足以容纳目标地址缓冲区 "
-                f"{targets_bytes / GPUMemoryCalculator.BYTES_PER_MB:.1f} MB"
+                f"{targets_bytes / GPUMemoryCalculator.BYTES_PER_MB:.1f} MB",
             )
             return 10_000  # 返回最小安全值
 
@@ -140,7 +143,7 @@ class GPUMemoryCalculator:
         logger.debug(
             f"显存估算: available={available_memory / GPUMemoryCalculator.BYTES_PER_MB:.1f}MB, "
             f"ratio={memory_ratio}, targets={num_targets}, "
-            f"estimated_max_batch={max_batch}"
+            f"estimated_max_batch={max_batch}",
         )
         return max_batch
 
@@ -161,6 +164,7 @@ class GPUMemoryCalculator:
                 'overhead_mb':      内核执行临时开销,
                 'total_mb':         总计,
             }
+
         """
         bp_mb = GPUMemoryCalculator.BYTES_PER_MB
 
@@ -189,7 +193,7 @@ class GPUMemoryCalculator:
             f"match_flags={breakdown['match_flags_mb']:.2f}MB, "
             f"targets={breakdown['targets_mb']:.2f}MB, "
             f"overhead={breakdown['overhead_mb']:.2f}MB, "
-            f"total={breakdown['total_mb']:.2f}MB"
+            f"total={breakdown['total_mb']:.2f}MB",
         )
 
         return breakdown
@@ -207,6 +211,7 @@ class GPUMemoryCalculator:
 
         Returns:
             显存需求（MB，浮点数）
+
         """
         bp_mb = GPUMemoryCalculator.BYTES_PER_MB
 
@@ -225,7 +230,7 @@ class GPUMemoryCalculator:
             f"match_flags={match_flags_mb:.2f}MB, "
             f"targets={targets_mb:.2f}MB, "
             f"overhead={overhead_mb:.2f}MB, "
-            f"total={total_mb:.2f}MB"
+            f"total={total_mb:.2f}MB",
         )
 
         return total_mb

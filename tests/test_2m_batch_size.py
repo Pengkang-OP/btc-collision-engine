@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Intel Arc GPU 2M批次大小性能测试
+"""Intel Arc GPU 2M批次大小性能测试
 
 测试目标：
 1. 验证2M批次大小的稳定性
@@ -15,20 +14,16 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-# 添加项目根目录
-sys.path.insert(0, str(Path(__file__).parent))
-
-import pytest  # noqa: E402
+import pytest
 
 pytestmark = pytest.mark.gpu  # 需要真实GPU硬件
 
-from src.collision.collision_stats import CollisionStats  # noqa: E402
-from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
+from src.collision.collision_stats import CollisionStats
+from src.collision.gpu.engine import GPUCollisionEngine
 
 
 def run_2m_batch_size(duration=60):
     """测试2M批次大小（内部基准函数，不作为 pytest 测试收集）"""
-
     print("\n" + "=" * 80)
     print("🚀 Intel Arc GPU 2M批次大小性能测试")
     print("=" * 80)
@@ -41,7 +36,7 @@ def run_2m_batch_size(duration=60):
     targets = set()
     address_file = Path(__file__).parent / "valid_addresses.txt"
     try:
-        with open(str(address_file), encoding="utf-8") as f:
+        with Path(str(address_file)).open(encoding="utf-8") as f:
             for line in f:
                 addr = line.strip()
                 if addr and len(addr) >= 26:
@@ -81,7 +76,7 @@ def run_2m_batch_size(duration=60):
             f"  [{mins:02d}:{secs:02d}] "
             f"已检查: {stats.total_checked:>12,} | "
             f"速度: {stats.speed:>12,.0f} keys/s | "
-            f"批次: {batch_count}"
+            f"批次: {batch_count}",
         )
 
     def on_match(private_key: bytes, address: str, wif: str):
@@ -191,7 +186,7 @@ def run_2m_batch_size(duration=60):
         }
 
         result_file = f"intel_arc_2m_test_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-        with open(result_file, "w", encoding="utf-8") as f:
+        with Path(result_file).open("w", encoding="utf-8") as f:
             json.dump(test_result, f, indent=2, ensure_ascii=False)
 
         print(f"\n💾 测试结果已保存到: {result_file}")
@@ -240,9 +235,8 @@ def main():
 
         print("=" * 80)
         return 0
-    else:
-        print("\n❌ 测试失败")
-        return 1
+    print("\n❌ 测试失败")
+    return 1
 
 
 if __name__ == "__main__":

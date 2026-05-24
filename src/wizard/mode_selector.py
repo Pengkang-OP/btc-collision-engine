@@ -1,5 +1,4 @@
 """Wizard mode selection step."""
-from typing import Any
 
 
 class ModeSelector:
@@ -13,5 +12,6 @@ class ModeSelector:
 
         Returns:
             Selected mode
+
         """
         return options[0] if options else ""

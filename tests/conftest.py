@@ -90,6 +90,7 @@ def _create_mock_gpu_objects(
 
     Returns:
         tuple: (mock_device, mock_context, mock_kernel)
+
     """
     # 创建Mock GPU设备
     mock_device = Mock()
@@ -135,6 +136,7 @@ def _apply_gpu_patches(mock_device, mock_context, mock_kernel, vendor="nvidia"):
 
     Returns:
         contextmanager: 上下文管理器
+
     """
 
     @contextmanager
@@ -159,7 +161,7 @@ def _apply_gpu_patches(mock_device, mock_context, mock_kernel, vendor="nvidia"):
                 patch(
                     "src.gpu.device.GPUDeviceDetector.is_gpu_available",
                     return_value=True,
-                )
+                ),
             )
             stack.enter_context(patch("src.gpu.device_manager.GPUDevice", return_value=mock_device))
             stack.enter_context(patch("src.gpu.device_manager.GPUContext", return_value=mock_context))
@@ -175,7 +177,7 @@ def _apply_gpu_patches(mock_device, mock_context, mock_kernel, vendor="nvidia"):
                         "pyopencl": mock_cl_module,
                         "pyopencl.array": mock_cl_array,
                     },
-                )
+                ),
             )
 
             # 配置ProfileLoader返回None(使用默认配置)
@@ -215,6 +217,7 @@ def mock_gpu_chain():
 
     Yields:
         tuple: (mock_device, mock_context, mock_kernel)
+
     """
     # 使用公共函数创建Mock对象
     mock_device, mock_context, mock_kernel = _create_mock_gpu_objects()
@@ -274,6 +277,7 @@ def mock_gpu_device():
 
     Yields:
         Mock: GPU设备实例
+
     """
     mock_device = Mock()
     mock_device.context = Mock()
@@ -287,7 +291,7 @@ def mock_gpu_device():
     mock_device.get_device_info = Mock(return_value=mock_device.device_info)
     mock_device.cleanup = Mock()
 
-    yield mock_device
+    return mock_device
 
 
 @pytest.fixture(scope="module")
@@ -320,6 +324,7 @@ def mock_gpu_device_module():
 
     Yields:
         Mock: GPU设备实例(模块内共享)
+
     """
     mock_device = Mock()
     mock_device.context = Mock()
@@ -333,7 +338,7 @@ def mock_gpu_device_module():
     mock_device.get_device_info = Mock(return_value=mock_device.device_info)
     mock_device.cleanup = Mock()
 
-    yield mock_device
+    return mock_device
 
 
 @pytest.fixture(scope="module")
@@ -366,6 +371,7 @@ def mock_gpu_chain_module():
 
     Yields:
         tuple: (mock_device, mock_context, mock_kernel)
+
     """
     mock_device, mock_context, mock_kernel = _create_mock_gpu_objects()
     with _apply_gpu_patches(mock_device, mock_context, mock_kernel) as mocks:
@@ -448,7 +454,7 @@ def mock_gpu_chain_nvidia(mock_gpu_chain):
             mock_device, mock_context, mock_kernel = mock_gpu_chain_nvidia
             # NVIDIA特定测试...
     """
-    yield mock_gpu_chain
+    return mock_gpu_chain
 
 
 @pytest.fixture
@@ -610,7 +616,7 @@ def pytest_sessionfinish(session, exitstatus):
                     obj.stop()
                     logger.debug("已停止 EnhancedMonitoringSystem 实例")
                 except Exception as e:
-                    logger.debug(f"停止 EnhancedMonitoringSystem 失败: {e}")
+                    logger.debug("停止 EnhancedMonitoringSystem 失败: %s", e)
     except ImportError:
         pass
 
@@ -624,7 +630,7 @@ def pytest_sessionfinish(session, exitstatus):
                     obj.stop()
                     logger.debug("已停止 MonitoringSystem 实例")
                 except Exception as e:
-                    logger.debug(f"停止 MonitoringSystem 失败: {e}")
+                    logger.debug("停止 MonitoringSystem 失败: %s", e)
     except ImportError:
         pass
 
@@ -638,7 +644,7 @@ def pytest_sessionfinish(session, exitstatus):
                     obj.stop()
                     logger.debug("已停止 DataCollector CPU 采样线程")
                 except Exception as e:
-                    logger.debug(f"停止 DataCollector 失败: {e}")
+                    logger.debug("停止 DataCollector 失败: %s", e)
     except ImportError:
         pass
 

@@ -29,6 +29,17 @@ class GPUBufferTracker:
     - 缓冲区类型分类管理
     """
 
+    __slots__ = (
+        "_allocated_buffers",
+        "_lock",
+        "_timeout",
+        "_memory_threshold",
+        "_cleanup_count",
+        "_leak_detection_count",
+        "_memory_usage_history",
+        "_last_check_time",
+    )
+
     # 类级别配置
     DEFAULT_TIMEOUT = 300  # 默认超时5分钟
     MAX_TRACKED_BUFFERS = 1000  # 最大追踪缓冲区数量
@@ -49,7 +60,7 @@ class GPUBufferTracker:
         self._last_check_time = time.time()
 
     def track_buffer(
-        self, name: str, buffer: Any, size: int, buffer_type: str = "generic", context: str = ""
+        self, name: str, buffer: Any, size: int, buffer_type: str = "generic", context: str = "",
     ) -> None:
         """注册缓冲区
 
@@ -62,6 +73,7 @@ class GPUBufferTracker:
 
         Raises:
             RuntimeError: 当追踪的缓冲区数量超过最大限制时
+
         """
         with self._lock:
             # P2-02修复: 使用 MAX_TRACKED_BUFFERS 防止无限制增长
@@ -73,7 +85,7 @@ class GPUBufferTracker:
                     _max = self.MAX_TRACKED_BUFFERS
                     raise RuntimeError(
                         f"GPU缓冲区追踪溢出: {_cnt} >= {_max}"
-                        f" (超时阈值: {self._timeout}s, 请检查是否有未释放的缓冲区)"
+                        f" (超时阈值: {self._timeout}s, 请检查是否有未释放的缓冲区)",
                     )
 
             self._allocated_buffers[name] = {
@@ -107,6 +119,7 @@ class GPUBufferTracker:
 
         Returns:
             True 如果缓冲区已在追踪列表中
+
         """
         with self._lock:
             return name in self._allocated_buffers
@@ -116,6 +129,7 @@ class GPUBufferTracker:
 
         Args:
             name: 缓冲区名称
+
         """
         with self._lock:
             if name in self._allocated_buffers:
@@ -124,9 +138,9 @@ class GPUBufferTracker:
                     buffer = self._allocated_buffers[name].get("buffer")
                     if buffer is not None and hasattr(buffer, "release"):
                         buffer.release()
-                        logger.debug(f"GPU Buffer追踪: 释放 {name}")
+                        logger.debug("GPU Buffer追踪: 释放 %s", name)
                 except Exception as e:
-                    logger.error(f"释放缓冲区失败 {name}: {e}")
+                    logger.error("释放缓冲区失败 %s: %s", name, e)
                 finally:
                     del self._allocated_buffers[name]
                     # 记录内存使用历史
@@ -140,6 +154,7 @@ class GPUBufferTracker:
 
         Returns:
             泄漏的缓冲区名称列表
+
         """
         current_time = time.time()
         leaked = []
@@ -160,6 +175,7 @@ class GPUBufferTracker:
 
         Returns:
             统计信息字典
+
         """
         with self._lock:
             total_size = sum(info["size"] for info in self._allocated_buffers.values())
@@ -194,6 +210,7 @@ class GPUBufferTracker:
 
         Returns:
             被清理的缓冲区名称列表
+
         """
         current_time = time.time()
         cleaned = []
@@ -213,14 +230,14 @@ class GPUBufferTracker:
                     if buffer is not None and hasattr(buffer, "release"):
                         buffer.release()
                         logger.debug(
-                            f"自动清理超时缓冲区: {name} (类型: {info.get('type', 'generic')})"
+                            f"自动清理超时缓冲区: {name} (类型: {info.get('type', 'generic')})",
                         )
                     else:
                         failed_to_release.append(name)
-                        logger.warning(f"超时缓冲区无release方法: {name}")
+                        logger.warning("超时缓冲区无release方法: %s", name)
                 except Exception as e:
                     failed_to_release.append(name)
-                    logger.error(f"清理超时缓冲区失败 {name}: {e}")
+                    logger.error("清理超时缓冲区失败 %s: %s", name, e)
                 finally:
                     del self._allocated_buffers[name]
                     cleaned.append(name)
@@ -247,6 +264,7 @@ class GPUBufferTracker:
 
         Returns:
             被清理的缓冲区名称列表
+
         """
         current_time = time.time()
         cleaned: list[str] = []
@@ -263,7 +281,7 @@ class GPUBufferTracker:
                 if buffer is not None and hasattr(buffer, "release"):
                     buffer.release()
             except (RuntimeError, OSError):
-                logger.debug(f"_cleanup_sync: 释放缓冲区失败 {name}，已移除追踪记录")
+                logger.debug("_cleanup_sync: 释放缓冲区失败 %s，已移除追踪记录", name)
             finally:
                 del self._allocated_buffers[name]
                 cleaned.append(name)
@@ -283,6 +301,7 @@ class GPUBufferTracker:
 
         Returns:
             被清理的缓冲区名称列表
+
         """
         cleaned = []
         failed_to_release = []
@@ -299,13 +318,13 @@ class GPUBufferTracker:
                     buffer = info.get("buffer")
                     if buffer is not None and hasattr(buffer, "release"):
                         buffer.release()
-                        logger.debug(f"按类型清理缓冲区: {name} (类型: {buffer_type})")
+                        logger.debug("按类型清理缓冲区: %s (类型: %s)", name, buffer_type)
                     else:
                         failed_to_release.append(name)
-                        logger.warning(f"缓冲区无release方法: {name}")
+                        logger.warning("缓冲区无release方法: %s", name)
                 except Exception as e:
                     failed_to_release.append(name)
-                    logger.error(f"清理缓冲区失败 {name}: {e}")
+                    logger.error("清理缓冲区失败 %s: %s", name, e)
                 finally:
                     del self._allocated_buffers[name]
                     cleaned.append(name)
@@ -328,10 +347,10 @@ class GPUBufferTracker:
         self._check_interval = interval
         self._periodic_check_stop = threading.Event()
         self._periodic_check_thread = threading.Thread(
-            target=self._periodic_check_loop, daemon=True, name="buffer-tracker-periodic"
+            target=self._periodic_check_loop, daemon=True, name="buffer-tracker-periodic",
         )
         self._periodic_check_thread.start()
-        logger.info(f"GPU缓冲区追踪器：定期检查已启动，间隔 {interval} 秒")
+        logger.info("GPU缓冲区追踪器：定期检查已启动，间隔 %s 秒", interval)
 
     def stop_periodic_check(self) -> None:
         """停止定期泄漏检查"""
@@ -354,7 +373,7 @@ class GPUBufferTracker:
                     stats = self.get_stats()
                     _count = stats["count"]
                     logger.warning(
-                        f"GPU缓冲区泄漏: 泄漏={len(leaked)}, 追踪={_count}, 已泄漏={leaked}"
+                        f"GPU缓冲区泄漏: 泄漏={len(leaked)}, 追踪={_count}, 已泄漏={leaked}",
                     )
                     # 自动清理泄漏的缓冲区
                     self.cleanup_timed_out_buffers()
@@ -365,7 +384,7 @@ class GPUBufferTracker:
                 # 更新最后检查时间
                 self._last_check_time = time.time()
             except Exception as e:
-                logger.error(f"定期泄漏检查失败: {e}")
+                logger.error("定期泄漏检查失败: %s", e)
 
     def _record_memory_usage(self):
         """记录内存使用情况"""
@@ -376,7 +395,7 @@ class GPUBufferTracker:
                 "total_size_bytes": total_size,
                 "total_size_mb": total_size / 1024 / 1024,
                 "buffer_count": len(self._allocated_buffers),
-            }
+            },
         )
 
         # 只保留最近记录
@@ -405,6 +424,7 @@ class GPUBufferTracker:
 
         Returns:
             检查结果字典
+
         """
         self._leak_detection_count += 1
 
@@ -432,13 +452,13 @@ class GPUBufferTracker:
                         buffer.release()
                         released.append(name)
                         logger.debug(
-                            f"关闭时释放缓冲区: {name} (类型: {info.get('type', 'generic')})"
+                            f"关闭时释放缓冲区: {name} (类型: {info.get('type', 'generic')})",
                         )
                 except Exception as e:
                     failed.append(
-                        {"name": name, "error": str(e), "type": info.get("type", "generic")}
+                        {"name": name, "error": str(e), "type": info.get("type", "generic")},
                     )
-                    logger.error(f"关闭时释放缓冲区失败 {name}: {e}")
+                    logger.error("关闭时释放缓冲区失败 %s: %s", name, e)
 
             # 清空追踪记录
             self._allocated_buffers.clear()
@@ -460,12 +480,12 @@ class GPUBufferTracker:
         if len(failed) > 0:
             logger.critical(
                 f"GPU引擎关闭时{len(failed)}个缓冲区释放失败 (可能内存泄漏): "
-                f"{', '.join([f['name'] for f in failed])}"
+                f"{', '.join([f['name'] for f in failed])}",
             )
         elif remaining > 0:
             logger.info(
                 f"GPU引擎关闭时释放了{remaining}个缓冲区 "
-                f"(总大小: {total_size / 1024:.1f}KB): {', '.join(buffer_names)}"
+                f"(总大小: {total_size / 1024:.1f}KB): {', '.join(buffer_names)}",
             )
         else:
             logger.info("GPU引擎关闭时所有缓冲区已正确释放")

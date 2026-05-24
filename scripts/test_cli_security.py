@@ -5,11 +5,6 @@ import contextlib
 import sys
 from pathlib import Path
 
-# 添加项目根目录到路径
-project_root = Path(__file__).parent.parent  # 项目根目录，非 src/
-sys.path.insert(0, str(project_root))
-
-
 def test_security_check_integration():
     """测试安全检查集成到CLI"""
     print("=" * 70)

@@ -20,10 +20,10 @@ class _DummyObj:
 
 
 class TestObjectPoolAutoTuneIdleShrink(unittest.TestCase):
-    """覆盖 auto_tune 中空闲缩容路径 (lines 300-301) — 避免死锁"""
+    """覆盖 auto_tune 中空闲缩容路径 (lines 334-349)"""
 
     def test_auto_tune_shrink_idle_branch(self):
-        """空闲对象过多时 auto_tune 内部调用 shrink（mock 避免死锁）"""
+        """空闲对象过多时 auto_tune 内部缩容（del _pool[target:]）"""
         pool = ObjectPool(lambda: _DummyObj(), initial_size=5, max_size=100)
         # 填充池到超过阈值 (POOL_SHRINK_THRESHOLD_RATIO=3, initial_size=5 → 阈值=15)
         objs = []
@@ -32,12 +32,13 @@ class TestObjectPoolAutoTuneIdleShrink(unittest.TestCase):
         for o in objs:
             pool.release(o)
         self.assertGreater(len(pool._pool), 5 * 3)
+        pre_size = len(pool._pool)
 
-        # Mock shrink 避免死锁 (Lock 不可重入) — 用 class-level patch 因 __slots__
-        with patch.object(ObjectPool, "shrink", return_value=30) as mock_shrink:
-            adjusted = pool.auto_tune(max_memory_mb=1024)
-            mock_shrink.assert_called_once_with(5)
-            self.assertTrue(adjusted)
+        adjusted = pool.auto_tune(max_memory_mb=1024)
+        self.assertTrue(adjusted)
+        # auto_tune 内部使用 del _pool[target:] 缩容到 initial_size
+        self.assertEqual(len(pool._pool), pool._initial_size)
+        self.assertLess(len(pool._pool), pre_size)
 
 
 class TestGlobalPoolManagerAutoCleanupEdge(unittest.TestCase):
@@ -56,7 +57,7 @@ class TestGlobalPoolManagerAutoCleanupEdge(unittest.TestCase):
 
         with patch.object(mgr, "auto_tune_all", return_value=True):
             with patch.object(mgr, "shrink_all", return_value=5):
-                with patch.object(mgr._cleanup_state, "_cleanup_stop_event") as mock_event:
+                with patch.object(mgr._cleanup_state, "stop_event") as mock_event:
                     mock_event.wait.side_effect = [False, True]  # 只运行一次
                     mgr._auto_cleanup_loop(0.01)
         # 不应崩溃
@@ -68,7 +69,7 @@ class TestGlobalPoolManagerAutoCleanupEdge(unittest.TestCase):
 
         with patch.object(mgr, "auto_tune_all", return_value=True):
             with patch.object(mgr, "shrink_all", return_value=0):
-                with patch.object(mgr._cleanup_state, "_cleanup_stop_event") as mock_event:
+                with patch.object(mgr._cleanup_state, "stop_event") as mock_event:
                     mock_event.wait.side_effect = [False, True]
                     mgr._auto_cleanup_loop(0.01)
 
@@ -89,18 +90,18 @@ class TestGlobalPoolManagerStopCleanupTimeout(unittest.TestCase):
         mgr.start_auto_cleanup(interval_seconds=3600)
 
         # 设置 stop_event 让线程尝试退出
-        mgr._cleanup_state._cleanup_stop_event.set()
+        mgr._cleanup_state.stop_event.set()
 
         # Mock join 不做实际等待, 然后 is_alive 返回 True
-        with patch.object(mgr._cleanup_state._cleanup_thread, "join") as mock_join:
-            with patch.object(mgr._cleanup_state._cleanup_thread, "is_alive", return_value=True):
+        with patch.object(mgr._cleanup_state.thread, "join") as mock_join:
+            with patch.object(mgr._cleanup_state.thread, "is_alive", return_value=True):
                 mgr.stop_auto_cleanup(timeout=0.1)
                 mock_join.assert_called_once()
 
         # 清理残留线程
-        mgr._cleanup_state._cleanup_stop_event.set()
-        if mgr._cleanup_state._cleanup_thread and mgr._cleanup_state._cleanup_thread.is_alive():
-            mgr._cleanup_state._cleanup_thread.join(timeout=2.0)
+        mgr._cleanup_state.stop_event.set()
+        if mgr._cleanup_state.thread and mgr._cleanup_state.thread.is_alive():
+            mgr._cleanup_state.thread.join(timeout=2.0)
 
 
 class TestECPointPool(unittest.TestCase):

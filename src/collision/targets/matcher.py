@@ -10,10 +10,13 @@
 """
 
 import threading
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 # 导入日志配置
 from ...utils import get_configured_logger
+
+if TYPE_CHECKING:
+    from pybloom_live import BloomFilter
 
 # v4.2.1修复: Python的logging.Logger本身是线程安全的，无需ThreadSafeLogger包装
 logger = get_configured_logger("AddressMatcher")
@@ -43,8 +46,7 @@ class AddressMatcher:
         bloom_capacity: int = 100000,
         bloom_error_rate: float = 0.001,
     ) -> None:
-        """
-        初始化地址匹配引擎
+        """初始化地址匹配引擎
 
         参数:
             strategy: 匹配策略,可选 'hash_set', 'bloom_filter', 'trie'
@@ -79,20 +81,20 @@ class AddressMatcher:
     def _init_bloom_filter(self, capacity: int, error_rate: float):
         """初始化布隆过滤器策略"""
         try:
-            from pybloom_live import BloomFilter  # type: ignore[import-untyped]
 
             self._bloom = BloomFilter(capacity=capacity, error_rate=error_rate)
             for addr in self.targets:
                 self._bloom.add(addr)
             logger.debug(
-                f"布隆过滤器初始化成功: 容量={capacity}, 误判率={error_rate}, 目标数={len(self.targets)}"
+                f"布隆过滤器初始化成功: 容量={capacity}, 误判率={error_rate}, "
+                f"目标数={len(self.targets)}",
             )
         except ImportError as e:
-            logger.warning(f"pybloom-live 未安装,回退到 hash_set 策略 (原因: {e})")
+            logger.warning("pybloom-live 未安装,回退到 hash_set 策略 (原因: %s)", e)
             self.strategy = "hash_set"
             self._init_hash_set()
         except Exception as e:
-            logger.error(f"布隆过滤器初始化失败: {e}, 回退到 hash_set 策略", exc_info=True)
+            logger.error("布隆过滤器初始化失败: %s, 回退到 hash_set 策略", e, exc_info=True)
             self.strategy = "hash_set"
             self._init_hash_set()
 
@@ -104,7 +106,7 @@ class AddressMatcher:
                 self._insert_trie(addr)
             logger.debug(f"前缀树初始化成功: {len(self.targets)} 个目标")
         except Exception as e:
-            logger.error(f"前缀树初始化失败: {e}, 回退到 hash_set 策略", exc_info=True)
+            logger.error("前缀树初始化失败: %s, 回退到 hash_set 策略", e, exc_info=True)
             self.strategy = "hash_set"
             self._init_hash_set()
 
@@ -118,8 +120,7 @@ class AddressMatcher:
         node["$"] = True  # 标记地址结束
 
     def is_match(self, address: str) -> bool:
-        """
-        检查地址是否匹配目标集
+        """检查地址是否匹配目标集
 
         参数:
             address: 待检查的地址
@@ -132,7 +133,7 @@ class AddressMatcher:
             try:
                 address = str(address)
             except Exception as e:
-                logger.error(f"地址类型转换失败: {address}, 错误={e}")
+                logger.error("地址类型转换失败: %s, 错误=%s", address, e)
                 return False
 
         # 标准化地址为小写，确保大小写不敏感匹配
@@ -142,12 +143,11 @@ class AddressMatcher:
             try:
                 if self.strategy == "hash_set":
                     return normalized_address in self._hash_set
-                elif self.strategy == "bloom_filter":
+                if self.strategy == "bloom_filter":
                     return normalized_address in self._bloom
-                elif self.strategy == "trie":
+                if self.strategy == "trie":
                     return self._search_trie(normalized_address)
-                else:
-                    return False
+                return False
             except Exception as e:
                 logger.error(f"地址匹配异常: {address}, 策略={self.strategy}, 错误={e}")
                 return False
@@ -162,8 +162,7 @@ class AddressMatcher:
         return "$" in node
 
     def add_target(self, address: str) -> None:
-        """
-        添加单个目标地址
+        """添加单个目标地址
 
         参数:
             address: 目标地址
@@ -173,7 +172,7 @@ class AddressMatcher:
             try:
                 address = str(address)
             except Exception as e:
-                logger.error(f"地址类型转换失败: {address}, 错误={e}")
+                logger.error("地址类型转换失败: %s, 错误=%s", address, e)
                 return
 
         # 标准化地址为小写
@@ -190,11 +189,10 @@ class AddressMatcher:
                 elif self.strategy == "trie":
                     self._insert_trie(normalized_address)
             except Exception as e:
-                logger.error(f"添加目标地址失败: {address}, 错误={e}")
+                logger.error("添加目标地址失败: %s, 错误=%s", address, e)
 
     def add_targets(self, addresses: set[str]) -> None:
-        """
-        批量添加目标地址
+        """批量添加目标地址
 
         参数:
             addresses: 目标地址集合
@@ -210,7 +208,7 @@ class AddressMatcher:
                     # 标准化地址为小写
                     valid_addresses.add(str(addr).lower())
                 except Exception as e:
-                    logger.warning(f"地址类型转换失败,跳过: {addr}, 错误={e}")
+                    logger.warning("地址类型转换失败,跳过: %s, 错误=%s", addr, e)
 
         with self._lock:
             try:
@@ -225,11 +223,10 @@ class AddressMatcher:
                     for addr in valid_addresses:
                         self._insert_trie(addr)
             except Exception as e:
-                logger.error(f"批量添加目标地址失败: 错误={e}")
+                logger.error("批量添加目标地址失败: 错误=%s", e)
 
     def remove_target(self, address: str) -> bool:
-        """
-        移除目标地址
+        """移除目标地址
 
         注意: 布隆过滤器不支持删除操作
 
@@ -261,8 +258,7 @@ class AddressMatcher:
             return True
 
     def get_stats(self) -> dict[str, Any]:
-        """
-        获取匹配引擎统计信息
+        """获取匹配引擎统计信息
 
         返回:
             包含统计信息的字典

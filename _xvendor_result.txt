@@ -1,0 +1,28 @@
+[PASS        ] auto_best_gpu             RC=0 speed=1,112,256 time=5.1s
+[PASS        ] nvidia_1660ti             RC=0 speed=1,129,277 time=5.2s
+[PASS        ] intel_arc_a770            RC=0 speed=1,094,208 time=5.1s
+[PASS        ] multi_nvidia_only         RC=0 speed=1,099,904 time=5.1s
+[PASS        ] multi_intel_only          RC=0 speed=1,113,567 time=5.0s
+[PASS        ] multi_auto_all            RC=0 speed=1,095,608 time=5.0s
+[PASS        ] multi_nv_intel_both       RC=0 speed=1,109,990 time=5.0s
+[PASS        ] nv_range                  RC=0 speed=1,133,278 time=4.1s
+[PASS        ] nv_bruteforce             RC=0 speed=1,389,596 time=3.7s
+[PASS        ] intel_range               RC=0 speed=1,071,021 time=4.1s
+[PASS        ] intel_bruteforce          RC=0 speed=1,390,350 time=3.8s
+
+======================================================================
+Results: 11 PASS / 0 FAIL / 0 TIMEOUT / 11 total
+
+GPU Speed Comparison:
+  auto_best_gpu                     1,112,256 keys/s  (5.1s) [PASS]
+  nvidia_1660ti                     1,129,277 keys/s  (5.2s) [PASS]
+  intel_arc_a770                    1,094,208 keys/s  (5.1s) [PASS]
+  multi_nvidia_only                 1,099,904 keys/s  (5.1s) [PASS]
+  multi_intel_only                  1,113,567 keys/s  (5.0s) [PASS]
+  multi_auto_all                    1,095,608 keys/s  (5.0s) [PASS]
+  multi_nv_intel_both               1,109,990 keys/s  (5.0s) [PASS]
+  nv_range                          1,133,278 keys/s  (4.1s) [PASS]
+  nv_bruteforce                     1,389,596 keys/s  (3.7s) [PASS]
+  intel_range                       1,071,021 keys/s  (4.1s) [PASS]
+  intel_bruteforce                  1,390,350 keys/s  (3.8s) [PASS]
+======================================================================

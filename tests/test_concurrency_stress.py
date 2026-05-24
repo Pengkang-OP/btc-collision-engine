@@ -11,6 +11,7 @@
 - 长时间运行稳定性
 """
 
+import math
 import tempfile
 import threading
 import time
@@ -128,7 +129,7 @@ class TestLogStorageConcurrency:
                             "timestamp": idx * 1000 + i,
                             "type": f"type_{idx}",
                             "message": f"message_{idx}_{i}",
-                        }
+                        },
                     )
 
             threads = [threading.Thread(target=writer, args=(j,)) for j in range(8)]
@@ -236,26 +237,7 @@ class TestLogCollectorConcurrency:
 
 @pytest.mark.thread_safety
 class TestObserverManagerConcurrency:
-    """ObserverManager 并发测试"""
-
-    def test_concurrent_notify(self):
-        """并发通知不应导致异常"""
-        from src.collision.collision_stats import CollisionStats
-        from src.collision.observers import BaseCollisionObserver, ObserverManager
-
-        manager = ObserverManager()
-        for _ in range(20):
-            manager.add_observer(BaseCollisionObserver())
-
-        errors = []
-
-        def notifier():
-            try:
-                for _ in range(50):
-                    stats = CollisionStats()
-                    manager.notify_progress(stats)
-            except Exception as e:
-                errors.append(e)
+# Observers 模块已移除 — test_concurrent_notify 测试已删除
 
         threads = [threading.Thread(target=notifier) for _ in range(4)]
         for t in threads:
@@ -320,8 +302,8 @@ class TestStressTests:
                         "timestamp": i,
                         "type": "stress_test",
                         "message": f"message_{i}" + "x" * 50,
-                        "data": {"index": i, "value": i * 3.14},
-                    }
+                        "data": {"index": i, "value": i * math.pi},
+                    },
                 )
             elapsed = time.perf_counter() - start
 

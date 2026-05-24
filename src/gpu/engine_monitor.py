@@ -50,12 +50,25 @@ class GPUEngineMonitor:
         status = monitor.get_engine_status()
     """
 
+    __slots__ = (
+        "_engine",
+        "_adjustment_history",
+        "_adjustment_history_lock",
+        "_performance_window",
+        "_performance_lock",
+        "_adaptive_enabled",
+        "_adjust_interval",
+        "_last_adjust_time",
+        "_error_rate_threshold",
+    )
+
     def __init__(self, engine: Optional["GPUCollisionEngine"] = None) -> None:
         """初始化引擎监控器
 
         Args:
             engine: GPU碰撞引擎实例（可选）。传入后可通过
                     :meth:`get_engine_status` 获取实时状态摘要。
+
         """
         self._engine = engine
 
@@ -93,6 +106,7 @@ class GPUEngineMonitor:
             new_size: 调整后的批次大小
             reason:   调整原因标识（如 "performance_good"、"buffer_resize"）
             details:  可选的补充说明
+
         """
         change_percent = ((new_size - old_size) / old_size * 100) if old_size > 0 else 0.0
 
@@ -128,6 +142,7 @@ class GPUEngineMonitor:
 
         Returns:
             调整历史记录列表，最新记录在前
+
         """
         with self._adjustment_history_lock:
             history = self._adjustment_history.copy()
@@ -140,6 +155,7 @@ class GPUEngineMonitor:
 
         Returns:
             包含总次数、平均变化幅度等的统计字典
+
         """
         with self._adjustment_history_lock:
             history = self._adjustment_history.copy()
@@ -174,6 +190,7 @@ class GPUEngineMonitor:
 
         Returns:
             该时间窗口内的调整次数
+
         """
         cutoff = time.time() - seconds
         with self._adjustment_history_lock:
@@ -209,6 +226,7 @@ class GPUEngineMonitor:
         Notes:
             若 :attr:`_engine` 为 None，则 engine_available 为 False，
             其余字段返回默认空值。
+
         """
         if self._engine is None:
             return {
@@ -264,6 +282,7 @@ class GPUEngineMonitor:
             batch_time: 批次执行时间（秒）
             num_keys: 处理的私钥数量
             success: 是否成功
+
         """
         performance_data = {
             "timestamp": time.time(),
@@ -283,13 +302,14 @@ class GPUEngineMonitor:
                 eng.stats.last_batch_time = batch_time
                 eng.stats.total_keys += num_keys
             except Exception as e:
-                logger.warning(f"更新引擎统计信息失败: {e}")
+                logger.warning("更新引擎统计信息失败: %s", e)
 
     def should_adjust_batch_size(self) -> bool:
         """判断是否需要调整batch_size
 
         Returns:
             True表示需要调整，False表示不需要
+
         """
         if not self._adaptive_enabled:
             return False
@@ -310,6 +330,7 @@ class GPUEngineMonitor:
 
         Returns:
             (new_batch_size, reason, details)
+
         """
         if not self._engine:
             return 0, "no_engine", "引擎未初始化"
@@ -350,6 +371,7 @@ class GPUEngineMonitor:
 
         Returns:
             True表示执行了调整，False表示未调整
+
         """
         if not self.should_adjust_batch_size():
             return False
@@ -368,12 +390,12 @@ class GPUEngineMonitor:
                 self.record_adjustment(old_size, new_size, reason, details)
 
                 logger.info(
-                    f"batch_size调整: {old_size:,} -> {new_size:,} (原因: {reason}, 详情: {details})"
+                    f"batch_size调整: {old_size:,} -> {new_size:,} (原因: {reason}, 详情: {details})",
                 )
 
                 return True
             except Exception as e:
-                logger.error(f"调整batch_size失败: {e}")
+                logger.error("调整batch_size失败: %s", e)
                 return False
 
         return False
@@ -383,6 +405,7 @@ class GPUEngineMonitor:
 
         Returns:
             性能统计字典
+
         """
         with self._performance_lock:
             performance_data = list(self._performance_window)

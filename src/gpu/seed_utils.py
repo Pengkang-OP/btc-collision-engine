@@ -26,6 +26,7 @@ def seed_bytes_to_u32_be_array(seed: bytes) -> "np.ndarray":
 
     Raises:
         ValueError: seed 长度不等于 32
+
     """
     if len(seed) != 32:
         raise ValueError(f"seed must be 32 bytes, got {len(seed)}")

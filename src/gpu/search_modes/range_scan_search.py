@@ -5,13 +5,10 @@
 """
 
 # 统一日志获取
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from ...utils import get_configured_logger
 from .base_search import BaseSearchMode
-
-if TYPE_CHECKING:
-    pass
 
 logger = get_configured_logger("RangeScanSearch")
 
@@ -29,6 +26,7 @@ class RangeScanSearchMode(BaseSearchMode):
         Args:
             start: 起始私钥整数值（含）
             end:   结束私钥整数值（含）
+
         """
         engine = self.engine
         logger.debug(f"范围扫描启动: start={start}, end={end}, total={end - start + 1}")

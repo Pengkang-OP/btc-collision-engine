@@ -16,18 +16,16 @@
 
 import json
 import os
+import pathlib
 import shutil
-import sys
 import tempfile
 import threading
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from src.monitoring.data_logger import DataLogger  # noqa: E402
-from src.monitoring.monitoring_system import DataStorage, MonitoringData  # noqa: E402
+from src.monitoring.data_logger import DataLogger
+from src.monitoring.monitoring_system import DataStorage, MonitoringData
 
 # ============================================================================
 # Fixtures
@@ -39,7 +37,7 @@ def temp_storage_dir():
     """创建临时存储目录"""
     d = tempfile.mkdtemp()
     yield d
-    if os.path.exists(d):
+    if pathlib.Path(d).exists():
         shutil.rmtree(d)
 
 
@@ -129,13 +127,13 @@ class TestDataStorageInit:
         """初始化时创建 error_log.json (无委托模式)"""
         DataStorage(storage_dir=temp_storage_dir, data_logger=None)
         error_path = os.path.join(temp_storage_dir, "error_log.json")
-        assert os.path.exists(error_path)
+        assert pathlib.Path(error_path).exists()
 
     def test_init_creates_history_file(self, temp_storage_dir):
         """初始化时创建 history_data.json (无委托模式)"""
         DataStorage(storage_dir=temp_storage_dir, data_logger=None)
         history_path = os.path.join(temp_storage_dir, "history_data.json")
-        assert os.path.exists(history_path)
+        assert pathlib.Path(history_path).exists()
 
 
 # ============================================================================
@@ -155,7 +153,7 @@ class TestSaveCurrentData:
         mock_data_logger.save_current_data.assert_called_once()
 
     def test_save_with_delegation_syncs_data(
-        self, storage_with_logger, mock_data_logger, sample_monitoring_data
+        self, storage_with_logger, mock_data_logger, sample_monitoring_data,
     ):
         """委托模式下同步 performance/system/engine 数据到 DataLogger"""
         storage_with_logger.save_current_data(sample_monitoring_data)
@@ -171,13 +169,13 @@ class TestSaveCurrentData:
         storage_no_logger.save_current_data(sample_monitoring_data)
 
         # 验证文件存在
-        assert os.path.exists(storage_no_logger.current_data_file)
+        assert pathlib.Path(storage_no_logger.current_data_file).exists()
 
     def test_save_without_delegation_content(self, storage_no_logger, sample_monitoring_data):
         """非委托模式写入内容验证"""
         storage_no_logger.save_current_data(sample_monitoring_data)
 
-        with open(storage_no_logger.current_data_file, encoding="utf-8") as f:
+        with pathlib.Path(storage_no_logger.current_data_file).open(encoding="utf-8") as f:
             saved = json.load(f)
 
             assert "timestamp" in saved
@@ -186,7 +184,7 @@ class TestSaveCurrentData:
             assert saved["performance"]["total_checked"] == 5000
 
     def test_delegation_error_handled(
-        self, storage_with_logger, mock_data_logger, sample_monitoring_data
+        self, storage_with_logger, mock_data_logger, sample_monitoring_data,
     ):
         """委托模式下 DataLogger 抛出异常应被捕获"""
         mock_data_logger.save_current_data.side_effect = RuntimeError("delegation error")
@@ -215,7 +213,7 @@ class TestSaveHistoryData:
         """非委托模式下直接写入文件"""
         storage_no_logger.save_history_data(sample_monitoring_data)
 
-        assert os.path.exists(storage_no_logger.history_data_file)
+        assert pathlib.Path(storage_no_logger.history_data_file).exists()
 
     def test_save_without_delegation_content(self, storage_no_logger, sample_monitoring_data):
         """非委托模式写入内容验证"""
@@ -228,7 +226,7 @@ class TestSaveHistoryData:
         assert history[0]["performance"]["total_checked"] == 5000
 
     def test_delegation_error_handled(
-        self, storage_with_logger, mock_data_logger, sample_monitoring_data
+        self, storage_with_logger, mock_data_logger, sample_monitoring_data,
     ):
         """委托模式下缓冲区操作异常应被捕获"""
         mock_data_logger._history_buffer = None  # 模拟异常状态
@@ -263,9 +261,9 @@ class TestSaveError:
         storage_no_logger.save_error(error)
 
         error_log_path = storage_no_logger.error_log_file
-        assert os.path.exists(error_log_path)
+        assert pathlib.Path(error_log_path).exists()
 
-        with open(error_log_path, encoding="utf-8") as f:
+        with pathlib.Path(error_log_path).open(encoding="utf-8") as f:
             errors = json.load(f)
             assert len(errors) >= 1
             assert errors[-1]["type"] == "test"
@@ -284,7 +282,7 @@ class TestSaveError:
         for i in range(510):
             storage_no_logger.save_error({"type": "test", "message": f"error {i}"})
 
-        with open(storage_no_logger.error_log_file, encoding="utf-8") as f:
+        with pathlib.Path(storage_no_logger.error_log_file).open(encoding="utf-8") as f:
             errors = json.load(f)
 
         assert len(errors) <= 500
@@ -312,7 +310,7 @@ class TestLoadHistoryWithRecovery:
     def test_delegation_passthrough(self, storage_with_logger, mock_data_logger):
         """委托模式下直接调用 DataLogger 的恢复方法"""
         mock_data_logger._load_history_with_recovery.return_value = [
-            {"timestamp": 1000, "performance": {"speed": 500}}
+            {"timestamp": 1000, "performance": {"speed": 500}},
         ]
 
         result = storage_with_logger._load_history_with_recovery()
@@ -323,8 +321,8 @@ class TestLoadHistoryWithRecovery:
     def test_no_file_returns_empty(self, storage_no_logger):
         """文件不存在时返回空列表"""
         # 删除初始化时创建的文件
-        if os.path.exists(storage_no_logger.history_data_file):
-            os.remove(storage_no_logger.history_data_file)
+        if pathlib.Path(storage_no_logger.history_data_file).exists():
+            pathlib.Path(storage_no_logger.history_data_file).unlink()
 
             result = storage_no_logger._load_history_with_recovery()
             assert result == []
@@ -332,7 +330,7 @@ class TestLoadHistoryWithRecovery:
     def test_empty_file_returns_empty(self, storage_no_logger):
         """空文件 (但存在) 的处理"""
         # 写入空内容
-        with open(storage_no_logger.history_data_file, "w", encoding="utf-8") as f:
+        with pathlib.Path(storage_no_logger.history_data_file).open("w", encoding="utf-8") as f:
             f.write("")
 
             result = storage_no_logger._load_history_with_recovery()
@@ -344,9 +342,8 @@ class TestLoadHistoryWithRecovery:
             {"timestamp": 1000, "performance": {"speed": 100}},
             {"timestamp": 2000, "performance": {"speed": 200}},
         ]
-        with open(storage_no_logger.history_data_file, "w", encoding="utf-8") as f:
-            for record in test_data:
-                f.write(json.dumps(record) + "\n")
+        with pathlib.Path(storage_no_logger.history_data_file).open("w", encoding="utf-8") as f:
+            f.writelines(json.dumps(record) + "\n" for record in test_data)
 
         result = storage_no_logger._load_history_with_recovery()
         assert len(result) == 2
@@ -360,8 +357,7 @@ class TestLoadHistoryWithRecovery:
         """
         # JSONL 格式：有效行 + 损坏行
         corrupt_content = '{"timestamp": 1000, "speed": 100, "total": 5000}\nCORRUPTED_GARBAGExyz'
-        with open(storage_no_logger.history_data_file, "w", encoding="utf-8") as f:
-            f.write(corrupt_content)
+        pathlib.Path(storage_no_logger.history_data_file).write_text(corrupt_content, encoding="utf-8")
 
         result = storage_no_logger._load_history_with_recovery()
         # JSONL 模式下有效行可正常解析
@@ -370,7 +366,7 @@ class TestLoadHistoryWithRecovery:
 
     def test_malformed_json_content(self, storage_no_logger):
         """完全损坏的 JSON 内容"""
-        with open(storage_no_logger.history_data_file, "w", encoding="utf-8") as f:
+        with pathlib.Path(storage_no_logger.history_data_file).open("w", encoding="utf-8") as f:
             f.write("NOT JSON AT ALL {{{")
 
             result = storage_no_logger._load_history_with_recovery()
@@ -379,7 +375,7 @@ class TestLoadHistoryWithRecovery:
 
     def test_exception_during_read(self, storage_no_logger):
         """读取异常时返回空列表"""
-        with open(storage_no_logger.history_data_file, "w", encoding="utf-8") as f:
+        with pathlib.Path(storage_no_logger.history_data_file).open("w", encoding="utf-8") as f:
             json.dump([{"valid": "data"}], f)
 
             # 模拟读取失败
@@ -407,8 +403,8 @@ class TestReadOperations:
 
     def test_get_current_data_no_file(self, storage_no_logger):
         """文件不存在时返回 None"""
-        if os.path.exists(storage_no_logger.current_data_file):
-            os.remove(storage_no_logger.current_data_file)
+        if pathlib.Path(storage_no_logger.current_data_file).exists():
+            pathlib.Path(storage_no_logger.current_data_file).unlink()
 
             result = storage_no_logger.get_current_data()
             assert result is None
@@ -422,8 +418,8 @@ class TestReadOperations:
 
     def test_get_history_data_no_file(self, storage_no_logger):
         """历史数据文件不存在"""
-        if os.path.exists(storage_no_logger.history_data_file):
-            os.remove(storage_no_logger.history_data_file)
+        if pathlib.Path(storage_no_logger.history_data_file).exists():
+            pathlib.Path(storage_no_logger.history_data_file).unlink()
 
             result = storage_no_logger.get_history_data()
             assert result == []
@@ -438,15 +434,15 @@ class TestReadOperations:
 
     def test_get_error_logs_no_file(self, storage_no_logger):
         """错误日志文件不存在"""
-        if os.path.exists(storage_no_logger.error_log_file):
-            os.remove(storage_no_logger.error_log_file)
+        if pathlib.Path(storage_no_logger.error_log_file).exists():
+            pathlib.Path(storage_no_logger.error_log_file).unlink()
 
             result = storage_no_logger.get_error_logs()
             assert result == []
 
     def test_get_error_logs_corrupt(self, storage_no_logger):
         """损坏的错误日志"""
-        with open(storage_no_logger.error_log_file, "w", encoding="utf-8") as f:
+        with pathlib.Path(storage_no_logger.error_log_file).open("w", encoding="utf-8") as f:
             f.write("CORRUPTED")
 
             result = storage_no_logger.get_error_logs()
@@ -473,7 +469,7 @@ class TestCompressOldData:
 
             # 压缩后的文件应存在
             compressed_file = storage_no_logger.history_data_file.replace(".json", "_compressed.json")
-            assert os.path.exists(compressed_file)
+            assert pathlib.Path(compressed_file).exists()
 
     def test_compress_no_history(self, storage_no_logger):
         """无历史数据时跳过压缩"""
@@ -481,7 +477,7 @@ class TestCompressOldData:
 
         compressed_file = storage_no_logger.history_data_file.replace(".json", "_compressed.json")
         # 无数据时不应创建压缩文件
-        assert not os.path.exists(compressed_file)
+        assert not pathlib.Path(compressed_file).exists()
 
     @staticmethod
     def _make_monitoring_data(index: int) -> MonitoringData:
@@ -554,7 +550,6 @@ class TestThreadSafety:
 
     def test_concurrent_reads(self, storage_no_logger, sample_monitoring_data):
         """并发读操作不冲突"""
-
         # 先写入数据
         storage_no_logger.save_current_data(sample_monitoring_data)
         storage_no_logger.save_history_data(sample_monitoring_data)

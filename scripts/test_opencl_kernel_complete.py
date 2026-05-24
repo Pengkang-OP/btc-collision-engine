@@ -12,9 +12,6 @@ import numpy as np
 
 # 添加项目根目录到路径
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-sys.path.insert(0, project_root)
-
-
 def test_kernel_compilation():
     """测试1: 内核编译"""
     print("\n" + "=" * 70)

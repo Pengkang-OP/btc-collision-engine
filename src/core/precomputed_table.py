@@ -16,6 +16,7 @@ Technical specifications:
 References:
 - HAC (Handbook of Applied Cryptography) Algorithm 3.27
 - "Speeding up Elliptic Curve Cryptography" - Brown et al.
+
 """
 
 from typing import Any
@@ -57,18 +58,17 @@ class PrecomputedPointTable:
     """
 
     __slots__ = [
-        "window_size",
-        "table",
-        "num_points",
-        "ec",
         "G",
+        "ec",
+        "num_points",
+        "table",
+        "window_size",
     ]
 
     def __init__(
-        self, window_size: int = 8, ec: Any = None
+        self, window_size: int = 8, ec: Any = None,
     ) -> None:
-        """
-        Initialize precomputed point table.
+        """Initialize precomputed point table.
 
         Args:
             window_size: Window size (bits), range 4-8, default 8
@@ -79,10 +79,11 @@ class PrecomputedPointTable:
 
         Raises:
             ValueError: When window_size is out of valid range
+
         """
         if not (4 <= window_size <= 8):
             raise ValueError(
-                f"Window size must be 4-8, got {window_size}"
+                f"Window size must be 4-8, got {window_size}",
             )
 
         self.window_size = window_size
@@ -98,12 +99,13 @@ class PrecomputedPointTable:
 
             self.ec = EllipticCurve()
             self.G = ECPoint(
-                Secp256k1.Gx, Secp256k1.Gy
+                Secp256k1.Gx, Secp256k1.Gy,
             )
         else:
             self.ec = ec
             if hasattr(ec.curve, "G"):
-                self.G = ec.curve.G  # type: ignore[assignment]
+                self.G = ec.curve.G
+
             else:
                 from .secp256k1 import (
                     ECPoint,
@@ -111,14 +113,14 @@ class PrecomputedPointTable:
                 )
 
                 self.G = ECPoint(
-                    Secp256k1.Gx, Secp256k1.Gy
+                    Secp256k1.Gx, Secp256k1.Gy,
                 )
 
         # Build precomputed table
         logger.info(
             f"Building precomputed point table: "
             f"window_size={window_size}, "
-            f"points={self.num_points}"
+            f"points={self.num_points}",
         )
         self.table = self._build_table()
 
@@ -127,12 +129,11 @@ class PrecomputedPointTable:
         ) / 1024  # Estimate memory
         logger.info(
             f"Precomputed table built, "
-            f"estimated memory: {memory_kb:.1f}KB"
+            f"estimated memory: {memory_kb:.1f}KB",
         )
 
     def _build_table(self) -> list:
-        """
-        Build precomputed table:
+        """Build precomputed table:
         [G, 2G, 3G, ..., (2^w-1)G]
 
         Uses double-add algorithm for efficient generation:
@@ -144,6 +145,7 @@ class PrecomputedPointTable:
         Returns:
             List of precomputed points, index i corresponds
             to (i+1)*G
+
         """
         table = []
 
@@ -158,17 +160,16 @@ class PrecomputedPointTable:
         # table[i] = (i+1)*G = table[i-1] + G
         for i in range(2, self.num_points):
             next_point = self.ec.point_add(
-                table[i - 1], self.G
+                table[i - 1], self.G,
             )
             table.append(next_point)
 
         return table
 
     def scalar_multiply_with_table(
-        self, k: int, ec: Any = None
+        self, k: int, ec: Any = None,
     ) -> Any:
-        """
-        Accelerated scalar multiplication using precomputed table.
+        """Accelerated scalar multiplication using precomputed table.
 
         Algorithm:
         1. Decompose k into w-bit windows
@@ -188,6 +189,7 @@ class PrecomputedPointTable:
         Usage:
             >>> k = 0x1234567890abcdef...
             >>> result = table.scalar_multiply_with_table(k)
+
         """
         from .secp256k1 import ECPoint, Secp256k1
 
@@ -234,28 +236,28 @@ class PrecomputedPointTable:
                     window_value - 1
                 ]
                 result = ec.point_add(
-                    result, precomputed_point
+                    result, precomputed_point,
                 )
 
         return result
 
     def get_memory_usage(self) -> int:
-        """
-        Estimate precomputed table memory usage (bytes).
+        """Estimate precomputed table memory usage (bytes).
 
         Returns:
             Memory usage in bytes
+
         """
         # Each ECPoint: 2 large integers (x,y) + metadata
         # ≈ 200 bytes
         return self.num_points * 200
 
     def get_speedup_estimate(self) -> float:
-        """
-        Estimate performance improvement factor.
+        """Estimate performance improvement factor.
 
         Returns:
             Speedup factor relative to standard method
+
         """
         # Standard method: 256 iterations
         # Window method: 256/w iterations + lookup overhead
@@ -287,8 +289,7 @@ class PrecomputedTableManager:
         window_size: int = 8,
         ec: Any = None,
     ) -> PrecomputedPointTable:
-        """
-        Get or create precomputed table.
+        """Get or create precomputed table.
 
         Args:
             window_size: Window size
@@ -296,6 +297,7 @@ class PrecomputedTableManager:
 
         Returns:
             PrecomputedPointTable instance
+
         """
         if window_size not in self._tables:
             self._tables[window_size] = (
@@ -314,10 +316,9 @@ precomputed_table_manager = PrecomputedTableManager()
 
 
 def get_precomputed_table(
-    window_size: int = 8, ec: Any = None
+    window_size: int = 8, ec: Any = None,
 ) -> PrecomputedPointTable:
-    """
-    Get precomputed table (convenience function).
+    """Get precomputed table (convenience function).
 
     Args:
         window_size: Window size (4-8), default 8
@@ -325,7 +326,8 @@ def get_precomputed_table(
 
     Returns:
         PrecomputedPointTable instance
+
     """
     return precomputed_table_manager.get_table(
-        window_size, ec
+        window_size, ec,
     )

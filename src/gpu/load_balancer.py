@@ -45,6 +45,13 @@ class GPULoadBalancer:
 
     # 厂商性能系数已迁移到 GPUDeviceScorer (P3-11)
 
+    __slots__ = (
+        "devices", "strategy", "rebalance_interval", "min_rebalance_threshold",
+        "memory_usage_threshold", "_scorer",
+        "_weights", "_key_ranges", "_last_rebalance_time",
+        "_performance_stats", "_memory_stats", "_historical_performance", "_load_history",
+    )
+
     def __init__(
         self,
         devices: list[dict],
@@ -63,6 +70,7 @@ class GPULoadBalancer:
             min_rebalance_threshold: 最小重平衡阈值(0.0-1.0)
             memory_usage_threshold: 内存使用阈值(0.0-1.0)
             scorer: GPU设备评分器，为None时使用全局单例
+
         """
         if not devices:
             raise ValueError("设备列表不能为空")
@@ -87,7 +95,7 @@ class GPULoadBalancer:
 
         _n = len(devices)
         _interval = rebalance_interval
-        logger.info(f"GPU负载均衡器已初始化: 设备数={_n}, 策略={strategy}, 重平衡间隔={_interval}s")
+        logger.info("GPU负载均衡器已初始化: 设备数=%s, 策略=%s, 重平衡间隔=%ss", _n, strategy, _interval)
 
     def _calculate_initial_weights(self) -> None:
         """计算初始负载权重"""
@@ -108,6 +116,7 @@ class GPULoadBalancer:
 
         Returns:
             设备索引 -> 权重映射 (总和为1.0)
+
         """
         return self._scorer.calculate_performance_weights(self.devices)
 
@@ -116,11 +125,12 @@ class GPULoadBalancer:
 
         Returns:
             设备索引 -> 权重映射
+
         """
         return self._weights.copy()
 
     def assign_key_range(
-        self, total_keys: int, device_idx: int, key_offset: int = 0
+        self, total_keys: int, device_idx: int, key_offset: int = 0,
     ) -> tuple[int, int]:
         """为指定GPU分配私钥搜索范围
 
@@ -131,6 +141,7 @@ class GPULoadBalancer:
 
         Returns:
             (start_key, end_key) 私钥范围
+
         """
         if device_idx not in self._weights:
             raise ValueError(f"设备索引 {device_idx} 不存在于负载均衡器中")
@@ -148,7 +159,8 @@ class GPULoadBalancer:
         self._key_ranges[device_idx] = (start_key, end_key)
 
         logger.debug(
-            f"设备 {device_idx} 分配范围: [{start_key},{end_key}), 量={device_keys:,}, 权重={weight:.3f}"
+            f"设备 {device_idx} 分配范围: [{start_key},{end_key}), "
+            f"量={device_keys:,}, 权重={weight:.3f}",
         )
 
         return start_key, end_key
@@ -161,6 +173,7 @@ class GPULoadBalancer:
 
         Returns:
             累积权重(0.0-1.0)
+
         """
         # 按设备索引排序
         sorted_indices = sorted(self._weights.keys())
@@ -174,7 +187,7 @@ class GPULoadBalancer:
         return cumulative
 
     def assign_all_key_ranges(
-        self, total_keys: int, key_offset: int = 0
+        self, total_keys: int, key_offset: int = 0,
     ) -> dict[int, tuple[int, int]]:
         """为所有GPU分配私钥范围
 
@@ -184,13 +197,14 @@ class GPULoadBalancer:
 
         Returns:
             设备索引 -> (start, end) 映射
+
         """
         ranges = {}
         current_offset = key_offset
 
         # 按权重排序,确保大权重GPU先分配
         sorted_devices = sorted(
-            self.devices, key=lambda d: self._weights.get(d["global_index"], 0), reverse=True
+            self.devices, key=lambda d: self._weights.get(d["global_index"], 0), reverse=True,
         )
 
         for device in sorted_devices:
@@ -211,7 +225,7 @@ class GPULoadBalancer:
         return ranges
 
     def record_performance(
-        self, device_idx: int, throughput: float, error_rate: float = 0.0
+        self, device_idx: int, throughput: float, error_rate: float = 0.0,
     ) -> None:
         """记录GPU实际性能
 
@@ -219,6 +233,7 @@ class GPULoadBalancer:
             device_idx: 设备索引
             throughput: 吞吐量(keys/s)
             error_rate: 错误率(0.0-1.0)
+
         """
         timestamp = time.time()
 
@@ -234,7 +249,7 @@ class GPULoadBalancer:
             self._historical_performance[device_idx] = []
 
         self._historical_performance[device_idx].append(
-            {"throughput": throughput, "error_rate": error_rate, "timestamp": timestamp}
+            {"throughput": throughput, "error_rate": error_rate, "timestamp": timestamp},
         )
 
         # 保持历史数据大小
@@ -244,7 +259,7 @@ class GPULoadBalancer:
             ]
 
     def record_memory_usage(
-        self, device_idx: int, used_memory_mb: float, total_memory_mb: float
+        self, device_idx: int, used_memory_mb: float, total_memory_mb: float,
     ) -> None:
         """记录GPU内存使用情况
 
@@ -252,6 +267,7 @@ class GPULoadBalancer:
             device_idx: 设备索引
             used_memory_mb: 已使用内存(MB)
             total_memory_mb: 总内存(MB)
+
         """
         usage_ratio = used_memory_mb / total_memory_mb if total_memory_mb > 0 else 0
 
@@ -267,6 +283,7 @@ class GPULoadBalancer:
 
         Returns:
             True表示需要重新平衡
+
         """
         now = time.time()
         elapsed = now - self._last_rebalance_time
@@ -287,6 +304,7 @@ class GPULoadBalancer:
 
         Returns:
             True表示负载不均衡
+
         """
         if not self._performance_stats:
             return False
@@ -316,6 +334,7 @@ class GPULoadBalancer:
 
         Returns:
             True表示存在内存压力
+
         """
         if not self._memory_stats:
             return False
@@ -332,6 +351,7 @@ class GPULoadBalancer:
 
         Returns:
             新的权重映射
+
         """
         if not self._performance_stats:
             logger.debug("无性能数据,保持当前权重")
@@ -434,6 +454,7 @@ class GPULoadBalancer:
 
         Returns:
             平均历史吞吐量
+
         """
         if device_idx not in self._historical_performance:
             return 0
@@ -446,7 +467,7 @@ class GPULoadBalancer:
         recent_history = history[-10:]
         throughputs = [h["throughput"] for h in recent_history]
 
-        return cast(float, statistics.mean(throughputs))
+        return cast("float", statistics.mean(throughputs))
 
     def _get_memory_factor(self, device_idx: int) -> float:
         """获取内存影响因子
@@ -456,6 +477,7 @@ class GPULoadBalancer:
 
         Returns:
             内存因子(0.0-1.0)
+
         """
         if device_idx not in self._memory_stats:
             return 1.0
@@ -466,10 +488,9 @@ class GPULoadBalancer:
         # 内存使用越高，因子越低
         if usage_ratio < 0.5:
             return 1.0
-        elif usage_ratio < 0.8:
-            return cast(float, 1.0 - (usage_ratio - 0.5) * 0.5)
-        else:
-            return cast(float, 0.8 - (usage_ratio - 0.8) * 0.5)
+        if usage_ratio < 0.8:
+            return cast("float", 1.0 - (usage_ratio - 0.5) * 0.5)
+        return cast("float", 0.8 - (usage_ratio - 0.8) * 0.5)
 
     def _record_load_history(self) -> None:
         """记录负载历史"""
@@ -493,6 +514,7 @@ class GPULoadBalancer:
 
         Returns:
             负载信息字典
+
         """
         if device_idx not in self._weights:
             return None
@@ -517,6 +539,7 @@ class GPULoadBalancer:
 
         Returns:
             设备索引 -> 负载信息映射
+
         """
         loads = {}
         for device in self.devices:
@@ -532,6 +555,7 @@ class GPULoadBalancer:
 
         Returns:
             策略名称
+
         """
         return self.strategy
 
@@ -540,6 +564,7 @@ class GPULoadBalancer:
 
         Args:
             strategy: 'performance' 或 'equal'
+
         """
         if strategy not in ("performance", "equal"):
             raise ValueError(f"无效的策略: {strategy}, 必须是 'performance' 或 'equal'")
@@ -547,7 +572,7 @@ class GPULoadBalancer:
         self.strategy = strategy
         self._calculate_initial_weights()
 
-        logger.info(f"负载策略已更改为: {strategy}")
+        logger.info("负载策略已更改为: %s", strategy)
 
     def get_performance_prediction(self, device_idx: int) -> float | None:
         """预测设备性能
@@ -557,6 +582,7 @@ class GPULoadBalancer:
 
         Returns:
             预测的吞吐量
+
         """
         if device_idx not in self._historical_performance:
             return None
@@ -578,7 +604,7 @@ class GPULoadBalancer:
         # 预测下一个值
         predicted = throughputs[-1] + trend
 
-        return cast(float, max(predicted, 0))
+        return cast("float", max(predicted, 0))
 
     def reset(self) -> None:
         """重置负载均衡器"""
@@ -599,6 +625,7 @@ class GPULoadBalancer:
 
         Returns:
             统计信息字典
+
         """
         stats = {
             "device_count": len(self.devices),

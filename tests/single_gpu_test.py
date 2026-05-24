@@ -1,23 +1,17 @@
 #!/usr/bin/env python3
-"""
-单GPU测试脚本
+"""单GPU测试脚本
 
 此脚本用于测试单GPU的功能，包括初始化、碰撞检测和资源释放等。
 """
 
-import os
-import sys
 import time
 
-# 添加项目根目录到Python路径
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-import pytest  # noqa: E402
+import pytest
 
 pytestmark = pytest.mark.gpu  # 需要真实GPU硬件
 
-from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
-from src.utils import get_configured_logger, init_logging  # noqa: E402
+from src.collision.gpu.engine import GPUCollisionEngine
+from src.utils import get_configured_logger, init_logging
 
 # 配置日志
 init_logging()
@@ -39,11 +33,11 @@ def test_single_gpu_initialization():
 
         # 获取设备信息
         device_info = engine.get_device_info()
-        logger.info(f"设备信息: {device_info}")
+        logger.info("设备信息: %s", device_info)
 
         return True
     except Exception as e:
-        logger.error(f"❌ 单GPU初始化失败: {e}")
+        logger.error("❌ 单GPU初始化失败: %s", e)
         import traceback
 
         traceback.print_exc()
@@ -54,7 +48,7 @@ def test_single_gpu_initialization():
                 engine.stop()
                 logger.info("单GPU引擎已停止")
             except Exception as e:
-                logger.warning(f"停止引擎时出现错误: {e}")
+                logger.warning("停止引擎时出现错误: %s", e)
 
 
 def test_single_gpu_collision_detection():
@@ -84,7 +78,7 @@ def test_single_gpu_collision_detection():
 
         return True
     except Exception as e:
-        logger.error(f"❌ 单GPU碰撞检测失败: {e}")
+        logger.error("❌ 单GPU碰撞检测失败: %s", e)
         import traceback
 
         traceback.print_exc()
@@ -95,7 +89,7 @@ def test_single_gpu_collision_detection():
                 engine.stop()
                 logger.info("单GPU引擎已停止")
             except Exception as e:
-                logger.warning(f"停止引擎时出现错误: {e}")
+                logger.warning("停止引擎时出现错误: %s", e)
 
 
 def test_single_gpu_resource_release():
@@ -126,7 +120,7 @@ def test_single_gpu_resource_release():
         logger.info("✅ 单GPU资源释放成功")
         return True
     except Exception as e:
-        logger.error(f"❌ 单GPU资源释放失败: {e}")
+        logger.error("❌ 单GPU资源释放失败: %s", e)
         import traceback
 
         traceback.print_exc()
@@ -150,7 +144,7 @@ def main():
         else:
             logger.error("❌ 单GPU测试部分失败")
     except Exception as e:
-        logger.error(f"❌ 测试过程中出现错误: {e}")
+        logger.error("❌ 测试过程中出现错误: %s", e)
         import traceback
 
         traceback.print_exc()

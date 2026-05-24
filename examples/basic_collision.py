@@ -19,7 +19,7 @@ import time
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.core.address_converter import AddressConverter
+from src.core.address_generator import P2PKHAddressGenerator
 from src.core.base58 import Base58
 from src.core.key_generator import SecureKeyGenerator
 
@@ -46,7 +46,7 @@ def main():
 
     # 初始化组件
     key_gen = SecureKeyGenerator()
-    converter = AddressConverter()
+    addr_gen = P2PKHAddressGenerator()
 
     # 将目标地址转为 Hash160 集合以实现 O(1) 匹配
     target_hash160_set = set()
@@ -72,9 +72,9 @@ def main():
             private_key = key_gen.generate_single()
 
             # 计算地址信息（含 Hash160）
-            result = converter.private_key_to_address(private_key, compressed=True)
-            address = result['address']
-            hash160 = bytes.fromhex(result['hash160'])
+            pubkey = addr_gen.private_key_to_public_key(private_key, compressed=True)
+            address = addr_gen.public_key_to_address(pubkey)
+            hash160 = addr_gen.public_key_to_hash160(pubkey)
 
             checked += 1
 

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Intel Arc资源监控功能验证脚本
+"""Intel Arc资源监控功能验证脚本
 
 验证以下功能：
 1. IntelMemoryMonitor - 显存监控
@@ -12,11 +11,6 @@ Intel Arc资源监控功能验证脚本
 import logging
 import sys
 import time
-from pathlib import Path
-
-# 添加项目根目录到路径
-project_root = Path(__file__).parent
-sys.path.insert(0, str(project_root))
 
 # 配置日志
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -59,7 +53,7 @@ def test_memory_monitor():
             f"  批次 {i + 1}: 分配 {size / 1024**2:.0f}MB -> "
             f"使用 {status['current_mb']:.0f}MB "
             f"({status['usage_percent']:.1f}%) "
-            f"[{'✓' if success else '✗'}]"
+            f"[{'✓' if success else '✗'}]",
         )
 
     # 测试显存释放
@@ -160,7 +154,7 @@ def test_performance_monitor():
     print("\n记录性能数据...")
     for i in range(5):
         monitor.record_kernel_metrics(
-            batch_size=100000, execution_time_ms=50.0 + i * 10, memory_allocated_mb=256.0
+            batch_size=100000, execution_time_ms=50.0 + i * 10, memory_allocated_mb=256.0,
         )
         print(f"  批次 {i + 1}: 执行时间 {50.0 + i * 10:.0f}ms, 显存 256MB")
 
@@ -193,7 +187,7 @@ def test_data_monitor():
 
     # 创建数据监控器
     monitor = DataMonitor(
-        config={"check_interval": 0.5, "throughput_threshold": 0.5, "error_rate_threshold": 0.1}
+        config={"check_interval": 0.5, "throughput_threshold": 0.5, "error_rate_threshold": 0.1},
     )
 
     print("\n✓ 数据监控器初始化成功")
@@ -206,7 +200,7 @@ def test_data_monitor():
     print("\n模拟数据报告...")
     for i in range(5):
         monitor.report_keys_generated(
-            device_idx=0, count=100000, key_range=(i * 100000, (i + 1) * 100000)
+            device_idx=0, count=100000, key_range=(i * 100000, (i + 1) * 100000),
         )
         print(f"  GPU 0: 生成 {100000:,} 个密钥 (批次 {i + 1})")
         time.sleep(0.1)
@@ -322,7 +316,7 @@ def main():
             result = test_func()
             results.append((name, result))
         except Exception as e:
-            logger.error(f"测试失败 [{name}]: {e}", exc_info=True)
+            logger.error("测试失败 [%s]: %s", name, e, exc_info=True)
             results.append((name, False))
 
     # 打印总结
@@ -342,9 +336,8 @@ def main():
     if passed == total:
         print("\n🎉 所有Intel Arc资源监控功能验证通过！")
         return 0
-    else:
-        print(f"\n⚠️ {total - passed} 个测试失败")
-        return 1
+    print(f"\n⚠️ {total - passed} 个测试失败")
+    return 1
 
 
 if __name__ == "__main__":

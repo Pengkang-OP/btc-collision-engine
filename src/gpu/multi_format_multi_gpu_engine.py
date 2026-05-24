@@ -1,5 +1,4 @@
-"""
-多格式地址支持 - 多GPU引擎集成方案
+"""多格式地址支持 - 多GPU引擎集成方案
 
 目标: 在不修改GPU内核的情况下，支持多格式地址匹配
 
@@ -41,6 +40,11 @@ class MultiFormatMultiGPUEngine:
     - 格式统计和监控
     """
 
+    __slots__ = (
+        "_multi_gpu_engine", "_format_manager", "_address_generator",
+        "_enable_post_processing", "_enable_cpu_fallback",
+    )
+
     def __init__(self, multi_gpu_config: dict | None = None):
         self._multi_gpu_engine = MultiGPUCollisionEngine(multi_gpu_config)
         self._format_manager = FormatAwareTargetManager()
@@ -55,7 +59,7 @@ class MultiFormatMultiGPUEngine:
     def initialize(self, device_indices=None, device_count=-1, strategy="performance"):
         """初始化GPU设备"""
         return self._multi_gpu_engine.initialize(
-            device_indices=device_indices, device_count=device_count, strategy=strategy
+            device_indices=device_indices, device_count=device_count, strategy=strategy,
         )
 
     def add_target(self, address: str) -> bool:
@@ -92,6 +96,7 @@ class MultiFormatMultiGPUEngine:
             match_callback: 匹配回调 (device_idx, match)
             range_start: range 模式起始私钥
             range_end: range 模式结束私钥
+
         """
         # 如果传入了 targets 且为 set/list，先添加到格式管理器
         if targets and isinstance(targets, (set, list)):
@@ -111,7 +116,7 @@ class MultiFormatMultiGPUEngine:
                     private_key_value = match.get("private_key_hash")
                     if private_key_value:
                         extra_formats = self._check_other_formats(
-                            private_key_value, matched_address, matched_format
+                            private_key_value, matched_address, matched_format,
                         )
                     else:
                         extra_formats = []
@@ -149,7 +154,7 @@ class MultiFormatMultiGPUEngine:
         )
 
     def _check_other_formats(
-        self, private_key: bytes, matched_address: str, matched_format: str
+        self, private_key: bytes, matched_address: str, matched_format: str,
     ) -> list[tuple[str, str]]:
         """检查其他格式是否也匹配"""
         extra_matches: list[tuple[str, str]] = []
@@ -239,7 +244,7 @@ if __name__ == "__main__":
 
     engine = create_engine()
 
-    print("\n✅ 引擎创建成功!")
+    print("\n[OK] 引擎创建成功!")
     print("\n支持的地址格式:")
     for fmt in AddressFormat:
         print(f"  • {fmt.value.upper()}: {fmt.value}")
@@ -275,4 +280,4 @@ if __name__ == "__main__":
     engine.cleanup()
     """)
 
-    print("\n✅ 集成方案设计完成!")
+    print("\n[OK] 集成方案设计完成!")

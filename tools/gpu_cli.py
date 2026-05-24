@@ -24,10 +24,6 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-# 添加项目根目录
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-
 def cmd_list_devices(args):
     """列出所有GPU设备"""
     from src.gpu.selector import get_gpu_selector
@@ -45,17 +41,6 @@ def cmd_list_devices(args):
 
     # 打印设备列表
     print(selector.format_all_devices(devices))
-
-    # 打印兼容性警告
-    from src.gpu.config_validator import GPUConfigValidator
-
-    validator = GPUConfigValidator()
-    is_compatible, warnings = validator.validate_device_compatibility(devices)
-
-    if warnings:
-        print("\n⚠️  兼容性警告:")
-        for warning in warnings:
-            print(f"  - {warning}")
 
     return 0
 
@@ -141,7 +126,6 @@ def cmd_test_multi(args):
 
 def cmd_generate_config(args):
     """生成配置文件"""
-    from src.gpu.config_validator import GPUConfigValidator
     from src.gpu.selector import get_gpu_selector
 
     selector = get_gpu_selector()
@@ -151,8 +135,11 @@ def cmd_generate_config(args):
         print("❌ 未检测到GPU设备")
         return 1
 
-    validator = GPUConfigValidator()
-    config = validator.suggest_config(devices, mode=args.mode)
+    # 生成简单配置 (config_validator 模块已移除)
+    config = {
+        "mode": args.mode if hasattr(args, "mode") else "single",
+        "device_indices": [d["global_index"] for d in devices],
+    }
 
     # 添加元数据
     config["_metadata"] = {

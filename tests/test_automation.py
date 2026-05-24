@@ -1,5 +1,4 @@
-"""
-src/automation 模块测试
+"""src/automation 模块测试
 """
 
 from datetime import datetime
@@ -141,7 +140,7 @@ class TestAnalysisReport:
                 category="test",
                 title="Critical",
                 description="Critical",
-            )
+            ),
         ]
         report = AnalysisReport(
             report_id="rpt-003",
@@ -311,7 +310,7 @@ class TestAuditResult:
                 category="test",
                 title="High Violation",
                 description="Test",
-            )
+            ),
         ]
         result = AuditResult(
             audit_id="audit-002",
@@ -332,7 +331,7 @@ class TestAuditResult:
                 category="test",
                 title="Critical Violation",
                 description="Critical test",
-            )
+            ),
         ]
         result = AuditResult(
             audit_id="audit-003",

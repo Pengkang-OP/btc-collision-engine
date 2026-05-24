@@ -88,7 +88,12 @@ class TestAuthFunctions:
         monkeypatch.setattr("src.web.dashboard.request", mock_request)
         assert _validate_api_key() is True
 
-    def test_validate_api_key_valid_query_param(self, monkeypatch):
+    def test_validate_api_key_query_param_not_supported(self, monkeypatch):
+        """Query param API keys are intentionally NOT supported.
+        
+        Security design: _validate_api_key only reads from Authorization header
+        to prevent API keys from leaking into browser history, server logs, etc.
+        """
         from src.web.dashboard import _validate_api_key
 
         monkeypatch.setattr("src.web.dashboard._api_key_required", True)
@@ -97,7 +102,8 @@ class TestAuthFunctions:
         mock_request.headers.get.return_value = ""
         mock_request.args.get.return_value = "my-secret"
         monkeypatch.setattr("src.web.dashboard.request", mock_request)
-        assert _validate_api_key() is True
+        # Query param is ignored by design – only Authorization header is checked
+        assert _validate_api_key() is False
 
     def test_validate_api_key_invalid(self, monkeypatch):
         from src.web.dashboard import _validate_api_key
@@ -280,7 +286,8 @@ class TestSafeReadJson:
 
         p = tmp_path / "unreadable.json"
         p.write_text('{"key": "value"}', encoding="utf-8")
-        with patch("builtins.open", side_effect=OSError("Permission denied")):
+        # _safe_read_json uses Path(path).open() not builtins.open()
+        with patch("pathlib.Path.open", side_effect=OSError("Permission denied")):
             result = _safe_read_json(p)
             assert result is None
 
@@ -847,7 +854,9 @@ class TestCreateAppFlaskAvailable:
         dash.create_app()
         # The Flask constructor should have been called with a name
         flask_mock["Flask"].assert_called_once()
-        assert len(flask_mock["route_handlers"]) == 6
+        # Routes: /, /api/status, /api/history, /api/errors, /api/report,
+        #         /api/security-audit, /health
+        assert len(flask_mock["route_handlers"]) == 7
 
 
 class TestRunDashboard:

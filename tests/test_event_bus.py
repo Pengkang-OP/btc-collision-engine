@@ -119,7 +119,7 @@ class TestEventCreation:
 
     def test_engine_complete_event(self):
         event = EngineCompleteEvent(
-            total_checked=1000000, matches_found=5, elapsed_time=3600.0, stop_reason="normal"
+            total_checked=1000000, matches_found=5, elapsed_time=3600.0, stop_reason="normal",
         )
         assert event.event_type == EventType.ENGINE_COMPLETE
 
@@ -442,7 +442,7 @@ class TestEventBusThreadSafety:
         """多线程同时发布不应损坏数据"""
         results = []
 
-        def handler(e):  # noqa: E306
+        def handler(e):
             return results.append(e.total_checked)
 
         sync_bus.subscribe(EventType.ENGINE_PROGRESS, handler)

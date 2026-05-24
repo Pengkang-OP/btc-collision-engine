@@ -107,7 +107,8 @@ disallow_incomplete_defs = false                          # 允许部分类型�
 disallow_untyped_calls = false                            # 允许调用未类型化函数
 no_implicit_optional = true                               # 防止隐式Optional
 strict_equality = true                                    # 防止不安全的类型比较
-exclude = ["tests/", "benchmarks/", "tools/", "scripts/"]
+exclude = ["tests/", "benchmarks/", "tools/", "scripts/", "src/gpu/pyopencl_stubs/"]
+mypy_path = ["src/gpu/pyopencl_stubs"]            # pyopencl stub 文件路径
 
 [tool.black]
 line-length = 105
@@ -168,7 +169,7 @@ exclude = [
 ]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "C90", "I", "N", "UP", "SIM", "B"]
+select = ["E", "F", "W", "C90", "I", "N", "UP", "SIM", "B", "T20"]
 ignore = ["E203"]
 
 [tool.ruff.lint.per-file-ignores]
@@ -179,7 +180,15 @@ ignore = ["E203"]
 "scripts/**/*.py" = ["E501", "E402"]               # 脚本：sys.path.insert + 可读性长行
 "scripts/_batch_p1.py" = ["E501"]                  # 嵌入式源码字符串补丁脚本
 "scripts/extract_opencl_kernels.py" = ["E501"]     # 文档字符串含 markdown 代码示例
-"benchmarks/**/*.py" = ["E501", "E402"]            # 基准测试：格式化非关键
+"benchmarks/**/*.py" = ["E501", "E402", "T201"]        # 基准测试：格式化非关键，允许 print
+# ── 合法 CLI 工具允许 print() 输出 ──────────────────────────
+"src/cli/*.py" = ["T201"]                                # CLI 命令行接口输出
+"src/utils/first_run_wizard.py" = ["T201"]               # 首次运行向导
+"src/wizard/*.py" = ["T201"]                             # 向导引擎
+"src/automation/*.py" = ["T201"]                         # 自动化闭环 CLI
+"src/utils/performance_benchmark.py" = ["T201"]          # 性能基准测试 CLI
+"src/utils/health_check.py" = ["T201"]                   # 健康检查 CLI
+"src/gpu/multi_format_multi_gpu_engine.py" = ["T201"]   # GPU 引擎示例/测试
 
 [tool.ruff.lint.mccabe]
 max-complexity = 15

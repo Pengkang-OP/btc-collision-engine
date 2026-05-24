@@ -1,0 +1,19 @@
+2026-05-24 00:25:32,866 - CryptoBackend - WARNING - PurePythonBackend: �Ǻ㶨ʱ��ģʽ - ���Ƽ������������������鰲װ coincurve �� cryptography
+2026-05-24 00:25:33,093 - CryptoBackend - INFO - Crypto backend initialization complete: available=['PURE_PYTHON', 'OPENSSL', 'COINCURVE', 'ECDSA'], current=coincurve (libsecp256k1)
+2026-05-24 00:25:33,094 - src.utils.logging_config - WARNING - ��־ϵͳ�ѱ���ʼ�����ظ����ñ�����
+[INFO] ��־��ȫ������������ (��ʽ: 16, �Զ�����: 11, �ܼ�: 27)
+2026-05-24 00:25:34,241 - GPUDevice - INFO - 检测到 2 个GPU设备
+================================================================
+参数推荐
+================================================================
+
+[Info] 推荐参数:
+   --use-gpu --workers 8 --checkpoint --dedup
+
+[Info] 推荐理由:
+   1. 检测到 GPU 设备，推荐启用 GPU 加速
+   2. 根据 16 核心 CPU，推荐 8 个工作线程
+   3. 推荐启用断点续传，防止意外中断导致进度丢失
+   4. 推荐启用去重过滤，避免重复检查相同私钥
+
+================================================================

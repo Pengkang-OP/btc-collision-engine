@@ -12,5 +12,6 @@ class ConfigBuilder:
 
         Returns:
             Engine configuration dictionary
+
         """
         return dict(selections)

@@ -1,15 +1,11 @@
 #!/usr/bin/env python3
-"""
-GPU资源清理测试脚本
+"""GPU资源清理测试脚本
 
 专门测试GPU碰撞引擎的资源清理功能，确保stop()方法正确释放所有资源。
 """
 
-import sys
 
 import pytest
-
-sys.path.insert(0, ".")
 
 pytestmark = [
     pytest.mark.gpu,

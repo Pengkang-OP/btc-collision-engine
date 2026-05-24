@@ -1,32 +1,24 @@
 #!/usr/bin/env python3
-"""
-向导引擎
+"""向导引擎
 
 协调各选择器工作，实现完整的交互式引导流程。
 """
 
 import logging
-import os
 import sys
 import time
+from collections.abc import Callable
+
+from .config_builder import ConfigBuilder
+from .events import EventDispatcher, WizardEventType
+from .gpu_selector import GPUSelector
+from .interfaces import WizardConfig, WizardMode, WizardResult
+from .message_queue import WizardMessageQueue, get_message_queue
+from .mode_selector import ModeSelector
+from .option_selector import OptionSelector
+from .target_selector import TargetSelector
 
 logger = logging.getLogger(__name__)
-
-# 添加项目根目录到路径
-_project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-if _project_root not in sys.path:
-    sys.path.insert(0, _project_root)
-
-from collections.abc import Callable  # noqa: E402
-
-from .config_builder import ConfigBuilder  # noqa: E402
-from .events import EventDispatcher, WizardEventType  # noqa: E402
-from .gpu_selector import GPUSelector  # noqa: E402
-from .interfaces import WizardConfig, WizardMode, WizardResult  # noqa: E402
-from .message_queue import WizardMessageQueue, get_message_queue  # noqa: E402
-from .mode_selector import ModeSelector  # noqa: E402
-from .option_selector import OptionSelector  # noqa: E402
-from .target_selector import TargetSelector  # noqa: E402
 
 
 class WizardEngine:
@@ -55,6 +47,7 @@ class WizardEngine:
             config: 向导配置，默认使用标准配置
             message_queue: 消息队列实例，默认使用全局单例。
                           支持注入自定义/模拟队列用于测试。
+
         """
         self.config = config or WizardConfig()
         self.result = WizardResult()
@@ -74,6 +67,7 @@ class WizardEngine:
 
         Returns:
             WizardResult: 向导结果
+
         """
         self._running = True
         self.message_queue.send_wizard_start({"mode": self.config.mode.value})
@@ -98,7 +92,7 @@ class WizardEngine:
         except KeyboardInterrupt:
             self._cancelled()
         except Exception as e:
-            logger.error(f"Wizard engine error: {e}", exc_info=True)
+            logger.error("Wizard engine error: %s", e, exc_info=True)
             self._error(f"{type(e).__name__}: {e}")
         finally:
             self._running = False
@@ -236,7 +230,7 @@ class WizardEngine:
         try:
             subprocess.run(self.result.command, shell=False)  # nosec B603
         except (subprocess.SubprocessError, FileNotFoundError, OSError) as e:
-            logger.error(f"Command execution failed: {e}")
+            logger.error("Command execution failed: %s", e)
             print(f"[ERROR] 执行失败: {e}")
 
     def stop(self):
@@ -253,6 +247,7 @@ class WizardEngine:
         Args:
             step_name: 步骤名称
             handler: 处理函数
+
         """
         self._step_handlers[step_name] = handler
 

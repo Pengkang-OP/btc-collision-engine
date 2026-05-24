@@ -9,7 +9,10 @@ modules, ensuring:
 """
 
 import importlib
+import logging
 from dataclasses import dataclass, field
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -111,10 +114,9 @@ class LogDependencyManager:
                 # 初始化依赖的组件
                 if not self.initialize_component(dep.name) and not dep.optional:
                     return False
-            else:
-                # 初始化外部依赖
-                if not self._initialize_external_dependency(dep) and not dep.optional:
-                    return False
+            # 初始化外部依赖
+            elif not self._initialize_external_dependency(dep) and not dep.optional:
+                return False
 
         # 初始化组件
         try:
@@ -123,10 +125,10 @@ class LogDependencyManager:
                 module.init()
             component.initialized = True
             self.initialized_components.add(component_name)
-            print(f"日志组件 '{component_name}' 初始化成功")
+            logger.info("日志组件 '%s' 初始化成功", component_name)
             return True
         except Exception as e:
-            print(f"日志组件 '{component_name}' 初始化失败: {e}")
+            logger.error("日志组件 '%s' 初始化失败: %s", component_name, e)
             return False
 
     def _initialize_external_dependency(self, dependency: Dependency) -> bool:
@@ -143,18 +145,16 @@ class LogDependencyManager:
             return True
         except ImportError:
             if dependency.optional:
-                print(f"可选依赖 '{dependency.name}' 未安装，将使用默认实现")
+                logger.info("可选依赖 '%s' 未安装，将使用默认实现", dependency.name)
                 return True
-            else:
-                print(f"必需依赖 '{dependency.name}' 未安装")
-                return False
+            logger.error("必需依赖 '%s' 未安装", dependency.name)
+            return False
         except Exception as e:
             if dependency.optional:
-                print(f"可选依赖 '{dependency.name}' 初始化失败: {e}，将使用默认实现")
+                logger.info("可选依赖 '%s' 初始化失败: %s，将使用默认实现", dependency.name, e)
                 return True
-            else:
-                print(f"必需依赖 '{dependency.name}' 初始化失败: {e}")
-                return False
+            logger.error("必需依赖 '%s' 初始化失败: %s", dependency.name, e)
+            return False
 
     def initialize_all(self) -> bool:
         """初始化所有组件"""
@@ -172,7 +172,7 @@ class LogDependencyManager:
 
             return success
         except Exception as e:
-            print(f"初始化过程中发生错误: {e}")
+            logger.error("初始化过程中发生错误: %s", e)
             return False
 
     def get_initialization_order(self) -> list[str]:
@@ -207,11 +207,11 @@ _dependency_manager: LogDependencyManager | None = None
 
 
 def get_dependency_manager() -> LogDependencyManager:
-    """
-    获取依赖管理器实例
+    """获取依赖管理器实例
 
     Returns:
         依赖管理器实例
+
     """
     global _dependency_manager
     if _dependency_manager is None:
@@ -220,8 +220,7 @@ def get_dependency_manager() -> LogDependencyManager:
 
 
 def init_log_dependencies() -> None:
-    """
-    初始化日志依赖
+    """初始化日志依赖
     """
     manager = get_dependency_manager()
 
@@ -242,7 +241,7 @@ def init_log_dependencies() -> None:
                 Dependency(name="json", module="json"),
             ],
             init_order=1,
-        )
+        ),
     )
 
     manager.register_component(
@@ -254,7 +253,7 @@ def init_log_dependencies() -> None:
                 Dependency(name="logging_config", module="src.utils.logging_config"),
             ],
             init_order=2,
-        )
+        ),
     )
 
     manager.register_component(
@@ -266,7 +265,7 @@ def init_log_dependencies() -> None:
                 Dependency(name="logging", module="logging"),
             ],
             init_order=3,
-        )
+        ),
     )
 
     manager.register_component(
@@ -278,7 +277,7 @@ def init_log_dependencies() -> None:
                 Dependency(name="psutil", module="psutil", optional=True),
             ],
             init_order=4,
-        )
+        ),
     )
 
     manager.register_component(
@@ -291,7 +290,7 @@ def init_log_dependencies() -> None:
                 Dependency(name="psutil", module="psutil", optional=True),
             ],
             init_order=5,
-        )
+        ),
     )
 
     # 初始化所有组件
@@ -299,22 +298,22 @@ def init_log_dependencies() -> None:
 
 
 def get_dependency_graph() -> dict[str, list[str]]:
-    """
-    获取依赖图
+    """获取依赖图
 
     Returns:
         依赖图
+
     """
     manager = get_dependency_manager()
     return manager.get_dependency_graph()
 
 
 def check_dependencies() -> dict[str, bool]:
-    """
-    检查依赖状态
+    """检查依赖状态
 
     Returns:
         依赖状态字典
+
     """
     manager = get_dependency_manager()
     status: dict[str, bool] = {}

@@ -64,7 +64,6 @@ class TestBech32Decode:
 
     def test_taproot_format_detection(self):
         """仅验证前缀检测 (不验证 Taproot 校验和)"""
-
         # 使用格式检测验证，不依赖具体地址校验
         from src.collision.targets.resolver import TargetResolver
 
@@ -85,7 +84,9 @@ class TestDecodeSegwitAddress:
     def test_valid_bech32_p2wpkh(self):
         from src.utils.bech32_codec import decode_segwit_address
 
-        version, program = decode_segwit_address("bc", "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq")
+        hrp, version, program = decode_segwit_address(
+            "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq", expected_hrp="bc"
+        )
         assert version == 0
         assert program is not None
         assert len(program) == 20
@@ -101,14 +102,16 @@ class TestDecodeSegwitAddress:
     def test_invalid_hrp_mismatch(self):
         from src.utils.bech32_codec import decode_segwit_address
 
-        version, program = decode_segwit_address("tb", "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq")
+        hrp, version, program = decode_segwit_address(
+            "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq", expected_hrp="tb"
+        )
         assert version is None
         assert program is None
 
     def test_invalid_address(self):
         from src.utils.bech32_codec import decode_segwit_address
 
-        version, program = decode_segwit_address("bc", "invalid")
+        hrp, version, program = decode_segwit_address("invalid", expected_hrp="bc")
         assert version is None
 
 
@@ -247,7 +250,7 @@ class TestResolveBatch:
             [
                 "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
                 "not_valid",
-            ]
+            ],
         )
         assert len(results) == 2
         assert results["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"] is not None

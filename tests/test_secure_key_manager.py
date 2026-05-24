@@ -147,7 +147,7 @@ class TestSecureKeyManagerProperties(unittest.TestCase):
         self.assertTrue(mgr.is_cleared)
 
     def test_backend(self):
-        """backend 属性"""
+        """Backend 属性"""
         mgr = SecureKeyManager()
         self.assertIsInstance(mgr.backend, str)
 
@@ -281,7 +281,7 @@ class TestSecureKeyManagerClearBackends(unittest.TestCase):
     """不同后端清零测试"""
 
     def test_clear_with_ctypes_backend(self):
-        """ctypes 后端清零"""
+        """Ctypes 后端清零"""
         mgr = SecureKeyManager(lock_memory=False)
         mgr._backend = "ctypes"
         mgr.generate_key(b"\x01" * 32)
@@ -291,7 +291,7 @@ class TestSecureKeyManagerClearBackends(unittest.TestCase):
         self.assertTrue(all(b == 0 for b in mgr._key))
 
     def test_clear_with_retry_fallback(self):
-        """pynacl 后端清零（带回退路径）"""
+        """Pynacl 后端清零（带回退路径）"""
         mgr = SecureKeyManager(lock_memory=False)
         mgr._backend = "pynacl"
         mgr.generate_key(b"\x02" * 32)

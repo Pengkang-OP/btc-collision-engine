@@ -1,6 +1,5 @@
 """Key auditing utilities for security compliance."""
 
-import hashlib
 
 from ..utils import get_configured_logger
 
@@ -14,18 +13,19 @@ class KeyAuditor:
         self._audit_log: list[dict] = []
 
     def record_generation(
-        self, key_hash: str
+        self, key_hash: str,
     ) -> None:
         """Record a key generation event.
 
         Args:
             key_hash: SHA-256 hash of generated key
+
         """
         self._audit_log.append(
             {
                 "event": "generation",
                 "key_hash": key_hash,
-            }
+            },
         )
         logger.debug(f"Key generation recorded: {key_hash[:8]}...")
 
@@ -34,6 +34,7 @@ class KeyAuditor:
 
         Returns:
             List of audit events
+
         """
         return list(self._audit_log)
 

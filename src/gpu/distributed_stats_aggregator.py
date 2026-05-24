@@ -33,6 +33,12 @@ class DistributedStatsAggregator:
     - 内置负载均衡感知
     """
 
+    __slots__ = (
+        "_stop_event", "_workers", "_workers_lock",
+        "_aggregated_stats", "_cache_valid", "_cache_lock",
+        "_aggregation_interval", "_aggregation_thread",
+    )
+
     def __init__(self) -> None:
         # 停止标志（必须在启动线程前初始化）
         self._stop_event = threading.Event()
@@ -193,7 +199,7 @@ class DistributedStatsAggregator:
                     "device_idx": idx,
                     "keys_checked": stats["keys_checked"],
                     "deviation_percent": deviation,
-                }
+                },
             )
 
         return {

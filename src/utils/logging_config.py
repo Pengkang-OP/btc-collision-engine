@@ -7,6 +7,7 @@ files,
 
 import logging
 import os
+import pathlib
 import platform
 import shutil
 import sys
@@ -17,6 +18,7 @@ from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 from typing import Any
 
 from .logger import ColoredFormatter, SafeStreamHandler
+from .security_log_filter import SecurityLogFilter
 
 # v4.5.1: 项目根目录缓存，用于解析相对日志路径
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -55,14 +57,10 @@ class SafeRotatingFileHandler(RotatingFileHandler):
                 time.sleep(self._retry_delay * (attempt + 1))
         # 所有重试均失败：输出警告并继续写入当前文件，不中断主程序
         _rc = self._retry_count
-        print(
-            f"[日志警告] 日志轮转失败（已重试{_rc}次），文件可能被其他进程占用: {self.baseFilename}",
-            file=sys.stderr,
+        sys.stderr.write(
+            f"[日志警告] 日志轮转失败（已重试{_rc}次），文件可能被其他进程占用: {self.baseFilename}\n",
         )
 
-
-# 导入安全过滤器（敏感信息遮蔽）
-from .security_log_filter import SecurityLogFilter  # noqa: E402
 
 # 幂等守卫：防止多次 import 重复执行安全过滤器初始化
 _security_filter_initialized: bool = False
@@ -96,8 +94,7 @@ class LoggingConfig:
         return cls._instance
 
     def init(self, config: dict[str, Any] | None = None) -> None:
-        """
-        初始化日志配置
+        """初始化日志配置
 
         参数:
             config: 自定义配置字典，None则使用默认配置
@@ -164,8 +161,8 @@ class LoggingConfig:
         self._config["file"] = log_path  # 更新配置中的路径为绝对路径
 
         log_dir = os.path.dirname(log_path)
-        if log_dir and not os.path.exists(log_dir):
-            os.makedirs(log_dir, mode=0o750, exist_ok=True)
+        if log_dir and not pathlib.Path(log_dir).exists():
+            pathlib.Path(log_dir).mkdir(mode=0o750, exist_ok=True, parents=True)
 
     def _resolve_log_path(self, log_file: str) -> str:
         """将日志路径解析为绝对路径（相对路径基于项目根目录）
@@ -175,8 +172,9 @@ class LoggingConfig:
 
         Returns:
             绝对路径的日志文件位置
+
         """
-        if os.path.isabs(log_file):
+        if pathlib.Path(log_file).is_absolute():
             return log_file
         # 相对路径基于项目根目录，而非 CWD
         return os.path.join(_PROJECT_ROOT, log_file)
@@ -189,31 +187,29 @@ class LoggingConfig:
 
         Returns:
             True 表示磁盘空间充足，False 表示空间不足
+
         """
         log_file = (
             self._config.get("file", "logs/collision.log") if self._config else "logs/collision.log"
         )
         log_dir = os.path.dirname(os.path.abspath(log_file)) or "."
         # 若目录不存在，退化到当前工作目录
-        check_path = log_dir if os.path.exists(log_dir) else "."
+        check_path = log_dir if pathlib.Path(log_dir).exists() else "."
         try:
             usage = shutil.disk_usage(check_path)
             free_mb = usage.free / (1024 * 1024)
             total_mb = usage.total / (1024 * 1024)
             used_pct = (usage.used / usage.total) * 100
             if free_mb < min_free_mb:
-                # 使用 print 而非 logging，避免递归初始化
-                print(
+                sys.stderr.write(
                     f"[磁盘警告] 日志目录 '{check_path}' 可用空间不足 "
                     f"{free_mb:.0f} MB（阈值 {min_free_mb} MB，"
-                    f"总计 {total_mb:.0f} MB，已用 {used_pct:.1f}%）",
-                    file=sys.stderr,
+                    f"总计 {total_mb:.0f} MB，已用 {used_pct:.1f}%）\n",
                 )
                 return False
             return True
         except Exception as e:
-            # 磁盘检查失败不应阻止程序启动
-            print(f"[磁盘检查] 无法获取磁盘空间信息: {e}", file=sys.stderr)
+            sys.stderr.write(f"[磁盘检查] 无法获取磁盘空间信息: {e}\n")
             return True
 
     def _setup_root_logger(self) -> None:
@@ -248,9 +244,9 @@ class LoggingConfig:
                 if file_handler:
                     root_logger.addHandler(file_handler)
 
-    def _create_file_handler(
-        self, log_file: str, format_str: str
-    ) -> logging.Handler | None:  # noqa: C901
+    def _create_file_handler(  # noqa: C901
+        self, log_file: str, format_str: str,
+    ) -> logging.Handler | None:
         """创建文件处理器"""
         assert self._config is not None
         rotation_type = self._config.get("rotation_type", "size")
@@ -329,15 +325,13 @@ class LoggingConfig:
                                 hasattr(errno, "ESTALE")
                                 and getattr(os_err, "errno", None) == errno.ESTALE
                             ):
-                                print(
-                                    f"[日志警告] NFS 文件句柄失效且无法恢复: {os_err}",
-                                    file=sys.stderr,
+                                sys.stderr.write(
+                                    f"[日志警告] NFS 文件句柄失效且无法恢复: {os_err}\n",
                                 )
                             else:
-                                print(
+                                sys.stderr.write(
                                     f"[日志警告] 日志文件写入失败（磁盘可能已满）: {os_err}"
-                                    " 请清理磁盘或调整 logging.file 路径",
-                                    file=sys.stderr,
+                                    " 请清理磁盘或调整 logging.file 路径\n",
                                 )
 
                 def _recover_stale_handle(self) -> None:
@@ -365,7 +359,7 @@ class LoggingConfig:
                                 handler = SafeRotatingFileHandler(
                                     self._log_file,
                                     maxBytes=(self._config_snapshot or {}).get(
-                                        "max_bytes", 10 * 1024 * 1024
+                                        "max_bytes", 10 * 1024 * 1024,
                                     ),
                                     backupCount=(self._config_snapshot or {}).get("backup_count", 5),
                                     encoding="utf-8-sig",
@@ -374,14 +368,14 @@ class LoggingConfig:
                             handler.setFormatter(
                                 logging.Formatter(self._format_str)
                                 if isinstance(self._format_str, str)
-                                else self._inner.formatter
+                                else self._inner.formatter,
                             )
                             self._inner = handler
-                            print(f"[日志] NFS 文件句柄已恢复: {self._log_file}", file=sys.stderr)
+                            sys.stderr.write(f"[日志] NFS 文件句柄已恢复: {self._log_file}\n")
                         except Exception as rebuild_err:
-                            print(f"[日志警告] NFS 句柄恢复失败: {rebuild_err}", file=sys.stderr)
+                            sys.stderr.write(f"[日志警告] NFS 句柄恢复失败: {rebuild_err}\n")
                     except Exception as close_err:
-                        print(f"[日志警告] 关闭旧日志句柄失败: {close_err}", file=sys.stderr)
+                        sys.stderr.write(f"[日志警告] 关闭旧日志句柄失败: {close_err}\n")
 
                 def close(self) -> None:
                     self._inner.close()
@@ -389,14 +383,14 @@ class LoggingConfig:
 
             # 设置日志文件权限为仅所有者可读写
             with suppress(OSError):
-                os.chmod(log_file, 0o600)  # Windows 系统可能不支持 chmod
+                pathlib.Path(log_file).chmod(0o600)  # Windows 系统可能不支持 chmod
 
             # v4.5.1: 绑定创建参数供 NFS stale handle 恢复
             safe_handler = _DiskSafeHandler(handler)
             safe_handler.bind_params(log_file, rotation_type, self._config or {})
             return safe_handler
         except Exception as e:
-            print(f"创建日志文件处理器失败: {e}", file=sys.stderr)
+            sys.stderr.write(f"创建日志文件处理器失败: {e}\n")
             return None
 
     def get_config(self) -> dict[str, Any]:
@@ -407,8 +401,7 @@ class LoggingConfig:
         return self._config.copy()
 
     def get_logger(self, name: str) -> logging.Logger:
-        """
-        获取配置好的日志记录器
+        """获取配置好的日志记录器
 
         参数:
             name: 日志记录器名称
@@ -427,8 +420,7 @@ logging_config = LoggingConfig()
 
 
 def init_logging(config: dict[str, Any] | None = None) -> None:
-    """
-    初始化日志系统
+    """初始化日志系统
 
     参数:
         config: 自定义配置字典
@@ -455,7 +447,7 @@ def _setup_security_filter() -> None:
     try:
         # 创建安全过滤器
         security_filter = SecurityLogFilter(
-            name="security_filter", mask_private_keys=True, mask_wif=True, mask_addresses=True
+            name="security_filter", mask_private_keys=True, mask_wif=True, mask_addresses=True,
         )
 
         # 添加到根日志记录器
@@ -506,24 +498,22 @@ def _setup_security_filter() -> None:
                 _processed_loggers.add(id(logger_ref))
                 auto_discovered += 1
 
-        # 注意：这里不使用logging.info，因为日志系统可能还未完全初始化
-        print(
+        sys.stderr.write(
             f"[INFO] 日志安全过滤器已启用 "
             f"(显式: {len(critical_module_loggers)}, "
             f"自动发现: {auto_discovered}, "
-            f"总计: {len(_processed_loggers) - 1})"
+            f"总计: {len(_processed_loggers) - 1})\n",
         )
         _security_filter_initialized = True
 
     except Exception as e:
         # 安全过滤器初始化失败不应阻止日志系统工作
-        print(f"[WARNING] 日志安全过滤器初始化失败: {e}")
-        print("[WARNING] 日志系统将继续工作，但可能不会屏蔽敏感信息")
+        sys.stderr.write(f"[WARNING] 日志安全过滤器初始化失败: {e}\n")
+        sys.stderr.write("[WARNING] 日志系统将继续工作，但可能不会屏蔽敏感信息\n")
 
 
 def get_configured_logger(name: str) -> logging.Logger:
-    """
-    获取统一配置的日志记录器
+    """获取统一配置的日志记录器
 
     参数:
         name: 日志记录器名称

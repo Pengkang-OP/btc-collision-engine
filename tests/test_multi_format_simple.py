@@ -84,7 +84,7 @@ class TestMultiFormatAddressGeneration:
         """Bech32 编解码往返一致"""
         hash160 = HashUtils.hash160(self.compressed_pk)
         manual_bech32 = bech32_encode("bc", 0, hash160, "bech32")
-        witver, prog = decode_segwit_address("bc", manual_bech32)
+        hrp, witver, prog = decode_segwit_address(manual_bech32, expected_hrp="bc")
         assert witver == 0, f"witness version 应为 0，实际: {witver}"
         assert prog == hash160, "解码后的 witness program 与原始 hash160 不一致"
 

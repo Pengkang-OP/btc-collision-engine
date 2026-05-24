@@ -1,17 +1,12 @@
 #!/usr/bin/env python3
+"""比特币多格式地址转换验证测试
 """
-比特币多格式地址转换验证测试
-"""
 
-import os
-import sys
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import secrets
 
-import secrets  # noqa: E402
-
-from src.core.address_generator import P2PKHAddressGenerator  # noqa: E402
-from src.core.bitcoin_key_validator import BitcoinKeyValidator  # noqa: E402
+from src.core.address_generator import P2PKHAddressGenerator
+from src.core.bitcoin_key_validator import BitcoinKeyValidator
 
 print("=" * 80)
 print("Bitcoin Multi-Format Address Conversion Test")
@@ -50,38 +45,8 @@ print("\n" + "=" * 80)
 print("[2] P2SH Address (Pay-to-Script-Hash)")
 print("-" * 80)
 
-from src.core.address_converter import AddressConverter  # noqa: E402
-
-try:
-    converter = AddressConverter()
-    p2sh_address = converter.pubkey_to_p2sh_address(compressed_pk)
-    print(f"Generated P2SH Address: {p2sh_address}")
-    print(f"Starts with '3': {p2sh_address[0] == '3'}")
-
-    result = validator.validate_address(p2sh_address)
-    print(f"Validation: {'✓ PASS' if result.success else '✗ FAIL'}")
-    if result.success:
-        print(f"Address Type: {result.details.get('address_type', 'N/A')}")
-        print(f"Checksum Valid: {result.details.get('checksum_valid', 'N/A')}")
-except Exception as e:
-    print(f"❌ P2SH conversion failed: {e}")
-
-# 3. Bech32地址生成 (SegWit v0)
-print("\n" + "=" * 80)
-print("[3] Bech32 Address (SegWit v0 - bc1q)")
-print("-" * 80)
-
-try:
-    bech32_address = converter.pubkey_to_bech32_address(compressed_pk)
-    print(f"Generated Bech32 Address: {bech32_address}")
-    print(f"Starts with 'bc1q': {bech32_address.startswith('bc1q')}")
-
-    result = validator.validate_address(bech32_address)
-    print(f"Validation: {'✓ PASS' if result.success else '✗ FAIL'}")
-    if result.success:
-        print(f"Address Type: {result.details.get('address_type', 'N/A')}")
-except Exception as e:
-    print(f"❌ Bech32 conversion failed: {e}")
+# AddressConverter 模块已移除 — P2SH/Bech32 测试已删除
+print(f"ℹ P2SH/Bech32 conversion requires AddressConverter (module removed)")
 
 # 4. Taproot地址生成 (SegWit v1)
 print("\n" + "=" * 80)

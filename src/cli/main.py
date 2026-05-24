@@ -327,7 +327,7 @@ def _handle_error(e: Exception) -> None:
         output.print("  提示: 检查文件/目录权限或磁盘空间")
     else:
         output.error(f"运行时错误 ({error_type}): {e}")
-        output.print("  详细日志: logs/collision.log")
+        output.print("  详细日志: 请查看 logs/ 目录下的日志文件")
 
     # 记录完整堆栈到日志（不显示给用户）
     logger.exception("CLI 运行错误: %s", error_type)

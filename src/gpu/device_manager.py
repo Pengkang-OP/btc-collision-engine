@@ -8,7 +8,7 @@ import logging
 import time
 import traceback
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 from ..core.base58 import Base58
 from ..utils import get_configured_logger
@@ -38,17 +38,34 @@ class GPUDeviceManager:
     负责GPU设备的初始化、配置和管理。
     """
 
+    __slots__ = (
+        "device_index",
+        "config",
+        "logger",
+        "_gpu_device",
+        "_gpu_context",
+        "_gpu_kernel",
+        "_async_executor",
+        "_gpu_memory_pool",
+        "_profile_loader",
+        "_intel_optimizer",
+        "_nvidia_optimizer",
+        "_amd_optimizer",
+        "target_hash160s",
+        "target_list",
+    )
+
     def __init__(
         self,
         device_index: int = -1,
         config: dict[str, Any] | None = None,
         logger: logging.Logger | None = None,
     ) -> None:
-        """
-        Args:
-            device_index: GPU设备索引（-1表示自动选择）
-            config: 配置字典
-            logger: 日志记录器
+        """Args:
+        device_index: GPU设备索引（-1表示自动选择）
+        config: 配置字典
+        logger: 日志记录器
+
         """
         self.device_index = device_index
         self.config = config or {}
@@ -121,6 +138,7 @@ class GPUDeviceManager:
         Raises:
             RuntimeError: GPU 不可用或初始化失败时抛出
             NoValidTargetsError: 无有效 P2PKH 目标地址时抛出
+
         """
         with EnhancedPerformanceMonitor(self.logger, "GPU设备初始化", level="INFO") as pm:
             try:
@@ -175,7 +193,7 @@ class GPUDeviceManager:
                 _vendor = device_info.get("vendor", "Unknown")
                 _wgs = getattr(self._gpu_kernel, "_work_group_size", "N/A")
                 self.logger.info(
-                    "GPU 设备初始化成功: %s (厂商: %s, batch_size: %d, " "work_group_size: %s)",
+                    "GPU 设备初始化成功: %s (厂商: %s, batch_size: %d, work_group_size: %s)",
                     _name,
                     _vendor,
                     batch_size,
@@ -198,8 +216,8 @@ class GPUDeviceManager:
                     e,
                 )
                 raise RuntimeError(
-                    "GPU初始化失败: %s (GPU 引擎仅支持 P2PKH 地址格式, "
-                    "其他格式请使用 CPU 模式)" % e
+                    f"GPU初始化失败: {e} (GPU 引擎仅支持 P2PKH 地址格式, "
+                    "其他格式请使用 CPU 模式)",
                 ) from e
             except ValueError as e:
                 # 使用ExceptionHandler记录详细错误
@@ -213,8 +231,8 @@ class GPUDeviceManager:
                     e,
                 )
                 raise RuntimeError(
-                    "GPU初始化失败: %s。请检查GPU驱动和OpenCL环境, "
-                    "或使用CPU引擎作为备选方案。" % e
+                    f"GPU初始化失败: {e}。请检查GPU驱动和OpenCL环境, "
+                    "或使用CPU引擎作为备选方案。",
                 ) from e
             except RuntimeError as e:
                 # 使用ExceptionHandler记录详细错误
@@ -228,8 +246,8 @@ class GPUDeviceManager:
                     e,
                 )
                 raise RuntimeError(
-                    "GPU初始化失败: %s。请检查GPU驱动和OpenCL环境, "
-                    "或使用CPU引擎作为备选方案。" % e
+                    f"GPU初始化失败: {e}。请检查GPU驱动和OpenCL环境, "
+                    "或使用CPU引擎作为备选方案。",
                 ) from e
 
         return self
@@ -268,7 +286,7 @@ class GPUDeviceManager:
             if "async_execution" in gpu_config:
                 enable_async = gpu_config["async_execution"]
                 config_source = "构造参数"
-                self.logger.info("✅ 从构造参数读取异步设置: %s (优先级1)", enable_async)
+                self.logger.info("[OK] 从构造参数读取异步设置: %s (优先级1)", enable_async)
 
         # 优先级2: 自动读取配置文件
         if config_source == "默认":
@@ -281,14 +299,14 @@ class GPUDeviceManager:
             for cfg_file in config_files:
                 if cfg_file.exists():
                     try:
-                        with open(cfg_file, encoding="utf-8") as f:
+                        with Path(cfg_file).open(encoding="utf-8") as f:
                             cfg = json.load(f)
                             gpu_cfg = cfg.get("gpu", {})
                             if "async_execution" in gpu_cfg:
                                 enable_async = bool(gpu_cfg["async_execution"])
-                                config_source = "配置文件 %s" % cfg_file.name
+                                config_source = f"配置文件 {cfg_file.name}"
                                 self.logger.info(
-                                    "✅ 从%s读取异步设置: %s (优先级2)",
+                                    "[OK] 从%s读取异步设置: %s (优先级2)",
                                     config_source,
                                     enable_async,
                                 )
@@ -304,7 +322,7 @@ class GPUDeviceManager:
         if enable_async:
             self._require_device().enable_async_execution = True
             self.logger.info(
-                "✅ GPU异步执行已启用 (来源: %s) - 双缓冲优化",
+                "[OK] GPU异步执行已启用 (来源: %s) - 双缓冲优化",
                 config_source,
             )
         else:
@@ -312,15 +330,40 @@ class GPUDeviceManager:
                 "GPU异步执行未启用 (来源: %s) - 使用同步模式",
                 config_source,
             )
-            self.logger.info("提示: 在配置文件中设置 'gpu.async_execution': true " "以启用异步优化")
+            self.logger.info("提示: 在配置文件中设置 'gpu.async_execution': true 以启用异步优化")
 
         return enable_async
 
+    @staticmethod
+    def _classify_address_format(address: str) -> str:
+        """根据前缀识别比特币地址格式，用于用户友好的警告提示。
+
+        Returns:
+            格式名称字符串: "P2PKH", "P2SH", "Bech32", "Bech32m/Taproot", "未知"
+        """
+        if address.startswith("1"):
+            return "P2PKH"
+        if address.startswith("3"):
+            return "P2SH"
+        if address.startswith("bc1q"):
+            return "Bech32 (P2WPKH/P2WSH)"
+        if address.startswith("bc1p"):
+            return "Bech32m (Taproot)"
+        return "未知格式"
+
     def _prepare_targets(self, targets: set[str]):
-        """准备目标地址 (仅 P2PKH 格式通过 Base58 校验)"""
+        """准备目标地址 (仅 P2PKH 格式通过 Base58 校验)
+
+        GPU 引擎仅支持 P2PKH (version=0x00, 以 '1' 开头) 地址的碰撞匹配。
+        非 P2PKH 目标（P2SH/Bech32/Taproot）在此被跳过，
+        并生成 WARNING 日志告知用户。
+
+        Bech32 P2WPKH 地址应在到达此方法前由 TargetResolver
+        转换为 P2PKH（witness program 即 hash160）。
+        """
         target_list = []
         hash160_list = []
-        skipped_non_p2pkh = 0
+        skipped_addresses: list[tuple[str, str, str]] = []  # (masked, format, reason)
 
         for address in sorted(targets):
             try:
@@ -329,27 +372,47 @@ class GPUDeviceManager:
                     target_list.append(address)
                     hash160_list.append(payload)
                 else:
-                    skipped_non_p2pkh += 1
+                    fmt = self._classify_address_format(address)
+                    addr_len = len(address)
+                    masked = address[:8] + "..." + address[-6:] if addr_len >= 14 else address
+                    reason = f"version=0x{version:02x} (仅接受 0x00)"
+                    skipped_addresses.append((masked, fmt, reason))
             except (ValueError, TypeError) as e:
-                skipped_non_p2pkh += 1
+                fmt = self._classify_address_format(address)
                 addr_len = len(address)
-                masked = address[:6] + "..." + address[-4:] if addr_len >= 10 else "***"
-                self.logger.debug("目标地址格式无效 [%s]: %s", masked, type(e).__name__)
+                masked = address[:8] + "..." + address[-6:] if addr_len >= 14 else address
+                reason = f"{type(e).__name__}"
+                skipped_addresses.append((masked, fmt, reason))
                 continue
             except RuntimeError as e:
+                fmt = self._classify_address_format(address)
                 addr_len = len(address)
-                masked = address[:6] + "..." + address[-4:] if addr_len >= 10 else "***"
+                masked = address[:8] + "..." + address[-6:] if addr_len >= 14 else address
                 self.logger.warning("目标地址解析失败 [%s]: %s", masked, type(e).__name__)
                 continue
 
-        if skipped_non_p2pkh:
+        if skipped_addresses:
+            skipped_count = len(skipped_addresses)
             self.logger.warning(
-                "已跳过 %d 个非 P2PKH 格式目标地址 (GPU 引擎仅支持 P2PKH)",
-                skipped_non_p2pkh,
+                "GPU 引擎仅支持 P2PKH 格式碰撞 — "
+                "已跳过 %d 个非 P2PKH 目标地址:",
+                skipped_count,
+            )
+            # 显示每个被跳过地址的格式和原因 (最多显示 10 条避免日志洪水)
+            for masked, fmt, reason in skipped_addresses[:10]:
+                self.logger.warning("  [SKIP] %s | 格式: %s | 原因: %s", masked, fmt, reason)
+            if skipped_count > 10:
+                self.logger.warning("  ... 以及 %d 条未显示", skipped_count - 10)
+            self.logger.warning(
+                "建议: P2SH/Bech32/Taproot 目标请在 CLI 加载前通过 TargetResolver 预处理，"
+                "或使用 CPU 模式。"
             )
 
         if not hash160_list:
-            raise NoValidTargetsError("没有有效的目标地址")
+            raise NoValidTargetsError(
+                f"没有有效的 P2PKH 目标地址 (已跳过 {len(skipped_addresses)} 个非 P2PKH 目标)。"
+                " 请添加 '1' 开头的 P2PKH 地址，或使用 CPU 模式。"
+            )
 
         target_hash160s = b"".join(hash160_list)
         return target_hash160s, target_list
@@ -401,7 +464,7 @@ class GPUDeviceManager:
             self._gpu_kernel = GPUKernel(
                 dev,
                 max_batch_size=batch_size,
-                program=self._gpu_context.program,  # type: ignore[union-attr]
+                program=cast(Any, self._gpu_context.program),  # type: ignore[union-attr]
             )
 
     def _init_memory_pool(self, batch_size: int = 0):
@@ -412,6 +475,7 @@ class GPUDeviceManager:
 
         Args:
             batch_size: 当前引擎批大小，用于预分配匹配结果缓冲区
+
         """
         # 从配置读取内存池设置
         gpu_config = self.config.get("gpu", {})
@@ -454,6 +518,7 @@ class GPUDeviceManager:
 
         Returns:
             去重后的缓冲区大小列表（字节）
+
         """
         sizes = {256, 1024, 65536}  # 通用对齐尺寸
         if batch_size > 0:
@@ -466,9 +531,9 @@ class GPUDeviceManager:
         if dev.enable_async_execution:
             self.logger.info("初始化GPU异步执行器...")
 
-            # 从配置读取queue_depth
+            # 从配置读取queue_depth (0=auto, 由GPU型号自动检测)
             gpu_config = self.config.get("gpu", {})
-            queue_depth = gpu_config.get("queue_depth", 4)
+            config_queue_depth = gpu_config.get("queue_depth", 0)
 
             # 尝试从GPU配置文件中获取推荐的队列深度
             device_info = dev.get_device_info()
@@ -476,21 +541,31 @@ class GPUDeviceManager:
             vendor = device_info.get("vendor_identifier", "unknown")
 
             profile = self._profile_loader.get_profile(vendor, device_name)
-            if profile and "queue_depth" in profile:
-                queue_depth = profile["queue_depth"]
-                self.logger.info("从GPU配置文件获取推荐队列深度: %s", queue_depth)
+            profile_queue_depth = profile.get("queue_depth", 0) if profile else 0
+
+            # v5.1 优化：取 config 和 GPU 推荐值中的较大者，GPU 硬件优化优先
+            queue_depth = max(config_queue_depth, profile_queue_depth, 4)
+            if profile_queue_depth > 0:
+                self.logger.info(
+                    "GPU推荐队列深度: %s (config: %s, 最终: %s)",
+                    profile_queue_depth, config_queue_depth, queue_depth,
+                )
 
             self._async_executor = AsyncGPUExecutor(
-                dev, max_batch_size=batch_size, queue_depth=queue_depth
+                dev, max_batch_size=batch_size, queue_depth=queue_depth,
             )
 
-            # 初始化双缓冲
+            # v5.1: 使用GPU特定初始批次大小（而非引擎配置），避免缓冲区频繁 resize
             executor = self._require_async_executor()
-            executor.initialize_buffers(dev.context, num_keys=batch_size)
+            init_batch = getattr(executor, 'initial_batch_size', batch_size)
+            executor.initialize_buffers(dev.context, num_keys=init_batch)
+
+            # v5.1: 启动后台结果收集器（消除主循环阻塞，实现流水线并行）
+            executor.start_result_collector()
 
             self.logger.info(
-                "✅ GPU异步执行器已初始化(双缓冲, 队列深度: %d)",
-                queue_depth,
+                "[OK] GPU异步执行器已初始化(流水线并行, 队列深度: %d, 初始批次: %d, 后台收集器: 启用)",
+                queue_depth, init_batch,
             )
         else:
             self._async_executor = None
@@ -510,7 +585,7 @@ class GPUDeviceManager:
         vendor_lower = vendor.lower()
 
         if vendor_lower.startswith("intel") or "intel" in vendor_lower:
-            self.logger.info("🔧 检测到 Intel GPU，应用特殊优化")
+            self.logger.info("[*] 检测到 Intel GPU，应用特殊优化")
             self._intel_optimizer = IntelGPUOptimizer(
                 device=self._gpu_device,
                 config=self.config,
@@ -520,10 +595,10 @@ class GPUDeviceManager:
                 {
                     "kernel_source": OPENCL_KERNEL_SOURCE,
                     "engine": self,
-                }
+                },
             )
         elif "nvidia" in vendor_lower:
-            self.logger.info("🔧 检测到 NVIDIA GPU，应用特殊优化")
+            self.logger.info("[*] 检测到 NVIDIA GPU，应用特殊优化")
             try:
                 self._nvidia_optimizer = NvidiaGPUOptimizer(
                     device_info=device_info,
@@ -534,15 +609,15 @@ class GPUDeviceManager:
                 arch_name = optimization_result.get("arch_name", "Unknown")
                 mem_ratio = optimization_result.get("recommended_memory_ratio", 0.60)
                 self.logger.info(
-                    "✅ NVIDIA 优化器已初始化: 架构=%s, memory_ratio=%.2f",
+                    "[OK] NVIDIA 优化器已初始化: 架构=%s, memory_ratio=%.2f",
                     arch_name,
                     mem_ratio,
                 )
             except RuntimeError as e:
-                self.logger.warning("⚠️ NVIDIA 优化器初始化失败（非致命）: %s", e)
+                self.logger.warning("[WARN] NVIDIA 优化器初始化失败（非致命）: %s", e)
                 self._nvidia_optimizer = None
         elif "amd" in vendor_lower or "advanced micro" in vendor_lower:
-            self.logger.info("🔧 检测到 AMD GPU，应用特殊优化")
+            self.logger.info("[*] 检测到 AMD GPU，应用特殊优化")
             try:
                 self._amd_optimizer = AmdGPUOptimizer(
                     device_info=device_info,
@@ -553,12 +628,12 @@ class GPUDeviceManager:
                 arch_name = optimization_result.get("arch_name", "Unknown")
                 mem_ratio = optimization_result.get("recommended_memory_ratio", 0.60)
                 self.logger.info(
-                    "✅ AMD 优化器已初始化: 架构=%s, memory_ratio=%.2f",
+                    "[OK] AMD 优化器已初始化: 架构=%s, memory_ratio=%.2f",
                     arch_name,
                     mem_ratio,
                 )
             except RuntimeError as e:
-                self.logger.warning("⚠️ AMD 优化器初始化失败（非致命）: %s", e)
+                self.logger.warning("[WARN] AMD 优化器初始化失败（非致命）: %s", e)
                 self._amd_optimizer = None
 
     def cleanup(self) -> None:

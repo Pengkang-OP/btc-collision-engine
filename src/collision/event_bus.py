@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Event bus for decoupled communication between components.
+"""Event bus for decoupled communication between components.
 """
 
 import logging
@@ -16,8 +15,7 @@ _event_bus_lock = threading.Lock()
 
 
 class EventBus:
-    """
-    Simple event bus for publish-subscribe communication.
+    """Simple event bus for publish-subscribe communication.
 
     Allows decoupled communication between engine components via
     typed events with handler registration and asynchronous dispatch.
@@ -26,7 +24,7 @@ class EventBus:
     def __init__(self):
         self._lock = threading.Lock()
         self._subscribers: dict[
-            type, list[Callable]
+            type, list[Callable],
         ] = {}
 
     def subscribe(
@@ -39,6 +37,7 @@ class EventBus:
         Args:
             event_type: Event class to subscribe to
             handler: Callable(event) -> None
+
         """
         with self._lock:
             if (
@@ -53,7 +52,7 @@ class EventBus:
             ].append(handler)
             logger.debug(
                 f"Subscribed {handler.__name__} "
-                f"to {event_type.__name__}"
+                f"to {event_type.__name__}",
             )
 
     def unsubscribe(
@@ -66,6 +65,7 @@ class EventBus:
         Args:
             event_type: Event class
             handler: Previously registered handler
+
         """
         with self._lock:
             if event_type in self._subscribers:
@@ -78,13 +78,14 @@ class EventBus:
 
         Args:
             event: Event instance
+
         """
         handlers = []
         with self._lock:
             handlers = list(
                 self._subscribers.get(
-                    type(event), []
-                )
+                    type(event), [],
+                ),
             )
         for handler in handlers:
             try:
@@ -93,7 +94,7 @@ class EventBus:
                 logger.error(
                     f"Event handler "
                     f"{handler.__name__} "
-                    f"failed: {e}"
+                    f"failed: {e}",
                 )
 
     def clear(self) -> None:
@@ -107,6 +108,7 @@ def get_event_bus() -> EventBus:
 
     Returns:
         The global EventBus instance
+
     """
     global _event_bus
     if _event_bus is None:

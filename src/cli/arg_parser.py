@@ -230,6 +230,11 @@ def parse_args() -> argparse.Namespace:
         "--no-memory-pool", action="store_true", default=False, help="禁用内存池优化（调试用）",
     )
 
+    # 集成 optimization_cli 参数
+    from .optimization_cli import OptimizationCLI
+
+    OptimizationCLI.add_arguments(parser)
+
     # ── 5. 工具命令 ──────────────────────────────────────────────────────────
     util_group = parser.add_argument_group(
         "工具命令", "独立功能命令，指定后直接执行并退出，不启动碰撞引擎",

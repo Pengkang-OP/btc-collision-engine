@@ -25,7 +25,7 @@ class TestValidationResult:
         from src.collision.targets.validator import ValidationResult
 
         result = ValidationResult(
-            address="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", valid=True, format_type="p2pkh"
+            address="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", valid=True, format_type="p2pkh",
         )
         assert result.valid is True
         assert result.validated is True  # default

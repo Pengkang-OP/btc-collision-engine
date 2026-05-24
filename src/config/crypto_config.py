@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-加密配置管理
+"""加密配置管理
 
 管理加密后端的选择和配置。
 支持从配置文件加载和保存加密设置。
@@ -8,6 +7,7 @@
 
 import json
 import os
+import pathlib
 from enum import Enum
 from typing import Any
 
@@ -28,8 +28,7 @@ class CryptoBackendType(str, Enum):
 
 
 class CryptoConfig:
-    """
-    加密配置管理器
+    """加密配置管理器
 
     管理加密相关的配置选项。
     """
@@ -42,8 +41,7 @@ class CryptoConfig:
     }
 
     def __init__(self, config_file: str | None = None, config_manager=None) -> None:
-        """
-        初始化加密配置
+        """初始化加密配置
 
         参数:
             config_file: 配置文件路径，None表示使用默认配置
@@ -53,12 +51,11 @@ class CryptoConfig:
         self.config_manager = config_manager  # 引用ConfigManager
         self.config = self.DEFAULT_CONFIG.copy()
 
-        if config_file and os.path.exists(config_file):
+        if config_file and pathlib.Path(config_file).exists():
             self.load()
 
     def load(self) -> bool:
-        """
-        从文件加载配置
+        """从文件加载配置
 
         返回:
             加载成功返回True
@@ -66,19 +63,18 @@ class CryptoConfig:
         try:
             if self.config_file is None:
                 return False
-            with open(self.config_file, encoding="utf-8") as f:
+            with pathlib.Path(self.config_file).open(encoding="utf-8") as f:
                 user_config = json.load(f)
             self.config.update(user_config)
             return True
         except (OSError, json.JSONDecodeError, ValueError, KeyError) as e:
             import logging
 
-            logging.warning(f"加载加密配置失败: {e}")
+            logging.warning("加载加密配置失败: %s", e)
             return False
 
     def save(self) -> bool:
-        """
-        保存配置到文件
+        """保存配置到文件
 
         返回:
             保存成功返回True
@@ -88,20 +84,19 @@ class CryptoConfig:
 
         try:
             # 确保目录存在
-            os.makedirs(os.path.dirname(self.config_file), exist_ok=True)
+            pathlib.Path(os.path.dirname(self.config_file)).mkdir(exist_ok=True, parents=True)
 
-            with open(self.config_file, "w", encoding="utf-8") as f:
+            with pathlib.Path(self.config_file).open("w", encoding="utf-8") as f:
                 json.dump(self.config, f, indent=2, ensure_ascii=False)
             return True
         except (OSError, ValueError, TypeError) as e:
             import logging
 
-            logging.error(f"保存加密配置失败: {e}")
+            logging.exception("保存加密配置失败: %s", e)
             return False
 
     def get(self, key: str, default: Any = None) -> Any:
-        """
-        获取配置值
+        """获取配置值
 
         参数:
             key: 配置键
@@ -113,8 +108,7 @@ class CryptoConfig:
         return self.config.get(key, default)
 
     def set(self, key: str, value: Any) -> bool:
-        """
-        设置配置值
+        """设置配置值
 
         参数:
             key: 配置键
@@ -127,8 +121,7 @@ class CryptoConfig:
         return True
 
     def get_backend_type(self) -> CryptoBackendType:
-        """
-        获取当前配置的后端类型
+        """获取当前配置的后端类型
 
         返回:
             CryptoBackendType枚举值
@@ -140,8 +133,7 @@ class CryptoConfig:
             return CryptoBackendType.AUTO
 
     def set_backend_type(self, backend_type: CryptoBackendType) -> bool:
-        """
-        设置后端类型
+        """设置后端类型
 
         参数:
             backend_type: 后端类型
@@ -153,8 +145,7 @@ class CryptoConfig:
         return True
 
     def apply_to_crypto_manager(self) -> bool:
-        """
-        将配置应用到加密后端管理器（线程安全）
+        """将配置应用到加密后端管理器（线程安全）
 
         返回:
             应用成功返回True
@@ -240,8 +231,7 @@ class CryptoConfig:
         )
 
     def get_gpu_config(self) -> dict[str, Any]:
-        """
-        获取GPU配置
+        """获取GPU配置
 
         优先从ConfigManager获取,如果没有则使用默认值
 
@@ -257,7 +247,7 @@ class CryptoConfig:
                 "auto_detect": self.config_manager.get("gpu.auto_detect", True),
                 "memory_usage_ratio": self.config_manager.get("gpu.memory_usage_ratio", 0.5),
                 "enable_vendor_optimizations": self.config_manager.get(
-                    "gpu.enable_vendor_optimizations", True
+                    "gpu.enable_vendor_optimizations", True,
                 ),
             }
 
@@ -274,8 +264,7 @@ class CryptoConfig:
         device_index: int | None = None,
         batch_size: int | None = None,
     ) -> bool:
-        """
-        设置GPU配置
+        """设置GPU配置
 
         参数:
             use_gpu: 是否使用GPU
@@ -294,8 +283,7 @@ class CryptoConfig:
         return True
 
     def validate(self) -> list:
-        """
-        验证配置
+        """验证配置
 
         返回:
             错误信息列表，空列表表示验证通过
@@ -329,8 +317,7 @@ class CryptoConfig:
         return errors
 
     def to_dict(self) -> dict[str, Any]:
-        """
-        导出配置为字典
+        """导出配置为字典
 
         返回:
             配置字典
@@ -344,8 +331,7 @@ class CryptoConfig:
 
 # 全局配置实例
 def get_crypto_config(config_file: str | None = None) -> CryptoConfig:
-    """
-    获取加密配置实例
+    """获取加密配置实例
 
     参数:
         config_file: 配置文件路径
@@ -363,8 +349,7 @@ def get_crypto_config(config_file: str | None = None) -> CryptoConfig:
 
 # 便捷函数
 def init_crypto_from_config(config_file: str | None = None) -> CryptoConfig:
-    """
-    从配置文件初始化加密系统
+    """从配置文件初始化加密系统
 
     参数:
         config_file: 配置文件路径

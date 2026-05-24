@@ -14,9 +14,17 @@ _P = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
 _GX = 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798
 _GY = 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8
 
-# 已知 2G 值（用于验证）
+# 已知 2G 值（SEC2 标准向量，用于验证）
 _EXPECTED_2G_X = 0xC6047F9441ED7D6D3045406E95C07CD85C778E4B8CEF3CA7ABAC09B95C709EE5
 _EXPECTED_2G_Y = 0x1AE168FEA63DC339A3C58419466CEAEEF7F632653266D0E1236431A950CFE52A
+
+# 已知 3G 值（SEC2 标准向量，扩展验证）
+_EXPECTED_3G_X = 0xF9308A019258C31049344F85F89D5229B531C845836F99B08601F113BCE036F9
+_EXPECTED_3G_Y = 0x388F7B0F632DE8140FE337E62A37F3566500A99934C2231B6CB9FD7584B8E672
+
+# 已知 10G 值（SEC2 标准向量，扩展验证）
+_EXPECTED_10G_X = 0xA0434D9E47F3C86235477C7B1AE6AE5D3442D49B1943C2B752A68E2A47E247C7
+_EXPECTED_10G_Y = 0x893ABA425419BC27A3B6C7E693A24C696F794C2ED877A1593CBEE53B037368D7
 
 
 def _point_add(p1: tuple[int, int] | None, p2: tuple[int, int] | None) -> tuple[int, int] | None:
@@ -28,6 +36,7 @@ def _point_add(p1: tuple[int, int] | None, p2: tuple[int, int] | None) -> tuple[
 
     Returns:
         相加结果点 (x, y)，或 None 表示无穷远点
+
     """
     if p1 is None:
         return p2
@@ -66,6 +75,7 @@ def _int_to_uint32_le(value: int) -> np.ndarray:
 
     Returns:
         np.ndarray: dtype=np.uint32, shape=(8,)
+
     """
     limbs = np.zeros(8, dtype=np.uint32)
     for i in range(8):
@@ -84,6 +94,7 @@ def generate_secp256k1_precomp_table() -> np.ndarray:
 
     Raises:
         RuntimeError: 如果生成的 1G 或 2G 值与已知值不符
+
     """
     table = np.zeros(496, dtype=np.uint32)  # 31 * 2 * 8 = 496
 
@@ -101,9 +112,22 @@ def generate_secp256k1_precomp_table() -> np.ndarray:
         table[offset + 8 : offset + 16] = _int_to_uint32_le(y)  # y 坐标
 
         # 下一个点
-        current = cast(tuple[int, int], _point_add(current, _g_point))
+        current = cast("tuple[int, int]", _point_add(current, _g_point))
 
     # === 验证 ===
+    # P3-9: 验证本地常量与 secp256k1 参考实现一致
+    from ..core.secp256k1 import Secp256k1 as _Secp256k1
+
+    _ref_p = _Secp256k1.P  # noqa: N806
+    _ref_gx = _Secp256k1.Gx  # noqa: N806
+    _ref_gy = _Secp256k1.Gy  # noqa: N806
+    if _P != _ref_p:
+        raise RuntimeError(f"p 参数不一致: precompute.P=0x{_P:X}, secp256k1.P=0x{_ref_p:X}")
+    if _GX != _ref_gx:
+        raise RuntimeError(f"Gx 参数不一致: precompute.Gx=0x{_GX:X}, secp256k1.Gx=0x{_ref_gx:X}")
+    if _GY != _ref_gy:
+        raise RuntimeError(f"Gy 参数不一致: precompute.Gy=0x{_GY:X}, secp256k1.Gy=0x{_ref_gy:X}")
+
     # 验证 1G
     g1x_reconstructed = sum(int(table[j]) << (32 * j) for j in range(8))
     g1y_reconstructed = sum(int(table[8 + j]) << (32 * j) for j in range(8))
@@ -120,11 +144,39 @@ def generate_secp256k1_precomp_table() -> np.ndarray:
 
     if g2x_reconstructed != _EXPECTED_2G_X:
         raise RuntimeError(
-            f"2G.x 验证失败: got {hex(g2x_reconstructed)}, expected {hex(_EXPECTED_2G_X)}"
+            f"2G.x 验证失败: got {hex(g2x_reconstructed)}, expected {hex(_EXPECTED_2G_X)}",
         )
     if g2y_reconstructed != _EXPECTED_2G_Y:
         raise RuntimeError(
-            f"2G.y 验证失败: got {hex(g2y_reconstructed)}, expected {hex(_EXPECTED_2G_Y)}"
+            f"2G.y 验证失败: got {hex(g2y_reconstructed)}, expected {hex(_EXPECTED_2G_Y)}",
+        )
+
+    # 验证 3G (SEC2 标准向量)
+    g3_offset = 32  # 第 3 个点的偏移
+    g3x_reconstructed = sum(int(table[g3_offset + j]) << (32 * j) for j in range(8))
+    g3y_reconstructed = sum(int(table[g3_offset + 8 + j]) << (32 * j) for j in range(8))
+
+    if g3x_reconstructed != _EXPECTED_3G_X:
+        raise RuntimeError(
+            f"3G.x 验证失败: got {hex(g3x_reconstructed)}, expected {hex(_EXPECTED_3G_X)}",
+        )
+    if g3y_reconstructed != _EXPECTED_3G_Y:
+        raise RuntimeError(
+            f"3G.y 验证失败: got {hex(g3y_reconstructed)}, expected {hex(_EXPECTED_3G_Y)}",
+        )
+
+    # 验证 10G (SEC2 标准向量)
+    g10_offset = 144  # 第 10 个点的偏移 (9 * 16)
+    g10x_reconstructed = sum(int(table[g10_offset + j]) << (32 * j) for j in range(8))
+    g10y_reconstructed = sum(int(table[g10_offset + 8 + j]) << (32 * j) for j in range(8))
+
+    if g10x_reconstructed != _EXPECTED_10G_X:
+        raise RuntimeError(
+            f"10G.x 验证失败: got {hex(g10x_reconstructed)}, expected {hex(_EXPECTED_10G_X)}",
+        )
+    if g10y_reconstructed != _EXPECTED_10G_Y:
+        raise RuntimeError(
+            f"10G.y 验证失败: got {hex(g10y_reconstructed)}, expected {hex(_EXPECTED_10G_Y)}",
         )
 
     return table
@@ -139,6 +191,7 @@ def get_precomp_table() -> np.ndarray:
 
     Returns:
         np.ndarray: dtype=np.uint32, shape=(496,)，同 generate_secp256k1_precomp_table()
+
     """
     global _cached_table
     if _cached_table is None:

@@ -25,20 +25,20 @@ P2SH/Bech32(P2WSH)/Taproot等非P2PKH目标必然无法匹配。
 """
 
 import os
+import pathlib
 
 from ...core.address_generator import P2PKHAddressGenerator
 from ...core.base58 import Base58
 
 # 导入日志配置
 from ...utils import get_configured_logger
+
+# v4.2.1修复: Python的logging.Logger本身是线程安全的，无需ThreadSafeLogger包装
+from ...utils.bech32_codec import decode_segwit_address
 from ...utils.encoding_utils import EncodingUtils
 from .cache import AddressCache
 
-# v4.2.1修复: Python的logging.Logger本身是线程安全的，无需ThreadSafeLogger包装
 logger = get_configured_logger("TargetResolver")
-
-
-from ...utils.bech32_codec import decode_segwit_address
 
 
 class TargetResolver:
@@ -73,8 +73,7 @@ class TargetResolver:
         max_lines: int = MAX_LINES,
         batch_size: int = BATCH_SIZE,
     ) -> None:
-        """
-        初始化目标地址解析器
+        """初始化目标地址解析器
 
         参数:
             enable_cache: 是否启用缓存,默认True
@@ -102,13 +101,12 @@ class TargetResolver:
             f"TargetResolver 初始化: 缓存={'启用' if enable_cache else '禁用'}, "
             f"缓存容量={cache_max_size if enable_cache else 'N/A'}, "
             f"最大文件大小={max_file_size_bytes // (1024 * 1024)}MB, "
-            f"最大行数={max_lines}"
+            f"最大行数={max_lines}",
         )
 
     @staticmethod
     def detect_format(input_str: str) -> str:
-        """
-        自动检测输入格式
+        """自动检测输入格式
 
         参数:
             input_str: 输入字符串
@@ -231,7 +229,7 @@ class TargetResolver:
                 logger.warning(
                     f"P2SH地址 '{input_str[:20]}...' 无法用于碰撞匹配: "
                     f"P2SH的payload=hash160(redeemScript)与引擎生成的hash160(pubkey)不相关，"
-                    f"密码学上不可能匹配。请使用P2PKH地址(1开头)或私钥/公钥。"
+                    f"密码学上不可能匹配。请使用P2PKH地址(1开头)或私钥/公钥。",
                 )
                 # 记录到不支持类型统计
                 self._unsupported_types.add("p2sh_address")
@@ -239,50 +237,48 @@ class TargetResolver:
             logger.warning(f"P2SH地址版本不匹配: version=0x{version:02x}")
             return None
         except ValueError:
-            logger.warning(f"P2SH地址校验失败: {input_str}")
+            logger.warning("P2SH地址校验失败: %s", input_str)
             return None
 
     def _resolve_bech32_address(self, input_str: str) -> str | None:
         """解析Bech32地址 (SegWit v0)
 
         P2WPKH (20字节 witness): witness_program = hash160(pubkey)，
-        与引擎生成的 hash160(pubkey) 路径相同 → 可匹配 ✅
+        与引擎生成的 hash160(pubkey) 路径相同 → 可匹配 [OK]
 
         P2WSH (32字节 witness): witness_program = sha256(redeemScript)，
-        与引擎生成的 hash160(pubkey) 路径不同 → 不可匹配 ❌
+        与引擎生成的 hash160(pubkey) 路径不同 → 不可匹配 [ERR]
         """
         try:
-            hrp = "bc" if input_str.lower().startswith("bc1") else "tb"
-            witness_version, witness_program = decode_segwit_address(hrp, input_str)
+            hrp, witness_version, witness_program = decode_segwit_address(input_str)
             if witness_version is None or witness_program is None:
-                logger.warning(f"Bech32地址解码失败: {input_str}")
+                logger.warning("Bech32地址解码失败: %s", input_str)
                 return None
             if witness_version != 0:
-                logger.warning(f"仅支持witness version 0, 当前={witness_version}")
+                logger.warning("仅支持witness version 0, 当前=%s", witness_version)
                 return None
             prog_len = len(witness_program)
             if prog_len == 20:
                 # P2WPKH (v0, 20字节): witness program = pubkey_hash (Hash160)
                 # 转换为 Legacy P2PKH 地址以便引擎进行碰撞匹配
-                from ...core.hash_utils import HashUtils
+                from ...core.base58 import Base58
 
-                p2pkh_addr = HashUtils.hash160_to_address(witness_program)
+                p2pkh_addr = Base58.check_encode(0x00, witness_program)
                 if self.cache:
                     self.cache.put(input_str, p2pkh_addr)
-                logger.debug(f"P2WPKH地址转换: {input_str} -> {p2pkh_addr}")
+                logger.debug("P2WPKH地址转换: %s -> %s", input_str, p2pkh_addr)
                 return p2pkh_addr
-            elif prog_len == 32:
+            if prog_len == 32:
                 # P2WSH: witness_program = sha256(redeemScript) → 不可匹配
                 logger.warning(
                     f"P2WSH地址 '{input_str[:25]}...' 无法用于碰撞匹配: "
                     f"P2WSH的witness program=sha256(redeemScript)与引擎生成的hash160(pubkey)不相关，"
-                    f"密码学上不可能匹配。请使用P2WPKH地址(20字节witness)或P2PKH地址(1开头)。"
+                    f"密码学上不可能匹配。请使用P2WPKH地址(20字节witness)或P2PKH地址(1开头)。",
                 )
                 self._unsupported_types.add("p2wsh_address")
                 return None
-            else:
-                logger.warning(f"Bech32 witness长度无效: {prog_len}字节")
-                return None
+            logger.warning("Bech32 witness长度无效: %s字节", prog_len)
+            return None
         except ValueError as e:
             logger.error(f"Bech32地址转换异常: {input_str} - {type(e).__name__}: {e}")
             return None
@@ -295,13 +291,12 @@ class TargetResolver:
         与 Taproot 的 x-only 公钥路径在密码学上不相关，无法匹配。
         """
         try:
-            hrp = "bc" if input_str.lower().startswith("bc1") else "tb"
-            witness_version, witness_program = decode_segwit_address(hrp, input_str)
+            hrp, witness_version, witness_program = decode_segwit_address(input_str)
             if witness_version is None or witness_program is None:
-                logger.warning(f"Taproot地址解码失败: {input_str}")
+                logger.warning("Taproot地址解码失败: %s", input_str)
                 return None
             if witness_version != 1:
-                logger.warning(f"Taproot期望witness version 1, 当前={witness_version}")
+                logger.warning("Taproot期望witness version 1, 当前=%s", witness_version)
                 return None
             if len(witness_program) != 32:
                 logger.warning("Taproot witness program应为32字节")
@@ -309,7 +304,7 @@ class TargetResolver:
             logger.warning(
                 f"Taproot地址 '{input_str[:25]}...' 无法用于碰撞匹配: "
                 f"Taproot的witness program=x-only公钥(32字节)与引擎生成的hash160(pubkey)不相关，"
-                f"密码学上不可能匹配。请使用P2PKH地址(1开头)或私钥/公钥。"
+                f"密码学上不可能匹配。请使用P2PKH地址(1开头)或私钥/公钥。",
             )
             self._unsupported_types.add("taproot_address")
             return None
@@ -324,7 +319,7 @@ class TargetResolver:
 
             private_key, compressed = WIF.decode(input_str)
             public_key = self.generator.private_key_to_public_key(
-                private_key, compressed=compressed
+                private_key, compressed=compressed,
             )
             address = self.generator.public_key_to_address(public_key)
             if self.cache:
@@ -351,10 +346,10 @@ class TargetResolver:
     def _resolve_hash160(self, input_str: str) -> str | None:
         """解析Hash160"""
         try:
-            from ...core.hash_utils import HashUtils
+            from ...core.base58 import Base58
 
             hash160 = bytes.fromhex(input_str)
-            address = HashUtils.hash160_to_address(hash160)
+            address = Base58.check_encode(0x00, hash160)
             if self.cache:
                 self.cache.put(input_str, address)
             logger.debug(f"Hash160解析成功: {input_str[:10]}... -> {address[:15]}...")
@@ -364,8 +359,7 @@ class TargetResolver:
             return None
 
     def resolve(self, input_str: str) -> str | None:
-        """
-        将任意格式输入解析为地址字符串,解析失败返回 None
+        """将任意格式输入解析为地址字符串,解析失败返回 None
 
         - 地址格式(P2PKH/P2SH): 保持原始大小写,Base58校验和大小写敏感
         - Bech32/Taproot: 小写标准化
@@ -406,8 +400,7 @@ class TargetResolver:
         return None
 
     def resolve_batch(self, inputs: list[str]) -> dict[str, str | None]:
-        """
-        批量解析多个输入字符串
+        """批量解析多个输入字符串
 
         参数:
             inputs: 输入字符串列表
@@ -458,7 +451,7 @@ class TargetResolver:
         cache_hits = len(results) - len(to_resolve)
         logger.info(
             f"批量解析完成: 总数={len(inputs)}, 成功={success_count}, "
-            f"失败={len(inputs) - success_count}, 缓存命中={cache_hits}"
+            f"失败={len(inputs) - success_count}, 缓存命中={cache_hits}",
         )
 
         return results
@@ -481,8 +474,7 @@ class TargetResolver:
         return valid_count, invalid_count
 
     def load_from_file(self, filepath: str) -> set[str]:
-        """
-        从文件加载目标地址集合
+        """从文件加载目标地址集合
 
         参数:
             filepath: 文件路径
@@ -493,15 +485,15 @@ class TargetResolver:
         addresses: set[str] = set()
         real_path = os.path.realpath(filepath)
 
-        if not os.path.exists(real_path):
-            logger.error(f"文件不存在: {real_path}")
+        if not pathlib.Path(real_path).exists():
+            logger.error("文件不存在: %s", real_path)
             return addresses
 
-        file_size = os.path.getsize(real_path)
+        file_size = pathlib.Path(real_path).stat().st_size
         if file_size > self._max_file_size_bytes:
             max_size_mb = self._max_file_size_bytes // (1024 * 1024)
             logger.error(
-                f"文件过大(>{max_size_mb}MB): {real_path}, 大小={file_size / 1024 / 1024:.1f}MB"
+                f"文件过大(>{max_size_mb}MB): {real_path}, 大小={file_size / 1024 / 1024:.1f}MB",
             )
             return addresses
 
@@ -517,7 +509,7 @@ class TargetResolver:
             try:
                 lines = EncodingUtils.read_file_lines(real_path, try_multiple=True)
             except (OSError, UnicodeDecodeError) as e:
-                logger.error(f"文件读取失败: {real_path}, 错误={e}")
+                logger.error("文件读取失败: %s, 错误=%s", real_path, e)
                 return addresses
 
             batch_inputs: list[str] = []
@@ -539,7 +531,7 @@ class TargetResolver:
                 batch_inputs.append(line)
                 if len(batch_inputs) >= self._batch_size:
                     valid_count, invalid_count = self._process_batch(
-                        batch_inputs, addresses, valid_count, invalid_count
+                        batch_inputs, addresses, valid_count, invalid_count,
                     )
                     batch_inputs.clear()
                     if len(addresses) > 0 and len(addresses) % 10000 == 0:
@@ -547,13 +539,13 @@ class TargetResolver:
 
             if batch_inputs:
                 valid_count, invalid_count = self._process_batch(
-                    batch_inputs, addresses, valid_count, invalid_count
+                    batch_inputs, addresses, valid_count, invalid_count,
                 )
 
             logger.info(
                 f"文件加载完成: 文件={real_path}, 总行数={line_count}, "
                 f"有效地址={len(addresses)}, 无效={invalid_count}, "
-                f"注释={comment_count}, 空行={empty_count}"
+                f"注释={comment_count}, 空行={empty_count}",
             )
 
             # 报告密码学上不支持的类型
@@ -561,15 +553,17 @@ class TargetResolver:
             if unsupported:
                 unsupported_summary = ", ".join(f"{k}={v}" for k, v in sorted(unsupported.items()))
                 logger.warning(
-                    f"密码学上不支持匹配的输入类型: {unsupported_summary}. "
-                    f"这些地址/格式因密码学路径不同无法通过私钥碰撞匹配，已自动跳过。"
-                    f"支持的类型: P2PKH地址(1开头)、WIF私钥、压缩/非压缩公钥、Hash160(hash160(pubkey))、P2WPKH Bech32(20字节witness)。"
+                    "密码学上不支持匹配的输入类型: %s. "
+                    "这些地址/格式因密码学路径不同无法通过私钥碰撞匹配，已自动跳过。"
+                    "支持的类型: P2PKH地址(1开头)、WIF私钥、压缩/非压缩公钥、"
+                    "Hash160(hash160(pubkey))、P2WPKH Bech32(20字节witness)。",
+                    unsupported_summary,
                 )
 
         except PermissionError:
-            logger.error(f"文件权限错误,无法读取: {real_path}")
+            logger.error("文件权限错误,无法读取: %s", real_path)
         except (OSError, ValueError, TypeError) as e:
-            logger.error(f"文件读取异常: {real_path}, 错误={e}", exc_info=True)
+            logger.error("文件读取异常: %s, 错误=%s", real_path, e, exc_info=True)
 
         return addresses
 
@@ -616,15 +610,14 @@ class TargetResolver:
         return counts
 
     def get_cache_stats(self) -> dict | None:
-        """
-        获取缓存统计信息
+        """获取缓存统计信息
 
         返回:
             缓存统计信息字典,未启用缓存返回空字典
         """
         if self.cache:
             stats = self.cache.get_stats()
-            logger.debug(f"缓存统计: {stats}")
+            logger.debug("缓存统计: %s", stats)
             return stats
         return {}
 
