@@ -27,7 +27,7 @@ class LogCollector:
             self._entries.append(entry)
             # Trim if over max queue size
             if len(self._entries) > self._max_queue_size:
-                self._entries = self._entries[-self._max_queue_size:]
+                self._entries = self._entries[-self._max_queue_size :]
         for handler in self._handlers:
             try:
                 handler(entry)

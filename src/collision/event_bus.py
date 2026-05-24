@@ -31,15 +31,18 @@ def _build_event_class_map() -> None:
         EngineStopEvent,
         EventType,
     )
-    _EVENT_CLASS_TO_TYPE.update({
-        EngineStartEvent: EventType.ENGINE_START,
-        EngineStopEvent: EventType.ENGINE_STOP,
-        EngineCompleteEvent: EventType.ENGINE_COMPLETE,
-        EngineMatchEvent: EventType.ENGINE_MATCH,
-        EngineErrorEvent: EventType.ENGINE_ERROR,
-        EngineProgressEvent: EventType.ENGINE_PROGRESS,
-        EngineStateEvent: EventType.ENGINE_STATE,
-    })
+
+    _EVENT_CLASS_TO_TYPE.update(
+        {
+            EngineStartEvent: EventType.ENGINE_START,
+            EngineStopEvent: EventType.ENGINE_STOP,
+            EngineCompleteEvent: EventType.ENGINE_COMPLETE,
+            EngineMatchEvent: EventType.ENGINE_MATCH,
+            EngineErrorEvent: EventType.ENGINE_ERROR,
+            EngineProgressEvent: EventType.ENGINE_PROGRESS,
+            EngineStateEvent: EventType.ENGINE_STATE,
+        }
+    )
 
 
 class EventBus:
