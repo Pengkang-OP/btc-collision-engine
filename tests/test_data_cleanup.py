@@ -36,16 +36,21 @@ class TestDataCleanerBasic(TestCase):
             shutil.rmtree(self.test_dir)
 
     def test_initialization_default(self):
-        """默认初始化 — retention_days=7, 默认 target_dirs"""
+        """默认初始化 — retention_days=7, 默认 target_dirs 解析为项目根路径"""
         cleaner = DataCleaner()
         self.assertEqual(cleaner._retention_seconds, 7 * 86400)
-        self.assertEqual(cleaner._target_dirs, ["data_logs", "logs", "temp"])
+        self.assertEqual(len(cleaner._target_dirs), 3)
+        # 默认路径解析为 PROJECT_ROOT 下的绝对路径
+        self.assertTrue(all(isinstance(p, Path) for p in cleaner._target_dirs))
+        self.assertTrue(all(p.is_absolute() for p in cleaner._target_dirs))
+        names = [p.name for p in cleaner._target_dirs]
+        self.assertEqual(names, ["data_logs", "logs", "temp"])
 
     def test_initialization_custom(self):
         """自定义参数初始化"""
         cleaner = DataCleaner(retention_days=3, target_dirs=["custom_dir"])
         self.assertEqual(cleaner._retention_seconds, 3 * 86400)
-        self.assertEqual(cleaner._target_dirs, ["custom_dir"])
+        self.assertEqual(cleaner._target_dirs, [Path("custom_dir")])
 
 
 class TestDataCleanerCleanAll(TestCase):
@@ -69,13 +74,17 @@ class TestDataCleanerCleanAll(TestCase):
 
     def test_clean_all_empty_dirs(self):
         """空目录 — 返回 0"""
-        cleaner = DataCleaner(retention_days=7)
+        cleaner = DataCleaner(
+            retention_days=7,
+            target_dirs=[str(Path(d)) for d in ["data_logs", "logs", "temp"]],
+        )
         result = cleaner.clean_all()
         self.assertEqual(result, 0)
 
     def test_clean_all_old_files(self):
         """清理过期文件"""
-        cleaner = DataCleaner(retention_days=1)
+        dirs = [str(Path(d)) for d in ["data_logs", "logs", "temp"]]
+        cleaner = DataCleaner(retention_days=1, target_dirs=dirs)
 
         # 创建过期文件（2天前）
         old_file = Path("data_logs") / "old_file.tmp"
@@ -89,7 +98,8 @@ class TestDataCleanerCleanAll(TestCase):
 
     def test_clean_all_new_files_preserved(self):
         """新文件不被清理"""
-        cleaner = DataCleaner(retention_days=7)
+        dirs = [str(Path(d)) for d in ["data_logs", "logs", "temp"]]
+        cleaner = DataCleaner(retention_days=7, target_dirs=dirs)
 
         # 创建新文件
         new_file = Path("data_logs") / "new_file.tmp"
@@ -101,7 +111,8 @@ class TestDataCleanerCleanAll(TestCase):
 
     def test_clean_all_multiple_dirs(self):
         """清理多个目录中的过期文件"""
-        cleaner = DataCleaner(retention_days=1)
+        dirs = [str(Path(d)) for d in ["data_logs", "logs", "temp"]]
+        cleaner = DataCleaner(retention_days=1, target_dirs=dirs)
 
         old_time = time.time() - (2 * 86400)
         for d in ["data_logs", "logs", "temp"]:
@@ -114,7 +125,8 @@ class TestDataCleanerCleanAll(TestCase):
 
     def test_clean_all_mixed_old_new(self):
         """混合新旧文件 — 只清理过期的"""
-        cleaner = DataCleaner(retention_days=1)
+        dirs = [str(Path(d)) for d in ["data_logs", "logs", "temp"]]
+        cleaner = DataCleaner(retention_days=1, target_dirs=dirs)
 
         old_time = time.time() - (2 * 86400)
 
@@ -161,7 +173,10 @@ class TestDataCleanerEdgeCases(TestCase):
         # 确保 mtime < now (Windows 时间粒度问题)
         time.sleep(0.01)
 
-        cleaner = DataCleaner(retention_days=0)
+        cleaner = DataCleaner(
+            retention_days=0,
+            target_dirs=["data_logs"],
+        )
         result = cleaner.clean_all()
         self.assertEqual(result, 1)
 
