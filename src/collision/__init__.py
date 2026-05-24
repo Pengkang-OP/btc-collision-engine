@@ -7,9 +7,11 @@ address sets using CPU and GPU acceleration.
 from .base_engine import BaseCollisionEngine
 from .checkpoint_manager import CheckpointManager
 from .collision_stats import CollisionStats
+from .targets.resolver import TargetResolver
 
 __all__ = [
     "BaseCollisionEngine",
     "CheckpointManager",
     "CollisionStats",
+    "TargetResolver",
 ]
