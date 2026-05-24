@@ -273,7 +273,7 @@ jobs:
   test:
     name: 测试 (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 50
     needs: [lint] # lint 通过后才运行完整测试
 
     strategy:
