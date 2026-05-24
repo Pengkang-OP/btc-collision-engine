@@ -120,4 +120,4 @@ def has_admin_privileges() -> bool:
         import ctypes
 
         return ctypes.windll.shell32.IsUserAnAdmin() != 0
-    return os.geteuid() == 0
+    return os.geteuid() == 0  # type: ignore[attr-defined]  # Unix-only

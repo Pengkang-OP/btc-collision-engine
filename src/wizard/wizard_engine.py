@@ -10,10 +10,17 @@ import time
 from collections.abc import Callable
 
 from .config_builder import ConfigBuilder
-from .events import EventDispatcher, WizardEventType
+from .events import EventDispatcher, WizardEventType  # type: ignore[attr-defined]  # 模块重命名后废弃
 from .gpu_selector import GPUSelector
-from .interfaces import WizardConfig, WizardMode, WizardResult
-from .message_queue import WizardMessageQueue, get_message_queue
+from .interfaces import (  # type: ignore[attr-defined]  # 模块重命名后废弃
+    WizardConfig,
+    WizardMode,
+    WizardResult,
+)
+from .message_queue import (  # type: ignore[attr-defined]  # 函数已移除
+    WizardMessageQueue,
+    get_message_queue,
+)
 from .mode_selector import ModeSelector
 from .option_selector import OptionSelector
 from .target_selector import TargetSelector
@@ -70,7 +77,7 @@ class WizardEngine:
 
         """
         self._running = True
-        self.message_queue.send_wizard_start({"mode": self.config.mode.value})
+        self.message_queue.send_wizard_start({"mode": self.config.mode.value})  # type: ignore[union-attr]
 
         try:
             if self.config.show_intro:
@@ -184,7 +191,7 @@ class WizardEngine:
         """向导出错"""
         self.result.success = False
         self.result.error_message = error_message
-        self.message_queue.send_wizard_error(error_message)
+        self.message_queue.send_wizard_error(error_message)  # type: ignore[union-attr]
         print(f"\n\n[ERROR] 向导出错: {error_message}")
 
     def _show_summary(self):

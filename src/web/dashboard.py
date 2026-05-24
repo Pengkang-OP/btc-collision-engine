@@ -50,11 +50,11 @@ try:
     FLASK_AVAILABLE = True
 except ImportError:
     FLASK_AVAILABLE = False
-    Flask: "type[Flask] | None" = None
-    jsonify: "Any | None" = None
-    render_template_string: "Any | None" = None
-    request: "Any | None" = None
-    abort: "Any | None" = None
+    Flask: "type[Flask] | None" = None  # type: ignore[no-redef]  # 条件导入兼容
+    jsonify: "Any | None" = None  # type: ignore[no-redef]
+    render_template_string: "Any | None" = None  # type: ignore[no-redef]
+    request: "Any | None" = None  # type: ignore[no-redef]
+    abort: "Any | None" = None  # type: ignore[no-redef]
 
 logger = logging.getLogger(__name__)
 

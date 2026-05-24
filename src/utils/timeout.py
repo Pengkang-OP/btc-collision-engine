@@ -174,7 +174,7 @@ def _execute_with_sigalrm_timeout(
                 return _execute_with_thread_timeout(func, args, kwargs, timeout, callback_name)
 
             old_handler = signal.signal(sigalrm, _timeout_handler)
-            setitimer(signal.ITIMER_REAL, timeout)
+            setitimer(signal.ITIMER_REAL, timeout)  # type: ignore[attr-defined]  # Unix-only
             try:
                 func(*args, **kwargs)
                 return True
@@ -190,8 +190,8 @@ def _execute_with_sigalrm_timeout(
                 )
                 return False
             finally:
-                setitimer(signal.ITIMER_REAL, 0.0)
-                signal.signal(signal.SIGALRM, old_handler)
+                setitimer(signal.ITIMER_REAL, 0.0)  # type: ignore[attr-defined]  # Unix-only
+                signal.signal(signal.SIGALRM, old_handler)  # type: ignore[attr-defined]  # Unix-only
         except (ValueError, OSError, AttributeError) as e:
             retry_count += 1
             if retry_count >= max_retries:
