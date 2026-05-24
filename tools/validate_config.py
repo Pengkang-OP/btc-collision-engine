@@ -27,7 +27,11 @@ import argparse
 import json
 import os
 import sys
+from pathlib import Path
 from typing import Any
+
+# 确保项目根目录在 sys.path 中，使 CI/任意 CWD 环境下均可导入 src
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 # ── 路径设置 ──────────────────────────────────────────────────────────
 # ── 辅助函数 ──────────────────────────────────────────────────────────
