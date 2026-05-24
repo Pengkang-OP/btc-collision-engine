@@ -155,14 +155,14 @@ class TestAllocate:
     def test_dynamic_adjustment_called_on_new(self):
         pool = self._pool(enable_dynamic_adjustment=True)
         with patch.dict(sys.modules, {"pyopencl": self.mock_cl}):
-            with patch.object(pool, "_adjust_pool_size") as ma:
+            with patch.object(type(pool), "_adjust_pool_size") as ma:
                 pool.allocate(256)
                 ma.assert_called_once()
 
     def test_dynamic_skipped_when_disabled(self):
         pool = self._pool(enable_dynamic_adjustment=False)
         with patch.dict(sys.modules, {"pyopencl": self.mock_cl}):
-            with patch.object(pool, "_adjust_pool_size") as ma:
+            with patch.object(type(pool), "_adjust_pool_size") as ma:
                 pool.allocate(256)
                 ma.assert_not_called()
 
@@ -735,7 +735,7 @@ class TestAdaptCapacity:
         pool = self._pool(max_buffers=50)
         mc = _make_mock_cl()
         mc.Buffer.side_effect = MemoryError("OOM")
-        with patch.dict(sys.modules, {"pyopencl": mc}), patch.object(pool, "_evict_lru") as mev:
+        with patch.dict(sys.modules, {"pyopencl": mc}), patch.object(type(pool), "_evict_lru") as mev:
             pool.adapt_capacity(context=object())
             mev.assert_called_once()
 
