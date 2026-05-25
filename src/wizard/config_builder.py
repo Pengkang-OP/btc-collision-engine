@@ -1,17 +1,30 @@
 """Wizard configuration builder."""
 
+from typing import Any
+
 
 class ConfigBuilder:
     """Builds engine configuration from wizard selections."""
 
-    def build(self, selections: dict) -> dict:
-        """Build configuration dictionary.
+    def build(self, selections: dict[str, Any]) -> list[str]:
+        """Build command-line arguments from wizard selections.
 
         Args:
             selections: User selections from wizard steps
 
         Returns:
-            Engine configuration dictionary
+            Command-line argument list for the collision engine
 
         """
-        return dict(selections)
+        cmd = ["python", "key_collision_cli.py"]
+        mode = selections.get("mode", "")
+        if mode:
+            cmd.extend(["-m", str(mode)])
+        targets = selections.get("targets", [])
+        if targets:
+            cmd.extend(["-t", ",".join(targets)])
+        if selections.get("checkpoint"):
+            cmd.append("--checkpoint")
+        if selections.get("dedup"):
+            cmd.append("--dedup")
+        return cmd

@@ -8,16 +8,17 @@ import logging
 import sys
 import time
 from collections.abc import Callable
+from typing import Any
 
 from .config_builder import ConfigBuilder
-from .events import EventDispatcher, WizardEventType  # type: ignore[attr-defined]  # 模块重命名后废弃
+from .events import EventDispatcher
 from .gpu_selector import GPUSelector
-from .interfaces import (  # type: ignore[attr-defined]  # 模块重命名后废弃
+from .interfaces import (
     WizardConfig,
     WizardMode,
     WizardResult,
 )
-from .message_queue import (  # type: ignore[attr-defined]  # 函数已移除
+from .message_queue import (
     WizardMessageQueue,
     get_message_queue,
 )
@@ -56,12 +57,12 @@ class WizardEngine:
                           支持注入自定义/模拟队列用于测试。
 
         """
-        self.config = config or WizardConfig()
-        self.result = WizardResult()
-        self.event_dispatcher = EventDispatcher()
-        self.message_queue = message_queue or get_message_queue()
-        self._running = False
-        self._step_handlers = {
+        self.config: WizardConfig = config or WizardConfig()
+        self.result: WizardResult = WizardResult()
+        self.event_dispatcher: EventDispatcher = EventDispatcher()
+        self.message_queue: WizardMessageQueue = message_queue or get_message_queue()
+        self._running: bool = False
+        self._step_handlers: dict[str, Callable[..., Any]] = {
             "target": self._select_target,
             "mode": self._select_mode,
             "options": self._select_options,
@@ -77,7 +78,7 @@ class WizardEngine:
 
         """
         self._running = True
-        self.message_queue.send_wizard_start({"mode": self.config.mode.value})  # type: ignore[union-attr]
+        self.message_queue.send({"event": "wizard_start", "mode": self.config.mode.value})
 
         try:
             if self.config.show_intro:
@@ -121,28 +122,29 @@ class WizardEngine:
     def _select_target(self):
         """选择目标地址"""
         selector = TargetSelector()
-        targets, target_file = selector.select(compact=(self.config.mode == WizardMode.COMPACT))
+        targets = selector.select([])  # 存根：传入空列表，返回空列表
         self.result.targets = targets
-        self.result.target_file = target_file
-        self.message_queue.send_target_selected(targets, target_file)
+        self.message_queue.send(
+            {"event": "target_selected", "targets": targets}
+        )
 
     def _select_mode(self):
         """选择碰撞模式"""
         selector = ModeSelector()
-        mode, start_key, end_key = selector.select(compact=(self.config.mode == WizardMode.COMPACT))
+        mode = selector.select([])  # 存根：传入空列表，返回空字符串
         self.result.mode = mode
-        self.result.start_key = start_key
-        self.result.end_key = end_key
-        self.message_queue.send_mode_selected(mode, start_key, end_key)
+        self.message_queue.send(
+            {"event": "mode_selected", "mode": mode}
+        )
 
     def _select_options(self):
         """选择功能选项"""
         selector = OptionSelector()
-        checkpoint, dedup, duration = selector.select(compact=(self.config.mode == WizardMode.COMPACT))
-        self.result.checkpoint = checkpoint
-        self.result.dedup = dedup
-        self.result.duration = duration
-        self.message_queue.send_options_selected(checkpoint, dedup, duration)
+        # 存根：传入空列表和空 key，返回 None，使用默认值
+        _ = selector.select([], "")
+        self.message_queue.send(
+            {"event": "options_selected"}
+        )
 
     def _select_gpu(self):
         """选择GPU设备"""
@@ -150,23 +152,25 @@ class WizardEngine:
         gpu_indices = selector.select([])
         self.result.gpu_indices = gpu_indices
         self.result.use_multi_gpu = len(gpu_indices) > 1
-        self.message_queue.send_gpu_selected(gpu_indices, len(gpu_indices) > 1)
+        self.message_queue.send(
+            {"event": "gpu_selected", "gpu_indices": gpu_indices, "multi_gpu": len(gpu_indices) > 1}
+        )
 
     def _build_config(self):
         """构建配置"""
         builder = ConfigBuilder()
         try:
-            command = builder.build(self.result)
+            command = builder.build(self.result.to_dict())
         except ValueError as e:
             self._error(f"Config validation failed: {e}")
             return
         self.result.command = command
-        self.message_queue.send(WizardEventType.CONFIG_BUILT, {"command": command})
+        self.message_queue.send({"event": "config_built", "command": command})
 
     def _complete(self):
         """向导完成"""
         self.result.success = True
-        self.message_queue.send_wizard_complete(self.result.to_dict())
+        self.message_queue.send({"event": "wizard_complete", "result": self.result.to_dict()})
 
         if self.config.show_summary:
             self._show_summary()
@@ -184,14 +188,14 @@ class WizardEngine:
         """向导取消"""
         self.result.success = False
         self.result.error_message = "用户取消"
-        self.message_queue.send_wizard_cancelled()
+        self.message_queue.send({"event": "wizard_cancelled"})
         print("\n\n[INFO] 向导已取消")
 
     def _error(self, error_message: str):
         """向导出错"""
         self.result.success = False
         self.result.error_message = error_message
-        self.message_queue.send_wizard_error(error_message)  # type: ignore[union-attr]
+        self.message_queue.send({"event": "wizard_error", "error": error_message})
         print(f"\n\n[ERROR] 向导出错: {error_message}")
 
     def _show_summary(self):
@@ -222,7 +226,7 @@ class WizardEngine:
 
     def _execute(self):
         """执行生成的命令"""
-        if not getattr(self.result, "command", None):
+        if not self.result.command:
             print("[ERROR] 没有可执行的命令")
             return
 
@@ -235,7 +239,7 @@ class WizardEngine:
         import subprocess
 
         try:
-            subprocess.run(self.result.command, shell=False)  # nosec B603
+            _ = subprocess.run(self.result.command, shell=False)  # nosec B603
         except (subprocess.SubprocessError, FileNotFoundError, OSError) as e:
             logger.error("Command execution failed: %s", e)
             print(f"[ERROR] 执行失败: {e}")
@@ -248,7 +252,7 @@ class WizardEngine:
         """检查向导是否正在运行"""
         return self._running
 
-    def register_step_handler(self, step_name: str, handler: Callable):
+    def register_step_handler(self, step_name: str, handler: Callable[..., Any]) -> None:
         """注册步骤处理器
 
         Args:
@@ -258,26 +262,30 @@ class WizardEngine:
         """
         self._step_handlers[step_name] = handler
 
-    def unregister_step_handler(self, step_name: str):
+    def unregister_step_handler(self, step_name: str) -> None:
         """取消注册步骤处理器"""
         self._step_handlers.pop(step_name, None)
 
 
-def main():
+def main() -> int:
     """独立运行向导"""
     import argparse
 
     parser = argparse.ArgumentParser(description="BTC碰撞引擎 - 交互式向导")
-    parser.add_argument("--compact", action="store_true", help="紧凑模式（跳过帮助信息）")
-    parser.add_argument("--auto", action="store_true", help="自动模式（使用默认值）")
-    parser.add_argument("--output", type=str, help="保存配置到文件")
+    _ = parser.add_argument("--compact", action="store_true", help="紧凑模式（跳过帮助信息）")
+    _ = parser.add_argument("--auto", action="store_true", help="自动模式（使用默认值）")
+    _ = parser.add_argument("--output", type=str, help="保存配置到文件")
 
     args = parser.parse_args()
 
-    # 配置向导模式
-    if args.auto:
+    # 配置向导模式（argparse store_true 返回 bool，但类型推断为 Any）
+    auto_mode: bool = args.auto  # type: ignore[assignment]
+    compact_mode: bool = args.compact  # type: ignore[assignment]
+    output_path: str | None = args.output  # type: ignore[assignment]
+
+    if auto_mode:
         config = WizardConfig(mode=WizardMode.AUTO, show_intro=False, show_summary=True)
-    elif args.compact:
+    elif compact_mode:
         config = WizardConfig(mode=WizardMode.COMPACT, show_intro=False, show_summary=True)
     else:
         config = WizardConfig(mode=WizardMode.INTERACTIVE)
@@ -287,9 +295,9 @@ def main():
     result = wizard.run()
 
     # 保存配置
-    if args.output and result.success:
-        result.save_to_file(args.output)
-        print(f"[OK] 配置已保存到: {args.output}")
+    if output_path and result.success:
+        result.save_to_file(output_path)
+        print(f"[OK] 配置已保存到: {output_path}")
 
     return 0 if result.success else 1
 

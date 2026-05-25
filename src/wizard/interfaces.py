@@ -42,6 +42,7 @@ class WizardResult:
     error_message: str = ""
     start_key: str = ""
     end_key: str = ""
+    command: list[str] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""

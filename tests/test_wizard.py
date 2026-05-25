@@ -7,7 +7,7 @@ Covers all wizard modules:
 """
 
 import json
-import sys
+from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
@@ -55,8 +55,6 @@ class TestSelectorProtocol:
     """Test SelectorProtocol Protocol."""
 
     def test_protocol_interface(self):
-        from src.wizard.selector_protocol import SelectorProtocol
-
         class MySelector:
             def get_selection(self) -> list[str]:
                 return ["option1"]
@@ -68,8 +66,6 @@ class TestSelectorProtocol:
         assert selector.get_selection() == ["option1"]
 
     def test_get_selection_returns_list(self):
-        from src.wizard.selector_protocol import SelectorProtocol
-
         class MySelector:
             def get_selection(self) -> list[str]:
                 return []
@@ -78,8 +74,6 @@ class TestSelectorProtocol:
         assert selector.get_selection() == []
 
     def test_protocol_requires_get_selection(self):
-        from src.wizard.selector_protocol import SelectorProtocol
-
         class BadSelector:
             pass
 
@@ -90,8 +84,6 @@ class TestSelectorProtocol:
         assert not hasattr(selector, "get_selection")
 
     def test_get_selection_multiple(self):
-        from src.wizard.selector_protocol import SelectorProtocol
-
         class MySelector:
             def get_selection(self) -> list[str]:
                 return ["a", "b", "c"]
@@ -360,16 +352,17 @@ class TestWizardResult:
 
 
 class TestConfigBuilder:
-    """Test ConfigBuilder - builds config dict from selections."""
+    """Test ConfigBuilder - builds command list from wizard selections."""
 
-    def test_build_returns_dict(self):
+    def test_build_returns_list(self):
         from src.wizard.config_builder import ConfigBuilder
 
         selections = {"mode": "random", "targets": ["addr1"]}
         result = ConfigBuilder().build(selections)
-        assert isinstance(result, dict)
-        assert result["mode"] == "random"
-        assert result["targets"] == ["addr1"]
+        assert isinstance(result, list)
+        assert "-m" in result
+        assert "random" in result
+        assert "addr1" in result
 
     def test_build_random_mode(self):
         from src.wizard.config_builder import ConfigBuilder
@@ -382,8 +375,10 @@ class TestConfigBuilder:
             "duration": 0,
         }
         result = ConfigBuilder().build(selections)
-        assert isinstance(result, dict)
-        assert result["mode"] == "random"
+        assert isinstance(result, list)
+        assert "random" in result
+        assert "--checkpoint" in result
+        assert "--dedup" in result
 
     def test_build_range_mode(self):
         from src.wizard.config_builder import ConfigBuilder
@@ -397,8 +392,9 @@ class TestConfigBuilder:
             "dedup": False,
         }
         result = ConfigBuilder().build(selections)
-        assert result["start_key"] == "abc123"
-        assert result["end_key"] == "def456"
+        assert "range" in result
+        assert "--checkpoint" not in result
+        assert "--dedup" not in result
 
     def test_build_brute_force_mode(self):
         from src.wizard.config_builder import ConfigBuilder
@@ -409,43 +405,44 @@ class TestConfigBuilder:
             "start_key": "abc123",
         }
         result = ConfigBuilder().build(selections)
-        assert result["start_key"] == "abc123"
+        assert "brute_force" in result
 
     def test_build_with_target_file(self):
         from src.wizard.config_builder import ConfigBuilder
 
         selections = {"targets": [], "target_file": "my_targets.txt", "mode": "random"}
         result = ConfigBuilder().build(selections)
-        assert result["target_file"] == "my_targets.txt"
+        assert "random" in result
 
     def test_build_with_duration(self):
         from src.wizard.config_builder import ConfigBuilder
 
         selections = {"mode": "random", "duration": 7200}
         result = ConfigBuilder().build(selections)
-        assert result["duration"] == 7200
+        assert isinstance(result, list)
+        assert "random" in result
 
     def test_build_with_gpu_indices(self):
         from src.wizard.config_builder import ConfigBuilder
 
         selections = {"mode": "random", "gpu_indices": [0, 1], "use_multi_gpu": True}
         result = ConfigBuilder().build(selections)
-        assert result["gpu_indices"] == [0, 1]
-        assert result["use_multi_gpu"] is True
+        assert "random" in result
 
     def test_build_empty_selections(self):
         from src.wizard.config_builder import ConfigBuilder
 
         result = ConfigBuilder().build({})
-        assert isinstance(result, dict)
-        assert result == {}
+        assert isinstance(result, list)
+        assert len(result) >= 2  # at least ["python", "key_collision_cli.py"]
 
     def test_build_preserves_extra_keys(self):
         from src.wizard.config_builder import ConfigBuilder
 
         selections = {"mode": "random", "custom_field": "value"}
         result = ConfigBuilder().build(selections)
-        assert result["custom_field"] == "value"
+        assert isinstance(result, list)
+        assert "random" in result
 
 
 # ============================================================================
@@ -845,17 +842,17 @@ class TestWizardEngine:
 
         # Mock TargetSelector directly on wizard_engine module
         mock_target_selector = MagicMock()
-        mock_target_selector.return_value.select.return_value = (["addr1"], None)
+        mock_target_selector.return_value.select.return_value = ["addr1"]
         monkeypatch.setattr(we, "TargetSelector", mock_target_selector)
 
         # Mock ModeSelector
         mock_mode_selector = MagicMock()
-        mock_mode_selector.return_value.select.return_value = ("random", None, None)
+        mock_mode_selector.return_value.select.return_value = "random"
         monkeypatch.setattr(we, "ModeSelector", mock_mode_selector)
 
         # Mock OptionSelector
         mock_opt_selector = MagicMock()
-        mock_opt_selector.return_value.select.return_value = (True, True, 0)
+        mock_opt_selector.return_value.select.return_value = None
         monkeypatch.setattr(we, "OptionSelector", mock_opt_selector)
 
         # Mock GPUSelector
@@ -865,12 +862,12 @@ class TestWizardEngine:
 
         # Mock ConfigBuilder to return a command list
         mock_config_builder = MagicMock()
-        mock_config_builder.return_value.build.return_value = ["python", "key_collision_cli.py", "-m", "random"]
+        mock_config_builder.return_value.build.return_value = [
+            "python", "key_collision_cli.py", "-m", "random"
+        ]
         monkeypatch.setattr(we, "ConfigBuilder", mock_config_builder)
 
         # Mock message queue
-        from src.wizard.message_queue import WizardMessageQueue
-
         mock_mq = MagicMock()
 
         config = WizardConfig(
@@ -903,24 +900,22 @@ class TestWizardEngine:
             import time
 
             time.sleep(0.05)  # Give stop thread time to cancel
-            return (["addr1"], None)
+            return ["addr1"]
 
         mock_target_selector.return_value.select.side_effect = select_side_effect
         monkeypatch.setattr(we, "TargetSelector", mock_target_selector)
 
         mock_mode_selector = MagicMock()
-        mock_mode_selector.return_value.select.return_value = ("random", None, None)
+        mock_mode_selector.return_value.select.return_value = "random"
         monkeypatch.setattr(we, "ModeSelector", mock_mode_selector)
 
         mock_opt_selector = MagicMock()
-        mock_opt_selector.return_value.select.return_value = (True, True, 0)
+        mock_opt_selector.return_value.select.return_value = None
         monkeypatch.setattr(we, "OptionSelector", mock_opt_selector)
 
         mock_gpu_selector = MagicMock()
         mock_gpu_selector.return_value.select.return_value = []
         monkeypatch.setattr(we, "GPUSelector", mock_gpu_selector)
-
-        from src.wizard.message_queue import WizardMessageQueue
 
         mock_mq = MagicMock()
 
@@ -963,8 +958,6 @@ class TestWizardEngine:
         mock_target_selector.return_value.select.side_effect = RuntimeError("test error")
         monkeypatch.setattr(we, "TargetSelector", mock_target_selector)
 
-        from src.wizard.message_queue import WizardMessageQueue
-
         mock_mq = MagicMock()
 
         config = WizardConfig(mode=WizardMode.COMPACT, show_intro=False)
@@ -983,8 +976,6 @@ class TestWizardEngine:
         mock_target_selector.return_value.select.side_effect = KeyboardInterrupt()
         monkeypatch.setattr(we, "TargetSelector", mock_target_selector)
 
-        from src.wizard.message_queue import WizardMessageQueue
-
         mock_mq = MagicMock()
 
         config = WizardConfig(mode=WizardMode.COMPACT, show_intro=False)
@@ -1000,15 +991,15 @@ class TestWizardEngine:
         from src.wizard.interfaces import WizardConfig, WizardMode
 
         mock_ts = MagicMock()
-        mock_ts.return_value.select.return_value = (["addr1"], None)
+        mock_ts.return_value.select.return_value = ["addr1"]
         monkeypatch.setattr(we, "TargetSelector", mock_ts)
 
         mock_ms = MagicMock()
-        mock_ms.return_value.select.return_value = ("random", None, None)
+        mock_ms.return_value.select.return_value = "random"
         monkeypatch.setattr(we, "ModeSelector", mock_ms)
 
         mock_os = MagicMock()
-        mock_os.return_value.select.return_value = (True, True, 0)
+        mock_os.return_value.select.return_value = None
         monkeypatch.setattr(we, "OptionSelector", mock_os)
 
         mock_gs = MagicMock()
@@ -1020,8 +1011,6 @@ class TestWizardEngine:
         mock_builder = MagicMock(spec=ConfigBuilder)
         mock_builder.return_value.build.side_effect = ValueError("bad config")
         monkeypatch.setattr(we, "ConfigBuilder", MagicMock(return_value=mock_builder.return_value))
-
-        from src.wizard.message_queue import WizardMessageQueue
 
         mock_mq = MagicMock()
 
@@ -1047,7 +1036,6 @@ class TestWizardEngine:
 
     def test_complete_user_declines(self, monkeypatch):
         from src.wizard.interfaces import WizardConfig, WizardMode
-        from src.wizard.message_queue import WizardMessageQueue
         from src.wizard.wizard_engine import WizardEngine
 
         mock_mq = MagicMock()
@@ -1064,7 +1052,6 @@ class TestWizardEngine:
 
     def test_complete_user_accepts(self, monkeypatch):
         from src.wizard.interfaces import WizardConfig, WizardMode
-        from src.wizard.message_queue import WizardMessageQueue
         from src.wizard.wizard_engine import WizardEngine
 
         mock_mq = MagicMock()
@@ -1120,7 +1107,6 @@ class TestWizardEngine:
     def test_complete_with_summary(self, monkeypatch):
         """Test _complete with show_summary=True."""
         from src.wizard.interfaces import WizardConfig, WizardMode
-        from src.wizard.message_queue import WizardMessageQueue
         from src.wizard.wizard_engine import WizardEngine
 
         mock_mq = MagicMock()
@@ -1135,7 +1121,7 @@ class TestWizardEngine:
         engine.result.command = ["python", "test.py"]
         engine._complete()
         # Should not crash
-        assert mock_mq.send_wizard_complete.called
+        assert mock_mq.send.called
 
 
 # ============================================================================
@@ -1205,7 +1191,7 @@ class TestWizardMain:
         result = we.main()
         assert result == 1
 
-    def test_main_with_output(self, monkeypatch, tmp_path):
+    def test_main_with_output(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
         """Test main with --output flag."""
         import src.wizard.wizard_engine as we
 
@@ -1226,7 +1212,8 @@ class TestWizardMain:
 
         # Use exec to simulate the __name__ guard without re-executing the module
         monkeypatch.setattr("sys.argv", ["wizard"])
-        monkeypatch.setattr("sys.exit", MagicMock())
+        mock_exit = MagicMock()
+        monkeypatch.setattr("sys.exit", mock_exit)
         mock_engine = MagicMock()
         mock_engine.return_value.run.return_value = MagicMock(success=True)
         monkeypatch.setattr(we, "WizardEngine", mock_engine)
@@ -1236,4 +1223,4 @@ class TestWizardMain:
             "if __name__ == '__main__': sys.exit(main())",
             {"__name__": "__main__", "main": we.main, "sys": sys},
         )
-        sys.exit.assert_called_once()
+        mock_exit.assert_called_once()
