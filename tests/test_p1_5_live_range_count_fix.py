@@ -185,7 +185,7 @@ class TestLiveRangeCountFix(unittest.TestCase):
         # 检查："_live_range_count += batch_count" 只应出现在注释中
         lines = worker_source.split("\n")
         exec_lines = [line for line in lines
-                       if "self._live_range_count += batch_count" in line]
+                      if "self._live_range_count += batch_count" in line]
         for line in exec_lines:
             stripped = line.strip()
             self.assertTrue(

@@ -10,6 +10,9 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
+from src.gpu.device import GPUDevice, GPUDeviceDetector, identify_vendor
+from src.gpu.selector import GPUDeviceSelector, get_gpu_selector, reset_gpu_selector
+
 pytestmark = pytest.mark.gpu
 
 # 修复Windows编码（Python 3.7+: reconfigure 安全无副作用）
@@ -20,9 +23,6 @@ if sys.platform == "win32":
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     else:
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", closefd=False)
-
-from src.gpu.device import GPUDevice, GPUDeviceDetector, identify_vendor
-from src.gpu.selector import GPUDeviceSelector, get_gpu_selector, reset_gpu_selector
 
 
 # Mock pyopencl常量

@@ -157,7 +157,11 @@ class TestSensitiveDataFilterRedact:
         """BIP32扩展密钥应被替换"""
         from src.log_engine.log_processor import SensitiveDataFilter
 
-        fake_xprv = "xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbN6mRyPHQpQ4QnZt7nEk2RgvXVcqvNNt5ThEZQUQoFwSsXPyDyoB6F5TsPgpXfXaM"
+        fake_xprv = (
+            "xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stb"
+            "N6mRyPHQpQ4QnZt7nEk2RgvXVcqvNNt5ThEZQUQoFwSsX"
+            "PyDyoB6F5TsPgpXfXaM"
+        )
         result = SensitiveDataFilter.redact(f"key: {fake_xprv}")
         assert fake_xprv not in result
         assert "[BIP32_EXTENDED_KEY]" in result
