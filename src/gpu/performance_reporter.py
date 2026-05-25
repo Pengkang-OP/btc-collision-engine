@@ -42,10 +42,12 @@ class PerformanceReportGenerator:
                 - batch_id: 批次编号
         """
         if self._running:
-            self._metrics.append({
-                "timestamp": time.perf_counter() - self._start_time,
-                **metrics,
-            })
+            self._metrics.append(
+                {
+                    "timestamp": time.perf_counter() - self._start_time,
+                    **metrics,
+                }
+            )
 
     def stop(self) -> dict[str, Any]:
         """停止采集并生成汇总报告。

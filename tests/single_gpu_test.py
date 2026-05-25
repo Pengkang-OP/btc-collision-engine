@@ -117,6 +117,7 @@ def main():
         except Exception as e:
             logger.error("❌ %s 失败: %s", name, e)
             import traceback
+
             traceback.print_exc()
             all_ok = False
 

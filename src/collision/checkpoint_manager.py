@@ -220,6 +220,7 @@ class CheckpointManager:
             return CheckpointManager._has_win32_security
         try:
             import win32security  # noqa: F401
+
             CheckpointManager._has_win32_security = True
         except ImportError:
             CheckpointManager._has_win32_security = False

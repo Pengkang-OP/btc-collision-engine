@@ -74,8 +74,7 @@ class EnhancedMonitoringSystem:
                 threshold = config.alert_threshold
                 if not (0.0 <= threshold <= 1.0):
                     logger.warning(
-                        "配置验证失败: alert_threshold=%s 超出范围 [0.0, 1.0]，"
-                        "使用默认值 0.8",
+                        "配置验证失败: alert_threshold=%s 超出范围 [0.0, 1.0]，使用默认值 0.8",
                         threshold,
                     )
                     valid = False

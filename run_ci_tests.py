@@ -1,4 +1,5 @@
 """Quick test runner for CI failures."""
+
 import subprocess
 import sys
 
@@ -9,15 +10,17 @@ tests = [
 ]
 
 for test in tests:
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Running: {test}")
-    print('='*60)
+    print("=" * 60)
     result = subprocess.run(
         [sys.executable, "-m", "pytest", test, "-v", "--tb=short", "-p", "no:cacheprovider"],
-        capture_output=True, text=True, cwd=r"f:\Qoder\btc-collision-engine"
+        capture_output=True,
+        text=True,
+        cwd=r"f:\Qoder\btc-collision-engine",
     )
     # Print last 30 lines of stdout
-    lines = result.stdout.strip().split('\n')
+    lines = result.stdout.strip().split("\n")
     for line in lines[-30:]:
         print(line)
     if result.returncode != 0:

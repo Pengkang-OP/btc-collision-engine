@@ -51,10 +51,10 @@ class GPUAutoTuner:
         vendor_name = str(device_info.get("vendor_name", device_info.get("vendor", ""))).lower()
 
         # 检测厂商并加载默认配置
-        vendor = "intel" if "intel" in vendor_name else (
-            "nvidia" if "nvidia" in vendor_name else (
-                "amd" if "amd" in vendor_name else "intel"
-            )
+        vendor = (
+            "intel"
+            if "intel" in vendor_name
+            else ("nvidia" if "nvidia" in vendor_name else ("amd" if "amd" in vendor_name else "intel"))
         )
         defaults = self._VENDOR_DEFAULTS.get(vendor, self._VENDOR_DEFAULTS["intel"])
 

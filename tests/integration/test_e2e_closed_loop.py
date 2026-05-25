@@ -620,7 +620,9 @@ class TestFileLoadingClosedLoop:
         engine._thread.join(timeout=15)
         engine.stop()
 
-        assert len(match_results) == 5, f"5 个 Legacy P2PKH (k=1..5) 应全部在 range 1-20 中匹配，实际: {len(match_results)}"
+        assert len(match_results) == 5, (
+            f"5 个 Legacy P2PKH (k=1..5) 应全部在 range 1-20 中匹配，实际: {len(match_results)}"
+        )
         assert all(addr.startswith("1") for addr in match_results)
 
     def test_multi_worker_range_scan_all_matches(self):

@@ -34,6 +34,7 @@ def test_secp256k1_deprecation_warning():
 
         # scalar_multiply() 已被永久禁用, 调用应触发 RuntimeError
         import pytest
+
         with pytest.raises(RuntimeError, match="已被永久禁用"):
             ec.scalar_multiply(2, G)
 

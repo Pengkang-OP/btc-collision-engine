@@ -188,8 +188,7 @@ class EventBus:
             required = sum(
                 1
                 for p in params
-                if p.default is p.empty
-                and p.kind in (p.POSITIONAL_ONLY, p.POSITIONAL_OR_KEYWORD)
+                if p.default is p.empty and p.kind in (p.POSITIONAL_ONLY, p.POSITIONAL_OR_KEYWORD)
             )
             if required >= 2 and event_type is not None:
                 handler(event_type, event)
@@ -200,7 +199,9 @@ class EventBus:
                 self.error_count += 1
             handler_name = getattr(handler, "__name__", None) or repr(handler)
             logger.warning(
-                "Event handler %s failed: %s", handler_name, e,
+                "Event handler %s failed: %s",
+                handler_name,
+                e,
             )
             # Call error handler callback if registered
             if self._error_handler is not None:

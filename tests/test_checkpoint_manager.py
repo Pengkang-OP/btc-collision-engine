@@ -44,12 +44,16 @@ class TestCheckpointManagerBasic(unittest.TestCase):
     def test_exists_after_save(self):
         """保存后 exists() 返回 True"""
         self.assertFalse(self.mgr.exists)
-        self.mgr.save(mode="random", targets=set(), current_position=0, total_checked=0, matches=[], force=True)
+        self.mgr.save(
+            mode="random", targets=set(), current_position=0, total_checked=0, matches=[], force=True
+        )
         self.assertTrue(self.mgr.exists)
 
     def test_delete(self):
         """删除后 exists() 返回 False"""
-        self.mgr.save(mode="random", targets=set(), current_position=0, total_checked=0, matches=[], force=True)
+        self.mgr.save(
+            mode="random", targets=set(), current_position=0, total_checked=0, matches=[], force=True
+        )
         self.assertTrue(self.mgr.exists)
         self.mgr.delete()
         self.assertFalse(self.mgr.exists)
@@ -106,13 +110,22 @@ class TestCheckpointSensitiveInfoCleaning(unittest.TestCase):
     def test_address_preserved_in_match(self):
         """断点保存保留地址信息"""
         matches = [{"address": "1TestPreserved", "timestamp": time.time()}]
-        self.mgr.save(mode="random", targets=set(), current_position=0, total_checked=0, matches=matches, force=True)
+        self.mgr.save(
+            mode="random",
+            targets=set(),
+            current_position=0,
+            total_checked=0,
+            matches=matches,
+            force=True,
+        )
         data = self.mgr.load()
         self.assertEqual(data["matches"][0]["address"], "1TestPreserved")
 
     def test_security_note_in_file(self):
         """断点文件包含安全说明"""
-        self.mgr.save(mode="random", targets=set(), current_position=0, total_checked=0, matches=[], force=True)
+        self.mgr.save(
+            mode="random", targets=set(), current_position=0, total_checked=0, matches=[], force=True
+        )
         raw = pathlib.Path(self.tmp_path).read_text(encoding="utf-8")
         self.assertIn("security_note", raw)
 
@@ -186,7 +199,9 @@ class TestCheckpointAutoSave(unittest.TestCase):
         tmp.close()
         try:
             mgr = CheckpointManager(filepath=tmp.name, auto_save_interval=9999)
-            mgr.save(mode="random", targets=set(), current_position=0, total_checked=0, matches=[], force=True)
+            mgr.save(
+                mode="random", targets=set(), current_position=0, total_checked=0, matches=[], force=True
+            )
             # 紧接着保存，间隔未到
             self.assertFalse(mgr.should_auto_save)
         finally:
@@ -539,8 +554,10 @@ class TestCheckpointDeleteErrors(unittest.TestCase):
         """Delete 异常被捕获"""
         mgr = CheckpointManager(filepath="/tmp/test.json")
         # Patch the instance's filepath Path methods
-        with patch.object(type(mgr.filepath), "exists", return_value=True), \
-             patch.object(type(mgr.filepath), "unlink", side_effect=Exception("delete failed")):
+        with (
+            patch.object(type(mgr.filepath), "exists", return_value=True),
+            patch.object(type(mgr.filepath), "unlink", side_effect=Exception("delete failed")),
+        ):
             mgr.delete()
 
 

@@ -38,7 +38,7 @@ results = []  # (category, test_name, status, detail)
 
 def record(category, name, status, detail=""):
     results.append((category, name, status, detail))
-    icon = {"PASS": "\u2705", "FAIL": "\u274C", "SKIP": "\u23ED"}.get(status, "\u26A0")
+    icon = {"PASS": "\u2705", "FAIL": "\u274c", "SKIP": "\u23ed"}.get(status, "\u26a0")
     print(f"  {icon} [{category}] {name}", flush=True)
     if detail:
         for line in detail.strip().split("\n"):
@@ -112,69 +112,93 @@ def test_d1_modes():
 
     # ── Normal Modes ──
     print("\n  [D1.1] Normal Modes —— 正常模式切换与运行")
-    assert_success("D1-Normal", "random-mode",
-                   ["-t", VALID_ADDR, "-m", "random", "--duration", "3"])
-    assert_success("D1-Normal", "range-mode",
-                   ["-t", VALID_ADDR, "-m", "range", "--start", "1", "--end", "FFFF", "--duration", "3"])
-    assert_success("D1-Normal", "range-hex-start",
-                   ["-t", VALID_ADDR, "-m", "range", "--start", "0x1", "--end", "0xFFFF", "--duration", "3"])
-    assert_success("D1-Normal", "brute_force-mode",
-                   ["-t", VALID_ADDR, "-m", "brute_force", "--start", "1", "--duration", "3"])
-    assert_success("D1-Normal", "gpu-mode",
-                   ["-t", VALID_ADDR, "-m", "random", "--use-gpu", "--duration", "3"])
+    assert_success("D1-Normal", "random-mode", ["-t", VALID_ADDR, "-m", "random", "--duration", "3"])
+    assert_success(
+        "D1-Normal",
+        "range-mode",
+        ["-t", VALID_ADDR, "-m", "range", "--start", "1", "--end", "FFFF", "--duration", "3"],
+    )
+    assert_success(
+        "D1-Normal",
+        "range-hex-start",
+        ["-t", VALID_ADDR, "-m", "range", "--start", "0x1", "--end", "0xFFFF", "--duration", "3"],
+    )
+    assert_success(
+        "D1-Normal",
+        "brute_force-mode",
+        ["-t", VALID_ADDR, "-m", "brute_force", "--start", "1", "--duration", "3"],
+    )
+    assert_success(
+        "D1-Normal", "gpu-mode", ["-t", VALID_ADDR, "-m", "random", "--use-gpu", "--duration", "3"]
+    )
     # 用临时有效文件测试文件输入
     _tmp_f = PROJECT_ROOT / "_test_targets_tmp.txt"
     _tmp_f.write_text(VALID_ADDR + "\n")
-    assert_success("D1-Normal", "file-input",
-                   ["-f", str(_tmp_f), "-m", "random", "--duration", "2"])
+    assert_success("D1-Normal", "file-input", ["-f", str(_tmp_f), "-m", "random", "--duration", "2"])
     _tmp_f.unlink(missing_ok=True)
 
     # ── Abnormal Modes ──
     print("\n  [D1.2] Abnormal Modes —— 异常/错误模式")
-    assert_fail("D1-Abnormal", "range-no-start",
-                ["-t", VALID_ADDR, "-m", "range", "--end", "FFFF", "--duration", "2"])
-    assert_fail("D1-Abnormal", "range-no-end",
-                ["-t", VALID_ADDR, "-m", "range", "--start", "1", "--duration", "2"])
-    assert_fail("D1-Abnormal", "gpu-multi-conflict",
-                ["-t", VALID_ADDR, "-m", "random", "--use-gpu", "--multi-gpu", "--duration", "2"])
-    assert_fail("D1-Abnormal", "invalid-mode",
-                ["-t", VALID_ADDR, "-m", "invalid_mode", "--duration", "2"])
-    assert_fail("D1-Abnormal", "no-target-no-file",
-                ["-m", "random", "--duration", "2"])
+    assert_fail(
+        "D1-Abnormal",
+        "range-no-start",
+        ["-t", VALID_ADDR, "-m", "range", "--end", "FFFF", "--duration", "2"],
+    )
+    assert_fail(
+        "D1-Abnormal",
+        "range-no-end",
+        ["-t", VALID_ADDR, "-m", "range", "--start", "1", "--duration", "2"],
+    )
+    assert_fail(
+        "D1-Abnormal",
+        "gpu-multi-conflict",
+        ["-t", VALID_ADDR, "-m", "random", "--use-gpu", "--multi-gpu", "--duration", "2"],
+    )
+    assert_fail(
+        "D1-Abnormal", "invalid-mode", ["-t", VALID_ADDR, "-m", "invalid_mode", "--duration", "2"]
+    )
+    assert_fail("D1-Abnormal", "no-target-no-file", ["-m", "random", "--duration", "2"])
 
     # ── Boundary Modes ──
     print("\n  [D1.3] Boundary Modes —— 边界条件")
     # --duration 0 表示持续运行(无限), subprocess 会超时, 引擎行为正确
-    assert_fail("D1-Boundary", "duration-zero=infinite",
-                ["-t", VALID_ADDR, "-m", "random", "--duration", "0"],
-                timeout=10)
-    assert_success("D1-Boundary", "duration-1sec",
-                   ["-t", VALID_ADDR, "-m", "random", "--duration", "1"])
+    assert_fail(
+        "D1-Boundary",
+        "duration-zero=infinite",
+        ["-t", VALID_ADDR, "-m", "random", "--duration", "0"],
+        timeout=10,
+    )
+    assert_success("D1-Boundary", "duration-1sec", ["-t", VALID_ADDR, "-m", "random", "--duration", "1"])
     # start=0 被引擎正确拒绝, start=end 被引擎正确拒绝
-    assert_fail("D1-Boundary", "start-zero-rejected",
-                ["-t", VALID_ADDR, "-m", "range", "--start", "0", "--end", "FF", "--duration", "2"])
-    assert_fail("D1-Boundary", "start-end-equal-rejected",
-                ["-t", VALID_ADDR, "-m", "range", "--start", "AA", "--end", "AA", "--duration", "2"])
+    assert_fail(
+        "D1-Boundary",
+        "start-zero-rejected",
+        ["-t", VALID_ADDR, "-m", "range", "--start", "0", "--end", "FF", "--duration", "2"],
+    )
+    assert_fail(
+        "D1-Boundary",
+        "start-end-equal-rejected",
+        ["-t", VALID_ADDR, "-m", "range", "--start", "AA", "--end", "AA", "--duration", "2"],
+    )
 
     # ── Tool Commands ──
     print("\n  [D1.4] Tool Commands —— 独立工具命令")
     # health-check 可能因残留进程退出码 1 (环境相关), 不强制断言
     rc, out, err, t = run(["--health-check"])
     ok = rc == 0 or ("检测到其他实例" in out)
-    record("D1-Tool", "health-check",
-           "PASS" if ok else "FAIL",
-           f"{t:.1f}s  exit={rc}" + (" (residual process)" if rc != 0 else ""))
-    assert_success("D1-Tool", "config-check", ["--config-check"],
-                   keywords=["config"])
-    assert_success("D1-Tool", "platform-check", ["--platform-check"],
-                   keywords=["Windows"])
-    assert_success("D1-Tool", "examples", ["--examples"],
-                   keywords=["example", "示例", "quick-start"])
-    assert_success("D1-Tool", "recommend", ["--recommend"],
-                   keywords=RECOMMEND_KW)
-    assert_success("D1-Tool", "template-list",
-                   ["--template", "quick-test"],
-                   keywords=["applied", "Template"])
+    record(
+        "D1-Tool",
+        "health-check",
+        "PASS" if ok else "FAIL",
+        f"{t:.1f}s  exit={rc}" + (" (residual process)" if rc != 0 else ""),
+    )
+    assert_success("D1-Tool", "config-check", ["--config-check"], keywords=["config"])
+    assert_success("D1-Tool", "platform-check", ["--platform-check"], keywords=["Windows"])
+    assert_success("D1-Tool", "examples", ["--examples"], keywords=["example", "示例", "quick-start"])
+    assert_success("D1-Tool", "recommend", ["--recommend"], keywords=RECOMMEND_KW)
+    assert_success(
+        "D1-Tool", "template-list", ["--template", "quick-test"], keywords=["applied", "Template"]
+    )
 
 
 # ================================================================
@@ -195,25 +219,35 @@ def test_d2_states():
     else:
         ckpt_backup = None
 
-    assert_success("D2-Init", "fresh-start-no-checkpoint",
-                   ["-t", VALID_ADDR, "-m", "random", "--duration", "2"])
+    assert_success(
+        "D2-Init", "fresh-start-no-checkpoint", ["-t", VALID_ADDR, "-m", "random", "--duration", "2"]
+    )
 
     # ── Mid-run → Terminal ──
     print("\n  [D2.2] Mid-run → Terminal —— 断点续传流转")
-    assert_success("D2-State", "checkpoint-enabled",
-                   ["-t", VALID_ADDR, "-m", "random", "--checkpoint", "--duration", "4"],
-                   keywords=CKPT_KW)
+    assert_success(
+        "D2-State",
+        "checkpoint-enabled",
+        ["-t", VALID_ADDR, "-m", "random", "--checkpoint", "--duration", "4"],
+        keywords=CKPT_KW,
+    )
 
     checkpoint_exists = ckpt_file.exists()
-    record("D2-State", "checkpoint-file-created",
-           "PASS" if checkpoint_exists else "FAIL",
-           "checkpoint.json exists" if checkpoint_exists else "MISSING")
+    record(
+        "D2-State",
+        "checkpoint-file-created",
+        "PASS" if checkpoint_exists else "FAIL",
+        "checkpoint.json exists" if checkpoint_exists else "MISSING",
+    )
 
     # ── Resume from checkpoint ──
     if checkpoint_exists:
-        assert_success("D2-State", "resume-from-checkpoint",
-                       ["-t", VALID_ADDR, "-m", "random", "--checkpoint", "--duration", "2"],
-                       keywords=CKPT_KW)
+        assert_success(
+            "D2-State",
+            "resume-from-checkpoint",
+            ["-t", VALID_ADDR, "-m", "random", "--checkpoint", "--duration", "2"],
+            keywords=CKPT_KW,
+        )
 
     # ── Clean restore ──
     if ckpt_backup:
@@ -223,10 +257,16 @@ def test_d2_states():
         ckpt_backup_data = ckpt_file.read_text()
         # Reset to minimal checkpoint for future clean state
         minimal = {
-            "crc32": 0, "current_position": 0, "matches": [],
-            "mode": "random", "range_end": None, "range_start": None,
-            "targets": [], "timestamp": time.time(),
-            "total_checked": 0, "version": 2
+            "crc32": 0,
+            "current_position": 0,
+            "matches": [],
+            "mode": "random",
+            "range_end": None,
+            "range_start": None,
+            "targets": [],
+            "timestamp": time.time(),
+            "total_checked": 0,
+            "version": 2,
         }
         ckpt_file.write_text(json.dumps(minimal))
         record("D2-State", "state-reset", "PASS", "reset to minimal checkpoint")
@@ -242,8 +282,7 @@ def test_d3_settings():
 
     # ── Default ──
     print("\n  [D3.1] Default Settings —— 默认配置")
-    assert_success("D3-Default", "no-config-flag",
-                   ["-t", VALID_ADDR, "-m", "random", "--duration", "2"])
+    assert_success("D3-Default", "no-config-flag", ["-t", VALID_ADDR, "-m", "random", "--duration", "2"])
 
     # ── Custom Templates ──
     print("\n  [D3.2] Custom Settings —— 自定义配置模板")
@@ -257,14 +296,18 @@ def test_d3_settings():
 
         rc, out, err, t = run(["--template", tmpl])
         ok = rc == 0 and "Template applied" in out
-        record("D3-Custom", f"template-{tmpl}",
-               "PASS" if ok else "FAIL",
-               f"{t:.1f}s  {err[:100] if not ok else ''}")
+        record(
+            "D3-Custom",
+            f"template-{tmpl}",
+            "PASS" if ok else "FAIL",
+            f"{t:.1f}s  {err[:100] if not ok else ''}",
+        )
 
         if ok:
             # Quick verify template works
-            assert_success("D3-Custom", f"run-with-{tmpl}",
-                           ["-t", VALID_ADDR, "-m", "random", "--duration", "2"])
+            assert_success(
+                "D3-Custom", f"run-with-{tmpl}", ["-t", VALID_ADDR, "-m", "random", "--duration", "2"]
+            )
 
         # Restore
         if cfg_backup:
@@ -272,20 +315,40 @@ def test_d3_settings():
 
     # ── Extreme Settings ──
     print("\n  [D3.3] Extreme Settings —— 极限配置")
-    assert_success("D3-Extreme", "workers-1",
-                   ["-t", VALID_ADDR, "-m", "random", "--workers", "1", "--duration", "2"])
+    assert_success(
+        "D3-Extreme",
+        "workers-1",
+        ["-t", VALID_ADDR, "-m", "random", "--workers", "1", "--duration", "2"],
+    )
     # workers=0 might crash or be rejected
-    rc, out, err, t = run(
-        ["-t", VALID_ADDR, "-m", "random", "--workers", "0", "--duration", "2"])
-    record("D3-Extreme", "workers-zero",
-           "PASS" if rc != 0 else "FAIL",
-           "correctly rejected" if rc != 0 else "accepted 0 workers")
+    rc, out, err, t = run(["-t", VALID_ADDR, "-m", "random", "--workers", "0", "--duration", "2"])
+    record(
+        "D3-Extreme",
+        "workers-zero",
+        "PASS" if rc != 0 else "FAIL",
+        "correctly rejected" if rc != 0 else "accepted 0 workers",
+    )
 
-    assert_success("D3-Extreme", "batch-size-1",
-                   ["-t", VALID_ADDR, "-m", "random", "--batch-size", "1", "--duration", "2"])
-    assert_success("D3-Extreme", "checkpoint-interval-min",
-                   ["-t", VALID_ADDR, "-m", "random", "--checkpoint",
-                    "--checkpoint-interval", "5", "--duration", "3"])
+    assert_success(
+        "D3-Extreme",
+        "batch-size-1",
+        ["-t", VALID_ADDR, "-m", "random", "--batch-size", "1", "--duration", "2"],
+    )
+    assert_success(
+        "D3-Extreme",
+        "checkpoint-interval-min",
+        [
+            "-t",
+            VALID_ADDR,
+            "-m",
+            "random",
+            "--checkpoint",
+            "--checkpoint-interval",
+            "5",
+            "--duration",
+            "3",
+        ],
+    )
 
 
 # ================================================================
@@ -300,20 +363,54 @@ def test_d4_params():
     print("\n  [D4.1] Valid Parameters —— 合法参数组合")
 
     combos = [
-        ("checkpoint+dedup", ["-t", VALID_ADDR, "-m", "random",
-                              "--checkpoint", "--dedup", "--duration", "2"]),
-        ("checkpoint+dedup+export", ["-t", VALID_ADDR, "-m", "random",
-                                     "--checkpoint", "--dedup", "--duration", "2",
-                                     "--export-progress", "test_progress.json",
-                                     "--export-matches", "test_matches.json"]),
-        ("gpu+checkpoint", ["-t", VALID_ADDR, "-m", "random",
-                            "--use-gpu", "--checkpoint", "--duration", "3"]),
-        ("workers+batch-size", ["-t", VALID_ADDR, "-m", "random",
-                                "--workers", "4", "--batch-size", "2000", "--duration", "2"]),
-        ("quiet+checkpoint", ["-t", VALID_ADDR, "-m", "random",
-                              "-q", "--checkpoint", "--duration", "2"]),
-        ("sensitive-mode", ["-t", VALID_ADDR, "-m", "random", "--duration", "2",
-                            "--sensitive-mode", "masked"]),
+        (
+            "checkpoint+dedup",
+            ["-t", VALID_ADDR, "-m", "random", "--checkpoint", "--dedup", "--duration", "2"],
+        ),
+        (
+            "checkpoint+dedup+export",
+            [
+                "-t",
+                VALID_ADDR,
+                "-m",
+                "random",
+                "--checkpoint",
+                "--dedup",
+                "--duration",
+                "2",
+                "--export-progress",
+                "test_progress.json",
+                "--export-matches",
+                "test_matches.json",
+            ],
+        ),
+        (
+            "gpu+checkpoint",
+            ["-t", VALID_ADDR, "-m", "random", "--use-gpu", "--checkpoint", "--duration", "3"],
+        ),
+        (
+            "workers+batch-size",
+            [
+                "-t",
+                VALID_ADDR,
+                "-m",
+                "random",
+                "--workers",
+                "4",
+                "--batch-size",
+                "2000",
+                "--duration",
+                "2",
+            ],
+        ),
+        (
+            "quiet+checkpoint",
+            ["-t", VALID_ADDR, "-m", "random", "-q", "--checkpoint", "--duration", "2"],
+        ),
+        (
+            "sensitive-mode",
+            ["-t", VALID_ADDR, "-m", "random", "--duration", "2", "--sensitive-mode", "masked"],
+        ),
     ]
 
     for name, args in combos:
@@ -322,52 +419,89 @@ def test_d4_params():
     # Quick-start 是交互式命令, 需要 stdin, subprocess 会超时(预期行为)
     rc, out, err, t = run(["--quick-start", "--compact"], timeout=TIMEOUT_INTERACTIVE_S)
     ok = rc in (-999, 0)  # 超时或成功均可接受
-    record("D4-Valid", "quick-start-compact",
-           "PASS" if ok else "FAIL",
-           f"{t:.1f}s  interactive command timeout expected")
+    record(
+        "D4-Valid",
+        "quick-start-compact",
+        "PASS" if ok else "FAIL",
+        f"{t:.1f}s  interactive command timeout expected",
+    )
 
     # ── Invalid Parameters ──
     print("\n  [D4.2] Invalid Parameters —— 非法参数")
 
-    assert_fail("D4-Invalid", "bad-address",
-                ["-t", INVALID_ADDR, "-m", "random", "--duration", "2"])
-    assert_fail("D4-Invalid", "bad-file",
-                ["-f", "nonexistent_file_xyz.txt", "-m", "random", "--duration", "2"])
-    assert_fail("D4-Invalid", "negative-duration",
-                ["-t", VALID_ADDR, "-m", "random", "--duration", "-1"])
-    assert_fail("D4-Invalid", "negative-workers",
-                ["-t", VALID_ADDR, "-m", "random", "--workers", "-5", "--duration", "2"])
-    assert_fail("D4-Invalid", "bad-sens-mode",
-                ["-t", VALID_ADDR, "-m", "random", "--sensitive-mode", "INVALID", "--duration", "2"])
-    assert_fail("D4-Invalid", "bad-language",
-                ["-t", VALID_ADDR, "-m", "random", "--language", "xx_XX", "--duration", "2"])
+    assert_fail("D4-Invalid", "bad-address", ["-t", INVALID_ADDR, "-m", "random", "--duration", "2"])
+    assert_fail(
+        "D4-Invalid", "bad-file", ["-f", "nonexistent_file_xyz.txt", "-m", "random", "--duration", "2"]
+    )
+    assert_fail(
+        "D4-Invalid", "negative-duration", ["-t", VALID_ADDR, "-m", "random", "--duration", "-1"]
+    )
+    assert_fail(
+        "D4-Invalid",
+        "negative-workers",
+        ["-t", VALID_ADDR, "-m", "random", "--workers", "-5", "--duration", "2"],
+    )
+    assert_fail(
+        "D4-Invalid",
+        "bad-sens-mode",
+        ["-t", VALID_ADDR, "-m", "random", "--sensitive-mode", "INVALID", "--duration", "2"],
+    )
+    assert_fail(
+        "D4-Invalid",
+        "bad-language",
+        ["-t", VALID_ADDR, "-m", "random", "--language", "xx_XX", "--duration", "2"],
+    )
 
     rc, out, err, t = run(
-        ["-t", VALID_ADDR, "-m", "random", "--checkpoint-interval", "3", "--duration", "2"])
-    record("D4-Invalid", "checkpoint-interval-too-low",
-           "PASS" if rc != 0 else "FAIL",
-           f"{t:.1f}s  {'correctly rejected' if rc != 0 else 'accepted invalid'}")
+        ["-t", VALID_ADDR, "-m", "random", "--checkpoint-interval", "3", "--duration", "2"]
+    )
+    record(
+        "D4-Invalid",
+        "checkpoint-interval-too-low",
+        "PASS" if rc != 0 else "FAIL",
+        f"{t:.1f}s  {'correctly rejected' if rc != 0 else 'accepted invalid'}",
+    )
 
     # ── Null / Empty ──
     print("\n  [D4.3] Null/Empty Parameters —— 空值参数")
 
-    assert_fail("D4-Null", "no-args",
-                [])
-    assert_fail("D4-Null", "target-empty-string",
-                ["-t", "", "-m", "random", "--duration", "2"])
+    assert_fail("D4-Null", "no-args", [])
+    assert_fail("D4-Null", "target-empty-string", ["-t", "", "-m", "random", "--duration", "2"])
 
     # ── Boundary Parameters ──
     print("\n  [D4.4] Boundary Parameters —— 边界参数")
 
-    assert_success("D4-Boundary", "large-batch",
-                   ["-t", VALID_ADDR, "-m", "random", "--batch-size", "1000000", "--duration", "2"])
-    assert_success("D4-Boundary", "max-workers-cpu-count",
-                   ["-t", VALID_ADDR, "-m", "random", "--workers", "16", "--duration", "2"])
-    assert_success("D4-Boundary", "max-workers-over-cpu",
-                   ["-t", VALID_ADDR, "-m", "random", "--workers", "32", "--duration", "2"])
-    assert_success("D4-Boundary", "long-range-hex",
-                   ["-t", VALID_ADDR, "-m", "range", "--start", "1",
-                    "--end", "FFFFFFFFFFFFFFFF", "--duration", "2"])
+    assert_success(
+        "D4-Boundary",
+        "large-batch",
+        ["-t", VALID_ADDR, "-m", "random", "--batch-size", "1000000", "--duration", "2"],
+    )
+    assert_success(
+        "D4-Boundary",
+        "max-workers-cpu-count",
+        ["-t", VALID_ADDR, "-m", "random", "--workers", "16", "--duration", "2"],
+    )
+    assert_success(
+        "D4-Boundary",
+        "max-workers-over-cpu",
+        ["-t", VALID_ADDR, "-m", "random", "--workers", "32", "--duration", "2"],
+    )
+    assert_success(
+        "D4-Boundary",
+        "long-range-hex",
+        [
+            "-t",
+            VALID_ADDR,
+            "-m",
+            "range",
+            "--start",
+            "1",
+            "--end",
+            "FFFFFFFFFFFFFFFF",
+            "--duration",
+            "2",
+        ],
+    )
 
     # Cleanup export files
     for f in ["test_progress.json", "test_matches.json"]:
@@ -405,11 +539,11 @@ def print_summary():
             if status == "FAIL":
                 print(f"    FAIL {name}: {detail}")
 
-    print(f"\n{'='*40}")
+    print(f"\n{'=' * 40}")
     print(f"  Total: {total} | PASS: {passed} | FAIL: {failed} | SKIP: {skipped}")
-    print(f"  Pass Rate: {passed/total*100:.1f}%")
+    print(f"  Pass Rate: {passed / total * 100:.1f}%")
     print(f"  Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"{'='*40}\n")
+    print(f"{'=' * 40}\n")
 
     return failed == 0
 

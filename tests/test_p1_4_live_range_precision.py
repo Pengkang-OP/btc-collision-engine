@@ -92,9 +92,7 @@ class TestP1_4RangeScanPrecisionFix:
             "random_search 应调用 _random_search_finalize"
         )
         # _random_search_finalize 内应使用 final_count 并重置
-        assert "final_count" in finalize_source, (
-            "_random_search_finalize 应使用 final_count"
-        )
+        assert "final_count" in finalize_source, "_random_search_finalize 应使用 final_count"
         assert "self._live_range_count = 0" in finalize_source, (
             "_random_search_finalize 应重置 _live_range_count"
         )
@@ -118,9 +116,7 @@ class TestP1_4RangeScanPrecisionFix:
         source = inspect.getsource(KeyCollisionEngine._range_scan_finalize)
 
         # _range_scan_finalize 使用 final_count 更新 stats
-        assert "final_count" in source, (
-            "_range_scan_finalize 应使用 final_count 进行统计更新"
-        )
+        assert "final_count" in source, "_range_scan_finalize 应使用 final_count 进行统计更新"
         assert "self.stats.update(final_count" in source, (
             "_range_scan_finalize 应使用 final_count 更新 stats"
         )

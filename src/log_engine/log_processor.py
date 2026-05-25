@@ -137,10 +137,7 @@ class SensitiveDataFilter(logging.Filter):
 
         """
         if isinstance(data, dict):
-            return {
-                key: SensitiveDataFilter.redact_data(value)
-                for key, value in data.items()
-            }
+            return {key: SensitiveDataFilter.redact_data(value) for key, value in data.items()}
         if isinstance(data, list):
             return [SensitiveDataFilter.redact_data(item) for item in data]
         if isinstance(data, str):

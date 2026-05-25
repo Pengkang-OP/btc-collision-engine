@@ -115,6 +115,7 @@ class TestP1_1ConstTimeSelectFix:
             assert r_const is not None, f"k={k} 时结果为 None"
             # 验证非恒定时间版本已被永久禁用
             import pytest
+
             with pytest.raises(RuntimeError, match="已被永久禁用"):
                 self.ec.scalar_multiply(k, self.G)
 

@@ -120,8 +120,7 @@ class TestLiveRangeCountFix(unittest.TestCase):
             final_live = self.engine._live_range_count
 
         # 停止后 _live_range_count 应为0（已重置）
-        self.assertEqual(final_live, 0,
-                         f"_live_range_count 应为0(已重置)，实际为 {final_live}")
+        self.assertEqual(final_live, 0, f"_live_range_count 应为0(已重置)，实际为 {final_live}")
 
         # 运行中 _live_range_count 不应异常大（通过进度回调间接验证）
         # 修复前：每批次 batch_count 被重复加入
@@ -133,8 +132,10 @@ class TestLiveRangeCountFix(unittest.TestCase):
             f"total_checked={stats.total_checked} 异常偏高，可能存在 batch_end 重复提交",
         )
 
-        print(f"\n[P1-5-C ✓] 引擎停止后 _live_range_count={final_live}, "
-              f"total_checked={stats.total_checked}")
+        print(
+            f"\n[P1-5-C ✓] 引擎停止后 _live_range_count={final_live}, "
+            f"total_checked={stats.total_checked}"
+        )
 
     def test_range_scan_live_count_reset(self):
         """P1-5-D: range_scan 结束后 _live_range_count 正确"""
@@ -169,11 +170,12 @@ class TestLiveRangeCountFix(unittest.TestCase):
 
         # 引擎结束后 _live_range_count 应为0（已重置）
         live_after = self.engine._live_range_count
-        self.assertEqual(live_after, 0,
-                         f"_live_range_count 应为0(已重置)，实际为 {live_after}")
+        self.assertEqual(live_after, 0, f"_live_range_count 应为0(已重置)，实际为 {live_after}")
 
-        print(f"\n[P1-5-D ✓] range_scan 最终计数: {final_count} (范围1-500), "
-              f"_live_range_count={live_after}")
+        print(
+            f"\n[P1-5-D ✓] range_scan 最终计数: {final_count} (范围1-500), "
+            f"_live_range_count={live_after}"
+        )
 
     def test_no_batch_end_double_count_in_worker(self):
         """P1-5-E: 确认 _random_search_worker 中不存在批次结束重复提交"""
@@ -184,8 +186,7 @@ class TestLiveRangeCountFix(unittest.TestCase):
 
         # 检查："_live_range_count += batch_count" 只应出现在注释中
         lines = worker_source.split("\n")
-        exec_lines = [line for line in lines
-                      if "self._live_range_count += batch_count" in line]
+        exec_lines = [line for line in lines if "self._live_range_count += batch_count" in line]
         for line in exec_lines:
             stripped = line.strip()
             self.assertTrue(

@@ -212,6 +212,7 @@ class DataStorage:
         # 防御性检查：确保 storage_dir 是字符串
         if not isinstance(self.storage_dir, str):
             import sys
+
             print(f"WARNING: storage_dir is {type(self.storage_dir)}, expected str", file=sys.stderr)
             self.storage_dir = "data_logs"
             pathlib.Path(self.storage_dir).mkdir(exist_ok=True, parents=True)
