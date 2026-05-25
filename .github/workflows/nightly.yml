@@ -12,10 +12,10 @@ concurrency:
 
 jobs:
   # ──────────────────────────────────────────
-  # 全版本矩阵测试
+  # 完整测试
   # ──────────────────────────────────────────
   full-test:
-    name: 完整测试 (Python ${{ matrix.python-version }})
+    name: 完整测试 (Python 3.12)
     runs-on: ubuntu-latest
     timeout-minutes: 45
 

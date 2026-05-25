@@ -93,7 +93,7 @@ jobs:
           sudo apt-get install -y --no-install-recommends libgmp-dev
 
       - name: 下载构建产物
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: dist-py${{ matrix.python-version }}
           path: dist/
