@@ -193,8 +193,9 @@ class GPUProfileLoader:
         "global_char_hang_bug",
     }
 
-    # ---- 驱动版本正则 (major.minor.patch[.build]) ----
-    _DRIVER_VERSION_RE = r"^\d+\.\d+\.\d+(?:\.\d+)?$"
+    # ---- 驱动版本正则 (major.minor[.patch[.build]]) ----
+    # NVIDIA: X.Y (450.00); AMD/Intel: X.Y.Z[.W] (31.0.101.0)
+    _DRIVER_VERSION_RE = r"^\d+\.\d+(?:\.\d+){0,2}$"
 
     @staticmethod
     def _validate_profile_models(profile: dict[str, Any], errors: list[str]) -> None:
