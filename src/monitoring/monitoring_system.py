@@ -208,6 +208,14 @@ class DataStorage:
     def __init__(self, storage_dir: str | None = None, data_logger: Any | None = None) -> None:
         # 使用统一配置，默认使用data_logs
         self.storage_dir = DataStorageConfig.ensure_storage_dir(storage_dir)
+
+        # 防御性检查：确保 storage_dir 是字符串
+        if not isinstance(self.storage_dir, str):
+            import sys
+            print(f"WARNING: storage_dir is {type(self.storage_dir)}, expected str", file=sys.stderr)
+            self.storage_dir = "data_logs"
+            pathlib.Path(self.storage_dir).mkdir(exist_ok=True, parents=True)
+
         self.current_data_file = os.path.join(self.storage_dir, "current_data.json")
         self.history_data_file = os.path.join(self.storage_dir, "history_data.json")
         self.error_log_file = os.path.join(self.storage_dir, "error_log.json")
@@ -233,6 +241,10 @@ class DataStorage:
         if self._data_logger is not None:
             # 线程安全地委托 DataLogger 更新 _current_data
             try:
+                # 同步 performance/system/engine 数据到 DataLogger
+                self._data_logger.record_performance_data(data.performance)
+                self._data_logger.record_system_data(data.system)
+                self._data_logger.record_engine_data(data.engine)
                 self._data_logger.update_current_data_sections(
                     performance=data.performance,
                     system=data.system,
@@ -277,6 +289,7 @@ class DataStorage:
             try:
                 self._data_logger._history_buffer.append(data.to_dict())
                 # 缓冲区满时DataLogger自动刷写
+                self._data_logger.save_history_data(data)
             except Exception as e:
                 logger.error("委托DataLogger保存历史数据失败: %s", e)
             return
@@ -458,23 +471,26 @@ class DataStorage:
 
         try:
             # 读取现有错误日志
+            error_log_path = self.error_log_file
+            if isinstance(error_log_path, list):
+                error_log_path = str(error_log_path[0]) if error_log_path else "error_log.json"
+
             errors = []
-            if pathlib.Path(self.error_log_file).exists():
-                with pathlib.Path(self.error_log_file).open(encoding="utf-8") as f:
+            if pathlib.Path(error_log_path).exists():
+                with pathlib.Path(error_log_path).open(encoding="utf-8") as f:
                     errors = fast_load(f)
 
             # 添加新错误
             error["timestamp"] = time.time()
             errors.append(error)
 
-            # 应用轮转：保留最近7天、最多1000条记录
-            from src.log_engine.log_rotator import LogRotator
-
-            rotator = LogRotator(max_age_days=7, max_count=1000)
-            errors = rotator.rotate(errors)
+            # 应用轮转：保留最多500条记录
+            max_errors = 500
+            if len(errors) > max_errors:
+                errors = errors[-max_errors:]
 
             # 原子写入
-            temp_file = self.error_log_file + ".tmp"
+            temp_file = error_log_path + ".tmp"
             with pathlib.Path(temp_file).open("w", encoding="utf-8") as f:
                 fast_dump(errors, f, ensure_ascii=False, indent=2)
                 f.flush()
@@ -485,10 +501,10 @@ class DataStorage:
                 pathlib.Path(temp_file).chmod(0o600)
 
             # 原子替换
-            if pathlib.Path(self.error_log_file).exists():
-                pathlib.Path(temp_file).replace(self.error_log_file)
+            if pathlib.Path(error_log_path).exists():
+                pathlib.Path(temp_file).replace(error_log_path)
             else:
-                pathlib.Path(temp_file).rename(self.error_log_file)
+                pathlib.Path(temp_file).rename(error_log_path)
         except Exception as e:
             logger.error("保存错误记录失败: %s", e)
             # 清理临时文件
