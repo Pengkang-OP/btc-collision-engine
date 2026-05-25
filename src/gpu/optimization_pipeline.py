@@ -198,7 +198,7 @@ class PerformanceOptimizationPipeline:
 
         # 延迟导入避免循环依赖
         try:
-            from ..gpu.performance_reporter import ReportConfig
+            from ..gpu.performance_reporter import ReportConfig  # type: ignore[attr-defined]
         except ImportError:
             self._logger.error("无法导入 ReportConfig")
             return ""

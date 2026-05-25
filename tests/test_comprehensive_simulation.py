@@ -18,8 +18,8 @@ from pathlib import Path
 
 # ── Fix Windows GBK encoding for Unicode output ──────────────────
 if sys.platform == "win32":
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
 
 # ── 配置 ────────────────────────────────────────────────────────
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -33,7 +33,7 @@ TIMEOUT_INTERACTIVE_S = 3  # 交互式命令超时
 CKPT_KW = ["checkpoint", "断点", "续传"]
 RECOMMEND_KW = ["recommend", "推荐", "GPU"]  # 单条测试超时
 
-results = []  # (category, test_name, status, detail)
+results: list = []  # (category, test_name, status, detail)
 
 
 def record(category, name, status, detail=""):

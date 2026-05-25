@@ -205,9 +205,7 @@ class EventBus:
             )
             # Call error handler callback if registered
             if self._error_handler is not None:
-                import contextlib
-
-                with contextlib.suppress(Exception):
+                with suppress(Exception):
                     self._error_handler(event, e)
 
     def clear(self) -> None:

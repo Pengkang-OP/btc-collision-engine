@@ -188,7 +188,7 @@ class EnhancedMonitoringSystem:
                     )
 
                 mode = getattr(engine, "_current_mode", "")
-                targets = getattr(engine, "targets", set())
+                targets: set = getattr(engine, "targets", set())
                 position = getattr(engine, "_current_position", 0)
 
                 self.data_logger.record_engine_data(
