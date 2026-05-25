@@ -313,7 +313,19 @@ class TestAsyncLogger:
             al.close()
 
     def test_emit_queues_record(self):
-        from conftest import poll_until
+        import importlib.util
+        import time
+
+        # Robust poll_until: avoid ambiguous 'conftest' import
+        # (tests/acceptance/conftest.py shadows root conftest.py)
+        def _poll_until(condition, timeout=2.0, interval=0.01):
+            deadline = time.time() + timeout
+            result = condition()
+            while not result and time.time() < deadline:
+                time.sleep(interval)
+                result = condition()
+            return result
+
         from src.utils.logger import AsyncLogger
 
         al = AsyncLogger(max_queue_size=100)
@@ -323,7 +335,7 @@ class TestAsyncLogger:
             record = logging.LogRecord("test", logging.INFO, "", 0, "async msg", (), None)
             al.emit(record)
             # 用 poll_until 等待后台线程处理，比 time.sleep(0.2) 更稳定
-            assert poll_until(lambda: handler.emit.called, timeout=2.0), (
+            assert _poll_until(lambda: handler.emit.called, timeout=2.0), (
                 "AsyncLogger writer thread did not process record within timeout"
             )
         finally:
