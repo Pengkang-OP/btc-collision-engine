@@ -89,7 +89,7 @@ def check_file_for_deprecated_imports(filepath: str) -> list:
                     )
                     break
     except Exception as e:
-        print(f"⚠️  读取文件失败 {filepath}: {e}", file=sys.stderr)
+        print(f"[WARN] 读取文件失败 {filepath}: {e}", file=sys.stderr)
 
     return issues
 
@@ -124,27 +124,27 @@ def check_project() -> list:
 def print_report(issues: list) -> None:
     """打印检查报告"""
     if not issues:
-        print("✅ 所有导入路径正确")
+        print("[PASS] 所有导入路径正确")
         print("\n推荐的导入方式:")
         for imp in RECOMMENDED_IMPORTS:
-            print(f"  ✅ {imp}")
+            print(f"  [OK] {imp}")
         return
 
-    print("❌ 发现使用已弃用导入路径的代码\n")
+    print("[FAIL] 发现使用已弃用导入路径的代码\n")
     print(f"共发现 {len(issues)} 个问题:\n")
 
     for i, issue in enumerate(issues, 1):
         # 计算相对路径
         rel_path = os.path.relpath(issue["file"], Path(__file__).parent.parent)
-        print(f"{i}. 📄 {rel_path}:{issue['line']}")
+        print(f"{i}. [FILE] {rel_path}:{issue['line']}")
         print(f"   {issue['content']}")
         print()
 
     print("=" * 80)
-    print("\n💡 修复建议:")
+    print("\n[TIP] 修复建议:")
     print("\n推荐的导入方式:")
     for imp in RECOMMENDED_IMPORTS:
-        print(f"  ✅ {imp}")
+        print(f"  [OK] {imp}")
 
     print("\n请替换所有使用旧路径的代码。")
     print("旧路径将在 v4.2.1 (2026-Q3) 中移除。\n")
@@ -153,7 +153,7 @@ def print_report(issues: list) -> None:
 def main():
     """主函数"""
     print("=" * 80)
-    print("🔍 导入路径检查工具")
+    print("[INFO] 导入路径检查工具")
     print("=" * 80)
     print()
 
@@ -162,12 +162,12 @@ def main():
 
     if issues:
         print("=" * 80)
-        print("❌ 检查失败: 发现弃用的导入路径")
+        print("[FAIL] 检查失败: 发现弃用的导入路径")
         print("=" * 80)
         sys.exit(1)
     else:
         print("=" * 80)
-        print("✅ 检查通过: 所有导入路径正确")
+        print("[PASS] 检查通过: 所有导入路径正确")
         print("=" * 80)
         sys.exit(0)
 

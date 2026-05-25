@@ -93,26 +93,29 @@ def test_crypto_backend_in_gpu():
     try:
         from unittest.mock import Mock, patch
 
-        # Mock GPU环境
+        # Mock GPU环境 (Phase 6 engine)
         with (
-            patch("src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE", True),
+            patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True),
             patch("pyopencl.Buffer"),
-            patch("src.collision.gpu_collision_engine.GPUDevice") as mock_device,
-            patch("src.collision.gpu_collision_engine.GPUContext"),
-            patch("src.collision.gpu_collision_engine.GPUKernel"),
-            patch("src.collision.gpu_collision_engine.GPUProfileLoader"),
+            patch("src.collision.gpu.engine.GPUDeviceManager") as mock_device_mgr,
+            patch("src.collision.gpu.engine.CollisionCore"),
+            patch("src.collision.gpu.engine.SearchModeCoordinator"),
+            patch("src.collision.gpu.engine.GPUEngineMonitor"),
+            patch("src.collision.gpu.engine.VendorOptimizationFactory.create"),
+            patch("src.collision.gpu.engine.GPUDeviceDetector"),
         ):
             # 配置Mock
             mock_device_instance = Mock()
             mock_device_instance.context = Mock()
-            mock_device_instance.queue = Mock()
-            mock_device_instance.device_info = {
-                "name": "Test GPU",
-                "vendor": "Intel Corporation",
-                "global_mem_size": 16 * 1024**3,
-            }
+            mock_device_instance.device = Mock()
+            mock_device_instance.device.name = "Test GPU"
+            mock_device_instance.device.vendor = "Intel Corporation"
+            mock_device_instance.device.global_mem_size = 16 * 1024**3
             mock_device_instance.initialize = Mock()
-            mock_device.return_value = mock_device_instance
+            mock_device_instance.kernel = Mock()
+            mock_device_instance.memory_pool = Mock()
+            mock_device_instance.async_executor = Mock()
+            mock_device_mgr.return_value = mock_device_instance
 
             # 创建引擎
             engine = GPUCollisionEngine(

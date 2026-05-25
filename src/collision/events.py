@@ -97,7 +97,7 @@ class EngineMatchEvent(EngineEvent):
         }
 
     @property
-    def event_type(self) -> "EventType":
+    def event_type(self) -> EventType:
         """Get the EventType for this event."""
         return EventType.ENGINE_MATCH
 
@@ -113,7 +113,7 @@ class EngineErrorEvent(EngineEvent):
     recoverable: bool = False
 
     @property
-    def event_type(self) -> "EventType":
+    def event_type(self) -> EventType:
         """Get the EventType for this event."""
         return EventType.ENGINE_ERROR
 
@@ -135,7 +135,7 @@ class EngineProgressEvent(EngineEvent):
     timestamp: float = field(default_factory=time.time)  # event timestamp
 
     @property
-    def event_type(self) -> "EventType":
+    def event_type(self) -> EventType:
         """Get the EventType for this event."""
         return EventType.ENGINE_PROGRESS
 

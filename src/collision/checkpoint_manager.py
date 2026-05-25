@@ -98,9 +98,7 @@ class CheckpointManager:
         with self._lock:
             self._buffer = state
             self._dirty = True
-            if kwargs.get("force", False):
-                self._flush_buffer()
-            elif self._dirty and self._last_save == 0.0:
+            if kwargs.get("force", False) or self._dirty and self._last_save == 0.0:
                 self._flush_buffer()
 
     def load(self) -> dict | None:

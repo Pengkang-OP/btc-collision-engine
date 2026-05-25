@@ -85,7 +85,7 @@ class WizardResult:
         """Load result from file."""
         import json
 
-        with open(filepath, "r") as f:
+        with open(filepath) as f:
             data = json.load(f)
         result = cls()
         for key, value in data.items():

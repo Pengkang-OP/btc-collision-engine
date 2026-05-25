@@ -11,6 +11,10 @@
 import sys
 import time
 
+import pytest
+
+pytestmark = pytest.mark.gpu
+
 
 def test_crypto_backend_performance():
     """测试crypto_backend性能"""
@@ -72,44 +76,27 @@ def test_gpu_initialization():
 
         print("\n[1/3] 创建Mock GPU环境...")
         with (
-            patch("src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE", True),
+            patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True),
             patch("pyopencl.Buffer"),
-            patch("src.collision.gpu_collision_engine.GPUDevice") as mock_device,
-            patch("src.collision.gpu_collision_engine.GPUContext") as mock_context,
-            patch("src.collision.gpu_collision_engine.GPUKernel") as mock_kernel,
-            patch("src.collision.gpu_collision_engine.GPUProfileLoader"),
+            patch("src.collision.gpu.engine.GPUDeviceManager") as mock_device_mgr,
+            patch("src.collision.gpu.engine.CollisionCore"),
+            patch("src.collision.gpu.engine.SearchModeCoordinator"),
+            patch("src.collision.gpu.engine.GPUEngineMonitor"),
+            patch("src.collision.gpu.engine.VendorOptimizationFactory.create"),
+            patch("src.collision.gpu.engine.GPUDeviceDetector"),
         ):
-            # 配置Mock
+            # 配置 GPUDeviceManager Mock
             mock_device_instance = Mock()
             mock_device_instance.context = Mock()
-            mock_device_instance.queue = Mock()
-            mock_device_instance.device_info = {
-                "name": "Intel Arc A770",
-                "vendor": "Intel Corporation",
-                "global_mem_size": 16 * 1024**3,  # 16GB
-            }
+            mock_device_instance.device = Mock()
+            mock_device_instance.device.name = "Intel Arc A770"
+            mock_device_instance.device.vendor = "Intel Corporation"
+            mock_device_instance.device.global_mem_size = 16 * 1024**3  # 16GB
+            mock_device_instance.kernel = Mock()
+            mock_device_instance.memory_pool = Mock()
+            mock_device_instance.async_executor = Mock()
             mock_device_instance.initialize = Mock()
-            mock_device_instance.get_device_info = Mock(return_value=mock_device_instance.device_info)
-            # v2.2.1优化: 显存效率从45%提升到70%
-            mock_device_instance.memory_efficiency = 0.70
-            mock_device_instance.timeout_seconds = 30
-            mock_device_instance.enable_async_execution = False
-            mock_device.return_value = mock_device_instance
-
-            mock_context_instance = Mock()
-            mock_context_instance.program = Mock()
-            mock_context_instance.apply_optimizations = Mock()
-            mock_context_instance.calculate_batch_size = Mock(return_value=65536)
-            mock_context_instance.compile_kernel = Mock()
-            mock_context_instance.cleanup = Mock()
-            mock_context.return_value = mock_context_instance
-
-            mock_kernel_instance = Mock()
-            mock_kernel_instance.run_batch = Mock(return_value=[])
-            mock_kernel_instance.set_targets = Mock()
-            mock_kernel_instance.cleanup = Mock()
-            mock_kernel_instance.max_batch_size = 65536
-            mock_kernel.return_value = mock_kernel_instance
+            mock_device_mgr.return_value = mock_device_instance
 
             print("[2/3] 初始化GPU引擎...")
             engine = GPUCollisionEngine(
@@ -153,28 +140,27 @@ def test_memory_leak_fix():
 
         print("\n[1/2] 创建GPU引擎...")
         with (
-            patch("src.collision.gpu_collision_engine.PYOPENCL_AVAILABLE", True),
+            patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True),
             patch("pyopencl.Buffer") as mock_buffer,
-            patch("src.collision.gpu_collision_engine.GPUDevice") as mock_device,
-            patch("src.collision.gpu_collision_engine.GPUContext"),
-            patch("src.collision.gpu_collision_engine.GPUKernel"),
-            patch("src.collision.gpu_collision_engine.GPUProfileLoader"),
+            patch("src.collision.gpu.engine.GPUDeviceManager") as mock_device_mgr,
+            patch("src.collision.gpu.engine.CollisionCore"),
+            patch("src.collision.gpu.engine.SearchModeCoordinator"),
+            patch("src.collision.gpu.engine.GPUEngineMonitor"),
+            patch("src.collision.gpu.engine.VendorOptimizationFactory.create"),
+            patch("src.collision.gpu.engine.GPUDeviceDetector"),
         ):
-            # 配置Mock
+            # 配置 GPUDeviceManager Mock
             mock_device_instance = Mock()
             mock_device_instance.context = Mock()
-            mock_device_instance.queue = Mock()
-            mock_device_instance.device_info = {
-                "name": "Test GPU",
-                "vendor": "Intel",
-                "global_mem_size": 16 * 1024**3,
-            }
+            mock_device_instance.device = Mock()
+            mock_device_instance.device.name = "Test GPU"
+            mock_device_instance.device.vendor = "Intel"
+            mock_device_instance.device.global_mem_size = 16 * 1024**3
             mock_device_instance.initialize = Mock()
-            mock_device_instance.get_device_info = Mock(return_value=mock_device_instance.device_info)
-            mock_device_instance.memory_efficiency = 0.70
-            mock_device_instance.timeout_seconds = 30
-            mock_device_instance.enable_async_execution = False
-            mock_device.return_value = mock_device_instance
+            mock_device_instance.kernel = Mock()
+            mock_device_instance.memory_pool = Mock()
+            mock_device_instance.async_executor = Mock()
+            mock_device_mgr.return_value = mock_device_instance
 
             # 创建Mock Buffer
             mock_buf = Mock()

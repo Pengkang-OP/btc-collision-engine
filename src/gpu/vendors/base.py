@@ -130,7 +130,7 @@ class GPUVendorBase(ABC):
 
         """
         optimizations = profile.get("optimizations", [])
-        
+
         return {
             "enable_fast_math": "fast_math" in optimizations,
             "enable_async_compute": "async_compute" in optimizations,

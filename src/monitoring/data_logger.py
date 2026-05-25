@@ -594,10 +594,10 @@ class DataLogger:
                 # 记录警告并转换为字符串
                 self.logger.warning("error_log_file is list, converting to str: %s", error_log_path)
                 error_log_path = str(error_log_path[0]) if error_log_path else "error_log.json"
-            
+
             errors = []
             if pathlib.Path(error_log_path).exists():
-                with open(error_log_path, mode="r", encoding="utf-8") as f:
+                with open(error_log_path, encoding="utf-8") as f:
                     errors = fast_load(f)
 
             errors.append(error_record)

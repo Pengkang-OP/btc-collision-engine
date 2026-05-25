@@ -73,7 +73,7 @@ class TestSecureKeyManagerGetKey(unittest.TestCase):
         mgr = SecureKeyManager()
         with self.assertRaises(SecureMemoryError) as ctx:
             mgr.get_key()
-        self.assertIn("未生成", str(ctx.exception))
+        self.assertIn("not generated", str(ctx.exception))
 
     def test_get_key_after_clear(self):
         """清零后获取密钥抛出 SecureMemoryError"""
@@ -82,7 +82,7 @@ class TestSecureKeyManagerGetKey(unittest.TestCase):
         mgr.clear()
         with self.assertRaises(SecureMemoryError) as ctx:
             mgr.get_key()
-        self.assertIn("已被清零", str(ctx.exception))
+        self.assertIn("has been cleared", str(ctx.exception))
 
 
 class TestSecureKeyManagerClear(unittest.TestCase):

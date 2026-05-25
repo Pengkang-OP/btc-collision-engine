@@ -9,10 +9,13 @@
 pytest>=9.0.0,<10.0.0
 pytest-benchmark>=4.0       # 性能基准测试
 pytest-cov>=4.0.0           # 测试覆盖率
+pytest-timeout>=2.0,<3.0.0  # 测试超时控制
+pytest-rerunfailures>=3.0,<17.0.0  # 测试失败重跑
 
 # 代码质量
 black>=24.0.0               # 代码格式化
 flake8>=6.0.0               # Lint 检查
+flake8-threading>=0.5.0     # 线程安全静态分析
 mypy>=1.0.0                 # 类型检查
 types-cachetools>=5.0        # cachetools 类型存根
 bandit>=1.7.0               # 安全扫描

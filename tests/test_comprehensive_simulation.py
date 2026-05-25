@@ -10,10 +10,8 @@ BTC Collision Engine — 全面模拟测试脚本
 """
 
 import json
-import os
 import subprocess
 import sys
-import tempfile
 import time
 from datetime import datetime
 from pathlib import Path
