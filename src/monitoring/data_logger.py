@@ -139,12 +139,23 @@ class DataLogger:
         使用临时文件+重命名的方式确保数据完整性，
         避免写入中断导致文件损坏。
 
+        v5.0.1: 使用 tempfile.mkstemp 生成唯一临时文件名，
+        消除并发竞态（多个线程共享固定 .tmp 文件名导致互相覆盖）。
+
         Args:
             filepath: 目标文件路径
             data: 要写入的数据
 
         """
-        temp_file = filepath + ".tmp"
+        # 使用唯一临时文件名，避免并发竞态
+        import tempfile as _tempfile
+
+        fd, temp_file = _tempfile.mkstemp(
+            dir=os.path.dirname(filepath),
+            suffix=".tmp",
+            prefix=".atomic_",
+        )
+        os.close(fd)
         try:
             with pathlib.Path(temp_file).open("w", encoding="utf-8") as f:
                 fast_dump(data, f, ensure_ascii=False, indent=2)
@@ -163,13 +174,11 @@ class DataLogger:
                     self.logger.debug("设置文件权限失败: %s", e)
         except Exception as e:
             self.logger.error("原子写入失败: %s", e)
-            # 清理临时文件
-            try:
-                if pathlib.Path(temp_file).exists():
+        finally:
+            # 清理临时文件（无论成功或失败）
+            if pathlib.Path(temp_file).exists():
+                with suppress(OSError):
                     pathlib.Path(temp_file).unlink()
-            except Exception as cleanup_error:
-                # A类修复: 资源清理失败添加DEBUG日志
-                self.logger.debug("清理临时文件失败（可忽略）: %s", cleanup_error)
 
     def _initialize_files(self) -> None:
         """初始化数据文件"""
@@ -768,6 +777,9 @@ class DataLogger:
         os.replace()，失败后使用指数退避重试，最后回退到
         直接写入（非原子但确保数据不丢失）。
 
+        v5.0.1: FileNotFoundError 不重试（源文件已被并发线程移走），
+        直接回退到直接写入。
+
         Args:
             src: 源文件路径（临时文件）
             dst: 目标文件路径
@@ -783,6 +795,10 @@ class DataLogger:
             try:
                 pathlib.Path(src).replace(dst)
                 return True
+            except FileNotFoundError:
+                # 源文件被并发线程移走，重试无意义，直接回退
+                self.logger.debug("源文件已不存在(并发竞态)，回退到直接写入: %s", dst)
+                return self._fallback_direct_write(src, dst)
             except PermissionError:
                 if attempt < max_retries - 1:
                     delay = delays[min(attempt, len(delays) - 1)]
@@ -800,7 +816,7 @@ class DataLogger:
                 )
                 return self._fallback_direct_write(src, dst)
             except OSError as e:
-                last_os_error = e  # 保存引用，避免 except 块退出后被释放
+                last_os_error = e
                 if attempt < max_retries - 1:
                     delay = delays[min(attempt, len(delays) - 1)]
                     _attempt = attempt + 1
@@ -828,6 +844,8 @@ class DataLogger:
         当 os.replace() 因外部锁定失败时使用此方法。
         虽然非原子操作，但可以绕过文件替换权限问题。
 
+        v5.0.1: 源文件不存在时快速失败，避免无意义的 read_text() 异常。
+
         Args:
             src: 源文件路径（临时文件）
             dst: 目标文件路径
@@ -837,6 +855,11 @@ class DataLogger:
 
         """
         try:
+            # 源文件检查：如果已被并发线程移走，直接声明失败
+            if not pathlib.Path(src).exists():
+                self.logger.debug("回退写入跳过: 源文件已不存在: %s", src)
+                return False
+
             # 读取临时文件内容
             content = pathlib.Path(src).read_text(encoding="utf-8")
 

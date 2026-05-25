@@ -51,6 +51,7 @@ test_data/
 test_results/
 /checkpoint.json
 /targets.lock
+/targets.txt
 /start_error.log
 /.flake8.archived
 

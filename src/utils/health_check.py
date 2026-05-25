@@ -242,7 +242,15 @@ class HealthChecker:
         return True, f"所有配置文件正常: {', '.join(self.required_configs)}"
 
     def check_config_permissions(self) -> tuple[bool, str]:
-        """检查配置文件权限"""
+        """检查配置文件权限
+
+        v5.0.1: Windows 上跳过 Unix 权限位检查
+        (Windows 不使用 POSIX 权限模型，st_mode 位无意义)。
+        """
+        # Windows 上无 POSIX 权限模型，跳过检查
+        if os.name == "nt":
+            return True, "配置文件权限检查已跳过 (Windows)"
+
         insecure_files = []
 
         for config_name in self.required_configs:

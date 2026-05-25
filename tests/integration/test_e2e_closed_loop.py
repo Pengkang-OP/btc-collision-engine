@@ -223,7 +223,7 @@ class TestCheckpointClosedLoop:
         engine._thread.join(timeout=15)
         engine.stop()
 
-        assert cp_mgr.exists(), "checkpoint 文件应存在"
+        assert cp_mgr.exists, "checkpoint 文件应存在（exists 是 @property）"
         assert len(match_addrs) >= 1, "应至少找到 k=1"
 
         data = cp_mgr.load()
@@ -258,7 +258,7 @@ class TestCheckpointClosedLoop:
         engine1._thread.join(timeout=15)
         engine1.stop()
 
-        assert cp_mgr.exists(), "第一次扫描后 checkpoint 应存在"
+        assert cp_mgr.exists, "第一次扫描后 checkpoint 应存在（exists 是 @property）"
         assert len(match_addrs) >= 1, "应至少找到 k=1"
 
         # 创建新引擎从断点恢复
@@ -417,10 +417,10 @@ class TestResolverPipelineClosedLoop:
         )
 
     def test_resolver_converts_taproot_to_p2pkh(self):
-        """Taproot (Bech32m) → Resolver → 保持原格式（载荷为 x-only pubkey）"""
+        """Taproot (Bech32m) → Resolver → 返回 None（x-only pubkey 无法用于 P2PKH 碰撞）"""
         pk = _K4_PK
         gen = P2PKHAddressGenerator()
-        p2pkh_addr, compressed_pk, _ = gen.generate_address(pk)
+        _, compressed_pk, _ = gen.generate_address(pk)
         x_only_pk = compressed_pk[1:]  # 去掉 02/03 前缀
         taproot_addr = bech32_encode("bc", 1, x_only_pk, "bech32m")
         assert taproot_addr.startswith("bc1p")
@@ -428,15 +428,15 @@ class TestResolverPipelineClosedLoop:
         resolver = TargetResolver(enable_cache=False)
         result = resolver.resolve(taproot_addr)
 
-        assert result is not None, "Resolver 应返回 Taproot 原地址"
-        assert result == taproot_addr, (
-            "Taproot 应保持原格式（payload 为 x-only pubkey，无法转换为 P2PKH）"
+        # Taproot 使用 x-only pubkey 作为 witness program，不能用于 P2PKH 碰撞匹配
+        # Resolver 正确返回 None
+        assert result is None, (
+            "Taproot 使用 x-only pubkey，hash160(x_only) != hash160(pubkey)，"
+            "无法用于 P2PKH 碰撞匹配，Resolver 应返回 None"
         )
-        # Taproot 的 witness program 是 x-only pubkey → P2PKH 载荷不同
-        assert result != p2pkh_addr, "Taproot 保持原格式，应不同于 Legacy P2PKH（载荷为 x-only pubkey）"
 
     def test_resolver_mixed_formats_same_pubkey(self):
-        """同一公钥 → 四种格式 → Resolver 全部可解析 → Bech32 与 Legacy 一致"""
+        """同一公钥 → 四种格式 → Resolver 行为验证（P2SH/Taproot 返回 None）"""
         pk = _K5_PK
         gen = P2PKHAddressGenerator()
         p2pkh_addr, compressed_pk, _ = gen.generate_address(pk)
@@ -452,13 +452,15 @@ class TestResolverPipelineClosedLoop:
         # Bech32 与 Legacy 解析结果相同（都是 P2PKH 以 '1' 开头）
         assert resolver.resolve(bech32_addr) == p2pkh_addr
         assert resolver.resolve(bech32_addr).startswith("1")
-        # P2SH 和 Taproot 保持原格式
-        assert resolver.resolve(p2sh_addr) != p2pkh_addr
-        assert resolver.resolve(p2sh_addr).startswith("3")
-        assert resolver.resolve(taproot_addr) != p2pkh_addr
-        assert resolver.resolve(taproot_addr).startswith("bc1p")
-        # 全部可解析
-        for addr in [p2pkh_addr, p2sh_addr, bech32_addr, taproot_addr]:
+        # P2SH 和 Taproot 无法用于 P2PKH 碰撞匹配，Resolver 返回 None
+        assert resolver.resolve(p2sh_addr) is None, (
+            "P2SH payload=hash160(redeemScript) ≠ hash160(pubkey)，无法碰撞匹配"
+        )
+        assert resolver.resolve(taproot_addr) is None, (
+            "Taproot payload=x-only pubkey，hash160(x_only) ≠ hash160(pubkey)，无法碰撞匹配"
+        )
+        # Legacy 和 Bech32 可解析
+        for addr in [p2pkh_addr, bech32_addr]:
             assert resolver.resolve(addr) is not None, f"{addr[:6]}... 应可解析"
 
 
@@ -556,11 +558,11 @@ class TestFileLoadingClosedLoop:
 
         # 验证解析结果：4 种格式 × 5 个密钥 = 20 行
         # - Legacy P2PKH + Bech32 → 5 个相同的 P2PKH (pubkey_hash)
-        # - P2SH → 5 个不同的 P2PKH (script_hash)
-        # - Taproot → 5 个不同的 P2PKH (x-only pubkey)
-        # 总计 15 个唯一 P2PKH
-        assert len(loaded_p2pkh) >= 10, (
-            f"应至少解析出 10 个唯一 P2PKH（5 Legacy + 5 P2SH + 5 Taproot），实际: {len(loaded_p2pkh)}"
+        # - P2SH → 无法碰撞匹配（script_hash ≠ pubkey_hash），Resolver 返回 None
+        # - Taproot → 无法碰撞匹配（x-only pubkey），Resolver 返回 None
+        # 总计 5 个唯一 P2PKH
+        assert len(loaded_p2pkh) == 5, (
+            f"应解析出 5 个唯一 P2PKH（Legacy + Bech32 dedup），实际: {len(loaded_p2pkh)}"
         )
 
         # 引擎闭环验证：Legacy P2PKH 应该全部匹配
@@ -618,8 +620,8 @@ class TestFileLoadingClosedLoop:
         engine._thread.join(timeout=15)
         engine.stop()
 
-        assert len(match_results) == 1, f"应检测到 1 个匹配（不重复），实际: {len(match_results)}"
-        assert match_results[0] == _K1_ADDR
+        assert len(match_results) == 5, f"5 个 Legacy P2PKH (k=1..5) 应全部在 range 1-20 中匹配，实际: {len(match_results)}"
+        assert all(addr.startswith("1") for addr in match_results)
 
     def test_multi_worker_range_scan_all_matches(self):
         """max_workers=4 range_scan[1,100] → k=1/2/3 全部找到"""
@@ -641,8 +643,8 @@ class TestFileLoadingClosedLoop:
         engine.stop()
 
         stats = engine.get_stats()
-        # 多线程下 total_checked 可能略少于 1000（窗口边界），但应接近
-        assert stats.total_checked >= 900, f"多线程至少检查 900 个私钥，实际: {stats.total_checked}"
+        # range 1-100，多线程分配后至少检查 90 个私钥
+        assert stats.total_checked >= 90, f"多线程至少检查 90 个私钥，实际: {stats.total_checked}"
         assert stats.speed >= 0, "speed 应 >= 0"
 
 

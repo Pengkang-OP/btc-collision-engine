@@ -484,9 +484,11 @@ class AsyncGPUExecutor:
         """停止后台结果收集线程并收集所有剩余结果。"""
         self._collector_running = False
         if self._collector_thread is not None and self._collector_thread.is_alive():
-            self._collector_thread.join(timeout=3.0)
-            if self._collector_thread.is_alive():
-                logger.warning("GPU结果收集器线程未在 3s 内退出")
+            # v5.1.2: 避免在收集器线程自身中调用 join（会触发 RuntimeError）
+            if self._collector_thread is not threading.current_thread():
+                self._collector_thread.join(timeout=3.0)
+                if self._collector_thread.is_alive():
+                    logger.warning("GPU结果收集器线程未在 3s 内退出")
         self._collector_thread = None
         logger.info(
             "GPU后台结果收集器已停止 (运行周期: %s, 待收集: %s)",
