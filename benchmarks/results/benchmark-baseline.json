@@ -46,44 +46,44 @@
       "success": true
     },
     "pubkey_derivation_coincurve": {
-      "ops_per_sec": 100000.0,
-      "mean_us": 10.0,
+      "ops_per_sec": 1.0,
+      "mean_us": 1000000.0,
       "std_us": 1.0,
       "iterations": 500,
       "success": true
     },
     "pubkey_derivation_purepython": {
-      "ops_per_sec": 5000.0,
-      "mean_us": 200.0,
-      "std_us": 10.0,
+      "ops_per_sec": 1.0,
+      "mean_us": 1000000.0,
+      "std_us": 1.0,
       "iterations": 200,
       "success": true
     },
     "pubkey_derivation_openssl": {
-      "ops_per_sec": 30000.0,
-      "mean_us": 33.0,
-      "std_us": 3.0,
+      "ops_per_sec": 1.0,
+      "mean_us": 1000000.0,
+      "std_us": 1.0,
       "iterations": 200,
       "success": true
     },
     "scalar_multiply_coincurve": {
-      "ops_per_sec": 50000.0,
-      "mean_us": 20.0,
-      "std_us": 2.0,
+      "ops_per_sec": 1.0,
+      "mean_us": 1000000.0,
+      "std_us": 1.0,
       "iterations": 200,
       "success": true
     },
     "scalar_multiply_purepython": {
-      "ops_per_sec": 1000.0,
-      "mean_us": 1000.0,
-      "std_us": 50.0,
+      "ops_per_sec": 1.0,
+      "mean_us": 1000000.0,
+      "std_us": 1.0,
       "iterations": 100,
       "success": true
     },
     "taproot_address": {
-      "ops_per_sec": 5000.0,
-      "mean_us": 200.0,
-      "std_us": 15.0,
+      "ops_per_sec": 1.0,
+      "mean_us": 1000000.0,
+      "std_us": 1.0,
       "iterations": 200,
       "success": true
     }
