@@ -338,9 +338,9 @@ def bench_scalar_multiply_purepython() -> BenchmarkResult:
 
 def bench_taproot_address() -> BenchmarkResult:
     """Taproot (P2TR) 地址生成吞吐量"""
-    from src.core.multi_format_generator import MultiFormatGenerator
+    from src.core.multi_format_generator import MultiFormatAddressGenerator
 
-    gen = MultiFormatGenerator()
+    gen = MultiFormatAddressGenerator()
     test_key = (42).to_bytes(32, "big")
 
     def _run():
