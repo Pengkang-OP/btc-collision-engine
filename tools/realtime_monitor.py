@@ -7,18 +7,34 @@ from pathlib import Path
 
 
 def read_monitoring_data():
-    """读取监控数据文件"""
-    monitoring_file = Path("monitoring_data/current_data.json")
-
-    if not monitoring_file.exists():
+    """读取监控数据文件（优先 data_logs，兼容旧 monitoring_data）"""
+    candidates = [
+        Path("data_logs/current_data.json"),
+        Path("monitoring_data/current_data.json"),
+    ]
+    monitoring_file = next((p for p in candidates if p.exists()), None)
+    if monitoring_file is None:
         return None
 
     try:
         with open(monitoring_file, encoding="utf-8") as f:
-            return json.load(f)
+            raw = json.load(f)
     except Exception as e:
         print(f"[ERROR] 读取监控数据失败: {e}")
         return None
+
+    # v4.3+ 嵌套结构 → 扁平字段供本工具展示
+    perf = raw.get("performance") or {}
+    engine = raw.get("engine") or {}
+    return {
+        "running_status": engine.get("is_running", raw.get("running_status")),
+        "total_checked": perf.get("total_checked", raw.get("total_checked", 0)),
+        "match_count": perf.get("matches_found", raw.get("match_count", 0)),
+        "keys_per_second": perf.get("speed", raw.get("keys_per_second", 0)),
+        "elapsed_time": raw.get("uptime", perf.get("elapsed_time", 0)),
+        "last_update": raw.get("saved_at", perf.get("datetime", "Unknown")),
+        "_source": str(monitoring_file),
+    }
 
 
 def read_error_log():

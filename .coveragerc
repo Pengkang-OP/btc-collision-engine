@@ -1,0 +1,3 @@
+[run]
+# CI 测试排除 GPU 源码：GPU 测试通过 marker 过滤排除，GPU 源码不应计入覆盖率
+omit = src/gpu/*

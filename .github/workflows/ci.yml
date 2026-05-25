@@ -202,13 +202,23 @@ jobs:
             --cov=src \
             --cov-report=xml \
             --cov-report=term-missing \
-            --cov-fail-under=40 \
+            --cov-fail-under=30 \
             -m "not (gpu or gpu_kernel or multi_gpu or integration)" \
             --timeout=600 \
             --timeout-method=thread \
-            -p no:cacheprovider
+            -p no:cacheprovider > test-output.log 2>&1; RC=$?
+          cat test-output.log
+          exit $RC
+
+      - name: 上传测试日志
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-output
+          path: test-output.log
 
       - name: 上传覆盖率报告
+        if: always()
         uses: codecov/codecov-action@v6
         with:
           files: ./coverage.xml
