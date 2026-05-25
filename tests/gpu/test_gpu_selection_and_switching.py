@@ -495,8 +495,8 @@ class TestGPUDeviceScoring(unittest.TestCase):
             },
         ]
 
-        # Mock detect_all_devices
-        with patch.object(self.selector, "detect_all_devices", return_value=devices):
+        # Mock detect_all_devices (patch class, not instance — __slots__ prevents instance patching)
+        with patch.object(GPUDeviceSelector, "detect_all_devices", return_value=devices):
             # 选择索引0
             device0 = self.selector.get_device_info(0)
             self.assertIsNotNone(device0)
@@ -918,7 +918,7 @@ class TestMultiGPUIntegration(unittest.TestCase):
 
         selector = GPUDeviceSelector()
 
-        with patch.object(selector, "detect_all_devices", return_value=devices):
+        with patch.object(GPUDeviceSelector, "detect_all_devices", return_value=devices):
             # 选择索引0和2
             selected = selector.select_devices_by_indices([0, 2])
 

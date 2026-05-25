@@ -56,6 +56,7 @@ test_results/
 /.flake8.archived
 
 # --- 根目录临时测试输出文件（仅匹配根目录）---
+/btc_addresses_only.txt
 /_*.txt
 /_*.py
 /_*.json
