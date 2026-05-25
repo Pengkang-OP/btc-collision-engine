@@ -8,12 +8,21 @@
 
 import pytest
 
+try:
+    from pytest_benchmark.fixture import BenchmarkFixture
+except ImportError:
+    BenchmarkFixture = None
+
 from src.collision.targets.resolver import TargetResolver
+
+# 标记这个测试模块为性能测试
+pytestmark = pytest.mark.benchmark
 
 
 class TestBech32P2SHPerformance:
     """Bech32/P2SH地址转换性能测试"""
 
+    @pytest.mark.skipif(BenchmarkFixture is None, reason="需要 pytest-benchmark 插件")
     def test_bech32_cache_performance(self, benchmark):
         """测试Bech32地址缓存性能"""
         resolver = TargetResolver(enable_cache=True)
@@ -28,6 +37,7 @@ class TestBech32P2SHPerformance:
         assert result is not None, "缓存命中应该返回结果"
         # 缓存命中应该在微秒级别
 
+    @pytest.mark.skipif(BenchmarkFixture is None, reason="需要 pytest-benchmark 插件")
     def test_p2sh_cache_performance(self, benchmark):
         """测试P2SH地址解析性能（P2SH返回None - 密码学上不可匹配）"""
         resolver = TargetResolver(enable_cache=True)
@@ -38,6 +48,7 @@ class TestBech32P2SHPerformance:
 
         assert result is None, "P2SH地址密码学上不可匹配，应返回None"
 
+    @pytest.mark.skipif(BenchmarkFixture is None, reason="需要 pytest-benchmark 插件")
     def test_bech32_first_resolve_performance(self, benchmark):
         """测试Bech32首次解析性能（缓存未命中）"""
         resolver = TargetResolver(enable_cache=True)
@@ -53,6 +64,7 @@ class TestBech32P2SHPerformance:
 
         assert result is not None, "首次解析应该成功"
 
+    @pytest.mark.skipif(BenchmarkFixture is None, reason="需要 pytest-benchmark 插件")
     def test_batch_resolve_performance(self, benchmark):
         """测试批量解析性能"""
         resolver = TargetResolver(enable_cache=True)
@@ -103,6 +115,7 @@ class TestBech32P2SHPerformance:
         hit_rate = stats2["hits"] / (stats2["hits"] + stats2["misses"]) * 100
         assert hit_rate == pytest.approx(100 / 3, abs=0.1), "命中率应该是~33.3%（P2SH不缓存）"
 
+    @pytest.mark.skipif(BenchmarkFixture is None, reason="需要 pytest-benchmark 插件")
     def test_resolve_without_cache_performance(self, benchmark):
         """测试禁用缓存的性能"""
         resolver = TargetResolver(enable_cache=False)
@@ -113,6 +126,7 @@ class TestBech32P2SHPerformance:
 
         assert result is not None, "无缓存也应该能解析"
 
+    @pytest.mark.skipif(BenchmarkFixture is None, reason="需要 pytest-benchmark 插件")
     @pytest.mark.benchmark(group="address_types")
     def test_p2pkh_resolve_performance(self, benchmark):
         """测试P2PKH地址解析性能"""
@@ -126,6 +140,7 @@ class TestBech32P2SHPerformance:
         result = benchmark(resolver.resolve, p2pkh_addr)
         assert result is not None
 
+    @pytest.mark.skipif(BenchmarkFixture is None, reason="需要 pytest-benchmark 插件")
     @pytest.mark.benchmark(group="address_types")
     def test_p2sh_resolve_performance(self, benchmark):
         """测试P2SH地址解析性能（P2SH返回None - 密码学上不可匹配）"""
@@ -136,6 +151,7 @@ class TestBech32P2SHPerformance:
         result = benchmark(resolver.resolve, p2sh_addr)
         assert result is None, "P2SH地址密码学上不可匹配，应返回None"
 
+    @pytest.mark.skipif(BenchmarkFixture is None, reason="需要 pytest-benchmark 插件")
     @pytest.mark.benchmark(group="address_types")
     def test_bech32_resolve_performance(self, benchmark):
         """测试Bech32地址解析性能"""
