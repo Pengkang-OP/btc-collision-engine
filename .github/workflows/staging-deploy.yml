@@ -29,7 +29,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.GITHUB_TOKEN }}  # 内置 Secret，无需手动配置
 
       - name: 获取短 SHA
         id: sha
@@ -42,13 +42,13 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}:staging
-            ghcr.io/${{ github.repository }}:staging-${{ steps.sha.outputs.short }}
+            ghcr.io/${{ github.repository }}:staging                    # 滚动 staging 标签
+            ghcr.io/${{ github.repository }}:staging-${{ steps.sha.outputs.short }}  # 带 SHA 的可追溯标签
           platforms: linux/amd64
           build-args: |
-            VERSION=staging-${{ steps.sha.outputs.short }}
-            BUILD_DATE=${{ github.event.head_commit.timestamp }}
-            VCS_REF=${{ github.sha }}
+            VERSION=staging-${{ steps.sha.outputs.short }}  # 镜像版本号
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}  # 构建时间戳
+            VCS_REF=${{ github.sha }}  # Git commit SHA
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -60,17 +60,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: build-staging
-    environment: staging
+    # 部署所需的自定义 Secret，需在仓库 Settings → Secrets and variables → Actions 中配置
+    env:
+      STAGING_HOST: ${{ secrets.STAGING_HOST }}      # Staging 服务器 IP/域名
+      STAGING_USER: ${{ secrets.STAGING_USER }}      # SSH 登录用户名
+      STAGING_SSH_KEY: ${{ secrets.STAGING_SSH_KEY }}  # SSH 私钥
+      STAGING_PATH: ${{ secrets.STAGING_PATH }}      # 部署目标路径，默认 /opt/btc-collision-engine
 
     steps:
       - uses: actions/checkout@v6
 
       - name: 部署 Staging 服务
-        env:
-          STAGING_HOST: ${{ secrets.STAGING_HOST }}
-          STAGING_USER: ${{ secrets.STAGING_USER }}
-          STAGING_SSH_KEY: ${{ secrets.STAGING_SSH_KEY }}
-          STAGING_PATH: ${{ secrets.STAGING_PATH }}
         run: |
           echo "🚀 部署 Staging 环境..."
 
@@ -119,11 +119,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: deploy-staging
+    # 复用 deploy-staging 中的 STAGING_HOST Secret 用于健康检查
+    env:
+      STAGING_HOST: ${{ secrets.STAGING_HOST }}
 
     steps:
       - name: 运行冒烟测试
-        env:
-          STAGING_HOST: ${{ secrets.STAGING_HOST }}
         run: |
           echo "🧪 运行 Staging 冒烟测试..."
           # 基础连通性检查

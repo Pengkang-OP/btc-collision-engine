@@ -341,5 +341,5 @@ nvidia-smi --query-gpu=utilization.gpu --format=csv -l 5
 
 ---
 
-**快速指南版本**: 1.0
+**快速指南版本**: 5.0.0
 **最后更新**: 2026-04-24

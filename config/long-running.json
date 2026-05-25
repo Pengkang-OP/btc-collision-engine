@@ -1,4 +1,14 @@
 {
+    "_comment": "long-running template - CPU-only, conservative, checkpoint-enabled for extended runs",
+    "_comment_max_threads": "4 threads, low CPU footprint for background long-term operation",
+    "_comment_batch_size": "1M keys per batch, moderate size for stable memory usage",
+    "_comment_checkpoint": "checkpoint enabled at 5min/1min intervals for crash recovery",
+    "_comment_gpu_disabled": "GPU disabled: suitable for servers without GPUs or background mode",
+    "_comment_memory_pool": "GPU memory pool disabled (GPU off), CPU memory pool enabled",
+    "_comment_logging": "WARNING level file-only logging, 50MB/20 backups for long-term rotation",
+    "_comment_constant_time": "true: constant-time crypto for side-channel resistance in production",
+    "_comment_conservative": "conservative memory policy + auto-cleanup for stable long-term operation",
+    "version": "5.0.0",
     "engine": {
         "mode": "random",
         "batch_size": 1048576,

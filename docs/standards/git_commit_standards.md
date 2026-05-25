@@ -333,6 +333,6 @@ git push origin v4.2.1
 *参考文件*：
 
 - `CHANGELOG.md` — 版本历史与变更记录
-- `pyproject.toml` — 当前版本号 `version = "3.3.1"`
+- `pyproject.toml` — 当前版本号 `version = "5.0.0"`
 - `.github/workflows/ci.yml` — CI 工作流配置
 - `.pre-commit-config.yaml` — 提交前自动检查

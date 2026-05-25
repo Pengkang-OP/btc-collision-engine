@@ -211,7 +211,7 @@ jobs:
       - name: 上传覆盖率报告
         uses: codecov/codecov-action@v6
         with:
-          file: ./coverage.xml
+          files: ./coverage.xml
           flags: unittests
           name: codecov-py3.12
 

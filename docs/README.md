@@ -1,6 +1,6 @@
 # 比特币私钥碰撞工具 - 文档中心
 
-**版本**: v4.5.1
+**版本**: v5.0.0
 
 
 > **面向**: 所有用户
@@ -39,12 +39,12 @@
 
 - [getting-started.md](getting-started.md) - 快速开始与部署指南 ⭐
 - [project-status.md](project-status.md) - 项目状态总览 ⭐
-- [requirements.md](requirements.md) - 需求规格和功能规划
+- [requirements.md](developer-docs/requirements.md) - 需求规格和功能规划
 
 ### 🏗️ 架构设计 (2个)
 
 - [architecture.md](architecture.md) - 系统架构设计（含代码审核和算法）⭐
-- [workflow_diagrams.md](workflow_diagrams.md) - 工作流程图
+- [workflow_diagrams.md](technical-docs/workflow_diagrams.md) - 工作流程图
 
 ### 💻 API和界面 (1个)
 
@@ -54,7 +54,7 @@
 
 - [security-guidelines.md](security-guidelines.md) - 安全最佳实践（含审计发现） ⭐
 - [secure-key-management.md](secure-key-management.md) - 私钥安全管理指南
-- [performance-optimization.md](performance-optimization.md) - 性能调优指南
+- [performance-optimization.md](technical-docs/performance-optimization.md) - 性能调优指南
 
 ### 🔧 运维和监控 (4个)
 
@@ -64,10 +64,10 @@
 
 ### 📦 功能特性 (4个)
 
-- [checkpoint-resume-feature.md](checkpoint-resume-feature.md) - 断点续传功能
-- [checkpoint-quick-guide.md](checkpoint-quick-guide.md) - 断点续传快速指南
-- [address-import-feature.md](address-import-feature.md) - 地址导入功能
-- [quick-reference-private-key-security.md](quick-reference-private-key-security.md) - 私钥安全快速参考
+- [checkpoint-resume-feature.md](feature-docs/checkpoint-resume-feature.md) - 断点续传功能
+- [checkpoint-quick-guide.md](feature-docs/checkpoint-quick-guide.md) - 断点续传快速指南
+- [address-import-feature.md](feature-docs/address-import-feature.md) - 地址导入功能
+- [quick-reference-private-key-security.md](feature-docs/quick-reference-private-key-security.md) - 私钥安全快速参考
 
 ### 📦 归档文档
 

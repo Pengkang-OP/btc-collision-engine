@@ -53,12 +53,13 @@
   - **异步双缓冲架构** (计算队列+传输队列,性能+63.9%)
   - **GPU 引擎架构重构** (协议层+外观层+核心层+监控管道+厂商策略)
   - Intel Arc A770: **4.89M keys/s**（异步模式,峰值5.08M）
-- ✅ **GPU 引擎架构重构** (v6.0.0 Phase 6, 2026-05)
+- ✅ **GPU 引擎架构重构** (v5.0.0, 2026-05)
   - 协议层+外观层+核心层+监控管道+厂商策略 完整解耦
   - 代码复杂度 -73%（1466→<400行），导入模块 -70%（49→<15）
   - Shim 层 100% 向后兼容，29 个专项测试全部通过
   - 新增 search_mode_coordinator / data_logger_adapter 等 5 个子模块
 
+> 📢 **v5.0.0 重大重构**: 移除 LegacyTargetResolver 和 CollisionCLI 旧版 CLI，Shim 层 100% 向后兼容，29 项专项测试全通过。配置预设文件注释化，文档链接全面修复。详见 [CHANGELOG](CHANGELOG.md)。
 > 📢 **v4.4.0 安全修复**: 新增多项安全修复（C-1/C-2/H-4/C-3/H-2/H-5/M-3），包括安全清零实现、OpenSSL后端安全要求、敏感数据脱敏、线程安全统计、析构函数异常处理、批量回调超时控制、配置值边界验证。详见 [SECURITY_IMPROVEMENTS](docs/SECURITY_IMPROVEMENTS.md)。
 > 📢 **v4.3.0 多格式地址支持**: 新增格式感知目标管理器，支持P2PKH/P2SH/Bech32/Taproot格式智能匹配，按需生成地址提升性能。
 > 📢 **v3.5.1 Phase 6**: GPU 引擎架构重构完成（引擎行数 -73%, 导入模块 -70%）, 29 项专项测试全通过, 测试交叉污染修复, data_logs 归档清理。详见 [CHANGELOG](CHANGELOG.md)。
@@ -447,7 +448,7 @@ engine = KeyCollisionEngine(
 | GPU内存池 | **-60%开销** | 缓冲区复用 |
 | **GPU PRNG** | **70x 总提升** | **Intel Arc A770: 3.07M keys/s** |
 
-> 📊 查看完整性能数据: [性能优化文档](docs/performance-optimization.md)
+> 📊 查看完整性能数据: [性能优化文档](docs/technical-docs/performance-optimization.md)
 
 ### 安装优化依赖
 
@@ -828,5 +829,5 @@ A:
 - [🚀 GPU引擎使用指南](docs/gpu-engine-guide.md) - GPU加速详细指南
 - [🔑 Bech32/P2SH地址支持](docs/bech32-p2sh-support.md) - 多地址类型支持
 - [📖 API参考](docs/api-reference.md) - 完整API文档
-- [⚡ 性能优化](docs/performance-optimization.md) - 性能调优指南
+- [⚡ 性能优化](docs/technical-docs/performance-optimization.md) - 性能调优指南
 - [🔒 安全指南](docs/security-guidelines.md) - 安全最佳实践

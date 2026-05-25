@@ -94,7 +94,7 @@ include = ["src*"]
 # pytest 配置已迁移至 pytest.ini，此处不再重复定义以避免冲突
 
 [tool.mypy]
-python_version = "3.11" # 与 CI type-check job 使用的 Python 版本一致
+python_version = "3.12" # 与 CI type-check job 使用的 Python 版本一致
 ignore_missing_imports = true
 warn_return_any = false # 大量底层C库返回Any，暂不强制
 warn_unused_configs = true

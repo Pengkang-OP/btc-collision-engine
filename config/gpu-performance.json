@@ -1,4 +1,15 @@
 {
+    "_comment": "gpu-performance template - single GPU optimized for maximum speed",
+    "_comment_max_threads": "4 threads, balanced for single-GPU compute saturation",
+    "_comment_batch_size": "2M keys per batch, optimized for GPU kernel occupancy",
+    "_comment_gpu_mode": "auto: single-GPU mode with vendor-specific optimizations",
+    "_comment_memory_ratio": "0.75: aggressive GPU memory allocation for larger batches",
+    "_comment_queue_depth": "8 async queue depth, balance of latency vs throughput",
+    "_comment_key_strategy": "PRNG_SEED: GPU-side seed-based key generation, no CPU transfer",
+    "_comment_memory_pool": "GPU memory pool enabled for reduced allocation overhead",
+    "_comment_uint32_workaround": "false: modern GPUs handle uint32 natively",
+    "_comment_constant_time": "false: raw throughput preferred for collision search",
+    "version": "5.0.0",
     "engine": {
         "mode": "random",
         "batch_size": 2097152,

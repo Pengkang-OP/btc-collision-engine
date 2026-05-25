@@ -1,4 +1,15 @@
 {
+    "_comment": "gpu-multi template - multi-GPU mode with performance load balancing",
+    "_comment_max_threads": "8 threads for multi-GPU parallel task scheduling",
+    "_comment_batch_size": "4M keys per batch, optimized for multi-GPU throughput",
+    "_comment_gpu_mode": "multi-device with performance-based load balancing and auto-tuning",
+    "_comment_device_index": "-1 means auto-detect all available GPU devices",
+    "_comment_queue_depth": "16 async operation queue depth for deep pipelining",
+    "_comment_key_strategy": "PRNG_SEED: GPU-side seed-based key generation, no CPU transfer",
+    "_comment_memory_pool": "GPU memory pool enabled for reduced allocation overhead",
+    "_comment_uint32_workaround": "false: modern GPUs handle uint32 natively",
+    "_comment_constant_time": "false: raw throughput preferred for collision search",
+    "version": "5.0.0",
     "engine": {
         "mode": "random",
         "batch_size": 4194304,
