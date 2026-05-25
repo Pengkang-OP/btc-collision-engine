@@ -18,13 +18,13 @@
 import argparse
 import hashlib
 import json
-import os
 import platform
 import statistics
 import sys
 import time
 import traceback
 from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -37,8 +37,6 @@ from src.core.base58 import Base58
 from src.core.crypto_backend import (
     BackendType,
     CryptoBackendManager,
-    get_available_backends,
-    set_crypto_backend,
 )
 
 # ── 项目根目录 ──────────────────────────────
@@ -49,26 +47,17 @@ _ROOT = Path(__file__).resolve().parent.parent
 # ──────────────────────────────────────────────
 
 
+@dataclass
 class BenchmarkResult:
     """单个基准测试的结果"""
 
-    def __init__(
-        self,
-        name: str,
-        ops_per_sec: float,
-        mean_us: float,
-        std_us: float,
-        iterations: int,
-        success: bool = True,
-        error: str = "",
-    ):
-        self.name = name
-        self.ops_per_sec = ops_per_sec
-        self.mean_us = mean_us
-        self.std_us = std_us
-        self.iterations = iterations
-        self.success = success
-        self.error = error
+    name: str
+    ops_per_sec: float
+    mean_us: float
+    std_us: float
+    iterations: int
+    success: bool = True
+    error: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         """转为字典，用于 JSON 序列化"""
@@ -89,9 +78,7 @@ class BenchmarkResult:
 # ──────────────────────────────────────────────
 
 
-def _run_timed(
-    func: Callable, warmup: int = 3, iterations: int = 1000
-) -> BenchmarkResult:
+def _run_timed(func: Callable[[], Any], warmup: int = 3, iterations: int = 1000) -> BenchmarkResult:
     """运行函数并精确计时。
 
     参数:
@@ -245,8 +232,13 @@ def bench_pubkey_derivation_coincurve() -> BenchmarkResult:
     """公钥派生 — coincurve 后端"""
     if not _force_backend(BackendType.COINCURVE):
         return BenchmarkResult(
-            name="pubkey_derivation_coincurve", ops_per_sec=0, mean_us=0, std_us=0,
-            iterations=0, success=False, error="coincurve 后端不可用",
+            name="pubkey_derivation_coincurve",
+            ops_per_sec=0,
+            mean_us=0,
+            std_us=0,
+            iterations=0,
+            success=False,
+            error="coincurve 后端不可用",
         )
     mgr = CryptoBackendManager()
     test_key = (42).to_bytes(32, "big")
@@ -263,8 +255,13 @@ def bench_pubkey_derivation_purepython() -> BenchmarkResult:
     """公钥派生 — Pure Python 后端"""
     if not _force_backend(BackendType.PURE_PYTHON):
         return BenchmarkResult(
-            name="pubkey_derivation_purepython", ops_per_sec=0, mean_us=0, std_us=0,
-            iterations=0, success=False, error="Pure Python 后端不可用",
+            name="pubkey_derivation_purepython",
+            ops_per_sec=0,
+            mean_us=0,
+            std_us=0,
+            iterations=0,
+            success=False,
+            error="Pure Python 后端不可用",
         )
     mgr = CryptoBackendManager()
     test_key = (42).to_bytes(32, "big")
@@ -281,8 +278,13 @@ def bench_pubkey_derivation_openssl() -> BenchmarkResult:
     """公钥派生 — OpenSSL 后端"""
     if not _force_backend(BackendType.OPENSSL):
         return BenchmarkResult(
-            name="pubkey_derivation_openssl", ops_per_sec=0, mean_us=0, std_us=0,
-            iterations=0, success=False, error="OpenSSL 后端不可用",
+            name="pubkey_derivation_openssl",
+            ops_per_sec=0,
+            mean_us=0,
+            std_us=0,
+            iterations=0,
+            success=False,
+            error="OpenSSL 后端不可用",
         )
     mgr = CryptoBackendManager()
     test_key = (42).to_bytes(32, "big")
@@ -299,8 +301,13 @@ def bench_scalar_multiply_coincurve() -> BenchmarkResult:
     """标量乘法 — coincurve 后端"""
     if not _force_backend(BackendType.COINCURVE):
         return BenchmarkResult(
-            name="scalar_multiply_coincurve", ops_per_sec=0, mean_us=0, std_us=0,
-            iterations=0, success=False, error="coincurve 后端不可用",
+            name="scalar_multiply_coincurve",
+            ops_per_sec=0,
+            mean_us=0,
+            std_us=0,
+            iterations=0,
+            success=False,
+            error="coincurve 后端不可用",
         )
     mgr = CryptoBackendManager()
     k = 123456789
@@ -320,8 +327,13 @@ def bench_scalar_multiply_purepython() -> BenchmarkResult:
     """标量乘法 — Pure Python 后端"""
     if not _force_backend(BackendType.PURE_PYTHON):
         return BenchmarkResult(
-            name="scalar_multiply_purepython", ops_per_sec=0, mean_us=0, std_us=0,
-            iterations=0, success=False, error="Pure Python 后端不可用",
+            name="scalar_multiply_purepython",
+            ops_per_sec=0,
+            mean_us=0,
+            std_us=0,
+            iterations=0,
+            success=False,
+            error="Pure Python 后端不可用",
         )
     mgr = CryptoBackendManager()
     k = 123456789
@@ -503,8 +515,7 @@ class BenchmarkRunner:
 
     # ── 运行所有测试 ──────────────────────────
 
-    def run_all(self, suite: dict[str, Callable] | None = None
-                ) -> dict[str, BenchmarkResult]:
+    def run_all(self, suite: dict[str, Callable[[], Any]] | None = None) -> dict[str, BenchmarkResult]:
         """运行所有基准测试。
 
         参数:
@@ -591,8 +602,7 @@ class BenchmarkRunner:
 
         if regressions:
             print(
-                f"\n[!] 发现 {len(regressions)} 处性能回归"
-                f" (下降 > {_REGRESSION_THRESHOLD * 100:.0f}%):"
+                f"\n[!] 发现 {len(regressions)} 处性能回归 (下降 > {_REGRESSION_THRESHOLD * 100:.0f}%):"
             )
             for r in regressions:
                 print(
@@ -706,16 +716,11 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         suite = {n: BUILTIN_BENCHMARKS[n] for n in args.only}
 
-    runner = BenchmarkRunner(
-        output_dir=args.output, compare=args.compare, baseline=args.baseline
-    )
-    return (
-        runner.run() if suite is BUILTIN_BENCHMARKS
-        else _run_subset(runner, suite)
-    )
+    runner = BenchmarkRunner(output_dir=args.output, compare=args.compare, baseline=args.baseline)
+    return runner.run() if suite is BUILTIN_BENCHMARKS else _run_subset(runner, suite)
 
 
-def _run_subset(runner: BenchmarkRunner, suite: dict[str, Callable]) -> int:
+def _run_subset(runner: BenchmarkRunner, suite: dict[str, Callable[[], Any]]) -> int:
     """运行子集并保存"""
     results = runner.run_all(suite)
     out_path = runner.save(results)

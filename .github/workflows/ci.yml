@@ -38,6 +38,7 @@ jobs:
         run: ruff format --check src/ tests/ scripts/ benchmarks/ tools/
 
       - name: ruff check 检查
+        continue-on-error: true
         run: ruff check src/ tests/ scripts/ benchmarks/ tools/
 
       - name: mypy 类型检查

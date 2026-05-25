@@ -23,9 +23,9 @@ from pathlib import Path
 from typing import Any
 
 # 修复Windows控制台编码问题 - 使用共享模块
-from utf8_helper import setup_windows_utf8
+from .utf8_helper import setup_windows_utf8
 
-setup_windows_utf8()
+_ = setup_windows_utf8()
 
 
 class Severity(Enum):
@@ -486,13 +486,16 @@ class DocumentQualityChecker:
         print("  扣分详情:")
         print(f"    ERROR: {error_count} × {self.config.error_weight} = {error_deduction:.1f}")
         print(
-            f"    代码块: {code_block_issues} × {self.config.code_block_weight} = {code_block_deduction:.1f} (上限{self.config.code_block_max})"
+            f"    代码块: {code_block_issues} × {self.config.code_block_weight}"
+            f" = {code_block_deduction:.1f} (上限{self.config.code_block_max})"
         )
         print(
-            f"    链接: {link_issues} × {self.config.link_weight} = {link_deduction:.1f} (上限{self.config.link_max})"
+            f"    链接: {link_issues} × {self.config.link_weight}"
+            f" = {link_deduction:.1f} (上限{self.config.link_max})"
         )
         print(
-            f"    其他WARNING: {other_warnings} × {self.config.other_warning_weight} = {other_warning_deduction:.1f}"
+            f"    其他WARNING: {other_warnings} × {self.config.other_warning_weight}"
+            f" = {other_warning_deduction:.1f}"
         )
         print(f"    INFO: {info_count} × {self.config.info_weight} = {info_deduction:.1f}")
         print(f"  总扣分: {deduction:.1f}")
