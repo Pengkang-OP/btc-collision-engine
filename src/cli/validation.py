@@ -7,7 +7,7 @@ from pathlib import Path
 from .output import CLIOutput
 
 
-def validate_args(args: argparse.Namespace) -> bool:
+def validate_args(args: argparse.Namespace) -> bool:  # noqa: C901
     """Validate parsed CLI arguments."""
     output = CLIOutput.get_instance()
 

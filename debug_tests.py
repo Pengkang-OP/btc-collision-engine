@@ -13,9 +13,9 @@ tests = [
 ]
 
 for test in tests:
-    print(f"\n{'=' * 60}")
-    print(f"Running: {test}")
-    print("=" * 60)
+    print(f"\n{'=' * 60}")  # noqa: T201
+    print(f"Running: {test}")  # noqa: T201
+    print("=" * 60)  # noqa: T201
     result = subprocess.run(
         [sys.executable, "-m", "pytest", test, "-v", "--tb=line", "-p", "no:cacheprovider"],
         capture_output=True,
@@ -25,7 +25,7 @@ for test in tests:
     # Print last 20 lines of stdout
     lines = result.stdout.strip().split("\n")
     for line in lines[-20:]:
-        print(line)
+        print(line)  # noqa: T201
     if result.returncode != 0:
-        print(f"FAILED with return code {result.returncode}")
-        print("STDERR:", result.stderr[-500:] if result.stderr else "")
+        print(f"FAILED with return code {result.returncode}")  # noqa: T201
+        print("STDERR:", result.stderr[-500:] if result.stderr else "")  # noqa: T201

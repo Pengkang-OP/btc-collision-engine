@@ -205,10 +205,10 @@ class EventBus:
             )
             # Call error handler callback if registered
             if self._error_handler is not None:
-                try:
+                import contextlib
+
+                with contextlib.suppress(Exception):
                     self._error_handler(event, e)
-                except Exception:
-                    pass
 
     def clear(self) -> None:
         """Remove all subscribers."""

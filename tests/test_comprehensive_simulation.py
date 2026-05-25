@@ -254,7 +254,7 @@ def test_d2_states():
         ckpt_file.write_bytes(ckpt_backup)
         record("D2-State", "state-rollback", "PASS", "checkpoint restored")
     elif ckpt_file.exists():
-        ckpt_backup_data = ckpt_file.read_text()
+        _ckpt_backup_data = ckpt_file.read_text()  # noqa: F841
         # Reset to minimal checkpoint for future clean state
         minimal = {
             "crc32": 0,

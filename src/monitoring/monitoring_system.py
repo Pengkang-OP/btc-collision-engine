@@ -213,7 +213,7 @@ class DataStorage:
         if not isinstance(self.storage_dir, str):
             import sys
 
-            print(f"WARNING: storage_dir is {type(self.storage_dir)}, expected str", file=sys.stderr)
+            print(f"WARNING: storage_dir is {type(self.storage_dir)}, expected str", file=sys.stderr)  # noqa: T201
             self.storage_dir = "data_logs"
             pathlib.Path(self.storage_dir).mkdir(exist_ok=True, parents=True)
 
