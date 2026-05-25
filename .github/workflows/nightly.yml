@@ -59,7 +59,7 @@ jobs:
 
       - name: 上传覆盖率报告
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-py${{ matrix.python-version }}
           path: |
@@ -161,7 +161,7 @@ jobs:
 
       - name: 上传基准结果
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nightly-benchmark-results
           path: benchmarks/results/
@@ -206,7 +206,7 @@ jobs:
 
       - name: 上传安全报告
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nightly-security-report
           path: bandit-nightly.json
