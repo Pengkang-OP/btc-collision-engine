@@ -281,14 +281,14 @@ class TestLoggingInitFunctions:
         result = init_logging()
         assert result is None
 
-    def test_get_configured_logger_returns_logger(self):
+    def test_get_configured_logger_returns_logger(self, reset_logging_config):
         from src.utils import get_configured_logger
 
         logger = get_configured_logger("TestModule")
         assert isinstance(logger, logging.Logger)
         assert logger.name == "TestModule"
 
-    def test_get_configured_logger_same_name_returns_same(self):
+    def test_get_configured_logger_same_name_returns_same(self, reset_logging_config):
         from src.utils import get_configured_logger
 
         a = get_configured_logger("SameName")

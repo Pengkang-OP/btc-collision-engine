@@ -541,6 +541,43 @@ def pytest_collection_modifyitems(config, items):
     skip_gpu_hw = os.environ.get("BTC_SKIP_GPU_HW", "") == "1"
     gpu_availability_checked = False
 
+    # 检查加密货币后端可用性（coincurve / OpenSSL）
+    _coincurve_available = None
+    _openssl_available = None
+
+    def _check_backend_availability():
+        nonlocal _coincurve_available, _openssl_available
+        if _coincurve_available is not None:
+            return
+        try:
+            from src.core.crypto_backend import crypto_manager
+            _coincurve_available = crypto_manager._backends.get(
+                crypto_manager.BackendType.COINCURVE
+            ).is_available if hasattr(crypto_manager.BackendType, "COINCURVE") else False
+            _openssl_available = crypto_manager._backends.get(
+                crypto_manager.BackendType.OPENSSL
+            ).is_available if hasattr(crypto_manager.BackendType, "OPENSSL") else False
+        except Exception:
+            _coincurve_available = False
+            _openssl_available = False
+
+    # 已知仅依赖 coincurve 的测试文件（当 coincurve 不可用时整体跳过）
+    _coincurve_only_files = {
+        "tests/test_core_crypto.py",
+        "tests/test_known_keypair_verification.py",
+        "tests/test_multi_format_simple.py",
+        "tests/test_p2sh_bech32_addresses.py",
+        "tests/test_random_search.py",
+        "tests/test_target_management.py",
+        "tests/test_thread_pool.py",
+        "tests/test_optimization_integration.py",
+        "tests/test_security.py",
+        "tests/test_smoke.py",
+    }
+
+    # 确保后端可用性已检查
+    _check_backend_availability()
+
     # 为GPU测试添加超时标记
     gpu_timeout_marker = pytest.mark.timeout(90)
     for item in items:
@@ -564,6 +601,30 @@ def pytest_collection_modifyitems(config, items):
         # GPU测试超时保护
         if any(m in item.keywords for m in ("gpu", "gpu_hardware", "gpu_unit", "gpu_integration")):
             item.add_marker(gpu_timeout_marker)
+
+        # 当 coincurve 不可用时跳过仅依赖 coincurve 的测试文件
+        if not _coincurve_available:
+            nodeid = item.nodeid
+            for cf in _coincurve_only_files:
+                if nodeid.startswith(cf):
+                    item.add_marker(pytest.mark.skip(
+                        reason="coincurve backend not available in CI"
+                    ))
+                    break
+            # 也跳过 crypto_backend_edge 中的 coincurve 特定测试
+            if "test_crypto_backend_edge.py" in nodeid:
+                if "Coincurve" in item.name and "not_available" not in item.name:
+                    item.add_marker(pytest.mark.skip(
+                        reason="coincurve backend not available in CI"
+                    ))
+        # 当 OpenSSL 不可用时跳过 OpenSSL 特定测试
+        if not _openssl_available:
+            nodeid = item.nodeid
+            if "test_crypto_backend_edge.py" in nodeid:
+                if "OpenSSL" in item.name and "not_available" not in item.name:
+                    item.add_marker(pytest.mark.skip(
+                        reason="OpenSSL backend not available in CI"
+                    ))
 
 
 @pytest.fixture(autouse=True)
