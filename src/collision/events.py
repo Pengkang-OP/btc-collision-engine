@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
@@ -95,6 +96,11 @@ class EngineMatchEvent(EngineEvent):
             "worker_id": self.worker_id,
         }
 
+    @property
+    def event_type(self) -> "EventType":
+        """Get the EventType for this event."""
+        return EventType.ENGINE_MATCH
+
 
 @dataclass
 class EngineErrorEvent(EngineEvent):
@@ -106,6 +112,11 @@ class EngineErrorEvent(EngineEvent):
     context: dict[str, Any] = field(default_factory=dict)
     recoverable: bool = False
 
+    @property
+    def event_type(self) -> "EventType":
+        """Get the EventType for this event."""
+        return EventType.ENGINE_ERROR
+
 
 @dataclass
 class EngineProgressEvent(EngineEvent):
@@ -113,11 +124,20 @@ class EngineProgressEvent(EngineEvent):
 
     total_checked: int = 0
     speed: float = 0.0
+    avg_speed: float = 0.0  # average speed
     matches_found: int = 0
     elapsed_time: float = 0.0
+    cpu_usage: float = 0.0  # CPU usage percentage
+    memory_usage: float = 0.0  # memory usage percentage
     keys_checked: int = 0  # alias for backward compat
     elapsed_seconds: float = 0.0  # alias for backward compat
     throughput: float = 0.0  # alias for backward compat
+    timestamp: float = field(default_factory=time.time)  # event timestamp
+
+    @property
+    def event_type(self) -> "EventType":
+        """Get the EventType for this event."""
+        return EventType.ENGINE_PROGRESS
 
 
 @dataclass

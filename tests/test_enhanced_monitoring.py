@@ -155,9 +155,10 @@ class TestEnhancedMonitoringSystemLifecycle:
 
         assert self.monitor.is_running() is False
         # 等待线程完全停止（join已在stop内完成，额外等待确保OS调度）
-        if self.monitor._thread:
+        if self.monitor._thread is not None:
             self.monitor._thread.join(timeout=5)
-        assert self.monitor._thread.is_alive() is False
+        # stop() sets _thread to None, so check is_alive only if not None
+        assert self.monitor._thread is None or not self.monitor._thread.is_alive()
 
     def test_start_already_running(self):
         """测试重复启动（应该无操作）"""

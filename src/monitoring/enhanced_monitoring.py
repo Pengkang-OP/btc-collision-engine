@@ -6,6 +6,7 @@ from contextlib import suppress
 from typing import Any
 
 from src.monitoring.data_logger import DataLogger
+from src.monitoring.monitor_config import MonitorConfig
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +20,7 @@ class EnhancedMonitoringSystem:
 
     def __init__(self, engine=None, config=None):
         self._engine = engine
-        self._config = config if config is not None else {}
+        self._config = config if config is not None else MonitorConfig()
         self._lock = threading.Lock()
         self._metrics: dict[str, list[float]] = {}
         self._running = False
@@ -52,7 +53,44 @@ class EnhancedMonitoringSystem:
         if self.enable_monitoring_data:
             self._init_monitoring_components()
 
+        # Validate configuration
+        self._validate_config()
+
         logger.info("增强版监控系统初始化完成")
+
+    def _validate_config(self) -> bool:
+        """Validate monitoring configuration.
+
+        Returns:
+            True if config is valid, False otherwise.
+
+        """
+        config = self._config
+        valid = True
+
+        if isinstance(config, MonitorConfig):
+            # Validate alert_threshold range (0.0 - 1.0)
+            if hasattr(config, "alert_threshold"):
+                threshold = config.alert_threshold
+                if not (0.0 <= threshold <= 1.0):
+                    logger.warning(
+                        "配置验证失败: alert_threshold=%s 超出范围 [0.0, 1.0]，"
+                        "使用默认值 0.8",
+                        threshold,
+                    )
+                    valid = False
+
+            # Validate collection_interval positive
+            if hasattr(config, "collection_interval"):
+                interval = config.collection_interval
+                if interval <= 0:
+                    logger.warning(
+                        "配置验证失败: collection_interval=%s 必须为正数",
+                        interval,
+                    )
+                    valid = False
+
+        return valid
 
     def _init_monitoring_components(self):
         """Initialize monitoring data components."""
@@ -70,6 +108,11 @@ class EnhancedMonitoringSystem:
     def engine(self):
         """Get the engine instance."""
         return self._engine
+
+    @engine.setter
+    def engine(self, value):
+        """Set the engine instance."""
+        self._engine = value
 
     def is_running(self) -> bool:
         """Check if monitoring system is running."""
@@ -186,7 +229,6 @@ class EnhancedMonitoringSystem:
             with suppress(Exception):
                 if self.data_logger is not None:
                     self.data_logger.stop()
-                    self.data_logger = None
             self._metrics.clear()
 
         logger.info("增强版监控系统已停止")

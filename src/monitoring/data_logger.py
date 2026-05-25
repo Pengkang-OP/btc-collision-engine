@@ -1618,7 +1618,11 @@ class DataLogger:
                         self.logger.warning("读取错误日志文件失败，将覆盖: %s", e)
                         errors = []
                 errors.extend(pending_errors)
-                errors = self._error_rotator.rotate(errors)
+                # 手动限制错误列表长度（_error_rotator.max_count）
+                # 注意：LogRotator.rotate() 用于文件轮转，不适用于内存列表
+                max_errors = getattr(self._error_rotator, "_max_count", 1000)
+                if len(errors) > max_errors:
+                    errors = errors[-max_errors:]
                 self._atomic_write_json(self.error_log_file, errors)
                 self.logger.debug(f"flush: 写入 {len(pending_errors)} 条错误数据")
             except Exception as e:

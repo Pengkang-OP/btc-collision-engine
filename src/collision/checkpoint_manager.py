@@ -9,6 +9,7 @@ import json
 import threading
 import time
 import zlib
+from contextlib import suppress
 from pathlib import Path
 
 from ..utils import get_configured_logger
@@ -58,6 +59,13 @@ class CheckpointManager:
         return self.should_save()
 
     def should_save(self) -> bool:
+        """Check if auto-save should trigger.
+
+        When interval is 0, always returns True (immediate auto-save).
+        Otherwise requires dirty state and elapsed interval.
+        """
+        if self._interval == 0:
+            return True
         return self._dirty and time.time() - self._last_save >= self._interval
 
     def save(
@@ -109,7 +117,7 @@ class CheckpointManager:
                 try:
                     temp_file.replace(self.filepath)
                     logger.info("Recovered checkpoint from .tmp file")
-                except OSError:
+                except (OSError, Exception):
                     logger.warning("Failed to recover from .tmp file")
                     return None
             else:
@@ -153,7 +161,8 @@ class CheckpointManager:
         """Delete checkpoint file."""
         with self._lock:
             if self.filepath.exists():
-                self.filepath.unlink()
+                with suppress(OSError, Exception):
+                    self.filepath.unlink()
             self._buffer = None
             self._dirty = False
 
@@ -164,12 +173,24 @@ class CheckpointManager:
         data = dict(self._buffer)
         data["version"] = CHECKPOINT_VERSION
         data["timestamp"] = time.time()
+        data["security_note"] = (
+            "This checkpoint file may contain sensitive information. "
+            "Do not share or commit to version control."
+        )
+        # Sanitize matches: strip sensitive fields
+        if "matches" in data and isinstance(data["matches"], list):
+            for match in data["matches"]:
+                if isinstance(match, dict):
+                    match.pop("private_key_hex", None)
+                    match.pop("private_key_wif", None)
         # Compute CRC on data without crc32 field, then add it and re-serialize
         serialized = fast_dumps(data, sort_keys=True)
         crc = zlib.crc32(serialized.encode())
         data["crc32"] = crc
         serialized = fast_dumps(data, sort_keys=True)
         temp_path = self.filepath.with_suffix(".json.tmp")
+        # Ensure parent directory exists
+        temp_path.parent.mkdir(parents=True, exist_ok=True)
         temp_path.write_text(serialized, encoding="utf-8")
         temp_path.replace(self.filepath)
         self._last_save = time.time()

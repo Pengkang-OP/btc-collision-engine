@@ -383,8 +383,8 @@ class TestDataLoggerAdapter(unittest.TestCase):
         event = EngineProgressEvent(total_checked=1000000, speed=537000.0, matches_found=0)
         bus.publish(event)
 
-        # 验证DataLogger被调用
-        mock_logger.record_performance_data.assert_called()
+        # 验证DataLogger被调用 (adapter calls log_progress for progress events)
+        mock_logger.log_progress.assert_called()
 
 
 class TestDependencyInjection(unittest.TestCase):

@@ -40,6 +40,11 @@ class DeduplicationFilter:
             "duplicates_found": 0,
         }
 
+    @property
+    def _current_size(self) -> int:
+        """Number of entries currently tracked."""
+        return len(self._seen_keys)
+
     def check_and_add(self, key: bytes, address: str | None = None) -> bool:
         """Check if key is duplicate and add if not.
 

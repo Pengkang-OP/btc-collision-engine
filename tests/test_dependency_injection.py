@@ -43,7 +43,7 @@ class TestDependencyInjectionFix:
         assert any(a["metric"] == "speed" for a in anomalies)
 
     def test_anomaly_detector_with_storage(self):
-        """测试AnomalyDetector在有storage时保存异常记录"""
+        """测试AnomalyDetector在有storage时检测异常"""
         # 创建mock storage
         mock_storage = Mock(spec=DataStorage)
         mock_storage.save_error = Mock()
@@ -57,14 +57,12 @@ class TestDependencyInjectionFix:
 
         anomalies = detector.detect_anomalies(data)
 
-        # 应检测到异常
+        # 应检测到异常（速度低于阈值 100）
         assert len(anomalies) > 0
+        assert any(a["metric"] == "speed" for a in anomalies)
 
-        # 应调用save_error保存异常记录
-        mock_storage.save_error.assert_called_once()
-        call_args = mock_storage.save_error.call_args[0][0]
-        assert call_args["type"] == "anomaly_detection"
-        assert call_args["level"] == "warning"
+        # 注意: save_error() 现在由 MonitoringAlertAdapter.generate_alert() 统一处理，
+        # AnomalyDetector.detect_anomalies() 不再直接调用 save_error 以避免双重写入。
 
     def test_alert_system_without_storage(self):
         """测试AlertSystem在没有storage时正常工作"""

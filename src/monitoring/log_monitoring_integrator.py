@@ -39,3 +39,20 @@ class LogMonitoringIntegrator:
 
         """
         self._alert_system = alert_system
+
+
+# Global integrator instance (lazy-initialized singleton)
+_integrator: LogMonitoringIntegrator | None = None
+
+
+def get_log_monitoring_integrator() -> LogMonitoringIntegrator:
+    """Get or create the global log-monitoring integrator instance.
+
+    Returns:
+        Global LogMonitoringIntegrator singleton.
+
+    """
+    global _integrator
+    if _integrator is None:
+        _integrator = LogMonitoringIntegrator()
+    return _integrator

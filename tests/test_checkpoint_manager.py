@@ -522,7 +522,7 @@ class TestCheckpointLoadTempRecoveryErrors(unittest.TestCase):
         result = self.mgr.load()
         self.assertIsNone(result)
 
-    @patch("os.replace", side_effect=Exception("unexpected"))
+    @patch("pathlib.Path.replace", side_effect=Exception("unexpected"))
     def test_temp_recovery_rename_unexpected_error(self, mock_rename):
         """Replace 未知异常被记录"""
         temp_file = self.tmp_path + ".tmp"
@@ -535,12 +535,13 @@ class TestCheckpointLoadTempRecoveryErrors(unittest.TestCase):
 class TestCheckpointDeleteErrors(unittest.TestCase):
     """delete() 异常处理测试"""
 
-    @patch("pathlib.Path.exists", return_value=True)
-    @patch("pathlib.Path.unlink", side_effect=Exception("delete failed"))
-    def test_delete_exception_caught(self, mock_unlink, mock_exists):
+    def test_delete_exception_caught(self):
         """Delete 异常被捕获"""
         mgr = CheckpointManager(filepath="/tmp/test.json")
-        mgr.delete()
+        # Patch the instance's filepath Path methods
+        with patch.object(type(mgr.filepath), "exists", return_value=True), \
+             patch.object(type(mgr.filepath), "unlink", side_effect=Exception("delete failed")):
+            mgr.delete()
 
 
 if __name__ == "__main__":
