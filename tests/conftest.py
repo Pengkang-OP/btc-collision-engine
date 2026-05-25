@@ -551,12 +551,17 @@ def pytest_collection_modifyitems(config, items):
             return
         try:
             from src.core.crypto_backend import crypto_manager
-            _coincurve_available = crypto_manager._backends.get(
-                crypto_manager.BackendType.COINCURVE
-            ).is_available if hasattr(crypto_manager.BackendType, "COINCURVE") else False
-            _openssl_available = crypto_manager._backends.get(
-                crypto_manager.BackendType.OPENSSL
-            ).is_available if hasattr(crypto_manager.BackendType, "OPENSSL") else False
+
+            _coincurve_available = (
+                crypto_manager._backends.get(crypto_manager.BackendType.COINCURVE).is_available
+                if hasattr(crypto_manager.BackendType, "COINCURVE")
+                else False
+            )
+            _openssl_available = (
+                crypto_manager._backends.get(crypto_manager.BackendType.OPENSSL).is_available
+                if hasattr(crypto_manager.BackendType, "OPENSSL")
+                else False
+            )
         except Exception:
             _coincurve_available = False
             _openssl_available = False
@@ -607,24 +612,18 @@ def pytest_collection_modifyitems(config, items):
             nodeid = item.nodeid
             for cf in _coincurve_only_files:
                 if nodeid.startswith(cf):
-                    item.add_marker(pytest.mark.skip(
-                        reason="coincurve backend not available in CI"
-                    ))
+                    item.add_marker(pytest.mark.skip(reason="coincurve backend not available in CI"))
                     break
             # 也跳过 crypto_backend_edge 中的 coincurve 特定测试
             if "test_crypto_backend_edge.py" in nodeid:
                 if "Coincurve" in item.name and "not_available" not in item.name:
-                    item.add_marker(pytest.mark.skip(
-                        reason="coincurve backend not available in CI"
-                    ))
+                    item.add_marker(pytest.mark.skip(reason="coincurve backend not available in CI"))
         # 当 OpenSSL 不可用时跳过 OpenSSL 特定测试
         if not _openssl_available:
             nodeid = item.nodeid
             if "test_crypto_backend_edge.py" in nodeid:
                 if "OpenSSL" in item.name and "not_available" not in item.name:
-                    item.add_marker(pytest.mark.skip(
-                        reason="OpenSSL backend not available in CI"
-                    ))
+                    item.add_marker(pytest.mark.skip(reason="OpenSSL backend not available in CI"))
 
 
 @pytest.fixture(autouse=True)

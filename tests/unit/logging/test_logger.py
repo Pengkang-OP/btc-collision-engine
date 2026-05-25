@@ -334,9 +334,9 @@ class TestAsyncLogger:
             record = logging.LogRecord("test", logging.INFO, "", 0, "async msg", (), None)
             al.emit(record)
             # 用 poll_until 等待后台线程处理，比 time.sleep(0.2) 更稳定
-            assert _poll_until(
-                lambda: handler.emit.called, timeout=2.0
-            ), "AsyncLogger writer thread did not process record within timeout"
+            assert _poll_until(lambda: handler.emit.called, timeout=2.0), (
+                "AsyncLogger writer thread did not process record within timeout"
+            )
         finally:
             al.close()
 
