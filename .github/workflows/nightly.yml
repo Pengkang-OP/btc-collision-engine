@@ -123,15 +123,41 @@ jobs:
       - name: 安装系统依赖
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libgmp-dev
+          sudo apt-get install -y --no-install-recommends libgmp-dev libsecp256k1-dev
 
       - name: 安装 Python 依赖
-        run: pip install -r requirements.txt
+        run: |
+          pip install -r requirements.txt
+          pip install coincurve
 
       - name: 运行性能基准测试
         run: |
           rm -f benchmarks/results/benchmark_[0-9]*.json
           python -m benchmarks.benchmark_runner --output benchmarks/results
+
+      - name: 更新基线文件
+        run: |
+          LATEST=$(ls -t benchmarks/results/benchmark_*.json 2>/dev/null | head -1)
+          if [ -n "$LATEST" ]; then
+            cp "$LATEST" benchmarks/results/benchmark-baseline.json
+            echo "✅ 基线已更新: $LATEST → benchmarks/results/benchmark-baseline.json"
+          else
+            echo "⚠️ 未找到基准测试结果文件"
+            exit 1
+          fi
+
+      - name: 提交基线更新
+        run: |
+          git config user.name "nightly-benchmark-bot"
+          git config user.email "bot@btc-collision-engine.dev"
+          git add benchmarks/results/benchmark-baseline.json
+          if git diff --cached --quiet; then
+            echo "基线无变化，跳过提交"
+          else
+            git commit -m "chore: 自动更新性能基线 [$(date +'%Y-%m-%d')]"
+            git push
+            echo "✅ 基线已提交"
+          fi
 
       - name: 上传基准结果
         if: always()

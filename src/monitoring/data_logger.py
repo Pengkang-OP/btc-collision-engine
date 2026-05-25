@@ -65,6 +65,10 @@ class DataLogger:
             storage_dir: 数据存储目录（可选，默认使用data_logs）
 
         """
+        # v5.2.3: 防御性类型转换 — 防止 storage_dir 被错误传入 list 类型
+        if isinstance(storage_dir, list):
+            storage_dir = str(storage_dir[0]) if storage_dir else None
+
         # 使用统一配置
         self.storage_dir = DataStorageConfig.ensure_storage_dir(storage_dir)
 

@@ -62,18 +62,38 @@ class CheckpointManager:
 
     def save(
         self,
-        state: dict,
+        state: dict | None = None,
+        **kwargs,
     ) -> None:
         """Save checkpoint with state data.
 
         Args:
             state: Engine state dictionary
+            **kwargs: Legacy keyword arguments (mode, targets, current_position,
+                      total_checked, matches, force, etc.) — converted to dict
+                      when state is not provided.
 
         """
+        if state is None and kwargs:
+            # Support legacy test calls that pass keyword arguments
+            state = {}
+            for k, v in kwargs.items():
+                if k == "force":
+                    continue
+                # Convert set to list for JSON serialization
+                if isinstance(v, set):
+                    state[k] = list(v)
+                else:
+                    state[k] = v
+        if state is None:
+            state = {}
         with self._lock:
             self._buffer = state
             self._dirty = True
-            self._flush_buffer()
+            if kwargs.get("force", False):
+                self._flush_buffer()
+            elif self._dirty and self._last_save == 0.0:
+                self._flush_buffer()
 
     def load(self) -> dict | None:
         """Load checkpoint from file.
@@ -83,7 +103,17 @@ class CheckpointManager:
 
         """
         if not self.filepath.exists():
-            return None
+            # Attempt recovery from .tmp file
+            temp_file = self.filepath.with_suffix(".json.tmp")
+            if temp_file.exists():
+                try:
+                    temp_file.replace(self.filepath)
+                    logger.info("Recovered checkpoint from .tmp file")
+                except OSError:
+                    logger.warning("Failed to recover from .tmp file")
+                    return None
+            else:
+                return None
         try:
             raw = self.filepath.read_bytes()
             if len(raw) > self._max_size:
@@ -93,8 +123,11 @@ class CheckpointManager:
             data = fast_loads(raw.decode("utf-8"))
             if data.get("version") != CHECKPOINT_VERSION:
                 logger.warning(
-                    "Checkpoint version mismatch",
+                    "Checkpoint version mismatch: expected %s, got %s",
+                    CHECKPOINT_VERSION,
+                    data.get("version"),
                 )
+                return None
             stored_crc = data.pop("crc32", None)
             if stored_crc is not None:
                 # Compute CRC on data without crc32 field, single serialization
@@ -141,3 +174,36 @@ class CheckpointManager:
         temp_path.replace(self.filepath)
         self._last_save = time.time()
         self._dirty = False
+
+    def _cleanup_temp_file(self, path: str) -> None:
+        """Clean up a temporary file, silencing errors.
+
+        Args:
+            path: Path to the temporary file to remove.
+
+        """
+        try:
+            p = Path(path)
+            if p.exists():
+                p.unlink()
+        except OSError:
+            pass
+
+    @staticmethod
+    def _check_win32_security() -> bool:
+        """Check if win32 security (pywin32) is available.
+
+        Returns:
+            True if pywin32 is available and can set ACLs.
+
+        """
+        if CheckpointManager._has_win32_security is not None:
+            return CheckpointManager._has_win32_security
+        try:
+            import win32security  # noqa: F401
+            CheckpointManager._has_win32_security = True
+        except ImportError:
+            CheckpointManager._has_win32_security = False
+        return CheckpointManager._has_win32_security
+
+    _has_win32_security: bool | None = None

@@ -323,9 +323,8 @@ class TestSwitchMode:
         coordinator.start("brute_force", start=0)
         coordinator.switch_mode("range_scan", start=10, end=100)
 
-        # 检查点 save 方法被调用（通过 _save_current_state）
         # _save_current_state 调用 engine._save_checkpoint
-        mock_checkpoint_mgr.save.assert_called()
+        engine._save_checkpoint.assert_called()
 
 
 # ============================================================================
@@ -372,7 +371,7 @@ class TestStop:
         coordinator = SearchModeCoordinator(engine)
         bf_mode = coordinator._modes["brute_force"]
         bf_mode.execute = MagicMock()
-        del bf_mode.stop
+        # BruteForceSearchMode 本身无 stop 方法，直接验证 coordinator.stop() 不抛异常
 
         coordinator.start("brute_force", start=0)
         coordinator.stop()  # 不应抛出异常

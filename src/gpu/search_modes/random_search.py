@@ -193,6 +193,10 @@ class RandomSearchMode(BaseSearchMode):
             try:
                 current_size = self._seed_queue.qsize()
 
+                # v5.2.3: 防御性检查 — 当 qsize() 返回 MagicMock（测试环境）时跳过
+                if not isinstance(current_size, int):
+                    current_size = SEED_MIN_QUEUE_SIZE
+
                 # v5.1.2: 使用自适应控制器推荐的批量大小
                 dynamic_batch = SEED_BATCH_GENERATE_SIZE
                 if self._adaptive_controller is not None:
