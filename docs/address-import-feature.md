@@ -63,9 +63,9 @@ print(f"导入成功: {result['success']}")
 print(f"有效地址数: {result['imported_count']}")
 print(f"无效地址数: {result['invalid_count']}")
 print(f"存储路径: {result['storage_path']}")
-```markdown
+```
 
-## 带进度回调的导入
+### 带进度回调的导入
 
 ```python
 def progress_callback(imported, total, address):
@@ -103,9 +103,9 @@ result = storage.import_addresses(
     storage_dir='./targets_data',
     storage_type='csv'
 )
-```markdown
+```
 
-## 不验证直接导入（快速模式）
+### 不验证直接导入（快速模式）
 
 ```python
 # 关闭验证，直接导入所有地址（包括可能无效的地址）
@@ -115,14 +115,13 @@ result = storage.import_addresses(
     validate=False,  # 关闭验证
     storage_type='json'
 )
-```markdown
+```
 
 ## 源文件格式
 
 ### TXT格式
 每行一个地址，支持注释（以#开头）：
-```
-
+```text
 # 目标地址文件
 
 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
@@ -131,10 +130,9 @@ result = storage.import_addresses(
 # 这是注释
 
 12c6DSiU4Rq3P4ZxziKxzrL5LmMBrzjrJX
+```
 
-```markdown
-
-## JSON格式
+### JSON格式
 支持多种结构：
 ```json
 {
@@ -143,7 +141,7 @@ result = storage.import_addresses(
     "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2"
   ]
 }
-```python
+```
 
 或：
 ```json
@@ -153,7 +151,7 @@ result = storage.import_addresses(
     "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2"
   ]
 }
-```python
+```
 
 或简单数组：
 ```json
@@ -161,7 +159,7 @@ result = storage.import_addresses(
   "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
   "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2"
 ]
-```markdown
+```
 
 ### CSV格式
 第一行为头部（可选），之后每行第一个字段为地址：
@@ -169,7 +167,7 @@ result = storage.import_addresses(
 address,name
 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa,test1
 1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2,test2
-```markdown
+```
 
 ## 返回结果
 
@@ -205,7 +203,7 @@ address,name
     "storage_type": "json"
   }
 }
-```markdown
+```
 
 ## 测试
 
@@ -213,7 +211,7 @@ address,name
 
 ```bash
 python -m pytest tests/test_address_import.py -v
-```markdown
+```
 
 ## 示例
 
