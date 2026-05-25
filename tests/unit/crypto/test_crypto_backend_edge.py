@@ -176,14 +176,14 @@ class TestCoincurveBackend(unittest.TestCase):
     """CoincurveBackend 全路径"""
 
     @unittest.skipIf(
-        not CoincurveBackend().is_available(),
+        not CoincurveBackend().is_available,
         "Coincurve backend not available in test environment",
     )
     def setUp(self):
         self.backend = CoincurveBackend()
 
     @unittest.skipIf(
-        not CoincurveBackend().is_available(),
+        not CoincurveBackend().is_available,
         "Coincurve backend not available in test environment",
     )
     def test_name(self):
@@ -191,7 +191,7 @@ class TestCoincurveBackend(unittest.TestCase):
         self.assertIn("coincurve", self.backend.name)
 
     @unittest.skipIf(
-        not CoincurveBackend().is_available(),
+        not CoincurveBackend().is_available,
         "Coincurve backend not available in test environment",
     )
     def test_is_available(self):
@@ -199,7 +199,7 @@ class TestCoincurveBackend(unittest.TestCase):
         self.assertTrue(self.backend.is_available)
 
     @unittest.skipIf(
-        not CoincurveBackend().is_available(),
+        not CoincurveBackend().is_available,
         "Coincurve backend not available in test environment",
     )
     def test_generate_public_key_compressed(self):
@@ -208,7 +208,7 @@ class TestCoincurveBackend(unittest.TestCase):
         self.assertEqual(len(result), 33)
 
     @unittest.skipIf(
-        not CoincurveBackend().is_available(),
+        not CoincurveBackend().is_available,
         "Coincurve backend not available in test environment",
     )
     def test_generate_public_key_uncompressed(self):
@@ -225,7 +225,7 @@ class TestCoincurveBackend(unittest.TestCase):
         self.assertIn("not available", str(ctx.exception))
 
     @unittest.skipIf(
-        not CoincurveBackend().is_available(),
+        not CoincurveBackend().is_available,
         "Coincurve backend not available in test environment",
     )
     def test_scalar_multiply(self):
@@ -244,7 +244,7 @@ class TestCoincurveBackend(unittest.TestCase):
         self.assertIn("not available", str(ctx.exception))
 
     @unittest.skipIf(
-        not CoincurveBackend().is_available(),
+        not CoincurveBackend().is_available,
         "Coincurve backend not available in test environment",
     )
     def test_is_constant_time(self):
@@ -259,7 +259,7 @@ class TestCoincurveBackend(unittest.TestCase):
             self.assertFalse(backend.is_available)
 
     @unittest.skipIf(
-        not CoincurveBackend().is_available(),
+        not CoincurveBackend().is_available,
         "Coincurve backend not available in test environment",
     )
     def test_scalar_multiply_fallback(self):
@@ -286,14 +286,14 @@ class TestECDSABackend(unittest.TestCase):
     """ECDSABackend 全路径"""
 
     @unittest.skipIf(
-        not ECDSABackend().is_available(),
+        not ECDSABackend().is_available,
         "ECDSA backend not available in test environment",
     )
     def setUp(self):
         self.backend = ECDSABackend()
 
     @unittest.skipIf(
-        not ECDSABackend().is_available(),
+        not ECDSABackend().is_available,
         "ECDSA backend not available in test environment",
     )
     def test_name(self):
@@ -301,14 +301,14 @@ class TestECDSABackend(unittest.TestCase):
         self.assertEqual(self.backend.name, "ecdsa")
 
     @unittest.skipIf(
-        not ECDSABackend().is_available(),
+        not ECDSABackend().is_available,
         "ECDSA backend not available in test environment",
     )
     def test_is_available(self):
         self.assertTrue(self.backend.is_available)
 
     @unittest.skipIf(
-        not ECDSABackend().is_available(),
+        not ECDSABackend().is_available,
         "ECDSA backend not available in test environment",
     )
     def test_generate_public_key_compressed(self):
@@ -317,7 +317,7 @@ class TestECDSABackend(unittest.TestCase):
         self.assertEqual(len(result), 33)
 
     @unittest.skipIf(
-        not ECDSABackend().is_available(),
+        not ECDSABackend().is_available,
         "ECDSA backend not available in test environment",
     )
     def test_generate_public_key_uncompressed(self):
@@ -335,7 +335,7 @@ class TestECDSABackend(unittest.TestCase):
         self.assertIn("not available", str(ctx.exception))
 
     @unittest.skipIf(
-        not ECDSABackend().is_available(),
+        not ECDSABackend().is_available,
         "ECDSA backend not available in test environment",
     )
     def test_scalar_multiply(self):
@@ -346,7 +346,7 @@ class TestECDSABackend(unittest.TestCase):
         self.assertEqual(len(result), 2)
 
     @unittest.skipIf(
-        not ECDSABackend().is_available(),
+        not ECDSABackend().is_available,
         "ECDSA backend not available in test environment",
     )
     def test_is_constant_time(self):
