@@ -734,10 +734,12 @@ class TestGPUSelector:
         from src.wizard.gpu_selector import GPUSelector
 
         selector = GPUSelector()
-        result = selector.select([
-            {"name": "GPU1", "index": 0},
-            {"name": "GPU2", "index": 1},
-        ])
+        result = selector.select(
+            [
+                {"name": "GPU1", "index": 0},
+                {"name": "GPU2", "index": 1},
+            ]
+        )
         assert result == [0, 1]
 
     def test_select_devices_without_index(self):
@@ -752,11 +754,13 @@ class TestGPUSelector:
         from src.wizard.gpu_selector import GPUSelector
 
         selector = GPUSelector()
-        result = selector.select([
-            {"name": "GPU0"},
-            {"name": "GPU1", "index": 5},
-            {"name": "GPU2"},
-        ])
+        result = selector.select(
+            [
+                {"name": "GPU0"},
+                {"name": "GPU1", "index": 5},
+                {"name": "GPU2"},
+            ]
+        )
         assert result == [0, 5, 2]
 
     def test_select_device_with_index_zero(self):
@@ -863,7 +867,10 @@ class TestWizardEngine:
         # Mock ConfigBuilder to return a command list
         mock_config_builder = MagicMock()
         mock_config_builder.return_value.build.return_value = [
-            "python", "key_collision_cli.py", "-m", "random"
+            "python",
+            "key_collision_cli.py",
+            "-m",
+            "random",
         ]
         monkeypatch.setattr(we, "ConfigBuilder", mock_config_builder)
 

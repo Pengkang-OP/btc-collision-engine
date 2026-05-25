@@ -124,27 +124,21 @@ class WizardEngine:
         selector = TargetSelector()
         targets = selector.select([])  # 存根：传入空列表，返回空列表
         self.result.targets = targets
-        self.message_queue.send(
-            {"event": "target_selected", "targets": targets}
-        )
+        self.message_queue.send({"event": "target_selected", "targets": targets})
 
     def _select_mode(self):
         """选择碰撞模式"""
         selector = ModeSelector()
         mode = selector.select([])  # 存根：传入空列表，返回空字符串
         self.result.mode = mode
-        self.message_queue.send(
-            {"event": "mode_selected", "mode": mode}
-        )
+        self.message_queue.send({"event": "mode_selected", "mode": mode})
 
     def _select_options(self):
         """选择功能选项"""
         selector = OptionSelector()
         # 存根：传入空列表和空 key，返回 None，使用默认值
         _ = selector.select([], "")
-        self.message_queue.send(
-            {"event": "options_selected"}
-        )
+        self.message_queue.send({"event": "options_selected"})
 
     def _select_gpu(self):
         """选择GPU设备"""
