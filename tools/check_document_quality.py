@@ -359,10 +359,30 @@ class DocumentQualityChecker:
                 else:
                     in_code_block = False
 
+    @staticmethod
+    def _lines_in_code_blocks(lines: list[str]) -> set[int]:
+        """识别代码块内的行号集合（代码块内注释 # 不是标题）"""
+        in_code_block = False
+        code_lines: set[int] = set()
+        for i, line in enumerate(lines, 1):
+            if line.strip().startswith("```"):
+                if in_code_block:
+                    in_code_block = False
+                else:
+                    in_code_block = True
+                    code_lines.add(i)
+                continue
+            if in_code_block:
+                code_lines.add(i)
+        return code_lines
+
     def check_headings(self, file_path: Path, content: str, lines: list[str]):
         """检查标题层级"""
+        code_lines = self._lines_in_code_blocks(lines)
         headings = []
         for i, line in enumerate(lines, 1):
+            if i in code_lines:
+                continue
             match = re.match(r"^(#{1,6})\s+", line)
             if match:
                 level = len(match.group(1))
