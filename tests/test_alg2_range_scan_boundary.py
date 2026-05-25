@@ -367,6 +367,8 @@ class TestCLIValidationBoundary:
         mock_args.dedup = False
         mock_args.dedup_max_size = 1000000
         mock_args.checkpoint = False
+        mock_args.batch_size = None
+        mock_args.progress_interval = None
 
         result = validate_args(mock_args)
         assert result is False, "start>=end 应被拒绝"
@@ -402,6 +404,8 @@ class TestCLIValidationBoundary:
         mock_args.dedup = False
         mock_args.dedup_max_size = 1000000
         mock_args.checkpoint = False
+        mock_args.batch_size = None
+        mock_args.progress_interval = None
 
         result = validate_args(mock_args)
         assert result is False, "start<1 应被拒绝"
@@ -437,6 +441,8 @@ class TestCLIValidationBoundary:
         mock_args.dedup = False
         mock_args.dedup_max_size = 1000000
         mock_args.checkpoint = False
+        mock_args.batch_size = None
+        mock_args.progress_interval = None
 
         result = validate_args(mock_args)
         assert result is True, "start=1 end=2 应被接受"

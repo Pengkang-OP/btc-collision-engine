@@ -30,8 +30,8 @@ class TestEntropyHealthCheck(unittest.TestCase):
         generator = SecureKeyGenerator(config)
         self.assertEqual(generator.min_entropy_bits, 2000)
 
-    @patch("os.path.exists")
-    @patch("builtins.open")
+    @patch("pathlib.Path.exists")
+    @patch("pathlib.Path.open")
     def test_low_entropy_detected(self, mock_open, mock_exists):
         """测试低熵检测"""
         # Mock Linux熵池文件
@@ -50,8 +50,8 @@ class TestEntropyHealthCheck(unittest.TestCase):
         # 应该记录低熵次数
         self.assertGreater(generator.stats["low_entropy_count"], 0)
 
-    @patch("os.path.exists")
-    @patch("builtins.open")
+    @patch("pathlib.Path.exists")
+    @patch("pathlib.Path.open")
     def test_adequate_entropy(self, mock_open, mock_exists):
         """测试熵池充足"""
         mock_exists.return_value = True
@@ -68,7 +68,7 @@ class TestEntropyHealthCheck(unittest.TestCase):
         self.assertTrue(result)
         self.assertEqual(generator.stats["low_entropy_count"], 0)
 
-    @patch("os.path.exists")
+    @patch("pathlib.Path.exists")
     def test_windows_no_entropy_check(self, mock_exists):
         """测试Windows系统不检查熵池"""
         # Mock文件不存在（Windows）
@@ -86,7 +86,7 @@ class TestEntropyHealthCheck(unittest.TestCase):
         generator = SecureKeyGenerator(config)
 
         # 即使熵池低，也应该返回True
-        with patch("os.path.exists", return_value=True), patch("builtins.open") as mock_open:
+        with patch("pathlib.Path.exists", return_value=True), patch("pathlib.Path.open") as mock_open:
             mock_file = MagicMock()
             mock_file.__enter__ = Mock(return_value=mock_file)
             mock_file.__exit__ = Mock(return_value=False)
@@ -159,7 +159,7 @@ class TestEntropyStatistics(unittest.TestCase):
         generator = SecureKeyGenerator()
 
         # 模拟多次低熵检查
-        with patch("os.path.exists", return_value=True), patch("builtins.open") as mock_open:
+        with patch("pathlib.Path.exists", return_value=True), patch("pathlib.Path.open") as mock_open:
             mock_file = MagicMock()
             mock_file.__enter__ = Mock(return_value=mock_file)
             mock_file.__exit__ = Mock(return_value=False)
@@ -196,8 +196,8 @@ class TestEntropyStatistics(unittest.TestCase):
 class TestEntropyCheckEdgeCases(unittest.TestCase):
     """熵池检查边界情况测试"""
 
-    @patch("os.path.exists")
-    @patch("builtins.open")
+    @patch("pathlib.Path.exists")
+    @patch("pathlib.Path.open")
     def test_entropy_file_read_error(self, mock_open, mock_exists):
         """测试熵池文件读取错误"""
         mock_exists.return_value = True
@@ -209,8 +209,8 @@ class TestEntropyCheckEdgeCases(unittest.TestCase):
         # 应该返回True（假设健康）
         self.assertTrue(result)
 
-    @patch("os.path.exists")
-    @patch("builtins.open")
+    @patch("pathlib.Path.exists")
+    @patch("pathlib.Path.open")
     def test_entropy_invalid_value(self, mock_open, mock_exists):
         """测试熵池无效值"""
         mock_exists.return_value = True
@@ -226,8 +226,8 @@ class TestEntropyCheckEdgeCases(unittest.TestCase):
         # 应该返回True（异常处理）
         self.assertTrue(result)
 
-    @patch("os.path.exists")
-    @patch("builtins.open")
+    @patch("pathlib.Path.exists")
+    @patch("pathlib.Path.open")
     def test_entropy_boundary_values(self, mock_open, mock_exists):
         """测试熵池边界值"""
         mock_exists.return_value = True
@@ -281,7 +281,7 @@ class TestEntropyCheckConfiguration(unittest.TestCase):
 
         self.assertFalse(generator.entropy_check_enabled)
         # 即使熵池低也应该返回True
-        with patch("os.path.exists", return_value=True), patch("builtins.open") as mock_open:
+        with patch("pathlib.Path.exists", return_value=True), patch("pathlib.Path.open") as mock_open:
             mock_file = MagicMock()
             mock_file.__enter__ = Mock(return_value=mock_file)
             mock_file.__exit__ = Mock(return_value=False)

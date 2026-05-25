@@ -111,30 +111,38 @@ class TestLiveRangeCountFix(unittest.TestCase):
         self.engine.start(mode="random")
         time.sleep(1.0)
 
-        # 获取中间状态（检查没有异常大的值）
-        with self.engine._state_lock:
-            mid_live = self.engine._live_range_count
-
+        # 先停引擎再获取锁（避免与worker争抢 _state_lock 导致死锁）
         self.engine.stop()
         time.sleep(0.5)
 
-        # 运行中 _live_range_count 不应异常大
+        # 获取最终状态（引擎已停止，锁安全）
+        with self.engine._state_lock:
+            final_live = self.engine._live_range_count
+
+        # 停止后 _live_range_count 应为0（已重置）
+        self.assertEqual(final_live, 0,
+                         f"_live_range_count 应为0(已重置)，实际为 {final_live}")
+
+        # 运行中 _live_range_count 不应异常大（通过进度回调间接验证）
         # 修复前：每批次 batch_count 被重复加入
         # batch_size=32, 1秒大约有多个批次
-        # 合理范围：一个批次约32个
+        stats = self.engine.get_stats()
         self.assertLess(
-            mid_live,
-            1000,
-            f"_live_range_count={mid_live} 异常偏高，可能存在 batch_end 重复提交",
+            stats.total_checked,
+            100000,
+            f"total_checked={stats.total_checked} 异常偏高，可能存在 batch_end 重复提交",
         )
 
-        print(f"\n[P1-5-C ✓] 运行中 _live_range_count={mid_live} (合理范围)")
+        print(f"\n[P1-5-C ✓] 引擎停止后 _live_range_count={final_live}, "
+              f"total_checked={stats.total_checked}")
 
     def test_range_scan_live_count_reset(self):
         """P1-5-D: range_scan 结束后 _live_range_count 正确"""
         complete_event = threading.Event()
+        final_stats = []
 
         def on_complete(stats):
+            final_stats.append(stats.total_checked)
             complete_event.set()
 
         self.engine = KeyCollisionEngine(
@@ -145,11 +153,8 @@ class TestLiveRangeCountFix(unittest.TestCase):
 
         self.engine._live_range_count = 0
         self.engine.start(mode="range", start=1, end=500)
-        # 确保引擎已启动
-        time.sleep(0.5)
-        if not self.engine.is_running():
-            self.fail("引擎未启动")
-        # 等待范围扫描完成（增加超时到60秒处理慢CI）
+
+        # 等待范围扫描完成（coincurve加速下500条不到1秒）
         if not complete_event.wait(timeout=60):
             self.engine.stop()
             self.fail("范围扫描未在60秒内完成")
@@ -160,45 +165,55 @@ class TestLiveRangeCountFix(unittest.TestCase):
 
         # 实际检查数应接近500（排除跳过无效值的）
         self.assertGreater(final_count, 0, f"final_count={final_count}")
-        self.assertLessEqual(final_count, 500)
+        self.assertLessEqual(final_count, 500, f"final_count={final_count} 超出范围")
 
-        print(f"\n[P1-5-D ✓] range_scan 最终计数: {final_count} (范围1-500)")
+        # 引擎结束后 _live_range_count 应为0（已重置）
+        live_after = self.engine._live_range_count
+        self.assertEqual(live_after, 0,
+                         f"_live_range_count 应为0(已重置)，实际为 {live_after}")
+
+        print(f"\n[P1-5-D ✓] range_scan 最终计数: {final_count} (范围1-500), "
+              f"_live_range_count={live_after}")
 
     def test_no_batch_end_double_count_in_worker(self):
         """P1-5-E: 确认 _random_search_worker 中不存在批次结束重复提交"""
-        # 通过代码检查：确认 L808-812 的旧代码已被删除
+        # 通过代码检查：确认旧的双重计数bug已被修复
         import inspect
 
         worker_source = inspect.getsource(KeyCollisionEngine._random_search_worker)
 
         # 检查："_live_range_count += batch_count" 只应出现在注释中
         lines = worker_source.split("\n")
-        exec_lines = [line for line in lines if "self._live_range_count += batch_count" in line]
-
+        exec_lines = [line for line in lines
+                       if "self._live_range_count += batch_count" in line]
         for line in exec_lines:
             stripped = line.strip()
-            # 必须是注释（以#开头）
             self.assertTrue(
                 stripped.startswith("#"),
                 f"非注释行仍包含旧代码! 行内容: {line.strip()[:80]}",
             )
 
-        # 确认reminder提交代码存在
+        # 确认 remainder 提交代码存在（CODE-2 重构后仍在 worker 中）
         self.assertIn(
             "remainder = local_count % 32",
             worker_source,
             "缺少worker退出时的剩余计数提交代码",
         )
 
-        # 确认_total_count减法代码存在于主循环中
-        random_search_source = inspect.getsource(KeyCollisionEngine.random_search)
+        # CODE-2 重构后：random_search 的 live 计数合并在 _random_search_finalize 中
+        finalize_source = inspect.getsource(KeyCollisionEngine._random_search_finalize)
         self.assertIn(
-            "_live_range_count = max(0, self._live_range_count - local_count)",
-            random_search_source,
-            "缺少已完成worker live计数转移代码",
+            "final_count = max(total_count, self._live_range_count)",
+            finalize_source,
+            "缺少 _random_search_finalize 中的 live 计数合并代码",
+        )
+        self.assertIn(
+            "self._live_range_count = 0",
+            finalize_source,
+            "缺少 _random_search_finalize 中的 live 计数重置代码",
         )
 
-        print("\n[P1-5-E ✓] 代码中无重复提交，余数提交和计数转移代码均存在")
+        print("\n[P1-5-E ✓] 代码中无重复提交，余数提交和计数合并代码均存在")
 
     def test_progress_callback_counts_monotonic(self):
         """P1-5-F: 进度回调中的total_checked单调递增（不翻倍）"""

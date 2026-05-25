@@ -344,7 +344,7 @@ class TestHandleSystemCommands:
         args.validate_addresses = None
         args.migrate_config = True
         with (
-            patch("src.cli.config_migration.migrate_config_file", return_value=True) as mock_migrate,
+            patch("src.config.config_migration.migrate_config_file", return_value=True) as mock_migrate,
             patch.object(sys, "exit") as mock_exit,
         ):
             _handle_system_commands(args)

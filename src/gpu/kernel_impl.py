@@ -19,7 +19,14 @@ from contextlib import suppress
 from typing import Any, cast
 
 import numpy as np
-import pyopencl as cl
+
+try:
+    import pyopencl as cl
+
+    PYOPENCL_AVAILABLE = True
+except ImportError:
+    PYOPENCL_AVAILABLE = False
+    cl = None  # type: ignore[assignment]
 
 from ..core.address_generator import P2PKHAddressGenerator
 from ..core.hash_utils import HashUtils

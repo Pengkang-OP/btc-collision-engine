@@ -169,7 +169,8 @@ class EventBus:
         for handler in all_handlers:
             self._invoke_handler(handler, event, resolved_evt_type)
 
-        self.published_count += 1
+        with self._lock:
+            self.published_count += 1
 
     def _invoke_handler(
         self,
@@ -195,7 +196,8 @@ class EventBus:
             else:
                 handler(event)
         except Exception as e:
-            self.error_count += 1
+            with self._lock:
+                self.error_count += 1
             handler_name = getattr(handler, "__name__", None) or repr(handler)
             logger.warning(
                 "Event handler %s failed: %s", handler_name, e,

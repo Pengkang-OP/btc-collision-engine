@@ -148,7 +148,7 @@ class TestDriverManager(unittest.TestCase):
         flags = DriverManager.get_driver_optimization_flags("NVIDIA", "520.67", {})
 
         self.assertTrue(flags["enable_async_compute"])
-        self.assertTrue(flags["enable_fast_math"])
+        self.assertFalse(flags["enable_fast_math"])  # 加密/哈希需严格精度
         self.assertTrue(flags["enable_shader_cache"])
         self.assertFalse(flags["conservative_mode"])
 

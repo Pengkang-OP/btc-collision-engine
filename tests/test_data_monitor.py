@@ -171,10 +171,11 @@ class TestDataMonitor(unittest.TestCase):
         self.monitor.start()
 
         # 触发不同类型的问题
+        # _validate_match 检查 private_key_hash (SHA256 hexdigest: 64 chars)，而非 private_key
         self.monitor.report_match(
             device_idx=0,
             match_data={
-                "private_key": "short",
+                "private_key_hash": "short",  # 5 chars，不符合 64 字符要求
                 "address": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
             },
         )
@@ -182,7 +183,7 @@ class TestDataMonitor(unittest.TestCase):
         self.monitor.report_match(
             device_idx=1,
             match_data={
-                "private_key": "a" * 64,
+                "private_key_hash": "a" * 64,  # 64 chars 有效 hex
                 "address": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
             },
         )

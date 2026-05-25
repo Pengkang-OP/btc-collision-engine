@@ -32,21 +32,12 @@ def test_secp256k1_deprecation_warning():
         ec = EllipticCurve()
         G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
 
-        # 捕获弃用警告
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
+        # scalar_multiply() 已被永久禁用, 调用应触发 RuntimeError
+        import pytest
+        with pytest.raises(RuntimeError, match="已被永久禁用"):
+            ec.scalar_multiply(2, G)
 
-            # 调用旧版标量乘法（应触发 FutureWarning）
-            result = ec.scalar_multiply(2, G)
-
-            # 检查警告（含 FutureWarning + RuntimeError 堆栈）
-            future_warnings = [x for x in w if issubclass(x.category, FutureWarning)]
-            assert len(future_warnings) >= 1
-            assert "不是恒定时间实现" in str(future_warnings[0].message)
-            assert "crypto_backend.py" in str(future_warnings[0].message)
-
-            print("[OK] 旧版 scalar_multiply() 正确触发弃用警告")
-            print(f"    警告内容: {future_warnings[0].message}")
+        print("[OK] 旧版 scalar_multiply() 正确抛出 RuntimeError (已被永久禁用)")
 
         # 测试新版恒定时间实现（不应触发警告）
         with warnings.catch_warnings(record=True) as w:

@@ -1654,6 +1654,10 @@ class KeyCollisionEngine(BaseCollisionEngine):
         chunk_size = total_range // num_workers
         if chunk_size == 0:
             total_count = self._range_scan_worker(start, end, 0)
+            # 单worker回退：worker已将计数写入_live_range_count，
+            # 需扣除以避免_range_scan_finalize双重计数
+            with self._state_lock:
+                self._live_range_count = max(0, self._live_range_count - total_count)
             self._range_scan_finalize(total_count, total_range)
             return
 

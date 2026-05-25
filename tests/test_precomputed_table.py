@@ -71,9 +71,9 @@ class TestPrecomputedPointTable:
             # 使用预计算表
             result_table = table.scalar_multiply_with_table(k)
 
-            # 使用标准方法
+            # 使用标准方法（恒定时间版本）
             G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
-            result_standard = ec.scalar_multiply(k, G)
+            result_standard = ec.scalar_multiply_const_time(k, G)
 
             # 结果应该相同
             assert result_table.x == result_standard.x
@@ -112,10 +112,10 @@ class TestPrecomputedPointTable:
             _ = table.scalar_multiply_with_table(k)
         elapsed_table = time.perf_counter() - start
 
-        # 测试标准方法
+        # 测试恒定时间方法（替代已禁用的非恒定时间 scalar_multiply）
         start = time.perf_counter()
         for _ in range(iterations):
-            _ = ec.scalar_multiply(k, G)
+            _ = ec.scalar_multiply_const_time(k, G)
         elapsed_standard = time.perf_counter() - start
 
         # 预计算表应该更快
@@ -200,7 +200,7 @@ class TestPrecomputedPointTable:
         G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
 
         result_table = table.scalar_multiply_with_table(100, ec=custom_ec)
-        result_std = custom_ec.scalar_multiply(100, G)
+        result_std = custom_ec.scalar_multiply_const_time(100, G)
         assert result_table.x == result_std.x
         assert result_table.y == result_std.y
 

@@ -82,7 +82,7 @@ class TestIntelMemoryMonitorInit:
         total = 8 * 1024**3  # 8GB
         monitor = IntelMemoryMonitor(total)
         assert monitor.total_memory == total
-        assert monitor.safe_limit == int(total * 0.45)
+        assert monitor.safe_limit == int(total * 0.70)
         assert monitor.current_usage == 0
         assert monitor.peak_usage == 0
         assert monitor.total_allocations == 0

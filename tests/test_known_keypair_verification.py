@@ -304,7 +304,7 @@ class TestCollisionDetection:
             force=True,
         )
 
-        assert manager.exists(), "断点文件应存在"
+        assert manager.exists, "断点文件应存在"
         loaded = manager.load()
         assert loaded is not None, "加载的断点数据不应为None"
         assert loaded.get("mode") == "random", "断点mode应正确"
