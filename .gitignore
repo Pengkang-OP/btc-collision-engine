@@ -250,6 +250,7 @@ build/
 
 # --- 运行时配置（config.example.json 作为模板被跟踪）---
 /config.json
+/src/collision/collision_checkpoint.json
 
 # --- 操作系统 ---
 .DS_Store
