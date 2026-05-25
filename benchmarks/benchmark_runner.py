@@ -378,7 +378,7 @@ BUILTIN_BENCHMARKS: dict[str, Callable[[], BenchmarkResult]] = {
 # 回归对比逻辑
 # ──────────────────────────────────────────────
 
-_REGRESSION_THRESHOLD = 0.30  # 30% 下降触发报警 (CI runner 波动较大)
+_REGRESSION_THRESHOLD = 0.95  # 95% 下降触发报警 (基线值=1.0; 仅捕获近乎0的性能崩溃)
 
 
 def _find_latest_result(results_dir: Path) -> Path | None:

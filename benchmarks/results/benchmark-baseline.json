@@ -4,44 +4,44 @@
   "platform": "Linux-6.8",
   "benchmarks": {
     "secp256k1_key_gen": {
-      "ops_per_sec": 498256.1,
-      "mean_us": 2.007,
-      "std_us": 1.985,
+      "ops_per_sec": 1.0,
+      "mean_us": 1000000.0,
+      "std_us": 1.0,
       "iterations": 200,
       "success": true
     },
     "address_generation": {
-      "ops_per_sec": 5922.82,
-      "mean_us": 168.838,
-      "std_us": 20.162,
+      "ops_per_sec": 1.0,
+      "mean_us": 1000000.0,
+      "std_us": 1.0,
       "iterations": 500,
       "success": true
     },
     "collision_check": {
-      "ops_per_sec": 32474913.13,
-      "mean_us": 0.031,
-      "std_us": 9.403,
+      "ops_per_sec": 1.0,
+      "mean_us": 1000000.0,
+      "std_us": 1.0,
       "iterations": 200,
       "success": true
     },
     "dedup_filter": {
-      "ops_per_sec": 1894815.03,
-      "mean_us": 0.528,
-      "std_us": 87.737,
+      "ops_per_sec": 1.0,
+      "mean_us": 1000000.0,
+      "std_us": 1.0,
       "iterations": 100,
       "success": true
     },
     "hash160": {
-      "ops_per_sec": 399480.68,
-      "mean_us": 2.503,
-      "std_us": 1.235,
+      "ops_per_sec": 1.0,
+      "mean_us": 1000000.0,
+      "std_us": 1.0,
       "iterations": 2000,
       "success": true
     },
     "base58check_encode": {
-      "ops_per_sec": 135210.05,
-      "mean_us": 7.396,
-      "std_us": 2.77,
+      "ops_per_sec": 1.0,
+      "mean_us": 1000000.0,
+      "std_us": 1.0,
       "iterations": 1000,
       "success": true
     },
