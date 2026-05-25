@@ -208,7 +208,6 @@ jobs:
             --ignore=tests/test_wizard.py \
             --ignore=tests/test_concurrency_stress.py \
             --ignore=tests/test_memory_locking.py \
-            --ignore=tests/test_commands.py \
             --timeout=600 \
             --timeout-method=thread \
             -p no:cacheprovider > test-output.log 2>&1; RC=$?
