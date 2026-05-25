@@ -24,6 +24,42 @@ def validate_args(args: argparse.Namespace) -> bool:
         output.error(f"无效模式: {mode}，有效值: random, range, brute_force")
         return False
 
+    # ── Duration validation (must be >= 0, 0 = indefinite) ──────────────────
+    duration = getattr(args, "duration", 0)
+    if duration is not None and duration < 0:
+        output.error(f"--duration 必须 >= 0，当前值: {duration}")
+        return False
+
+    # ── Workers validation (must be >= 1 when specified) ────────────────────
+    workers = getattr(args, "workers", None)
+    if workers is not None and workers < 1:
+        output.error(f"--workers 必须 >= 1，当前值: {workers}")
+        return False
+
+    # ── Checkpoint interval validation (range 5-3600) ───────────────────────
+    cp_interval = getattr(args, "checkpoint_interval", None)
+    if cp_interval is not None and not (5 <= cp_interval <= 3600):
+        output.error(f"--checkpoint-interval 必须在 5-3600 之间，当前值: {cp_interval}")
+        return False
+
+    # ── Batch size validation (must be >= 1 when specified) ─────────────────
+    batch_size = getattr(args, "batch_size", None)
+    if batch_size is not None and batch_size < 1:
+        output.error(f"--batch-size 必须 >= 1，当前值: {batch_size}")
+        return False
+
+    # ── Progress interval validation (must be > 0) ──────────────────────────
+    prog_interval = getattr(args, "progress_interval", None)
+    if prog_interval is not None and prog_interval <= 0:
+        output.error(f"--progress-interval 必须 > 0，当前值: {prog_interval}")
+        return False
+
+    # ── Dedup max size validation (must be > 0) ─────────────────────────────
+    dedup_max = getattr(args, "dedup_max_size", None)
+    if dedup_max is not None and dedup_max < 1:
+        output.error(f"--dedup-max-size 必须 >= 1，当前值: {dedup_max}")
+        return False
+
     # Range/brute_force mode requires --start
     if mode in ("range", "brute_force"):
         start = getattr(args, "start", None)

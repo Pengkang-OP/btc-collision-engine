@@ -1,0 +1,70 @@
+{
+    "engine": {
+        "mode": "random",
+        "batch_size": 2097152,
+        "max_threads": 4
+    },
+    "collision": {
+        "max_workers": 4,
+        "progress_interval": 1000,
+        "dedup_max_size": 1000000,
+        "use_performance_optimization": true,
+        "precomputed_window_size": 8,
+        "use_simd_hash": true,
+        "use_memory_pool": true,
+        "use_gpu_memory_pool": true
+    },
+    "logging": {
+        "level": "INFO",
+        "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        "file": "logs/collision.log",
+        "max_bytes": 10485760,
+        "backup_count": 5,
+        "enable_console": true,
+        "enable_file": true
+    },
+    "gpu": {
+        "use_gpu": true,
+        "device_index": -1,
+        "batch_size": 2097152,
+        "auto_detect": true,
+        "memory_usage_ratio": 0.75,
+        "enable_vendor_optimizations": true,
+        "queue_depth": 8,
+        "use_new_module": true,
+        "async_execution": true,
+        "seed_prefetch_size": 64,
+        "timeout_protection": true,
+        "base_timeout_seconds": 30,
+        "max_error_retries": 100,
+        "gpu_memory_pool": true,
+        "max_buffers": 100,
+        "max_memory_mb": 8192,
+        "mode": "auto",
+        "work_group_size": 256,
+        "use_fast_math": true,
+        "use_uint32_workaround": false,
+        "driver_check": {
+            "enabled": true,
+            "require_minimum_version": true,
+            "warn_on_unstable": true,
+            "auto_fallback_conservative": true
+        },
+        "key_generation_strategy": "PRNG_SEED"
+    },
+    "optimization": {
+        "uint32_workaround": true,
+        "disable_async_transfer": false,
+        "conservative_memory_policy": false,
+        "adaptive_timeout": true
+    },
+    "crypto": {
+        "backend": "auto",
+        "constant_time": false,
+        "verify_checksums": true,
+        "strict_wif_validation": true,
+        "use_gpu": true,
+        "gpu_device_index": -1,
+        "gpu_batch_size": 65536
+    }
+}

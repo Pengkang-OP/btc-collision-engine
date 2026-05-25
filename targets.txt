@@ -1,0 +1,14 @@
+# BTC 碰撞引擎 - 目标地址文件
+# 每行一个比特币地址，# 开头为注释
+
+# Satoshi 创世地址
+1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
+
+# 中本聪早期地址
+12c6DSiU4Rq3P4ZxziKxzrL5LmMBrzjrJX
+
+# 交易所地址示例
+1FeexV6bAHb8ybZjqQMjJrcCrHGW9sb6uF
+
+# Counterparty 地址
+1CounterpartyXXXXXXXXXXXXXXXUWLpVr

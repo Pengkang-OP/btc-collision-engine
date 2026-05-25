@@ -1,0 +1,88 @@
+{
+    "engine": {
+        "mode": "random",
+        "batch_size": 1048576,
+        "max_threads": 4,
+        "checkpoint_interval": 300
+    },
+    "collision": {
+        "max_workers": 4,
+        "progress_interval": 5000,
+        "checkpoint_interval": 60,
+        "dedup_max_size": 5000000,
+        "use_performance_optimization": true,
+        "precomputed_window_size": 8,
+        "use_simd_hash": true,
+        "use_memory_pool": true,
+        "use_gpu_memory_pool": false
+    },
+    "logging": {
+        "level": "WARNING",
+        "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        "file": "logs/collision.log",
+        "max_bytes": 52428800,
+        "backup_count": 20,
+        "enable_console": false,
+        "enable_file": true,
+        "rotation_type": "size"
+    },
+    "gpu": {
+        "use_gpu": false,
+        "device_index": -1,
+        "batch_size": 1048576,
+        "auto_detect": true,
+        "memory_usage_ratio": 0.60,
+        "enable_vendor_optimizations": false,
+        "queue_depth": 4,
+        "use_new_module": true,
+        "async_execution": false,
+        "seed_prefetch_size": 32,
+        "timeout_protection": true,
+        "base_timeout_seconds": 120,
+        "max_error_retries": 500,
+        "gpu_memory_pool": false,
+        "max_buffers": 50,
+        "max_memory_mb": 4096,
+        "mode": "auto",
+        "work_group_size": 256,
+        "use_fast_math": false,
+        "use_uint32_workaround": false,
+        "driver_check": {
+            "enabled": true,
+            "require_minimum_version": true,
+            "warn_on_unstable": true,
+            "auto_fallback_conservative": true
+        }
+    },
+    "monitoring": {
+        "enabled": true,
+        "collection_interval": 30,
+        "storage_dir": "data_logs",
+        "history_max_size": 5000,
+        "error_max_size": 2000,
+        "auto_cleanup": {
+            "enabled": true,
+            "max_age_days": 30
+        }
+    },
+    "optimization": {
+        "uint32_workaround": false,
+        "disable_async_transfer": true,
+        "conservative_memory_policy": true,
+        "adaptive_timeout": true
+    },
+    "crypto": {
+        "backend": "auto",
+        "constant_time": true,
+        "verify_checksums": true,
+        "strict_wif_validation": true,
+        "use_gpu": false
+    },
+    "performance_monitoring": {
+        "enabled": true,
+        "track_slow_operations": true,
+        "slow_threshold_ms": 60000,
+        "max_records": 50000,
+        "log_level": "INFO"
+    }
+}
