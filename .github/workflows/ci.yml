@@ -283,10 +283,12 @@ jobs:
       - name: 安装系统依赖
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libgmp-dev
+          sudo apt-get install -y --no-install-recommends libgmp-dev libsecp256k1-dev
 
       - name: 安装 Python 依赖
-        run: pip install -r requirements.txt
+        run: |
+          pip install -r requirements.txt
+          pip install coincurve  # 安装高性能加密后端用于对比测试
 
       - name: 运行性能基准测试
         run: |
@@ -306,6 +308,63 @@ jobs:
         with:
           name: benchmark-results
           path: benchmarks/results/benchmark_*.json
+
+      - name: 生成 PR 性能注释
+        if: github.event_name == 'pull_request' && success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const resultsDir = 'benchmarks/results';
+            const files = fs.readdirSync(resultsDir)
+              .filter(f => f.startsWith('benchmark_') && f.endsWith('.json'))
+              .sort();
+            if (files.length === 0) {
+              console.log('未找到基准测试结果文件');
+              return;
+            }
+            const latest = JSON.parse(fs.readFileSync(`${resultsDir}/${files[files.length-1]}`, 'utf8'));
+            const comp = latest.comparison || {};
+            let body = '## 📊 性能基准测试结果\n\n';
+            if (comp.baseline_file) {
+              body += `基线: \`${comp.baseline_file}\`\n\n`;
+              const regressions = comp.regressions || [];
+              const improvements = comp.improvements || [];
+              if (regressions.length > 0) {
+                body += '### ⚠️ 性能回归\n| 测试项 | 基线 (ops/s) | 当前 (ops/s) | 变化 |\n|---|---|---|---|\n';
+                for (const r of regressions) {
+                  body += `| ${r.name} | ${r.baseline_ops_per_sec.toLocaleString()} | ${r.current_ops_per_sec.toLocaleString()} | **${r.change_pct}%** |\n`;
+                }
+                body += '\n';
+              }
+              if (improvements.length > 0) {
+                body += '### ✅ 性能提升\n| 测试项 | 基线 (ops/s) | 当前 (ops/s) | 变化 |\n|---|---|---|---|\n';
+                for (const r of improvements) {
+                  body += `| ${r.name} | ${r.baseline_ops_per_sec.toLocaleString()} | ${r.current_ops_per_sec.toLocaleString()} | +${r.change_pct}% |\n`;
+                }
+                body += '\n';
+              }
+              if (regressions.length === 0 && improvements.length === 0) {
+                body += '✅ 未检测到显著性能变化（阈值 ±10%）\n\n';
+              }
+            } else {
+              body += '本次为首次运行，未与基线对比。\n\n';
+            }
+            // 输出各测试项结果
+            body += '### 各项测试详情\n| 测试项 | ops/s | 均值 (μs) |\n|---|---|---|\n';
+            for (const [name, bm] of Object.entries(latest.benchmarks || {})) {
+              if (bm.success) {
+                body += `| ${name} | ${bm.ops_per_sec.toLocaleString()} | ${bm.mean_us} |\n`;
+              } else {
+                body += `| ${name} | ❌ 失败 | ${bm.error || ''} |\n`;
+              }
+            }
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
 
   # ──────────────────────────────────────────
   # 6. 文档检查

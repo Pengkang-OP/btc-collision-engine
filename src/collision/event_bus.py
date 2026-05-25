@@ -133,8 +133,9 @@ class EventBus:
                 handler(event)
             except Exception as e:
                 self.error_count += 1
-                logger.error(
-                    f"Event handler {handler.__name__} failed: {e}",
+                handler_name = getattr(handler, "__name__", None) or repr(handler)
+                logger.warning(
+                    "Event handler %s failed: %s", handler_name, e,
                 )
         self.published_count += 1
 

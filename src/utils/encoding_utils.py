@@ -1,8 +1,46 @@
 """Encoding utility functions for Bitcoin data formats."""
 
+import chardet
+
 
 class EncodingUtils:
     """Encoding utility class for Bitcoin data formats."""
+
+    @staticmethod
+    def detect_file_encoding(file_path: str) -> str:
+        """Detect file encoding by reading the file as bytes."""
+        with open(file_path, "rb") as f:
+            raw = f.read()
+        return EncodingUtils.detect_encoding_from_bytes(raw)
+
+    @staticmethod
+    def detect_encoding_from_bytes(data: bytes) -> str:
+        """Detect encoding from byte data."""
+        result = chardet.detect(data)
+        return result.get("encoding", "utf-8") or "utf-8"
+
+    @staticmethod
+    def ensure_utf8_compatible(text: str) -> str:
+        """Ensure text is UTF-8 compatible."""
+        return text.encode("utf-8", errors="replace").decode("utf-8")
+
+    @staticmethod
+    def convert_file_encoding(
+        src_path: str,
+        dst_path: str,
+        dst_encoding: str = "utf-8",
+    ) -> bool:
+        """Convert file encoding from source to destination."""
+        with open(src_path, "rb") as f:
+            raw = f.read()
+        src_encoding = EncodingUtils.detect_encoding_from_bytes(raw)
+        # Handle common encoding aliases
+        if src_encoding and src_encoding.lower() in ("ascii", "ansi"):
+            src_encoding = "utf-8"
+        content = raw.decode(src_encoding or "utf-8", errors="replace")
+        with open(dst_path, "w", encoding=dst_encoding) as f:
+            f.write(content)
+        return True
 
     @staticmethod
     def bytes_to_hex(data: bytes) -> str:
@@ -22,19 +60,7 @@ class EncodingUtils:
 
     @staticmethod
     def read_file_lines(file_path: str, try_multiple: bool = True):
-        """Read file lines with multiple encoding fallback.
-
-        Args:
-            file_path: Path to the file to read.
-            try_multiple: If True, try multiple encodings on decode error.
-
-        Returns:
-            List of lines from the file.
-
-        Raises:
-            OSError: If file cannot be read.
-            UnicodeDecodeError: If all encodings fail.
-        """
+        """Read file lines with multiple encoding fallback."""
         encodings = ["utf-8", "gbk", "latin-1"]
         errors = []
 
@@ -56,20 +82,7 @@ class EncodingUtils:
 
     @staticmethod
     def read_file(file_path: str, encoding: str = "utf-8", try_multiple: bool = False) -> str:
-        """Read entire file content with optional encoding fallback.
-
-        Args:
-            file_path: Path to the file to read.
-            encoding: Primary encoding to try.
-            try_multiple: If True, try multiple encodings on decode error.
-
-        Returns:
-            File content as string.
-
-        Raises:
-            OSError: If file cannot be read.
-            UnicodeDecodeError: If all encodings fail.
-        """
+        """Read entire file content with optional encoding fallback."""
         encodings = [encoding, "utf-8", "gbk", "latin-1"] if try_multiple else [encoding]
         errors = []
 
@@ -91,31 +104,6 @@ class EncodingUtils:
 
     @staticmethod
     def write_file(file_path: str, content: str, encoding: str = "utf-8") -> None:
-        """Write string content to a file.
-
-        Args:
-            file_path: Path to the file to write.
-            content: String content to write.
-            encoding: Encoding to use.
-
-        Raises:
-            OSError: If file cannot be written.
-        """
+        """Write string content to a file."""
         with open(file_path, "w", encoding=encoding) as f:
             f.write(content)
-
-
-def bytes_to_hex(data: bytes) -> str:
-    return data.hex()
-
-
-def hex_to_bytes(hex_str: str) -> bytes:
-    return bytes.fromhex(hex_str)
-
-
-def int_to_bytes(value: int, length: int = 32) -> bytes:
-    return value.to_bytes(length, "big")
-
-
-def bytes_to_int(data: bytes) -> int:
-    return int.from_bytes(data, "big")

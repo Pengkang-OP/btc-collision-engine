@@ -68,7 +68,7 @@ class TestACLEnvironmentVariable(unittest.TestCase):
         self.assertTrue(pathlib.Path(self.test_file).exists())
 
         # 验证可以正常删除(没有被icacls锁定)
-        pathlib.Path(self.test_file).unlink()
+        pathlib.Path(self.test_file).unlink(missing_ok=True)
         self.assertFalse(pathlib.Path(self.test_file).exists())
 
     def test_skip_acl_false(self):
@@ -156,7 +156,7 @@ class TestACLEnvironmentVariable(unittest.TestCase):
 
     def test_skip_acl_with_engine_integration(self):
         """测试与KeyCollisionEngine集成"""
-        from src.collision import KeyCollisionEngine
+        from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 设置环境变量跳过ACL
         os.environ["BTC_ENGINE_SKIP_ACL"] = "true"
@@ -168,7 +168,7 @@ class TestACLEnvironmentVariable(unittest.TestCase):
         )
 
         # 替换断点文件路径
-        engine.checkpoint_mgr.filepath = self.test_file
+        engine.checkpoint_mgr.filepath = pathlib.Path(self.test_file)
 
         # 启动并立即停止
         engine.start(mode="random")

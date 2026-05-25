@@ -39,15 +39,21 @@ def validate_args(args: argparse.Namespace) -> bool:
 
         # Validate hex format
         try:
-            int(start, 16)
+            start_int = int(start, 16)
         except (ValueError, TypeError):
             output.error(f"--start 值不是合法的十六进制: {start}")
             return False
+        if start_int < 1:
+            output.error(f"--start 必须 >= 1，当前值: {start_int}")
+            return False
         if end:
             try:
-                int(end, 16)
+                end_int = int(end, 16)
             except (ValueError, TypeError):
                 output.error(f"--end 值不是合法的十六进制: {end}")
+                return False
+            if end_int <= start_int:
+                output.error(f"--end ({end_int}) 必须大于 --start ({start_int})")
                 return False
 
     return True

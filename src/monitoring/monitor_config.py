@@ -11,6 +11,7 @@ class MonitorConfig:
     metrics_enabled: bool = True
     alerts_enabled: bool = True
     log_enabled: bool = True
+    data_logging_enabled: bool = True  # Alias for data_logging_enabled
     sample_interval: float = 1.0
     collection_interval: int = 5  # Alias for monitoring collection interval
     enable_monitoring_data: bool = True

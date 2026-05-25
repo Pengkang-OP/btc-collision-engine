@@ -5,6 +5,8 @@
 - 收集执行时间、吞吐量等指标
 - 将结果持久化为 JSON 文件
 - 支持与上次结果对比，检测性能回归（阈值：>10% 下降报警）
+- 加密后端对比（coincurve vs pure-python vs OpenSSL）
+- 公钥派生、Taproot 地址生成专项测试
 
 用法:
     python -m benchmarks.benchmark_runner
@@ -16,6 +18,7 @@
 import argparse
 import hashlib
 import json
+import os
 import platform
 import statistics
 import sys
@@ -31,6 +34,15 @@ from src.collision.deduplication_filter import (
 )
 from src.core.address_generator import P2PKHAddressGenerator
 from src.core.base58 import Base58
+from src.core.crypto_backend import (
+    BackendType,
+    CryptoBackendManager,
+    get_available_backends,
+    set_crypto_backend,
+)
+
+# ── 项目根目录 ──────────────────────────────
+_ROOT = Path(__file__).resolve().parent.parent
 
 # ──────────────────────────────────────────────
 # 基准测试结果数据结构
@@ -215,16 +227,150 @@ def bench_base58check_encode() -> BenchmarkResult:
 
 
 # ──────────────────────────────────────────────
+# 加密后端对比基准测试
+# ──────────────────────────────────────────────
+
+
+def _force_backend(backend_type: BackendType) -> bool:
+    """强制切换到指定后端，返回是否成功"""
+    mgr = CryptoBackendManager()
+    available = [bt for bt, _ in mgr.get_available_backends()]
+    if backend_type in available:
+        mgr.set_backend(backend_type)
+        return True
+    return False
+
+
+def bench_pubkey_derivation_coincurve() -> BenchmarkResult:
+    """公钥派生 — coincurve 后端"""
+    if not _force_backend(BackendType.COINCURVE):
+        return BenchmarkResult(
+            name="pubkey_derivation_coincurve", ops_per_sec=0, mean_us=0, std_us=0,
+            iterations=0, success=False, error="coincurve 后端不可用",
+        )
+    mgr = CryptoBackendManager()
+    test_key = (42).to_bytes(32, "big")
+
+    def _run():
+        mgr.generate_public_key(test_key, compressed=True)
+
+    result = _run_timed(_run, warmup=5, iterations=500)
+    result.name = "pubkey_derivation_coincurve"
+    return result
+
+
+def bench_pubkey_derivation_purepython() -> BenchmarkResult:
+    """公钥派生 — Pure Python 后端"""
+    if not _force_backend(BackendType.PURE_PYTHON):
+        return BenchmarkResult(
+            name="pubkey_derivation_purepython", ops_per_sec=0, mean_us=0, std_us=0,
+            iterations=0, success=False, error="Pure Python 后端不可用",
+        )
+    mgr = CryptoBackendManager()
+    test_key = (42).to_bytes(32, "big")
+
+    def _run():
+        mgr.generate_public_key(test_key, compressed=True)
+
+    result = _run_timed(_run, warmup=5, iterations=200)
+    result.name = "pubkey_derivation_purepython"
+    return result
+
+
+def bench_pubkey_derivation_openssl() -> BenchmarkResult:
+    """公钥派生 — OpenSSL 后端"""
+    if not _force_backend(BackendType.OPENSSL):
+        return BenchmarkResult(
+            name="pubkey_derivation_openssl", ops_per_sec=0, mean_us=0, std_us=0,
+            iterations=0, success=False, error="OpenSSL 后端不可用",
+        )
+    mgr = CryptoBackendManager()
+    test_key = (42).to_bytes(32, "big")
+
+    def _run():
+        mgr.generate_public_key(test_key, compressed=True)
+
+    result = _run_timed(_run, warmup=5, iterations=200)
+    result.name = "pubkey_derivation_openssl"
+    return result
+
+
+def bench_scalar_multiply_coincurve() -> BenchmarkResult:
+    """标量乘法 — coincurve 后端"""
+    if not _force_backend(BackendType.COINCURVE):
+        return BenchmarkResult(
+            name="scalar_multiply_coincurve", ops_per_sec=0, mean_us=0, std_us=0,
+            iterations=0, success=False, error="coincurve 后端不可用",
+        )
+    mgr = CryptoBackendManager()
+    k = 123456789
+    # G 点坐标
+    gx = 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798
+    gy = 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8  # noqa: E501
+
+    def _run():
+        mgr.scalar_multiply(k, gx, gy)
+
+    result = _run_timed(_run, warmup=5, iterations=200)
+    result.name = "scalar_multiply_coincurve"
+    return result
+
+
+def bench_scalar_multiply_purepython() -> BenchmarkResult:
+    """标量乘法 — Pure Python 后端"""
+    if not _force_backend(BackendType.PURE_PYTHON):
+        return BenchmarkResult(
+            name="scalar_multiply_purepython", ops_per_sec=0, mean_us=0, std_us=0,
+            iterations=0, success=False, error="Pure Python 后端不可用",
+        )
+    mgr = CryptoBackendManager()
+    k = 123456789
+    gx = 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798
+    gy = 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8  # noqa: E501
+
+    def _run():
+        mgr.scalar_multiply(k, gx, gy)
+
+    result = _run_timed(_run, warmup=5, iterations=100)
+    result.name = "scalar_multiply_purepython"
+    return result
+
+
+def bench_taproot_address() -> BenchmarkResult:
+    """Taproot (P2TR) 地址生成吞吐量"""
+    from src.core.multi_format_generator import MultiFormatGenerator
+
+    gen = MultiFormatGenerator()
+    test_key = (42).to_bytes(32, "big")
+
+    def _run():
+        gen.generate_taproot_address(test_key)
+
+    result = _run_timed(_run, warmup=5, iterations=200)
+    result.name = "taproot_address"
+    return result
+
+
+# ──────────────────────────────────────────────
 # 内建基准测试注册表
 # ──────────────────────────────────────────────
 
 BUILTIN_BENCHMARKS: dict[str, Callable[[], BenchmarkResult]] = {
+    # 原有核心测试
     "secp256k1_key_gen": bench_secp256k1_key_generation,
     "address_generation": bench_address_generation,
     "collision_check": bench_collision_check,
     "dedup_filter": bench_dedup_filter,
     "hash160": bench_hash160,
     "base58check_encode": bench_base58check_encode,
+    # 加密后端对比测试
+    "pubkey_derivation_coincurve": bench_pubkey_derivation_coincurve,
+    "pubkey_derivation_purepython": bench_pubkey_derivation_purepython,
+    "pubkey_derivation_openssl": bench_pubkey_derivation_openssl,
+    "scalar_multiply_coincurve": bench_scalar_multiply_coincurve,
+    "scalar_multiply_purepython": bench_scalar_multiply_purepython,
+    # 地址格式专项
+    "taproot_address": bench_taproot_address,
 }
 
 

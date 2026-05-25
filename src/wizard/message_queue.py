@@ -33,3 +33,20 @@ class WizardMessageQueue:
             return self._queue.get(timeout=timeout)
         except queue.Empty:
             return None
+
+
+# Global message queue instance
+_global_message_queue: WizardMessageQueue | None = None
+
+
+def get_message_queue() -> WizardMessageQueue:
+    """Get the global message queue instance.
+
+    Returns:
+        Global WizardMessageQueue instance
+
+    """
+    global _global_message_queue
+    if _global_message_queue is None:
+        _global_message_queue = WizardMessageQueue()
+    return _global_message_queue
