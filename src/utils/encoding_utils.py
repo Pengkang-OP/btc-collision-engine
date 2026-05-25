@@ -31,13 +31,8 @@ class EncodingUtils:
         dst_encoding: str = "utf-8",
     ) -> bool:
         """Convert file encoding from source to destination."""
-        with open(src_path, "rb") as f:
-            raw = f.read()
-        src_encoding = EncodingUtils.detect_encoding_from_bytes(raw)
-        # Handle common encoding aliases
-        if src_encoding and src_encoding.lower() in ("ascii", "ansi"):
-            src_encoding = "utf-8"
-        content = raw.decode(src_encoding or "utf-8", errors="replace")
+        # Use read_file with multi-encoding fallback to properly decode
+        content = EncodingUtils.read_file(src_path, try_multiple=True)
         with open(dst_path, "w", encoding=dst_encoding) as f:
             f.write(content)
         return True

@@ -702,9 +702,10 @@ class DriverManager:
                 flags["enable_fast_math"] = False
                 logger.warning("AMD驱动版本较旧(< 22.10.0),禁用快速数学优化")
             else:
+                flags["enable_fast_math"] = True  # 新驱动启用快速数学
                 flags["enable_async_compute"] = True
                 flags["conservative_mode"] = False
-                logger.info("AMD驱动版本 >= 22.10.0,启用异步计算优化")
+                logger.info("AMD驱动版本 >= 22.10.0,启用异步计算和快速数学优化")
 
         # Intel特定优化
         elif vendor_lower == "intel":

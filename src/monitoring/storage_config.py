@@ -30,6 +30,10 @@ class DataStorageConfig:
             Path to the storage directory
 
         """
+        # 防御性类型转换 — 防止 storage_dir 被错误传入 list 类型
+        if isinstance(storage_dir, list):
+            storage_dir = str(storage_dir[0]) if storage_dir else None
+
         dir_path = storage_dir or "data_logs"
         pathlib.Path(dir_path).mkdir(exist_ok=True, parents=True)
         return dir_path

@@ -72,6 +72,14 @@ class DataLogger:
         # 使用统一配置
         self.storage_dir = DataStorageConfig.ensure_storage_dir(storage_dir)
 
+        # 防御性检查：确保 storage_dir 是字符串
+        if not isinstance(self.storage_dir, str):
+            # 记录错误并使用默认目录
+            import sys
+            print(f"WARNING: storage_dir is {type(self.storage_dir)}, expected str", file=sys.stderr)
+            self.storage_dir = "data_logs"
+            pathlib.Path(self.storage_dir).mkdir(exist_ok=True, parents=True)
+
         # 初始化日志记录器
         # v4.2.1修复: Python的logging.Logger本身是线程安全的，无需ThreadSafeLogger包装
         self.logger = get_configured_logger("DataLogger")
@@ -571,15 +579,26 @@ class DataLogger:
 
         # 在锁外执行文件I/O，避免阻塞高频路径（record_performance_data/save_history_data）
         try:
+            # 防御性类型检查：确保 error_log_file 是字符串
+            error_log_path = self.error_log_file
+            if isinstance(error_log_path, list):
+                # 记录警告并转换为字符串
+                self.logger.warning("error_log_file is list, converting to str: %s", error_log_path)
+                error_log_path = str(error_log_path[0]) if error_log_path else "error_log.json"
+            
             errors = []
-            if pathlib.Path(self.error_log_file).exists():
-                with pathlib.Path(self.error_log_file).open(encoding="utf-8") as f:
+            if pathlib.Path(error_log_path).exists():
+                with open(error_log_path, mode="r", encoding="utf-8") as f:
                     errors = fast_load(f)
 
             errors.append(error_record)
-            errors = self._error_rotator.rotate(errors)
+            # 手动限制错误列表长度（_error_rotator.max_count）
+            # 注意：LogRotator.rotate() 用于文件轮转，不适用于内存列表
+            max_errors = getattr(self._error_rotator, "_max_count", 1000)
+            if len(errors) > max_errors:
+                errors = errors[-max_errors:]
 
-            with pathlib.Path(self.error_log_file).open("w", encoding="utf-8") as f:
+            with open(error_log_path, mode="w", encoding="utf-8") as f:
                 fast_dump(errors, f, ensure_ascii=False, indent=2)
             self._record_pipeline_metric("record_error", success=True)
         except Exception as e:

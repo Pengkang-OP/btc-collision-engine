@@ -130,10 +130,10 @@ class GPUVendorBase(ABC):
 
         """
         optimizations = profile.get("optimizations", [])
-
+        
         return {
-            "async_transfer": "async_transfer" in optimizations,
-            "persistent_buffers": "persistent_buffers" in optimizations,
-            "shared_memory_optimization": "shared_memory_optimization" in optimizations,
-            "memory_coalescing": "memory_coalescing" in optimizations,
+            "enable_fast_math": "fast_math" in optimizations,
+            "enable_async_compute": "async_compute" in optimizations,
+            "conservative_mode": "conservative" in optimizations,
+            "enable_shader_cache": "shader_cache" in optimizations,
         }
