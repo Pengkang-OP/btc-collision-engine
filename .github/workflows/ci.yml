@@ -228,6 +228,7 @@ jobs:
           files: ./coverage.xml
           flags: unittests
           name: codecov-py3.12
+          fail_ci_if_error: false
 
   # ──────────────────────────────────────────
   # 4. 扩展测试 (综合 + 关键路径)

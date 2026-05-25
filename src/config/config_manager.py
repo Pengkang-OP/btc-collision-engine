@@ -37,6 +37,10 @@ class ConfigManager:
     CONFIG_SCHEMA = {
         "type": "object",
         "properties": {
+            "version": {
+                "type": "string",
+                "pattern": "^\\d+\\.\\d+\\.\\d+$",
+            },
             "collision": {
                 "type": "object",
                 "properties": {
@@ -231,6 +235,18 @@ class ConfigManager:
                     "disable_async_transfer": {"type": "boolean"},
                     "conservative_memory_policy": {"type": "boolean"},
                     "adaptive_timeout": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            # D-2修复: 补充 config.example.json 中的 gui 区块
+            "gui": {
+                "type": "object",
+                "properties": {
+                    "theme": {"type": "string"},
+                    "font": {"type": "string"},
+                    "font_size": {"type": "integer", "minimum": 8, "maximum": 72},
+                    "window_width": {"type": "integer", "minimum": 400},
+                    "window_height": {"type": "integer", "minimum": 300},
                 },
                 "additionalProperties": False,
             },
