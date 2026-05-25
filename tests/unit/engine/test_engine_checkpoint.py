@@ -27,7 +27,7 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
 
     def _create_checkpoint(self, mode="range", current_position=100, total_checked=500, range_end=1000):
         data = {
-            "version": 1,
+            "version": 2,
             "timestamp": "2026-05-03T00:00:00",
             "mode": mode,
             "targets": ["1TestAddr"],

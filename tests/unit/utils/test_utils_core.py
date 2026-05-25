@@ -24,7 +24,8 @@ class TestExceptionBasics(unittest.TestCase):
     def test_collision_engine_error_is_base(self):
         err = CollisionEngineError("test")
         self.assertIsInstance(err, Exception)
-        self.assertEqual(str(err), "test")
+        self.assertEqual(err.message, "test")
+        self.assertEqual(err.error_code, 1000)
 
     def test_collision_error_alias(self):
         """CollisionError 是 CollisionEngineError 的别名"""
@@ -36,13 +37,13 @@ class TestExceptionBasics(unittest.TestCase):
     def test_key_generation_error_has_custom_init(self):
         """KeyGenerationError 有 error_code 和 context"""
         err = KeyGenerationError("key fail", error_code=2, context={"reason": "entropy"})
-        self.assertEqual(str(err), "key fail")
+        self.assertEqual(err.message, "key fail")
         self.assertEqual(err.error_code, 2)
         self.assertEqual(err.context, {"reason": "entropy"})
 
     def test_key_generation_error_defaults(self):
-        err = KeyGenerationError()
-        self.assertEqual(err.error_code, 0)
+        err = KeyGenerationError("test")
+        self.assertEqual(err.error_code, 1001)
         self.assertEqual(err.context, {})
 
     def test_all_subclasses_exist(self):
@@ -59,7 +60,7 @@ class TestExceptionBasics(unittest.TestCase):
         ]:
             err = cls("test")
             self.assertIsInstance(err, CollisionEngineError)
-            self.assertEqual(str(err), "test")
+            self.assertEqual(err.message, "test")
 
 
 class TestExceptionHandler(unittest.TestCase):

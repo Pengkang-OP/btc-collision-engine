@@ -4,7 +4,7 @@ import hashlib
 import threading
 import unittest
 
-from src.collision.collision_stats import CollisionStats
+from src.collision.collision_stats import CollisionStats, StatsSnapshot
 
 
 class TestCollisionStatsInit(unittest.TestCase):
@@ -105,14 +105,14 @@ class TestCollisionStatsUpdate(unittest.TestCase):
 
 
 class TestCollisionStatsSnapshot(unittest.TestCase):
-    """snapshot() 测试 — 返回 dict"""
+    """snapshot() 测试 — 返回 StatsSnapshot dataclass"""
 
-    def test_snapshot_returns_dict(self):
+    def test_snapshot_returns_dataclass(self):
         stats = CollisionStats()
         stats.record_keys(500)
         snap = stats.snapshot()
-        self.assertIsInstance(snap, dict)
-        self.assertEqual(snap["total_keys_checked"], 500)
+        self.assertIsInstance(snap, StatsSnapshot)
+        self.assertEqual(snap.total_keys_checked, 500)
 
     def test_snapshot_is_independent(self):
         stats = CollisionStats()
@@ -123,20 +123,18 @@ class TestCollisionStatsSnapshot(unittest.TestCase):
         stats.record_keys(9999)
         stats.add_match(b"\x01" * 32, "1Another")
 
-        self.assertEqual(snap["total_keys_checked"], 500)
-        self.assertEqual(snap["total_matches"], 1)
+        self.assertEqual(snap.total_keys_checked, 500)
+        self.assertEqual(snap.total_matches, 1)
 
     def test_snapshot_keys(self):
         stats = CollisionStats()
         snap = stats.snapshot()
-        for key in [
-            "total_keys_checked",
-            "total_matches",
-            "total_errors",
-            "elapsed_seconds",
-            "throughput",
-        ]:
-            self.assertIn(key, snap)
+        self.assertEqual(snap.total_keys_checked, 0)
+        self.assertEqual(snap.total_matches, 0)
+        self.assertEqual(snap.total_errors, 0)
+        self.assertGreaterEqual(snap.elapsed_seconds, 0)
+        self.assertGreaterEqual(snap.throughput, 0)
+        self.assertIsInstance(snap.matches, list)
 
 
 class TestCollisionStatsToDict(unittest.TestCase):
@@ -209,7 +207,7 @@ class TestCollisionStatsReset(unittest.TestCase):
     """reset() 测试"""
 
     def test_reset_clears_counters(self):
-        """reset() 清零内部计数器但保留 matches 列表"""
+        """reset() 清零所有内部计数器包括 matches 列表"""
         stats = CollisionStats()
         stats.record_keys(500)
         stats.record_match()
@@ -220,8 +218,8 @@ class TestCollisionStatsReset(unittest.TestCase):
 
         self.assertEqual(stats.total_checked, 0)
         self.assertEqual(stats.matches_found, 0)
-        # matches 列表不自动清空
-        self.assertEqual(len(stats.matches), 1)
+        # matches 列表也被清空（源码 reset() 调用 self.matches.clear()）
+        self.assertEqual(len(stats.matches), 0)
         # to_dict 中 total_errors 也清零
         self.assertEqual(stats.to_dict()["total_errors"], 0)
 

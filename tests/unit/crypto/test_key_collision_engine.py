@@ -160,22 +160,18 @@ class TestKeyCollisionEngineRangeScan(unittest.TestCase):
             complete_event.set()
 
         engine = KeyCollisionEngine(
-            targets={"1NonExistentAddress"},
+            targets={"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"},
             on_complete=on_complete,
             max_workers=1,
         )
-        engine.start(mode="range", start=1, end=1000)
-        # 确保引擎已启动
-        time.sleep(0.5)
-        if not engine.is_running():
-            self.fail("引擎未启动")
-        # 等待范围扫描完成（增加超时到60秒以处理慢CI环境）
-        if not complete_event.wait(timeout=60):
+        engine.start(mode="range", start=1, end=3000)
+        # 等待范围扫描完成（使用 on_complete 回调）
+        if not complete_event.wait(timeout=30):
             engine.stop()
-            self.fail("范围扫描未在60秒内完成")
+            self.fail("范围扫描未在30秒内完成")
         stats = engine.get_stats()
-        # 范围内应检查接近1000个
-        self.assertGreater(stats.total_checked, 900, f"total_checked={stats.total_checked}")
+        # 范围内应检查接近3000个
+        self.assertGreater(stats.total_checked, 2500, f"total_checked={stats.total_checked}")
 
 
 class TestKeyCollisionEngineBruteForce(unittest.TestCase):
@@ -1169,7 +1165,7 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
 
     def _create_checkpoint(self, mode="range", current_position=100, total_checked=500, range_end=1000):
         data = {
-            "version": 1,
+            "version": 2,
             "timestamp": "2026-05-03T00:00:00",
             "mode": mode,
             "targets": ["1TestAddr"],

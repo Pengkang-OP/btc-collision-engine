@@ -118,7 +118,7 @@ class TestSetupAndStartEngine:
     def test_cpu_engine_created(self):
         from src.cli.engine_runner import _setup_and_start_engine
 
-        args = Mock(use_gpu=False, mode="random", checkpoint=False, dedup=False)
+        args = Mock(use_gpu=False, multi_gpu=False, mode="random", checkpoint=False, dedup=False)
 
         mock_engine = MagicMock()
         mock_as = MagicMock()
@@ -144,7 +144,7 @@ class TestSetupAndStartEngine:
     def test_gpu_engine_created(self):
         from src.cli.engine_runner import _setup_and_start_engine
 
-        args = Mock(use_gpu=True, mode="random", checkpoint=False, dedup=False)
+        args = Mock(use_gpu=True, multi_gpu=False, mode="random", checkpoint=False, dedup=False)
 
         mock_engine = MagicMock()
         mock_as = MagicMock()
