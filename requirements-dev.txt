@@ -7,25 +7,24 @@
 
 # 测试框架
 pytest>=9.0.0,<10.0.0
-pytest-benchmark>=4.0       # 性能基准测试
-pytest-cov>=4.0.0           # 测试覆盖率
-pytest-timeout>=2.0,<3.0.0  # 测试超时控制
+pytest-benchmark>=4.0,<6.0.0      # 性能基准测试（与 pyproject.toml 一致）
+pytest-cov>=4.0.0,<8.0.0          # 测试覆盖率（与 pyproject.toml 一致）
+pytest-timeout>=2.0,<3.0.0         # 测试超时控制
 pytest-rerunfailures>=3.0,<17.0.0  # 测试失败重跑
 
 # 代码质量
-black>=24.0.0               # 代码格式化
-flake8>=6.0.0               # Lint 检查
-flake8-threading>=0.5.0     # 线程安全静态分析
-mypy>=1.0.0                 # 类型检查
-types-cachetools>=5.0        # cachetools 类型存根
-bandit>=1.7.0               # 安全扫描
+black>=24.0.0,<26.0.0             # 代码格式化（与 pyproject.toml 一致）
+flake8>=6.0.0,<8.0.0              # Lint 检查（与 pyproject.toml 一致）
+mypy>=1.0.0,<2.0.0                # 类型检查（与 pyproject.toml 一致）
+types-cachetools>=5.0,<7.0.0      # cachetools 类型存根（与 pyproject.toml 一致）
+bandit>=1.7.0,<2.0.0              # 安全扫描（与 pyproject.toml 一致）
 
 # 性能分析
-memory-profiler>=0.61       # 内存占用分析
+memory-profiler>=0.61,<1.0.0      # 内存占用分析（与 pyproject.toml 一致）
 
 # 文档工具
-sphinx>=7.0.0
-sphinx-rtd-theme>=1.3.0
+sphinx>=7.0.0,<9.0.0              # 文档生成（与 pyproject.toml 一致）
+sphinx-rtd-theme>=1.3.0,<4.0.0    # 文档主题（与 pyproject.toml 一致）
 
 # 模糊测试
-hypothesis>=6.0.0
+hypothesis>=6.0.0,<7.0.0          # 模糊测试（与 pyproject.toml 一致）

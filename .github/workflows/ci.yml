@@ -21,7 +21,7 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: 设置 Python
         uses: actions/setup-python@v6
@@ -108,7 +108,7 @@ jobs:
     timeout-minutes: 12
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: 设置 Python
         uses: actions/setup-python@v6
@@ -172,7 +172,7 @@ jobs:
     needs: [static-analysis]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: 设置 Python
         uses: actions/setup-python@v6
@@ -189,7 +189,6 @@ jobs:
         run: |
           pip install --upgrade pip setuptools wheel
           pip install -r requirements.txt
-          pip install pytest pytest-cov pytest-timeout pytest-benchmark
 
       - name: 配置验证
         run: python tools/validate_config.py
@@ -210,7 +209,7 @@ jobs:
             -p no:cacheprovider
 
       - name: 上传覆盖率报告
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         with:
           file: ./coverage.xml
           flags: unittests
@@ -226,7 +225,7 @@ jobs:
     needs: [static-analysis]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: 设置 Python
         uses: actions/setup-python@v6
@@ -242,7 +241,6 @@ jobs:
       - name: 安装 Python 依赖
         run: |
           pip install -r requirements.txt
-          pip install pytest pytest-cov pytest-timeout hypothesis
 
       - name: 五大维度综合测试
         run: pytest tests/test_comprehensive_5d.py -v --tb=short --timeout=120 --timeout-method=thread
@@ -272,7 +270,7 @@ jobs:
     needs: [static-analysis]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: 设置 Python
         uses: actions/setup-python@v6
@@ -288,7 +286,6 @@ jobs:
       - name: 安装 Python 依赖
         run: |
           pip install -r requirements.txt
-          pip install coincurve  # 安装高性能加密后端用于对比测试
 
       - name: 运行性能基准测试
         run: |
@@ -375,7 +372,7 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Markdown 规范检查
         uses: DavidAnson/markdownlint-cli2-action@v15

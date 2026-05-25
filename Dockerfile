@@ -22,17 +22,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     opencl-headers \
     && rm -rf /var/lib/apt/lists/*
 
-# 复制依赖文件
+# 复制依赖文件（仅生产依赖，不包含开发/测试工具）
 COPY requirements-base.txt requirements-base.txt
 COPY requirements-gpu.txt requirements-gpu.txt
-COPY requirements-dev.txt requirements-dev.txt
-COPY requirements.txt requirements.txt
 
 # 创建虚拟环境并安装依赖
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements-base.txt -r requirements-gpu.txt
 
 # 生产阶段
 FROM --platform=$TARGETPLATFORM python:3.11-slim AS production

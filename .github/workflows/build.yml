@@ -26,7 +26,7 @@ jobs:
         python-version: ["3.12"]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0 # setuptools_scm 需要完整历史
 
@@ -80,7 +80,7 @@ jobs:
         python-version: ["3.12"]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: 设置 Python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
@@ -121,13 +121,13 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: 设置 Docker Buildx
         uses: docker/setup-buildx-action@v4
 
       - name: 构建 Docker 镜像 (amd64)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./Dockerfile
@@ -150,7 +150,7 @@ jobs:
 
       - name: 构建 AMD GPU Docker 镜像
         continue-on-error: true # AMD ROCm 运行时在标准 ubuntu-latest 上不可用
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./Dockerfile.amd

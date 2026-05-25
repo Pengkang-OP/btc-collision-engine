@@ -67,9 +67,10 @@ dev = [
     "mypy>=1.0.0,<2.0.0",                # L1: 添加上限
     "black>=24.0.0,<26.0.0",             # L1: 添加上限
     "flake8>=6.0.0,<8.0.0",              # L1: 添加上限
-    "flake8-threading>=0.5.0",           # M3: 线程安全静态分析
     "sphinx>=7.0.0,<9.0.0",              # L1: 添加上限
     "sphinx-rtd-theme>=1.3.0,<4.0.0",    # L1: 添加上限
+    "hypothesis>=6.0.0,<7.0.0",          # 模糊测试（与 requirements-dev.txt 一致）
+    "types-cachetools>=5.0,<7.0.0",      # cachetools 类型存根（与 requirements-dev.txt 一致）
 ]
 # 一次性安装所有可选依赖
 all = ["btc-collision-engine[gpu,dev]"]
