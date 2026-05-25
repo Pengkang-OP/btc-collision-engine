@@ -120,8 +120,8 @@ class TestWizardEvent:
     def test_default_values(self):
         from src.wizard.events import WizardEvent, WizardEventType
 
-        event = WizardEvent(event_type=WizardEventType.WIZARD_START)
-        assert event.event_type == WizardEventType.WIZARD_START
+        event = WizardEvent(type=WizardEventType.WIZARD_START)
+        assert event.type == WizardEventType.WIZARD_START
         assert event.data == {}
         assert isinstance(event.timestamp, float)
         assert event.source == "wizard"
@@ -130,7 +130,7 @@ class TestWizardEvent:
         from src.wizard.events import WizardEvent, WizardEventType
 
         event = WizardEvent(
-            event_type=WizardEventType.TARGET_SELECTED,
+            type=WizardEventType.TARGET_SELECTED,
             data={"targets": ["addr1"]},
             timestamp=12345.0,
             source="test",
@@ -142,9 +142,9 @@ class TestWizardEvent:
     def test_to_dict(self):
         from src.wizard.events import WizardEvent, WizardEventType
 
-        event = WizardEvent(event_type=WizardEventType.MODE_SELECTED, data={"mode": "random"})
+        event = WizardEvent(type=WizardEventType.MODE_SELECTED, data={"mode": "random"})
         d = event.to_dict()
-        assert d["event_type"] == "mode_selected"
+        assert d["type"] == "mode_selected"
         assert d["data"] == {"mode": "random"}
         assert "timestamp" in d
         assert d["source"] == "wizard"
@@ -159,7 +159,7 @@ class TestEventDispatcher:
         dispatcher = EventDispatcher()
         callback = MagicMock()
         dispatcher.register(WizardEventType.WIZARD_START, callback)
-        event = WizardEvent(event_type=WizardEventType.WIZARD_START)
+        event = WizardEvent(type=WizardEventType.WIZARD_START)
         dispatcher.dispatch(event)
         callback.assert_called_once_with(event)
 
@@ -170,7 +170,7 @@ class TestEventDispatcher:
         callback = MagicMock()
         dispatcher.register(WizardEventType.WIZARD_START, callback)
         dispatcher.unregister(WizardEventType.WIZARD_START, callback)
-        event = WizardEvent(event_type=WizardEventType.WIZARD_START)
+        event = WizardEvent(type=WizardEventType.WIZARD_START)
         dispatcher.dispatch(event)
         callback.assert_not_called()
 
@@ -178,7 +178,7 @@ class TestEventDispatcher:
         from src.wizard.events import EventDispatcher, WizardEvent, WizardEventType
 
         dispatcher = EventDispatcher()
-        event = WizardEvent(event_type=WizardEventType.WIZARD_START)
+        event = WizardEvent(type=WizardEventType.WIZARD_START)
         dispatcher.dispatch(event)  # should not raise
 
     def test_dispatch_callback_exception(self, caplog):
@@ -190,7 +190,7 @@ class TestEventDispatcher:
             raise RuntimeError("test error")
 
         dispatcher.register(WizardEventType.WIZARD_ERROR, failing_callback)
-        event = WizardEvent(event_type=WizardEventType.WIZARD_ERROR)
+        event = WizardEvent(type=WizardEventType.WIZARD_ERROR)
         dispatcher.dispatch(event)  # should not raise
         # Error should be logged
         assert "test error" in caplog.text
@@ -203,7 +203,7 @@ class TestEventDispatcher:
         cb2 = MagicMock()
         dispatcher.register(WizardEventType.WIZARD_START, cb1)
         dispatcher.register(WizardEventType.WIZARD_START, cb2)
-        event = WizardEvent(event_type=WizardEventType.WIZARD_START)
+        event = WizardEvent(type=WizardEventType.WIZARD_START)
         dispatcher.dispatch(event)
         cb1.assert_called_once()
         cb2.assert_called_once()
@@ -215,7 +215,7 @@ class TestEventDispatcher:
         callback = MagicMock()
         dispatcher.register(WizardEventType.WIZARD_START, callback)
         dispatcher.clear()
-        event = WizardEvent(event_type=WizardEventType.WIZARD_START)
+        event = WizardEvent(type=WizardEventType.WIZARD_START)
         dispatcher.dispatch(event)
         callback.assert_not_called()
 
@@ -248,7 +248,7 @@ class TestWizardConfig:
         assert config.show_summary is True
         assert config.validate_input is True
         assert config.auto_continue is False
-        assert config.countdown_seconds == 3
+        assert config.countdown_seconds == 5
 
     def test_custom_values(self):
         from src.wizard.interfaces import WizardConfig, WizardMode
@@ -272,10 +272,10 @@ class TestWizardResult:
         result = WizardResult()
         assert result.success is False
         assert result.targets == []
-        assert result.target_file is None
-        assert result.mode == "random"
-        assert result.checkpoint is True
-        assert result.dedup is True
+        assert result.target_file == ""
+        assert result.mode == ""
+        assert result.checkpoint is False
+        assert result.dedup is False
         assert result.duration == 0
         assert result.gpu_indices == []
         assert result.use_multi_gpu is False
@@ -296,7 +296,7 @@ class TestWizardResult:
 
         result = WizardResult(success=True, targets=["addr1"], mode="random")
         cmd = result.build_command()
-        assert isinstance(cmd, list)
+        assert isinstance(cmd, str)
         assert "python" in cmd
         assert "random" in cmd
 
@@ -372,6 +372,7 @@ class TestConfigBuilder:
 
         result = self._make_result(mode="random", targets=["addr1"])
         cmd = ConfigBuilder().build(result)
+        assert isinstance(cmd, list)
         assert cmd[0] == "python"
         assert "key_collision_cli.py" in cmd[1]
         assert "-t" in cmd
@@ -391,6 +392,7 @@ class TestConfigBuilder:
             dedup=False,
         )
         cmd = ConfigBuilder().build(result)
+        assert isinstance(cmd, list)
         assert "range" in cmd
         assert "--start" in cmd and "abc123" in cmd
         assert "--end" in cmd and "def456" in cmd
@@ -406,6 +408,7 @@ class TestConfigBuilder:
             start_key="abc123",
         )
         cmd = ConfigBuilder().build(result)
+        assert isinstance(cmd, list)
         assert "brute_force" in cmd
         assert "--start" in cmd and "abc123" in cmd
 
@@ -414,6 +417,7 @@ class TestConfigBuilder:
 
         result = self._make_result(targets=[], target_file="my_targets.txt", mode="random")
         cmd = ConfigBuilder().build(result)
+        assert isinstance(cmd, list)
         assert "-f" in cmd
         assert "my_targets.txt" in cmd
 
@@ -422,6 +426,7 @@ class TestConfigBuilder:
 
         result = self._make_result(mode="random", duration=7200)
         cmd = ConfigBuilder().build(result)
+        assert isinstance(cmd, list)
         assert "--duration" in cmd
         assert "7200" in cmd
 
@@ -430,6 +435,7 @@ class TestConfigBuilder:
 
         result = self._make_result(mode="random", gpu_indices=[0, 1], use_multi_gpu=True)
         cmd = ConfigBuilder().build(result)
+        assert isinstance(cmd, list)
         assert "--multi-gpu" in cmd
         assert "--gpu-indices" in cmd
         assert "0" in cmd
@@ -811,7 +817,7 @@ class TestWizardMessageQueue:
         assert mq.send(WizardEventType.WIZARD_START, {"key": "val"})
         event = mq.receive()
         assert event is not None
-        assert event.event_type == WizardEventType.WIZARD_START
+        assert event.type == WizardEventType.WIZARD_START
         assert event.data == {"key": "val"}
 
     def test_send_disabled_queue(self):

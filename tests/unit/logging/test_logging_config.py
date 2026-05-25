@@ -230,7 +230,7 @@ class TestDiskSpaceCheck:
 class TestSafeRotatingFileHandler:
     """安全日志轮转测试"""
 
-    def test_creates_handler(self, temp_log_dir):
+    def test_creates_handler(self, temp_log_dir, reset_logging_config):
         from src.utils.logging_config import SafeRotatingFileHandler
 
         log_file = os.path.join(temp_log_dir, "test.log")
@@ -238,7 +238,7 @@ class TestSafeRotatingFileHandler:
         assert handler is not None
         handler.close()
 
-    def test_doRollover_windows_retry(self, temp_log_dir):
+    def test_doRollover_windows_retry(self, temp_log_dir, reset_logging_config):
         """Windows 下 doRollover 重试不会崩溃"""
         from src.utils.logging_config import SafeRotatingFileHandler
 
@@ -253,7 +253,7 @@ class TestSafeRotatingFileHandler:
             pass  # 在某些条件下可能失败
         handler.close()
 
-    def test_non_windows_uses_parent_doRollover(self, temp_log_dir):
+    def test_non_windows_uses_parent_doRollover(self, temp_log_dir, reset_logging_config):
         """非 Windows 平台走父类 doRollover"""
         if sys.platform == "win32":
             pytest.skip("当前平台为 Windows，测试不适用")
