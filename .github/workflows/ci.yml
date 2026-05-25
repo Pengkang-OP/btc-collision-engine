@@ -205,9 +205,6 @@ jobs:
             --cov-report=term-missing \
             --cov-fail-under=30 \
             -m "not (gpu or gpu_kernel or multi_gpu or integration)" \
-            --ignore=tests/test_wizard.py \
-            --ignore=tests/test_concurrency_stress.py \
-            --ignore=tests/test_memory_locking.py \
             --timeout=600 \
             --timeout-method=thread \
             -p no:cacheprovider > test-output.log 2>&1; RC=$?

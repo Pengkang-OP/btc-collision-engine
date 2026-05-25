@@ -81,16 +81,19 @@ class WizardResult:
             json.dump(self.to_dict(), f, indent=2)
 
     @classmethod
-    def load_from_file(cls, filepath: str) -> "WizardResult":
+    def load_from_file(cls, filepath: str) -> "WizardResult | None":
         """Load result from file."""
         import json
 
-        with open(filepath) as f:
-            data = json.load(f)
-        result = cls()
-        for key, value in data.items():
-            setattr(result, key, value)
-        return result
+        try:
+            with open(filepath) as f:
+                data = json.load(f)
+            result = cls()
+            for key, value in data.items():
+                setattr(result, key, value)
+            return result
+        except (FileNotFoundError, json.JSONDecodeError, OSError):
+            return None
 
 
 class WizardStep(ABC):

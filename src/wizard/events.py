@@ -1,11 +1,14 @@
 """Wizard event definitions."""
 
 import contextlib
+import logging
 import time
 from dataclasses import dataclass, field
 from enum import Enum
 from queue import Queue
 from typing import Any, Callable
+
+logger = logging.getLogger(__name__)
 
 
 class WizardEventType(Enum):
@@ -68,7 +71,10 @@ class EventDispatcher:
         self._event_queue.put(event)
         if event.type in self._listeners:
             for listener in self._listeners[event.type]:
-                listener(event)
+                try:
+                    listener(event)
+                except Exception as e:
+                    logger.error("Event dispatch error: %s", e)
 
     def clear(self) -> None:
         """Clear all listeners."""

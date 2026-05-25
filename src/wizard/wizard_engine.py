@@ -147,10 +147,10 @@ class WizardEngine:
     def _select_gpu(self):
         """选择GPU设备"""
         selector = GPUSelector()
-        gpu_indices, use_multi_gpu = selector.select(compact=(self.config.mode == WizardMode.COMPACT))
+        gpu_indices = selector.select([])
         self.result.gpu_indices = gpu_indices
-        self.result.use_multi_gpu = use_multi_gpu
-        self.message_queue.send_gpu_selected(gpu_indices, use_multi_gpu)
+        self.result.use_multi_gpu = len(gpu_indices) > 1
+        self.message_queue.send_gpu_selected(gpu_indices, len(gpu_indices) > 1)
 
     def _build_config(self):
         """构建配置"""
@@ -222,7 +222,7 @@ class WizardEngine:
 
     def _execute(self):
         """执行生成的命令"""
-        if not self.result.command:
+        if not getattr(self.result, "command", None):
             print("[ERROR] 没有可执行的命令")
             return
 

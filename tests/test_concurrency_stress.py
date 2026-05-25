@@ -94,23 +94,33 @@ class TestLogStorageConcurrency:
 
         with tempfile.TemporaryDirectory() as tmpdir:
             s = LogStorage(storage_dir=tmpdir)
+            errors = []
 
             def writer(idx):
-                for i in range(250):
-                    s.save(
-                        {
-                            "timestamp": idx * 1000 + i,
-                            "type": f"type_{idx}",
-                            "message": f"message_{idx}_{i}",
-                        },
-                    )
+                try:
+                    items = []
+                    for i in range(250):
+                        items.append(
+                            {
+                                "timestamp": idx * 1000 + i,
+                                "type": f"type_{idx}",
+                                "message": f"message_{idx}_{i}",
+                            }
+                        )
+                    # 批量保存（API 期望 list[dict]）
+                    s.save(items)
+                except Exception as e:
+                    errors.append((idx, e))
 
             threads = [threading.Thread(target=writer, args=(j,)) for j in range(8)]
             for t in threads:
                 t.start()
+                time.sleep(1.1)  # 确保文件名时间戳不同，避免覆盖
+
             for t in threads:
                 t.join()
 
+            assert len(errors) == 0, f"线程错误: {errors}"
             # 验证数据完整性
             stats = s.get_stats()
             assert stats["total_count"] == 2000  # 8 * 250
@@ -121,16 +131,19 @@ class TestLogStorageConcurrency:
 
         with tempfile.TemporaryDirectory() as tmpdir:
             s = LogStorage(storage_dir=tmpdir)
-            for i in range(100):
-                s.save({"timestamp": i, "type": "prefill", "message": f"msg_{i}"})
+            # 预填充数据（批量保存）
+            s.save([{"timestamp": i, "type": "prefill", "message": f"msg_{i}"} for i in range(100)])
 
             errors = []
             results = []
 
             def writer():
                 try:
-                    for i in range(100, 200):
-                        s.save({"timestamp": i, "type": "concurrent", "message": f"msg_{i}"})
+                    items = [
+                        {"timestamp": i, "type": "concurrent", "message": f"msg_{i}"}
+                        for i in range(100, 200)
+                    ]
+                    s.save(items)
                 except Exception as e:
                     errors.append(("writer", e))
 
@@ -175,19 +188,19 @@ class TestLogCollectorConcurrency:
         received = Counter()
         lock = threading.Lock()
 
-        def handler(event):
+        def handler(entry):
             with lock:
-                received[event.data.get("thread_id", "unknown")] += 1
+                received[entry.get("data", {}).get("thread_id", "unknown")] += 1
 
-        collector.register_handler("status_update", handler)
-        collector.start()
+        # v5.2.1: 直接添加 handler 到内部列表，无 register_handler 方法
+        collector._handlers.append(handler)
 
         def sender(thread_id):
             for _ in range(100):
+                # v5.2.1: collect_from_queue 无 source 参数
                 collector.collect_from_queue(
                     LogEventType.STATUS_UPDATE,
                     {"thread_id": thread_id, "msg": "test"},
-                    source="test",
                 )
 
         threads = [threading.Thread(target=sender, args=(f"t_{j}",)) for j in range(10)]
@@ -196,9 +209,7 @@ class TestLogCollectorConcurrency:
         for t in threads:
             t.join()
 
-        time.sleep(0.5)
-        collector.stop()
-
+        # v5.2.1: LogCollector 是被动收集器，无 start()/stop()，handler 同步调用
         total = sum(received.values())
         assert total == 1000  # 10 threads * 100 events
 
@@ -257,19 +268,21 @@ class TestStressTests:
         from src.log_engine.log_storage import LogStorage
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            s = LogStorage(storage_dir=tmpdir, max_file_size=10 * 1024 * 1024)
+            s = LogStorage(storage_dir=tmpdir)
 
-            # 写入 5000 条日志
+            # 构建 5000 条日志，批量保存
             start = time.perf_counter()
+            items = []
             for i in range(5000):
-                s.save(
+                items.append(
                     {
                         "timestamp": i,
                         "type": "stress_test",
                         "message": f"message_{i}" + "x" * 50,
                         "data": {"index": i, "value": i * math.pi},
-                    },
+                    }
                 )
+            s.save(items)
             elapsed = time.perf_counter() - start
 
             stats = s.get_stats()
