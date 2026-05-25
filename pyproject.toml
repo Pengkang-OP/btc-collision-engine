@@ -348,6 +348,10 @@ max-complexity = 15
 [tool.ruff.format]
 line-ending = "lf"
 
+[tool.coverage.run]
+# CI 测试排除 GPU 源码：GPU 测试通过 marker 过滤排除，GPU 源码不应计入覆盖率
+omit = ["src/gpu/*"]
+
 [tool.bandit]
 exclude_dirs = ["tests", "docs", "benchmarks"]
 # B101: assert 语句在本项目中广泛用于防御性编程(非安全校验), 不构成安全风险

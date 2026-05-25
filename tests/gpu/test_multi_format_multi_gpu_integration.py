@@ -30,6 +30,7 @@ def engine():
         eng.cleanup()
 
 
+@pytest.mark.gpu
 def test_format_manager():
     """测试1: 多格式目标管理器"""
     print("\n" + "=" * 80)
@@ -66,6 +67,7 @@ def test_format_manager():
     return manager
 
 
+@pytest.mark.gpu
 def test_engine_creation():
     """测试2: 引擎创建"""
     print("\n" + "=" * 80)
@@ -89,6 +91,7 @@ def test_engine_creation():
     return engine
 
 
+@pytest.mark.gpu
 def test_multi_format_matching(engine):
     """测试3: 多格式地址匹配"""
     print("\n" + "=" * 80)
@@ -148,6 +151,7 @@ def test_multi_format_matching(engine):
     return addresses
 
 
+@pytest.mark.gpu
 def test_post_processing(engine):
     """测试4: 后处理检查其他格式"""
     print("\n" + "=" * 80)
@@ -210,6 +214,7 @@ def test_post_processing(engine):
     print("\n✅ 测试4通过: 后处理检查其他格式")
 
 
+@pytest.mark.gpu
 def test_format_stats(engine):
     """测试5: 格式统计"""
     print("\n" + "=" * 80)
@@ -251,6 +256,7 @@ def test_format_stats(engine):
     print("\n✅ 测试5通过: 格式统计")
 
 
+@pytest.mark.gpu
 def test_integration_scenario():
     """测试6: 集成场景测试"""
     print("\n" + "=" * 80)
