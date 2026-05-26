@@ -382,7 +382,7 @@ class GPUMemoryPool:
 
     def _update_lru_access(self, buf_id: int, buf: Any, size: int, buffer_type: str) -> None:
         """更新缓冲区的 LRU 访问时间（O(1) 操作）
-        
+
         Args:
             buf_id: 缓冲区对象的 id()
             buf: 缓冲区对象
@@ -408,11 +408,11 @@ class GPUMemoryPool:
 
     def _find_lru_candidate(self, min_idle_seconds: float, now: float) -> tuple | None:
         """在 LRU 缓存中查找符合条件的最久未使用的候选缓冲区
-        
+
         Args:
             min_idle_seconds: 最小空闲时间，0 表示不限制
             now: 当前时间戳
-            
+
         Returns:
             (timestamp, buf_id, size, buf, type_str) 或 None
         """
@@ -425,12 +425,12 @@ class GPUMemoryPool:
 
     def _evict_lru_locked(self, count: int = 1, min_idle_seconds: float = 0) -> int:
         """淘汰最久未使用的空闲缓冲区（必须在持有 _lock 时调用）
-        
+
         使用 OrderedDict 实现 O(1) 的 LRU 淘汰
         """
         now = time.monotonic() if min_idle_seconds > 0 else 0
         evicted = 0
-        
+
         # 需要先收集要淘汰的项，因为不能在迭代时修改字典
         to_evict = []
         for buf_id, (buf, size, buffer_type, access_time) in self._lru_cache.items():
@@ -439,15 +439,15 @@ class GPUMemoryPool:
             if min_idle_seconds > 0 and (now - access_time) < min_idle_seconds:
                 continue
             to_evict.append((buf_id, buf, size, buffer_type))
-        
+
         # 执行淘汰
         for buf_id, lru_buf, lru_size, lru_type in to_evict:
             # 从对应池中移除
             self._remove_lru_from_pool(lru_type, lru_size, buf_id)
-            
+
             # 从 LRU 缓存中移除
             del self._lru_cache[buf_id]
-            
+
             # 释放显存
             try:
                 if hasattr(lru_buf, "release"):
@@ -456,9 +456,9 @@ class GPUMemoryPool:
                     del lru_buf
             except Exception as e:
                 logger.debug("LRU淘汰释放缓冲区失败: %s", e)
-            
+
             evicted += 1
-        
+
         if evicted > 0:
             logger.debug("LRU批量淘汰: 移除了 %s 个最久未使用空闲缓冲区", evicted)
         return evicted
