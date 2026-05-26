@@ -341,6 +341,7 @@ class GPUDeviceManager:
 
         Returns:
             格式名称字符串: "P2PKH", "P2SH", "Bech32", "Bech32m/Taproot", "未知"
+
         """
         if address.startswith("1"):
             return "P2PKH"

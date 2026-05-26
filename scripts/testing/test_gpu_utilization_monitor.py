@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-GPU利用率监控测试 - v3.3.1
+"""GPU利用率监控测试 - v3.3.1
 
 测试目标:
 1. 验证异步模式是否真正提升GPU利用率
@@ -37,6 +36,7 @@ class GPUMonitor:
         Args:
             engine: GPU引擎实例
             interval: 采样间隔(秒)
+
         """
         self._running = True
         self._monitor_thread = threading.Thread(
@@ -110,6 +110,7 @@ def test_gpu_utilization(mode: str = "async", duration: int = 60):
     Args:
         mode: 测试模式 ('sync' 或 'async')
         duration: 测试时长(秒)
+
     """
     print("=" * 80)
     print(f"  GPU利用率监控测试 - {mode.upper()}模式")

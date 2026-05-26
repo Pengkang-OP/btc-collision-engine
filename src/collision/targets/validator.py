@@ -74,6 +74,7 @@ class AddressBatchValidator:
         >>> results = validator.validate_batch(['1A1z...', 'invalid'])
         >>> for addr, result in results.items():
         ...     print(f"{addr}: {'valid' if result.valid else 'invalid'}")
+
     """
 
     def __init__(self, max_workers: int = 4) -> None:
@@ -81,6 +82,7 @@ class AddressBatchValidator:
 
         Args:
             max_workers: 最大工作线程数,默认4
+
         """
         self.max_workers = max_workers
         self._lock = threading.Lock()
@@ -240,6 +242,7 @@ class AddressBatchValidator:
 
         Returns:
             验证结果
+
         """
         try:
             from ...core.base58 import Base58
@@ -318,6 +321,7 @@ class AddressBatchValidator:
 
         Returns:
             有效地址列表
+
         """
         logger.debug(f"开始过滤有效地址: 输入数={len(addresses)}")
 
@@ -333,6 +337,7 @@ class AddressBatchValidator:
 
         Returns:
             统计信息字典
+
         """
         with self._lock:
             summary = {
@@ -355,6 +360,7 @@ class AddressBatchValidator:
 
         Returns:
             摘要字典
+
         """
         valid_count = sum(1 for r in results.values() if r.valid)
         invalid_count = len(results) - valid_count
@@ -392,6 +398,7 @@ class AddressBatchValidator:
             >>> coverage = validator.get_validation_coverage(results)
             >>> print(f"验证覆盖率: {coverage['coverage']:.1f}%")
             >>> print(f"验证失败: {coverage['invalid']} (已验证但失败)")
+
         """
         total = len(results)
 

@@ -87,6 +87,7 @@ class _PendingBatch:
         buf: 对应的缓冲区字典，包含 'matches' 和 'match_flags'
         num_keys: 当前批次的密钥数量
         seed: 当前批次对应的 32 字节种子，用于 seed+gid 还原私钥
+
     """
 
     __slots__ = ("batch_num", "buf", "num_keys", "read_event", "seed")

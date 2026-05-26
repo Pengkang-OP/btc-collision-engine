@@ -49,6 +49,7 @@ def _t(key: str, default: str = "", **kwargs) -> str:
 
     Returns:
         Translated text
+
     """
     _auto_load_language()
     text = _translator.translate(key, default)
@@ -65,5 +66,6 @@ def set_language(lang: str) -> None:
 
     Args:
         lang: Language code (e.g. 'en', 'zh')
+
     """
     _translator.load(lang)

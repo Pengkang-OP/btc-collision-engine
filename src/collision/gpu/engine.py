@@ -26,7 +26,6 @@
 
 import contextlib
 import logging
-from ...utils import get_configured_logger
 import os
 import pathlib
 import threading
@@ -34,7 +33,6 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, cast
-from ...utils.logging_config import LOG_DEFAULT_MAX_BYTES
 
 # 跨包依赖
 from ...gpu.device import GPUDeviceDetector
@@ -42,17 +40,6 @@ from ...gpu.device_manager import GPUDeviceManager
 from ...gpu.engine_monitor import GPUEngineMonitor
 from ...gpu.search_mode_coordinator import SearchModeCoordinator
 from ...monitoring.data_logger import DataLogger
-from ...utils.timeout import invoke_with_timeout
-
-# 回调类型
-from ..types import CompleteCallback, MatchCallback, ProgressCallback
-
-# Phase 1-5 组件
-from ._result_processor import GPUResultProcessor
-from ._scheduler import GPUBatchScheduler
-from .core import CollisionCore
-from .monitoring import PerformanceMonitoringPipeline
-from .vendor_strategy import VendorOptimizationFactory  # noqa: F401 # 保留供测试 patch 目标
 
 # 其余依赖
 from ...monitoring.enhanced_monitoring import EnhancedMonitoringSystem
@@ -65,6 +52,9 @@ from ...monitoring.gpu_performance_monitor import (
     get_gpu_performance_monitor,
 )
 from ...monitoring.monitor_config import MonitorConfig
+from ...utils import get_configured_logger
+from ...utils.logging_config import LOG_DEFAULT_MAX_BYTES
+from ...utils.timeout import invoke_with_timeout
 from ..base_engine import BaseCollisionEngine
 
 # 碰撞基础
@@ -82,10 +72,20 @@ from ..events import (
     EventType,
 )
 
+# 回调类型
+from ..types import CompleteCallback, MatchCallback, ProgressCallback
+
+# Phase 1-5 组件
+from ._result_processor import GPUResultProcessor
+from ._scheduler import GPUBatchScheduler
+from .core import CollisionCore
+
 # v3.2.1: 增强私钥生成器
 from .key_generator import (
     KeyGenerationStrategy,
 )
+from .monitoring import PerformanceMonitoringPipeline
+from .vendor_strategy import VendorOptimizationFactory  # noqa: F401 # 保留供测试 patch 目标
 
 logger = get_configured_logger(__name__)
 

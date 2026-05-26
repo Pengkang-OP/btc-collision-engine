@@ -166,6 +166,7 @@ class ConfigManager:
 
         Args:
             config_file: 配置文件路径，None表示使用默认配置
+
         """
         self.config_file = config_file
         self._lock = threading.Lock()  # 线程锁保护配置读写
@@ -207,6 +208,7 @@ class ConfigManager:
 
         Returns:
             过滤后的配置字典（不修改原对象）
+
         """
         if isinstance(config, dict):
             return {
@@ -221,6 +223,7 @@ class ConfigManager:
 
         Returns:
             加载成功返回True，失败返回False
+
         """
         try:
             if not self.config_file:
@@ -260,6 +263,7 @@ class ConfigManager:
 
         Returns:
             重载成功返回 True，失败返回 False
+
         """
         if not self.config_file:
             return False
@@ -311,6 +315,7 @@ class ConfigManager:
 
         Args:
             callback: 无参数的可调用对象
+
         """
         self._change_callbacks.append(callback)
 
@@ -340,6 +345,7 @@ class ConfigManager:
 
         Returns:
             启动成功返回 True
+
         """
         if not self.config_file:
             logger.warning("无法启动配置监听: 未设置配置文件路径")
@@ -387,6 +393,7 @@ class ConfigManager:
 
         Returns:
             保存成功返回True，失败返回False
+
         """
         if not self.config_file:
             return False
@@ -429,6 +436,7 @@ class ConfigManager:
 
         Returns:
             配置值
+
         """
         keys = key.split(".")
         # DF-1修复：整个遍历过程在锁内完成，确保真正的线程安全
@@ -451,6 +459,7 @@ class ConfigManager:
 
         Returns:
             设置成功返回True，失败返回False
+
         """
         keys = key.split(".")
         # 线程安全：在锁内修改配置
@@ -471,6 +480,7 @@ class ConfigManager:
         Args:
             base: 基础配置
             update: 更新配置
+
         """
         for key, value in update.items():
             if key in base and isinstance(base[key], dict) and isinstance(value, dict):
@@ -486,6 +496,7 @@ class ConfigManager:
 
         Returns:
             配置字典的深拷贝
+
         """
         # 一般问题修复: copy 已在文件顶部导入
         return copy.deepcopy(config)
@@ -500,6 +511,7 @@ class ConfigManager:
 
         Returns:
             验证失败的配置项和错误信息字典
+
         """
         if config is None:
             config = self.config
@@ -519,6 +531,7 @@ class ConfigManager:
 
         Returns:
             错误信息字典，空字典表示验证通过
+
         """
         if not HAS_JSONSCHEMA:
             return {}  # 没有jsonschema库，返回空
@@ -579,6 +592,7 @@ class ConfigManager:
 
         Returns:
             如果是严格的布尔值返回True，否则返回False
+
         """
         # JSON解析的True/False是bool类型，isinstance返回True
         # 但用户直接传入的1/0是int类型，应该拒绝
@@ -651,6 +665,7 @@ class ConfigManager:
             min_val: 最小值（含）
             nullable: 是否允许 None 值
             max_val: 最大值（含），None 表示不限制
+
         """
         if nullable and value is None:
             return None
@@ -726,6 +741,7 @@ class ConfigManager:
             value: 日志级别字符串
             errors: 错误字典
             prefix: 错误键前缀（如 "logging."）
+
         """
         valid_levels = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
         key = prefix + "level"
@@ -752,6 +768,7 @@ class ConfigManager:
 
         Returns:
             错误字典 {字段名: 错误信息}，空字典表示验证通过
+
         """
         errors: dict[str, str] = {}
 

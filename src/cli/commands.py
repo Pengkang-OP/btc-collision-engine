@@ -11,7 +11,6 @@
 import argparse
 import concurrent.futures
 import json
-from ..utils import get_configured_logger
 import string
 import sys
 import time
@@ -32,6 +31,8 @@ from src.cli.output import CLIOutput
 from src.cli.validation import validate_file_path
 from src.i18n import _t
 from src.utils.platform_utils import PlatformUtils
+
+from ..utils import get_configured_logger
 
 logger = get_configured_logger(__name__)
 
@@ -1260,8 +1261,8 @@ def _handle_system_commands(args: argparse.Namespace) -> bool:
         dry_run = getattr(args, "dry_run", False)
         if dry_run:
             # 预览模式：收集并列出实际待删除文件
-            from pathlib import Path
             from datetime import datetime, timedelta
+            from pathlib import Path
 
             print("[预览模式] 扫描待清理文件 (超过 7 天)...")
             print(SEPARATOR_DASHED)

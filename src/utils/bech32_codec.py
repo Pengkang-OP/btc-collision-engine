@@ -81,6 +81,7 @@ def decode_segwit_address(
 
     Returns:
         (hrp, witness_version, witness_program) or (None, None, None) on failure
+
     """
     hrp, data, spec = bech32_decode(address)
     if hrp is None or not data:

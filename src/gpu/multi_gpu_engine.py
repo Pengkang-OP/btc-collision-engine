@@ -27,7 +27,7 @@ from ..utils import get_configured_logger
 # 本模块内部导入
 from .data_monitor import DataMonitor
 from .gpu_config import MultiGPUConfig, WorkerConfig
-from .gpu_recovery_manager import GPUFailureType, GPURecoveryManager
+from .gpu_recovery_manager import GPURecoveryManager
 from .load_balancer import GPULoadBalancer
 from .memory_pool import GPUMemoryPool
 from .metrics import get_metrics_collector
@@ -1408,6 +1408,7 @@ class MultiGPUCollisionEngine:
           在解释器关闭时可能因模块卸载顺序导致异常
         - 但已有 try/except 包裹，异常写入 stderr 后静默处理
         - 守护线程在进程退出时会自动清理，不依赖 __del__ 的完整执行
+
         """
         try:
             self.cleanup()

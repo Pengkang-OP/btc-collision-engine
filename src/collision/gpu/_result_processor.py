@@ -12,9 +12,9 @@
 创建日期: 2026-05-20
 """
 
-from ...utils import get_configured_logger
 from typing import TYPE_CHECKING
 
+from ...utils import get_configured_logger
 from ...utils.timeout import invoke_with_timeout
 from ..events import EngineMatchEvent
 

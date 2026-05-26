@@ -10,6 +10,7 @@ Example:
     >>> manager.load_targets(['1A1z...', '3J98t...', 'bc1qw...'])
     >>> targets_by_format = manager.get_targets_by_format()
     >>> print(f"P2PKH: {len(targets_by_format['p2pkh'])}")
+
 """
 
 import pathlib
@@ -37,6 +38,7 @@ class FormatAwareTargetManager:
         >>> manager.add_target('3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy')
         >>> manager.get_format_stats()
         {'p2pkh': 1, 'p2sh': 1}
+
     """
 
     def __init__(self) -> None:
@@ -61,6 +63,7 @@ class FormatAwareTargetManager:
 
         Returns:
             是否添加成功
+
         """
         with self._lock:
             try:
@@ -95,6 +98,7 @@ class FormatAwareTargetManager:
 
         Returns:
             成功添加的数量
+
         """
         count = 0
         for address in addresses:
@@ -112,6 +116,7 @@ class FormatAwareTargetManager:
 
         Returns:
             成功加载的数量
+
         """
         with self._lock:
             try:
@@ -131,6 +136,7 @@ class FormatAwareTargetManager:
 
         Returns:
             格式到地址集合的映射
+
         """
         with self._lock:
             return {fmt: targets.copy() for fmt, targets in self._targets_by_format.items()}
@@ -140,6 +146,7 @@ class FormatAwareTargetManager:
 
         Returns:
             所有目标地址集合
+
         """
         with self._lock:
             return self._all_targets.copy()
@@ -149,6 +156,7 @@ class FormatAwareTargetManager:
 
         Returns:
             各格式目标数量统计
+
         """
         with self._lock:
             return {fmt.value: len(targets) for fmt, targets in self._targets_by_format.items()}
@@ -161,6 +169,7 @@ class FormatAwareTargetManager:
 
         Returns:
             是否存在目标
+
         """
         with self._lock:
             if format_type is None:
@@ -175,6 +184,7 @@ class FormatAwareTargetManager:
 
         Returns:
             目标数量
+
         """
         with self._lock:
             if format_type is None:
@@ -190,6 +200,7 @@ class FormatAwareTargetManager:
 
         Returns:
             (is_match, matched_address, matched_format) 元组
+
         """
         return self._generator.match_address(private_key, self._targets_by_format)
 
@@ -203,6 +214,7 @@ class FormatAwareTargetManager:
         Returns:
             (is_match, list[tuple[address, format]]) 元组
             例如: (True, [("1xxx...", "p2pkh"), ("bc1q...", "bech32")])
+
         """
         with self._lock:
             return self._generator.match_all_formats(private_key, self._targets_by_format)
@@ -220,6 +232,7 @@ class FormatAwareTargetManager:
 
         Returns:
             包含目标的格式列表
+
         """
         with self._lock:
             return [fmt.value for fmt, targets in self._targets_by_format.items() if len(targets) > 0]
@@ -229,6 +242,7 @@ class FormatAwareTargetManager:
 
         Returns:
             批量大小
+
         """
         supported_count = len(self.get_supported_formats())
         if supported_count == 0:

@@ -10,13 +10,14 @@ all platforms, including:
 
 import ctypes
 import logging
-from .logging_config import get_configured_logger
 import os
 import pathlib
 import platform
 import sys
 from collections.abc import Callable
 from typing import Any, cast
+
+from .logging_config import get_configured_logger
 
 
 class PlatformAdapter:
@@ -270,8 +271,9 @@ class PlatformAdapter:
             文件处理器
 
         """
-        from .logging_config import LOG_DEFAULT_MAX_BYTES
         from logging.handlers import RotatingFileHandler
+
+        from .logging_config import LOG_DEFAULT_MAX_BYTES
 
         return cast(
             "logging.Handler",

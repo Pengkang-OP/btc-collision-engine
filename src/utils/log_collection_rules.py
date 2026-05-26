@@ -9,7 +9,6 @@ Provides detailed log collection rule configuration supporting:
 
 import json
 import logging
-from .logging_config import get_configured_logger
 import os
 import pathlib
 import re
@@ -17,6 +16,8 @@ from contextlib import suppress
 from dataclasses import dataclass, field
 from re import Pattern
 from typing import Any
+
+from .logging_config import get_configured_logger
 
 
 @dataclass

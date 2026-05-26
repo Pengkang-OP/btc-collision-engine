@@ -9,7 +9,6 @@ features, including:
 """
 
 import logging
-from .logging_config import get_configured_logger
 import os
 import platform
 import queue
@@ -18,6 +17,8 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
+
+from .logging_config import get_configured_logger
 
 
 @dataclass

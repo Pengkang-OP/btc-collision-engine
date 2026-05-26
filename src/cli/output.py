@@ -2,12 +2,13 @@
 
 import io
 import json
-from ..utils import get_configured_logger
 import os
 import platform
 import sys
 import threading
 from typing import Any, Optional
+
+from ..utils import get_configured_logger
 
 logger = get_configured_logger(__name__)
 
@@ -189,6 +190,7 @@ class CLIOutput:
         Args:
             title_or_config: 面板标题(str) 或 配置字典(dict)
             rows: 可选的行列表
+
         """
         if self.quiet:
             return
@@ -240,6 +242,7 @@ class CLIOutput:
         Args:
             stats: 统计数据字典，key 为标签，value 为值
             title: 面板标题
+
         """
         if self.quiet or not stats:
             return
@@ -418,6 +421,7 @@ def paginate(
         title: Optional header shown above each page.
         page_size: Lines per page (default 20).
         console: Optional Rich Console instance. If None, uses _get_utf8_console().
+
     """
     if not lines:
         return

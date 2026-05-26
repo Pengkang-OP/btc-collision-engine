@@ -101,14 +101,14 @@ class AdaptivePipelineController:
         on_adjust_batch_size: Callable[[int], None] | None = None,
         on_adjust_seed_batch_size: Callable[[int], None] | None = None,
     ) -> None:
-        """
-        Args:
-            initial_queue_depth: 初始队列深度
-            initial_batch_size: 初始批次大小
-            initial_seed_prefetch_size: 初始种子队列容量
-            on_adjust_queue_depth: 队列深度调整回调(新值)
-            on_adjust_batch_size: 批次大小调整回调(新值)
-            on_adjust_seed_batch_size: 种子生成批量调整回调(新值)
+        """Args:
+        initial_queue_depth: 初始队列深度
+        initial_batch_size: 初始批次大小
+        initial_seed_prefetch_size: 初始种子队列容量
+        on_adjust_queue_depth: 队列深度调整回调(新值)
+        on_adjust_batch_size: 批次大小调整回调(新值)
+        on_adjust_seed_batch_size: 种子生成批量调整回调(新值)
+
         """
         self._queue_depth = initial_queue_depth
         self._batch_size = initial_batch_size
@@ -223,6 +223,7 @@ class AdaptivePipelineController:
 
         Returns:
             调整动作字典，如 {"queue_depth": 10, "batch_size": 1310720, "seed_batch": 72}
+
         """
         if self._cooldown_remaining > 0:
             self._cooldown_remaining -= 1

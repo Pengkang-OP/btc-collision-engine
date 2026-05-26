@@ -133,12 +133,6 @@ def run_full_loop(args: argparse.Namespace) -> "AuditResult":
 
 
 def main() -> None:
-    from src.automation import (
-        AuditModule,
-        AutoTestModule,
-        DataAnalysisModule,
-        LoopController,
-    )
 
     parser = argparse.ArgumentParser(description="端到端自动化闭环管理系统")
 

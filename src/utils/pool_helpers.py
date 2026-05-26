@@ -1,8 +1,9 @@
 """Thread pool cleanup helpers for memory pool management."""
 
-from .logging_config import get_configured_logger
 import threading
 import time
+
+from .logging_config import get_configured_logger
 
 logger = get_configured_logger(__name__)
 

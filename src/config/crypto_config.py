@@ -46,6 +46,7 @@ class CryptoConfig:
         Args:
             config_file: 配置文件路径，None表示使用默认配置
             config_manager: ConfigManager实例，用于获取统一配置
+
         """
         self.config_file = config_file
         self.config_manager = config_manager  # 引用ConfigManager
@@ -59,6 +60,7 @@ class CryptoConfig:
 
         Returns:
             加载成功返回True
+
         """
         try:
             if self.config_file is None:
@@ -78,6 +80,7 @@ class CryptoConfig:
 
         Returns:
             保存成功返回True
+
         """
         if not self.config_file:
             return False
@@ -104,6 +107,7 @@ class CryptoConfig:
 
         Returns:
             配置值
+
         """
         return self.config.get(key, default)
 
@@ -116,6 +120,7 @@ class CryptoConfig:
 
         Returns:
             设置成功返回True
+
         """
         self.config[key] = value
         return True
@@ -125,6 +130,7 @@ class CryptoConfig:
 
         Returns:
             CryptoBackendType枚举值
+
         """
         backend_str = self.config.get("backend", "auto")
         try:
@@ -140,6 +146,7 @@ class CryptoConfig:
 
         Returns:
             设置成功返回True
+
         """
         self.config["backend"] = backend_type.value
         return True
@@ -149,6 +156,7 @@ class CryptoConfig:
 
         Returns:
             应用成功返回True
+
         """
         from ..core.crypto_backend import BackendType, crypto_manager
 
@@ -191,6 +199,7 @@ class CryptoConfig:
 
         Returns:
             True if GPU可用，False otherwise
+
         """
         from ..gpu.device import GPUDeviceDetector
 
@@ -203,6 +212,7 @@ class CryptoConfig:
             可用GPU设备信息列表，每个设备是一个字典
             格式: [{"name": str, "type": str, "platform": str, ...}, ...]
             如果无可用设备或pyopencl不可用，返回空列表
+
         """
         from ..gpu.config import GPUConfig
 
@@ -220,6 +230,7 @@ class CryptoConfig:
 
         Raises:
             RuntimeError: 当GPU不可用时
+
         """
         from ..collision.gpu.engine import GPUCollisionEngine
 
@@ -237,6 +248,7 @@ class CryptoConfig:
 
         Returns:
             GPU配置字典
+
         """
         # 如果有ConfigManager,从它获取GPU配置
         if self.config_manager:
@@ -274,6 +286,7 @@ class CryptoConfig:
 
         Returns:
             设置成功返回True
+
         """
         if use_gpu is not None:
             self.config["use_gpu"] = use_gpu
@@ -288,6 +301,7 @@ class CryptoConfig:
 
         Returns:
             错误信息列表，空列表表示验证通过
+
         """
         errors = []
 
@@ -322,6 +336,7 @@ class CryptoConfig:
 
         Returns:
             配置字典
+
         """
         return self.config.copy()
 
@@ -339,6 +354,7 @@ def get_crypto_config(config_file: str | None = None) -> CryptoConfig:
 
     Returns:
         CryptoConfig实例
+
     """
     if config_file is None:
         # 使用默认配置文件路径
@@ -357,6 +373,7 @@ def init_crypto_from_config(config_file: str | None = None) -> CryptoConfig:
 
     Returns:
         CryptoConfig实例
+
     """
     config = get_crypto_config(config_file)
     config.apply_to_crypto_manager()

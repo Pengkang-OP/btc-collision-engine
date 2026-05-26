@@ -9,6 +9,11 @@
 
 ### Changed
 
+- **ROADMAP #15 启用 pydocstyle Google convention 强制校验**:
+  - 在 `[tool.ruff.lint]` select 中添加 `"D"` 规则
+  - 取消注释 `[tool.ruff.lint.pydocstyle]` 的 `convention = "google"`
+  - 添加 `"**/*.py" = ["D"]` per-file-ignores 豁免现有代码（16434 个违规暂缓）
+  - 更新 ROADMAP 描述，标明增量收紧策略（按文件移除 D 豁免项）
 - **ROADMAP #29 Web API 版本前缀 + 速率限制**:
   - `src/web/dashboard.py` 添加 `API_PREFIX = "/api/v1"` 常量
   - 添加滑动窗口 `rate_limit` 装饰器（120 次/分钟，基于客户端 IP + 端点）

@@ -341,6 +341,7 @@ class DataStorage:
             sample_rate: 采样率，0.1表示保留10%的数据（默认0.1）
 
         自 v4.3.1: 压缩文件同样使用 JSONL 格式，与主历史数据文件保持一致。
+
         """
         try:
             from datetime import datetime, timedelta
@@ -427,6 +428,7 @@ class DataStorage:
 
         Returns:
             采样后的数据列表
+
         """
         if not data or sample_rate >= 1.0:
             return data

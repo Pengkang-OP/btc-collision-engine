@@ -71,7 +71,6 @@ class TestDataFlow:
 
     def test_data_flow_address_generation(self, mock_event_bus):
         """数据流测试：私钥 → 地址"""
-
         from src.core.optimized_address_generator import OptimizedP2PKHAddressGenerator
 
         # 数据流：私钥 → 公钥 → 地址
@@ -104,7 +103,6 @@ class TestDataFlow:
 
     def test_data_flow_collision_detection(self, mock_event_bus):
         """数据流测试：地址 → 碰撞检测"""
-
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 数据流：地址 → 目标哈希 → 碰撞检测
@@ -140,7 +138,6 @@ class TestDataPipeline:
 
     def test_pipeline_checkpoint_save(self, temp_dir):
         """数据管道测试：Checkpoint 保存"""
-
         from src.collision.checkpoint_manager import CheckpointManager
 
         # 数据管道：保存 Checkpoint
@@ -167,7 +164,6 @@ class TestDataPipeline:
 
     def test_pipeline_checkpoint_load(self, temp_dir):
         """数据管道测试：Checkpoint 加载"""
-
         from src.collision.checkpoint_manager import CheckpointManager
 
         # 数据管道：加载 Checkpoint
@@ -197,7 +193,6 @@ class TestDataPipeline:
 
     def test_pipeline_checkpoint_recovery(self, temp_dir):
         """数据管道测试：Checkpoint 恢复"""
-
         from src.collision.checkpoint_manager import CheckpointManager
 
         # 数据管道：恢复 Checkpoint
@@ -223,7 +218,6 @@ class TestDataPipeline:
 
     def test_pipeline_checkpoint_corrupted(self, temp_dir):
         """数据管道测试：损坏的 Checkpoint"""
-
         from src.collision.checkpoint_manager import CheckpointManager
 
         # 数据管道：损坏的 Checkpoint
@@ -260,7 +254,6 @@ class TestDataTypes:
 
     def test_data_type_private_key(self):
         """数据类型测试：私钥（bytes）"""
-
         # 数据类型：私钥
         private_key = os.urandom(32)
 
@@ -280,7 +273,6 @@ class TestDataTypes:
 
     def test_data_type_public_key(self):
         """数据类型测试：公钥（bytes）"""
-
         from src.core.crypto_backend import CryptoBackendManager
 
         # 数据类型：公钥
@@ -313,7 +305,6 @@ class TestDataTypes:
 
     def test_data_type_address(self):
         """数据类型测试：地址（str）"""
-
         from src.core.optimized_address_generator import OptimizedP2PKHAddressGenerator
 
         # 数据类型：地址
@@ -338,7 +329,6 @@ class TestDataTypes:
 
     def test_data_type_hash160(self):
         """数据类型测试：Hash160（bytes）"""
-
         from src.core.hash_utils import HashUtils
 
         # 数据类型：Hash160
@@ -370,7 +360,6 @@ class TestDataInvocation:
 
     def test_invocation_backend(self, mock_crypto_backend):
         """数据调用测试：后端调用接口"""
-
         from src.core.crypto_backend import CryptoBackendManager
 
         # 数据调用：后端调用
@@ -389,7 +378,6 @@ class TestDataInvocation:
 
     def test_invocation_checkpoint(self, temp_dir):
         """数据调用测试：检查点调用接口"""
-
         from src.collision.checkpoint_manager import CheckpointManager
 
         # 数据调用：检查点调用
@@ -425,7 +413,6 @@ class TestDataLayerEdgeCases:
 
     def test_edge_case_empty_private_key(self):
         """边界条件测试：空私钥"""
-
         # 边界条件：空私钥
         empty_private_key = b""
 
@@ -437,7 +424,6 @@ class TestDataLayerEdgeCases:
 
     def test_edge_case_zero_private_key(self):
         """边界条件测试：零私钥"""
-
         # 边界条件：零私钥
         zero_private_key = b"\x00" * 32
 
@@ -453,7 +439,6 @@ class TestDataLayerEdgeCases:
 
     def test_edge_case_max_private_key(self):
         """边界条件测试：最大私钥"""
-
         from src.core.secp256k1 import Secp256k1
 
         # 边界条件：最大私钥（n-1）
@@ -468,7 +453,6 @@ class TestDataLayerEdgeCases:
 
     def test_edge_case_invalid_checkpoint(self, temp_dir):
         """边界条件测试：无效 Checkpoint"""
-
         from src.collision.checkpoint_manager import CheckpointManager
 
         # 边界条件：无效 Checkpoint

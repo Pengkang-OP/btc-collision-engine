@@ -8,12 +8,13 @@ Provides systematic performance monitoring including:
 """
 
 import logging
-from .logging_config import get_configured_logger
 import threading
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
+
+from .logging_config import get_configured_logger
 
 logger = get_configured_logger(__name__)
 
@@ -223,12 +224,13 @@ class EnhancedPerformanceMonitor:
         2. 异常继续传播到外层
         3. 外层监控也会记录为FAILED
 
-        Example:
+    Example:
             with EnhancedPerformanceMonitor(logger, "外层操作", level="INFO"):
                 with EnhancedPerformanceMonitor(logger, "内层操作", level="DEBUG"):
                     do_something()  # 如果这里抛出异常
                 # 内层记录: [Performance] 内层操作: FAILED after Xms
             # 外层记录: [Performance] 外层操作: FAILED after Yms
+
     """
 
     def __init__(

@@ -1,12 +1,13 @@
 """Enhanced monitoring with advanced metrics tracking."""
 
-from ..utils import get_configured_logger
 import threading
 from contextlib import suppress
 from typing import Any
 
 from src.monitoring.data_logger import DataLogger
 from src.monitoring.monitor_config import MonitorConfig
+
+from ..utils import get_configured_logger
 
 logger = get_configured_logger(__name__)
 

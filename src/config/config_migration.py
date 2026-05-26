@@ -5,10 +5,11 @@ automatically backing up the original file.
 """
 
 import json
-from ..utils import get_configured_logger
 import shutil
 from datetime import datetime
 from pathlib import Path
+
+from ..utils import get_configured_logger
 
 logger = get_configured_logger(__name__)
 
@@ -21,6 +22,7 @@ def migrate_config_file(config_path: str | None = None) -> bool:
 
     Returns:
         True if migration was performed, False if already up to date.
+
     """
     if config_path is None:
         config_path = str(Path(__file__).parent.parent.parent / "config.json")

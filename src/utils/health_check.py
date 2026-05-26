@@ -19,13 +19,14 @@ Extended checks:
 
 import importlib
 import json
-from .logging_config import get_configured_logger
 import os
 import pathlib
 import shutil
 import socket
 import sys
 from contextlib import suppress
+
+from .logging_config import get_configured_logger
 
 logger = get_configured_logger(__name__)
 
@@ -52,6 +53,7 @@ class HealthChecker:
 
         Args:
             project_root: 项目根目录路径
+
         """
         self.project_root = project_root or os.path.dirname(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
@@ -113,6 +115,7 @@ class HealthChecker:
 
         Args:
             min_mb: 最小可用空间要求（MB）
+
         """
         try:
             total, used, free = shutil.disk_usage(self.project_root)
@@ -387,6 +390,7 @@ class HealthChecker:
 
         Returns:
             检查结果字典 {检查项: (是否通过, 详细信息)}
+
         """
         print("=" * 70)
         print("BTC碰撞引擎 - 系统健康检查")

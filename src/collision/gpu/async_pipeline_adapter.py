@@ -8,10 +8,10 @@
 """
 
 import hashlib
-from ...utils import get_configured_logger
 import time
 from typing import Any, cast
 
+from ...utils import get_configured_logger
 from .protocols import GPUKernel, IAsyncExecutionPipeline, MatchResult
 
 logger = get_configured_logger(__name__)

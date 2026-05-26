@@ -14,6 +14,7 @@ Example:
 
     # 启用断点续传和去重，运行60秒
     python key_collision_cli.py -t 1A1z... -m random --checkpoint --dedup --duration 60
+
 """
 
 import os

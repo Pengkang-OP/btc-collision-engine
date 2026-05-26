@@ -1,5 +1,6 @@
 """启动菜单主入口 — main() 函数和 __main__ 守卫。"""
 import sys
+
 from src.start_menu._i18n import _t
 from src.start_menu._ui import (
     _run_cli,

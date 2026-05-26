@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-OpenCL内核完整验证测试
+"""OpenCL内核完整验证测试
 测试GPU内核的所有关键功能
 """
 

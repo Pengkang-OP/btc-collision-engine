@@ -602,6 +602,7 @@ class GPUKernel(GPUKernelProtocol):
 
         Returns:
             bool: 是否成功加载缓存
+
         """
         import pyopencl as cl
 

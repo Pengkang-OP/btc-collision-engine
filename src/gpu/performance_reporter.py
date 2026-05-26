@@ -4,9 +4,10 @@
 汇总 GPU 运行性能指标，生成结构化性能报告。
 """
 
-from ..utils import get_configured_logger
 import time
 from typing import Any
+
+from ..utils import get_configured_logger
 
 logger = get_configured_logger(__name__)
 
@@ -40,6 +41,7 @@ class PerformanceReportGenerator:
                 - elapsed_ms: 耗时（毫秒）
                 - memory_used_mb: 显存使用量 (MB)
                 - batch_id: 批次编号
+
         """
         if self._running:
             self._metrics.append(
@@ -59,6 +61,7 @@ class PerformanceReportGenerator:
             - avg_keys_per_sec: 平均速度
             - peak_memory_mb: 峰值显存 (MB)
             - sample_count: 数据点数量
+
         """
         self._running = False
         elapsed = time.perf_counter() - self._start_time

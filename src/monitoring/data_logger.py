@@ -23,11 +23,11 @@ from typing import Any
 
 from src.log_engine.log_rotator import LogRotator
 from src.monitoring.storage_config import DataStorageConfig
-from src.utils.logging_config import LOG_DEFAULT_MAX_BYTES
 
 # 导入现有日志系统
 from src.utils import get_configured_logger
 from src.utils.fast_json import fast_dump, fast_load, fast_loads
+from src.utils.logging_config import LOG_DEFAULT_MAX_BYTES
 
 
 class DataLogger:
@@ -1362,6 +1362,7 @@ class DataLogger:
 
         Returns:
             (enabled: bool, max_age_days: int) 元组，读取失败时返回默认值 (True, 7)
+
         """
         # 默认值（向后兼容）
         default_enabled = True

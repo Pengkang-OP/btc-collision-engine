@@ -64,7 +64,6 @@ class TestCryptoBackendWhiteBox:
         - 后端名称正确返回
         - 后端可用性正确检测
         """
-
         # 白盒验证：模拟后端可用性
         if backend_type == "pure_python":
             # Pure Python 后端始终可用
@@ -83,7 +82,6 @@ class TestCryptoBackendWhiteBox:
         - 可用后端正确识别
         - 不可用后端正确标记
         """
-
         # 白盒验证：后端可用性检测逻辑
         if backend_type == "pure_python":
             backend = PurePythonBackend()
@@ -110,7 +108,6 @@ class TestCryptoBackendWhiteBox:
         - 降级路径覆盖所有后端
         - 所有后端都不可用时正确处理
         """
-
         # CryptoBackendManager 是单例，autouse fixture 已设置了 _current_backend 为 Mock
         # 先重置 _current_backend 使 _select_best_backend 可以正常选择
         manager = CryptoBackendManager()
@@ -137,7 +134,6 @@ class TestCryptoBackendWhiteBox:
         - 锁保护应防止竞态条件
         - 后端状态应一致
         """
-
         # 白盒验证：线程安全逻辑
         manager = CryptoBackendManager()
         backend = PurePythonBackend()
@@ -197,7 +193,6 @@ class TestCryptoBackendBlackBox:
         - 压缩格式公钥长度为 33 字节
         - 非压缩格式公钥长度为 65 字节
         """
-
         manager = CryptoBackendManager()
 
         # 使用 monkeypatch 让 manager 使用 mock 后端
@@ -248,7 +243,6 @@ class TestCryptoBackendBlackBox:
         - 私钥为 n 时抛出异常或返回 None
         - 私钥非 32 字节时抛出异常
         """
-
         manager = CryptoBackendManager()
 
         # 无效私钥：0
@@ -283,7 +277,6 @@ class TestCryptoBackendBlackBox:
         - 有效输入返回有效点坐标
         - 返回值为元组 (rx, ry)
         """
-
         manager = CryptoBackendManager()
         monkeypatch.setattr(manager, "_current_backend", mock_crypto_backend)
 
@@ -314,7 +307,6 @@ class TestCryptoBackendBlackBox:
         - coincurve 后端应返回 True（恒定时间）
         - Pure Python 后端可能返回 False（解释器级别不保证）
         """
-
         # 黑盒验证：is_constant_time 功能
         manager = CryptoBackendManager()
 
@@ -351,7 +343,6 @@ class TestCryptoBackendFunctionalLayer:
         - 不同私钥生成不同公钥
         - 压缩和非压缩格式生成不同公钥
         """
-
         manager = CryptoBackendManager()
 
         # 功能正确性：相同私钥生成相同公钥
@@ -391,7 +382,6 @@ class TestCryptoBackendFunctionalLayer:
         - get_current_backend() 返回当前后端
         - 切换后端后功能正常
         """
-
         manager = CryptoBackendManager()
 
         # 功能判断：后端切换
@@ -461,7 +451,6 @@ class TestCryptoBackendLogicLayer:
         - 高优先级后端可用时选择高优先级后端
         - 高优先级后端不可用时降级到低优先级后端
         """
-
         manager = CryptoBackendManager()
 
         # 逻辑判断：后端选择优先级
@@ -489,7 +478,6 @@ class TestCryptoBackendLogicLayer:
         - 无效输入时的错误处理
         - 异常情况下的错误恢复
         """
-
         manager = CryptoBackendManager()
 
         # 逻辑正确性：后端不可用时的错误处理
@@ -514,7 +502,6 @@ class TestCryptoBackendLogicLayer:
         - 锁保护应防止竞态条件
         - 后端状态应一致
         """
-
         manager = CryptoBackendManager()
 
         # 逻辑判断：并发安全性
@@ -573,7 +560,6 @@ class TestCryptoBackendDataLayer:
         - 公钥数据为 33 或 65 字节 bytes
         - 标量乘法结果为 (int, int) 元组
         """
-
         manager = CryptoBackendManager()
 
         # 数据：私钥格式
@@ -603,7 +589,6 @@ class TestCryptoBackendDataLayer:
         - 数据流各阶段数据格式正确
         - 数据无损坏或丢失
         """
-
         manager = CryptoBackendManager()
 
         # 数据流：输入 → 处理 → 输出
@@ -637,7 +622,6 @@ class TestCryptoBackendDataLayer:
         - 公钥 bytes → 坐标 (int, int) 转换正确
         - 标量乘法 int 输入正确
         """
-
         manager = CryptoBackendManager()
 
         # 数据类型转换：bytes → int
@@ -677,7 +661,6 @@ class TestCryptoBackendDataLayer:
         - 后端调用参数正确传递
         - 后端调用结果正确返回
         """
-
         manager = CryptoBackendManager()
 
         # 数据调用：后端调用接口
@@ -725,7 +708,6 @@ class TestCryptoBackendMultiBackend:
         - 所有后端都能成功初始化
         - 初始化后后端状态正确
         """
-
         # 多后端验证：后端初始化
         if backend_type == "pure_python":
             backend = PurePythonBackend()
@@ -752,7 +734,6 @@ class TestCryptoBackendMultiBackend:
         - 所有后端都能生成公钥
         - 生成的公钥格式正确
         """
-
         # 创建后端实例
         backend_map = {
             "pure_python": PurePythonBackend,
@@ -792,7 +773,6 @@ class TestCryptoBackendMultiBackend:
         - coincurve 后端应返回 True（恒定时间）
         - 其他后端可能返回 False（解释器级别不保证）
         """
-
         # 创建后端实例
         backend_map = {
             "pure_python": PurePythonBackend,
@@ -827,7 +807,6 @@ class TestCryptoBackendEdgeCases:
 
     def test_edge_case_private_key_zero(self, mock_crypto_backend):
         """边界条件测试：私钥为 0"""
-
         manager = CryptoBackendManager()
 
         # 边界条件：私钥为 0

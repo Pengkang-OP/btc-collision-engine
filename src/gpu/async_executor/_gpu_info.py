@@ -21,6 +21,7 @@ class _GPUInfoMixin:
 
     Note:
         Mixin 方法通过 self 访问 AsyncGPUExecutor 实例属性。
+
     """
 
     def _detect_gpu_model(self) -> str:

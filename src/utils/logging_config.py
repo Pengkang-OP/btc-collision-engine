@@ -101,6 +101,7 @@ class LoggingConfig:
 
         Args:
             config: 自定义配置字典，None则使用默认配置
+
         """
         if self._initialized:
             # 添加警告日志，提示调用者日志系统已初始化
@@ -418,6 +419,7 @@ class LoggingConfig:
 
         Returns:
             配置好的日志记录器
+
         """
         if not self._initialized:
             self.init()
@@ -434,6 +436,7 @@ def init_logging(config: dict[str, Any] | None = None) -> None:
 
     Args:
         config: 自定义配置字典
+
     """
     logging_config.init(config)
 
@@ -533,5 +536,6 @@ def get_configured_logger(name: str) -> logging.Logger:
 
     Returns:
         配置好的日志记录器
+
     """
     return logging_config.get_logger(name)

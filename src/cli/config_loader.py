@@ -48,6 +48,7 @@ class ConfigLoader:
 
         Returns:
             Configuration dictionary
+
         """
         path = Path(filepath)
         if not path.exists():

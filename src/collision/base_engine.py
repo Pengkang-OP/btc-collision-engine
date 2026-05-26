@@ -49,6 +49,7 @@ class BaseCollisionEngine(ABC):
 
         Returns:
             Engine-specific statistics object (e.g. CollisionStats).
+
         """
 
     def is_running(self) -> bool:

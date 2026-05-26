@@ -44,7 +44,6 @@ class TestKeyCollisionEngineLifecycle:
 
     def test_lifecycle_initialization(self, mock_event_bus):
         """生命周期测试：初始化阶段"""
-
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 生命周期：初始化阶段
@@ -57,7 +56,6 @@ class TestKeyCollisionEngineLifecycle:
 
     def test_lifecycle_running(self, mock_event_bus):
         """生命周期测试：运行阶段"""
-
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 生命周期：运行阶段
@@ -87,7 +85,6 @@ class TestKeyCollisionEngineLifecycle:
 
     def test_lifecycle_stopping(self, mock_event_bus):
         """生命周期测试：停止阶段"""
-
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 生命周期：停止阶段
@@ -110,7 +107,6 @@ class TestKeyCollisionEngineLifecycle:
 
     def test_lifecycle_cleanup(self, mock_event_bus):
         """生命周期测试：清理阶段"""
-
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 生命周期：清理阶段
@@ -130,7 +126,6 @@ class TestKeyCollisionEngineLifecycle:
 
     def test_lifecycle_error_recovery(self, mock_event_bus):
         """生命周期测试：错误恢复"""
-
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 生命周期：错误恢复
@@ -169,7 +164,6 @@ class TestCryptoBackendManagerLifecycle:
 
     def test_lifecycle_initialization(self, monkeypatch):
         """生命周期测试：初始化阶段"""
-
         from src.core.crypto_backend import CryptoBackendManager
 
         # 生命周期：初始化阶段
@@ -183,7 +177,6 @@ class TestCryptoBackendManagerLifecycle:
 
     def test_lifecycle_backend_selection(self, monkeypatch):
         """生命周期测试：后端选择阶段"""
-
         from src.core.crypto_backend import CryptoBackendManager
 
         # 生命周期：后端选择阶段
@@ -198,7 +191,6 @@ class TestCryptoBackendManagerLifecycle:
 
     def test_lifecycle_backend_switching(self, monkeypatch):
         """生命周期测试：后端切换阶段"""
-
         from src.core.crypto_backend import CryptoBackendManager
 
         # 生命周期：后端切换阶段
@@ -212,7 +204,6 @@ class TestCryptoBackendManagerLifecycle:
 
     def test_lifecycle_cleanup(self, monkeypatch):
         """生命周期测试：清理阶段"""
-
         from src.core.crypto_backend import CryptoBackendManager
 
         # 生命周期：清理阶段
@@ -244,7 +235,6 @@ class TestAsyncGPUExecutorLifecycle:
 
     def test_lifecycle_initialization(self, mock_gpu_chain):
         """生命周期测试：初始化阶段"""
-
         from src.gpu.async_executor import AsyncGPUExecutor
 
         # 生命周期：初始化阶段
@@ -261,7 +251,6 @@ class TestAsyncGPUExecutorLifecycle:
 
     def test_lifecycle_starting(self, mock_gpu_chain):
         """生命周期测试：启动阶段"""
-
         from src.gpu.async_executor import AsyncGPUExecutor
 
         # 生命周期：启动阶段
@@ -284,7 +273,6 @@ class TestAsyncGPUExecutorLifecycle:
 
     def test_lifecycle_executing(self, mock_gpu_chain):
         """生命周期测试：执行阶段"""
-
         from src.gpu.async_executor import AsyncGPUExecutor
 
         # 生命周期：执行阶段
@@ -309,7 +297,6 @@ class TestAsyncGPUExecutorLifecycle:
 
     def test_lifecycle_stopping(self, mock_gpu_chain):
         """生命周期测试：停止阶段"""
-
         from src.gpu.async_executor import AsyncGPUExecutor
 
         # 生命周期：停止阶段
@@ -333,7 +320,6 @@ class TestAsyncGPUExecutorLifecycle:
 
     def test_lifecycle_cleanup(self, mock_gpu_chain):
         """生命周期测试：清理阶段"""
-
         from src.gpu.async_executor import AsyncGPUExecutor
 
         # 生命周期：清理阶段
@@ -370,7 +356,6 @@ class TestCheckpointManagerLifecycle:
 
     def test_lifecycle_initialization(self, temp_dir):
         """生命周期测试：初始化阶段"""
-
         from src.collision.checkpoint_manager import CheckpointManager
 
         # 生命周期：初始化阶段
@@ -383,7 +368,6 @@ class TestCheckpointManagerLifecycle:
 
     def test_lifecycle_saving(self, temp_dir):
         """生命周期测试：保存阶段"""
-
         from src.collision.checkpoint_manager import CheckpointManager
 
         # 生命周期：保存阶段
@@ -400,7 +384,6 @@ class TestCheckpointManagerLifecycle:
 
     def test_lifecycle_loading(self, temp_dir):
         """生命周期测试：加载阶段"""
-
         from src.collision.checkpoint_manager import CheckpointManager
 
         # 生命周期：加载阶段
@@ -423,7 +406,6 @@ class TestCheckpointManagerLifecycle:
 
     def test_lifecycle_deleting(self, temp_dir):
         """生命周期测试：删除阶段"""
-
         from src.collision.checkpoint_manager import CheckpointManager
 
         # 生命周期：删除阶段
@@ -443,7 +425,6 @@ class TestCheckpointManagerLifecycle:
 
     def test_lifecycle_cleanup(self, temp_dir):
         """生命周期测试：清理阶段"""
-
         from src.collision.checkpoint_manager import CheckpointManager
 
         # 生命周期：清理阶段
@@ -474,7 +455,6 @@ class TestDeduplicationFilterLifecycle:
 
     def test_lifecycle_initialization(self):
         """生命周期测试：初始化阶段"""
-
         from src.collision.deduplication_filter import DeduplicationFilter
 
         # 生命周期：初始化阶段
@@ -486,7 +466,6 @@ class TestDeduplicationFilterLifecycle:
 
     def test_lifecycle_adding(self):
         """生命周期测试：添加阶段"""
-
         from src.collision.deduplication_filter import DeduplicationFilter
 
         # 生命周期：添加阶段
@@ -502,7 +481,6 @@ class TestDeduplicationFilterLifecycle:
 
     def test_lifecycle_checking(self):
         """生命周期测试：检查阶段"""
-
         from src.collision.deduplication_filter import DeduplicationFilter
 
         # 生命周期：检查阶段
@@ -520,7 +498,6 @@ class TestDeduplicationFilterLifecycle:
 
     def test_lifecycle_resetting(self):
         """生命周期测试：重置阶段"""
-
         from src.collision.deduplication_filter import DeduplicationFilter
 
         # 生命周期：重置阶段
@@ -538,7 +515,6 @@ class TestDeduplicationFilterLifecycle:
 
     def test_lifecycle_cleanup(self):
         """生命周期测试：清理阶段"""
-
         from src.collision.deduplication_filter import DeduplicationFilter
 
         # 生命周期：清理阶段
@@ -570,7 +546,6 @@ class TestEventBusLifecycle:
 
     def test_lifecycle_initialization(self):
         """生命周期测试：初始化阶段"""
-
         from src.collision.event_bus import EventBus
 
         # 生命周期：初始化阶段
@@ -581,7 +556,6 @@ class TestEventBusLifecycle:
 
     def test_lifecycle_subscribing(self):
         """生命周期测试：订阅阶段"""
-
         from src.collision.event_bus import EventBus
 
         # 生命周期：订阅阶段
@@ -606,7 +580,6 @@ class TestEventBusLifecycle:
 
     def test_lifecycle_publishing(self):
         """生命周期测试：发布阶段"""
-
         from src.collision.event_bus import EventBus
 
         # 生命周期：发布阶段
@@ -634,7 +607,6 @@ class TestEventBusLifecycle:
 
     def test_lifecycle_unsubscribing(self):
         """生命周期测试：取消订阅阶段"""
-
         from src.collision.event_bus import EventBus
 
         # 生命周期：取消订阅阶段
@@ -661,7 +633,6 @@ class TestEventBusLifecycle:
 
     def test_lifecycle_cleanup(self):
         """生命周期测试：清理阶段"""
-
         from src.collision.event_bus import EventBus
 
         # 生命周期：清理阶段

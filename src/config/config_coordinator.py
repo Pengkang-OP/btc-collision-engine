@@ -3,10 +3,10 @@
 提供统一的配置访问接口,协调ConfigManager、CryptoConfig和GPUConfig之间的配置同步。
 """
 
-from ..utils import get_configured_logger
 import threading
 from typing import Any
 
+from ..utils import get_configured_logger
 from .config_manager import ConfigManager
 from .crypto_config import CryptoConfig
 
@@ -28,6 +28,7 @@ class ConfigCoordinator:
 
         Args:
             config_file: 配置文件路径
+
         """
         # W13修复: 添加实例级锁，避免多线程访问时的竞态条件
         self._sync_lock = threading.Lock()
@@ -112,6 +113,7 @@ class ConfigCoordinator:
 
         Returns:
             包含所有配置的统一字典
+
         """
         # S1修复: 使用锁保护读取操作，防止多线程并发访问导致的数据不一致
         with self._sync_lock:
@@ -131,6 +133,7 @@ class ConfigCoordinator:
 
         Returns:
             配置值
+
         """
         # S1修复: 使用锁保护读取操作
         with self._sync_lock:
@@ -154,6 +157,7 @@ class ConfigCoordinator:
 
         Returns:
             设置成功返回True
+
         """
         # S1修复: 使用锁保护写入操作
         with self._sync_lock:
@@ -167,6 +171,7 @@ class ConfigCoordinator:
 
         Returns:
             验证错误字典,key为配置管理器名称,value为错误列表
+
         """
         errors: dict[str, Any] = {}
 
@@ -192,6 +197,7 @@ class ConfigCoordinator:
 
         Returns:
             保存成功返回True
+
         """
         success = True
 

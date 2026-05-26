@@ -18,8 +18,6 @@ interactively guides the user through:
 import json
 import os
 import re
-
-from .logging_config import LOG_DEFAULT_MAX_BYTES
 import shutil
 import sys
 from contextlib import suppress
@@ -27,6 +25,7 @@ from pathlib import Path
 from typing import Any
 
 from ..utils import get_configured_logger
+from .logging_config import LOG_DEFAULT_MAX_BYTES
 
 logger = get_configured_logger("FirstRunWizard")
 

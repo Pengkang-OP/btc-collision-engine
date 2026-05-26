@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-GPU停止阻塞修复 - 异常处理专项测试
+"""GPU停止阻塞修复 - 异常处理专项测试
 
 测试目标:
 1. 验证command_execution_status查询的异常处理

@@ -18,6 +18,7 @@ class CollisionError(Exception):
         error_code: Integer error code
         context: Error context dictionary
         original_error: Original exception (if any)
+
     """
 
     # Error code definitions
@@ -45,6 +46,7 @@ class CollisionError(Exception):
             error_code: Error code, defaults to UNKNOWN_ERROR
             context: Error context dictionary
             original_error: Original exception that caused this error
+
         """
         self.message = message
         self.error_code = error_code if error_code is not None else self.UNKNOWN_ERROR
@@ -68,6 +70,7 @@ class CollisionError(Exception):
 
         Returns:
             Dictionary containing exception information
+
         """
         result: dict[str, Any] = {
             "error_code": self.error_code,

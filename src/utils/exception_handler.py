@@ -41,6 +41,7 @@ class ExceptionHandler:
             error: 捕获的异常
             stats: 统计对象(可选),用于记录错误
             context: 错误发生的上下文描述
+
         """
         error_type = type(error).__name__
         error_msg = str(error)
@@ -107,6 +108,7 @@ class ExceptionHandler:
 
         Returns:
             bool: 是否应该继续执行(总是返回True)
+
         """
         if isinstance(error, (RuntimeError, ValueError)):
             # OpenCL运行时错误或数据验证错误
@@ -175,6 +177,7 @@ class ExceptionHandler:
 
         Returns:
             bool: True=应回退到同步模式, False=应向上传播
+
         """
         error_type = type(error).__name__
 
@@ -218,6 +221,7 @@ class ExceptionHandler:
 
         Returns:
             bool: True=资源耗尽(应降批/释放), False=其他错误
+
         """
         error_msg = str(error).lower()
         resource_keywords = [
@@ -252,6 +256,7 @@ class ExceptionHandler:
         Args:
             error: 捕获的异常
             resource_name: 资源名称("seed_buffer"/"precomp_buffer"/"compute_queue")
+
         """
         if isinstance(error, RuntimeError):
             logger.warning("GPU清理%sOpenCL错误: %s", resource_name, error)
@@ -267,6 +272,7 @@ class ExceptionHandler:
         Args:
             error: 捕获的异常
             config_type: 配置类型("ConfigManager"/"CryptoConfig"/"GPUConfig")
+
         """
         if isinstance(error, (FileNotFoundError, OSError)):
             logger.warning("%s配置文件不存在或无法读取: %s", config_type, error)
@@ -285,6 +291,7 @@ class ExceptionHandler:
             error: 捕获的异常
             operation: 操作类型("读取"/"写入"/"删除")
             filepath: 文件路径
+
         """
         if isinstance(error, FileNotFoundError):
             logger.error("文件不存在(%s): %s", operation, filepath)

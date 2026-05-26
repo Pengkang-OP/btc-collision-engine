@@ -4,22 +4,21 @@ import shutil
 import subprocess
 from pathlib import Path
 
+from src.start_menu._i18n import _t
 from src.start_menu._shared import (
     _HAS_RICH,
     _PROJECT_ROOT,
     _PYTHON_EXE,
+    _console,
     _RichPanel,
     _RichText,
-    _console,
 )
-from src.start_menu._i18n import _t
 from src.start_menu._utils import (
     _clear_screen,
     _collect_dynamic_stats,
     _term_width,
     _wait_key,
 )
-
 
 # ── 子菜单 Rich 渲染 ────────────────────────────────────────────
 

@@ -19,11 +19,12 @@
 - start/stop/pause等状态修改操作使用线程锁保护
 """
 
-from ...utils import get_configured_logger
 import threading
 import time
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, Optional
+
+from ...utils import get_configured_logger
 
 # 统一回调类型别名
 from ..types import MatchCallback, ProgressCallback

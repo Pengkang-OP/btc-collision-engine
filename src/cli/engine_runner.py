@@ -21,6 +21,7 @@ def _mask_private_key(key: str, mode: str = "masked") -> str:
 
     Returns:
         脱敏后的私钥字符串
+
     """
     if not key:
         return "(空)"
@@ -43,6 +44,7 @@ def _compute_range(args: Any) -> tuple:
 
     Returns:
         (start_val, end_val, total_range)
+
     """
     mode = getattr(args, "mode", "random")
     if mode == "random":
@@ -112,6 +114,7 @@ def _setup_and_start_engine(
 
     Returns:
         (engine, engine_type, alert_system, stop_event)
+
     """
     use_gpu = getattr(args, "use_gpu", False) or getattr(args, "multi_gpu", False)
     is_multi_gpu = getattr(args, "multi_gpu", False)
@@ -322,6 +325,7 @@ def _format_match_detail(match: dict, sensitive_mode: str) -> str:
 
     Returns:
         格式化后的匹配详情字符串
+
     """
     addr = match.get("address", match.get("target", "N/A"))
     pk = match.get("private_key", match.get("key", ""))

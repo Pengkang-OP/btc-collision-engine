@@ -37,6 +37,7 @@ class AddressMatcher:
         >>> matcher = AddressMatcher(strategy='hash_set', targets=targets)
         >>> matcher.is_match('1A1z...')
         True
+
     """
 
     def __init__(
@@ -53,6 +54,7 @@ class AddressMatcher:
             targets: 目标地址集合
             bloom_capacity: 布隆过滤器容量(仅bloom_filter策略)
             bloom_error_rate: 布隆过滤器误判率(仅bloom_filter策略)
+
         """
         self.strategy = strategy
         # 标准化目标地址为小写，确保大小写不敏感匹配
@@ -126,6 +128,7 @@ class AddressMatcher:
 
         Returns:
             True表示匹配,False表示不匹配
+
         """
         # 输入验证
         if not isinstance(address, str):
@@ -165,6 +168,7 @@ class AddressMatcher:
 
         Args:
             address: 目标地址
+
         """
         # 输入验证
         if not isinstance(address, str):
@@ -195,6 +199,7 @@ class AddressMatcher:
 
         Args:
             addresses: 目标地址集合
+
         """
         # 输入验证和转换
         valid_addresses = set()
@@ -234,6 +239,7 @@ class AddressMatcher:
 
         Returns:
             True表示成功移除,False表示地址不存在
+
         """
         # 标准化地址为小写
         normalized_address = address.lower()
@@ -261,6 +267,7 @@ class AddressMatcher:
 
         Returns:
             包含统计信息的字典
+
         """
         with self._lock:
             stats = {

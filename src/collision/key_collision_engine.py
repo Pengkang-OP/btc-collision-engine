@@ -33,23 +33,6 @@ from ..utils import get_configured_logger
 from ..utils.exception_handler import ExceptionHandler
 from ..utils.logger import get_sampled_logger
 from ..utils.timeout import invoke_with_timeout
-from .base_engine import BaseCollisionEngine
-from .checkpoint_manager import CheckpointManager
-from .collision_stats import CollisionStats
-from .deduplication_filter import DeduplicationFilter
-
-# v4.2.1: 事件系统支持
-from .event_bus import EventBus
-from .events import (
-    EngineCompleteEvent,
-    EngineErrorEvent,
-    EngineMatchEvent,
-    EngineProgressEvent,
-    EngineStartEvent,
-    EngineStopEvent,
-)
-from .types import CompleteCallback, MatchCallback, ProgressCallback
-
 from ._engine_constants import (
     BATCH_SIZE,
     BATCH_TUNE_1_2_CORE,
@@ -69,6 +52,22 @@ from ._engine_constants import (
     PROGRESS_INTERVAL_COUNT_DEFAULT,
     PROGRESS_INTERVAL_SEC,
 )
+from .base_engine import BaseCollisionEngine
+from .checkpoint_manager import CheckpointManager
+from .collision_stats import CollisionStats
+from .deduplication_filter import DeduplicationFilter
+
+# v4.2.1: 事件系统支持
+from .event_bus import EventBus
+from .events import (
+    EngineCompleteEvent,
+    EngineErrorEvent,
+    EngineMatchEvent,
+    EngineProgressEvent,
+    EngineStartEvent,
+    EngineStopEvent,
+)
+from .types import CompleteCallback, MatchCallback, ProgressCallback
 
 # 获取模块日志记录器
 # v4.2.1修复: Python的logging.Logger本身是线程安全的，无需ThreadSafeLogger包装
@@ -438,6 +437,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         Returns:
             (private_key, address) 如果匹配，否则 None
             注意：返回的private_key是副本，调用者负责清零
+
         """
         # 使用安全密钥管理器
         with SecureKeyManager() as key_mgr:
@@ -487,6 +487,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             - 使用 CheckpointManager 的线程安全方法
             - 保存的信息包括：模式、目标、位置、已检查数、匹配结果
             - random模式不保存当前位置（因为是随机生成）
+
         """
         if self.checkpoint_mgr and self.checkpoint_mgr.should_auto_save:
             # 通过 snapshot() 获取线程安全的匹配列表快照，避免无锁迭代 self.stats.matches
@@ -527,6 +528,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         Args:
             count: 当前已检查的私钥数量
             speed: 当前检测速度（次/秒）
+
         """
         if not self.data_logging_enabled or not self.data_logger:
             return
@@ -586,6 +588,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         Args:
             memory_mb: 当前进程占用内存（MB）
             current_time: 当前时间戳
+
         """
         # 冷却期内不重复降级
         if current_time - self._last_memory_downgrade_time < self._memory_downgrade_cooldown:
@@ -684,6 +687,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
         Returns:
             bool: 是否需要检查非压缩格式
+
         """
         target_count = len(self.targets)
 
@@ -1104,6 +1108,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
         Returns:
             本线程处理的私钥总数
+
         """
         local_count = 0
         local_matches: list[tuple[bytes, str, str, bytes | None]] = []
@@ -2034,6 +2039,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         Raises:
             ValueError: 当参数无效时
             Exception: 当启动失败时
+
         """
         try:
             if self._running:
@@ -2185,6 +2191,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         Args:
             timeout: 等待工作线程结束的超时时间（秒）
                     None时使用默认值（根据目标数动态计算，最少10秒）
+
         """
         logger.info(_t("engine.stop"))
 
@@ -2222,6 +2229,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         Returns:
             True 表示引擎正在运行（已启动且工作线程存活），
             False 表示引擎已停止或未启动
+
         """
         return cast(
             "bool",
@@ -2271,6 +2279,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             返回的是原始 stats 对象的引用，外部修改会影响内部状态
             P2修复: 包含_live_range_count确保实时统计数据准确
             线程安全: 使用stats.update()确保正确的锁保护
+
         """
         if self.stats:
             with self._state_lock:

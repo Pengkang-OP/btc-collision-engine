@@ -586,7 +586,6 @@ class TestTimeoutDataLayer:
         - 超时时间数据为浮点数
         - 函数数据为可调用对象
         """
-
         # 数据：超时时间格式
         timeout_value = 1.0
         assert isinstance(timeout_value, float), "数据格式不正确：超时时间应为 float 类型"

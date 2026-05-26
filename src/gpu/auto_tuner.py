@@ -4,8 +4,9 @@
 根据设备硬件规格和基准测试结果，自动推荐最优的内核参数配置。
 """
 
-from ..utils import get_configured_logger
 from typing import Any
+
+from ..utils import get_configured_logger
 
 logger = get_configured_logger(__name__)
 
@@ -29,6 +30,7 @@ class GPUAutoTuner:
 
         Args:
             device: GPU 设备对象
+
         """
         self._device = device
         self._tuned_params: dict[str, Any] = {}
@@ -46,6 +48,7 @@ class GPUAutoTuner:
             - batch_size: 推荐批次大小
             - memory_usage_ratio: 推荐内存使用比例
             - queue_depth: 推荐命令队列深度
+
         """
         device_info = self._device.device_info if hasattr(self._device, "device_info") else {}
         vendor_name = str(device_info.get("vendor_name", device_info.get("vendor", ""))).lower()

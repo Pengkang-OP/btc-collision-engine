@@ -65,6 +65,7 @@ class GPUFacade:
             checkpoint_enabled: 是否启用断点续传（兼容参数）
             dedup_enabled: 是否启用去重（兼容参数）
             config: 配置字典，可包含 gpu_device 等键
+
         """
         self._driver_manager = None
         self._gpu_device = None
@@ -88,6 +89,7 @@ class GPUFacade:
             mode: 碰撞模式 (random/sequential)
             resume: 是否从断点恢复（兼容参数）
             max_keys: 最大检查密钥数（兼容参数）
+
         """
         if not self._is_initialized:
             device_index = 0

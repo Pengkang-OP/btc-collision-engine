@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-验证Intel Arc快速数学优化效果
+"""验证Intel Arc快速数学优化效果
 对比启用/禁用fast-math的性能差异
 """
 

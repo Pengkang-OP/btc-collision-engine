@@ -35,6 +35,7 @@ class _SyncFallbackMixin:
     Note:
         所有 cleanup 路径中的日志使用 _log_cleanup 包装，
         避免解释器关闭时日志基础设施已销毁导致 "句柄无效"。
+
     """
 
     @staticmethod
@@ -63,6 +64,7 @@ class _SyncFallbackMixin:
 
         Returns:
             [(seed, matches)] 格式，种子随匹配绑定，与异步路径一致。
+
         """
         import pyopencl as cl
 

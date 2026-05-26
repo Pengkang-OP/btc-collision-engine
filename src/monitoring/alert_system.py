@@ -5,7 +5,6 @@ anomaly alerting.
 支持多种告警规则和通知方式。
 """
 
-from ..utils import get_configured_logger
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -15,6 +14,8 @@ from pathlib import Path
 from typing import Any, cast
 
 from src.utils.fast_json import fast_dump, fast_load
+
+from ..utils import get_configured_logger
 
 logger = get_configured_logger(__name__)
 

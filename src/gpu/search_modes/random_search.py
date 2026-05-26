@@ -442,6 +442,7 @@ class RandomSearchMode(BaseSearchMode):
         Returns:
             (batch_results, execution_time_ms)
             batch_results: list of (seed, matches) pairs from previously collected batches
+
         """
         batch_results: list[tuple[bytes, list[dict]]]
         batch_results, execution_time_ms = engine._async_executor.run_batch_async(

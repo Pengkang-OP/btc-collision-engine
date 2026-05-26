@@ -46,6 +46,7 @@ def validate_bitcoin_address(address: str) -> bool:
 
     Returns:
         bool: 地址格式是否有效
+
     """
     if not address or not isinstance(address, str):
         return False
@@ -71,6 +72,7 @@ class AddressStorage:
         >>> storage = AddressStorage(storage_type='json', path='targets_data')
         >>> storage.save_targets({'1A1z...', '1B2x...'}, metadata={'name': 'test'})
         >>> targets, metadata = storage.load_targets()
+
     """
 
     def __init__(self, storage_type: str = "json", path: str = "targets_data") -> None:
@@ -79,6 +81,7 @@ class AddressStorage:
         Args:
             storage_type: 存储类型,可选 'json', 'sqlite', 'csv'
             path: 存储路径(文件路径或目录路径)
+
         """
         self.storage_type = storage_type
         self.path = path
@@ -397,6 +400,7 @@ class AddressStorage:
 
         Returns:
             包含存储信息的字典
+
         """
         info = {
             "storage_type": self.storage_type,

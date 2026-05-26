@@ -5,7 +5,6 @@
 
 import ast
 import json
-from ..utils import get_configured_logger
 import os
 import re
 import uuid
@@ -14,6 +13,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from ..utils import get_configured_logger
 from .models import AnalysisReport, Issue, Severity
 
 logger = get_configured_logger(__name__)

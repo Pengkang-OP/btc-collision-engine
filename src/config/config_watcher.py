@@ -71,6 +71,7 @@ class ConfigWatcher:
             on_reload: 配置变更回调（在后台线程中调用）
             debounce_seconds: 防抖间隔，短时间内多次变更仅触发一次
             poll_interval: 轮询模式下的检查间隔（秒）
+
         """
         if not pathlib.Path(config_path).is_absolute():
             raise ValueError(f"config_path 必须是绝对路径: {config_path}")
@@ -105,6 +106,7 @@ class ConfigWatcher:
 
         Returns:
             True 如果启动成功，False 如果已在运行中
+
         """
         with self._lock:
             if not self._stop_event.is_set():

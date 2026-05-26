@@ -1,12 +1,13 @@
 """Wizard event definitions."""
 
 import contextlib
-from ..utils import get_configured_logger
 import time
 from dataclasses import dataclass, field
 from enum import Enum
 from queue import Queue
 from typing import Any, Callable
+
+from ..utils import get_configured_logger
 
 logger = get_configured_logger(__name__)
 

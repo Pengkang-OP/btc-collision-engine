@@ -1,6 +1,7 @@
 """Log manager for centralized log configuration."""
 
 import logging
+
 from ..utils import get_configured_logger
 
 logger = get_configured_logger(__name__)

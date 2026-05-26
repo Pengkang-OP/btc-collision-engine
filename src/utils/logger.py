@@ -263,6 +263,7 @@ def setup_logger(
 
     Returns:
         配置好的日志记录器
+
     """
     # 创建日志记录器
     logger = logging.getLogger(name)
@@ -330,6 +331,7 @@ def get_sampled_logger(name: str, sample_rate: int = 100, max_per_second: float 
 
     Returns:
         采样日志记录器
+
     """
     # 直接使用 logging.getLogger，依赖全局 init_logging 配置的 handlers
     # 避免通过 get_logger/setup_logger 再次配置 handlers 导致重复输出

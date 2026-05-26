@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import logging
-from ..utils import get_configured_logger
 import re
 from typing import TYPE_CHECKING
+
+from ..utils import get_configured_logger
 
 if TYPE_CHECKING:
     from src.log_engine.events import LogEvent  # pragma: no cover

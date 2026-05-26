@@ -1,10 +1,11 @@
 """Wizard interface definitions."""
 
-from ..utils import get_configured_logger
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
+
+from ..utils import get_configured_logger
 
 logger = get_configured_logger(__name__)
 

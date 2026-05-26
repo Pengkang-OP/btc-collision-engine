@@ -255,17 +255,20 @@ exclude = [
 ]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "C90", "I", "N", "UP", "SIM", "B", "T20"]
+select = ["E", "F", "W", "C90", "I", "N", "UP", "SIM", "B", "T20", "D"]
 ignore = ["E203"]
 
-# TODO: Add pydocstyle Google convention enforcement incrementally:
-# 1. Add "D" to select list above
-# 2. Add per-file-ignores for known violations
-# 3. Gradually fix violations to reduce ignore list
-# [tool.ruff.lint.pydocstyle]
-# convention = "google"
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+# ROADMAP #15: Docstring (D) rules enabled with Google convention.
+# All existing code currently exempted via per-file-ignores "**/*.py" = ["D"].
+# Fix files one by one and remove their D exclusion to enforce incrementally.
 
 [tool.ruff.lint.per-file-ignores]
+# ROADMAP #15: 所有现有代码暂时抑制 D 规则；修复文件的 docstring 后移除其 D 豁免项
+"**/*.py" = ["D"]
+# 移除示例: 当 "src/core/crypto_backend.py" 的 docstring 修复后，删除下行注释并加入移除项
+# "src/core/crypto_backend.py" = []
 "src/web/dashboard.py" = ["E501"] # HTML/Jinja2 模板字符串无法有意义地拆分
 "src/monitoring/alert_notifications.py" = ["E501"] # HTML 邮件模板字符串
 "src/utils/ui_tutorial.py" = ["E501"] # 长行 UI 字符串/格式化提示文本

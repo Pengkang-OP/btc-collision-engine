@@ -4,7 +4,6 @@ Uses rich.live.Live for smooth real-time stats display
 without the flicker of \\r overwrite approach.
 """
 
-from ..utils import get_configured_logger
 import time
 
 from rich.console import Group
@@ -12,6 +11,8 @@ from rich.live import Live
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
+
+from ..utils import get_configured_logger
 
 # ── formatting helpers ─────────────────────────────────────────
 
@@ -61,6 +62,7 @@ def format_progress(
 
     Returns:
         Compact single-line progress string
+
     """
     k = _fmt_keys(keys_checked)
     sp = _fmt_speed(speed)
@@ -93,6 +95,7 @@ def create_stats_table(
 
     Returns:
         Rich Table ready for Live display
+
     """
     table = Table(
         show_header=True,

@@ -145,6 +145,7 @@ class NvidiaDriverDetector:
 
         Returns:
             驱动版本字符串或 None
+
         """
         try:
             import pyopencl as cl

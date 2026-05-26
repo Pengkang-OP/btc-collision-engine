@@ -12,8 +12,6 @@
 v5.2.3: 代码质量优化。外部代码无感知。
 """
 
-from ._executor import AsyncGPUExecutor
-
 # ============================================================
 # 向后兼容：保留旧模块级导出，原 `from async_executor import X` 继续可用
 # ============================================================
@@ -24,6 +22,7 @@ from ..executor_types import (
     _SyncFallbackError,
 )
 from ..seed_utils import _seed_bytes_to_u32_be_array
+from ._executor import AsyncGPUExecutor
 
 __all__ = [
     "AsyncGPUExecutor",

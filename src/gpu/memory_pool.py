@@ -117,6 +117,7 @@ class GPUMemoryPool:
             max_buffers: 最大缓冲区数量
             max_memory_mb: 最大内存使用量(MB)
             enable_dynamic_adjustment: 是否启用动态内存池大小调整
+
         """
         self._context = context
         self._max_buffers = max_buffers
@@ -172,6 +173,7 @@ class GPUMemoryPool:
 
         Returns:
             OpenCL缓冲区对象
+
         """
         import pyopencl as cl
 
@@ -245,6 +247,7 @@ class GPUMemoryPool:
             buf: OpenCL缓冲区对象
             size: 缓冲区大小(字节),如果为None则尝试从池中查找
             buffer_type: 缓冲区类型 (generic, input, output, temp)
+
         """
         # 性能优化v4.2.1: 使用对齐后的大小
         if size is not None:
@@ -337,6 +340,7 @@ class GPUMemoryPool:
         v4.2.1增强:
         - 支持自定义内存标志
         - 为不同用途分配不同标志的缓冲区
+
         """
         import pyopencl as cl
 
@@ -391,6 +395,7 @@ class GPUMemoryPool:
             buf: 缓冲区对象
             size: 对齐后的缓冲区大小
             buffer_type: 缓冲区类型
+
         """
         # 如果已存在，先移除以更新位置
         if buf_id in self._lru_cache:
@@ -418,6 +423,7 @@ class GPUMemoryPool:
 
         Returns:
             (timestamp, buf_id, size, buf, type_str) 或 None
+
         """
         # OrderedDict 按插入顺序存储，第一个就是最久未使用的
         for buf_id, (buf, size, buffer_type, access_time) in self._lru_cache.items():
@@ -610,6 +616,7 @@ class GPUMemoryPool:
 
         Returns:
             包含统计数据的字典
+
         """
         with self._lock:
             total_buffers = sum(len(buffers) for buffers in self._pool.values())
@@ -762,6 +769,7 @@ class GPUBufferAllocator:
         Args:
             context: OpenCL上下文
             max_pool_size: 最大池大小
+
         """
         self._context = context
         self._max_pool_size = max_pool_size
@@ -856,6 +864,7 @@ class GlobalGPUMemoryManager:
 
         Returns:
             GPUMemoryPool实例
+
         """
         context_id = id(context)
         with self._lock:
@@ -913,6 +922,7 @@ class GlobalGPUMemoryManager:
         Args:
             interval_seconds: 清理间隔(秒)，默认 300s (5分钟)
             lru_idle_timeout: LRU空闲超时(秒)，默认 600s (10分钟)
+
         """
         interval = (
             interval_seconds if interval_seconds is not None else self.DEFAULT_AUTO_CLEANUP_INTERVAL
@@ -933,6 +943,7 @@ class GlobalGPUMemoryManager:
 
         Args:
             timeout: 等待线程结束的超时时间(秒)，默认5秒
+
         """
         stop_cleanup_thread(
             self._cleanup_state,

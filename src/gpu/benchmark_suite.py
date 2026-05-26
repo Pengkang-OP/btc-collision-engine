@@ -4,9 +4,10 @@
 提供 GPU 性能基准测试，用于检测设备理论吞吐量和内存带宽。
 """
 
-from ..utils import get_configured_logger
 import time
 from typing import Any
+
+from ..utils import get_configured_logger
 
 logger = get_configured_logger(__name__)
 
@@ -23,6 +24,7 @@ class GPUBenchmarkSuite:
 
         Args:
             device: GPU 设备对象（需提供 device_info 属性和 compute_units 信息）
+
         """
         self._device = device
         self._results: dict[str, float] = {}
@@ -39,6 +41,7 @@ class GPUBenchmarkSuite:
             - compute_ops_per_sec: 每秒计算操作数
             - memory_bandwidth_gb_s: 内存带宽 (GB/s)
             - estimated_keys_per_sec: 预估密钥生成速度
+
         """
         t0 = time.perf_counter()
 

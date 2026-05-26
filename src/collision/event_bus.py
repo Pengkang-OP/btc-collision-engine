@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Event bus for decoupled communication between components."""
 
-from ..utils import get_configured_logger
 import threading
 from collections.abc import Callable
 from contextlib import suppress
 from typing import Any
+
+from ..utils import get_configured_logger
 
 logger = get_configured_logger(__name__)
 

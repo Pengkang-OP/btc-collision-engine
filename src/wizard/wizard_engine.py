@@ -4,12 +4,12 @@
 协调各选择器工作，实现完整的交互式引导流程。
 """
 
-from ..utils import get_configured_logger
 import sys
 import time
 from collections.abc import Callable
 from typing import Any
 
+from ..utils import get_configured_logger
 from .config_builder import ConfigBuilder
 from .events import EventDispatcher
 from .gpu_selector import GPUSelector

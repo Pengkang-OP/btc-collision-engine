@@ -44,6 +44,7 @@ class AddressCache:
         >>> cache = AddressCache(lru_size=10000, ttl_seconds=3600)
         >>> cache.put('5KJvs...', '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa')
         >>> address = cache.get('5KJvs...')
+
     """
 
     def __init__(
@@ -58,6 +59,7 @@ class AddressCache:
             lru_size: LRU缓存最大容量，默认10000条目
             ttl_seconds: TTL缓存过期时间(秒)，默认3600秒(1小时)
             enable_stats: 是否启用缓存统计，默认True
+
         """
         # 内存LRU缓存 - 用于持久化常用地址
         self.lru_cache: Any = _LRUCache(maxsize=lru_size) if _LRUCache is not dict else {}
@@ -88,6 +90,7 @@ class AddressCache:
 
         Returns:
             缓存的地址，未命中返回None
+
         """
         # 输入验证
         if not isinstance(key, str):
@@ -121,6 +124,7 @@ class AddressCache:
             key: 缓存键(原始输入字符串)
             value: 缓存值(解析后的地址)
             use_ttl: 是否使用TTL缓存，默认False(使用LRU缓存)
+
         """
         # 输入验证
         if not value:
@@ -170,6 +174,7 @@ class AddressCache:
 
         Returns:
             包含缓存统计信息的字典
+
         """
         with self._lock:
             try:

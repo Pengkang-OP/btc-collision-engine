@@ -5,8 +5,9 @@ based on system resource detection. Used by the performance tuning
 group in arg_parser.py.
 """
 
-from ..utils import get_configured_logger
 import os
+
+from ..utils import get_configured_logger
 
 logger = get_configured_logger(__name__)
 

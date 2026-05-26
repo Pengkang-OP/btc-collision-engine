@@ -1,8 +1,9 @@
 """Wizard message queue for inter-component communication."""
 
-from ..utils import get_configured_logger
 import queue
 from typing import Any
+
+from ..utils import get_configured_logger
 
 logger = get_configured_logger(__name__)
 

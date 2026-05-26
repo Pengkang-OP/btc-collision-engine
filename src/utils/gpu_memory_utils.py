@@ -14,9 +14,10 @@
     - 对于碰撞引擎，该函数只在初始化时调用一次，性能影响可忽略
 """
 
-from .logging_config import get_configured_logger
 from dataclasses import dataclass
 from typing import Any, Protocol
+
+from .logging_config import get_configured_logger
 
 logger = get_configured_logger(__name__)
 

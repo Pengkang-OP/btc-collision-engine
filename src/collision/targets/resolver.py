@@ -57,6 +57,7 @@ class TargetResolver:
         >>> resolver = TargetResolver(enable_cache=True)
         >>> address = resolver.resolve('1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa')
         >>> addresses = resolver.resolve_multiple(['1A1z...', '5KJvs...'])
+
     """
 
     MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024  # 最大文件大小: 100MB
@@ -81,6 +82,7 @@ class TargetResolver:
             max_file_size_bytes: 最大文件大小(字节),默认100MB
             max_lines: 最大行数限制,默认100万行
             batch_size: 批量解析大小,默认100
+
         """
         self.generator = P2PKHAddressGenerator()
 
@@ -112,6 +114,7 @@ class TargetResolver:
         Returns:
             格式类型: 'address', 'p2sh_address', 'bech32_address', 'taproot_address', 'wif',
                      'pubkey_compressed', 'pubkey_uncompressed', 'hash160', 'unknown'
+
         """
         input_str = input_str.strip()
 
@@ -406,6 +409,7 @@ class TargetResolver:
 
         Returns:
             字典 {输入: P2PKH地址}
+
         """
         logger.info(f"开始批量解析: 总数={len(inputs)}")
 
@@ -480,6 +484,7 @@ class TargetResolver:
 
         Returns:
             有效地址字符串集合(小写标准化)
+
         """
         addresses: set[str] = set()
         real_path = os.path.realpath(filepath)
@@ -591,6 +596,7 @@ class TargetResolver:
 
         Returns:
             格式→数量映射,如 {'p2pkh': 100, 'p2sh': 5, 'bech32': 3}
+
         """
         counts: dict[str, int] = {
             "p2pkh": 0,
@@ -619,6 +625,7 @@ class TargetResolver:
 
         Returns:
             缓存统计信息字典,未启用缓存返回空字典
+
         """
         if self.cache:
             stats = self.cache.get_stats()
@@ -633,6 +640,7 @@ class TargetResolver:
             字典 {类型名: 计数}，例如 {'p2sh_address': 3, 'taproot_address': 1}
 
         可用于向用户报告哪些输入格式因密码学路径不同而无法用于碰撞匹配。
+
         """
         from collections import Counter
 

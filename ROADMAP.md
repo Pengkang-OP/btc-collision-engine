@@ -230,9 +230,9 @@
 | 字段 | 内容 |
 |------|------|
 | **来源** | 轮次 1（统一事项审核） |
-| **描述** | **修复内容**：将 27 个文件中的中文 section header 标签（`参数:`/`返回:`/`属性:`/`字段说明:`/`异常:`/`示例:`）统一为英文 Google 风格（`Args:`/`Returns:`/`Attributes:`/`Fields:`/`Raises:`/`Example:`）。Google 风格占比从 88% 提升至 100%。在 `pyproject.toml` 中预留了 pydocstyle Google convention 配置（注释状态），待逐步启用 enforce |
+| **描述** | **修复内容**：将 27 个文件中的中文 section header 标签（`参数:`/`返回:`/`属性:`/`字段说明:`/`异常:`/`示例:`）统一为英文 Google 风格（`Args:`/`Returns:`/`Attributes:`/`Fields:`/`Raises:`/`Example:`）。Google 风格占比从 88% 提升至 100%。在 `pyproject.toml` 中启用 pydocstyle Google convention 强制校验（`convention = "google"`），现有代码通过 `"**/*.py" = ["D"]` 暂缓执行，修复 docstring 后按文件移除豁免项逐步收紧 |
 | **冲突类型** | 🔬 需先验证后处理 → ✅ 已修复 |
-| **工作量** | 大（涉及 27 个文件） |
+| **工作量** | 大（涉及 27 个文件 + ruff 配置） |
 | **风险等级** | 🟢 低 |
 
 ### ✅ 事项 16：统一测试框架为 pytest（已修复 - 步骤 1/2）

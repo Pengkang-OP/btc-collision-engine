@@ -124,6 +124,7 @@ def _sanitize_error_message(message: str) -> str:
 
     Returns:
         脱敏后的错误消息
+
     """
     import re
 
@@ -152,6 +153,7 @@ def classify_recoverable_error(error: Exception) -> RecoverableErrorCategory | N
 
     Returns:
         RecoverableErrorCategory 或 None（不可恢复）
+
     """
     if isinstance(error, (SystemExit, KeyboardInterrupt)):
         return None
@@ -197,6 +199,7 @@ def retry_on_error(
         @retry_on_error(max_retries=3, delay=1.0, backoff=2.0)
         def fragile_io_operation(filepath):
             ...
+
     """
 
     def decorator(func: F) -> F:
@@ -305,6 +308,7 @@ class FallbackStrategy:
 
         Returns:
             (是否成功, 最终执行的方案标签)
+
         """
         for label, action in self._fallbacks:
             logger.info(f"执行降级策略 [{self.name}]: {label}")
@@ -516,6 +520,7 @@ class ErrorRecoveryManager:
 
         Returns:
             装饰后的函数
+
         """
         manager = self
 

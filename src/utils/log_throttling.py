@@ -4,9 +4,10 @@ Provides unified error log frequency control to prevent log
 flooding.
 """
 
-from .logging_config import get_configured_logger
 import time
 from collections.abc import Callable
+
+from .logging_config import get_configured_logger
 
 logger = get_configured_logger(__name__)
 

@@ -134,7 +134,6 @@ class TestEndToEnd:
 
     def test_e2e_callback_workflow(self, mock_event_bus):
         """端到端测试：回调工作流"""
-
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 端到端：回调工作流
@@ -163,7 +162,6 @@ class TestEndToEnd:
 
     def test_e2e_checkpoint_workflow(self, mock_event_bus, temp_dir):
         """端到端测试：检查点工作流"""
-
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 端到端：检查点工作流
@@ -222,7 +220,6 @@ class TestEndToEndMultiMode:
 
     def test_multi_mode_init(self, mock_event_bus, search_mode):
         """多模式端到端测试：初始化"""
-
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 多模式：初始化
@@ -244,7 +241,6 @@ class TestEndToEndMultiMode:
 
     def test_multi_mode_start_stop(self, mock_event_bus, search_mode):
         """多模式端到端测试：启动和停止"""
-
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 多模式：启动和停止
@@ -277,7 +273,6 @@ class TestEndToEndMultiMode:
 
     def test_multi_mode_batch_size(self, mock_event_bus, search_mode, monkeypatch):
         """多模式端到端测试：batch_size"""
-
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 设置 CPU 核心数
@@ -307,7 +302,6 @@ class TestCompleteWorkflow:
 
     def test_workflow_initialization(self, mock_event_bus):
         """完整工作流测试：初始化阶段"""
-
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 完整工作流：初始化阶段
@@ -324,7 +318,6 @@ class TestCompleteWorkflow:
 
     def test_workflow_startup(self, mock_event_bus):
         """完整工作流测试：启动阶段"""
-
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 完整工作流：启动阶段
@@ -351,7 +344,6 @@ class TestCompleteWorkflow:
 
     def test_workflow_running(self, mock_event_bus):
         """完整工作流测试：运行阶段"""
-
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 完整工作流：运行阶段
@@ -384,7 +376,6 @@ class TestCompleteWorkflow:
 
     def test_workflow_stopping(self, mock_event_bus):
         """完整工作流测试：停止阶段"""
-
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 完整工作流：停止阶段
@@ -410,7 +401,6 @@ class TestCompleteWorkflow:
 
     def test_workflow_cleanup(self, mock_event_bus):
         """完整工作流测试：清理阶段"""
-
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 完整工作流：清理阶段
@@ -443,7 +433,6 @@ class TestErrorHandlingEndToEnd:
 
     def test_error_handling_detection(self, mock_event_bus):
         """错误处理端到端测试：错误检测"""
-
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 错误处理：错误检测
@@ -461,7 +450,6 @@ class TestErrorHandlingEndToEnd:
 
     def test_error_handling_handling(self, mock_event_bus):
         """错误处理端到端测试：错误处理"""
-
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 错误处理：错误处理
@@ -477,7 +465,6 @@ class TestErrorHandlingEndToEnd:
 
     def test_error_handling_recovery(self, mock_event_bus):
         """错误处理端到端测试：错误恢复"""
-
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 错误处理：错误恢复

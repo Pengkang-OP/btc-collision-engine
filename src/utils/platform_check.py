@@ -1,11 +1,12 @@
 """Platform detection utilities for OS-specific features."""
 
-from .logging_config import get_configured_logger
 import os
 import platform
 import shutil
 import sys
 from pathlib import Path
+
+from .logging_config import get_configured_logger
 
 logger = get_configured_logger(__name__)
 
@@ -31,6 +32,7 @@ class PlatformChecker:
 
         Returns:
             (all_passed, list of (passed, message) tuples)
+
         """
         self._results = []
 

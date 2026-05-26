@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-CLI人性化改进测试脚本
+"""CLI人性化改进测试脚本
 
 测试新增的CLI功能：
 1. --examples 命令

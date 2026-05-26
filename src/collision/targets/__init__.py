@@ -12,6 +12,7 @@ Example:
     >>> resolver = TargetResolver(enable_cache=True)
     >>> address = resolver.resolve('1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa')
     >>> matcher = AddressMatcher(strategy='hash_set', targets={address})
+
 """
 
 from .cache import AddressCache

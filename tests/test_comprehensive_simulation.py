@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-BTC Collision Engine — 全面模拟测试脚本
+"""BTC Collision Engine — 全面模拟测试脚本
 
 覆盖维度：
   D1: 多模式（normal / abnormal / boundary）切换与运行

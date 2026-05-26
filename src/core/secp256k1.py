@@ -44,6 +44,7 @@ class Secp256k1:
         Gx, Gy: 基点G的坐标（生成元）
         A: 曲线参数a（secp256k1中a=0）
         B: 曲线参数b（secp256k1中b=7）
+
     """
 
     # 素数域模数 p = 2^256 - 2^32 - 977
@@ -205,6 +206,7 @@ class ECPoint:
     Example:
         >>> point = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
         >>> infinity = ECPoint(None, None)
+
     """
 
     def __init__(self, x: int | None, y: int | None, curve: Any = Secp256k1) -> None:
@@ -214,6 +216,7 @@ class ECPoint:
             x: x坐标，None表示无穷远点
             y: y坐标，None表示无穷远点
             curve: 椭圆曲线参数类，默认Secp256k1
+
         """
         self.x = x
         self.y = y
@@ -228,6 +231,7 @@ class ECPoint:
 
         Returns:
             两点相等返回True，否则返回False
+
         """
         if not isinstance(other, ECPoint):
             return False
@@ -242,6 +246,7 @@ class ECPoint:
 
         Returns:
             点的十六进制坐标表示或"Infinity"
+
         """
         if self.is_infinity:
             return "ECPoint(Infinity)"
@@ -252,6 +257,7 @@ class ECPoint:
 
         Returns:
             当前点的深拷贝
+
         """
         return ECPoint(self.x, self.y, self.curve)
 
@@ -274,6 +280,7 @@ class EllipticCurve:
     Example:
         >>> ec = EllipticCurve()
         >>> public_key = ec.generate_public_key(private_key_int)
+
     """
 
     def __init__(self, curve: Any = Secp256k1) -> None:
@@ -281,6 +288,7 @@ class EllipticCurve:
 
         Args:
             curve: 椭圆曲线参数类，默认Secp256k1
+
         """
         self.curve = curve
 
@@ -304,6 +312,7 @@ class EllipticCurve:
         Raises:
             ValueError: 当逆元不存在时（a和m不互质）
             TypeError: 当输入参数类型不正确时
+
         """
         # 输入参数验证
         if not isinstance(a, int):
@@ -353,6 +362,7 @@ class EllipticCurve:
         Raises:
             ValueError: 当逆元不存在时（a和m不互质）
             TypeError: 当输入参数类型不正确时
+
         """
         # 输入参数验证
         if not isinstance(a, int):
@@ -407,6 +417,7 @@ class EllipticCurve:
 
         Raises:
             TypeError: 当输入参数类型不正确时
+
         """
         # 输入参数验证
         if not isinstance(p1, ECPoint):
@@ -468,6 +479,7 @@ class EllipticCurve:
 
         Returns:
             如果点在曲线上返回True，否则返回False
+
         """
         if point.is_infinity:
             return True  # 无穷远点被认为在曲线上
@@ -494,6 +506,7 @@ class EllipticCurve:
 
         Raises:
             TypeError: 当输入参数类型不正确时
+
         """
         if not isinstance(k, int):
             raise TypeError("标量k必须是整数")
@@ -512,6 +525,7 @@ class EllipticCurve:
 
         Raises:
             RuntimeError: 始终抛出 — 非恒定时间实现已被锁定
+
         """
         raise RuntimeError(
             "scalar_multiply() 非恒定时间实现已被永久禁用。\n"
@@ -568,6 +582,7 @@ class EllipticCurve:
 
         Returns:
             根据条件选择的点
+
         """
         # 构造位掩码: condition=1 → mask=-1 (全1), condition=0 → mask=0
         mask = -condition
@@ -623,6 +638,7 @@ class EllipticCurve:
 
         Raises:
             TypeError: 当输入参数类型不正确时
+
         """
         # 输入参数验证（使用公共验证方法）
         self._validate_scalar_multiply(k, point)
@@ -695,6 +711,7 @@ class EllipticCurve:
 
         Raises:
             ValueError: 当生成的公钥为无穷远点时
+
         """
         # 将私钥转换为整数
         k = int.from_bytes(private_key, "big") if isinstance(private_key, bytes) else int(private_key)

@@ -2,7 +2,6 @@
 
 import json as _json
 import typing
-from functools import lru_cache
 
 
 def fast_dump(obj: typing.Any, fp: typing.BinaryIO, **kwargs: typing.Any) -> None:

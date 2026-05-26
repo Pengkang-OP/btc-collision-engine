@@ -986,7 +986,6 @@ class TestKeyCollisionEngineExceptionHandling:
 
     def test_exception_handling_callback(self, mock_event_bus):
         """异常处理测试：回调函数异常"""
-
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         targets = {AcceptanceTestConstants.VALID_P2PKH_ADDRESS}

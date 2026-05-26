@@ -15,12 +15,12 @@ from typing import Any
 import numpy as np
 
 from ...utils import get_configured_logger
-from ._collector import _ResultCollectorMixin
-from ._gpu_info import _GPUInfoMixin
-from ._sync import _SyncFallbackMixin
 from ..adaptive_pipeline import AdaptivePipelineController
 from ..executor_types import DEFAULT_QUEUE_DEPTH, _PendingBatch, _SyncFallbackError
 from ..seed_utils import _seed_bytes_to_u32_be_array
+from ._collector import _ResultCollectorMixin
+from ._gpu_info import _GPUInfoMixin
+from ._sync import _SyncFallbackMixin
 
 logger = get_configured_logger("AsyncGPUExecutor")
 
@@ -44,6 +44,7 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
         max_batch_size: 最大批次大小
         queue_depth: GPU命令队列深度
         initial_batch_size: 初始批次大小
+
     """
 
     __slots__ = (
@@ -248,6 +249,7 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
         Note:
             v5.2.3: 此方法保留为外部兼容 API（async_pipeline_adapter 调用），
             内部 run_batch_async 使用流水线机制替代了旧预取队列。
+
         """
         if not self._prefetch_enabled:
             return

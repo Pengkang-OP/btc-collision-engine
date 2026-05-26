@@ -30,6 +30,7 @@ class _ResultCollectorMixin:
     Note:
         Mixin 方法通过 self 访问 AsyncGPUExecutor 实例属性，
         如 self._prefetch_events, self._prefetch_lock, self._completed_results 等。
+
     """
 
     def start_result_collector(self) -> None:
@@ -148,6 +149,7 @@ class _ResultCollectorMixin:
         Returns:
             所有已收集的 (seed, matches) 对列表。
             调用方必须使用每对中自己的 seed 重建私钥。
+
         """
         combined: list[tuple[bytes, list[dict]]] = []
         with self._completed_results_lock:  # type: ignore[attr-defined]
@@ -165,6 +167,7 @@ class _ResultCollectorMixin:
         Returns:
             List[Tuple[bytes, List[Dict]]]：每个元素为 (seed, matches_for_that_batch)。
             调用方必须使用每批次自己的 seed 重建私钥。
+
         """
         batch_results: list[tuple[bytes, list[dict]]] = []
 
@@ -212,6 +215,7 @@ class _ResultCollectorMixin:
 
         Returns:
             list[(seed, matches)] — 包含该批次的种子和匹配列表
+
         """
         prev_matches: list[tuple[bytes, list[dict]]] = []
         oldest = batch

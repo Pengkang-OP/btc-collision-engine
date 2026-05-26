@@ -23,6 +23,7 @@ def _mask_value(value: str, mode: str = "masked") -> str:
 
     Returns:
         脱敏后的字符串
+
     """
     if not value:
         return "(空)"
@@ -45,6 +46,7 @@ def _print_final_summary(engine: Any, engine_type: str, args: Any) -> None:
         engine: The collision engine instance
         engine_type: Engine type label (e.g. 'GPU', 'CPU')
         args: Parsed CLI arguments
+
     """
     from ..cli.output import CLIOutput
 
@@ -205,6 +207,7 @@ class StatsReporter:
 
         Returns:
             Formatted summary string
+
         """
         lines = [
             "=== Collision Detection Summary ===",
@@ -224,5 +227,6 @@ class StatsReporter:
 
         Returns:
             JSON string
+
         """
         return json.dumps(stats, indent=2, default=str)

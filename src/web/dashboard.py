@@ -27,15 +27,16 @@ API 端点:
 
 import argparse
 import json
-from ..utils import get_configured_logger
 import os
 import secrets
 import sys
 import time
+from collections import defaultdict
 from functools import wraps
 from pathlib import Path
-from collections import defaultdict
 from typing import TYPE_CHECKING, Any
+
+from ..utils import get_configured_logger
 
 if TYPE_CHECKING:
     from flask import Flask, abort, jsonify, redirect, render_template_string, request

@@ -208,7 +208,7 @@ class TestEventBusPublish:
         h_progress.assert_not_called()
 
     def test_publish_handler_receives_correct_event(self, bus):
-        """handler 接收到正确的事件实例"""
+        """Handler 接收到正确的事件实例"""
         received = []
 
         def handler(e):
@@ -229,7 +229,7 @@ class TestEventBusErrorHandling:
     """错误处理测试"""
 
     def test_handler_error_is_logged_not_propagated(self, bus):
-        """handler 抛异常时不向外传播"""
+        """Handler 抛异常时不向外传播"""
         bad_handler = Mock(__name__="bad_handler", side_effect=RuntimeError("handler error"))
         good_handler = Mock(__name__="good_handler")
 
@@ -262,7 +262,7 @@ class TestEventBusLifecycle:
         assert len(bus._subscribers) == 0
 
     def test_clear_then_resubscribe(self, bus):
-        """clear 后可以重新订阅"""
+        """Clear 后可以重新订阅"""
         handler = Mock(__name__="handler")
         bus.subscribe(EngineStartEvent, handler)
         bus.clear()

@@ -78,6 +78,7 @@ class CollisionStats:
         Raises:
             ValueError: If delta is negative
             TypeError: If delta is not an int
+
         """
         if not isinstance(delta, int):
             raise TypeError(f"delta must be an int, got {type(delta).__name__}")
@@ -91,6 +92,7 @@ class CollisionStats:
 
         Args:
             batch_num: Current batch number to record
+
         """
         with self._lock:
             self._total_batches = batch_num
@@ -340,6 +342,7 @@ class CollisionStats:
             -1.0 if total_range is not set or is 0 (infinite),
             0.0 if remaining work <= 0,
             otherwise remaining / throughput.
+
         """
         throughput = self.avg_speed
         remaining = self._total_range - self._total_keys

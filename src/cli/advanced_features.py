@@ -1,8 +1,9 @@
 """Advanced CLI features for power users."""
 
-from ..utils import get_configured_logger
 from pathlib import Path
 from typing import Any
+
+from ..utils import get_configured_logger
 
 logger = get_configured_logger(__name__)
 
@@ -15,6 +16,7 @@ def apply_template(template_name: str) -> bool:
 
     Returns:
         True if successful, False otherwise
+
     """
     templates_dir = Path(__file__).parent.parent.parent / "deploy" / "templates"
     if not templates_dir.exists():
@@ -54,6 +56,7 @@ def recommend_parameters(args: Any) -> dict[str, Any]:
 
     Returns:
         Dict with 'recommendations' (list[str]) and 'reasons' (list[str])
+
     """
     import os
 

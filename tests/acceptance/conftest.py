@@ -89,6 +89,7 @@ def create_mock_gpu_device(
 
     Returns:
         Mock: 配置好的 GPU 设备 Mock 对象
+
     """
     mock_device = Mock()
     mock_device.name = device_name
@@ -132,6 +133,7 @@ def create_mock_gpu_context(
 
     Returns:
         Mock: 配置好的 GPU 上下文 Mock 对象
+
     """
     if device is None:
         device = create_mock_gpu_device()
@@ -159,6 +161,7 @@ def create_mock_gpu_kernel(
 
     Returns:
         Mock: 配置好的 GPU 内核 Mock 对象
+
     """
     mock_kernel = Mock()
     mock_kernel.batch_size = batch_size
@@ -192,6 +195,7 @@ def create_mock_checkpoint_data(
 
     Returns:
         Dict[str, Any]: 检查点数据字典
+
     """
     return {
         "version": version,
@@ -228,6 +232,7 @@ def test_data_dir() -> Path:
 
     Returns:
         Path: 测试数据目录的 Path 对象
+
     """
     return Path(__file__).parent / "test_data"
 
@@ -287,6 +292,7 @@ def temp_dir() -> Generator[Path, None, None]:
 
     Note:
         测试结束后自动清理临时目录
+
     """
     temp_path = Path(tempfile.mkdtemp(prefix="btc_acceptance_test_"))
     yield temp_path
@@ -309,6 +315,7 @@ def mock_gpu_chain() -> Generator[tuple[Mock, Mock, Mock], None, None]:
         >>> def test_gpu_engine(mock_gpu_chain):
         ...     mock_device, mock_context, mock_kernel = mock_gpu_chain
         ...     # 测试代码...
+
     """
     mock_device = create_mock_gpu_device()
     mock_context = create_mock_gpu_context(mock_device)
@@ -337,6 +344,7 @@ def mock_checkpoint_manager(temp_dir: Path) -> Any:
 
     Note:
         使用临时目录存储检查点文件，避免污染项目目录
+
     """
     from src.collision.checkpoint_manager import CheckpointManager
 
@@ -356,6 +364,7 @@ def mock_event_bus() -> Any:
 
     Returns:
         EventBus: 配置好的 EventBus 实例
+
     """
     from src.collision.event_bus import EventBus
 
@@ -370,6 +379,7 @@ def mock_target_resolver() -> Any:
 
     Returns:
         TargetResolver: 配置好的 TargetResolver 实例
+
     """
     from src.collision.targets.resolver import TargetResolver
 
@@ -383,6 +393,7 @@ def sample_target_addresses() -> set[str]:
 
     Returns:
         Set[str]: 目标地址集合
+
     """
     return {
         AcceptanceTestConstants.VALID_P2PKH_ADDRESS,
@@ -397,6 +408,7 @@ def mock_collision_stats() -> Any:
 
     Returns:
         CollisionStats: 配置好的 CollisionStats 实例
+
     """
     from src.collision.collision_stats import CollisionStats
 
@@ -410,6 +422,7 @@ def mock_deduplication_filter() -> Any:
 
     Returns:
         DeduplicationFilter: 配置好的 DeduplicationFilter 实例
+
     """
     from src.collision.deduplication_filter import DeduplicationFilter
 
@@ -456,6 +469,7 @@ def mock_crypto_backend() -> Any:
 
     Returns:
         Mock: 配置好的 CryptoBackendManager Mock 对象
+
     """
     from unittest.mock import Mock
 
@@ -498,6 +512,7 @@ def valid_addresses(test_data_dir: Path) -> list[str]:
 
     Returns:
         List[str]: 有效地址列表
+
     """
     valid_file = test_data_dir / "valid_addresses.txt"
     if not valid_file.exists():
@@ -517,6 +532,7 @@ def invalid_addresses(test_data_dir: Path) -> list[str]:
 
     Returns:
         List[str]: 无效地址列表
+
     """
     invalid_file = test_data_dir / "invalid_addresses.txt"
     if not invalid_file.exists():
@@ -541,6 +557,7 @@ def assert_valid_bitcoin_address(address: str, message: Optional[str] = None) ->
 
     Raises:
         AssertionError: 如果地址无效
+
     """
     assert isinstance(address, str), message or f"地址必须是字符串类型，实际类型: {type(address)}"
     assert address, message or "地址不能为空"
@@ -561,6 +578,7 @@ def assert_valid_private_key(private_key: bytes, message: Optional[str] = None) 
 
     Raises:
         AssertionError: 如果私钥无效
+
     """
     assert isinstance(private_key, bytes), (
         message or f"私钥必须是 bytes 类型，实际类型: {type(private_key)}"
@@ -588,6 +606,7 @@ def assert_engine_state(
 
     Raises:
         AssertionError: 如果引擎状态不符合预期
+
     """
     assert engine is not None, message or "引擎实例不能为 None"
 
@@ -617,6 +636,7 @@ def assert_pipeline_stage_complete(
 
     Raises:
         AssertionError: 如果阶段结果无效
+
     """
     assert stage_result is not None, message or f"Pipeline 阶段 '{stage_name}' 的结果不能为 None"
 
@@ -637,6 +657,7 @@ def pytest_configure(config: Any) -> None:
 
     Args:
         config: pytest 配置对象
+
     """
     # 验收测试相关 marker
     config.addinivalue_line("markers", "acceptance: 验收测试（端到端功能验证）")
@@ -663,6 +684,7 @@ def pytest_collection_modifyitems(config: Any, items: list[Any]) -> None:
     Args:
         config: pytest 配置对象
         items: 测试项列表
+
     """
     # 为验收测试添加超时标记
     acceptance_timeout_marker = pytest.mark.timeout(AcceptanceTestConstants.MAX_ACCEPTABLE_TIME_SEC)
@@ -695,6 +717,7 @@ def cleanup_after_all_tests() -> Generator[None, None, None]:
 
     Note:
         这个 fixture 会自动执行，无需手动调用
+
     """
     yield
 

@@ -41,6 +41,7 @@ def with_sync_fallback(
     Args:
         message: 日志消息前缀
         error_types: 要捕获的异常类型元组（默认 RuntimeError, MemoryError）
+
     """
     SyncFallback = _get_sync_fallback_error_type()
 

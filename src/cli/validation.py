@@ -1,9 +1,9 @@
 """CLI input validation utilities."""
 
 import argparse
-from ..utils import get_configured_logger
 from pathlib import Path
 
+from ..utils import get_configured_logger
 from .output import CLIOutput
 
 logger = get_configured_logger(__name__)
