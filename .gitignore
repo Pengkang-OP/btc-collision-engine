@@ -210,6 +210,7 @@ tests/logs/
 /final_check.txt
 /test_stats_output.txt
 /tests_report.txt
+/tests_errors.txt
 /out.log
 
 # --- flake8 检查输出 ---
