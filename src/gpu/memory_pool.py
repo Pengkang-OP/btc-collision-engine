@@ -429,18 +429,20 @@ class GPUMemoryPool:
         使用 OrderedDict 实现 O(1) 的 LRU 淘汰
         """
         now = time.monotonic() if min_idle_seconds > 0 else 0
-        evicted = 0
 
         # 需要先收集要淘汰的项，因为不能在迭代时修改字典
         to_evict = []
+        collected = 0
         for buf_id, (buf, size, buffer_type, access_time) in self._lru_cache.items():
-            if evicted >= count:
+            if collected >= count:
                 break
             if min_idle_seconds > 0 and (now - access_time) < min_idle_seconds:
                 continue
             to_evict.append((buf_id, buf, size, buffer_type))
+            collected += 1
 
         # 执行淘汰
+        evicted = 0
         for buf_id, lru_buf, lru_size, lru_type in to_evict:
             # 从对应池中移除
             self._remove_lru_from_pool(lru_type, lru_size, buf_id)
