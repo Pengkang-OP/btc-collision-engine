@@ -18,8 +18,8 @@ import pytest
 
 pytestmark = pytest.mark.gpu  # 需要真实GPU硬件
 
-from src.collision.collision_stats import CollisionStats
-from src.collision.gpu.engine import GPUCollisionEngine
+from src.collision.collision_stats import CollisionStats  # noqa: E402
+from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
 
 
 def run_2m_batch_size(duration=60):

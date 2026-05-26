@@ -24,7 +24,9 @@
 本软件可能受美国出口管理条例 (EAR, 15 CFR Parts 730-774) 的约束，具体为：
 
 - **ECC 分类**: 5A002 (加密物品)
+
 - **相关条款**: EAR 742.15 (加密物品)
+
 - **管制理由**: 国家安全 (NS) + 反恐 (AT)
 
 ### 欧洲出口管制
@@ -38,7 +40,9 @@
 ## 用户责任
 
 1. **遵守当地法律**: 用户必须确保使用本软件符合当地法律法规
+
 2. **出口许可**: 如果需要出口或再出口本软件，可能需要申请相应的出口许可
+
 3. **禁止用途**: 不得用于非法目的，包括但不限于未经授权的访问、数据窃取等
 
 ## 免责声明
@@ -48,7 +52,9 @@
 ## 相关资源
 
 - [美国 BIS 网站](https://www.bis.gov/)
+
 - [EAR 742.15](https://www.ecfr.gov/current/title-15/subtitle-B/chapter-VII/subchapter-C/part-742/section-742.15)
+
 - [EU 双重用途条例](https://ec.europa.eu/trade/import-and-export-rules/export-from-eu/dual-use-controls/)
 
 ---
@@ -56,5 +62,7 @@
 ## 相关文档
 
 - [许可证兼容性](license-compatibility.md)
+
 - [第三方代码归属](third-party-attribution.md)
+
 - [安全指南](../security/security-guidelines.md)

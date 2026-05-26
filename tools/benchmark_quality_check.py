@@ -18,7 +18,7 @@ from utf8_helper import setup_windows_utf8
 
 setup_windows_utf8()
 
-from tools.check_document_quality import DocumentQualityChecker
+from tools.check_document_quality import DocumentQualityChecker  # noqa: E402
 
 
 def benchmark_check(docs_dir: str, iterations: int = 10) -> dict:

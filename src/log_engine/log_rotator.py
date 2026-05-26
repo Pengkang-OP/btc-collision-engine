@@ -14,6 +14,7 @@ class LogRotator:
         max_age_days: int | None = None,
         max_count: int | None = None,
     ):
+        """Initialize the log rotator."""
         self._max_size = max_size_mb * 1024 * 1024
         self._backup_count = backup_count
         self._max_age_days = max_age_days

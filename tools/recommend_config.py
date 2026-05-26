@@ -17,7 +17,7 @@ from utf8_helper import setup_windows_utf8
 setup_windows_utf8()
 
 # 导入重试工具
-from retry_helper import read_with_retry
+from retry_helper import read_with_retry  # noqa: E402
 
 
 def analyze_project(docs_dir: str) -> dict:
@@ -184,7 +184,8 @@ def print_recommendation(features: dict, config_name: str, config: dict):
 
         print("\n💡 使用方式:")
         print(
-            f"  python tools/check_document_quality.py --config tools/scoring_{config_name[:4].lower()}.json"
+            f"  python tools/check_document_quality.py "
+            f"--config tools/scoring_{config_name[:4].lower()}.json"
         )
 
     print(f"\n{'=' * 60}")

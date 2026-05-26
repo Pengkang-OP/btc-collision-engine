@@ -19,9 +19,9 @@ import time
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.core.address_generator import P2PKHAddressGenerator
-from src.core.base58 import Base58
-from src.core.key_generator import SecureKeyGenerator
+from src.core.address_generator import P2PKHAddressGenerator  # noqa: E402
+from src.core.base58 import Base58  # noqa: E402
+from src.core.key_generator import SecureKeyGenerator  # noqa: E402
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 目标地址（示例：比特币创世区块地址，余额 > 50 BTC）

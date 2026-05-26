@@ -632,7 +632,7 @@ class TestGPUSwitching:
             gpu_device = GPUDevice()
 
             # 尝试使用不存在的索引
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError) as context:
                 gpu_device.initialize(device_index=5)
 
             # 验证错误信息包含可用设备列表

@@ -65,7 +65,7 @@ class TestCalculateBatchMemory:
     def test_typical_gpu_run_size(self):
         """验证典型 GPU 运行规模(100万 keys, 320 targets)的计算值合理"""
         result = GPUMemoryCalculator.calculate_batch_memory(1_000_000, 320)
-        # PRNG模式: seed(32B) + precomp(1984B) + match_flags(1M*4=4MB) + overhead(4MB*0.2=0.8MB) + targets(320*20=6400B)
+        # PRNG模式: seed(32B) + precomp(1984B) + match_flags(1M*4=4MB) + overhead(4MB*0.2=0.8MB) + targets(320*20=6400B)  # noqa: E501
         # 总计约 4MB + 0.8MB ≈ 4.8MB
         result_mb = result / GPUMemoryCalculator.BYTES_PER_MB
         assert result_mb > 4.5
@@ -302,4 +302,3 @@ class TestCalculateFromHash160Bytes:
             + len(hash160_bytes) / bpMB
         )
         assert result == pytest.approx(expected, places=10)
-

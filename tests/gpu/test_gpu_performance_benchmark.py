@@ -18,11 +18,11 @@ import pytest
 
 pytestmark = pytest.mark.gpu
 
-import pathlib
+import pathlib  # noqa: E402
 
-from src.collision.collision_stats import CollisionStats
-from src.collision.gpu.engine import GPUCollisionEngine
-from src.collision.key_collision_engine import KeyCollisionEngine
+from src.collision.collision_stats import CollisionStats  # noqa: E402
+from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
+from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
 
 # 配置日志
 logging.basicConfig(

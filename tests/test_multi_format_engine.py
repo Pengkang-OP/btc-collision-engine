@@ -40,7 +40,7 @@ for fmt, addr in addresses.items():
         expected_fmt = AddressFormat(fmt)
         match = detected_fmt == expected_fmt
         print(
-            f"  {fmt:10s}: {'✓' if match else '✗'} (expected={expected_fmt.value}, detected={detected_fmt.value})",
+            f"  {fmt:10s}: {'✓' if match else '✗'} (expected={expected_fmt.value}, detected={detected_fmt.value})",  # noqa: E501
         )
 
 # 2. 测试格式检测
@@ -118,7 +118,7 @@ for fmt in ["p2pkh", "p2sh", "bech32", "taproot"]:
         manager_test.add_target(addr)
         is_match, matched_addr, matched_fmt = manager_test.check_match(private_key_1)
         print(
-            f"  {fmt:10s}: {'✓ MATCHED' if is_match else '✗ NO MATCH'} - {matched_addr if is_match else ''}",
+            f"  {fmt:10s}: {'✓ MATCHED' if is_match else '✗ NO MATCH'} - {matched_addr if is_match else ''}",  # noqa: E501
         )
 
 # 5. 测试混合格式匹配
@@ -146,7 +146,7 @@ if is_match:
 print("\n[Test 6] Performance Test")
 print("-" * 80)
 
-import time
+import time  # noqa: E402
 
 # 生成1000个地址
 iterations = 1000

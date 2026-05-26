@@ -1,6 +1,6 @@
-"""暴力穷举搜索模式 - BruteForceSearchMode
+"""暴力穷举搜索模式 - BruteForceSearchMode.
 
-将 GPUCollisionEngine._brute_force() 迁移至此独立模块。
+将 GPUCollisionEngine._brute_force() 迁移至此独立模块.
 通过 self.engine 访问所有引擎状态，不复制状态。
 """
 
@@ -14,14 +14,14 @@ logger = get_configured_logger("BruteForceSearch")
 
 
 class BruteForceSearchMode(BaseSearchMode):
-    """暴力穷举搜索模式
+    """暴力穷举搜索模式.
 
-    对应原 GPUCollisionEngine._brute_force() 方法。
+    对应原 GPUCollisionEngine._brute_force() 方法.
     从指定起始私钥开始，按顺序遍历所有私钥空间。
     """
 
     def execute(self, start: int) -> None:
-        """执行暴力穷举搜索（委托给通用批处理循环）
+        """执行暴力穷举搜索（委托给通用批处理循环）.
 
         Args:
             start: 起始私钥整数值

@@ -15,8 +15,8 @@ from typing import Any
 class CryptoBackendType(str, Enum):
     """加密后端类型（字符串版本，用于配置）
 
-    使用 (str, Enum) 而非 StrEnum 以保证 Python 3.9+ 兼容性。
-    StrEnum 在 Python 3.11 才引入。
+    使用 (str, Enum) 而非 StrEnum 以保证一致性。
+    StrEnum 在 Python 3.11 引入，本项目最低要求 3.12 但保持该约定。
     """
 
     PURE_PYTHON = "pure_python"

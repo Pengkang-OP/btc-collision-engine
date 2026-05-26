@@ -1,4 +1,4 @@
-"""AMD GPU特定优化
+"""AMD GPU specific optimizations.
 
 针对AMD GPU的优化策略,包括:
 - 内存合并访问优化
@@ -17,17 +17,18 @@ logger = get_configured_logger("AMDVendor")
 
 
 class AMDGPUVendor(GPUVendorBase):
-    """AMD GPU优化处理器"""
+    """AMD GPU optimization processor."""
 
     _RECOMMENDED_BATCH: int = 524288
     _MAX_BATCH: int = 1048576
     _MEMORY_EFFICIENCY: float = 0.55
 
     def get_vendor_name(self) -> str:
+        """Return vendor name."""
         return "AMD"
 
     def apply_optimizations(self, device: Any, profile: dict[str, Any]) -> None:
-        """应用AMD特定优化
+        """Apply AMD specific optimizations.
 
         优化策略:
         1. 内存合并访问优化

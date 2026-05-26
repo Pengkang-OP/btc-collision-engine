@@ -8,10 +8,15 @@
 ## 📋 目录
 
 1. [GPU配置快速指南](#gpu配置快速指南)
+
 2. [批次大小调优](#批次大小调优)
+
 3. [配置模板对比](#配置模板对比)
+
 4. [--sensitive-mode 使用指南](#--sensitive-mode-使用指南)
+
 5. [性能优化参数](#性能优化参数)
+
 6. [常见问题](#常见问题)
 
 ---
@@ -36,6 +41,7 @@
 │
 └─ 无独立GPU 或 仅集成显卡？
     └─ 使用CPU模式（无需GPU参数，配合 long-running 模板）
+
 ```
 
 ### 快速启动命令对照
@@ -77,6 +83,7 @@ python key_collision_cli.py -t <地址> -m random --use-gpu --gpu-batch-size 500
 
 # 步骤3：如性能未达预期，可适当增大（不超过显存80%）
 python key_collision_cli.py -t <地址> -m random --use-gpu --gpu-batch-size 200000
+
 ```
 
 ### 配置文件方式（持久化）
@@ -87,6 +94,7 @@ python key_collision_cli.py -t <地址> -m random --use-gpu --gpu-batch-size 200
     "gpu_batch_size": 200000
   }
 }
+
 ```
 
 > ⚠️ 值设为 `-1` 表示自动计算（默认）。
@@ -100,6 +108,7 @@ python key_collision_cli.py -t <地址> -m random --use-gpu --gpu-batch-size 200
 ```bash
 # 应用模板（修改 config.json 并立即生效）
 python key_collision_cli.py --template gpu-performance
+
 ```
 
 ### 四个模板详细对比
@@ -148,6 +157,7 @@ python key_collision_cli.py -t <地址> -m random \
   --use-gpu \
   --template quick-test \
   --duration 60
+
 ```
 
 ---
@@ -184,12 +194,15 @@ python key_collision_cli.py -t <地址> -m random \
   地址     : 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
   私钥 Hex : [SHA256:5feceb66ffc86f38...]
   WIF      : [已隐藏]
+
 ```
 
 ### 安全建议
 
 - 🟢 **本地单人使用**：使用默认 `full` 模式，确保找到碰撞后可立即获取完整私钥。
+
 - 🟡 **团队协作 / 截图留存**：使用 `masked` 模式，防止私钥在通讯记录中泄露。
+
 - 🔴 **高安全合规场景**：使用 `hash_only` 模式，仅记录碰撞存在的证据，不保存私钥。
 
 ```bash
@@ -199,6 +212,7 @@ python key_collision_cli.py -f targets.txt -m random \
   --sensitive-mode masked \
   --export-matches matches_masked.json \
   --export-progress progress.json
+
 ```
 
 > ⚠️ **重要**：`hash_only` 模式下，匹配到的私钥将**无法恢复**。如果您需要实际使用发现的私钥，请勿使用此模式，或在验证后改回 `full` 模式重新运行。
@@ -248,6 +262,7 @@ python key_collision_cli.py -f targets.txt -m random \
   --use-gpu \
   --no-memory-pool \
   --duration 3600
+
 ```
 
 ### `--window-size` 调优说明
@@ -255,7 +270,9 @@ python key_collision_cli.py -f targets.txt -m random \
 `window_size` 决定预计算椭圆曲线点的数量（`2^window_size` 个）：
 
 - 值越大 → 预计算表越大 → 单次查表更快 → 但初始化时间和内存占用更高
+
 - 推荐范围：`4` ~ `16`，默认 `8` 在大多数场景下效果最佳
+
 - GPU模式下CPU端计算占比较小，调整此值对整体性能影响有限
 
 ---
@@ -277,6 +294,7 @@ python -c "import pyopencl as cl; [print(p) for p in cl.get_platforms()]"
 
 # 步骤3：使用内置健康检查
 python key_collision_cli.py --health-check
+
 ```
 
 **解决方案**：
@@ -288,6 +306,7 @@ pip install pyopencl
 # NVIDIA GPU：确保已安装 CUDA Toolkit
 # AMD GPU：安装 ROCm 或 AMD 驱动
 # Intel Arc：更新至最新 Intel Graphics 驱动
+
 ```
 
 ---
@@ -309,6 +328,7 @@ python key_collision_cli.py --template gpu-performance
 # 然后编辑 config.json，将 gpu.gpu_batch_size 设为 50000
 
 # 方法3：关闭其他占用显存的程序（游戏、浏览器WebGL等）
+
 ```
 
 ---
@@ -330,6 +350,7 @@ python key_collision_cli.py -f targets.txt -m random \
 
 # 方法2：使用性能均衡策略（已内置于 gpu-multi 模板）
 python key_collision_cli.py --template gpu-multi
+
 ```
 
 ---
@@ -353,6 +374,7 @@ python key_collision_cli.py -t <地址> -m random \
 python key_collision_cli.py -t <地址> -m random \
   --use-gpu \
   --config config.intel_arc.json
+
 ```
 
 > 💡 引擎已内置30秒超时保护机制，GPU Hang会被自动检测并恢复，无需手动干预。
@@ -379,6 +401,7 @@ for p in platforms:
         ctx = cl.Context([d])
         print(f'✅ {d.name} 上下文创建成功')
 "
+
 ```
 
 ---
@@ -386,9 +409,13 @@ for p in platforms:
 ## 📚 相关参考
 
 - GPU引擎详细说明：[gpu-engine-guide.md](gpu-engine-guide.md)
+
 - Intel Arc专项指南：[intel-arc-integration-guide.md](intel-arc-integration-guide.md)
+
 - 多GPU配置：[MULTI_GPU.md](MULTI_GPU.md)
+
 - 性能优化：[performance-optimization.md](performance-optimization.md)
+
 - 配置文件说明：[CONFIG.md](CONFIG.md)
 
 ---

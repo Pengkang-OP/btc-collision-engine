@@ -1,4 +1,4 @@
-"""项目路径初始化模块
+"""项目路径初始化模块.
 
 在 CLI 入口文件加载前确保项目根目录在 sys.path 中，
 使 `from src.xxx` 绝对导入正常工作。
@@ -16,7 +16,7 @@ import sys
 
 
 def _get_project_root() -> str:
-    """返回本模块所在的项目根目录（src 的父目录）"""
+    """返回本模块所在的项目根目录（src 的父目录）."""
     return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -25,7 +25,7 @@ _initialized: bool = False
 
 
 def ensure_project_root() -> None:
-    """确保项目根目录在 sys.path 中（幂等）。
+    """确保项目根目录在 sys.path 中（幂等）.
 
     v5.0.1: 使用 pip install -e . 可编辑安装后，
     src 包自动在 site-packages 中可用，此函数作为 fallback 保留。

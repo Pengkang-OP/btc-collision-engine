@@ -47,7 +47,7 @@ class TestKeyCollisionEngineRangeScan:
             engine.stop()
             pytest.fail("范围扫描未在60秒内完成")
         stats = engine.get_stats()
-        assert stats.total_checked  >  900, f"total_checked={stats.total_checked}"
+        assert stats.total_checked > 900, f"total_checked={stats.total_checked}"
 
 
 class TestKeyCollisionEngineRangeScanWorker:
@@ -63,8 +63,8 @@ class TestKeyCollisionEngineRangeScanWorker:
             data_logging_enabled=False,
         )
         count = engine._range_scan_worker(1, 5, 0)
-        assert count  ==  5
-        assert len(engine.stats.matches)  ==  1
+        assert count == 5
+        assert len(engine.stats.matches) == 1
         engine.stop()
 
     def test_range_scan_worker_compressed_only(self):
@@ -78,8 +78,8 @@ class TestKeyCollisionEngineRangeScanWorker:
             data_logging_enabled=False,
         )
         count = engine._range_scan_worker(1, 5, 0)
-        assert count  ==  5
-        assert len(engine.stats.matches)  ==  1
+        assert count == 5
+        assert len(engine.stats.matches) == 1
         engine.stop()
 
     def test_range_scan_worker_with_uncompressed_check(self):
@@ -93,8 +93,8 @@ class TestKeyCollisionEngineRangeScanWorker:
             data_logging_enabled=False,
         )
         count = engine._range_scan_worker(1, 5, 0)
-        assert count  ==  5
-        assert len(engine.stats.matches)  ==  1
+        assert count == 5
+        assert len(engine.stats.matches) == 1
         engine.stop()
 
     def test_range_scan_worker_no_callback_stops(self):
@@ -107,7 +107,7 @@ class TestKeyCollisionEngineRangeScanWorker:
             data_logging_enabled=False,
         )
         count = engine._range_scan_worker(1, 5, 0)
-        assert count  <  5, "匹配后应提前停止"
+        assert count < 5, "匹配后应提前停止"
         assert engine._stop_event.is_set()
         engine.stop()
 
@@ -119,8 +119,8 @@ class TestKeyCollisionEngineRangeScanWorker:
             data_logging_enabled=False,
         )
         count = engine._range_scan_worker(1, 10, 0)
-        assert count  ==  10
-        assert len(engine.stats.matches)  ==  0
+        assert count == 10
+        assert len(engine.stats.matches) == 0
         engine.stop()
 
     def test_range_scan_worker_out_of_range_key(self):
@@ -131,7 +131,7 @@ class TestKeyCollisionEngineRangeScanWorker:
             data_logging_enabled=False,
         )
         count = engine._range_scan_worker(0, 5, 0)
-        assert count  ==  5, "k=0应跳过，仅5个有效"
+        assert count == 5, "k=0应跳过，仅5个有效"
         engine.stop()
 
 
@@ -154,7 +154,7 @@ class TestKeyCollisionEngineRangeScanOrchestration:
         engine.start(mode="range", start=1, end=20)
         time.sleep(0.5)
         engine.stop()
-        assert len(progress_called)  >  0, "进度回调应至少被调用一次"
+        assert len(progress_called) > 0, "进度回调应至少被调用一次"
 
     def test_range_scan_with_complete_callback(self):
         """范围扫描：完成回调被调用"""
@@ -174,4 +174,4 @@ class TestKeyCollisionEngineRangeScanOrchestration:
         engine.start(mode="range", start=1, end=10)
         complete_called.wait(timeout=10)
         engine.stop()
-        assert len(final_stats)  >  0
+        assert len(final_stats) > 0

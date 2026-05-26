@@ -2,7 +2,6 @@
 
 **版本**: v4.5.1
 
-
 ## 概述
 
 本工具 (`tools/btc_key_address_verifier.py`) 用于验证比特币密钥派生及地址生成流程的正确性。
@@ -10,19 +9,29 @@
 ### 功能特性
 
 1. **私钥到公钥的数学验证**
+
    - secp256k1 椭圆曲线标量乘法验证
+
    - 公钥点在曲线上的验证
+
    - 压缩/非压缩公钥格式生成
 
 2. **公钥到地址格式转换验证**
+
    - P2PKH (Legacy) - 以 '1' 开头
+
    - P2SH (Nested SegWit) - 以 '3' 开头
+
    - Bech32 (Native SegWit v0) - 以 'bc1' 开头
+
    - Bech32m (Taproot) - 以 'bc1p' 开头
 
 3. **地址匹配验证**
+
    - 生成地址与目标地址逐一对比
+
    - 明确标识匹配/不匹配状态
+
    - 标出不匹配的具体环节
 
 ## 使用方法
@@ -50,6 +59,7 @@ python tools/btc_key_address_verifier.py --random --json
 
 # 静默模式
 python tools/btc_key_address_verifier.py --private-key "..." --quiet
+
 ```
 
 ### Python API 使用
@@ -84,6 +94,7 @@ for fmt, result in results["verification_results"].items():
 
 # 方式3: 随机私钥验证
 report = verifier.generate_random_verification()
+
 ```
 
 ## 输出格式
@@ -112,6 +123,7 @@ P2PKH: 1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH [OK] MATCH
 P2SH: 3LRW7jeCvQCRdPF8S3yUCfRAx4eqXFmdcr [OK] MATCH
 Bech32: bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4 [OK] MATCH
 Bech32m: bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jjw (format valid)
+
 ```
 
 ### JSON 输出
@@ -140,6 +152,7 @@ Bech32m: bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jjw (format 
   },
   "overall_match": true
 }
+
 ```
 
 ## 验证流程
@@ -154,6 +167,7 @@ Bech32m: bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jjw (format 
     │
     ▼ [验证点在 secp256k1 曲线上]
 验证结果
+
 ```
 
 ### 2. P2PKH 地址
@@ -172,6 +186,7 @@ Hash160 (20 bytes)
     │
     ▼ [Base58Check 编码]
 P2PKH 地址 (以 '1' 开头)
+
 ```
 
 ### 3. P2SH 地址
@@ -193,6 +208,7 @@ Script Hash
     │
     ▼ [Base58Check 编码]
 P2SH 地址 (以 '3' 开头)
+
 ```
 
 ### 4. Bech32 地址
@@ -208,6 +224,7 @@ Pub Key Hash (20 bytes)
     │
     ▼ [Bech32 编码]
 Bech32 地址 (以 'bc1' 开头)
+
 ```
 
 ### 5. Bech32m (Taproot) 地址
@@ -223,6 +240,7 @@ X Only Public Key (32 bytes)
     │
     ▼ [Bech32m 编码]
 Bech32m 地址 (以 'bc1p' 开头)
+
 ```
 
 ## 测试向量
@@ -238,18 +256,24 @@ Bech32m 地址 (以 'bc1p' 开头)
 ### 地址不匹配
 
 当生成地址与目标地址不匹配时，工具会：
+
 1. 显示 `[FAIL] MISMATCH`
+
 2. 标出不一致环节
+
 3. 显示生成的地址和目标地址
 
 ```text
 P2PKH: 1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH [FAIL] MISMATCH
+
 ```
 
 ### 格式验证失败
 
 当地址格式不正确时，工具会：
+
 1. 显示格式错误详情
+
 2. 列出验证步骤中的错误
 
 ## 示例脚本
@@ -258,12 +282,17 @@ P2PKH: 1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH [FAIL] MISMATCH
 
 ```bash
 python examples/demo_btc_key_verification.py
+
 ```
 
 ## 依赖项
 
 - Python 3.8+
+
 - src.core.secp256k1 (secp256k1 椭圆曲线实现)
+
 - src.core.hash_utils (Hash160 实现)
+
 - src.core.base58 (Base58 编解码)
+
 - bech32 (可选，用于 Bech32/Bech32m 编解码)

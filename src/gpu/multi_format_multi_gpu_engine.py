@@ -23,9 +23,9 @@
 
 from collections.abc import Callable
 
-from src.collision.targets.format_aware_manager import FormatAwareTargetManager
-from src.core.multi_format_generator import AddressFormat, MultiFormatAddressGenerator
-from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
+from ..collision.targets.format_aware_manager import FormatAwareTargetManager
+from ..core.multi_format_generator import AddressFormat, MultiFormatAddressGenerator
+from .multi_gpu_engine import MultiGPUCollisionEngine
 
 from ..utils import get_configured_logger
 

@@ -21,12 +21,15 @@
     >>> from src.core.key_generator import SecureKeyGenerator
     >>> gen = SecureKeyGenerator({'batch_size': 1000})
 """
+
 ```
 
 **规则**：
 
 - 第一行固定为 `# -*- coding: utf-8 -*-`
+
 - 模块级 docstring 必须存在，至少包含一行功能描述
+
 - 脚本入口文件（如 `key_collision_cli.py`）首行改为 `#!/usr/bin/env python3`，第二行为编码声明
 
 ---
@@ -43,6 +46,7 @@
 ### 2.2 类名
 
 - 使用 **PascalCase**（大驼峰）
+
 - 名称应清晰表达职责
 
 ```python
@@ -54,12 +58,15 @@ class AsyncGPUExecutor:
 # 错误
 class secure_key_generator:   # 不使用下划线
 class Gpu:                     # 过于简短，语义不清
+
 ```
 
 ### 2.3 函数与方法
 
 - 使用 **snake_case**（下划线小写）
+
 - 私有方法前缀单下划线 `_`，强内部方法前缀双下划线 `__`（谨慎使用）
+
 - 动词开头，语义清晰
 
 ```python
@@ -71,11 +78,13 @@ def calculate_batch_size(mem_size: int) -> int:
 # 错误
 def gen(self, n):              # 过于简短
 def GenerateBatch(self, count): # 不使用驼峰
+
 ```
 
 ### 2.4 变量与属性
 
 - 使用 **snake_case**
+
 - 布尔变量建议以 `is_`、`has_`、`use_` 为前缀
 
 ```python
@@ -83,11 +92,13 @@ batch_size = 65536
 is_gpu_available = True
 use_uint32_workaround = False
 total_generated = 0
+
 ```
 
 ### 2.5 常量
 
 - 使用 **UPPER_SNAKE_CASE**（全大写下划线）
+
 - 定义在模块顶层或类体内
 
 ```python
@@ -101,6 +112,7 @@ VENDOR_INTEL = "Intel Corporation"
 class GPUConstants:
     DEFAULT_MEM_SIZE = 8 * 1024 ** 3   # 8GB
     HIGH_MEM_SIZE = 16 * 1024 ** 3     # 16GB
+
 ```
 
 ---
@@ -122,6 +134,7 @@ addopts = "-v --tb=short"
 [tool.bandit]
 exclude_dirs = ["tests", "docs", "benchmarks"]
 skips = ["B101"]
+
 ```
 
 > 项目当前 `pyproject.toml` 未显式定义 `[tool.black]` 和 `[tool.flake8]`，遵循以下默认约定：
@@ -140,6 +153,7 @@ black src/core/key_generator.py
 
 # 格式化整个源码目录
 black src/ tests/
+
 ```
 
 ### 3.3 flake8 规范
@@ -153,6 +167,7 @@ black src/ tests/
 ```bash
 # 检查代码风格
 flake8 src/ --max-line-length=100 --max-complexity=10
+
 ```
 
 ---
@@ -182,6 +197,7 @@ def calculate_batch_size(
 # 错误：无注解
 def generate_batch(self, count):
     ...
+
 ```
 
 ### 4.2 Optional 与 None
@@ -190,6 +206,7 @@ def generate_batch(self, count):
 # 参数可为 None 时使用 Optional
 def __init__(self, config: Optional[Dict] = None) -> None:
     config = config or {}
+
 ```
 
 ### 4.3 Python 3.9+ 内置泛型
@@ -205,6 +222,7 @@ def process(items: list[str]) -> dict[str, int]:
 from typing import List, Dict
 def process(items: List[str]) -> Dict[str, int]:
     ...
+
 ```
 
 ---
@@ -214,7 +232,9 @@ def process(items: List[str]) -> Dict[str, int]:
 ### 5.1 语言要求
 
 - **注释使用中文为主**（项目面向中文开发团队）
+
 - 关键算法、协议实现部分补充英文术语
+
 - 代码中不得存在无意义注释（如 `# TODO: fix this` 悬挂超过 2 个版本）
 
 ### 5.2 行内注释
@@ -226,6 +246,7 @@ logger = get_configured_logger("SecureKeyGenerator")
 
 batch_size = config.get('batch_size', 1000)  # 每批生成数量，默认1000
 self._lock = threading.Lock()                 # 线程安全锁
+
 ```
 
 ### 5.3 函数/方法 docstring
@@ -245,6 +266,7 @@ def _check_entropy_health(self) -> bool:
     异常:
         OSError: 读取系统熵源失败时抛出
     """
+
 ```
 
 ### 5.4 类 docstring
@@ -267,6 +289,7 @@ class SecureKeyGenerator:
         >>> generator = SecureKeyGenerator(config)
         >>> keys = generator.generate_batch(1000)
     """
+
 ```
 
 ---
@@ -279,6 +302,7 @@ class SecureKeyGenerator:
 1. 标准库（stdlib）
 2. 第三方库（third-party）
 3. 项目内部模块（local）
+
 ```
 
 ```python
@@ -296,13 +320,17 @@ import numpy as np
 from ..utils import init_logging, get_configured_logger
 from .secp256k1 import Secp256k1
 from .secure_key_manager import SecureKeyManager
+
 ```
 
 **规则**：
 
 - 每段内按字母顺序排序
+
 - 使用 `isort` 工具自动整理（`isort --profile black src/`）
+
 - 禁止使用 `from module import *`（明确导入所有需要的名称）
+
 - 相对导入（`from ..utils import ...`）仅在包内使用
 
 ---
@@ -315,6 +343,7 @@ from .secure_key_manager import SecureKeyManager
 
 ```
 捕获具体 → 记录完整 → 尽职传递 → 不静默失败
+
 ```
 
 ### 7.2 五级异常处理模型速查
@@ -338,6 +367,7 @@ except Exception:  logger.error("...")     # 无 raise（L1 路径）
 # ❌ 条件禁止
 logger.error(f"操作失败: {e}")            # 使用 f-string，应改用 %s
 logger.warning("内核执行失败: %s", e)      # L1 路径用 warning 级别
+
 ```
 
 ### 7.4 资源清理
@@ -355,6 +385,7 @@ try:
 finally:
     if gpu_device is not None:
         gpu_device.cleanup()
+
 ```
 
 > **完整规范**（含所有等级示例、命名规范、模块对照表）：→ `docs/standards/exception_handling_standards.md`
@@ -386,7 +417,6 @@ logger = get_configured_logger("SecureKeyGenerator")
 # 模块级常量
 DEFAULT_BATCH_SIZE: int = 1000
 MIN_ENTROPY_BITS: int = 1000
-
 
 class SecureKeyGenerator:
     """
@@ -447,6 +477,7 @@ class SecureKeyGenerator:
 
         logger.debug("成功生成 %d 个私钥", len(keys))
         return keys
+
 ```
 
 ---
@@ -456,12 +487,19 @@ class SecureKeyGenerator:
 提交代码前请检查：
 
 - [ ] 文件头部有编码声明和模块 docstring
+
 - [ ] 所有公开函数/方法有类型注解和 docstring
+
 - [ ] 没有裸 `except`，异常必须记录日志
+
 - [ ] 常量使用 `UPPER_SNAKE_CASE`，类名使用 `PascalCase`
+
 - [ ] 导入按三段式排序（stdlib → third-party → local）
+
 - [ ] 无注释掉的死代码（`# old_func(x)`）
+
 - [ ] 资源（GPU显存、文件句柄）在 `finally` 或上下文管理器中释放
+
 - [ ] 通过 `black` 格式化和 `flake8` 检查
 
 ---
@@ -469,6 +507,9 @@ class SecureKeyGenerator:
 *参考文件*：
 
 - `pyproject.toml` — 构建与工具配置
+
 - `src/core/key_generator.py` — 标准代码风格示例
+
 - `src/collision/types.py` — 类型定义与异常类示例
+
 - `tests/conftest.py` — 常量集中管理示例（`GPUConstants`）

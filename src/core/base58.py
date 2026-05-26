@@ -1,4 +1,4 @@
-"""Base58 encode/decode utility"""
+"""Base58 encode/decode utility."""
 
 from .hash_utils import HashUtils
 

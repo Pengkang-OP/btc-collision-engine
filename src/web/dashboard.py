@@ -544,7 +544,7 @@ def get_security_audit_data(data_dir: Path) -> dict[str, Any]:
 
     # 1. 尝试从 KeyAuditor 获取运行内存统计
     try:
-        from src.utils.key_audit import KeyAuditor
+        from ..utils.key_audit import KeyAuditor
 
         audit_logger = KeyAuditor()
         report = audit_logger.get_report()
@@ -588,7 +588,7 @@ def get_security_audit_data(data_dir: Path) -> dict[str, Any]:
 
     # 3. 检查 SecurityLogFilter 是否已初始化
     try:
-        from src.utils.logging_config import _security_filter_initialized as _sfi
+        from ..utils.logging_config import _security_filter_initialized as _sfi
 
         audit_info["security_filter_enabled"] = _sfi
     except ImportError:
@@ -597,7 +597,7 @@ def get_security_audit_data(data_dir: Path) -> dict[str, Any]:
     # 4. CryptoBackend 安全性验证
     #    仅暴露后端名称、安全级别、恒定时间状态，不暴露私钥或密码学材料
     try:
-        from src.core.crypto_backend import get_backend_security_info, verify_production_ready
+        from ..core.crypto_backend import get_backend_security_info, verify_production_ready
 
         is_ready, message = verify_production_ready()
         backend_info = get_backend_security_info()

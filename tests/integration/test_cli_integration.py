@@ -14,7 +14,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.cli.arg_parser import parse_args
-from src.cli.commands import _dispatch_utility_commands
+from src.cli.commands import dispatch_utility_commands
 from src.cli.engine_runner import (
     _compute_range,
     _run_collision_loop,
@@ -143,7 +143,7 @@ class TestUtilityCommandDispatch:
         sys.argv = ["key_collision_cli", "--examples"]
         args = parse_args()
         with pytest.raises(SystemExit) as exc_info:
-            _dispatch_utility_commands(args)
+            dispatch_utility_commands(args)
         assert exc_info.value.code == 0
 
     def test_config_check_dispatched(self):
@@ -151,7 +151,7 @@ class TestUtilityCommandDispatch:
         sys.argv = ["key_collision_cli", "--config-check"]
         args = parse_args()
         with pytest.raises(SystemExit) as exc_info:
-            _dispatch_utility_commands(args)
+            dispatch_utility_commands(args)
         # 没有 config.json 时可能以 0 退出（checker 内部处理）
         assert exc_info.value.code is not None
 
@@ -160,28 +160,28 @@ class TestUtilityCommandDispatch:
         sys.argv = ["key_collision_cli", "--health-check"]
         args = parse_args()
         with pytest.raises(SystemExit):
-            _dispatch_utility_commands(args)
+            dispatch_utility_commands(args)
 
     def test_platform_check_dispatched(self):
         """--platform-check 被正确分发。"""
         sys.argv = ["key_collision_cli", "--platform-check"]
         args = parse_args()
         with pytest.raises(SystemExit):
-            _dispatch_utility_commands(args)
+            dispatch_utility_commands(args)
 
     def test_recommend_dispatched(self):
         """--recommend 被正确分发。"""
         sys.argv = ["key_collision_cli", "--recommend"]
         args = parse_args()
         with pytest.raises(SystemExit):
-            _dispatch_utility_commands(args)
+            dispatch_utility_commands(args)
 
     def test_template_dispatched(self):
         """--template 无效名称时正常退出。"""
         sys.argv = ["key_collision_cli", "--template", "nonexistent"]
         args = parse_args()
         with pytest.raises(SystemExit) as exc_info:
-            _dispatch_utility_commands(args)
+            dispatch_utility_commands(args)
         # 模板不存在，应返回错误
         assert exc_info.value.code == 1
 
@@ -190,7 +190,7 @@ class TestUtilityCommandDispatch:
         sys.argv = ["key_collision_cli", "--validate-addresses", "nonexistent.txt"]
         args = parse_args()
         with pytest.raises(SystemExit) as exc_info:
-            _dispatch_utility_commands(args)
+            dispatch_utility_commands(args)
         assert exc_info.value.code == 1
 
     def test_quick_start_flag(self):
@@ -383,8 +383,8 @@ class TestConfigLoading:
 class TestCLIMainEntry:
     """CLI 主入口集成测试。"""
 
-    @patch("src.cli.main._dispatch_utility_commands")
-    @patch("src.cli.main.parse_args")
+    @patch("src.cli.commands.dispatch_utility_commands")
+    @patch("src.cli.arg_parser.parse_args")
     def test_main_dispatches_utility_and_exits(self, mock_parse, mock_dispatch):
         """main() 正确分发工具命令后退出。"""
         mock_parse.return_value = MagicMock(
@@ -405,7 +405,7 @@ class TestCLIMainEntry:
         mock_dispatch.assert_called_once()
         mock_parse.assert_called_once()
 
-    @patch("src.cli.main.parse_args")
+    @patch("src.cli.arg_parser.parse_args")
     def test_main_error_handling(self, mock_parse):
         """main() 捕获异常并正确处理。"""
         mock_parse.side_effect = FileNotFoundError("test")

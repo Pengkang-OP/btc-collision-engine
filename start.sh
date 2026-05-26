@@ -25,7 +25,7 @@ if command -v python3 >/dev/null 2>&1; then
 elif command -v python >/dev/null 2>&1; then
     PYTHON=python
 else
-    echo -e "${RED}[错误] 未找到Python，请先安装Python 3.9+${NC}"
+    echo -e "${RED}[错误] 未找到Python，请先安装Python 3.12+${NC}"
     echo "Ubuntu/Debian: sudo apt install python3"
     echo "Fedora: sudo dnf install python3"
     echo "macOS: brew install python"

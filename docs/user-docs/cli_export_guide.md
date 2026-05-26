@@ -8,9 +8,13 @@
 ## 📋 目录
 
 1. [导出功能概述](#导出功能概述)
+
 2. [使用方法](#使用方法)
+
 3. [JSON输出格式](#json输出格式)
+
 4. [数据分析示例](#数据分析示例)
+
 5. [注意事项](#注意事项)
 
 ---
@@ -52,6 +56,7 @@ python key_collision_cli.py \
   -m random \
   --duration 3600 \
   --export-progress progress.json
+
 ```
 
 ### 示例2：范围模式 + 同时导出进度和匹配结果
@@ -65,6 +70,7 @@ python key_collision_cli.py \
   --end FFFFFFFFFFFF \
   --export-progress progress.json \
   --export-matches matches.json
+
 ```
 
 ### 示例3：仅导出匹配结果（GPU加速）
@@ -76,6 +82,7 @@ python key_collision_cli.py \
   -m random \
   --use-gpu \
   --export-matches found_keys.json
+
 ```
 
 ### 示例4：组合使用（长时间运行 + 断点续传 + 完整导出）
@@ -92,6 +99,7 @@ python key_collision_cli.py \
   --sensitive-mode masked \
   --export-progress daily_progress.json \
   --export-matches daily_matches.json
+
 ```
 
 ### 示例5：多GPU + 范围扫描 + 导出
@@ -106,6 +114,7 @@ python key_collision_cli.py \
   --multi-gpu \
   --export-progress multi_gpu_progress.json \
   --export-matches multi_gpu_matches.json
+
 ```
 
 ---
@@ -148,6 +157,7 @@ python key_collision_cli.py \
   "matches_count": 0,
   "matches": []
 }
+
 ```
 
 **输出示例（范围模式，含进度）**
@@ -172,6 +182,7 @@ python key_collision_cli.py \
   "total_range": 1099511627775,
   "progress_percent": 0.001221
 }
+
 ```
 
 ---
@@ -215,6 +226,7 @@ python key_collision_cli.py \
     }
   ]
 }
+
 ```
 
 > 💡 **脱敏说明**：配合 `--sensitive-mode masked` 时，`private_key` 仅显示首尾各8位，其余用 `*` 掩码；`--sensitive-mode hash_only` 时显示为 `[SHA256:xxxx...]` 哈希摘要。
@@ -231,7 +243,6 @@ python key_collision_cli.py \
 
 import json
 from pathlib import Path
-
 
 def analyze_progress(progress_file: str) -> None:
     """分析进度导出文件，输出速度趋势和关键统计"""
@@ -272,7 +283,6 @@ def analyze_progress(progress_file: str) -> None:
 
     print()
 
-
 def analyze_matches(matches_file: str) -> None:
     """分析匹配导出文件，输出匹配汇总信息"""
     path = Path(matches_file)
@@ -303,17 +313,18 @@ def analyze_matches(matches_file: str) -> None:
     unique_addresses = {m['address'] for m in data['matches']}
     print(f"  涉及唯一地址数: {len(unique_addresses)}")
 
-
 if __name__ == '__main__':
     # 修改此处为实际文件路径
     analyze_progress('progress.json')
     analyze_matches('matches.json')
+
 ```
 
 **运行方式**
 
 ```bash
 python analyze_export.py
+
 ```
 
 ---
@@ -321,24 +332,30 @@ python analyze_export.py
 ## ⚠️ 注意事项
 
 1. **文件会被覆盖**
+
    每次运行使用相同导出路径时，旧文件将被直接覆盖，不会追加。如需保留历史记录，请在路径中加入时间戳，例如：`--export-progress progress_$(date +%Y%m%d_%H%M%S).json`（Linux/macOS）。
 
 2. **确保磁盘空间充足**
+
    单次进度文件体积通常较小（< 1MB），但若 `matches` 列表非常大，文件可能显著增大。建议在长时间运行前确认目标磁盘有足够空间。
 
 3. **路径权限**
+
    确保指定的导出路径对当前用户可写。建议使用相对路径（写入项目目录）或提前创建目标目录。
 
 4. **建议搭配 `--sensitive-mode` 使用**
+
    导出文件中会包含私钥信息，强烈建议在不需要完整私钥时使用 `--sensitive-mode masked` 或 `--sensitive-mode hash_only`，以降低敏感数据泄露风险：
 
    ```bash
    python key_collision_cli.py -f targets.txt -m random \
      --sensitive-mode masked \
      --export-matches matches.json
+
    ```
 
 5. **仅在运行结束时写入**
+
    导出操作在碰撞引擎停止后执行（正常退出或 `--duration` 到期），中途 `Ctrl+C` 强制中断**不保证**导出文件被写入，建议配合 `--duration` 参数使用以确保正常退出。
 
 ---
@@ -346,8 +363,11 @@ python analyze_export.py
 ## 📚 相关参考
 
 - 完整参数帮助: `python key_collision_cli.py --help`
+
 - CLI快速参考: [CLI_QUICK_REFERENCE.md](CLI_QUICK_REFERENCE.md)
+
 - GPU引擎指南: [gpu-engine-guide.md](gpu-engine-guide.md)
+
 - 配置说明: [CONFIG.md](CONFIG.md)
 
 ---

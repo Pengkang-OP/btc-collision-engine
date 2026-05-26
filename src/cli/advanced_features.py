@@ -100,6 +100,7 @@ class AdvancedFeatureManager:
     """Manages advanced CLI features."""
 
     def __init__(self):
+        """Initialize advanced features manager."""
         self._features: dict[str, bool] = {
             "batch_size_tuning": False,
             "auto_worker_count": True,

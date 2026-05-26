@@ -38,7 +38,7 @@ rem ── 检查 Python 是否在 PATH 中 ────────────
 where python >nul 2>&1
 if errorlevel 1 (
     echo [ERROR] Python not found
-    echo         请安装 Python 3.9+ 并添加到 PATH
+    echo         请安装 Python 3.12+ 并添加到 PATH
     echo         下载: https://www.python.org/downloads/
     pause
     exit /b 1
@@ -46,11 +46,11 @@ if errorlevel 1 (
 echo [OK] Python found
 goto :eof
 
-rem ── 检查 Python 版本 >= 3.9 ─────────────────────────────────────
+rem ── 检查 Python 版本 >= 3.12 ─────────────────────────────────────
 :check_python_version
-python -c "import sys; v=sys.version_info; sys.exit(0 if v.major>=3 and v.minor>=9 else 1)" >nul 2>&1
+python -c "import sys; v=sys.version_info; sys.exit(0 if v.major>=3 and v.minor>=12 else 1)" >nul 2>&1
 if errorlevel 1 (
-    echo [ERROR] Python version too old (需要 >= 3.9)
+    echo [ERROR] Python version too old (需要 >= 3.12)
     pause
     exit /b 1
 )

@@ -17,7 +17,7 @@ from utf8_helper import setup_windows_utf8
 
 setup_windows_utf8()
 
-from tools.check_document_quality import DocumentScore
+from tools.check_document_quality import DocumentScore  # noqa: E402
 
 
 def check_single_doc(args) -> DocumentScore:

@@ -68,7 +68,7 @@ class TestPythonVersionCheck:
 
     def test_current_python_version_passes(self, checker):
         passed, message = checker.check_python_version()
-        # 项目要求 Python >= 3.9
+        # 项目要求 Python >= 3.12
         assert passed is True
         assert "Python版本" in message  # pragma: no cover
 

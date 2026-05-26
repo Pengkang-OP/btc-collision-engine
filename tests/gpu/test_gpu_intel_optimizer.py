@@ -258,7 +258,7 @@ class TestApplyOptimizationsFailure:
             "kernel_source": _INVALID_KERNEL_SOURCE,
             "engine": Mock(),
         }
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError) as cm:
             optimizer.apply_optimizations(context)
         assert "workaround" in str(cm.exception.lower())
 
@@ -567,4 +567,3 @@ class TestComponentProperties:
         mock_pr = Mock()
         self.optimizer._performance_reporter = mock_pr
         assert self.optimizer.performance_reporter is mock_pr
-

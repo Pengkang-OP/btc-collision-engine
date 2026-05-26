@@ -9,6 +9,7 @@ import shutil
 from datetime import datetime
 from pathlib import Path
 
+from src import __version__ as _version
 from ..utils import get_configured_logger
 
 logger = get_configured_logger(__name__)
@@ -74,8 +75,8 @@ def migrate_config_file(config_path: str | None = None) -> bool:
     logger.info("已备份原配置: %s", backup_path)
     print(f"[OK] 原配置已备份至: {backup_path}")  # noqa: T201
 
-    # Update version
-    config["version"] = "5.0.0"
+    # Update version（从包版本统一读取）
+    config["version"] = _version
 
     # Write migrated config
     with open(src, "w", encoding="utf-8") as f:

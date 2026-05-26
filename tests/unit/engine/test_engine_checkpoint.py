@@ -61,8 +61,8 @@ class TestKeyCollisionEngineP3Checkpoint:
         engine.checkpoint_mgr = mgr
         result = engine.resume_from_checkpoint()
         assert result is not None
-        assert result["mode"]  ==  "range"
-        assert engine.stats.total_checked  ==  500
+        assert result["mode"] == "range"
+        assert engine.stats.total_checked == 500
         engine.stop()
 
     def test_resume_from_checkpoint_brute_force(self):
@@ -80,7 +80,7 @@ class TestKeyCollisionEngineP3Checkpoint:
         engine.checkpoint_mgr = mgr
         result = engine.resume_from_checkpoint()
         assert result is not None
-        assert result["mode"]  ==  "brute_force"
+        assert result["mode"] == "brute_force"
         engine.stop()
 
     def test_start_from_checkpoint_range(self):

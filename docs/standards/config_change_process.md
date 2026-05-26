@@ -11,8 +11,11 @@
 规范配置项的添加、修改和删除流程，确保：
 
 - 配置验证Schema同步更新
+
 - 文档及时更新
+
 - 向后兼容性得到保证
+
 - 变更可追溯
 
 ---
@@ -26,9 +29,13 @@
 **要求**:
 
 - [ ] 在JSON Schema中添加定义
+
 - [ ] 提供默认值
+
 - [ ] 更新配置文档
+
 - [ ] 添加单元测试
+
 - [ ] 确保向后兼容
 
 **示例流程**:
@@ -48,6 +55,7 @@
        assert config['new_option'] is False
 
 5. 运行测试验证
+
 ```
 
 ---
@@ -59,10 +67,15 @@
 **要求**:
 
 - [ ] 评估向后兼容性
+
 - [ ] 更新JSON Schema
+
 - [ ] 更新默认值（如需要）
+
 - [ ] 添加迁移逻辑
+
 - [ ] 更新文档
+
 - [ ] 添加弃用警告（如需要）
 
 **兼容性级别**:
@@ -75,6 +88,7 @@
 
 # ✅ 兼容: 添加新枚举值
 "log_level": {"enum": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL", "TRACE"]}
+
 ```
 
 **部分兼容**: 需要迁移
@@ -90,6 +104,7 @@ def migrate_config(config):
         config['timeout'] = f"{config['timeout']}s"
         logger.warning("配置timeout已自动迁移为字符串格式")
     return config
+
 ```
 
 **不兼容**: 需要版本升级
@@ -103,6 +118,7 @@ def migrate_config(config):
 # 1. 先标记为弃用
 # 2. 在下个大版本删除
 # 3. 提供迁移指南
+
 ```
 
 ---
@@ -114,9 +130,13 @@ def migrate_config(config):
 **要求**:
 
 - [ ] 提前一个版本标记为弃用
+
 - [ ] 添加弃用警告
+
 - [ ] 提供替代方案
+
 - [ ] 更新文档
+
 - [ ] 在下个大版本删除
 
 **弃用流程**:
@@ -129,6 +149,7 @@ def migrate_config(config):
     config['new_option'] = 'enabled' if config['old_option'] else 'disabled'
 
 # 移除所有相关代码
+
 ```
 
 ---
@@ -220,6 +241,7 @@ def migrate_config(config):
 - **开发负责人**: ___________ 日期: _______
 - **测试负责人**: ___________ 日期: _______
 - **产品负责人**: ___________ 日期: _______
+
 ```
 
 ---
@@ -229,35 +251,53 @@ def migrate_config(config):
 ### 4.1 开发阶段
 
 - [ ] 在CONFIG_SCHEMA中添加/修改配置项
+
 - [ ] 在DEFAULT_CONFIG中添加默认值
+
 - [ ] 实现配置读取逻辑
+
 - [ ] 实现配置验证逻辑
+
 - [ ] 实现迁移逻辑（如需要）
+
 - [ ] 添加弃用警告（如需要）
+
 - [ ] 更新类型注解
 
 ### 4.2 测试阶段
 
 - [ ] 单元测试通过
+
 - [ ] 集成测试通过
+
 - [ ] 兼容性测试通过
+
 - [ ] 性能测试通过（如影响性能）
+
 - [ ] 文档测试通过
 
 ### 4.3 文档阶段
 
 - [ ] 更新config.md
+
 - [ ] 更新CHANGELOG.md
+
 - [ ] 更新示例配置
+
 - [ ] 添加迁移指南（如需要）
+
 - [ ] 更新API文档
 
 ### 4.4 发布阶段
 
 - [ ] 代码审查通过
+
 - [ ] 测试报告通过
+
 - [ ] 文档审查通过
+
 - [ ] 发布说明更新
+
 - [ ] 通知用户（重大变更）
 
 ---
@@ -298,6 +338,7 @@ jobs:
       - name: 检查Schema同步
         run: |
           python scripts/dev/check_schema_sync.py
+
 ```
 
 ### 5.2 Schema同步检查脚本
@@ -333,6 +374,7 @@ def check_schema_sync():
 if __name__ == '__main__':
     import sys
     sys.exit(0 if check_schema_sync() else 1)
+
 ```
 
 ---
@@ -347,12 +389,15 @@ if __name__ == '__main__':
   |      |      +- 配置验证修复
   |      +-------- 添加配置项（兼容）
   +--------------- 删除配置项（不兼容）
+
 ```
 
 **示例**:
 
 - v4.2.1: 添加async_execution（兼容）
+
 - v4.2.1: 修复work_group_size验证
+
 - v4.2.1: 删除deprecated_option（不兼容）
 
 ### 6.2 配置迁移历史
@@ -374,6 +419,7 @@ if __name__ == '__main__':
 ## v4.2.1 (2026-01-01)
 - ❌ 删除: legacy_mode (使用gpu.vendor_optimizations替代)
 - ✅ 新增: gpu.use_gpu
+
 ```
 
 ---
@@ -383,9 +429,13 @@ if __name__ == '__main__':
 ### 7.1 设计原则
 
 1. **最小化**: 只添加必要的配置项
+
 2. **明确性**: 配置项名称清晰表达用途
+
 3. **安全性**: 敏感配置项使用加密存储
+
 4. **文档化**: 每个配置项都有完整文档
+
 5. **验证性**: 所有配置项都有验证规则
 
 ### 7.2 命名规范
@@ -400,6 +450,7 @@ if __name__ == '__main__':
 "bs"                  # 缩写不清
 "mem"                 # 含义不明
 "async"               # 缺少动词
+
 ```
 
 ### 7.3 默认值原则
@@ -413,6 +464,7 @@ if __name__ == '__main__':
 # ❌ 危险的默认值
 "batch_size": 16777216       # 可能导致OOM
 "memory_usage_ratio": 0.95   # 几乎用尽显存
+
 ```
 
 ---
@@ -429,6 +481,7 @@ A: 检查清单:
    2. 值类型是否正确？
    3. 值是否在有效范围内？
    4. JSON格式是否正确？
+
 ```
 
 **Q2: 如何查看当前生效的配置？**
@@ -439,6 +492,7 @@ from src.config.config_manager import ConfigManager
 cm = ConfigManager()
 cm.load('config.json')
 print(json.dumps(cm.config, indent=2))
+
 ```
 
 **Q3: 配置文件格式错误如何恢复？**
@@ -449,6 +503,7 @@ A: 使用默认配置:
 
    或从备份恢复:
    cp config.json.backup config.json
+
 ```
 
 ---
@@ -456,7 +511,9 @@ A: 使用默认配置:
 ## 9. 参考资料
 
 - [JSON Schema规范](https://json-schema.org/)
+
 - [配置管理最佳实践](https://12factor.net/config)
+
 - [语义化版本](https://semver.org/)
 
 ---

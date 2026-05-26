@@ -224,4 +224,3 @@ class TestGPUKernelSourceValidation:
         from src.gpu.kernel import OPENCL_KERNEL_SOURCE
 
         assert "SECP256K1_N" in OPENCL_KERNEL_SOURCE
-

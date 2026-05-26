@@ -19,6 +19,7 @@ class LogThrottle:
         self,
         interval: float = 5.0,
     ):
+        """Initialize log throttling."""
         self._interval = interval
         self._last_log: dict[str, float] = {}
 

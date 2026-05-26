@@ -1,4 +1,4 @@
-"""NVIDIA GPU特定优化
+"""NVIDIA GPU specific optimizations.
 
 针对NVIDIA GPU的优化策略,包括:
 - 异步数据传输
@@ -17,17 +17,18 @@ logger = get_configured_logger("NvidiaVendor")
 
 
 class NVIDIAGPUVendor(GPUVendorBase):
-    """NVIDIA GPU优化处理器"""
+    """NVIDIA GPU optimization processor."""
 
     _RECOMMENDED_BATCH: int = 524288
     _MAX_BATCH: int = 1048576
     _MEMORY_EFFICIENCY: float = 0.60
 
     def get_vendor_name(self) -> str:
+        """Return vendor name."""
         return "NVIDIA"
 
     def apply_optimizations(self, device: Any, profile: dict[str, Any]) -> None:
-        """应用NVIDIA特定优化
+        """Apply NVIDIA specific optimizations.
 
         优化策略:
         1. 启用异步数据传输

@@ -1,0 +1,152 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.10, pytest-9.0.3, pluggy-1.6.0 -- C:\Users\pengk\AppData\Local\Microsoft\WindowsApps\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\python.exe
+hypothesis profile 'default'
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: f:\Qoder\btc-collision-engine
+configfile: pytest.ini
+plugins: hypothesis-6.152.9, pyfakefs-6.2.0, benchmark-5.2.3, cov-7.1.0, timeout-2.4.0, xdist-3.8.0
+collecting ... collected 32 items
+
+tests/unit/collision/test_collision_stats.py::TestCollisionStatsInit::test_initial_state 
+------------------------------- live log setup --------------------------------
+WARNING  src.utils.logging_config:logging_config.py:110 日志系统已被初始化，重复调用被忽略
+PASSED                                                                   [  3%]
+tests/unit/collision/test_collision_stats.py::TestCollisionStatsInit::test_default_throughput_is_zero PASSED [  6%]
+tests/unit/collision/test_collision_stats.py::TestCollisionStatsRecordKey::test_record_key_increments FAILED [  9%]
+tests/unit/collision/test_collision_stats.py::TestCollisionStatsRecordKey::test_record_keys_batch FAILED [ 12%]
+tests/unit/collision/test_collision_stats.py::TestCollisionStatsRecordKey::test_record_key_multiple FAILED [ 15%]
+tests/unit/collision/test_collision_stats.py::TestCollisionStatsAddMatch::test_add_match_no_private_key FAILED [ 18%]
+tests/unit/collision/test_collision_stats.py::TestCollisionStatsAddMatch::test_add_match_stores_hash FAILED [ 21%]
+tests/unit/collision/test_collision_stats.py::TestCollisionStatsAddMatch::test_add_match_multiple FAILED [ 25%]
+tests/unit/collision/test_collision_stats.py::TestCollisionStatsAddMatch::test_add_match_without_args FAILED [ 28%]
+tests/unit/collision/test_collision_stats.py::TestCollisionStatsAddMatch::test_add_match_address_only FAILED [ 31%]
+tests/unit/collision/test_collision_stats.py::TestCollisionStatsUpdate::test_update_sets_total_checked FAILED [ 34%]
+tests/unit/collision/test_collision_stats.py::TestCollisionStatsUpdate::test_update_zero_does_nothing FAILED [ 37%]
+tests/unit/collision/test_collision_stats.py::TestCollisionStatsUpdate::test_update_with_total_range FAILED [ 40%]
+tests/unit/collision/test_collision_stats.py::TestCollisionStatsSnapshot::test_snapshot_returns_dataclass PASSED [ 43%]
+tests/unit/collision/test_collision_stats.py::TestCollisionStatsSnapshot::test_snapshot_is_independent PASSED [ 46%]
+tests/unit/collision/test_collision_stats.py::TestCollisionStatsSnapshot::test_snapshot_keys PASSED [ 50%]
+tests/unit/collision/test_collision_stats.py::TestCollisionStatsToDict::test_to_dict_basic PASSED [ 53%]
+tests/unit/collision/test_collision_stats.py::TestCollisionStatsToDict::test_to_dict_has_throughput FAILED [ 56%]
+tests/unit/collision/test_collision_stats.py::TestCollisionStatsAvgSpeed::test_avg_speed_initial_zero PASSED [ 59%]
+tests/unit/collision/test_collision_stats.py::TestCollisionStatsAvgSpeed::test_get_throughput PASSED [ 62%]
+tests/unit/collision/test_collision_stats.py::TestCollisionStatsGet::test_get_total_checked FAILED [ 65%]
+tests/unit/collision/test_collision_stats.py::TestCollisionStatsGet::test_get_speed FAILED [ 68%]
+tests/unit/collision/test_collision_stats.py::TestCollisionStatsGet::test_get_matches_found FAILED [ 71%]
+tests/unit/collision/test_collision_stats.py::TestCollisionStatsGet::test_get_elapsed FAILED [ 75%]
+tests/unit/collision/test_collision_stats.py::TestCollisionStatsGet::test_get_unknown_key_returns_default FAILED [ 78%]
+tests/unit/collision/test_collision_stats.py::TestCollisionStatsRecordMatch::test_record_match_increments PASSED [ 81%]
+tests/unit/collision/test_collision_stats.py::TestCollisionStatsReset::test_reset_clears_counters PASSED [ 84%]
+tests/unit/collision/test_collision_stats.py::TestCollisionStatsReset::test_reset_updates_start_time PASSED [ 87%]
+tests/unit/collision/test_collision_stats.py::TestCollisionStatsReset::test_reset_then_reuse PASSED [ 90%]
+tests/unit/collision/test_collision_stats.py::TestCollisionStatsRecordError::test_record_error_increments PASSED [ 93%]
+tests/unit/collision/test_collision_stats.py::TestCollisionStatsThreadSafety::test_concurrent_add_match PASSED [ 96%]
+tests/unit/collision/test_collision_stats.py::TestCollisionStatsThreadSafety::test_concurrent_record_keys PASSED [100%]
+[conftest] 检测到 pytest-cov 激活，跳过强制退出以保留覆盖率输出
+
+
+================================== FAILURES ===================================
+___________ TestCollisionStatsRecordKey.test_record_key_increments ____________
+tests\unit\collision\test_collision_stats.py:33: in test_record_key_increments
+    self.stats.record_key()
+    ^^^^^^^^^^
+E   AttributeError: 'TestCollisionStatsRecordKey' object has no attribute 'stats'
+_____________ TestCollisionStatsRecordKey.test_record_keys_batch ______________
+tests\unit\collision\test_collision_stats.py:37: in test_record_keys_batch
+    self.stats.record_keys(100)
+    ^^^^^^^^^^
+E   AttributeError: 'TestCollisionStatsRecordKey' object has no attribute 'stats'
+____________ TestCollisionStatsRecordKey.test_record_key_multiple _____________
+tests\unit\collision\test_collision_stats.py:42: in test_record_key_multiple
+    self.stats.record_key()
+    ^^^^^^^^^^
+E   AttributeError: 'TestCollisionStatsRecordKey' object has no attribute 'stats'
+__________ TestCollisionStatsAddMatch.test_add_match_no_private_key ___________
+tests\unit\collision\test_collision_stats.py:54: in test_add_match_no_private_key
+    self.stats.add_match(pk, "1TestAddress")
+    ^^^^^^^^^^
+E   AttributeError: 'TestCollisionStatsAddMatch' object has no attribute 'stats'
+____________ TestCollisionStatsAddMatch.test_add_match_stores_hash ____________
+tests\unit\collision\test_collision_stats.py:64: in test_add_match_stores_hash
+    self.stats.add_match(pk, "1TestAddress")
+    ^^^^^^^^^^
+E   AttributeError: 'TestCollisionStatsAddMatch' object has no attribute 'stats'
+_____________ TestCollisionStatsAddMatch.test_add_match_multiple ______________
+tests\unit\collision\test_collision_stats.py:72: in test_add_match_multiple
+    self.stats.add_match(pk, f"1Address{i}")
+    ^^^^^^^^^^
+E   AttributeError: 'TestCollisionStatsAddMatch' object has no attribute 'stats'
+___________ TestCollisionStatsAddMatch.test_add_match_without_args ____________
+tests\unit\collision\test_collision_stats.py:77: in test_add_match_without_args
+    self.stats.add_match()
+    ^^^^^^^^^^
+E   AttributeError: 'TestCollisionStatsAddMatch' object has no attribute 'stats'
+___________ TestCollisionStatsAddMatch.test_add_match_address_only ____________
+tests\unit\collision\test_collision_stats.py:82: in test_add_match_address_only
+    self.stats.add_match(address="1TestAddress")
+    ^^^^^^^^^^
+E   AttributeError: 'TestCollisionStatsAddMatch' object has no attribute 'stats'
+___________ TestCollisionStatsUpdate.test_update_sets_total_checked ___________
+tests\unit\collision\test_collision_stats.py:95: in test_update_sets_total_checked
+    self.stats.update(1000)
+    ^^^^^^^^^^
+E   AttributeError: 'TestCollisionStatsUpdate' object has no attribute 'stats'
+___________ TestCollisionStatsUpdate.test_update_zero_does_nothing ____________
+tests\unit\collision\test_collision_stats.py:99: in test_update_zero_does_nothing
+    self.stats.update(0)
+    ^^^^^^^^^^
+E   AttributeError: 'TestCollisionStatsUpdate' object has no attribute 'stats'
+____________ TestCollisionStatsUpdate.test_update_with_total_range ____________
+tests\unit\collision\test_collision_stats.py:103: in test_update_with_total_range
+    self.stats.update(total_range=5000)
+    ^^^^^^^^^^
+E   AttributeError: 'TestCollisionStatsUpdate' object has no attribute 'stats'
+____________ TestCollisionStatsToDict.test_to_dict_has_throughput _____________
+tests\unit\collision\test_collision_stats.py:154: in test_to_dict_has_throughput
+    assert d in "throughput"
+           ^^^^^^^^^^^^^^^^^
+E   TypeError: 'in <string>' requires string as left operand, not dict
+________________ TestCollisionStatsGet.test_get_total_checked _________________
+tests\unit\collision\test_collision_stats.py:177: in test_get_total_checked
+    self.stats.record_keys(42)
+    ^^^^^^^^^^
+E   AttributeError: 'TestCollisionStatsGet' object has no attribute 'stats'
+____________________ TestCollisionStatsGet.test_get_speed _____________________
+tests\unit\collision\test_collision_stats.py:181: in test_get_speed
+    assert self.stats.get("speed") == 0.0
+           ^^^^^^^^^^
+E   AttributeError: 'TestCollisionStatsGet' object has no attribute 'stats'
+________________ TestCollisionStatsGet.test_get_matches_found _________________
+tests\unit\collision\test_collision_stats.py:184: in test_get_matches_found
+    assert self.stats.get("matches_found") == 0
+           ^^^^^^^^^^
+E   AttributeError: 'TestCollisionStatsGet' object has no attribute 'stats'
+___________________ TestCollisionStatsGet.test_get_elapsed ____________________
+tests\unit\collision\test_collision_stats.py:187: in test_get_elapsed
+    elapsed = self.stats.get("elapsed")
+              ^^^^^^^^^^
+E   AttributeError: 'TestCollisionStatsGet' object has no attribute 'stats'
+_________ TestCollisionStatsGet.test_get_unknown_key_returns_default __________
+tests\unit\collision\test_collision_stats.py:192: in test_get_unknown_key_returns_default
+    assert self.stats.get("nonexistent") is None
+           ^^^^^^^^^^
+E   AttributeError: 'TestCollisionStatsGet' object has no attribute 'stats'
+=========================== short test summary info ===========================
+FAILED tests/unit/collision/test_collision_stats.py::TestCollisionStatsRecordKey::test_record_key_increments - AttributeError: 'TestCollisionStatsRecordKey' object has no attribute 'stats'
+FAILED tests/unit/collision/test_collision_stats.py::TestCollisionStatsRecordKey::test_record_keys_batch - AttributeError: 'TestCollisionStatsRecordKey' object has no attribute 'stats'
+FAILED tests/unit/collision/test_collision_stats.py::TestCollisionStatsRecordKey::test_record_key_multiple - AttributeError: 'TestCollisionStatsRecordKey' object has no attribute 'stats'
+FAILED tests/unit/collision/test_collision_stats.py::TestCollisionStatsAddMatch::test_add_match_no_private_key - AttributeError: 'TestCollisionStatsAddMatch' object has no attribute 'stats'
+FAILED tests/unit/collision/test_collision_stats.py::TestCollisionStatsAddMatch::test_add_match_stores_hash - AttributeError: 'TestCollisionStatsAddMatch' object has no attribute 'stats'
+FAILED tests/unit/collision/test_collision_stats.py::TestCollisionStatsAddMatch::test_add_match_multiple - AttributeError: 'TestCollisionStatsAddMatch' object has no attribute 'stats'
+FAILED tests/unit/collision/test_collision_stats.py::TestCollisionStatsAddMatch::test_add_match_without_args - AttributeError: 'TestCollisionStatsAddMatch' object has no attribute 'stats'
+FAILED tests/unit/collision/test_collision_stats.py::TestCollisionStatsAddMatch::test_add_match_address_only - AttributeError: 'TestCollisionStatsAddMatch' object has no attribute 'stats'
+FAILED tests/unit/collision/test_collision_stats.py::TestCollisionStatsUpdate::test_update_sets_total_checked - AttributeError: 'TestCollisionStatsUpdate' object has no attribute 'stats'
+FAILED tests/unit/collision/test_collision_stats.py::TestCollisionStatsUpdate::test_update_zero_does_nothing - AttributeError: 'TestCollisionStatsUpdate' object has no attribute 'stats'
+FAILED tests/unit/collision/test_collision_stats.py::TestCollisionStatsUpdate::test_update_with_total_range - AttributeError: 'TestCollisionStatsUpdate' object has no attribute 'stats'
+FAILED tests/unit/collision/test_collision_stats.py::TestCollisionStatsToDict::test_to_dict_has_throughput - TypeError: 'in <string>' requires string as left operand, not dict
+FAILED tests/unit/collision/test_collision_stats.py::TestCollisionStatsGet::test_get_total_checked - AttributeError: 'TestCollisionStatsGet' object has no attribute 'stats'
+FAILED tests/unit/collision/test_collision_stats.py::TestCollisionStatsGet::test_get_speed - AttributeError: 'TestCollisionStatsGet' object has no attribute 'stats'
+FAILED tests/unit/collision/test_collision_stats.py::TestCollisionStatsGet::test_get_matches_found - AttributeError: 'TestCollisionStatsGet' object has no attribute 'stats'
+FAILED tests/unit/collision/test_collision_stats.py::TestCollisionStatsGet::test_get_elapsed - AttributeError: 'TestCollisionStatsGet' object has no attribute 'stats'
+FAILED tests/unit/collision/test_collision_stats.py::TestCollisionStatsGet::test_get_unknown_key_returns_default - AttributeError: 'TestCollisionStatsGet' object has no attribute 'stats'
+======================== 17 failed, 15 passed in 3.01s ========================

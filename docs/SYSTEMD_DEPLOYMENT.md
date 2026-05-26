@@ -2,19 +2,24 @@
 
 **版本**: v4.5.1
 
-
-
 本文档提供BTC碰撞引擎的systemd服务部署详细说明。
 
 ## 📋 目录
 
 - [快速开始](#快速开始)
+
 - [自动化安装](#自动化安装)
+
 - [手动安装](#手动安装)
+
 - [服务管理](#服务管理)
+
 - [日志管理](#日志管理)
+
 - [性能调优](#性能调优)
+
 - [故障排除](#故障排除)
+
 - [安全加固](#安全加固)
 
 ---
@@ -24,8 +29,11 @@
 ### 前置要求
 
 - Linux系统（Ubuntu 20.04+, Debian 11+, CentOS 8+）
+
 - Python 3.9+
+
 - systemd 239+
+
 - root或sudo权限
 
 ### 一键安装
@@ -37,6 +45,7 @@ cd btc-collision-engine
 
 # 运行安装脚本
 sudo bash deploy/install-systemd.sh
+
 ```
 
 ---
@@ -48,12 +57,19 @@ sudo bash deploy/install-systemd.sh
 安装脚本会自动完成以下操作：
 
 1. ✅ 创建`btc-engine`用户和组
+
 2. ✅ 创建目录结构（`/opt/btc-collision-engine`）
+
 3. ✅ 复制应用文件（排除开发和测试文件）
+
 4. ✅ 创建Python虚拟环境
+
 5. ✅ 安装依赖包
+
 6. ✅ 安装systemd服务文件
+
 7. ✅ 配置生产环境
+
 8. ✅ 启用并启动服务
 
 ### 安装后验证
@@ -67,6 +83,7 @@ journalctl -u btc-collision-engine -f
 
 # 运行健康检查
 /opt/btc-collision-engine/venv/bin/python -m src.utils.health_check
+
 ```
 
 ---
@@ -83,6 +100,7 @@ sudo useradd -r -m -d /opt/btc-collision-engine -s /bin/bash btc-engine
 sudo mkdir -p /opt/btc-collision-engine/{logs,data_logs,monitoring_data}
 sudo chown -R btc-engine:btc-engine /opt/btc-collision-engine
 sudo chmod 750 /opt/btc-collision-engine/{logs,data_logs,monitoring_data}
+
 ```
 
 ## 2. 部署应用
@@ -94,6 +112,7 @@ sudo rsync -avz --exclude='venv' --exclude='.git' \
 
 # 设置权限
 sudo chown -R btc-engine:btc-engine /opt/btc-collision-engine
+
 ```
 
 ## 3. 创建虚拟环境
@@ -113,6 +132,7 @@ python3 -m venv venv
 
 # 退出
 exit
+
 ```
 
 ## 4. 安装systemd服务
@@ -126,6 +146,7 @@ sudo systemctl daemon-reload
 
 # 启用服务
 sudo systemctl enable btc-collision-engine
+
 ```
 
 ## 5. 配置生产环境
@@ -141,6 +162,7 @@ sudo chmod 600 /opt/btc-collision-engine/config.production.json
 
 # 编辑配置
 sudo nano /opt/btc-collision-engine/config.production.json
+
 ```
 
 ## 6. 启动服务
@@ -154,6 +176,7 @@ sudo systemctl status btc-collision-engine
 
 # 查看日志
 sudo journalctl -u btc-collision-engine -f
+
 ```
 
 ---
@@ -183,6 +206,7 @@ sudo systemctl enable btc-collision-engine
 
 # 禁用开机自启
 sudo systemctl disable btc-collision-engine
+
 ```
 
 ## 查看日志
@@ -202,6 +226,7 @@ sudo journalctl -u btc-collision-engine --since "2024-01-01 00:00:00" --until "2
 
 # 错误日志
 sudo journalctl -u btc-collision-engine -p err
+
 ```
 
 ## 性能监控
@@ -215,6 +240,7 @@ sudo systemctl show btc-collision-engine -p MemoryCurrent
 
 # 查看进程树
 systemd-cgls
+
 ```
 
 ---
@@ -235,6 +261,7 @@ systemd-cgls
     notifempty
     create 0640 root systemd-journal
 }
+
 ```
 
 ### 导出日志
@@ -248,6 +275,7 @@ sudo journalctl -u btc-collision-engine -o json > btc-engine.json
 
 # 导出错误日志
 sudo journalctl -u btc-collision-engine -p err > btc-engine-errors.log
+
 ```
 
 ## 清理日志
@@ -258,6 +286,7 @@ sudo journalctl --vacuum-time=7d
 
 # 限制日志大小为1GB
 sudo journalctl --vacuum-size=1G
+
 ```
 
 ---
@@ -283,6 +312,7 @@ LimitNPROC=4096
 
 # 进程优先级
 Nice=10
+
 ```
 
 重新加载配置：
@@ -290,6 +320,7 @@ Nice=10
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl restart btc-collision-engine
+
 ```
 
 ## GPU支持
@@ -305,6 +336,7 @@ Environment="NVIDIA_DRIVER_CAPABILITIES=compute,utility"
 # 如果需要nvidia-persistenced服务
 After=network.target nvidia-persistenced.service
 Wants=nvidia-persistenced.service
+
 ```
 
 ## I/O优化
@@ -318,6 +350,7 @@ IODeviceWeight=/dev/sda 500
 # 限制读写速率
 IOReadBandwidthMax=/dev/sda 100M
 IOWriteBandwidthMax=/dev/sda 50M
+
 ```
 
 ---
@@ -340,6 +373,7 @@ ls -la /opt/btc-collision-engine/
 # 手动运行测试
 sudo -u btc-engine /opt/btc-collision-engine/venv/bin/python \
     /opt/btc-collision-engine/key_collision_cli.py --help
+
 ```
 
 ## 性能低下
@@ -356,6 +390,7 @@ nvidia-smi
 
 # 查看碰撞引擎状态
 cat /opt/btc-collision-engine/data_logs/current_data.json | jq '.performance'
+
 ```
 
 ## 内存泄漏
@@ -370,6 +405,7 @@ sudo systemctl restart btc-collision-engine
 # 设置内存限制（自动重启）
 # 在服务文件中添加:
 # MemoryMax=16G
+
 ```
 
 ## 断点恢复
@@ -389,6 +425,7 @@ with open('/opt/btc-collision-engine/data_logs/checkpoint.json') as f:
 
 # 重启服务自动恢复
 sudo systemctl restart btc-collision-engine
+
 ```
 
 ---
@@ -407,6 +444,7 @@ sudo chmod 750 /opt/btc-collision-engine/{data_logs,logs,monitoring_data}
 # 应用文件（只读）
 sudo chmod 644 /opt/btc-collision-engine/*.py
 sudo chmod 755 /opt/btc-collision-engine/src/
+
 ```
 
 ## systemd安全选项
@@ -431,6 +469,7 @@ ReadWritePaths=/opt/btc-collision-engine/logs \
 
 # 私有临时目录
 PrivateTmp=true
+
 ```
 
 ## 网络隔离
@@ -445,6 +484,7 @@ PrivateNetwork=true
 # 或者限制网络访问
 IPAddressAllow=localhost
 IPAddressDeny=any
+
 ```
 
 ---
@@ -463,6 +503,7 @@ sudo tar czf /backup/btc-engine-$(date +%Y%m%d).tar.gz \
 
 # 设置备份权限
 sudo chmod 600 /backup/btc-engine-*.tar.gz
+
 ```
 
 ## 恢复数据
@@ -479,6 +520,7 @@ sudo chown -R btc-engine:btc-engine /opt/btc-collision-engine
 
 # 启动服务
 sudo systemctl start btc-collision-engine
+
 ```
 
 ---
@@ -498,6 +540,7 @@ PathModified=/opt/btc-collision-engine/data_logs/current_data.json
 
 [Install]
 WantedBy=multi-user.target
+
 ```
 
 创建对应的服务 `/etc/systemd/system/btc-collision-monitor.service`:
@@ -510,12 +553,14 @@ Description=Check BTC Collision Engine Status
 Type=oneshot
 ExecStart=/opt/btc-collision-engine/venv/bin/python -m src.utils.health_check --quiet
 User=btc-engine
+
 ```
 
 启用监控：
 
 ```bash
 sudo systemctl enable --now btc-collision-monitor.path
+
 ```
 
 ---
@@ -528,6 +573,7 @@ A: 编辑服务文件中的 `ExecStart`:
 
 ```bash
 sudo systemctl edit btc-collision-engine
+
 ```
 
 修改为：
@@ -540,6 +586,7 @@ ExecStart=/opt/btc-collision-engine/venv/bin/python key_collision_cli.py \
     --mode range \
     --start 1 \
     --end FFFFFFFF
+
 ```
 
 ### Q: 如何添加目标地址？
@@ -557,6 +604,7 @@ sudo chmod 640 /opt/btc-collision-engine/targets.txt
 # 修改服务文件使用文件模式
 sudo systemctl edit btc-collision-engine
 # 添加: --file /opt/btc-collision-engine/targets.txt
+
 ```
 
 ## Q: 如何升级应用？
@@ -582,6 +630,7 @@ sudo systemctl start btc-collision-engine
 
 # 验证运行
 sudo systemctl status btc-collision-engine
+
 ```
 
 ## Q: 服务频繁重启怎么办？
@@ -593,12 +642,14 @@ A: 检查服务文件中的重启限制：
 # 5分钟内最多重启5次
 StartLimitIntervalSec=300
 StartLimitBurst=5
+
 ```
 
 查看重启记录：
 
 ```bash
 sudo journalctl -u btc-collision-engine | grep "Scheduled restart"
+
 ```
 
 ---
@@ -606,8 +657,11 @@ sudo journalctl -u btc-collision-engine | grep "Scheduled restart"
 ## 相关资源
 
 - [README.md](../README.md) - 项目主文档
+
 - [DOCKER_DEPLOYMENT.md](./DOCKER_DEPLOYMENT.md) - Docker部署指南
+
 - [config.example.json](../config.example.json) - 配置示例
+
 - [健康检查](../src/utils/health_check.py) - 系统健康诊断
 
 ---

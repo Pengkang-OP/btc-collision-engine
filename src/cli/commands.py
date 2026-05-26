@@ -18,7 +18,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from src.cli.constants import (
+from .constants import (
     CONFIG_EXAMPLE_FILE,
     CONFIG_FILE_NAME,
     REQUIRED_CONFIG_SECTIONS,
@@ -27,10 +27,10 @@ from src.cli.constants import (
     SEPARATOR_EQUAL,
     WIZARD_MARKER_PATH,
 )
-from src.cli.output import CLIOutput
-from src.cli.validation import validate_file_path
-from src.i18n import _t
-from src.utils.platform_utils import PlatformUtils
+from .output import CLIOutput
+from .validation import validate_file_path
+from ..i18n import t as _t
+from ..utils.platform_utils import PlatformUtils
 
 from ..utils import get_configured_logger
 
@@ -47,7 +47,7 @@ QUICK_RUN_DEFAULTS: dict[str, Any] = {
 }
 
 # 预览配置常量
-PREVIEW_CONFIG = {
+PREVIEW_CONFIG: dict[str, int] = {
     "max_preview_addresses": 3,  # 最多预览地址数
     "max_address_display_length": 20,  # 地址显示最大长度
 }
@@ -92,7 +92,7 @@ def _cmd_validate_addresses(file_path: str) -> None:
         print(_t("errors.io_error", detail=str(exc)), file=sys.stderr)
         sys.exit(1)
 
-    addresses = []
+    addresses: list[str] = []
     for raw in lines:
         stripped = raw.strip()
         if stripped and not stripped.startswith("#"):
@@ -261,7 +261,7 @@ def _validate_config_schema(config: dict[str, Any]) -> list[str]:
         with schema_path.open(encoding="utf-8") as f:
             schema = json.load(f)
         validator = jsonschema.Draft202012Validator(schema)
-        errors = list(validator.iter_errors(config))
+        errors = list(validator.iter_errors(config))  # pyright: ignore[reportUnknownMemberType]
         return [
             f"{'.'.join(str(p) for p in e.absolute_path)}: {e.message}"
             for e in errors
@@ -365,7 +365,7 @@ def _cmd_config_check() -> None:
 DEFAULT_TARGETS_FILE = "targets.txt"
 
 
-def _save_address_to_targets_file(address: str, output) -> None:
+def _save_address_to_targets_file(address: str, output: CLIOutput) -> None:
     """将单个地址去重合并写入 targets.txt。
     - 读取现有地址，若地址已存在则跳过；否则追加到文件末尾。
     - 若文件不存在则自动创建。
@@ -373,7 +373,7 @@ def _save_address_to_targets_file(address: str, output) -> None:
     """
     targets_path = Path(DEFAULT_TARGETS_FILE)
     lock_path = targets_path.with_suffix(".lock")
-    existing: set = set()
+    existing: set[str] = set()
 
     # 使用文件锁实现跨进程安全
     lock_file = None
@@ -410,9 +410,9 @@ def _save_address_to_targets_file(address: str, output) -> None:
         # 将新地址追加到文件
         if not targets_path.exists():
             with Path(targets_path).open("w", encoding="utf-8") as f:
-                f.write("# BTC 目标地址列表\n")
-                f.write("# 每行一个地址，支持 # 注释行\n")
-                f.write("# 支持 P2PKH (1开头)、P2SH (3开头)、Bech32 (bc1开头) 格式\n#\n")
+                _ = f.write("# BTC 目标地址列表\n")
+                _ = f.write("# 每行一个地址，支持 # 注释行\n")
+                _ = f.write("# 支持 P2PKH (1开头)、P2SH (3开头)、Bech32 (bc1开头) 格式\n#\n")
 
         # 读取最新内容并追加新地址
         content = Path(targets_path).read_text(encoding="utf-8")
@@ -422,10 +422,10 @@ def _save_address_to_targets_file(address: str, output) -> None:
 
         # 写入临时文件
         temp_path = targets_path.with_suffix(".tmp")
-        Path(temp_path).write_text(content, encoding="utf-8")
+        _ = Path(temp_path).write_text(content, encoding="utf-8")
 
         # 原子替换
-        Path(temp_path).replace(targets_path)
+        _ = Path(temp_path).replace(targets_path)
 
         output.print(
             "   [green][OK] 地址已保存到 targets.txt（共 " + str(len(existing) + 1) + " 条）[/green]",
@@ -495,9 +495,9 @@ def _handle_missing_target_file(
     if choice == "1":
         try:
             with Path(target_file).open("w", encoding="utf-8") as f:
-                f.write("# 目标地址文件\n")
-                f.write("# 每行一个地址，支持 # 注释\n")
-                f.write("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\n")
+                _ = f.write("# 目标地址文件\n")
+                _ = f.write("# 每行一个地址，支持 # 注释\n")
+                _ = f.write("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\n")
             output.success(_t("cli.commands.example_file_created", path=target_file))
             output.print("   [TIP] " + _t("cli.commands.example_file_tip"))
             output.success(
@@ -657,7 +657,7 @@ def _quick_start_select_mode(compact: bool = False) -> tuple[str, str | None, st
     return mode, start_key, end_key
 
 
-def _yn_prompt(output: CLIOutput, prompt: str, default: str = "y") -> bool:
+def _yn_prompt(output: CLIOutput, prompt: str, _default: str = "y") -> bool:
     """提示 yes/no，默认 Y。"""
     while True:
         val = input(f"   {prompt} (推荐: Y): ").strip().lower()
@@ -722,7 +722,7 @@ def _quick_start_select_options(compact: bool = False) -> tuple[bool, bool, int]
     return checkpoint, dedup, duration
 
 
-def _detect_gpu_devices() -> list[dict]:
+def _detect_gpu_devices() -> list[dict[str, Any]]:
     """检测可用的GPU设备，失败时返回空列表"""
     try:
         from src.gpu.device import GPUDeviceDetector
@@ -734,7 +734,7 @@ def _detect_gpu_devices() -> list[dict]:
         return []
 
 
-def _format_device_label(device: dict, index: int) -> str:
+def _format_device_label(device: dict[str, Any], index: int) -> str:
     """格式化设备显示标签，包含名称和显存"""
     name = device.get("name", f"GPU #{index}")
     mem_size = device.get("global_mem_size", 0)
@@ -749,7 +749,7 @@ def _format_device_label(device: dict, index: int) -> str:
     return name
 
 
-def _detect_gpu_devices_with_timeout(timeout: float = 5.0) -> list[dict]:
+def _detect_gpu_devices_with_timeout(timeout: float = 5.0) -> list[dict[str, Any]]:
     """带超时的 GPU 检测，超时返回空列表"""
     output = CLIOutput.get_instance()
     with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
@@ -778,7 +778,7 @@ def _gpu_no_devices_confirm(
     return []
 
 
-def _single_gpu_select(output: CLIOutput, devices: list[dict]) -> list[str]:
+def _single_gpu_select(output: CLIOutput, devices: list[dict[str, Any]]) -> list[str]:
     """单GPU模式设备选择。"""
     if not devices:
         return _gpu_no_devices_confirm(output, "GPU 模式", "--use-gpu")
@@ -803,7 +803,7 @@ def _single_gpu_select(output: CLIOutput, devices: list[dict]) -> list[str]:
     return ["--use-gpu", "--gpu-device", "0"]
 
 
-def _multi_gpu_select(output: CLIOutput, devices: list[dict]) -> list[str]:
+def _multi_gpu_select(output: CLIOutput, devices: list[dict[str, Any]]) -> list[str]:
     """多GPU模式设备选择。"""
     if not devices:
         return _gpu_no_devices_confirm(output, "多GPU模式", "--multi-gpu")
@@ -906,7 +906,7 @@ def _quick_run_scan_target(
     return address_count, preview_addresses
 
 
-def _quick_run_config_summary(target_file: str) -> dict:
+def _quick_run_config_summary(target_file: str) -> dict[str, str]:
     """构建默认配置摘要。"""
     return {
         "目标文件": target_file,
@@ -1000,7 +1000,7 @@ def _cmd_quick_run(executor: Callable[[], None] | None = None) -> None:
 def _quick_start_build_and_run(
     cmd_parts: list[str],
     executor: Callable[[], None] | None,
-    config_summary: dict | None = None,
+    config_summary: dict[str, str] | None = None,
 ) -> None:
     """构建并（可选）执行生成的命令"""
     output = CLIOutput.get_instance()
@@ -1180,7 +1180,9 @@ def _handle_info_commands(args: argparse.Namespace) -> bool:
     return False
 
 
-def _handle_wizard_and_quickstart(args: argparse.Namespace, run_main_fn=None) -> bool:
+def _handle_wizard_and_quickstart(  # noqa: E501
+    args: argparse.Namespace, run_main_fn: Callable[[], None] | None = None
+) -> bool:
     """处理向导和快速启动：--quick-start, --quick-run, 首次运行检测"""
     # --quick-run (快速模式)
     if getattr(args, "quick_run", False):
@@ -1199,8 +1201,8 @@ def _handle_wizard_and_quickstart(args: argparse.Namespace, run_main_fn=None) ->
     wizard_marker = Path(WIZARD_MARKER_PATH)
     if not wizard_marker.is_absolute():
         try:
-            from ._path_setup import _get_project_root as _pr
-            wizard_marker = Path(_pr()) / WIZARD_MARKER_PATH
+            # 使用当前文件路径计算项目根目录，避免依赖私有函数
+            wizard_marker = Path(__file__).resolve().parent.parent / WIZARD_MARKER_PATH
         except Exception:
             logger.debug("Path setup failed, using default path")
 
@@ -1222,7 +1224,7 @@ def _handle_wizard_and_quickstart(args: argparse.Namespace, run_main_fn=None) ->
         from ..utils.first_run_wizard import FirstRunWizard
 
         wizard = FirstRunWizard()
-        wizard.run()
+        _ = wizard.run()
         print("\n" + _t("cli.main.wizard_done"))
         print(_t("cli.main.wizard_tip") + "\n")
         sys.exit(0)
@@ -1237,7 +1239,7 @@ def _handle_system_commands(args: argparse.Namespace) -> bool:
         from ..utils.health_check import HealthChecker
         checker = HealthChecker()
         results = checker.run_all_checks()
-        checker.generate_report()
+        _ = checker.generate_report()
         all_ok = all(passed for passed, _ in results.values())
         sys.exit(0 if all_ok else 1)
 
@@ -1284,7 +1286,9 @@ def _handle_system_commands(args: argparse.Namespace) -> bool:
                                 size = f.stat().st_size
                                 if not found_any:
                                     found_any = True
-                                print(f"  [待删除] {f} ({_format_file_size(size)}, {mtime.strftime('%Y-%m-%d')})")
+                                print(
+                                    f"  [待删除] {f} ({_format_file_size(size)}, {mtime.strftime('%Y-%m-%d')})",  # noqa: E501
+                                )
                                 files_in_dir += 1
                                 total_size += size
                         except OSError:
@@ -1326,7 +1330,9 @@ def _handle_system_commands(args: argparse.Namespace) -> bool:
     return False
 
 
-def _dispatch_utility_commands(args: argparse.Namespace, run_main_fn=None) -> bool:
+def dispatch_utility_commands(  # noqa: E501
+    args: argparse.Namespace, run_main_fn: Callable[[], None] | None = None
+) -> bool:
     """处理所有实用工具命令（不启动碰撞引擎的独立命令）。"""
     return (
         _handle_info_commands(args)

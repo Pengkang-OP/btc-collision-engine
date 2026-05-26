@@ -318,4 +318,3 @@ class TestResourceCleanup:
         assert device.device_info == {}
         assert device.vendor is None
         assert device.profile is None
-

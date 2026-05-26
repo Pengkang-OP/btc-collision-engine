@@ -2,7 +2,6 @@
 
 **版本**: v4.5.1
 
-
 ## 1. 概述
 
 ### 1.1 目标
@@ -10,14 +9,19 @@
 将BTC碰撞引擎的引导界面与日志界面进行分离设计，实现：
 
 - **引导界面模块**：专注于用户交互与流程引导
+
 - **日志处理模块**：专注于日志的收集、处理与存储功能
+
 - **模块独立运行**：两个模块可独立运行，同时保持必要的数据交互
 
 ### 1.2 设计原则
 
 - **高内聚低耦合**：每个模块职责单一，模块间依赖最小化
+
 - **接口清晰**：定义明确的模块间接口和数据传递方式
+
 - **独立运行**：支持模块独立测试和运行
+
 - **向后兼容**：不影响现有功能和使用方式
 
 ---
@@ -43,12 +47,15 @@ f:\Qoder\btc-collision-engine\
 │   └── utils/
 │       ├── logger.py              # 日志工具
 │       └── first_run_wizard.py    # 首次运行向导
+
 ```
 
 ### 2.2 问题
 
 - **引导逻辑与日志逻辑混杂**：`_cmd_quick_start`等函数包含大量用户交互代码
+
 - **日志处理分散**：data_logger、logger等分散在不同目录
+
 - **start.bat职责过多**：处理启动选择、命令分发、环境检查等
 
 ---
@@ -86,6 +93,7 @@ f:\Qoder\btc-collision-engine\
 │   │   └── ...
 │   └── utils/
 │       └── logger.py              # 日志工具(重构)
+
 ```
 
 ### 3.2 模块职责划分
@@ -143,6 +151,7 @@ class LogConfig:
     console_output: bool = True
     max_file_size: int = 10 * 1024 * 1024  # 10MB
     backup_count: int = 5
+
 ```
 
 ### 4.2 消息队列接口
@@ -189,6 +198,7 @@ class WizardLogQueue:
 
     def disable(self):
         self._enabled = False
+
 ```
 
 ### 4.3 事件定义
@@ -216,6 +226,7 @@ class LogEvent(Enum):
     GPU_DETECTED = "gpu_detected"
     PERFORMANCE_UPDATE = "performance_update"
     MATCH_FOUND = "match_found"
+
 ```
 
 ---
@@ -238,6 +249,7 @@ log_manager = LogManager()
 # 直接传递结果
 result = wizard.run()
 log_manager.log_wizard_result(result)
+
 ```
 
 #### 模式2：消息队列（中等耦合）
@@ -255,6 +267,7 @@ queue.send(WizardEvent.WIZARD_COMPLETE, {'config': {...}})
 message = queue.receive(timeout=5.0)
 if message:
     log_manager.process(message)
+
 ```
 
 #### 模式3：文件传递（松耦合）
@@ -272,6 +285,7 @@ with open(config_file, 'w') as f:
 # 日志进程读取配置
 with open(config_file, 'r') as f:
     config = json.load(f)
+
 ```
 
 ### 5.2 推荐的传递方式
@@ -353,6 +367,7 @@ if "!CHOICE!"=="1" (
     exit /b 0
 )
 goto :eof
+
 ```
 
 ### 6.2 启动模式对应关系
@@ -370,34 +385,51 @@ goto :eof
 ### 阶段1：创建引导模块
 
 1. 创建 `src/wizard/__init__.py`
+
 2. 实现 `wizard_engine.py` - 向导引擎
+
 3. 实现 `target_selector.py` - 目标选择器
+
 4. 实现 `mode_selector.py` - 模式选择器
+
 5. 实现 `option_selector.py` - 选项选择器
+
 6. 实现 `gpu_selector.py` - GPU选择器
+
 7. 实现 `config_builder.py` - 配置构建器
+
 8. 创建接口定义文件
 
 ### 阶段2：创建日志模块
 
 1. 创建 `src/log_engine/__init__.py`
+
 2. 实现 `log_manager.py` - 日志管理器
+
 3. 实现 `log_collector.py` - 日志收集器
+
 4. 实现 `log_processor.py` - 日志处理器
+
 5. 实现 `log_storage.py` - 日志存储器
+
 6. 实现 `log_query.py` - 日志查询器
+
 7. 整合现有日志功能
 
 ### 阶段3：修改start.bat
 
 1. 简化start.bat代码
+
 2. 添加新的启动选项
+
 3. 支持独立运行各模块
 
 ### 阶段4：测试和优化
 
 1. 测试各模块独立运行
+
 2. 测试模块间数据交互
+
 3. 性能优化和错误处理
 
 ---
@@ -407,19 +439,25 @@ goto :eof
 ### 8.1 向后兼容
 
 - 原有的 `key_collision_cli.py` 保持不变
+
 - 原有的命令行参数保持不变
+
 - start.bat 的使用方式保持不变
 
 ### 8.2 新增接口
 
 - 提供 Python API 供其他模块调用
+
 - 提供命令行接口供独立运行
+
 - 提供配置文件接口供数据传递
 
 ### 8.3 文档
 
 - 为每个模块编写使用文档
+
 - 提供接口调用示例
+
 - 提供故障排查指南
 
 ---
@@ -429,13 +467,19 @@ goto :eof
 本方案通过以下方式实现引导界面与日志界面的分离：
 
 1. **模块化设计**：创建独立的 `src/wizard/` 和 `src/log_engine/` 目录
+
 2. **清晰接口**：定义明确的数据结构和消息传递方式
+
 3. **灵活部署**：支持独立运行和组合运行
+
 4. **向后兼容**：不影响现有功能和使用方式
 
 通过实施本方案，可以实现：
 
 - 引导界面专注于用户交互，提升用户体验
+
 - 日志处理独立进行，提高系统整体性能
+
 - 模块独立测试，降低维护成本
+
 - 灵活的部署方式，适应不同场景需求

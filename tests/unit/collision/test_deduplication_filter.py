@@ -1,6 +1,7 @@
 """DeduplicationFilter 单元测试 - 基于集合的去重过滤器"""
 
 import threading
+import unittest
 
 from src.collision.deduplication_filter import DeduplicationFilter
 
@@ -46,8 +47,8 @@ class TestDeduplicationFilterBasic:
         f.check_and_add(pk2)
 
         stats = f.get_stats()
-        assert stats["checks_total"]  ==  3
-        assert stats["duplicates_found"]  ==  1
+        assert stats["checks_total"] == 3
+        assert stats["duplicates_found"] == 1
 
 
 class TestDeduplicationFilterAddress:
@@ -94,7 +95,7 @@ class TestDeduplicationFilterMaxSize:
             pk = i.to_bytes(32, "big")
             f.check_and_add(pk)
         # 超过了 max_size 但不崩溃
-        assert len(f._seen_keys)  >  max_size
+        assert len(f._seen_keys) > max_size
 
     def test_check_and_add_still_works_after_exceed(self):
         """超过 max_size 后仍可正常使用"""
@@ -128,7 +129,7 @@ class TestDeduplicationFilterConcurrency:
         for t in threads:
             t.join()
 
-        assert errors  ==  []
+        assert errors == []
 
     def test_concurrent_count_accuracy(self):
         """并发下 checks_total 准确"""
@@ -148,7 +149,7 @@ class TestDeduplicationFilterConcurrency:
             t.join()
 
         stats = f.get_stats()
-        assert stats["checks_total"]  ==  n_threads * n_per_thread
+        assert stats["checks_total"] == n_threads * n_per_thread
 
     def test_duplicate_detection_concurrent(self):
         """并发下重复检测有效（同一批私钥多个线程并发检查）"""
@@ -171,7 +172,7 @@ class TestDeduplicationFilterConcurrency:
 
         # 总通过数不超过 100（每个键最多通过一次）
         total_pass = sum(pass_counts)
-        assert total_pass  <=  100
+        assert total_pass <= 100
 
 
 class TestDeduplicationFilterGetStats:
@@ -184,12 +185,12 @@ class TestDeduplicationFilterGetStats:
             f.check_and_add(i.to_bytes(32, "big"))
         stats = f.get_stats()
 
-        assert stats  in  "unique_keys"
-        assert stats  in  "unique_addresses"
-        assert stats  in  "duplicates_found"
-        assert stats  in  "checks_total"
-        assert stats  in  "max_size"
-        assert stats  in  "enabled"
+        assert stats in "unique_keys"
+        assert stats in "unique_addresses"
+        assert stats in "duplicates_found"
+        assert stats in "checks_total"
+        assert stats in "max_size"
+        assert stats in "enabled"
 
     def test_get_stats_values(self):
         """get_stats 返回正确的数值"""
@@ -199,12 +200,12 @@ class TestDeduplicationFilterGetStats:
         f.check_and_add(pk)  # 重复
 
         stats = f.get_stats()
-        assert stats["checks_total"]  ==  2
-        assert stats["duplicates_found"]  ==  1
-        assert stats["unique_keys"]  ==  1
-        assert stats["unique_addresses"]  ==  0
-        assert stats["enabled"]  ==  True
-        assert stats["max_size"]  ==  1000
+        assert stats["checks_total"] == 2
+        assert stats["duplicates_found"] == 1
+        assert stats["unique_keys"] == 1
+        assert stats["unique_addresses"] == 0
+        assert stats["enabled"]
+        assert stats["max_size"] == 1000
 
 
 class TestDeduplicationFilterReset:
@@ -216,15 +217,15 @@ class TestDeduplicationFilterReset:
         for i in range(10):
             f.check_and_add(i.to_bytes(32, "big"))
         # 确认有数据
-        assert f.get_stats()["checks_total"]  >  0
+        assert f.get_stats()["checks_total"] > 0
 
         f.reset()
 
         stats = f.get_stats()
-        assert stats["checks_total"]  ==  0
-        assert stats["duplicates_found"]  ==  0
-        assert len(f._seen_keys)  ==  0
-        assert len(f._seen_addresses)  ==  0
+        assert stats["checks_total"] == 0
+        assert stats["duplicates_found"] == 0
+        assert len(f._seen_keys) == 0
+        assert len(f._seen_addresses) == 0
 
     def test_reset_then_reuse(self):
         """Reset 后可正常使用"""
@@ -233,7 +234,7 @@ class TestDeduplicationFilterReset:
         f.reset()
         # 重置后可以再次添加
         assert f.check_and_add(b"key2".ljust(32, b"\x00"))
-        assert f.get_stats()["checks_total"]  ==  1
+        assert f.get_stats()["checks_total"] == 1
 
     def test_reset_with_duplicates(self):
         """Reset 清除重复计数"""
@@ -241,10 +242,10 @@ class TestDeduplicationFilterReset:
         pk = b"dup".ljust(32, b"\x00")
         f.check_and_add(pk)
         f.check_and_add(pk)  # 重复
-        assert f.get_stats()["duplicates_found"]  ==  1
+        assert f.get_stats()["duplicates_found"] == 1
 
         f.reset()
-        assert f.get_stats()["duplicates_found"]  ==  0
+        assert f.get_stats()["duplicates_found"] == 0
         # 之前的重复键可以再次通过
         assert f.check_and_add(pk)
 
@@ -253,7 +254,7 @@ class TestDeduplicationFilterReset:
         f = DeduplicationFilter(max_size=100)
         f.check_and_add(b"\x01" * 32)
         f.clear()
-        assert f.get_stats()["checks_total"]  ==  0
+        assert f.get_stats()["checks_total"] == 0
 
 
 if __name__ == "__main__":

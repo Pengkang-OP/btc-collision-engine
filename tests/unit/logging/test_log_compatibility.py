@@ -278,4 +278,3 @@ class TestLogCompatibility:
         with pathlib.Path(self.log_file + ".format").open(encoding="utf-8") as f:
             content = f.read()
             assert "INFO: " + test_message in content
-

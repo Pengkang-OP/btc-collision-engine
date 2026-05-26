@@ -293,7 +293,7 @@ python -m src.utils.data_cleanup --temp-days 14 --data-days 30
 
 ### 部署前
 
-- [ ] 检查系统要求（Python 3.9+、内存、磁盘）
+- [ ] 检查系统要求（Python 3.12+、内存、磁盘）
 - [ ] 安装依赖（Docker或systemd）
 - [ ] 准备GPU驱动（如使用GPU）
 - [ ] 克隆仓库
@@ -338,7 +338,7 @@ python -m src.utils.data_cleanup --temp-days 14 --data-days 30
 ---
 
 **文件清单版本**: 5.0.0  
-**创建日期**: 2026-04-24  
+**最近更新**: 2026-05-27  
 **文件总数**: 15个  
 **代码行数**: 约3,446行  
 

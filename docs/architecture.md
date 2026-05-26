@@ -9,23 +9,41 @@
 ## 目录
 
 1. [整体架构概览](#1-整体架构概览)
+
 2. [模块分层与依赖关系](#2-模块分层与依赖关系)
+
 3. [应用启动流](#3-应用启动流)
+
 4. [核心数据流](#4-核心数据流)
+
 5. [模块详解](#5-模块详解)
+
    - [5.1 src/utils/ — 基础工具层](#51-srcutils--基础工具层)
+
    - [5.2 src/core/ — 密码学核心层](#52-srccore--密码学核心层)
+
    - [5.3 src/config/ — 配置管理层](#53-srcconfig--配置管理层)
+
    - [5.4 src/security/ — 安全层](#54-srcsecurity--安全层)
+
    - [5.5 src/collision/ — 碰撞引擎层](#55-srccollision--碰撞引擎层)
+
    - [5.6 src/collision/gpu/ — GPU 引擎层](#56-srccollisiongpu--gpu-引擎层)
+
    - [5.7 src/collision/targets/ — 目标地址管理层](#57-srccollisiontargets--目标地址管理层)
+
    - [5.8 src/pipeline/ — 流水线层](#58-srcpipeline--流水线层)
+
    - [5.9 src/data/ — 数据持久化层](#59-srcdata--数据持久化层)
+
    - [5.10 src/monitoring/ — 监控层](#510-srcmonitoring--监控层)
+
    - [5.11 src/cli/ — 命令行界面层](#511-srccli--命令行界面层)
+
    - [5.12 src/service/ — 服务编排层](#512-srcservice--服务编排层)
+
    - [5.13 src/plugins/ — 插件系统](#513-srcplugins--插件系统)
+
 6. [模块间依赖矩阵](#6-模块间依赖矩阵)
 
 ---
@@ -82,12 +100,17 @@ graph TB
     config --> utils
     data --> utils
     monitoring --> utils
+
 ```
 
 **设计原则**:
+
 - **基础设施层**无业务依赖，仅依赖标准库和第三方库
+
 - **业务逻辑层**依赖基础设施层，彼此间松耦合
+
 - **服务编排层**组装业务模块，提供统一服务接口
+
 - **表现层**仅处理用户交互，依赖服务层和业务层
 
 ---
@@ -131,6 +154,7 @@ graph LR
     L1 --> L2
     L2 --> L3
     L3 --> L4
+
 ```
 
 ### 2.2 关键依赖方向
@@ -155,6 +179,7 @@ src/collision/
 
 src/core/
   └── src/utils/           (仅日志/异常，无其他 src 依赖)
+
 ```
 
 ---
@@ -193,6 +218,7 @@ sequenceDiagram
     Main->>Main: 阶段7: 主运行循环
     Main->>Engine: 阶段8: 停止等待
     Main->>Main: 阶段9: 最终统计摘要
+
 ```
 
 **9 个启动阶段**:
@@ -239,6 +265,7 @@ flowchart LR
         I -->|否| K[去重过滤]
         K --> L[继续下一轮]
     end
+
 ```
 
 ### 4.2 CPU 引擎内部数据流
@@ -269,6 +296,7 @@ flowchart TB
     W1 & W2 & W3 -->|去重| DF
     W1 & W2 & W3 -->|事件| EB
     M -->|保存/恢复| CK
+
 ```
 
 ### 4.3 GPU 引擎数据流 (重构后 v6.0)
@@ -318,6 +346,7 @@ flowchart TB
     ENG --> SMC
     SCH --> RP
     MON --> CC
+
 ```
 
 ---
@@ -336,11 +365,17 @@ flowchart TB
 **核心职责**: 为所有模块提供日志、异常处理、编解码、文件操作、序列化等基础功能。
 
 **导出清单**:
+
 - **日志**: `init_logging`, `get_configured_logger`, `LoggingConfig`
+
 - **异常类型** (11 种): `AddressGenerationError`, `CheckpointError`, `CollisionEngineError`, `CollisionError`, `ConfigError`, `CryptoBackendError`, `DeduplicationError`, `GPUError`, `KeyGenerationError`, `TargetResolutionError`, `ValidationError`
+
 - **异常处理**: `ExceptionHandler` — 统一异常处理与恢复策略
+
 - **编解码**: `bech32_encode`, `bech32_decode`, `decode_segwit_address`, `EncodingUtils`
+
 - **文件操作**: `atomic_json_read/write`, `atomic_write`, `ensure_directory`, `get_file_size_safe`, `safe_file_delete`
+
 - **敏感数据模式**: 定义 P2PKH/P2SH/WIF/私钥 HEX 等格式的正则匹配模式，用于日志脱敏
 
 **关键子模块**:
@@ -399,6 +434,7 @@ flowchart LR
 
     CC -.->|性能最优| CC
     PP -.->|零外部依赖| PP
+
 ```
 
 ---
@@ -415,8 +451,11 @@ flowchart LR
 **核心职责**: JSON 配置文件加载、环境变量覆盖、运行时配置合并、配置验证。
 
 **关键子模块**:
+
 - `config_loader.py` — 多源配置加载（文件 + 环境变量 + 命令行）
+
 - `config_validator.py` — 配置项类型/范围验证
+
 - `config_resolver.py` — 配置优先级合并
 
 ---
@@ -433,8 +472,11 @@ flowchart LR
 **核心职责**: 内存安全擦除、私钥保护、安全日志脱敏。
 
 **关键功能**:
+
 - 私钥内存安全清零 (`sodium_memzero` / 手动覆写)
+
 - 敏感数据标记与跟踪
+
 - 安全审计日志
 
 ---
@@ -496,6 +538,7 @@ flowchart LR
     BUS --> OBS2
     BUS --> OBS3
     BUS --> OBS4
+
 ```
 
 ---
@@ -540,6 +583,7 @@ flowchart LR
   ├── monitoring.py         → 独立监控
   ├── vendor_strategy.py    → 厂商优化
   └── _scheduler.py         → 任务调度
+
 ```
 
 ---
@@ -591,6 +635,7 @@ flowchart LR
 └──────────┘    └──────────┘    └──────────┘    └──────────┘
      ↓               ↓               ↓               ↓
  DataLogger      DataLogger      DataLogger      DataLogger
+
 ```
 
 ---
@@ -732,6 +777,7 @@ f:/Qoder/btc-collision-engine/
 ├── scripts/                      # 辅助脚本（分类子目录）（分类子目录）
 ├── examples/                     # 使用示例
 └── deploy/                       # 部署配置 (Docker/K8s)
+
 ```
 
 ### B. 技术栈
@@ -750,7 +796,11 @@ f:/Qoder/btc-collision-engine/
 ### C. 相关文档
 
 - `README.md` — 项目概述与快速开始
+
 - `CHANGELOG.md` — 版本变更日志
+
 - `PROJECT_ANALYSIS.md` — 项目全面分析
+
 - `RELEASE_NOTES_*.md` — 各版本发布说明
+
 - `docs/` — 详细文档目录 (305 篇)

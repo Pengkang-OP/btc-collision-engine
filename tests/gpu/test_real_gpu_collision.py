@@ -17,10 +17,10 @@ import pytest
 # 模块级别 marker：本文件所有测试都属于 GPU 测试
 pytestmark = pytest.mark.gpu
 
-import pathlib
+import pathlib  # noqa: E402
 
-from src.collision.collision_stats import CollisionStats
-from src.collision.gpu.engine import GPUCollisionEngine
+from src.collision.collision_stats import CollisionStats  # noqa: E402
+from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
 
 # 配置日志
 logging.basicConfig(

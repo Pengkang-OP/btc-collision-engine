@@ -25,7 +25,7 @@ logger = get_configured_logger("MultiFormatAddressGenerator")
 
 
 class AddressFormat(Enum):
-    """Bitcoin address format enumeration"""
+    """Bitcoin address format enumeration."""
 
     P2PKH = "p2pkh"
     P2SH = "p2sh"
@@ -397,6 +397,7 @@ class MultiFormatAddressGenerator:
         targets: dict[AddressFormat, set[str]],
     ) -> tuple[bool, str | None, str | None]:
         """Check if generated address matches any format target.
+
         [Optimization] Only generates addresses for target formats
         to improve performance.
         [Note] Returns first match; use match_all_formats for all
@@ -450,8 +451,8 @@ class MultiFormatAddressGenerator:
         private_key: bytes,
         targets: dict[AddressFormat, set[str]],
     ) -> tuple[bool, list[tuple[str, str]]]:
-        """Check if generated address matches all target format
-        addresses.
+        """Check if generated address matches all target format addresses.
+
         [Full check] Iterates all target formats, returns all
         matching addresses.
 

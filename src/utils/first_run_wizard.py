@@ -341,7 +341,7 @@ class FirstRunWizard:
     # 主入口
     # -------------------------------------------------------------------------
 
-    def run(self) -> dict:
+    def run(self) -> dict[str, Any]:
         """运行完整向导，返回最终配置"""
         import copy
 

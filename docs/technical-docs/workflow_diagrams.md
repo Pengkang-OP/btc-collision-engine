@@ -3,18 +3,24 @@
 > **版本**: v1.2.0 | **最后更新**: 2026-04-21  
 > **面向**: 开发者
 
-
 本文档包含系统各个关键流程的详细序列图和说明。
 
 ---
 
 ## 目录
+
 1. [系统整体架构](#1-系统整体架构)
+
 2. [启动流程](#2-启动流程)
+
 3. [碰撞模式流程](#3-碰撞模式流程)
+
 4. [地址生成流程](#4-地址生成流程)
+
 5. [GUI交互流程](#5-gui交互流程)
+
 6. [断点管理流程](#6-断点管理流程)
+
 7. [程序运行完整流程](#7-程序运行完整流程)
 
 ---
@@ -84,11 +90,15 @@ graph TD
     style UI fill:#e1f5ff
     style Engine fill:#fff3e0
     style Core fill:#e8f5e9
+
 ```python
 
 **说明**:
+
 - **用户界面层**：提供CLI、GUI、API三种交互方式
+
 - **碰撞引擎层**：核心业务逻辑，包含三种碰撞模式和四个管理组件
+
 - **核心算法层**：密码学基础，支持四种加密后端和完整地址生成流程
 
 ---
@@ -127,14 +137,21 @@ sequenceDiagram
         Engine->>CLI: on_progress(stats)
         CLI->>User: 显示进度<br/>速度/已检查/匹配数
     end
+
 ```python
 
 **启动步骤说明**:
+
 1. **参数解析**：使用argparse解析命令行参数
+
 2. **参数验证**：检查mode、targets、start/end等参数有效性
+
 3. **目标加载**：从文件或命令行参数加载目标地址集合
+
 4. **引擎创建**：初始化KeyCollisionEngine及其组件
+
 5. **引擎启动**：在后台线程启动碰撞检测
+
 6. **进度回调**：每0.5秒更新一次进度显示
 
 ### 2.2 GUI启动流程
@@ -164,12 +181,17 @@ sequenceDiagram
     
     Main->>User: 显示窗口<br/>mainloop()
     User-->>Main: 界面就绪
+
 ```python
 
 **GUI启动特点**:
+
 - 使用Tkinter创建图形界面
+
 - 多标签页设计：单地址生成、批量生成、碰撞检测、地址验证
+
 - 事件驱动的交互模式
+
 - 后台线程执行碰撞任务，避免UI阻塞
 
 ---
@@ -221,12 +243,17 @@ sequenceDiagram
     end
     
     Pool-->>Engine: 收集所有worker结果
+
 ```python
 
 **随机碰撞特点**:
+
 - 使用SecureKeyManager确保私钥安全
+
 - 去重过滤器避免重复计算
+
 - 私钥未匹配时自动清零
+
 - 匹配时传递私钥副本给回调函数
 
 ### 3.2 范围扫描模式
@@ -265,12 +292,17 @@ sequenceDiagram
     end
     
     Engine->>Stats: update(total_count, total_range)
+
 ```python
 
 **范围扫描特点**:
+
 - 均匀分块，每个Worker处理连续范围
+
 - 实时计数器_live_range_count减少锁竞争
+
 - 支持ETA计算（总范围已知）
+
 - 顺序扫描，适合已知私钥范围
 
 ---
@@ -352,34 +384,51 @@ flowchart TD
     style OnMatch fill:#c8e6c9
     style ClearKey fill:#e8f5e9
     style CheckStop fill:#fff3e0
+
 ```yaml
 
 **流程说明**:
 
 **1. 启动阶段**：
+
    - CLI/GUI两种启动方式
+
    - 加载目标地址集合
+
    - 初始化所有组件（断点、去重、统计、日志、监控）
 
 **2. 后端选择**：
+
    - 优先级：Coincurve > OpenSSL > ECDSA > PurePython
+
    - 自动检测可用后端
+
    - 性能差异：3-5倍
 
 **3. 碰撞循环**：
+
    - SecureKeyManager生成私钥
+
    - 地址生成：私钥→公钥→Hash160→Base58Check
+
    - 匹配检查：O(1) Set查找
+
    - 私钥安全：未匹配自动清零，匹配传递副本
 
 **4. 监控与日志**：
+
    - 每5秒记录性能数据
+
    - 异常检测与告警
+
    - 数据保存到JSON文件
 
 **5. 停止阶段**：
+
    - 保存最终断点
+
    - 生成数据报告
+
    - 优雅退出
 
 ---
@@ -412,28 +461,41 @@ flowchart TD
     style F fill:#fff3e0
     style G fill:#e8f5e9
     style H fill:#c8e6c9
+
 ```yaml
 
 **详细步骤说明**:
 
 1. **私钥生成/验证**：
+
    - 使用 `secrets.token_bytes(32)` 生成加密安全随机数
+
    - 验证 `1 <= int(private_key) < Secp256k1.N`
+
    - N = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
 
 2. **公钥生成（椭圆曲线标量乘法）**：
+
    - 计算 Q = k * G（G是secp256k1基点）
+
    - 压缩格式: 0x02/0x03 + x坐标（33字节）
+
    - 非压缩格式: 0x04 + x坐标 + y坐标（65字节）
 
 3. **Hash160哈希**：
+
    - SHA256(public_key) → 32字节
+
    - RIPEMD160(sha256_result) → 20字节
 
 4. **Base58Check编码**：
+
    - 版本字节: 0x00（主网P2PKH）
+
    - 载荷: 20字节Hash160
+
    - 校验和: double_sha256(版本+载荷)[:4]
+
    - Base58编码: 版本 + 载荷 + 校验和
 
 ### 4.2 椭圆曲线运算流程
@@ -465,32 +527,43 @@ flowchart TD
     style BitCheck fill:#ffebee
     style Return fill:#c8e6c9
     style End fill:#e1f5ff
+
 ```python
 
 **点加法与点倍乘公式**:
 
 **点加法（P ≠ Q）**：
+
 ```
 λ = (y2 - y1) / (x2 - x1) mod p
 x3 = λ² - x1 - x2 mod p
 y3 = λ(x1 - x3) - y1 mod p
+
 ```python
 
 **点倍乘（P = Q）**：
+
 ```
 λ = (3x1² + a) / (2y1) mod p
 x3 = λ² - 2x1 mod p
 y3 = λ(x1 - x3) - y1 mod p
+
 ```python
 
 **曲线参数**：
+
 - p = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
+
 - a = 0
+
 - b = 7
 
 **安全特性**：
+
 - Montgomery Ladder恒定时间实现
+
 - 使用条件选择代替if-else
+
 - 避免侧信道攻击（时序分析）
 
 ---
@@ -527,6 +600,7 @@ sequenceDiagram
     GUI->>Panel: 更新按钮状态
     GUI->>Panel: 禁用输入控件
     GUI-->>User: 界面更新
+
 ```markdown
 
 ### 5.2 进度更新流程
@@ -551,11 +625,15 @@ sequenceDiagram
     Stats-->>Display: 刷新显示数据
     
     Display-->>Engine: 界面更新完成
+
 ```python
 
 **进度更新特点**:
+
 - 使用`root.after(0)`确保线程安全
+
 - 回调函数在主线程执行，避免Tkinter跨线程操作
+
 - 每0.5秒更新一次，平衡性能与响应性
 
 ### 5.3 匹配发现流程
@@ -582,11 +660,15 @@ sequenceDiagram
     Note over LogFrame: 私钥/地址/WIF<br/>完整信息展示
     
     GUI->>GUI: 更新状态栏<br/>“发现匹配!”
+
 ```python
 
 **匹配处理特点**:
+
 - 传递私钥副本，原始私钥自动清零
+
 - 高亮显示完整匹配信息
+
 - 状态栏实时更新
 
 ---
@@ -619,12 +701,17 @@ sequenceDiagram
     Note over Buffer,FileSystem: os.replace()保证原子性
     
     CPMgr-->>Engine: 保存完成
+
 ```python
 
 **断点保存特点**:
+
 - 原子写入：先写入临时文件，再原子重命名
+
 - 安全保护：清理敏感信息（私钥）
+
 - 自动保存：根据间隔自动触发
+
 - 崩溃恢复：即使程序崩溃也不会损坏断点文件
 
 ### 6.2 恢复断点流程
@@ -658,12 +745,17 @@ sequenceDiagram
     Engine->>Engine: start(resume=True)
     Engine-->>GUI: 从断点继续运行
     GUI-->>User: 显示恢复成功
+
 ```python
 
 **断点恢复特点**:
+
 - 版本检查：确保断点文件格式兼容
+
 - 数据验证：检查JSON完整性和有效性
+
 - 状态恢复：恢复计数器、目标集合、引擎状态
+
 - 无缝继续：从上次停止的位置继续碰撞检测
 
 ---
@@ -721,11 +813,15 @@ graph TD
     style MainThread fill:#e1f5ff
     style EngineThread fill:#fff3e0
     style WorkerPool fill:#e8f5e9
+
 ```python
 
 **线程结构说明**:
+
 - **主线程**：负责GUI事件循环和用户交互，不执行碰撞计算
+
 - **引擎线程**：协调工作线程池，管理碰撞任务生命周期
+
 - **工作线程池**：并行执行私钥生成、地址计算、匹配检查
 
 ### 7.2 同步机制
@@ -763,6 +859,7 @@ graph LR
     style DedupLock fill:#f3e5f5
     style FileLock fill:#e8f5e9
     style InstanceLock fill:#fff3e0
+
 ```python
 
 **同步对象说明**:
@@ -778,9 +875,13 @@ graph LR
 | `_instance_lock` | RLock | 保护后端状态 | CryptoBackendManager |
 
 **线程安全设计**:
+
 - 使用Event实现优雅停止，避免强制终止线程
+
 - 使用Lock保护共享数据，避免竞态条件
+
 - 使用RLock支持递归锁定（CryptoBackendManager）
+
 - 最小化临界区，减少锁竞争
 
 ---
@@ -813,12 +914,17 @@ sequenceDiagram
     
     Device->>Device: 创建Context/Queue<br/>cl.Context, cl.CommandQueue
     Device-->>Engine: 初始化完成
+
 ```python
 
 **GPU设备选择策略**:
+
 - 优先级：NVIDIA > AMD > Intel GPU
+
 - 过滤掉CPU和核显
+
 - 验证计算单元数量和显存大小
+
 - 自动选择性能最优设备
 
 ### 8.2 GPU批量处理流程
@@ -854,12 +960,17 @@ sequenceDiagram
     
     Engine->>Engine: 更新统计
     Engine->>GPUDevice: 生成下一批
+
 ```python
 
 **GPU批量处理特点**:
+
 - 批次大小：65536个工作项
+
 - 并行计算：GPU端完成私钥→公钥→Hash160
+
 - 数据传输：PCIe总线（主要瓶颈）
+
 - 匹配检查：CPU端完成（避免GPU分支分化）
 
 ### 8.3 GPU错误恢复流程
@@ -893,12 +1004,17 @@ sequenceDiagram
     end
     
     Engine->>Engine: 继续下一批
+
 ```python
 
 **错误恢复策略**:
+
 - 资源不足：记录错误，尝试减小批次大小
+
 - 运行时错误：记录错误，跳过当前批次
+
 - 不中断引擎：错误处理后继续执行
+
 - 错误统计：便于后续分析
 
 ### 8.4 GPU vs CPU工作流对比
@@ -925,6 +1041,7 @@ flowchart LR
     
     style CPU fill:#e8f5e9
     style GPU fill:#fff3e0
+
 ```python
 
 **性能对比**:
@@ -971,6 +1088,7 @@ flowchart LR
        │                   │                   │                   │ 写入JSON
        │                   │                   │                   │ 文件
        │                   │                   │                   │
+
 ```markdown
 
 ### 9.2 数据日志记录流程
@@ -1002,6 +1120,7 @@ flowchart LR
        │                   │                   │ performance.log   │
        │                   │                   │ (CSV格式)         │
        │                   │                   │                   │
+
 ```markdown
 
 ### 9.3 异常检测与告警流程
@@ -1038,6 +1157,7 @@ flowchart LR
        │                   │                   │                   │ [ALERT]
        │                   │                   │                   │ 告警消息
        │                   │                   │                   │
+
 ```markdown
 
 ### 9.4 报告生成流程
@@ -1072,6 +1192,7 @@ flowchart LR
        │                   │                   │                   │
        │                   │                   │                   │ report_YYYY-MM-DD.json
        │                   │                   │                   │
+
 ```markdown
 
 ### 9.5 GPU监控数据流程
@@ -1095,6 +1216,7 @@ flowchart LR
        │                   │                   │                   │
        │                   │                   │ 保存监控数据      │
        │                   │                   │                   │
+
 ```python
 
 ---
@@ -1124,6 +1246,7 @@ sequenceDiagram
     GK->>CPU: return_results()
     CPU->>CPU: check_matches()
     CPU-->>E: update_stats()
+
 ```markdown
 
 ### 10.2 监控数据流Mermaid图
@@ -1149,6 +1272,7 @@ flowchart TD
     N --> P[生成告警]
     H --> Q[ReportGenerator]
     Q --> R[每日报告]
+
 ```markdown
 
 ### 10.3 完整系统架构Mermaid图
@@ -1200,6 +1324,7 @@ graph TB
     DataLog --> JSON
     DataLog --> Logs
     GPUMon --> JSON
+
 ```
 
 ---

@@ -6,14 +6,17 @@
 
 import re
 import threading
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
+
+if TYPE_CHECKING:
+    import pyopencl as cl
 
 # 统一日志获取
 from ..utils import get_configured_logger
 
 # 尝试导入pyopencl
 try:
-    import pyopencl as cl
+    import pyopencl as cl  # noqa: F811
 
     PYOPENCL_AVAILABLE = True
 except ImportError:
@@ -335,7 +338,7 @@ class GPUDeviceDetector:
         logger.debug("GPU可用性缓存和设备信息缓存已清除")
 
     @staticmethod
-    def detect_devices() -> list[dict]:
+    def detect_devices() -> list[dict[str, Any]]:
         """检测所有可用的GPU设备
 
         过滤规则:
@@ -703,7 +706,7 @@ class GPUDevice:
                 self.queue = cl.CommandQueue(
                     self.context,
                     self.device,
-                    properties=ooo_prop,
+                    properties=ooo_prop,  # type: ignore[arg-type]
                 )
                 # Intel Arc: compute/transfer 共用同一 OOO 队列
                 self.compute_queue = self.queue
@@ -714,12 +717,12 @@ class GPUDevice:
                 self.compute_queue = cl.CommandQueue(
                     self.context,
                     self.device,
-                    properties=ooo_prop,
+                    properties=ooo_prop,  # type: ignore[arg-type]
                 )
                 self.transfer_queue = cl.CommandQueue(
                     self.context,
                     self.device,
-                    properties=ooo_prop,
+                    properties=ooo_prop,  # type: ignore[arg-type]
                 )
                 self.queue = self.compute_queue
                 logger.info("  - 计算队列: 已创建(支持性能分析)")
@@ -804,7 +807,7 @@ class GPUDevice:
 
         # 2. 检查驱动健康状态
         self.driver_health = DriverManager.check_driver_health(
-            self.vendor,
+            cast("str", self.vendor) if self.vendor else "",
             self.driver_version,
             self.profile,
         )
@@ -823,7 +826,7 @@ class GPUDevice:
 
         # 4. 获取驱动优化标志
         self.driver_optimization_flags = DriverManager.get_driver_optimization_flags(
-            self.vendor,
+            cast("str", self.vendor) if self.vendor else "",
             self.driver_version,
             self.profile,
         )
@@ -895,7 +898,7 @@ class GPUDevice:
                 # 确保所有命令完成
                 if hasattr(self.context, "finish"):
                     start_time = time.time()
-                    self.context.finish()
+                    self.context.finish()  # type: ignore[attr-defined]
                     elapsed = time.time() - start_time
                     logger.debug(f"GPU上下文已完成所有命令 (耗时: {elapsed:.2f}秒)")
             except Exception as e:

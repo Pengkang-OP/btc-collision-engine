@@ -3,6 +3,8 @@
 import unittest
 from unittest.mock import Mock
 
+import pytest
+
 from src.utils.exception_handler import ExceptionHandler
 from src.utils.exceptions import (
     AddressGenerationError,

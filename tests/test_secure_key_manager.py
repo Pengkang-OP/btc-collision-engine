@@ -20,12 +20,12 @@ class TestSecureKeyManagerInit:
         mgr = SecureKeyManager()
         assert not mgr.is_cleared
         assert not mgr.is_memory_locked
-        assert ("cryptography", "pynacl", "ctypes")  in  mgr.backend
+        assert ("cryptography", "pynacl", "ctypes") in mgr.backend
 
     def test_init_lock_memory_disabled(self):
         """禁用内存锁定"""
         mgr = SecureKeyManager(lock_memory=False)
-        assert mgr.backend  ==  mgr.backend  # backend property works
+        assert mgr.backend == mgr.backend  # backend property works
 
 
 class TestSecureKeyManagerGenerateKey:
@@ -40,7 +40,7 @@ class TestSecureKeyManagerGenerateKey:
         key = self.mgr.get_key()
         # 现在返回只读视图，但也可以验证是可读写的内存对象
         assert isinstance(key, memoryview)
-        assert len(key)  ==  32
+        assert len(key) == 32
         # 验证只读
         with self.assertRaises((TypeError, ValueError)):
             key[0] = 0  # 尝试写入应该失败
@@ -51,7 +51,7 @@ class TestSecureKeyManagerGenerateKey:
         key_bytes = b"\x01" * 32
         self.mgr.generate_key(key_bytes)
         key = self.mgr.get_key()
-        assert bytes(key)  ==  key_bytes
+        assert bytes(key) == key_bytes
 
     def test_generate_invalid_length(self):
         """密钥长度不为 32 时抛出 ValueError"""
@@ -63,7 +63,7 @@ class TestSecureKeyManagerGenerateKey:
         self.mgr.generate_key(b"\x01" * 32)
         self.mgr.generate_key(b"\x02" * 32)
         key = self.mgr.get_key()
-        assert bytes(key)  ==  b"\x02" * 32
+        assert bytes(key) == b"\x02" * 32
 
 
 class TestSecureKeyManagerGetKey:
@@ -74,7 +74,7 @@ class TestSecureKeyManagerGetKey:
         mgr = SecureKeyManager()
         with self.assertRaises(SecureMemoryError) as ctx:
             mgr.get_key()
-        assert str(ctx.exception)  in  "not generated"
+        assert str(ctx.exception) in "not generated"
 
     def test_get_key_after_clear(self):
         """清零后获取密钥抛出 SecureMemoryError"""
@@ -83,7 +83,7 @@ class TestSecureKeyManagerGetKey:
         mgr.clear()
         with self.assertRaises(SecureMemoryError) as ctx:
             mgr.get_key()
-        assert str(ctx.exception)  in  "has been cleared"
+        assert str(ctx.exception) in "has been cleared"
 
 
 class TestSecureKeyManagerClear:
@@ -111,8 +111,8 @@ class TestSecureKeyManagerClear:
         self.mgr.generate_key()
         self.mgr.clear()
         stats = SecureKeyManager.get_clear_stats()
-        assert stats["total"]  >=  1
-        assert stats["successful"]  >=  1
+        assert stats["total"] >= 1
+        assert stats["successful"] >= 1
 
     @patch.object(SecureKeyManager, "_clear_secure", side_effect=RuntimeError("fail"))
     def test_clear_failure_updates_stats(self, mock_clear):
@@ -121,7 +121,7 @@ class TestSecureKeyManagerClear:
         with pytest.raises(SecureMemoryError):
             self.mgr.clear()
         stats = SecureKeyManager.get_clear_stats()
-        assert stats["failed"]  >=  1
+        assert stats["failed"] >= 1
 
 
 class TestSecureKeyManagerContextManager:
@@ -170,8 +170,8 @@ class TestSecureKeyManagerStats:
     def test_get_clear_stats_initial(self):
         """初始统计"""
         stats = SecureKeyManager.get_clear_stats()
-        assert stats["total"]  ==  0
-        assert stats["success_rate"]  ==  100.0
+        assert stats["total"] == 0
+        assert stats["success_rate"] == 100.0
 
     def test_reset_clear_stats(self):
         """重置统计"""
@@ -180,11 +180,11 @@ class TestSecureKeyManagerStats:
         mgr.clear()
 
         stats = SecureKeyManager.get_clear_stats()
-        assert stats["total"]  >  0
+        assert stats["total"] > 0
 
         SecureKeyManager.reset_clear_stats()
         stats = SecureKeyManager.get_clear_stats()
-        assert stats["total"]  ==  0
+        assert stats["total"] == 0
 
 
 class TestSecureKeyManagerDel:
@@ -229,7 +229,7 @@ class TestConvenienceFunctions:
         """secure_key_context 随机生成"""
         with secure_key_context() as key:
             assert isinstance(key, memoryview)
-            assert len(key)  ==  32
+            assert len(key) == 32
             # 验证只读
             with self.assertRaises((TypeError, ValueError)):
                 key[0] = 0
@@ -238,13 +238,13 @@ class TestConvenienceFunctions:
         """secure_key_context 从字节串生成"""
         key_bytes = b"\x03" * 32
         with secure_key_context(key_bytes) as key:
-            assert bytes(key)  ==  key_bytes
+            assert bytes(key) == key_bytes
 
     def test_generate_secure_key(self):
         """generate_secure_key 生成密钥"""
         key = generate_secure_key()
         assert isinstance(key, bytearray)
-        assert len(key)  ==  32
+        assert len(key) == 32
 
 
 class TestSecureKeyManagerMemoryLock:
@@ -309,4 +309,3 @@ class TestSecureKeyManagerClearBackends:
             mgr.clear()
             mock_unlock.assert_called_once()
         assert mgr.is_cleared
-

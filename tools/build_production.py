@@ -315,7 +315,7 @@ btc-collision-engine/
 
 ## 系统要求
 
-- Python 3.8+
+- Python 3.12+
 - Windows 10/11 或 Linux
 - (可选) OpenCL兼容的GPU
 

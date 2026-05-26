@@ -13,15 +13,21 @@
 多GPU碰撞引擎（MultiGPUCollisionEngine）目前存在以下限制：
 
 1. **GPU内核只生成P2PKH地址**
+
    - 位置: `src/gpu/kernel_impl.py` 第5-6行
+
    - 注释: "GPU路径同样仅生成P2PKH地址进行碰撞检测"
    
 2. **目标传递不包含格式信息**
+
    - `SingleGPUWorker` 接收 `targets: set[str]`
+
    - 无法区分目标地址的格式类型
 
 3. **多格式支持缺失**
+
    - 无法匹配 Bech32、Taproot 等格式
+
    - 用户添加这些格式目标时将无法检测到匹配
 
 ### 1.2 解决思路
@@ -29,12 +35,14 @@
 **核心约束**: GPU内核不可修改（性能优化，禁止改动）
 
 **解决方案**: 混合架构
+
 ```python
 GPU路径: 快速P2PKH匹配 (保持不变)
     ↓
 后处理: 检查其他格式 (新增)
     ↓
 CPU路径: 全格式检查 (新增)
+
 ```
 
 ---
@@ -65,6 +73,7 @@ CPU路径: 全格式检查 (新增)
 │  │ • 发现额外匹配，触发额外回调                │     │
 │  └─────────────────────────────────────────────┘     │
 └─────────────────────────────────────────────────────────┘
+
 ```
 
 ### 2.2 数据流
@@ -91,6 +100,7 @@ CPU路径: 全格式检查 (新增)
        ("1BgGZ...", "p2pkh"),
        ("bc1q...", "bech32")
    ]
+
 ```
 
 ---
@@ -137,6 +147,7 @@ print(f"格式统计: {stats['format_stats']}")
 
 # 8. 清理
 engine.cleanup()
+
 ```
 
 ### 3.2 从文件加载目标
@@ -152,6 +163,7 @@ print(f"加载了 {count} 个目标地址")
 
 # 查看格式统计
 print(engine.get_format_stats())
+
 ```
 
 ### 3.3 CPU路径检查
@@ -176,6 +188,7 @@ is_match, matches = engine.check_match_all(private_key)
 if is_match:
     for addr, fmt in matches:
         print(f"{fmt}: {addr}")
+
 ```
 
 ---
@@ -196,6 +209,7 @@ engine = create_engine()
 # 方式2: 完整工厂
 engine_class = create_multi_format_multi_gpu_engine()
 engine = engine_class(multi_gpu_config)
+
 ```
 
 ### 4.2 目标管理
@@ -249,6 +263,7 @@ def _check_other_formats(private_key, matched_address, matched_format):
     
     # 3. 返回额外匹配
     return extra_matches
+
 ```
 
 ### 5.2 性能影响
@@ -267,6 +282,7 @@ engine._enable_post_processing = True  # 默认开启
 
 # CPU备用检查
 engine._enable_cpu_fallback = False  # 默认关闭
+
 ```
 
 ---
@@ -276,7 +292,9 @@ engine._enable_cpu_fallback = False  # 默认关闭
 ### 6.1 GPU路径优化
 
 - ✅ 保持GPU快速P2PKH匹配
+
 - ✅ 利用GPU并行计算能力
+
 - ✅ 后处理在CPU执行，不影响GPU性能
 
 ### 6.2 按需生成优化
@@ -287,6 +305,7 @@ targets_by_format = manager.get_targets_by_format()
 
 # 例如: 只有 P2PKH 和 Bech32 目标
 # → 不生成 P2SH 和 Taproot 地址
+
 ```
 
 ### 6.3 批量操作
@@ -304,6 +323,7 @@ for key in batch:
     is_match, matches = engine.check_match_all(key)
     if is_match:
         process_matches(matches)
+
 ```
 
 ---
@@ -323,6 +343,7 @@ python test_multi_format_multi_gpu_integration.py
 # ✅ 后处理检查其他格式 - 正常工作
 # ✅ 格式统计和监控 - 正常工作
 # ✅ 集成场景测试 - 正常工作
+
 ```
 
 ### 7.2 测试覆盖
@@ -343,20 +364,27 @@ python test_multi_format_multi_gpu_integration.py
 ### 8.1 GPU内核限制
 
 - ❌ GPU内核只生成P2PKH地址
+
 - ❌ 无法直接生成其他格式进行GPU匹配
+
 - ⚠️ 必须通过后处理支持其他格式
 
 ### 8.2 性能权衡
 
 - ⚠️ 后处理增加少量CPU开销
+
 - ⚠️ 首次匹配后需检查所有格式
+
 - ⚠️ 多格式目标多时，后处理开销增加
 
 ### 8.3 未来改进
 
 **Phase 2** (规划中):
+
 - [ ] 优化后处理逻辑，减少不必要的格式检查
+
 - [ ] 添加格式优先级配置
+
 - [ ] 实现真正的GPU多格式生成
 
 ---
@@ -458,6 +486,7 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+
 ```
 
 ### 9.2 快速验证示例
@@ -493,6 +522,7 @@ else:
 
 # 清理
 engine.cleanup()
+
 ```
 
 ---
@@ -502,6 +532,7 @@ engine.cleanup()
 ### 10.1 常见问题
 
 #### Q1: GPU初始化失败
+
 ```python
 # 检查GPU是否可用
 from src.gpu.selector import get_gpu_selector
@@ -511,9 +542,11 @@ print(f"检测到 {len(devices)} 个GPU")
 
 # 使用特定GPU
 engine.initialize(device_indices=[0])  # 使用第一个GPU
+
 ```
 
 #### Q2: 目标地址格式无法识别
+
 ```python
 # 检查地址格式
 from src.core.multi_format_generator import MultiFormatAddressGenerator
@@ -523,15 +556,18 @@ try:
     fmt = gen.detect_address_format("无效地址")
 except ValueError as e:
     print(f"地址格式错误: {e}")
+
 ```
 
 #### Q3: 性能不如预期
+
 ```python
 # 调整GPU数量
 engine.initialize(device_count=4)  # 使用更多GPU
 
 # 调整批次大小
 engine._config.batch_size = 2_000_000  # 增大批次
+
 ```
 
 ### 10.2 调试模式
@@ -547,6 +583,7 @@ engine = create_engine()
 # 添加目标时会输出格式检测信息
 engine.add_target("1BgGZ...")
 # 输出: FormatAwareTargetManager - 添加目标地址: 1BgGZ... (格式: p2pkh)
+
 ```
 
 ---
@@ -572,14 +609,19 @@ engine.add_target("1BgGZ...")
 ### 11.3 使用建议
 
 1. **优先使用GPU**: GPU路径性能最优
+
 2. **合理添加目标**: 只添加需要的目标格式
+
 3. **使用后处理**: 利用后处理支持其他格式
+
 4. **监控统计**: 实时查看格式统计和性能
 
 ### 11.4 下一步
 
 - [ ] Phase 2: 优化后处理逻辑
+
 - [ ] Phase 3: 支持真正的GPU多格式生成
+
 - [ ] Phase 4: 添加更多地址格式支持
 
 ---

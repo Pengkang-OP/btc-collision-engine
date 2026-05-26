@@ -5,6 +5,7 @@ import os
 import pathlib
 import tempfile
 import time
+import pytest
 from unittest.mock import patch
 
 from src.collision.checkpoint_manager import CheckpointManager
@@ -13,14 +14,14 @@ from src.collision.checkpoint_manager import CheckpointManager
 class TestCheckpointManagerBasic:
     """基础保存/加载/删除测试"""
 
-    def setUp(self):
+    def setup_method(self):
         # 使用临时文件，但不预先创建
         import uuid
 
         self.tmp_path = os.path.join(tempfile.gettempdir(), f"test_ckpt_{uuid.uuid4().hex[:8]}.json")
         self.mgr = CheckpointManager(filepath=self.tmp_path)
 
-    def tearDown(self):
+    def teardown_method(self):
         if pathlib.Path(self.tmp_path).exists():
             pathlib.Path(self.tmp_path).unlink()
 
@@ -36,9 +37,9 @@ class TestCheckpointManagerBasic:
         )
         data = self.mgr.load()
         assert data is not None
-        assert data["mode"]  ==  "random"
-        assert data["current_position"]  ==  12345
-        assert data["total_checked"]  ==  50000
+        assert data["mode"] == "random"
+        assert data["current_position"] == 12345
+        assert data["total_checked"] == 50000
 
     def test_exists_after_save(self):
         """保存后 exists() 返回 True"""
@@ -66,7 +67,7 @@ class TestCheckpointManagerBasic:
 class TestCheckpointSensitiveInfoCleaning:
     """敏感信息清理测试"""
 
-    def setUp(self):
+    def setup_method(self):
         import uuid
 
         self.tmp_path = os.path.join(
@@ -75,7 +76,7 @@ class TestCheckpointSensitiveInfoCleaning:
         )
         self.mgr = CheckpointManager(filepath=self.tmp_path)
 
-    def tearDown(self):
+    def teardown_method(self):
         if pathlib.Path(self.tmp_path).exists():
             pathlib.Path(self.tmp_path).unlink()
 
@@ -101,10 +102,10 @@ class TestCheckpointSensitiveInfoCleaning:
         # 直接读取 JSON 文件内容
         raw = pathlib.Path(self.tmp_path).read_text(encoding="utf-8")
 
-        assert raw  not in  "deadbeef"
-        assert raw  not in  "KwDiBf89"
-        assert raw  not in  "private_key_hex"
-        assert raw  not in  "private_key_wif"
+        assert "deadbeef" not in raw
+        assert "KwDiBf89" not in raw
+        assert "private_key_hex" not in raw
+        assert "private_key_wif" not in raw
 
     def test_address_preserved_in_match(self):
         """断点保存保留地址信息"""
@@ -118,7 +119,7 @@ class TestCheckpointSensitiveInfoCleaning:
             force=True,
         )
         data = self.mgr.load()
-        assert data["matches"][0]["address"]  ==  "1TestPreserved"
+        assert data["matches"][0]["address"] == "1TestPreserved"
 
     def test_security_note_in_file(self):
         """断点文件包含安全说明"""
@@ -126,7 +127,7 @@ class TestCheckpointSensitiveInfoCleaning:
             mode="random", targets=set(), current_position=0, total_checked=0, matches=[], force=True
         )
         raw = pathlib.Path(self.tmp_path).read_text(encoding="utf-8")
-        assert raw  in  "security_note"
+        assert "security_note" in raw
 
 
 class TestCheckpointAtomicWrite:
@@ -150,7 +151,7 @@ class TestCheckpointAtomicWrite:
             )
             with pathlib.Path(tmp.name).open(encoding="utf-8") as f:
                 data = json.load(f)
-            assert data  in  "mode"
+            assert "mode" in data
         finally:
             if pathlib.Path(tmp.name).exists():
                 pathlib.Path(tmp.name).unlink()
@@ -171,7 +172,7 @@ class TestCheckpointAtomicWrite:
             )
             data = mgr.load()
             assert isinstance(data["targets"], list)
-            assert data["targets"]  in  "addr1"
+            assert "addr1" in data["targets"]
         finally:
             if pathlib.Path(tmp.name).exists():
                 pathlib.Path(tmp.name).unlink()
@@ -215,7 +216,7 @@ class TestCheckpointDefaultPath:
         """无filepath参数时使用默认路径"""
         mgr = CheckpointManager()
         # 默认路径为 checkpoint.json（不在 data_logs 目录下）
-        assert str(mgr.filepath)  in  "checkpoint.json"
+        assert "checkpoint.json" in str(mgr.filepath)
         # 清理
         if mgr.filepath.exists():
             mgr.delete()
@@ -224,13 +225,13 @@ class TestCheckpointDefaultPath:
 class TestCheckpointSaveVariants:
     """save() 多种场景测试"""
 
-    def setUp(self):
+    def setup_method(self):
         import uuid
 
         self.tmp_path = os.path.join(tempfile.gettempdir(), f"test_ckpt_var_{uuid.uuid4().hex[:8]}.json")
         self.mgr = CheckpointManager(filepath=self.tmp_path, auto_save_interval=9999)
 
-    def tearDown(self):
+    def teardown_method(self):
         if pathlib.Path(self.tmp_path).exists():
             pathlib.Path(self.tmp_path).unlink()
 
@@ -280,19 +281,19 @@ class TestCheckpointSaveVariants:
             force=True,
         )
         data = self.mgr.load()
-        assert data["matches"][0].get("private_key_hash")  ==  "abc123"
+        assert data["matches"][0].get("private_key_hash") == "abc123"
 
 
 class TestCheckpointFlushErrors:
     """_flush_buffer 异常处理测试"""
 
-    def setUp(self):
+    def setup_method(self):
         import uuid
 
         self.tmp_path = os.path.join(tempfile.gettempdir(), f"test_ckpt_err_{uuid.uuid4().hex[:8]}.json")
         self.mgr = CheckpointManager(filepath=self.tmp_path)
 
-    def tearDown(self):
+    def teardown_method(self):
         if pathlib.Path(self.tmp_path).exists():
             pathlib.Path(self.tmp_path).unlink()
 
@@ -336,7 +337,7 @@ class TestCheckpointFlushErrors:
 class TestCheckpointLoadEdgeCases:
     """load() 边界情况测试"""
 
-    def setUp(self):
+    def setup_method(self):
         import uuid
 
         self.tmp_path = os.path.join(
@@ -345,7 +346,7 @@ class TestCheckpointLoadEdgeCases:
         )
         self.mgr = CheckpointManager(filepath=self.tmp_path)
 
-    def tearDown(self):
+    def teardown_method(self):
         for p in [self.tmp_path, self.tmp_path + ".tmp"]:
             if pathlib.Path(p).exists():
                 pathlib.Path(p).unlink()
@@ -391,13 +392,13 @@ class TestCheckpointLoadEdgeCases:
 class TestCheckpointDelete:
     """delete() 测试"""
 
-    def setUp(self):
+    def setup_method(self):
         import uuid
 
         self.tmp_path = os.path.join(tempfile.gettempdir(), f"test_ckpt_del_{uuid.uuid4().hex[:8]}.json")
         self.mgr = CheckpointManager(filepath=self.tmp_path)
 
-    def tearDown(self):
+    def teardown_method(self):
         for p in [self.tmp_path, self.tmp_path + ".tmp"]:
             if pathlib.Path(p).exists():
                 pathlib.Path(p).unlink()
@@ -445,7 +446,7 @@ class TestCheckpointPywin32Check:
         """结果被缓存"""
         result1 = CheckpointManager._check_win32_security()
         result2 = CheckpointManager._check_win32_security()
-        assert result1  ==  result2
+        assert result1 == result2
 
     def test_check_win32_security_import_error(self):
         """pywin32 不可用时返回 False"""
@@ -515,13 +516,13 @@ class TestCheckpointCleanupErrors:
 class TestCheckpointLoadTempRecoveryErrors:
     """load() 临时文件恢复失败测试"""
 
-    def setUp(self):
+    def setup_method(self):
         import uuid
 
         self.tmp_path = os.path.join(tempfile.gettempdir(), f"test_ckpt_rec_{uuid.uuid4().hex[:8]}.json")
         self.mgr = CheckpointManager(filepath=self.tmp_path)
 
-    def tearDown(self):
+    def teardown_method(self):
         for p in [self.tmp_path, self.tmp_path + ".tmp"]:
             if pathlib.Path(p).exists():
                 pathlib.Path(p).unlink()
@@ -561,4 +562,4 @@ class TestCheckpointDeleteErrors:
 
 
 if __name__ == "__main__":
-    unittest.main(verbosity=2)
+    pytest.main([__file__, "-v"])

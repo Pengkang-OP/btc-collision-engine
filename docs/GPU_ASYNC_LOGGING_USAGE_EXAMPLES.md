@@ -27,6 +27,7 @@ try:
     engine.run()
 finally:
     engine.cleanup()  # 自动关闭异步日志
+
 ```
 
 ## 2. 通过配置文件使用
@@ -48,6 +49,7 @@ finally:
     }
   }
 }
+
 ```
 
 **加载配置**:
@@ -71,6 +73,7 @@ engine = GPUCollisionEngine(
     async_log_max_bytes=log_config.get('async_max_bytes', 10*1024*1024),
     async_log_backup_count=log_config.get('async_backup_count', 5)
 )
+
 ```
 
 ---
@@ -100,6 +103,7 @@ if engine._async_log_handler:
         print("⚠️ 警告: 异步日志队列积压严重")
     if stats['dropped_count'] > 100:
         print("❌ 错误: 异步日志丢弃过多")
+
 ```
 
 ---
@@ -121,6 +125,7 @@ engine = GPUCollisionEngine(
 # 手动修改队列大小（如果需要）
 if engine._async_log_handler:
     engine._async_log_handler._async_logger._queue.maxsize = 50000
+
 ```
 
 ## 2. 日志轮转策略
@@ -134,6 +139,7 @@ engine = GPUCollisionEngine(
     async_log_max_bytes=50*1024*1024,  # 50MB
     async_log_backup_count=10  # 保留10个备份
 )
+
 ```
 
 ## 3. 调试模式
@@ -152,6 +158,7 @@ engine = GPUCollisionEngine(
 logger.setLevel(logging.DEBUG)
 
 # 现在会记录所有调试信息到异步日志
+
 ```
 
 ---
@@ -177,6 +184,7 @@ if engine._async_log_handler is None:
     if not ASYNC_LOG_AVAILABLE:
         print("错误: AsyncFileHandler导入失败")
         print("请确保 src/utils/logger.py 包含 AsyncFileHandler 类")
+
 ```
 
 **解决方案**:
@@ -187,6 +195,7 @@ grep -n "class AsyncFileHandler" src/utils/logger.py
 
 # 如果没有，运行核心模块修复
 python tests/verify_threadsafe_replacement.py
+
 ```
 
 ## Q2: 日志丢弃过多？
@@ -213,6 +222,7 @@ logger.setLevel(logging.WARNING)  # 只记录WARNING及以上
 # 方案3: 使用采样日志（在高频循环中）
 from src.utils.logger import SampledLogger
 sampled_logger = SampledLogger(logger, sample_rate=100)
+
 ```
 
 ## Q3: 程序退出时日志丢失？
@@ -231,6 +241,7 @@ finally:
 # ❌ 错误做法
 engine.run()
 # 忘记调用cleanup()，队列中的日志会丢失
+
 ```
 
 ---
@@ -268,6 +279,7 @@ engine = GPUCollisionEngine(
     async_log_backup_count=10,
     use_enhanced_monitoring=True
 )
+
 ```
 
 ### 2. 开发环境配置
@@ -278,6 +290,7 @@ engine = GPUCollisionEngine(
     targets=targets,
     use_async_logging=False  # 使用同步日志
 )
+
 ```
 
 ## 3. 长时间运行任务
@@ -300,6 +313,7 @@ while engine._running:
         stats = engine._async_log_handler.get_stats()
         if stats['dropped_count'] > 1000:
             logger.warning("日志丢弃过多，考虑增加队列大小")
+
 ```
 
 ---
@@ -327,6 +341,7 @@ def check_async_log_health(engine):
             logger.info("已降级到同步日志")
         except Exception as e:
             logger.error(f"降级失败: {e}")
+
 ```
 
 ---
@@ -334,7 +349,9 @@ def check_async_log_health(engine):
 ## 相关文档
 
 - [GPU异步日志集成指南](file:///f:/Qoder/btc-collision-engine/docs/GPU_ASYNC_LOGGING_INTEGRATION_GUIDE.md)
+
 - [核心模块修复报告](file:///f:/Qoder/btc-collision-engine/docs/CORE_MODULES_FIX_REPORT_20260423.md)
+
 - [四步任务完成总结](file:///f:/Qoder/btc-collision-engine/docs/FOUR_TASKS_COMPLETION_SUMMARY.md)
 
 ---

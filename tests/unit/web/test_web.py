@@ -316,7 +316,7 @@ class TestGetCurrentStats:
             },
             "system": {
                 "os": "Windows",
-                "python_version": "3.11",
+                "python_version": "3.12",
                 "pid": 9999,
             },
             "uptime": 3600,
@@ -336,7 +336,7 @@ class TestGetCurrentStats:
         assert result["target_count"] == 5
         assert result["current_position"] == 12345
         assert result["os"] == "Windows"
-        assert result["python_version"] == "3.11"
+        assert result["python_version"] == "3.12"
         assert result["pid"] == 9999
         assert "generated_at" in result
 

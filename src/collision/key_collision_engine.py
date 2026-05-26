@@ -390,8 +390,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
             return
 
         try:
-            from src.monitoring.event_adapters import setup_data_logging
-            from src.monitoring.monitor_config import MonitorConfig
+            from ..monitoring.event_adapters import setup_data_logging
+            from ..monitoring.monitor_config import MonitorConfig
 
             if use_enhanced_monitoring:
                 # 使用增强监控系统（推荐）
@@ -405,7 +405,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 self.data_logger = self.enhanced_monitoring.data_logger
 
                 # 订阅事件到增强监控
-                from src.monitoring.event_adapters import EnhancedMonitoringAdapter
+                from ..monitoring.event_adapters import EnhancedMonitoringAdapter
 
                 monitoring_adapter = EnhancedMonitoringAdapter(self.enhanced_monitoring)
                 monitoring_adapter.subscribe_to(self.event_bus)

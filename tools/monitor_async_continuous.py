@@ -68,7 +68,9 @@ def monitor_performance(duration_seconds=60):
 
             # 显示数据
             print(
-                f"{sample_count * 5}s | {current_throughput:>12} | {avg_throughput:>12} | {peak_throughput:>12} | {total_batches:>6} | {error_rate:>6}"
+                f"{sample_count * 5}s | {current_throughput:>12} | "
+                f"{avg_throughput:>12} | {peak_throughput:>12} | "
+                f"{total_batches:>6} | {error_rate:>6}"
             )
 
         except Exception as e:

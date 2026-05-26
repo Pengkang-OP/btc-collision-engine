@@ -2,6 +2,7 @@
 
 import math
 import os
+import unittest
 
 import pytest
 
@@ -40,22 +41,22 @@ class TestSecp256k1Parameters:
 
     def test_get_security_info_has_keys(self):
         info = Secp256k1.get_security_info()
-        assert info["name"]  ==  "secp256k1"
-        assert info["bit_length"]  ==  256
-        assert info["security_level"]  ==  "128-bit"
-        assert info  in  "parameter_sizes"
+        assert info["name"] == "secp256k1"
+        assert info["bit_length"] == 256
+        assert info["security_level"] == "128-bit"
+        assert info in "parameter_sizes"
         sizes = info["parameter_sizes"]
-        assert sizes["P_bits"]  ==  256
-        assert sizes["N_bits"]  ==  256
-        assert sizes["G_x_bits"]  ==  255
-        assert sizes["G_y_bits"]  ==  255
+        assert sizes["P_bits"] == 256
+        assert sizes["N_bits"] == 256
+        assert sizes["G_x_bits"] == 255
+        assert sizes["G_y_bits"] == 255
         assert info["parameters_verified"]
 
     def test_parameter_constants(self):
-        assert Secp256k1.P  >  2**255
-        assert Secp256k1.N  >  2**255
-        assert Secp256k1.A  ==  0
-        assert Secp256k1.B  ==  7
+        assert Secp256k1.P > 2**255
+        assert Secp256k1.N > 2**255
+        assert Secp256k1.A == 0
+        assert Secp256k1.B == 7
 
 
 class TestECPointEdge:
@@ -63,9 +64,9 @@ class TestECPointEdge:
 
     def test_eq_non_ecpoint(self):
         p = ECPoint(100, 200)
-        assert p  !=  "not a point"
-        assert p  !=  None
-        assert p  !=  42
+        assert p != "not a point"
+        assert p is not None
+        assert p != 42
 
     def test_eq_infinity_different_curve(self):
         class FakeCurve:
@@ -73,14 +74,14 @@ class TestECPointEdge:
 
         p1 = ECPoint(None, None, Secp256k1)
         p2 = ECPoint(None, None, FakeCurve)
-        assert p1  ==  p2
+        assert p1 == p2
 
     def test_copy_preserves_coordinates(self):
         p = ECPoint(0x123456, 0x789ABC)
         c = p.copy()
-        assert c.x  ==  0x123456
-        assert c.y  ==  0x789ABC
-        assert c  is not  p
+        assert c.x == 0x123456
+        assert c.y == 0x789ABC
+        assert c is not p
 
     def test_copy_individual_curve(self):
         class FakeCurve:
@@ -88,11 +89,11 @@ class TestECPointEdge:
 
         p = ECPoint(1, 2, FakeCurve)
         c = p.copy()
-        assert c.curve  is  FakeCurve
+        assert c.curve is FakeCurve
 
     def test_constructor_sets_curve_default(self):
         p = ECPoint(100, 200)
-        assert p.curve  is  Secp256k1
+        assert p.curve is Secp256k1
 
     def test_constructor_explicit_none(self):
         p = ECPoint(None, None)
@@ -144,13 +145,13 @@ class TestConstTimeSelect:
         a = ECPoint(100, 200)
         b = ECPoint(300, 400)
         r = self.ec._const_time_select(0, a, b)
-        assert r  ==  a
+        assert r == a
 
     def test_select_condition_1_normal(self):
         a = ECPoint(100, 200)
         b = ECPoint(300, 400)
         r = self.ec._const_time_select(1, a, b)
-        assert r  ==  b
+        assert r == b
 
     def test_select_condition_0_a_inf(self):
         a = ECPoint(None, None)
@@ -162,13 +163,13 @@ class TestConstTimeSelect:
         a = ECPoint(None, None)
         b = self.G
         r = self.ec._const_time_select(1, a, b)
-        assert r  ==  self.G
+        assert r == self.G
 
     def test_select_condition_0_b_inf(self):
         a = self.G
         b = ECPoint(None, None)
         r = self.ec._const_time_select(0, a, b)
-        assert r  ==  self.G
+        assert r == self.G
 
     def test_select_condition_1_b_inf(self):
         a = self.G
@@ -224,14 +225,14 @@ class TestScalarMultiplyDeprecated:
         """调用 scalar_multiply 应抛出 RuntimeError (非 DeprecationWarning)"""
         with self.assertRaises(RuntimeError) as ctx:
             self.ec.scalar_multiply(1, self.G)
-        assert str(ctx.exception)  in  "已被永久禁用"
+        assert str(ctx.exception) in "已被永久禁用"
 
     def test_k_mod_n_result(self):
         """K % N 结果测试 → RuntimeError (已锁定)"""
         k = Secp256k1.N + 1
         with self.assertRaises(RuntimeError) as ctx:
             self.ec.scalar_multiply(k, self.G)
-        assert str(ctx.exception)  in  "已被永久禁用"
+        assert str(ctx.exception) in "已被永久禁用"
 
 
 class TestScalarMultiplyConstTimeDeep:
@@ -272,7 +273,7 @@ class TestScalarMultiplyConstTimeDeep:
         for k in [13, 77, 256, 65535, 12345678901234567890]:
             r1 = self.ec.scalar_multiply_const_time(k, self.G)
             r2 = self.ec.scalar_multiply_const_time(k, self.G)
-            assert r1  ==  r2
+            assert r1 == r2
 
 
 class TestGeneratePublicKeyDeep:
@@ -284,12 +285,12 @@ class TestGeneratePublicKeyDeep:
     def test_from_bytes_private_key(self):
         pk = (12345).to_bytes(32, "big")
         pub = self.ec.generate_public_key(pk, compressed=True)
-        assert len(pub)  ==  33
+        assert len(pub) == 33
 
     def test_from_int_private_key(self):
         pub = self.ec.generate_public_key(12345, compressed=False)
-        assert len(pub)  ==  65
-        assert pub[0]  ==  4
+        assert len(pub) == 65
+        assert pub[0] == 4
 
     def test_zero_private_key_raises(self):
         pk = (0).to_bytes(32, "big")
@@ -309,7 +310,7 @@ class TestGeneratePublicKeyDeep:
             k = random.randint(1, 10**12)
             pk = k.to_bytes(32, "big")
             pub = self.ec.generate_public_key(pk, compressed=True)
-            assert [2, 3]  in  pub[0]
+            assert [2, 3] in pub[0]
 
     def test_uncompressed_prefix_04(self):
         import random
@@ -319,7 +320,7 @@ class TestGeneratePublicKeyDeep:
             k = random.randint(1, 10**12)
             pk = k.to_bytes(32, "big")
             pub = self.ec.generate_public_key(pk, compressed=False)
-            assert pub[0]  ==  4
+            assert pub[0] == 4
 
     def test_compressed_odd_y_prefix_03(self):
         G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
@@ -327,24 +328,24 @@ class TestGeneratePublicKeyDeep:
         Q = self.ec.scalar_multiply_const_time(k, G)
         pk = k.to_bytes(32, "big")
         pub = self.ec.generate_public_key(pk, compressed=True)
-        assert pub[1:]  ==  (Q.x).to_bytes(32, "big")
+        assert pub[1:] == (Q.x).to_bytes(32, "big")
 
     def test_generate_public_key_const_time_alias(self):
         pk = (42).to_bytes(32, "big")
         pub1 = self.ec.generate_public_key(pk, compressed=True)
         pub2 = self.ec.generate_public_key_const_time(pk, compressed=True)
-        assert pub1  ==  pub2
+        assert pub1 == pub2
 
     def test_large_private_key(self):
         pk = (Secp256k1.N - 1).to_bytes(32, "big")
         pub = self.ec.generate_public_key(pk, compressed=True)
-        assert len(pub)  ==  33
+        assert len(pub) == 33
 
     def test_private_key_1(self):
         pk = (1).to_bytes(32, "big")
         pub = self.ec.generate_public_key(pk, compressed=True)
-        assert len(pub)  ==  33
-        assert pub[1:]  ==  Secp256k1.Gx.to_bytes(32, "big")
+        assert len(pub) == 33
+        assert pub[1:] == Secp256k1.Gx.to_bytes(32, "big")
 
 
 class TestModInverseEdge:
@@ -356,12 +357,12 @@ class TestModInverseEdge:
     def test_large_numbers(self):
         p = Secp256k1.P
         inv = self.ec.mod_inverse(123456789, p)
-        assert (123456789 * inv) % p  ==  1
+        assert (123456789 * inv) % p == 1
 
     def test_result_normalized_positive(self):
         result = self.ec.mod_inverse(-3, 7)
-        assert result  >=  0
-        assert result  <  7
+        assert result >= 0
+        assert result < 7
 
     def test_gcd_larger_than_1_raises(self):
         with pytest.raises(ValueError):
@@ -391,7 +392,7 @@ class TestPointAddEdge:
 
     def test_same_point_doubling(self):
         G2 = self.ec.point_add(self.G, self.G)
-        assert self.ec.scalar_multiply_const_time(2, self.G)  ==  G2
+        assert self.ec.scalar_multiply_const_time(2, self.G) == G2
 
 
 class TestModInverseSummary:
@@ -408,7 +409,7 @@ class TestModInverseSummary:
         for _ in range(10):
             a = random.randint(1, p - 1)
             inv = self.ec.mod_inverse(a, p)
-            assert (a * inv) % p  ==  1
+            assert (a * inv) % p == 1
 
 
 if __name__ == "__main__":

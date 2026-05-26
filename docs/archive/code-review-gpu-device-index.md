@@ -510,7 +510,6 @@ class GPUDevice:
         self.device = device_info['device']
         # ...
 
-
 class GPUDeviceDetector:
     @staticmethod
     def _select_best_device(devices: List[Dict]) -> Dict:

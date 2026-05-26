@@ -93,13 +93,13 @@ class TestCLIOutputSingleton:
         """二次 get_instance → 同一实例。"""
         a = CLIOutput.get_instance()
         b = CLIOutput.get_instance()
-        assert a  is  b
+        assert a is b
 
     def test_init_resets_instance(self):
         """init() → 替换为新实例。"""
         old = CLIOutput.get_instance()
         new = CLIOutput.init(quiet=True, compact=True)
-        assert old  is not  new
+        assert old is not new
         assert new.quiet
         assert new.compact
 
@@ -108,7 +108,7 @@ class TestCLIOutputSingleton:
         old = CLIOutput.get_instance()
         CLIOutput.reset_instance()
         new = CLIOutput.get_instance()
-        assert old  is not  new
+        assert old is not new
 
 
 # ── CLIOutput 初始化 ───────────────────────────────────────────
@@ -193,8 +193,8 @@ class TestCLIOutputMessages:
         self.out.info("hello")
         self.out.console.print.assert_called_once()
         call_arg = self.out.console.print.call_args[0][0]
-        assert call_arg  in  "[INFO]"
-        assert call_arg  in  "hello"
+        assert call_arg in "[INFO]"
+        assert call_arg in "hello"
 
     # ── success ──
 
@@ -203,8 +203,8 @@ class TestCLIOutputMessages:
         self.out.success("done")
         self.out.console.print.assert_called_once()
         call_arg = self.out.console.print.call_args[0][0]
-        assert call_arg  in  "[OK]"
-        assert call_arg  in  "done"
+        assert call_arg in "[OK]"
+        assert call_arg in "done"
 
     def test_success_even_in_quiet(self):
         """Success + quiet → 仍输出。"""
@@ -219,7 +219,7 @@ class TestCLIOutputMessages:
         self.out.hint("tip")
         self.out.console.print.assert_called_once()
         call_arg = self.out.console.print.call_args[0][0]
-        assert call_arg  in  "[HINT]"
+        assert call_arg in "[HINT]"
 
     def test_hint_even_in_quiet(self):
         """Hint + quiet → 仍输出。"""
@@ -234,15 +234,15 @@ class TestCLIOutputMessages:
         self.out.warning("caution")
         self.out.err_console.print.assert_called_once()
         call_arg = self.out.err_console.print.call_args[0][0]
-        assert call_arg  in  "[WARN]"
-        assert call_arg  in  "caution"
+        assert call_arg in "[WARN]"
+        assert call_arg in "caution"
 
     def test_warning_with_details(self):
         """Warning 有 details → 追加详细行。"""
         self.out.warning("caution", details="extra info")
-        assert self.out.err_console.print.call_count  ==  2
+        assert self.out.err_console.print.call_count == 2
         second_call_arg = self.out.err_console.print.call_args_list[1][0][0]
-        assert second_call_arg  in  "extra info"
+        assert second_call_arg in "extra info"
 
     # ── error ──
 
@@ -251,15 +251,15 @@ class TestCLIOutputMessages:
         self.out.error("fail")
         self.out.err_console.print.assert_called_once()
         call_arg = self.out.err_console.print.call_args[0][0]
-        assert call_arg  in  "[ERROR]"
-        assert call_arg  in  "fail"
+        assert call_arg in "[ERROR]"
+        assert call_arg in "fail"
 
     def test_error_with_details(self):
         """Error 有 details → 追加详细行。"""
         self.out.error("fail", details="stack trace")
-        assert self.out.err_console.print.call_count  ==  2
+        assert self.out.err_console.print.call_count == 2
         second_call_arg = self.out.err_console.print.call_args_list[1][0][0]
-        assert second_call_arg  in  "stack trace"
+        assert second_call_arg in "stack trace"
 
     # ── print ──
 
@@ -345,7 +345,7 @@ class TestCLIOutputStructured:
         self.out.compact = False
         self.out.header("Title")
         # print() 调用次数 ≥ 2 (空行 + 空行)
-        assert self.out.console.print.call_count  ==  2
+        assert self.out.console.print.call_count == 2
         self.out.console.rule.assert_called_once()
 
     def test_header_compact_mode(self):
@@ -439,7 +439,7 @@ class TestCLIOutputRuntime:
             self.out.status_line("running...")
             mock_write.assert_called_once()
             mock_flush.assert_called_once()
-            assert mock_write.call_args[0][0]  in  "running..."
+            assert mock_write.call_args[0][0] in "running..."
 
     # ── performance_status ──
 
@@ -464,13 +464,13 @@ class TestCLIOutputRuntime:
             )
             mock_sl.assert_called_once()
             status_text = mock_sl.call_args[0][0]
-            assert status_text  in  "速度:"
-            assert status_text  in  "5.0K/s"
-            assert status_text  in  "总尝试:"
-            assert status_text  in  "GPU:"
-            assert status_text  in  "85%"
-            assert status_text  in  "内存:"
-            assert status_text  in  "2048MB"
+            assert status_text in "速度:"
+            assert status_text in "5.0K/s"
+            assert status_text in "总尝试:"
+            assert status_text in "GPU:"
+            assert status_text in "85%"
+            assert status_text in "内存:"
+            assert status_text in "2048MB"
 
     def test_performance_status_partial_fields(self):
         """performance_status 部分字段 → 只输出存在的。"""
@@ -479,8 +479,8 @@ class TestCLIOutputRuntime:
             self.out.performance_status({"speed": 2000})
             mock_sl.assert_called_once()
             status_text = mock_sl.call_args[0][0]
-            assert status_text  in  "2.0K/s"
-            assert status_text  not in  "GPU"
+            assert status_text in "2.0K/s"
+            assert status_text not in "GPU"
 
     def test_performance_status_empty_stats(self):
         """performance_status 空字典 → 不调用 status_line。"""

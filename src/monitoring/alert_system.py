@@ -13,7 +13,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, cast
 
-from src.utils.fast_json import fast_dump, fast_load
+from ..utils.fast_json import fast_dump, fast_load
 
 from ..utils import get_configured_logger
 

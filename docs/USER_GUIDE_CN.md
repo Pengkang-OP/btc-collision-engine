@@ -2,8 +2,6 @@
 
 **版本**: v4.5.1
 
-
-
 **语言**: 简体中文
 
 ---
@@ -11,8 +9,11 @@
 ## 📖 快速导航
 
 - [5分钟快速开始](#5分钟快速开始)
+
 - [命令速查表](#命令速查表)
+
 - [功能详解](#功能详解)
+
 - [常见问题](#常见问题)
 
 ---
@@ -25,13 +26,17 @@
 
 ```bash
 start.bat qs
+
 ```
 
 **第二步**: 按照向导提示操作：
 
 1. 选择地址来源（输入地址或从文件读取）
+
 2. 选择碰撞模式（推荐"随机碰撞"）
+
 3. 启用功能选项（推荐启用断点续传和去重）
+
 4. 确认配置，等待3秒自动启动
 
 **完成！** 程序开始运行，您会看到实时进度条。
@@ -44,6 +49,7 @@ start.bat qs
 
 ```bash
 start.bat qr
+
 ```
 
 系统会自动检测文件并显示预览，3秒后开始运行。
@@ -77,6 +83,7 @@ python key_collision_cli.py --help
 
 # 显示示例
 python key_collision_cli.py --examples
+
 ```
 
 ---
@@ -90,14 +97,18 @@ python key_collision_cli.py --examples
 **特点**:
 
 - ⚡ 跳过向导，直接启动
+
 - 📁 自动检测`targets.txt`
+
 - 👁️ 显示文件预览（前3个地址）
+
 - ⏱️ 3秒倒计时（可取消）
 
 **使用方法**:
 
 ```bash
 start.bat qr
+
 ```
 
 **运行流程**:
@@ -121,6 +132,7 @@ start.bat qr
 ════════════════════════════════════════
 
 将在 3 秒后启动... (按 Ctrl+C 取消)
+
 ```
 
 ---
@@ -132,14 +144,18 @@ start.bat qr
 **特点**:
 
 - 🧙 4步引导，简单易懂
+
 - 💡 每步都有帮助提示
+
 - 🎨 可视化界面
+
 - ✅ 配置摘要确认
 
 **使用方法**:
 
 ```bash
 start.bat qs
+
 ```
 
 **向导步骤**:
@@ -157,6 +173,7 @@ start.bat qs
       - Bech32: bc1开头 (例如: bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh)
 
 请选择 (1/2): 2
+
 ```
 
 **步骤2**: 选择碰撞模式
@@ -173,6 +190,7 @@ start.bat qs
       - 暴力穷举: 从指定位置开始顺序搜索
 
 请选择 (1/2/3): 1
+
 ```
 
 **步骤3**: 选择功能选项
@@ -187,6 +205,7 @@ start.bat qs
 启用断点续传? (y/n) [Y]: y
 启用去重过滤? (y/n) [Y]: y
 运行时长（秒，0=无限制）[0]: 0
+
 ```
 
 **步骤4**: 确认并启动
@@ -204,6 +223,7 @@ start.bat qs
 ╚═══════════════════════════════════════════════════════════╝
 
 将在 3 秒后启动... (按 Ctrl+C 取消)
+
 ```
 
 ---
@@ -215,13 +235,16 @@ start.bat qs
 **特点**:
 
 - 📦 跳过详细帮助信息
+
 - ⚡ 加快配置速度
+
 - 🎯 适合小屏幕终端
 
 **使用方法**:
 
 ```bash
 python key_collision_cli.py --quick-start --compact
+
 ```
 
 **对比示例**:
@@ -239,6 +262,7 @@ python key_collision_cli.py --quick-start --compact
       - Bech32: bc1开头 (例如: bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh)
 
 请选择 (1/2):
+
 ```
 
 **紧凑模式**（跳过帮助）:
@@ -249,6 +273,7 @@ python key_collision_cli.py --quick-start --compact
    2. 从文件读取
 
 请选择 (1/2):
+
 ```
 
 ---
@@ -259,6 +284,7 @@ python key_collision_cli.py --quick-start --compact
 
 ```bash
 [00:05] [CPU] ████░░░░░░░░░░░░ 25.0% | 1,234/4,936 | 速度: 246/s | ETA: 15s | 匹配: 0
+
 ```
 
 **详细说明**:
@@ -287,6 +313,7 @@ echo # 我的目标地址 > targets.txt
 echo 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa >> targets.txt
 echo 3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy >> targets.txt
 echo bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh >> targets.txt
+
 ```
 
 **Linux/Mac**:
@@ -298,12 +325,15 @@ cat > targets.txt << EOF
 3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy
 bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh
 EOF
+
 ```
 
 ### 方法2: 文本编辑器创建
 
 1. 用记事本或任何文本编辑器创建新文件
+
 2. 输入地址（每行一个）
+
 3. 保存为`targets.txt`
 
 ### 文件格式
@@ -315,12 +345,15 @@ EOF
 # 空行也会被忽略
 3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy
 bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh
+
 ```
 
 **支持的地址格式**:
 
 - ✅ **P2PKH**: 以`1`开头
+
 - ✅ **P2SH**: 以`3`开头
+
 - ✅ **Bech32**: 以`bc1`开头
 
 ---
@@ -333,6 +366,7 @@ bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh
 
 ```bash
 start.bat qs
+
 ```
 
 向导会一步步引导您完成配置。
@@ -355,6 +389,7 @@ start.bat qs
 
 ```bash
 echo "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa" > targets.txt
+
 ```
 
 **方法2**: 使用向导输入地址
@@ -362,12 +397,14 @@ echo "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa" > targets.txt
 ```bash
 start.bat qs
 # 选择"输入单个地址"
+
 ```
 
 **方法3**: 使用完整命令指定文件
 
 ```bash
 python key_collision_cli.py -t my_addresses.txt -m random
+
 ```
 
 ---
@@ -384,6 +421,7 @@ python key_collision_cli.py --quick-start
 
 # 代替 start.bat qr
 python key_collision_cli.py --quick-run
+
 ```
 
 ---
@@ -396,24 +434,28 @@ python key_collision_cli.py --quick-run
 
 ```bash
 python key_collision_cli.py --quick-run --engine gpu
+
 ```
 
 **2. 增加CPU线程数**
 
 ```bash
 python key_collision_cli.py --quick-run --threads 8
+
 ```
 
 **3. 启用去重过滤**（避免重复检查）
 
 ```bash
 # 默认已启用，无需额外参数
+
 ```
 
 **4. 使用快速模式**（减少启动时间）
 
 ```bash
 start.bat qr
+
 ```
 
 ---
@@ -433,6 +475,7 @@ start.bat ex
 
 # 获取参数推荐
 start.bat rec
+
 ```
 
 ---
@@ -448,6 +491,7 @@ start.bat rec
    ```bash
    start.bat qr
    # 运行10分钟后按Ctrl+C停止
+
    ```
 
 2. 第二次运行（自动恢复）
@@ -455,6 +499,7 @@ start.bat rec
    ```bash
    start.bat qr
    # 系统会自动从上次的断点继续
+
    ```
 
 ---
@@ -490,6 +535,7 @@ python --version
 
 # 3. 安装依赖
 pip install -r requirements.txt
+
 ```
 
 ---
@@ -502,6 +548,7 @@ pip install -r requirements.txt
 
 ```bash
 pip install -r requirements.txt
+
 ```
 
 ---
@@ -516,18 +563,21 @@ pip install -r requirements.txt
 
 ```bash
 start.bat qr
+
 ```
 
 **方法2**: 安装GPU依赖
 
 ```bash
 pip install -r requirements-gpu.txt
+
 ```
 
 **方法3**: 检查GPU状态
 
 ```bash
 python key_collision_cli.py --health-check
+
 ```
 
 ---
@@ -541,13 +591,16 @@ python key_collision_cli.py --health-check
 **方法1**: 使用现代终端
 
 - Windows: Windows Terminal
+
 - Mac: Terminal或iTerm2
+
 - Linux: GNOME Terminal或Konsole
 
 **方法2**: 禁用彩色输出
 
 ```bash
 python key_collision_cli.py --quick-run --no-color
+
 ```
 
 ---
@@ -560,12 +613,14 @@ python key_collision_cli.py --quick-run --no-color
 
 ```bash
 start /B python key_collision_cli.py --quick-run > log.txt 2>&1
+
 ```
 
 **Linux/Mac**:
 
 ```bash
 nohup python key_collision_cli.py --quick-run > log.txt 2>&1 &
+
 ```
 
 ---
@@ -575,8 +630,11 @@ nohup python key_collision_cli.py --quick-run > log.txt 2>&1 &
 **Windows**（使用任务计划程序）:
 
 1. 打开"任务计划程序"
+
 2. 创建基本任务
+
 3. 设置触发器和操作
+
 4. 操作: `start.bat qr`
 
 **Linux**（使用cron）:
@@ -584,6 +642,7 @@ nohup python key_collision_cli.py --quick-run > log.txt 2>&1 &
 ```bash
 crontab -e
 # 添加: 0 2 * * * cd /path/to/project && python key_collision_cli.py --quick-run
+
 ```
 
 ---
@@ -596,12 +655,14 @@ crontab -e
 targets_small.txt     # 少量地址，快速测试
 targets_medium.txt    # 中等数量，日常使用
 targets_large.txt     # 大量地址，长时间运行
+
 ```
 
 根据需要切换：
 
 ```bash
 python key_collision_cli.py -t targets_small.txt -m random
+
 ```
 
 ---
@@ -609,9 +670,13 @@ python key_collision_cli.py -t targets_small.txt -m random
 ## 📚 更多资源
 
 - 📘 [完整使用指南](USER_GUIDE.md) - 详细文档
+
 - 📖 [README](../README.md) - 项目概述
+
 - 📝 [版本历史](../CHANGELOG.md) - 更新日志
+
 - 🔧 [配置示例](../config.example.json) - 完整配置
+
 - 🤝 [贡献指南](../CONTRIBUTING.md) - 参与开发
 
 ---
@@ -621,8 +686,11 @@ python key_collision_cli.py -t targets_small.txt -m random
 遇到问题？
 
 1. **查看本文档** - 常见问题都有解答
+
 2. **查看日志** - `logs/`目录下的日志文件
+
 3. **查看完整文档** - `docs/`目录
+
 4. **提交Issue** - GitHub上提问
 
 ---

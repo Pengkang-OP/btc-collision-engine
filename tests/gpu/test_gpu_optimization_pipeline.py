@@ -391,4 +391,3 @@ class TestPipelineComponentAccess:
         assert not pipeline.auto_tuner
         assert not pipeline.benchmark_suite
         assert not pipeline.performance_reporter
-

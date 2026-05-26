@@ -433,4 +433,3 @@ class TestLinuxDriverDetection:
 
         version = DriverManager._detect_intel_linux()
         assert version == "2023.12.12"
-

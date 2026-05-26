@@ -11,6 +11,7 @@ class LogStorage:
         self,
         storage_dir: str | Path = "logs",
     ):
+        """Initialize the log storage."""
         self._storage_dir = Path(storage_dir)
         self._storage_dir.mkdir(
             parents=True,

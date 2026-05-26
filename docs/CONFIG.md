@@ -2,7 +2,6 @@
 
 **版本**: v5.2.1
 
-
 本文件说明 `config.json` 中所有配置项的类型、默认值、有效范围及用途。
 
 > 首次使用请将 `config.example.json` 复制为 `config.json` 并按需修改：
@@ -168,6 +167,7 @@
 
 ```text
 内置默认值  →  config.json  →  环境变量（如有）  →  命令行参数（--workers 等）
+
 ```
 
 ## 常见配置场景
@@ -179,6 +179,7 @@
   "collision": { "max_workers": 16, "use_performance_optimization": true },
   "gpu": { "use_gpu": false }
 }
+
 ```
 
 ### Intel Arc GPU 稳定模式
@@ -192,6 +193,7 @@
     "enable_vendor_optimizations": true
   }
 }
+
 ```
 
 ### 调试模式
@@ -201,6 +203,7 @@
   "logging": { "level": "DEBUG", "enable_console": true },
   "collision": { "max_workers": 1 }
 }
+
 ```
 
 ### 生产环境模式
@@ -224,6 +227,7 @@
     "enable_audit_log": true
   }
 }
+
 ```
 
 ### 多 GPU 并行模式
@@ -237,4 +241,5 @@
     "auto_tuning": true
   }
 }
+
 ```

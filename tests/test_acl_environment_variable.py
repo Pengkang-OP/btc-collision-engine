@@ -5,21 +5,22 @@ import tempfile
 
 # 添加项目根目录到路径
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-import pathlib
+import pathlib  # noqa: E402
+import pytest  # noqa: E402
 
-from src.collision.checkpoint_manager import CheckpointManager
+from src.collision.checkpoint_manager import CheckpointManager  # noqa: E402
 
 
 class TestACLEnvironmentVariable:
     """测试环境变量控制ACL设置"""
 
-    def setUp(self):
+    def setup_method(self, method):
         """保存原始环境变量"""
         self.original_skip_acl = os.environ.get("BTC_ENGINE_SKIP_ACL")
         temp_dir = tempfile.gettempdir()
         self.test_file = os.path.join(temp_dir, f"test_acl_env_{os.getpid()}.json")
 
-    def tearDown(self):
+    def teardown_method(self, method):
         """恢复原始环境变量"""
         if self.original_skip_acl is None:
             os.environ.pop("BTC_ENGINE_SKIP_ACL", None)
@@ -185,4 +186,4 @@ class TestACLEnvironmentVariable:
 
 
 if __name__ == "__main__":
-    unittest.main(verbosity=2)
+    pytest.main([__file__, "-v"])

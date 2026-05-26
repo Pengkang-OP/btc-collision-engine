@@ -56,6 +56,7 @@ $env:BTC_ENGINE_LOG_LEVEL = "DEBUG"
 
 # Windows (CMD)
 set BTC_ENGINE_LOG_LEVEL=DEBUG
+
 ```
 
 ### 方式二：使用 .env 文件
@@ -68,16 +69,21 @@ copy .env.example .env
 
 # Linux/macOS
 cp .env.example .env
+
 ```
 
 ## 注意事项
 
 1. 环境变量优先级高于配置文件（`config.json`）
+
 2. 修改环境变量后需要重新启动程序才能生效
+
 3. 不要在 `.env` 文件中存储敏感信息（如私钥）
+
 4. `.env` 文件不应提交到版本控制系统
 
 ## 相关文档
 
 - [配置示例](../../config.example.json)
+
 - [部署指南](../docker-deployment-guide.md)

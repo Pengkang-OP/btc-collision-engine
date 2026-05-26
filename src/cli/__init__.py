@@ -19,10 +19,12 @@ Sub-modules:
 - stats_reporter.py : 最终统计摘要
 """
 
-from src.cli.arg_parser import parse_args
-from src.cli.main import main
-from src.cli.optimization_cli import OptimizationCLI
-from src.cli.output import CLIOutput
+from src import __version__ as __version__  # noqa: F401
+
+from .arg_parser import parse_args
+from .main import main
+from .optimization_cli import OptimizationCLI
+from .output import CLIOutput
 
 __all__ = [
     "main",

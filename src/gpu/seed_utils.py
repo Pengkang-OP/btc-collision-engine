@@ -1,4 +1,4 @@
-"""种子字节端序转换工具
+"""种子字节端序转换工具.
 
 提供 _seed_bytes_to_u32_be_array 函数的单一权威实现，
 消除 kernel_impl.py / async_executor.py / engine.py 中的三处重复定义。
@@ -10,7 +10,7 @@ import numpy as np
 
 
 def seed_bytes_to_u32_be_array(seed: bytes) -> "np.ndarray":
-    """将 32 字节 seed 按 big-endian 拆成 8*uint32，再转成本机端序。
+    """将 32 字节 seed 按 big-endian 拆成 8*uint32，再转成本机端序.
 
     比特币私钥为 256-bit big-endian 整数，GPU Kernel 期望 native-endian uint32 数组。
     此函数确保从 BE bytes → native uint32 的正确转换，且在 LE 机器上透明高效。

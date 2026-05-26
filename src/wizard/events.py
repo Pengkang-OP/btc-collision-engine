@@ -52,6 +52,7 @@ class EventDispatcher:
     """Event dispatcher for wizard events."""
 
     def __init__(self) -> None:
+        """Initialize the event dispatcher."""
         self._listeners: dict[str, list[Callable]] = {}
         self._event_queue: Queue = Queue()
 

@@ -39,7 +39,7 @@ def _auto_load_language() -> None:
     _translator.load("zh")
 
 
-def _t(key: str, default: str = "", **kwargs) -> str:
+def _t(key: str, default: str = "", **kwargs: object) -> str:
     """Translate a key to the current language.
 
     Args:
@@ -59,6 +59,10 @@ def _t(key: str, default: str = "", **kwargs) -> str:
         except (KeyError, ValueError):
             return text
     return text
+
+
+# 公开别名，供跨模块使用
+t = _t
 
 
 def set_language(lang: str) -> None:

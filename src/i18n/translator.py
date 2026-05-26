@@ -11,6 +11,7 @@ class Translator:
         self,
         locale_dir: str | Path = "",
     ):
+        """Initialize the translator."""
         self._locale_dir = Path(locale_dir or (Path(__file__).parent / "locales"))
         self._translations: dict = {}
 

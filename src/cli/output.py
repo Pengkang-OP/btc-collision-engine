@@ -6,7 +6,7 @@ import os
 import platform
 import sys
 import threading
-from typing import Any, Optional
+from typing import Any
 
 from ..utils import get_configured_logger
 
@@ -24,56 +24,51 @@ except ImportError:
     Text = None
 
 
-def _get_utf8_console(stderr: bool = False, no_color: bool = False):
+def _get_utf8_console(stderr: bool = False, no_color: bool = False) -> Any:
     """获取 UTF-8 兼容的 Console 实例。"""
     if platform.system() == "Windows":
         # Windows 特殊处理：尝试设置 stdout/stderr 为 utf-8
         try:
-            if stderr:
-                if hasattr(sys.stderr, "reconfigure"):
-                    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
-            elif hasattr(sys.stdout, "reconfigure"):
-                sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+            stream: Any = sys.stderr if stderr else sys.stdout
+            _reconfigure = getattr(stream, "reconfigure", None)
+            if _reconfigure is not None:
+                _reconfigure(encoding="utf-8", errors="replace")
         except (OSError, AttributeError, io.UnsupportedOperation) as e:
             logger.debug("Failed to reconfigure stdout/stderr encoding: %s", e)
     # 检查 NO_COLOR 环境变量
     env_no_color = "NO_COLOR" in os.environ
     actual_no_color = no_color or env_no_color
-    console_kwargs = {
-        "no_color": actual_no_color,
-        "stderr": stderr,
-    }
     if Console is not None:
-        return Console(**console_kwargs)
+        return Console(no_color=actual_no_color, stderr=stderr)
     # 如果没有安装 rich，返回简单的对象
 
     class SimpleConsole:
-        def __init__(self, **kwargs):
-            self.no_color = kwargs.get("no_color", False)
-            self.stderr = kwargs.get("stderr", False)
+        def __init__(self: "SimpleConsole", no_color: bool = False, stderr: bool = False) -> None:
+            self.no_color: bool = no_color
+            self.stderr: bool = stderr
 
-        def print(self, *args, **kwargs):
+        def print(self: "SimpleConsole", *args: Any, **kwargs: Any) -> None:
             print(*args, **kwargs)
 
-        def rule(self, title="", **kwargs):
+        def rule(self: "SimpleConsole", title: str = "") -> None:
             out = sys.stderr if self.stderr else sys.stdout
             print(title, file=out)
 
-    return SimpleConsole(**console_kwargs)
+    return SimpleConsole(no_color=actual_no_color, stderr=stderr)
 
 
 class CLIOutput:
     """CLI 输出管理器单例类。"""
 
-    _instance: Optional["CLIOutput"] = None
+    _instance: "CLIOutput | None" = None
     _instance_lock: threading.Lock = threading.Lock()
-    _adaptive_console: Optional["Console"] = None  # 缓存用于自适应宽度的 Console 实例
+    _adaptive_console: Any | None = None  # 缓存用于自适应宽度的 Console 实例
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args: Any, **kwargs: Any) -> "CLIOutput":
+        # __new__ 不抢占锁：get_instance() 已在外层加锁，
+        # 若此处再次 acquire 同一把 Lock 会导致死锁。
         if cls._instance is None:
-            with cls._instance_lock:
-                if cls._instance is None:
-                    cls._instance = super().__new__(cls)
+            cls._instance = super().__new__(cls)
         return cls._instance
 
     @classmethod
@@ -94,30 +89,30 @@ class CLIOutput:
         return instance
 
     @classmethod
-    def reset_instance(cls):
+    def reset_instance(cls) -> None:
         """重置单例（仅用于测试）。"""
         cls._instance = None
         cls._adaptive_console = None
 
-    def __init__(self, quiet: bool = False, no_color: bool = False, compact: bool = False):
+    def __init__(self, quiet: bool = False, no_color: bool = False, compact: bool = False) -> None:
         if getattr(self, "_initialized", False):
             return  # 单例已初始化，跳过
-        self._initialized = True
-        self.quiet = quiet
-        self.compact = compact
-        self.console = _get_utf8_console(stderr=False, no_color=no_color)
-        self.err_console = _get_utf8_console(stderr=True, no_color=no_color)
+        self._initialized: bool = True
+        self.quiet: bool = quiet
+        self.compact: bool = compact
+        self.console: Any = _get_utf8_console(stderr=False, no_color=no_color)
+        self.err_console: Any = _get_utf8_console(stderr=True, no_color=no_color)
 
-    def print(self, message: Any = "", **kwargs):
+    def print(self, message: Any = "", **kwargs: Any) -> None:
         """普通打印（受 quiet 模式影响。"""
         if not self.quiet:
             self.console.print(message, **kwargs)
 
-    def print_always(self, message: Any = "", **kwargs):
+    def print_always(self, message: Any = "", **kwargs: Any) -> None:
         """总是打印（不受 quiet 影响）。"""
         self.console.print(message, **kwargs)
 
-    def info(self, message: str):
+    def info(self, message: str) -> None:
         """打印 INFO 级别消息。"""
         if not self.quiet:
             if Text is not None:
@@ -125,21 +120,21 @@ class CLIOutput:
             else:
                 self.console.print(f"[INFO] {message}")
 
-    def success(self, message: str):
+    def success(self, message: str) -> None:
         """打印 SUCCESS 级别消息。"""
         if Text is not None:
             self.console.print(Text.assemble(("[OK] ", "green"), message))
         else:
             self.console.print(f"[OK] {message}")
 
-    def hint(self, message: str):
+    def hint(self, message: str) -> None:
         """打印 HINT 级别消息。"""
         if Text is not None:
             self.console.print(Text.assemble(("[HINT] ", "cyan"), message))
         else:
             self.console.print(f"[HINT] {message}")
 
-    def warning(self, message: str, details: Optional[str] = None):
+    def warning(self, message: str, details: str | None = None) -> None:
         """打印 WARNING 级别消息。"""
         if Text is not None:
             self.err_console.print(Text.assemble(("[WARN] ", "yellow"), message))
@@ -151,7 +146,7 @@ class CLIOutput:
             else:
                 self.err_console.print(details)
 
-    def error(self, message: str, details: Optional[str] = None):
+    def error(self, message: str, details: str | None = None) -> None:
         """打印 ERROR 级别消息。"""
         if Text is not None:
             self.err_console.print(Text.assemble(("[ERROR] ", "red"), message))
@@ -163,7 +158,7 @@ class CLIOutput:
             else:
                 self.err_console.print(details)
 
-    def rule(self, title: str = "", style: str = "dim"):
+    def rule(self, title: str = "", style: str = "dim") -> None:
         """打印分隔线。"""
         if not self.quiet:
             if self.console and hasattr(self.console, "rule"):
@@ -171,7 +166,7 @@ class CLIOutput:
             else:
                 self.console.print(title)
 
-    def header(self, title: str):
+    def header(self, title: str) -> None:
         """打印标题头。"""
         if not self.quiet:
             if not self.compact:
@@ -180,7 +175,8 @@ class CLIOutput:
             if not self.compact:
                 self.print()
 
-    def startup_panel(self, title_or_config, rows=None):
+    def startup_panel(self, title_or_config: str | dict[str, str],
+                      rows: list[tuple[str, str]] | None = None) -> None:
         """打印启动配置面板 (Rich Panel + Table)，自适应终端宽度。
 
         支持两种调用方式:
@@ -236,7 +232,7 @@ class CLIOutput:
             for k, v in rows:
                 self.console.print(f"    {k}: {v}")
 
-    def dynamic_stats_panel(self, stats: dict[str, str], title: str = "System Status"):
+    def dynamic_stats_panel(self, stats: dict[str, str], title: str = "System Status") -> None:
         """打印动态统计面板（自适应宽度）。
 
         Args:
@@ -282,16 +278,19 @@ class CLIOutput:
         """获取自适应面板宽度（缓存 Console 实例）。返回 None 表示不限制。"""
         try:
             if Console is not None:
-                if cls._adaptive_console is None:
-                    cls._adaptive_console = Console()
-                w = cls._adaptive_console.width
-                if w and w > 40:
-                    return max(56, min(w - 4, 100))
+                con = cls._adaptive_console
+                if con is None:
+                    con = Console()
+                    cls._adaptive_console = con
+                if con is not None:
+                    w = con.width
+                    if w and w > 40:
+                        return max(56, min(w - 4, 100))
         except Exception:
             logger.debug("Failed to create adaptive console, using fallback")
         return None
 
-    def final_summary(self, title: str, stats: dict):
+    def final_summary(self, title: str, stats: dict[str, str]) -> None:
         """打印最终摘要（自适应宽度）。"""
         panel_width = self._adaptive_width()
         if Panel is not None and Table is not None:
@@ -310,7 +309,7 @@ class CLIOutput:
             for k, v in stats.items():
                 self.console.print(f"  {k}: {v}")
 
-    def stats_panel(self, title: str, rows: list):
+    def stats_panel(self, title: str, rows: list[tuple[str, str] | tuple[str, str, str]]) -> None:
         """打印统计面板（自适应宽度）。"""
         panel_width = self._adaptive_width()
         if Panel is not None and Table is not None:
@@ -318,7 +317,10 @@ class CLIOutput:
             for row in rows:
                 if len(row) == 3:
                     k, v, style = row
-                    table.add_row(f"{k}:", Text(str(v), style=style))
+                    if Text is not None:
+                        table.add_row(f"{k}:", Text(str(v), style=style))
+                    else:
+                        table.add_row(f"{k}:", str(v))
                 elif len(row) == 2:
                     k, v = row
                     table.add_row(f"{k}:", str(v))
@@ -339,24 +341,25 @@ class CLIOutput:
                     k, v = row
                     self.console.print(f"  {k}: {v}")
 
-    def status_line(self, text: str):
+    def status_line(self, text: str) -> None:
         """打印状态行（覆盖式）。"""
         if not self.quiet:
-            sys.stdout.write(f"\r{text}")
+            _ = sys.stdout.write(f"\r{text}")
             sys.stdout.flush()
 
-    def performance_status(self, stats: dict):
+    def performance_status(self, stats: dict[str, str | int | float]) -> None:
         """打印性能状态行。"""
         if not self.quiet and stats:
-            parts = []
+            parts: list[str] = []
             if "speed" in stats:
                 speed = stats["speed"]
-                if speed >= 1000000:
-                    parts.append(f"速度: {speed / 1000000:.1f}M/s")
-                elif speed >= 1000:
-                    parts.append(f"速度: {speed / 1000:.1f}K/s")
-                else:
-                    parts.append(f"速度: {speed:.0f}/s")
+                if isinstance(speed, (int, float)):
+                    if speed >= 1000000:
+                        parts.append(f"速度: {speed / 1000000:.1f}M/s")
+                    elif speed >= 1000:
+                        parts.append(f"速度: {speed / 1000:.1f}K/s")
+                    else:
+                        parts.append(f"速度: {speed:.0f}/s")
             if "keys_total" in stats:
                 parts.append(f"总尝试: {stats['keys_total']:,}")
             if "gpu_usage" in stats:
@@ -367,7 +370,7 @@ class CLIOutput:
                 self.status_line(" | ".join(parts))
 
 
-def format_results(results: list[dict]) -> str:
+def format_results(results: list[dict[str, str]]) -> str:
     """Format collision results for console output.
 
     Args:
@@ -388,7 +391,7 @@ def format_results(results: list[dict]) -> str:
     return "\n".join(lines)
 
 
-def format_json(data) -> str:
+def format_json(data: object) -> str:
     """Format data as pretty JSON.
 
     Args:
@@ -406,7 +409,7 @@ def paginate(
     *,
     title: str = "",
     page_size: int = 20,
-    console: "Console | None" = None,
+    console: Any = None,
 ) -> None:
     """Display long content with page-by-page navigation.
 
@@ -477,7 +480,9 @@ def paginate(
                     f"[bold dim]-- {title} (Page {current_page}/{total_pages}) --[/bold dim]"
                 )
             else:
-                _con.print(f"[bold dim]-- Page {current_page}/{total_pages} --[/bold dim]")
+                _con.print(
+                    f"[bold dim]-- Page {current_page}/{total_pages} --[/bold dim]"
+                )
             for line in chunk:
                 _con.print(line)
             footer = (
@@ -496,6 +501,6 @@ def paginate(
         # 最后一页后不需要暂停
         if start + page_size < total:
             try:
-                input("   Press Enter to continue (q=quit)...")
+                _ = input("   Press Enter to continue (q=quit)...")
             except (EOFError, KeyboardInterrupt):
                 break

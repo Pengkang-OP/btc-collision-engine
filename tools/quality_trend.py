@@ -16,9 +16,9 @@ from utf8_helper import setup_windows_utf8
 
 setup_windows_utf8()
 
-import contextlib
+import contextlib  # noqa: E402
 
-from tools.check_document_quality import DocumentQualityChecker
+from tools.check_document_quality import DocumentQualityChecker  # noqa: E402
 
 
 class QualityTrendAnalyzer:

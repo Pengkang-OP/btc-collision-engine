@@ -38,6 +38,7 @@ Returns:
 Raises:
     ValueError: If param1 is invalid.
 """
+
 ```
 
 ## 4. 迁移计划
@@ -51,7 +52,7 @@ Raises:
 
 ## 5. 示例对比
 
-### 修改前（中文）：
+### 修改前（中文）
 
 ```python
 class CryptoBackend(ABC):
@@ -59,9 +60,10 @@ class CryptoBackend(ABC):
 
     定义椭圆曲线运算的统一接口。
     """
+
 ```
 
-### 修改后（英文）：
+### 修改后（英文）
 
 ```python
 class CryptoBackend(ABC):
@@ -69,18 +71,23 @@ class CryptoBackend(ABC):
 
     Defines unified interface for elliptic curve operations.
     """
+
 ```
 
 ## 6. 工具支持
 
 - 使用 `pylint` 检查 docstring 语言（可配置）
+
 - CI/CD 中添加注释语言检查步骤
 
 ## 7. 例外情况
 
 以下情况可保留中文注释：
+
 1. 引用中文技术文档的链接说明
+
 2. 特定业务术语无英文对应时（须在术语表定义）
+
 3. 已弃用代码的注释（整个模块即将移除）
 
 ---

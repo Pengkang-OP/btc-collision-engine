@@ -144,7 +144,7 @@ class TestKeyCollisionEngineResumeAndStop:
         engine._live_range_count = 100
         engine.stats.total_checked = 50
         stats = engine.get_stats()
-        assert stats.total_checked  >=  100
+        assert stats.total_checked >= 100
         engine.stop()
 
     def test_stop_save_checkpoint_error(self):

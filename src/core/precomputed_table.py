@@ -133,7 +133,8 @@ class PrecomputedPointTable:
         )
 
     def _build_table(self) -> list:
-        """Build precomputed table:
+        """Build precomputed table.
+
         [G, 2G, 3G, ..., (2^w-1)G]
 
         Uses double-add algorithm for efficient generation:
@@ -280,6 +281,7 @@ class PrecomputedTableManager:
     def __new__(
         cls,
     ) -> "PrecomputedTableManager":
+        """Create singleton instance."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._tables = {}

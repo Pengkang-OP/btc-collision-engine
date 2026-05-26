@@ -20,10 +20,10 @@ from pathlib import Path
 
 # 添加项目根目录
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
-from src.collision.collision_stats import CollisionStats
-from src.collision.gpu.engine import GPUCollisionEngine
-from src.gpu.intel_memory_monitor import IntelMemoryMonitor
-from src.gpu.intel_timeout_manager import AdaptiveTimeoutManager
+from src.collision.collision_stats import CollisionStats  # noqa: E402
+from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
+from src.gpu.intel_memory_monitor import IntelMemoryMonitor  # noqa: E402
+from src.gpu.intel_timeout_manager import AdaptiveTimeoutManager  # noqa: E402
 
 # 输出目录
 _TEST_OUTPUT_DIR = _PROJECT_ROOT / "test_results"

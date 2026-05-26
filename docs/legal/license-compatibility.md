@@ -39,7 +39,9 @@
 项目依赖于以下 LGPL 许可证的库，均通过动态链接使用，符合 LGPL 要求：
 
 1. **gmpy2** (LGPL-3.0): GMP/MPFR/MPC 的 Python 绑定，动态链接
+
 2. **pybloom-live** (LGPL-3.0): Bloom 过滤器实现，动态链接
+
 3. **chardet** (LGPL-2.1): 字符编码检测，动态链接
 
 ### 无 GPL 依赖
@@ -49,11 +51,15 @@
 ## 许可证合规建议
 
 1. 在分发二进制文件时，包含 MIT 许可证副本
+
 2. 在文档中保留第三方版权声明
+
 3. 定期审查依赖许可证变更
 
 ## 相关文档
 
 - [加密出口管制声明](export-control.md)
+
 - [第三方代码归属](third-party-attribution.md)
+
 - [LICENSE](../../LICENSE)

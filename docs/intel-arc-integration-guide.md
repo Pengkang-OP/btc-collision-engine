@@ -18,6 +18,7 @@
 **替代方案 (Linux)**:
 
 - NVIDIA GPU: 推荐，CUDA 生态完善
+
 - AMD GPU: ROCm 平台支持 Intel Arc 实验性
 
 ---
@@ -25,49 +26,93 @@
 ## 目录
 
 - [📋 目录](#-目录)
+
 - [概述](#概述)
+
   - [功能清单](#功能清单)
+
 - [架构概览](#架构概览)
+
   - [初始化流程](#初始化流程)
+
 - [P0 功能：Intel Arc 兼容性](#p0-功能intel-arc-兼容性)
+
   - [1. uint32 Workaround](#1-uint32-workaround)
+
 - [2. 运行时验证](#2-运行时验证)
+
   - [3. 驱动版本检查](#3-驱动版本检查)
+
 - [P1 功能：监控和预警](#p1-功能监控和预警)
+
   - [1. 自适应超时管理](#1-自适应超时管理)
+
 - [2. 显存监控和预警](#2-显存监控和预警)
+
 - [P2 功能：性能优化](#p2-功能性能优化)
+
   - [1. 性能基准测试](#1-性能基准测试)
+
 - [2. 自动调优机制](#2-自动调优机制)
+
 - [3. 性能报告生成](#3-性能报告生成)
+
 - [1. 设备信息](#1-设备信息)
+
 - [2. 基准测试结果](#2-基准测试结果)
+
 - [3. 调优结果](#3-调优结果)
+
 - [4. 历史趋势](#4-历史趋势)
+
 - [5. 优化建议](#5-优化建议)
+
 - [6. 历史对比（可选）](#6-历史对比可选)
+
 - [快速开始](#快速开始)
+
   - [步骤 1: 初始化引擎](#步骤-1-初始化引擎)
+
 - [步骤 2: 运行基准测试（可选但推荐）](#步骤-2-运行基准测试可选但推荐)
+
 - [步骤 3: 启动自动调优（可选）](#步骤-3-启动自动调优可选)
+
 - [步骤 4: 开始对撞](#步骤-4-开始对撞)
+
 - [步骤 5: 生成性能报告](#步骤-5-生成性能报告)
+
 - [API 参考](#api-参考)
+
   - [GPUCollisionEngine 新增属性](#gpucollisionengine-新增属性)
+
 - [GPUCollisionEngine 新增方法](#gpucollisionengine-新增方法)
+
 - [最佳实践](#最佳实践)
+
   - [1. 首次使用流程](#1-首次使用流程)
+
   - [2. 定期维护](#2-定期维护)
+
   - [3. 性能优化建议](#3-性能优化建议)
+
   - [4. 监控指标](#4-监控指标)
+
 - [故障排查](#故障排查)
+
   - [问题 1: Intel uint32 workaround 验证失败](#问题-1-intel-uint32-workaround-验证失败)
+
   - [问题 2: 显存频繁警告](#问题-2-显存频繁警告)
+
   - [问题 3: 执行时间接近超时](#问题-3-执行时间接近超时)
+
   - [问题 4: 性能退化](#问题-4-性能退化)
+
 - [测试验证](#测试验证)
+
   - [运行所有测试](#运行所有测试)
+
 - [预期结果](#预期结果)
+
 - [总结](#总结)
 
 ---
@@ -75,13 +120,21 @@
 ## 📋 目录
 
 - [概述](#概述)
+
 - [架构概览](#架构概览)
+
 - [P0 功能：Intel Arc 兼容性](#p0-功能intel-arc-兼容性)
+
 - [P1 功能：监控和预警](#p1-功能监控和预警)
+
 - [P2 功能：性能优化](#p2-功能性能优化)
+
 - [快速开始](#快速开始)
+
 - [API 参考](#api-参考)
+
 - [最佳实践](#最佳实践)
+
 - [故障排查](#故障排查)
 
 ---
@@ -124,6 +177,7 @@ GPUCollisionEngine
     ├── benchmark_suite (基准测试)
     ├── auto_tuner (自动调优)
     └── performance_reporter (报告生成)
+
 ```
 
 ### 初始化流程
@@ -138,6 +192,7 @@ _apply_intel_specific_optimizations()  # 仅 Intel GPU
 _init_intel_monitoring_and_tuning()    # 初始化 P1/P2
     ↓
 ✅ 所有组件就绪
+
 ```python
 
 ---
@@ -156,6 +211,7 @@ _init_intel_monitoring_and_tuning()    # 初始化 P1/P2
 # 自动检测并应用
 if vendor.lower().startswith('intel'):
     device.requires_uint32_workaround = True
+
 ```markdown
 
 ## 2. 运行时验证
@@ -168,6 +224,7 @@ def _verify_uint32_workaround(self):
     # 检查内核参数类型
     # 验证编译器标志
     # 返回 True/False
+
 ```markdown
 
 ### 3. 驱动版本检查
@@ -176,6 +233,7 @@ def _verify_uint32_workaround(self):
 # 自动检查驱动版本
 if driver_version < "31.0.101.4500":
     logger.warning("⚠️ 驱动版本较旧，建议升级")
+
 ```python
 
 ---
@@ -187,8 +245,11 @@ if driver_version < "31.0.101.4500":
 **文件**: `src/gpu/intel_timeout_manager.py`
 
 **功能**:
+
 - 基于统计学动态计算超时阈值
+
 - 公式: `timeout = mean + 3σ`
+
 - 自动记录和预警
 
 **使用**:
@@ -210,6 +271,7 @@ timeout = timeout_manager.get_timeout()
 # 检查是否接近超时
 if timeout_manager.should_warn(execution_time):
     logger.warning("⚠️ 执行时间接近超时阈值")
+
 ```markdown
 
 ## 2. 显存监控和预警
@@ -217,9 +279,13 @@ if timeout_manager.should_warn(execution_time):
 **文件**: `src/gpu/intel_memory_monitor.py`
 
 **功能**:
+
 - 4 级状态预警（Normal/Warning/Critical/Emergency）
+
 - Intel 保守策略：45% 使用率
+
 - 显存泄漏检测
+
 - 批量大小调整建议
 
 **使用**:
@@ -244,6 +310,7 @@ warnings = memory_monitor.check_warnings()
 reduction = memory_monitor.get_recommended_batch_reduction()
 if reduction > 0:
     new_size = int(current_size * (1 - reduction))
+
 ```python
 
 **状态转换**:
@@ -263,9 +330,13 @@ Normal (0-70%) → Warning (70-85%) → Critical (85-95%) → Emergency (>95%)
 **文件**: `src/gpu/benchmark_suite.py`
 
 **功能**:
+
 - 内核编译测试
+
 - 批次执行测试
+
 - 显存带宽测试
+
 - 扩展性测试
 
 **使用**:
@@ -282,6 +353,7 @@ results = benchmark_suite.run_all_benchmarks(iterations=5)
 # 获取摘要
 summary = benchmark_suite.get_summary(results)
 print(summary)
+
 ```python
 
 **输出示例**:
@@ -315,9 +387,13 @@ print(summary)
 **文件**: `src/gpu/auto_tuner.py`
 
 **功能**:
+
 - 三阶段调优（Exploration → Exploitation → Monitoring）
+
 - 自动探索最优 batch_size
+
 - 性能退化检测
+
 - 自动重新调优
 
 **使用**:
@@ -341,6 +417,7 @@ results = auto_tuner.start_tuning(
 
 print(f"最优 batch_size: {results['optimal_batch_size']:,}")
 print(f"预期吞吐量: {results['expected_throughput']:,.0f} keys/s")
+
 ```python
 
 **调优阶段**:
@@ -366,8 +443,11 @@ print(f"预期吞吐量: {results['expected_throughput']:,.0f} keys/s")
 **文件**: `src/gpu/performance_reporter.py`
 
 **功能**:
+
 - 生成 Markdown/JSON 格式报告
+
 - 6 大章节（设备信息、基准测试、调优结果、历史趋势、优化建议、历史对比）
+
 - 自动保存文件
 
 **使用**:
@@ -400,6 +480,7 @@ report_path = reporter.generate_report(
 )
 
 print(f"报告已保存: {report_path}")
+
 ```python
 
 **报告结构**:
@@ -436,6 +517,7 @@ print(f"报告已保存: {report_path}")
 ## 6. 历史对比（可选）
 - 与之前对比
 - 改进幅度
+
 ```python
 
 ---
@@ -453,6 +535,7 @@ engine = GPUCollisionEngine(
     batch_size=100000,
     device_index=0
 )
+
 ```markdown
 
 ## 步骤 2: 运行基准测试（可选但推荐）
@@ -460,6 +543,7 @@ engine = GPUCollisionEngine(
 ```python
 # 运行基准测试并生成报告
 results = engine.run_benchmark(iterations=5)
+
 ```markdown
 
 ## 步骤 3: 启动自动调优（可选）
@@ -467,6 +551,7 @@ results = engine.run_benchmark(iterations=5)
 ```python
 # 自动找到最优 batch_size
 results = engine.start_auto_tuning(max_iterations=30)
+
 ```markdown
 
 ## 步骤 4: 开始对撞
@@ -474,6 +559,7 @@ results = engine.start_auto_tuning(max_iterations=30)
 ```python
 # 正常运行，所有监控和调优自动进行
 engine.start()
+
 ```markdown
 
 ## 步骤 5: 生成性能报告
@@ -482,6 +568,7 @@ engine.start()
 # 随时生成报告
 report_path = engine.generate_performance_report()
 print(f"报告: {report_path}")
+
 ```python
 
 ---
@@ -499,6 +586,7 @@ engine.memory_monitor       # IntelMemoryMonitor
 engine.benchmark_suite      # GPUBenchmarkSuite
 engine.auto_tuner           # GPUAutoTuner
 engine.performance_reporter # PerformanceReportGenerator
+
 ```markdown
 
 ## GPUCollisionEngine 新增方法
@@ -525,6 +613,7 @@ engine.generate_performance_report(
     include_comparison: bool = False,
     output_dir: str = None
 ) -> str
+
 ```python
 
 ---
@@ -567,8 +656,11 @@ engine.generate_performance_report(
 ### 3. 性能优化建议
 
 - **batch_size**: 使用自动调优找到最优值
+
 - **驱动版本**: 保持最新稳定版
+
 - **显存使用**: 监控警告并及时调整
+
 - **超时设置**: 使用自适应超时，不要手动固定
 
 ### 4. 监控指标
@@ -586,6 +678,7 @@ print(f"当前超时: {timeout:.1f}秒")
 # 检查调优状态
 if engine.auto_tuner.should_re_tune():
     print("建议重新调优")
+
 ```python
 
 ---
@@ -595,6 +688,7 @@ if engine.auto_tuner.should_re_tune():
 ### 问题 1: Intel uint32 workaround 验证失败
 
 **症状**:
+
 ```
 
 ❌ Intel uint32 workaround 验证失败
@@ -603,13 +697,17 @@ RuntimeError: Intel GPU workaround 未正确应用
 ```python
 
 **解决**:
+
 1. 检查 GPU 是否真的是 Intel Arc
+
 2. 更新驱动到最新版本
+
 3. 检查 `gpu_profiles.json` 配置
 
 ### 问题 2: 显存频繁警告
 
 **症状**:
+
 ```
 
 ⚠️ 显存使用率过高: 78.5%
@@ -618,13 +716,17 @@ RuntimeError: Intel GPU workaround 未正确应用
 ```python
 
 **解决**:
+
 1. 减小初始 batch_size
+
 2. 使用自动调优找到合适值
+
 3. 检查是否有显存泄漏
 
 ### 问题 3: 执行时间接近超时
 
 **症状**:
+
 ```
 
 ⚠️ 执行时间接近超时阈值: 28000ms / 30000ms
@@ -632,13 +734,17 @@ RuntimeError: Intel GPU workaround 未正确应用
 ```python
 
 **解决**:
+
 1. 等待自适应超时自动调整
+
 2. 减小 batch_size
+
 3. 检查 GPU 负载
 
 ### 问题 4: 性能退化
 
 **症状**:
+
 ```
 
 📉 检测到性能退化，建议重新调优
@@ -646,8 +752,11 @@ RuntimeError: Intel GPU workaround 未正确应用
 ```python
 
 **解决**:
+
 1. 运行 `engine.start_auto_tuning()`
+
 2. 检查系统资源
+
 3. 重启引擎
 
 ---
@@ -669,6 +778,7 @@ pytest tests/test_gpu_p2_optimizations.py -v
 
 # 集成测试
 pytest tests/test_gpu_integration.py -v
+
 ```markdown
 
 ## 预期结果
@@ -688,10 +798,15 @@ pytest tests/test_gpu_integration.py -v
 通过本指南，您已经了解了如何：
 
 1. ✅ **集成 P0/P1/P2 所有功能**到 GPU 引擎
+
 2. ✅ **使用自适应超时管理**避免误判
+
 3. ✅ **监控显存使用**并及时预警
+
 4. ✅ **运行基准测试**评估性能
+
 5. ✅ **自动调优**找到最优配置
+
 6. ✅ **生成详细报告**记录性能
 
 所有功能在 Intel GPU 初始化时**自动启用**，无需手动配置！
@@ -699,9 +814,13 @@ pytest tests/test_gpu_integration.py -v
 ---
 
 **相关文档**:
+
 - [P0 实施报告](intel-arc-optimization-implementation-report.md)
+
 - [P1 实施报告](intel-arc-p1-implementation-report.md)
+
 - [P2 实施报告](intel-arc-p2-implementation-report.md)
+
 - [Intel Arc 兼容性调研](intel-arc-gpu-compatibility-research.md)
 
 **技术支持**: 如有问题，请查看日志文件或运行测试验证。

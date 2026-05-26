@@ -4,6 +4,8 @@ Provides logging, exception handling, encoding, and other shared
 utilities used across the project.
 """
 
+from src import __version__ as __version__  # noqa: F401
+
 from .bech32_codec import (
     bech32_decode,
     bech32_encode,

@@ -7,6 +7,7 @@
 ## 📋 目录
 
 - [开发环境设置](#开发环境设置)
+- [Python 版本约束](#python-版本约束)
 - [代码规范](#代码规范)
 - [导入规范](#导入规范)
 - [文档规范](#文档规范)
@@ -35,7 +36,7 @@ pip install -r requirements.txt
 ### 3. 安装开发依赖
 
 ```bash
-pip install pytest pytest-benchmark pytest-cov pylint mypy
+pip install pytest pytest-benchmark pytest-cov ruff mypy
 ```
 
 ### 4. 安装pre-commit钩子（推荐）
@@ -74,13 +75,44 @@ python -m pytest tests/test_import_paths.py -v
 
 ---
 
+## Python 版本约束
+
+### 开发版本
+
+本项目**强制使用 Python 3.12** 进行开发，并已配置：
+
+- `pyproject.toml` 中 `requires-python = ">=3.12"` 确保运行时仅支持 3.12+
+- `.python-version` 文件供 pyenv/pipenv/`.venv` 自动切换
+- CI 中核心任务（构建、部署、文档检查）均使用 Python 3.12
+
+### Python 3.12 特性使用规范
+
+开发者可以自由使用 Python 3.12 引入的新语法和标准库特性，包括但不限于：
+
+| 特性 | 说明 |
+|------|------|
+| PEP 695 类型参数语法 | `def func[T](x: T) -> T:` |
+| PEP 701 f-string 跨行 | 多行 f-string 表达式 |
+| PEP 692 `TypedDict` 余量 | `**kwargs: Unpack[MyTypedDict]` |
+| `itertools.batched()` | 批量迭代 |
+| `pathlib.walk()` | 文件树遍历 |
+| `functools.cached` | 方法级缓存 |
+| `datetime.UTC` | UTC 时区常量 |
+| `str.removeprefix()` / `str.removesuffix()` | 字符串前缀/后缀移除 |
+| `zoneinfo` 标准库 | IANA 时区支持 |
+| `typing.override` | 方法覆写标注 |
+| `enum.member` / `enum.nonmember` | 枚举成员标注 |
+| `copy.replace()` | 对象字段替换 |
+
+> **注意**：使用上述特性时，应避免在公共 API 签名中暴露仅 3.12 支持的语法（如 PEP 695 泛型），以保持版本一致性。
+
 ## 代码规范
 
 ### Python代码风格
 
 - 遵循 [PEP 8](https://pep8.org/) 规范
 - 使用4个空格缩进
-- 行长度不超过100字符
+- 行长度不超过105字符（black、flake8、ruff 均统一配置为 105）
 - 使用类型提示
 
 ### 命名规范
@@ -358,7 +390,6 @@ python tools/check_broken_links.py
 import pytest
 from src.collision import TargetResolver
 
-
 class TestTargetResolver:
     """TargetResolver测试类"""
     
@@ -454,7 +485,7 @@ git commit -m "test(import): 添加导入路径专项测试"
 ### 提交前检查清单
 
 - [ ] 运行所有测试并通过
-- [ ] 检查代码风格（pylint）
+- [ ] 检查代码风格（ruff check）
 - [ ] 检查导入路径规范
 - [ ] 更新相关文档
 - [ ] 添加必要的测试
@@ -466,8 +497,11 @@ git commit -m "test(import): 添加导入路径专项测试"
 # 运行测试
 python -m pytest tests/ -v
 
-# 检查代码风格
-pylint src/collision/
+# 检查代码风格（使用 ruff 替代原 pylint）
+ruff check src/
+
+# 格式化代码
+ruff format src/ tests/ --check
 
 # 检查导入路径
 python scripts/dev/check_import_paths.py
@@ -537,7 +571,7 @@ git checkout -b feature/your-feature-name
 python -m pytest tests/ -v
 
 # 检查代码质量
-pylint src/
+ruff check src/
 ```
 
 ### 3. 提交更改
@@ -578,10 +612,10 @@ from src.collision.targets.resolver import TargetResolver
 
 A:
 
-1. 确保安装了所有依赖
-2. 检查Python版本（需要3.9+）
+1. 确认 Python 版本为 **3.12** (`python --version`)
+2. 确保安装了所有依赖
 3. 查看详细错误信息
-4. 查看项目Issues是否有类似问题
+4. 查看项目 Issues 是否有类似问题
 
 ---
 

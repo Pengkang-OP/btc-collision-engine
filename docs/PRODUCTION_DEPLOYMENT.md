@@ -2,8 +2,6 @@
 
 **版本**: v4.5.1
 
-
-
 本文档总结BTC碰撞引擎的完整生产部署方案，包括systemd服务和Docker容器化两种部署方式。
 
 ---
@@ -63,21 +61,29 @@ sudo bash deploy/install-systemd.sh
 # 3. 查看状态
 systemctl status btc-collision-engine
 journalctl -u btc-collision-engine -f
+
 ```
 
 **优势：**
 
 - ✅ 原生Linux服务管理
+
 - ✅ 自动重启和开机自启
+
 - ✅ 系统级资源控制
+
 - ✅ 与系统集成度高
+
 - ✅ 性能开销最小
 
 **适用场景：**
 
 - 专用服务器或VPS
+
 - 长期运行的生产环境
+
 - 需要精细资源控制
+
 - 已有运维基础设施
 
 ---
@@ -96,21 +102,29 @@ docker-compose --profile gpu --profile amd up -d
 
 # 带监控
 docker-compose --profile gpu --profile nvidia --profile monitoring up -d
+
 ```
 
 **优势：**
 
 - ✅ 环境隔离
+
 - ✅ 快速部署和迁移
+
 - ✅ 版本控制
+
 - ✅ 易于扩展
+
 - ✅ 一键监控栈
 
 **适用场景：**
 
 - 多环境部署（开发/测试/生产）
+
 - 容器化基础设施
+
 - 需要快速扩缩容
+
 - 团队共享环境
 
 ---
@@ -171,12 +185,15 @@ pytest tests/ -v
 
 # 查看测试报告
 cat data_logs/acceptance_test/acceptance_test_summary.md
+
 ```
 
 ### 验收报告位置
 
 - **JSON报告**: `data_logs/acceptance_test/acceptance_test_report.json`
+
 - **Markdown摘要**: `data_logs/acceptance_test/acceptance_test_summary.md`
+
 - **测试日志**: `data_logs/acceptance_test/acceptance_test.log`
 
 ---
@@ -205,6 +222,7 @@ cat data_logs/acceptance_test/acceptance_test_summary.md
     "history_max_size": 5000          // 保留5000条历史
   }
 }
+
 ```
 
 ---
@@ -225,6 +243,7 @@ journalctl -u btc-collision-engine -f
 
 # 查看资源限制状态
 systemctl show btc-collision-engine | grep Memory
+
 ```
 
 ### 2. 应用级监控
@@ -247,6 +266,7 @@ cat data_logs/current_data.json | jq '.performance'
 
 # 查看统计数据
 cat data_logs/current_data.json | jq '.stats'
+
 ```
 
 ### 3. 监控栈（Docker）
@@ -265,6 +285,7 @@ docker-compose --profile monitoring up -d
 
 # 查看告警规则
 cat deploy/prometheus/rules/btc-collision-alerts.yml
+
 ```
 
 ### 4. 告警规则
@@ -295,6 +316,7 @@ ProtectSystem=strict          # 保护系统目录
 ProtectHome=true              # 保护家目录
 PrivateTmp=true               # 私有临时目录
 ReadWritePaths=...            # 限定可写路径
+
 ```
 
 ### Docker安全选项
@@ -313,6 +335,7 @@ docker-compose.yml:
     resources:
       limits:
         memory: 16G
+
 ```
 
 ### 文件权限
@@ -327,6 +350,7 @@ chmod 750 data_logs/ logs/ monitoring_data/
 # 应用文件（644/755）
 chmod 644 *.py
 chmod 755 src/
+
 ```
 
 ---
@@ -347,6 +371,7 @@ nano /opt/btc-collision-engine/config.production.json
 
 # 启动
 sudo systemctl start btc-collision-engine
+
 ```
 
 ### 场景2：团队开发（多环境）
@@ -362,6 +387,7 @@ docker-compose --profile gpu up -d
 
 # 生产环境
 docker-compose -f docker-compose.prod.yml up -d
+
 ```
 
 ### 场景3：大规模生产（多节点）
@@ -376,6 +402,7 @@ docker stack deploy -c docker-compose.yml btc-engine
 # Kubernetes（需要额外配置）
 kubectl apply -f k8s/deployment.yaml
 kubectl apply -f k8s/service.yaml
+
 ```
 
 ### 场景4：云平台部署
@@ -391,6 +418,7 @@ gcloud run deploy btc-engine --source .
 
 # Azure Container Instances
 az container create --resource-group myRG --name btc-engine --image btc-engine:latest
+
 ```
 
 ---
@@ -414,6 +442,7 @@ journalctl -u btc-collision-engine -p err --since today
 
 # 5. 运行健康检查
 python -m src.utils.health_check --gpu
+
 ```
 
 ### 定期维护
@@ -433,6 +462,7 @@ python scripts/dev/backup_manager.py list
 
 # 恢复备份
 python scripts/dev/backup_manager.py restore btc-collision-backup_20240101_120000.tar.gz
+
 ```
 
 ### 自动备份配置
@@ -446,6 +476,7 @@ python scripts/dev/schedule_backup.py show
 
 # 移除定时备份任务
 python scripts/dev/schedule_backup.py remove
+
 ```
 
 ### 故障处理
@@ -465,6 +496,7 @@ journalctl -u btc-collision-engine --since "1 hour ago"
 
 # 5. 检查资源限制
 systemctl show btc-collision-engine | grep -E '(Memory|CPU)'
+
 ```
 
 ### 资源限制配置
@@ -486,9 +518,13 @@ systemd服务已配置以下资源限制：
 ## 📚 相关文档
 
 - [README.md](../README.md) - 项目主文档
+
 - [SYSTEMD_DEPLOYMENT.md](./SYSTEMD_DEPLOYMENT.md) - systemd详细指南
+
 - [DOCKER_DEPLOYMENT.md](./DOCKER_DEPLOYMENT.md) - Docker详细指南
+
 - [CONFIG.md](./CONFIG.md) - 配置说明
+
 - [health_check.py](../src/utils/health_check.py) - 健康检查工具
 
 ---
@@ -498,27 +534,45 @@ systemd服务已配置以下资源限制：
 ### systemd部署
 
 - [ ] 创建btc-engine用户
+
 - [ ] 安装应用到`/opt/btc-collision-engine`
+
 - [ ] 创建虚拟环境并安装依赖
+
 - [ ] 配置生产参数（config.production.json）
+
 - [ ] 安装systemd服务文件
+
 - [ ] 设置文件权限
+
 - [ ] 启用并启动服务
+
 - [ ] 验证健康检查
+
 - [ ] 配置日志轮转
+
 - [ ] 设置监控告警
 
 ### Docker部署
 
 - [ ] 安装Docker和Docker Compose
+
 - [ ] 安装NVIDIA Container Toolkit（GPU模式）
+
 - [ ] 准备生产配置
+
 - [ ] 构建Docker镜像
+
 - [ ] 启动服务
+
 - [ ] 验证GPU识别（GPU模式）
+
 - [ ] 配置数据卷
+
 - [ ] 启动监控栈（可选）
+
 - [ ] 验证健康检查
+
 - [ ] 配置备份策略
 
 ---
@@ -526,12 +580,19 @@ systemd服务已配置以下资源限制：
 ## 🎓 最佳实践
 
 1. **始终使用生产配置**：不要使用config.example.json直接运行
+
 2. **定期备份数据**：至少每周备份一次断点和历史数据
+
 3. **监控资源使用**：设置CPU和内存告警阈值
+
 4. **日志管理**：配置日志轮转，避免磁盘耗尽
+
 5. **安全加固**：最小权限原则，定期更新依赖
+
 6. **性能调优**：根据硬件调整batch_size和workers
+
 7. **健康检查**：定期检查服务状态和数据完整性
+
 8. **文档更新**：记录所有配置变更和运维操作
 
 ---
@@ -539,8 +600,11 @@ systemd服务已配置以下资源限制：
 ## 📞 技术支持
 
 - **问题反馈**：GitHub Issues
+
 - **文档**：docs/目录
+
 - **示例配置**：config.*.json
+
 - **部署脚本**：deploy/目录
 
 ---

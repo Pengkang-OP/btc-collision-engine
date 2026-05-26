@@ -9,6 +9,11 @@
 
 ### Changed
 
+- **全项目版本号统一至 v5.0.0**:
+  - 50+ 文档文件版本头/脚从 v4.2.2/v4.5.1 更新至 v5.0.0
+  - README.md 内联版本引用从 v3.4.0/v3.5.0/v4.3.0/v4.4.0 统一至 v5.0.0
+  - `src/__init__.py` 模块文档字符串扩展为多行描述
+  - 根目录 `GPU_CONFIG_GUIDE.md`、`deploy/QUICK_START.md` 添加 v5.0.0 版本标记
 - **ROADMAP #15 启用 pydocstyle Google convention 强制校验**:
   - 在 `[tool.ruff.lint]` select 中添加 `"D"` 规则
   - 取消注释 `[tool.ruff.lint.pydocstyle]` 的 `convention = "google"`
@@ -76,6 +81,12 @@
 - **`tests/test_memory_locking.py`（17 测试，0 失败）**: API 完全匹配，无需代码修改
 - 为 `tests/unit/crypto/test_crypto_backend_edge.py` 中的 `TestCoincurveBackend` 和 `TestECDSABackend` 添加 `@unittest.skipIf` 守卫，在后端不可用时跳过测试
 - 为 `tests/unit/logging/test_logging_config.py` 中的 `TestSafeRotatingFileHandler` 添加 `reset_logging_config` fixture，确保测试间状态隔离
+- **`src/collision/key_collision_engine.py` — P0 加密后端初始化失败**: 添加 `raise` 传播，消除静默吞异常导致后续私钥生成在错误状态下运行的隐患
+- **`src/gpu/kernel_impl.py` — P0 内核执行失败**: `return []` 改为 `raise RuntimeError(...) from e`，消除假阴性（搜索失败误报"无匹配"）
+- **`src/gpu/worker.py` — P0 工作器异常传播**: `_execute_search()` 中 `RuntimeError`/`ValueError`/`Exception` 记录后 `raise`；`finally` 块中不再覆盖 `status="error"` 为 `"stopped"`
+- **`src/gpu/kernel_impl.py` — P1 ALG-3 增强验证失败**: `logger.warning` 升级为 `logger.error + exc_info=True + raise`，阻止 GPU 内核在未通过正确性验证的情况下运行
+- **`src/gpu/kernel_impl.py` — P1 4 处缺失 `exc_info=True`**: 清空 match_buf、超时监控线程、内核执行、内存泄漏检查
+- **`src/gpu/async_executor/_executor.py` — P1 预取失败日志升级**: `logger.warning` → `logger.error`
 
 ### Added
 
@@ -84,21 +95,12 @@
 ### Removed
 
 - **`gpu_test_output.txt`**: 删除项目根目录的陈旧测试输出文件（56.85 KB）
-
-### Changed
-
-- **异常处理标准化（ROADMAP #12）**:
+- **`build_test/` 目录 (372 文件)**: 删除项目根目录的陈旧完整项目副本
+- **根目录陈旧 CI/代码质量日志 (10+ 文件)**: 删除 `checked_files.txt`、`docs_tracked.txt`、`err.log`、`flake8_err.txt`、`pytest_fix.txt`、`pytest_out.txt`、`ruff_check.json`、`gpu_test_v2_output.txt`、`lint_keygen.txt`、`lint_keygen2.txt`、`lint_output.txt`、`output.txt`、`output2.txt`、`report.txt`、`test_output.txt`
+- **根目录空文件**: 删除 `2000` (0B)
+- **docs/ 根目录过时分析/审计报告 (15 个)**: 删除 v3.x 时期分析报告 (`PROJECT_ANALYSIS.md`、`PROJECT_CLEANUP_REPORT_V3.1.0.md`、`PROJECT_COMPREHENSIVE_ANALYSIS_V3.md`)、发布说明 (`RELEASE_NOTES_v3.3.1.md`)、修复报告 (`p1_fixes_report.md`、`p2_fixes_report.md`、`p3_fixes_report.md`)、CLI 审计报告 (`cli_functional_audit_report.md`、`cli_improvement_report.md`、`cli_usability_review.md`)、代码审查报告 (`code_review_interactive_improvements.md`、`manual_code_review_cli_improvements.md`)、文本文件 (`FORMAT_AUTO_DETECTION_ANALYSIS.txt`、`MULTI_FORMAT_IMPLEMENTATION_GUIDE.txt`、`MULTI_FORMAT_VERIFICATION_REPORT.txt`、`VERIFICATION_REPORT.txt`、`health_review_issues.csv`)
   - 新增 `docs/standards/exception_handling_standards.md` — 正式的五级异常处理规范（L1致命/L2降级/L3隔离/L4清理/L5包装）
   - 更新 `docs/standards/development_code_standards.md` 第 7 节 — 精简为概要，引用新规范
-
-### Fixed
-
-- **`src/collision/key_collision_engine.py` — P0 加密后端初始化失败**: 添加 `raise` 传播，消除静默吞异常导致后续私钥生成在错误状态下运行的隐患
-- **`src/gpu/kernel_impl.py` — P0 内核执行失败**: `return []` 改为 `raise RuntimeError(...) from e`，消除假阴性（搜索失败误报"无匹配"）
-- **`src/gpu/worker.py` — P0 工作器异常传播**: `_execute_search()` 中 `RuntimeError`/`ValueError`/`Exception` 记录后 `raise`；`finally` 块中不再覆盖 `status="error"` 为 `"stopped"`
-- **`src/gpu/kernel_impl.py` — P1 ALG-3 增强验证失败**: `logger.warning` 升级为 `logger.error + exc_info=True + raise`，阻止 GPU 内核在未通过正确性验证的情况下运行
-- **`src/gpu/kernel_impl.py` — P1 4 处缺失 `exc_info=True`**: 清空 match_buf、超时监控线程、内核执行、内存泄漏检查
-- **`src/gpu/async_executor/_executor.py` — P1 预取失败日志升级**: `logger.warning` → `logger.error`
 
 ### Docs
 

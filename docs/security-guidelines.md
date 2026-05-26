@@ -6,63 +6,121 @@
 ## 目录
 
 - [1. 概述](#1-概述)
+
 - [2. 安全设计原则](#2-安全设计原则)
+
   - [2.1 核心原则](#21-核心原则)
+
   - [2.2 安全目标](#22-安全目标)
+
 - [3. 随机数生成安全](#3-随机数生成安全)
+
   - [3.1 随机数源](#31-随机数源)
+
   - [3.2 不安全的随机数源](#32-不安全的随机数源)
+
 - [3.3 私钥范围验证](#33-私钥范围验证)
+
 - [4. 恒定时间算法](#4-恒定时间算法)
+
   - [7.2 CheckpointManager的原子写入](#72-checkpointmanager的原子写入)
+
 - [7.3 计数器线程安全更新](#73-计数器线程安全更新)
+
 - [8. 恒定时间算法](#8-恒定时间算法)
+
   - [8.1 侧信道攻击风险](#81-侧信道攻击风险)
+
 - [8.2 Montgomery Ladder算法](#82-montgomery-ladder算法)
+
   - [4.3 恒定时间条件选择](#43-恒定时间条件选择)
+
   - [4.4 使用建议](#44-使用建议)
+
 - [5. 线程安全机制](#5-线程安全机制)
+
   - [5.1 共享资源保护](#51-共享资源保护)
+
   - [5.2 统计信息更新](#52-统计信息更新)
+
 - [5.3 去重过滤器线程安全](#53-去重过滤器线程安全)
+
 - [6. 异常处理与信息保护](#6-异常处理与信息保护)
+
   - [6.1 私钥信息保护](#61-私钥信息保护)
+
 - [6.2 安全的日志记录](#62-安全的日志记录)
+
 - [6.3 异常分类](#63-异常分类)
+
 - [11. 文件安全](#11-文件安全)
+
   - [7.1 导出文件权限](#71-导出文件权限)
+
   - [7.2 临时文件处理](#72-临时文件处理)
+
 - [8. 内存安全](#8-内存安全)
+
   - [8.1 敏感数据清理](#81-敏感数据清理)
+
 - [8.2 内存转储保护](#82-内存转储保护)
+
 - [13. 网络安全](#13-网络安全)
+
   - [9.1 离线使用建议](#91-离线使用建议)
+
   - [9.2 网络请求安全](#92-网络请求安全)
+
 - [10. 安全配置](#10-安全配置)
+
   - [10.1 配置文件安全](#101-配置文件安全)
+
   - [10.2 环境变量](#102-环境变量)
+
 - [15. 安全审计清单](#15-安全审计清单)
+
   - [11.1 代码审计](#111-代码审计)
+
   - [11.2 运行时审计](#112-运行时审计)
+
 - [16. 安全使用建议](#16-安全使用建议)
+
   - [12.1 生成私钥](#121-生成私钥)
+
   - [12.2 使用私钥](#122-使用私钥)
+
   - [12.3 软件安全](#123-软件安全)
+
 - [17. 应急响应](#17-应急响应)
+
   - [13.1 私钥泄露响应](#131-私钥泄露响应)
+
   - [13.2 安全事件报告](#132-安全事件报告)
+
 - [18. 安全审计发现](#18-安全审计发现)
+
   - [18.1 审计概述](#181-审计概述)
+
   - [18.2 关键发现统计](#182-关键发现统计)
+
   - [18.3 已修复的高危问题](#183-已修复的高危问题)
+
     - [问题1: 断点文件敏感信息泄露](#问题1-断点文件敏感信息泄露)
+
     - [问题2: collision_stats 明文存储私钥](#问题2-collision_stats-明文存储私钥)
+
     - [问题3: 路径遍历漏洞](#问题3-路径遍历漏洞)
+
   - [18.4 线程安全问题修复](#184-线程安全问题修复)
+
     - [问题1: total_count 竞态条件](#问题1-total_count-竞态条件)
+
     - [问题2: 线程池清理风险](#问题2-线程池清理风险)
+
     - [问题3: checks_total 竞态计数](#问题3-checks_total-竞态计数)
+
   - [18.5 安全评分](#185-安全评分)
+
 - [19. 总结](#19-总结)
 
 ## 1. 概述
@@ -74,9 +132,13 @@
 ### 2.1 核心原则
 
 1. **最小权限原则**: 仅授予必要的权限，导出文件设置600权限
+
 2. **纵深防御**: 多层安全机制，单点失效不会导致整体失效
+
 3. **安全默认**: 默认启用安全选项
+
 4. **透明性**: 安全机制清晰可见，便于审计
+
 5. **故障安全**: 异常情况下安全地失败
 
 ### 2.2 安全目标
@@ -97,8 +159,11 @@
 **原因**:
 
 - `secrets`模块使用操作系统提供的最高质量随机数源
+
 - 在Linux上使用`/dev/urandom`
+
 - 在Windows上使用`CryptGenRandom`或`BCryptGenRandom`
+
 - 适合密码学应用
 
 **代码实现**:
@@ -116,16 +181,21 @@ def generate_private_key(self) -> bytes:
         # 验证范围: 1 <= key < N
         if 1 <= key_int < Secp256k1.N:
             return private_key
+
 ```markdown
 
 ### 3.2 不安全的随机数源
 
 **避免使用**:
+
 - `random`模块: 伪随机数生成器，不适合密码学应用
+
 - `os.urandom()`: 虽然安全，但`secrets`是更推荐的接口
+
 - `numpy.random`: 伪随机数，不适合密码学
 
 **风险**:
+
 ```python
 # 不安全！不要使用
 import random
@@ -134,11 +204,13 @@ private_key = bytes([random.randint(0, 255) for _ in range(32)])
 # 安全
 import secrets
 private_key = secrets.token_bytes(32)
+
 ```markdown
 
 ## 3.3 私钥范围验证
 
 **验证条件**:
+
 ```
 
 1 ≤ private_key < N
@@ -146,6 +218,7 @@ private_key = secrets.token_bytes(32)
 ```python
 
 其中 N 是secp256k1曲线的阶:
+
 ```
 
 N = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
@@ -153,15 +226,20 @@ N = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
 ```python
 
 **代码实现**:
+
 ```python
 key_int = int.from_bytes(private_key, 'big')
 if not (1 <= key_int < Secp256k1.N):
     raise ValueError("私钥超出有效范围")
+
 ```python
 
 **重要性**:
+
 - 私钥为0或大于等于N时，会导致安全问题
+
 - 可能产生可预测的公钥
+
 - 可能导致签名伪造攻击
 
 ## 4. 恒定时间算法
@@ -169,6 +247,7 @@ if not (1 <= key_int < Secp256k1.N):
 ### 7.2 CheckpointManager的原子写入
 
 **实现**:
+
 ```python
 # 使用临时文件 + 原子重命名
 temp_filepath = self.filepath + '.tmp'
@@ -177,17 +256,23 @@ with open(temp_filepath, 'w', encoding='utf-8') as f:
 
 # 原子重命名（防止写入中断导致文件损坏）
 os.replace(temp_filepath, self.filepath)
+
 ```python
 
 **安全特性**:
+
 - 临时文件写入
+
 - 原子重命名
+
 - 失败时清理临时文件
+
 - 不保存私钥
 
 ## 7.3 计数器线程安全更新
 
 **碰撞引擎**:
+
 ```python
 # 使用独立锁保护不同资源
 self._count_lock = threading.Lock()      # 保护计数器
@@ -198,9 +283,11 @@ self._dedup_lock = threading.Lock()      # 保护去重过滤器
 with self._count_lock:
     self.stats.total_checked += local_count
     self.stats.matches.extend(local_matches)
+
 ```python
 
 **去重过滤器**:
+
 ```python
 def check_and_add(self, private_key: bytes) -> bool:
     fp = self._fingerprint(private_key)  # 指纹计算在锁外
@@ -211,17 +298,23 @@ def check_and_add(self, private_key: bytes) -> bool:
             self.duplicates_found += 1
             return False
         # ...
+
 ```markdown
 
 ## 8. 恒定时间算法
+
 - **时序攻击**: 通过测量运算时间推断私钥信息
+
 - **功耗分析**: 通过分析功耗模式推断私钥
+
 - **电磁分析**: 通过电磁泄漏推断私钥
 
 ### 8.1 侧信道攻击风险
+
 标准双倍-加法算法的执行时间依赖于私钥的位模式。
 
 **非恒定时间实现**（有风险）:
+
 ```python
 # 非恒定时间 - 有风险
 while k > 0:
@@ -229,16 +322,21 @@ while k > 0:
         result = self.point_add(result, addend)
     addend = self.point_add(addend, addend)
     k >>= 1
+
 ```markdown
 
 ## 8.2 Montgomery Ladder算法
 
 **算法特性**:
+
 - 恒定时间: 执行时间不依赖于私钥的位模式
+
 - 恒定内存访问: 避免基于密钥的内存访问模式
+
 - 每轮执行: 1次点加 + 1次点倍乘
 
 **代码实现**:
+
 ```python
 def scalar_multiply_const_time(self, k: int, point: ECPoint) -> ECPoint:
     """恒定时间的椭圆曲线标量乘法"""
@@ -271,11 +369,13 @@ def scalar_multiply_const_time(self, k: int, point: ECPoint) -> ECPoint:
         r1 = r1_new
 
     return r0
+
 ```markdown
 
 ### 4.3 恒定时间条件选择
 
 **实现原理**:
+
 ```python
 def _const_time_select(self, condition: int, a: ECPoint, b: ECPoint) -> ECPoint:
     """
@@ -290,6 +390,7 @@ def _const_time_select(self, condition: int, a: ECPoint, b: ECPoint) -> ECPoint:
     y = (a.y & ~mask) | (b.y & mask)
 
     return ECPoint(x, y, self.curve)
+
 ```markdown
 
 ### 4.4 使用建议
@@ -305,6 +406,7 @@ def _const_time_select(self, condition: int, a: ECPoint, b: ECPoint) -> ECPoint:
 ### 5.1 共享资源保护
 
 **碰撞引擎中的锁**:
+
 ```python
 class KeyCollisionEngine:
     def __init__(self, ...):
@@ -312,6 +414,7 @@ class KeyCollisionEngine:
         self._count_lock = threading.Lock()
         self._matches_lock = threading.Lock()
         self._dedup_lock = threading.Lock()
+
 ```markdown
 
 ### 5.2 统计信息更新
@@ -324,6 +427,7 @@ with self._count_lock:
 with self._matches_lock:
     for pk, addr in local_matches:
         self.stats.add_match(pk, addr)
+
 ```markdown
 
 ## 5.3 去重过滤器线程安全
@@ -341,6 +445,7 @@ class DeduplicationFilter:
                 return False
             self._filter.add(private_key)
             return True
+
 ```markdown
 
 ## 6. 异常处理与信息保护
@@ -350,6 +455,7 @@ class DeduplicationFilter:
 **原则**: 异常信息中不得包含私钥内容
 
 **正确做法**:
+
 ```python
 try:
     private_key, _ = WIF.decode(wif_string)
@@ -357,15 +463,18 @@ except Exception as e:
     # 只记录错误类型，不记录私钥
     logging.error("解码WIF时出错: %s", str(e))
     raise ValueError("WIF格式无效")
+
 ```python
 
 **错误做法**:
+
 ```python
 # 不安全！可能泄露私钥
 try:
     process(private_key)
 except Exception as e:
     logging.error(f"处理私钥失败: {private_key.hex()}")  # 危险！
+
 ```markdown
 
 ## 6.2 安全的日志记录
@@ -385,11 +494,13 @@ logger = logging.getLogger("BTC")
 logger.info("生成新地址")  # 安全
 logger.info(f"地址: {address}")  # 安全
 # logger.info(f"私钥: {private_key.hex()}")  # 不安全！不要这样做
+
 ```markdown
 
 ## 6.3 异常分类
 
 **自定义异常**:
+
 ```python
 # src/utils/exceptions.py
 
@@ -407,6 +518,7 @@ class InvalidPrivateKeyError(ValueError):
 class InvalidAddressError(ValueError):
     """无效地址错误"""
     pass
+
 ```markdown
 
 ## 11. 文件安全
@@ -414,6 +526,7 @@ class InvalidAddressError(ValueError):
 ### 7.1 导出文件权限
 
 **CSV导出文件权限设置**:
+
 ```python
 def _on_export_csv(self):
     """导出 CSV 按钮点击事件"""
@@ -444,11 +557,15 @@ def _on_export_csv(self):
             messagebox.showinfo("导出成功", f"结果已保存到:\n{filename}")
         except Exception as e:
             messagebox.showerror("导出失败", str(e))
+
 ```python
 
 **权限说明**:
+
 - `0o600`: 仅文件所有者可读写
+
 - 其他用户无权限访问
+
 - 保护包含私钥的导出文件
 
 ### 7.2 临时文件处理
@@ -468,6 +585,7 @@ try:
     os.remove(temp_path)
 except OSError:
     pass
+
 ```markdown
 
 ## 8. 内存安全
@@ -477,6 +595,7 @@ except OSError:
 **问题**: Python的内存管理不保证立即释放敏感数据
 
 **缓解措施**:
+
 ```python
 import ctypes
 
@@ -494,6 +613,7 @@ try:
 finally:
     # 清理内存
     secure_clear(private_key)
+
 ```markdown
 
 ## 8.2 内存转储保护
@@ -501,6 +621,7 @@ finally:
 **风险**: 核心转储可能包含敏感数据
 
 **缓解措施**:
+
 ```python
 import resource
 
@@ -509,6 +630,7 @@ try:
     resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
 except (ValueError, OSError):
     pass
+
 ```markdown
 
 ## 13. 网络安全
@@ -518,14 +640,19 @@ except (ValueError, OSError):
 **原则**: 私钥生成应在离线环境中进行
 
 **推荐做法**:
+
 1. 使用离线计算机生成私钥
+
 2. 禁用网络连接
+
 3. 使用Live CD/USB系统
+
 4. 生成后立即记录到纸质介质
 
 ### 9.2 网络请求安全
 
 **查询地址余额**:
+
 ```python
 # 仅查询公开信息，不涉及私钥
 def query_address_balance(address: str) -> dict:
@@ -534,11 +661,15 @@ def query_address_balance(address: str) -> dict:
     url = f"https://api.blockchain.info/balance?active={address}"
     response = requests.get(url, timeout=10)
     return response.json()
+
 ```python
 
 **注意事项**:
+
 - 仅使用HTTPS
+
 - 设置超时
+
 - 不发送私钥到网络
 
 ## 10. 安全配置
@@ -548,6 +679,7 @@ def query_address_balance(address: str) -> dict:
 **配置文件位置**: `config.json`
 
 **敏感配置项**:
+
 ```json
 {
     "security": {
@@ -558,16 +690,20 @@ def query_address_balance(address: str) -> dict:
         "use_const_time_algorithm": false
     }
 }
+
 ```python
 
 **配置文件权限**:
+
 ```bash
 chmod 600 config.json
+
 ```markdown
 
 ### 10.2 环境变量
 
 **敏感配置使用环境变量**:
+
 ```python
 import os
 
@@ -575,6 +711,7 @@ import os
 api_key = os.environ.get('BTC_API_KEY')
 if not api_key:
     raise ValueError("BTC_API_KEY环境变量未设置")
+
 ```
 
 ## 15. 安全审计清单
@@ -603,22 +740,31 @@ if not api_key:
 ### 12.1 生成私钥
 
 1. **离线环境**: 在离线计算机上生成私钥
+
 2. **安全存储**: 将私钥记录在纸质介质上
+
 3. **多重备份**: 创建多份备份，存放在不同地点
+
 4. **验证地址**: 生成后立即验证地址正确性
 
 ### 12.2 使用私钥
 
 1. **最小暴露**: 仅在必要时使用私钥
+
 2. **一次性使用**: 考虑使用一次性地址
+
 3. **硬件钱包**: 大额资金建议使用硬件钱包
+
 4. **多重签名**: 重要地址使用多重签名
 
 ### 12.3 软件安全
 
 1. **代码审计**: 使用前审计代码
+
 2. **官方来源**: 仅从官方渠道下载
+
 3. **验证签名**: 验证软件签名
+
 4. **保持更新**: 及时更新到最新版本
 
 ## 17. 应急响应
@@ -626,8 +772,11 @@ if not api_key:
 ### 13.1 私钥泄露响应
 
 1. **立即转移**: 将资金转移到新地址
+
 2. **停止使用**: 停止使用泄露的私钥
+
 3. **分析原因**: 分析泄露原因
+
 4. **加强安全**: 加强安全措施
 
 ### 13.2 安全事件报告
@@ -635,8 +784,11 @@ if not api_key:
 **报告内容**:
 
 - 事件描述
+
 - 影响范围
+
 - 已采取措施
+
 - 建议改进
 
 ## 18. 安全审计发现
@@ -661,19 +813,25 @@ if not api_key:
 #### 问题1: 断点文件敏感信息泄露
 
 - **文件**: `checkpoint_manager.py`
+
 - **问题**: 匹配的私钥以明文保存到磁盘
+
 - **状态**: ✅ 已修复 - 仅保存地址，不保存私钥
 
 #### 问题2: collision_stats 明文存储私钥
 
 - **文件**: `collision_stats.py`
+
 - **问题**: 存储私钥和WIF到内存
+
 - **状态**: ✅ 已修复 - 仅保存地址，私钥通过回调单独处理
 
 #### 问题3: 路径遍历漏洞
 
 - **文件**: `target_resolver.py`
+
 - **问题**: 未验证用户输入的文件路径
+
 - **状态**: ✅ 已修复 - 添加路径验证和规范化
 
 ### 18.4 线程安全问题修复
@@ -681,19 +839,25 @@ if not api_key:
 #### 问题1: total_count 竞态条件
 
 - **文件**: `key_collision_engine.py`
+
 - **问题**: `total_count`被多线程修改但读取时无锁保护
+
 - **状态**: ✅ 已修复 - 添加锁保护
 
 #### 问题2: 线程池清理风险
 
 - **文件**: `key_collision_engine.py`
+
 - **问题**: 线程池关闭时未确保所有任务完成
+
 - **状态**: ✅ 已修复 - 使用`shutdown(wait=True)`
 
 #### 问题3: checks_total 竞态计数
 
 - **文件**: `deduplication_filter.py`
+
 - **问题**: `checks_total += 1`在锁外执行
+
 - **状态**: ✅ 已修复 - 将计数移入锁内
 
 ### 18.5 安全评分
@@ -714,9 +878,13 @@ if not api_key:
 BTC项目采用多层安全设计：
 
 1. **密码学安全**: 使用加密安全随机数、恒定时间算法、多后端支持
+
 2. **访问控制**: 文件权限、线程安全锁、原子写入
+
 3. **信息保护**: 异常处理、日志安全、断点脱敏
+
 4. **运行安全**: 离线使用、内存保护、数据日志安全
+
 5. **加密后端**: coincurve（libsecp256k1）提供生产级安全保障
 
 用户应遵循安全使用建议，在离线环境中生成和存储私钥，确保资金安全。

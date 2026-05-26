@@ -1,5 +1,7 @@
 """Event adapters for monitoring system integration."""
 
+from typing import Any
+
 from ..utils import get_configured_logger
 
 logger = get_configured_logger(__name__)
@@ -9,6 +11,7 @@ class DataLoggerAdapter:
     """Adapter that wraps a DataLogger and subscribes it to events."""
 
     def __init__(self, data_logger):
+        """Initialize the data logger adapter."""
         self.data_logger = data_logger
 
 
@@ -24,7 +27,7 @@ def setup_data_logging(event_bus: "Any", data_logger: "Any") -> DataLoggerAdapte
 
     """
     # Import event types to avoid circular imports
-    from src.collision.events import EngineErrorEvent, EngineMatchEvent, EngineProgressEvent
+    from ..collision.events import EngineErrorEvent, EngineMatchEvent, EngineProgressEvent
 
     # Subscribe to events using type objects
     event_bus.subscribe(EngineMatchEvent, lambda e: data_logger.log_match(e))
@@ -37,11 +40,12 @@ class EnhancedMonitoringAdapter:
     """Adapter that subscribes enhanced monitoring to event bus events."""
 
     def __init__(self, monitoring_system):
+        """Initialize the monitoring adapter."""
         self._monitoring = monitoring_system
 
     def subscribe_to(self, event_bus):
         """Subscribe to relevant events on the event bus."""
-        from src.collision.events import EngineMatchEvent, EngineProgressEvent
+        from ..collision.events import EngineMatchEvent, EngineProgressEvent
 
         event_bus.subscribe(EngineMatchEvent, self._on_match)
         event_bus.subscribe(EngineProgressEvent, self._on_progress)
@@ -63,11 +67,12 @@ class AlertSystemAdapter:
     """
 
     def __init__(self, alert_system):
+        """Initialize the alert adapter."""
         self._alert_system = alert_system
 
     def subscribe_to(self, event_bus):
         """Subscribe to relevant events on the event bus."""
-        from src.collision.events import EngineErrorEvent, EngineProgressEvent
+        from ..collision.events import EngineErrorEvent, EngineProgressEvent
 
         event_bus.subscribe(EngineProgressEvent, self._on_progress)
         event_bus.subscribe(EngineErrorEvent, self._on_error)

@@ -17,6 +17,7 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-v --tb=short"
+
 ```
 
 ### 1.2 目录结构
@@ -30,12 +31,15 @@ tests/
 │   └── verify_*.py
 ├── archive/                    # 已归档的历史测试
 └── test_<module_name>.py       # 各模块测试文件
+
 ```
 
 **约定**：
 
 - 每个源码模块对应一个测试文件，命名为 `test_<模块名>.py`
+
 - 集成测试文件以 `test_<模块名>_integration.py` 结尾
+
 - 性能测试放入 `tests/` 下并以 `test_<模块名>_performance.py` 命名
 
 ---
@@ -48,6 +52,7 @@ tests/
 test_<模块名>.py                  # 单元测试
 test_<模块名>_integration.py      # 集成测试
 test_<模块名>_performance.py      # 性能测试
+
 ```
 
 示例（对应 `src/` 下的实际模块）：
@@ -67,6 +72,7 @@ test_<模块名>_performance.py      # 性能测试
 class TestSecureKeyGenerator:        # 对应 SecureKeyGenerator 类
 class TestGPUCollisionEngine:         # 对应 GPUCollisionEngine 类
 class TestBatchSizeCalculation:       # 对应特定功能
+
 ```
 
 测试方法使用 `snake_case`，格式为 `test_<功能描述>_<预期结果>`：
@@ -82,6 +88,7 @@ def test_batch_size_capped_at_max_when_mem_is_small(self):
 def test_generate(self):
 def test_error(self):
 def test_1(self):
+
 ```
 
 ---
@@ -123,7 +130,6 @@ def mock_gpu_chain():
     with _apply_gpu_patches(mock_device, mock_context, mock_kernel) as mocks:
         yield mocks
 
-
 @pytest.fixture(scope='module')
 def mock_gpu_chain_module():
     """模块级共享的GPU Mock链（适用于只读集成测试）
@@ -133,6 +139,7 @@ def mock_gpu_chain_module():
     mock_device, mock_context, mock_kernel = _create_mock_gpu_objects()
     with _apply_gpu_patches(mock_device, mock_context, mock_kernel) as mocks:
         yield mocks
+
 ```
 
 ### 3.2 参数化测试
@@ -156,7 +163,6 @@ def test_validate_batch_size(batch_size: int, expected):
     else:
         assert validate_batch_size(batch_size) == expected
 
-
 @pytest.mark.parametrize("vendor,expected_workaround", [
     ("nvidia", False),
     ("amd",    False),
@@ -165,6 +171,7 @@ def test_validate_batch_size(batch_size: int, expected):
 def test_vendor_workaround_flag(vendor: str, expected_workaround: bool):
     result = should_use_uint32_workaround(vendor)
     assert result == expected_workaround
+
 ```
 
 ---
@@ -194,6 +201,7 @@ class TestGPUKernel:
             engine = GPUCollisionEngine(targets)
             with pytest.raises(MemoryError):
                 engine._execute_gpu_batch(keys)
+
 ```
 
 ### 4.2 预置 Mock 设备
@@ -209,6 +217,7 @@ cpu_device    = GPUMockFactory.cpu_device()         # CPU 设备
 
 # 多厂商平台列表（用于多GPU测试）
 platforms = GPUMockFactory.multi_vendor_platforms()
+
 ```
 
 ### 4.3 conftest.py 厂商预设 Fixture
@@ -222,6 +231,7 @@ def test_nvidia_batch(mock_gpu_chain_nvidia):
 def test_intel_workaround(mock_gpu_chain_intel):
     mock_device, mock_context, mock_kernel = mock_gpu_chain_intel
     assert mock_kernel.use_uint32_workaround is True
+
 ```
 
 ### 4.4 Mock pyopencl.Buffer
@@ -244,12 +254,15 @@ with patch.dict('sys.modules', {
 # ❌ 错误（无法拦截函数级 import）
 with patch('pyopencl.Buffer', return_value=Mock()):
     ...  # 仅在模块级 import 时有效，函数级 import 无效
+
 ```
 
 ### 4.5 Mock 使用原则
 
 - **最小化 Mock**：只 Mock 外部依赖（GPU 硬件、网络、文件 I/O），不 Mock 被测逻辑
+
 - **验证 Mock 调用**：使用 `assert_called_once_with()` 验证关键调用
+
 - **避免过度 Mock**：Mock 层次超过 3 层时考虑重构代码
 
 ```python
@@ -260,6 +273,7 @@ def test_cleanup_called_on_engine_stop(mock_gpu_chain):
     # 验证清理方法被调用
     mock_kernel.cleanup.assert_called_once()
     mock_device.cleanup.assert_called_once()
+
 ```
 
 ---
@@ -269,7 +283,9 @@ def test_cleanup_called_on_engine_stop(mock_gpu_chain):
 ### 5.1 单元测试
 
 - **目标**：测试单个函数或类的行为，完全隔离外部依赖
+
 - **覆盖重点**：边界值、异常路径、正常路径
+
 - **运行速度**：< 100ms / 个测试
 
 ```python
@@ -291,12 +307,15 @@ class TestBatchSizeCalculation:
         """显存为0时抛出 ValueError"""
         with pytest.raises(ValueError, match="显存大小不能为0"):
             calculate_batch_size(0)
+
 ```
 
 ### 5.2 集成测试
 
 - **目标**：测试多个模块协同工作
+
 - **依赖**：允许使用 Mock 替代 GPU 硬件，但不 Mock 项目内部模块
+
 - **文件命名**：`test_*_integration.py`
 
 ```python
@@ -314,12 +333,15 @@ class TestGPUEngineIntegration:
         # 验证生命周期方法均被调用
         mock_device.initialize.assert_called_once()
         mock_kernel.cleanup.assert_called_once()
+
 ```
 
 ### 5.3 性能测试
 
 - **工具**：`pytest-benchmark`（已在 `pyproject.toml` dev 依赖中）
+
 - **目录**：`benchmarks/` 或 `tests/test_*_performance.py`
+
 - **标准**：核心密钥生成 ≥ 10,000 keys/s（CPU），GPU 路径 ≥ 100,000 keys/s
 
 ```python
@@ -328,6 +350,7 @@ def test_key_generation_throughput(benchmark):
     generator = SecureKeyGenerator({'batch_size': 1000})
     result = benchmark(generator.generate_batch, 1000)
     assert len(result) == 1000
+
 ```
 
 ---
@@ -350,6 +373,7 @@ pytest --cov=src --cov-report=html --cov-report=term-missing
 
 # 只检查核心模块覆盖率
 pytest tests/test_core_crypto.py --cov=src/core --cov-fail-under=80
+
 ```
 
 ---
@@ -366,12 +390,15 @@ test_data/
 └── fixtures/             # 可复用的测试数据文件
     ├── valid_addresses.txt
     └── sample_keys.json
+
 ```
 
 ### 7.2 使用规范
 
 - 测试用比特币地址使用 `valid_addresses.txt`（已在项目根目录）
+
 - 大文件（> 1MB）不提交至 git，使用生成函数动态创建
+
 - 敏感测试数据（私钥、种子）使用 `secrets` 模块生成，不硬编码
 
 ```python
@@ -390,6 +417,7 @@ def valid_address_list(tmp_path):
     src = Path("valid_addresses.txt")
     data = src.read_text(encoding="utf-8").splitlines()[:100]  # 仅取前100行
     return data
+
 ```
 
 ### 7.3 临时文件
@@ -404,6 +432,7 @@ def test_checkpoint_save_and_load(tmp_path):
     manager.save({"progress": 12345})
     loaded = manager.load()
     assert loaded["progress"] == 12345
+
 ```
 
 ---
@@ -421,6 +450,7 @@ def test_checkpoint_save_and_load(tmp_path):
   uses: codecov/codecov-action@v3
   with:
     file: ./coverage.xml
+
 ```
 
 ### 8.2 提交前检查（pre-commit）
@@ -428,7 +458,9 @@ def test_checkpoint_save_and_load(tmp_path):
 见 `.pre-commit-config.yaml`，提交前自动运行：
 
 1. `black` 代码格式化
+
 2. `flake8` 风格检查
+
 3. `bandit` 安全扫描（排除 `tests/`）
 
 ### 8.3 测试执行命令
@@ -448,6 +480,7 @@ pytest tests/ -v -m "not benchmark"
 
 # 生成覆盖率报告
 pytest tests/ --cov=src --cov-report=html -q
+
 ```
 
 ---
@@ -468,6 +501,7 @@ pytest scripts/testing/test_gpu_collision_actual.py
 
 # ✅ 直接运行
 python scripts/testing/test_gpu_collision_actual.py
+
 ```
 
 ### Q3: Windows 下 pytest 导入失败如何处理？
@@ -476,6 +510,7 @@ python scripts/testing/test_gpu_collision_actual.py
 
 ```bash
 python -c "from src.collision.gpu.engine import GPUCollisionEngine; print('OK')"
+
 ```
 
 ---
@@ -483,6 +518,9 @@ python -c "from src.collision.gpu.engine import GPUCollisionEngine; print('OK')"
 *参考文件*：
 
 - `tests/conftest.py` — 全局 Fixture 与 GPU Mock 链实现
+
 - `tests/gpu_mock_factory.py` — GPU Mock 工厂（标准化 Mock 对象）
+
 - `pyproject.toml` — pytest 与开发依赖配置
+
 - `.pre-commit-config.yaml` — 提交前自动检查配置

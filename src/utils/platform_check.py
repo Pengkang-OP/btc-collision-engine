@@ -15,10 +15,11 @@ class PlatformChecker:
     """Cross-platform compatibility checker."""
 
     def __init__(self):
+        """Initialize PlatformChecker."""
         self._results: list[tuple[bool, str]] = []
 
     def _add(self, passed: bool, message: str) -> None:
-        """添加一条检查结果
+        """添加一条检查结果.
 
         Args:
             passed: 检查是否通过
@@ -41,8 +42,8 @@ class PlatformChecker:
 
         # Python version
         py_ver = sys.version_info
-        py_ok = py_ver >= (3, 9)
-        label = "OK" if py_ok else "需要 >=3.9"
+        py_ok = py_ver >= (3, 12)
+        label = "OK" if py_ok else "需要 >=3.12"
         self._add(py_ok, f"Python 版本: {py_ver.major}.{py_ver.minor}.{py_ver.micro} {label}")
 
         # Path separators
@@ -69,7 +70,7 @@ class PlatformChecker:
         return all_passed, self._results
 
     def print_report(self) -> None:
-        """打印跨平台兼容性检查报告"""
+        """打印跨平台兼容性检查报告."""
         print(f"\n{'=' * 60}")  # noqa: T201
         print("  跨平台兼容性检查")  # noqa: T201
         print(f"{'=' * 60}")  # noqa: T201

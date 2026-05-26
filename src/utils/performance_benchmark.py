@@ -20,7 +20,7 @@ import time
 from datetime import datetime
 from typing import Any, cast
 
-from src.utils import get_configured_logger
+from . import get_configured_logger
 
 # 日志系统由CLI/main.py入口统一初始化
 logger = get_configured_logger("PerformanceBenchmark")

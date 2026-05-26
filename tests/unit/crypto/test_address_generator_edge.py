@@ -7,6 +7,8 @@ from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
 
+import unittest
+
 from src.core.address_generator import (
     P2PKHAddressGenerator,
     PerformanceWarning,
@@ -25,7 +27,7 @@ class TestSecureClearBytearray:
         """传入 bytes 触发 TypeError → lines 61-65"""
         with self.assertRaises(TypeError) as ctx:
             secure_clear_bytearray(b"\x00" * 32)
-        assert str(ctx.exception)  in  "bytearray"
+        assert str(ctx.exception) in "bytearray"
 
     def test_non_bytearray_list_raises_typeerror(self):
         """传入 list 触发 TypeError"""
@@ -37,7 +39,7 @@ class TestSecureClearBytearray:
         buf = bytearray(b"\xff" * 32)
         secure_clear_bytearray(buf)
         # 所有字节应被清零
-        assert buf  ==  bytearray(b"\x00" * 32)
+        assert buf == bytearray(b"\x00" * 32)
 
     def test_exception_handler(self):
         """ctypes.memset 异常处理 → lines 70-76"""
@@ -46,7 +48,7 @@ class TestSecureClearBytearray:
             # 不应抛出异常（静默失败）
             secure_clear_bytearray(buf)
             # buf 未被清零
-            assert buf  !=  bytearray(b"\x00" * 32)
+            assert buf != bytearray(b"\x00" * 32)
 
 
 # ===========================================================================
@@ -66,7 +68,7 @@ class TestGeneratePrivateKeyEdge:
             # 零私钥始终无效, 耗尽 max_retries
             with self.assertRaises(Exception) as ctx:
                 self.gen.generate_private_key(max_retries=3)
-            assert str(ctx.exception)  in  "Cannot generate valid private key within 3 attempts"
+            assert str(ctx.exception) in "Cannot generate valid private key within 3 attempts"
 
     def test_generate_private_key_valueerror_handler(self):
         """secrets.token_bytes 抛 ValueError → lines 173-179"""
@@ -152,7 +154,7 @@ class TestPubKeyFallback:
 
         with patch("builtins.__import__", side_effect=mock_import):
             pk = gen.private_key_to_public_key(b"\x01" * 32, compressed=True)
-            assert len(pk)  ==  33
+            assert len(pk) == 33
 
 
 if __name__ == "__main__":

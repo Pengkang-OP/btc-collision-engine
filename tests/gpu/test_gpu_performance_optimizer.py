@@ -267,4 +267,3 @@ class TestGPUPerformanceOptimizer:
 
         # 慢编译应该使用更小的batch_size
         assert profile_fast.max_batch_size > profile_slow.max_batch_size
-

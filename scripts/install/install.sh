@@ -20,7 +20,7 @@ NC='\033[0m' # No Color
 # 1. 检查Python版本
 echo "[1/7] 检查Python版本..."
 if ! command -v python3 >/dev/null 2>&1; then
-    echo -e "${RED}[错误] 未找到Python3，请先安装Python 3.9+${NC}"
+    echo -e "${RED}[错误] 未找到Python3，请先安装Python 3.12+${NC}"
     echo "Ubuntu/Debian: sudo apt install python3 python3-venv python3-pip"
     echo "Fedora: sudo dnf install python3"
     echo "macOS: brew install python"
@@ -30,9 +30,9 @@ fi
 PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}')
 echo -e "${GREEN}[成功]${NC} Python版本: $PYTHON_VERSION"
 
-# 检查Python版本是否 >= 3.9
-if ! python3 -c "import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)" 2>/dev/null; then
-    echo -e "${RED}[错误] Python版本过低，需要3.9或更高版本${NC}"
+# 检查Python版本是否 >= 3.12
+if ! python3 -c "import sys; sys.exit(0 if sys.version_info >= (3, 12) else 1)" 2>/dev/null; then
+    echo -e "${RED}[错误] Python版本过低，需要3.12或更高版本${NC}"
     echo "当前版本: $PYTHON_VERSION"
     exit 1
 fi

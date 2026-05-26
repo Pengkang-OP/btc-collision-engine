@@ -1,6 +1,6 @@
-"""范围扫描搜索模式 - RangeScanSearchMode
+"""范围扫描搜索模式 - RangeScanSearchMode.
 
-将 GPUCollisionEngine._range_scan() 迁移至此独立模块。
+将 GPUCollisionEngine._range_scan() 迁移至此独立模块.
 通过 self.engine 访问所有引擎状态，不复制状态。
 """
 
@@ -14,14 +14,14 @@ logger = get_configured_logger("RangeScanSearch")
 
 
 class RangeScanSearchMode(BaseSearchMode):
-    """范围扫描搜索模式
+    """范围扫描搜索模式.
 
-    对应原 GPUCollisionEngine._range_scan() 方法。
+    对应原 GPUCollisionEngine._range_scan() 方法.
     在指定范围 [start, end] 内按顺序扫描所有私钥，支持流水线预生成。
     """
 
     def execute(self, start: int, end: int) -> None:
-        """执行范围扫描（ALG-2修复：委托给通用批处理循环）
+        """执行范围扫描（ALG-2修复：委托给通用批处理循环）.
 
         Args:
             start: 起始私钥整数值（含）

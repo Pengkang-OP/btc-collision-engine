@@ -11,6 +11,7 @@ import json
 import os
 import pathlib
 import tempfile
+import unittest
 
 from src.config.crypto_config import CryptoBackendType, CryptoConfig
 
@@ -34,7 +35,7 @@ class TestCryptoConfig:
             assert result
             with pathlib.Path(tmpfile).open(encoding="utf-8") as f:
                 saved = json.load(f)
-            assert saved["backend"]  ==  "coincurve"
+            assert saved["backend"] == "coincurve"
         finally:
             import shutil
 
@@ -71,13 +72,13 @@ class TestCryptoConfig:
     def test_get_backend_type_valid(self):
         """get_backend_type() 返回有效的后端类型"""
         self.cfg.set("backend", "coincurve")
-        assert self.cfg.get_backend_type()  ==  CryptoBackendType.COINCURVE
+        assert self.cfg.get_backend_type() == CryptoBackendType.COINCURVE
 
     def test_get_backend_type_invalid_fallback(self):
         """get_backend_type() 无效值时回退到 AUTO"""
         self.cfg.set("backend", "invalid_backend")
         result = self.cfg.get_backend_type()
-        assert result  ==  CryptoBackendType.AUTO
+        assert result == CryptoBackendType.AUTO
 
     # ── reset / to_dict ────────────────────────────────────────
 
@@ -86,41 +87,41 @@ class TestCryptoConfig:
         self.cfg.set("backend", "coincurve")
         self.cfg.set("constant_time", True)
         self.cfg.reset_to_defaults()
-        assert self.cfg.config  ==  CryptoConfig.DEFAULT_CONFIG
+        assert self.cfg.config == CryptoConfig.DEFAULT_CONFIG
 
     def test_to_dict(self):
         """to_dict() 返回 config 副本"""
         self.cfg.set("backend", "ecdsa")
         d = self.cfg.to_dict()
-        assert d["backend"]  ==  "ecdsa"
-        assert d  is not  self.cfg.config  # 确保是副本
+        assert d["backend"] == "ecdsa"
+        assert d is not self.cfg.config  # 确保是副本
 
     # ── set / get ──────────────────────────────────────────────
 
     def test_set_and_get(self):
         """set()/get() 设置和获取配置值"""
         self.cfg.set("constant_time", True)
-        assert self.cfg.get("constant_time")  ==  True
-        assert self.cfg.get("nonexistent", 42)  ==  42
+        assert self.cfg.get("constant_time")
+        assert self.cfg.get("nonexistent", 42) == 42
 
     def test_set_backend_type(self):
         """set_backend_type() 设置后端类型"""
         result = self.cfg.set_backend_type(CryptoBackendType.ECDSA)
         assert result
-        assert self.cfg.get("backend")  ==  "ecdsa"
+        assert self.cfg.get("backend") == "ecdsa"
 
     # ── validate ──────────────────────────────────────────────
 
     def test_validate_valid_config(self):
         """validate() 有效配置返回空列表"""
         errors = self.cfg.validate()
-        assert errors  ==  []
+        assert errors == []
 
     def test_validate_invalid_backend(self):
         """validate() 检测无效后端类型"""
         self.cfg.set("backend", "bitcoinj")
         errors = self.cfg.validate()
-        assert errors[0]  in  "无效的后端类型"
+        assert errors[0] in "无效的后端类型"
 
     def test_validate_non_bool_fields(self):
         """validate() 检测非布尔字段"""

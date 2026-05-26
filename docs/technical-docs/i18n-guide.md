@@ -8,7 +8,9 @@ BTC 碰撞引擎支持多语言界面，当前支持中文（zh_CN）和英文�
 国际化功能由 `src/i18n` 模块提供，核心组件包括：
 
 - **`Translator`**：核心翻译器，负责加载 JSON 语言文件、嵌套键访问、参数替换和自动回退
+
 - **`detect_system_language`**：跨平台语言自动检测，支持 Windows/Linux/macOS
+
 - **`_t()`**：全局翻译快捷函数，是调用翻译的主要入口
 
 语言设置支持多种方式，按优先级从高到低依次生效（详见[语言检测优先级](#5-语言检测优先级)）。
@@ -27,6 +29,7 @@ python key_collision_cli.py --language en_US -t <地址> -m random
 
 # 使用中文界面（默认）
 python key_collision_cli.py --language zh_CN -t <地址> -m random
+
 ```
 
 > `--language` 参数仅支持 `zh_CN` 和 `en_US` 两个值。
@@ -47,6 +50,7 @@ python key_collision_cli.py -t <地址> -m random
 # Linux / macOS
 export BTC_LANGUAGE=en_US
 python key_collision_cli.py -t <地址> -m random
+
 ```
 
 ### 配置文件设置
@@ -62,6 +66,7 @@ python key_collision_cli.py -t <地址> -m random
     "_comment_fallback_language": "回退语言，当指定语言找不到翻译时使用"
   }
 }
+
 ```
 
 `language` 字段支持以下值：
@@ -100,6 +105,7 @@ print(_t("cli.commands.start"))   # 输出：启动碰撞引擎
 
 # 访问嵌套键（通过点分隔符）
 print(_t("cli.help.description"))  # 输出：BTC碰撞引擎 - 高性能比特币地址碰撞检测工具
+
 ```
 
 ### 参数替换
@@ -120,6 +126,7 @@ msg = _t("collision.progress", checked=1000000, speed="500K", elapsed="2s")
 # 错误消息
 msg = _t("errors.file_not_found", path="/tmp/addresses.txt")
 # 输出：文件未找到: /tmp/addresses.txt
+
 ```
 
 > 若参数替换失败（键名不匹配），`_t()` 会记录警告日志并返回原始未格式化的字符串，不会抛出异常。
@@ -141,6 +148,7 @@ print(_t("common.success"))        # 输出：Success
 
 set_language("zh_CN")
 print(_t("common.success"))        # 输出：成功
+
 ```
 
 ### 直接使用 Translator 类
@@ -158,6 +166,7 @@ print(t.translate("gpu.init_success", name="NVIDIA RTX 4090"))
 t.set_language("zh_CN")
 print(t.translate("gpu.init_success", name="NVIDIA RTX 4090"))
 # 输出：GPU初始化成功: NVIDIA RTX 4090
+
 ```
 
 ### 添加新翻译条目
@@ -173,6 +182,7 @@ print(t.translate("gpu.init_success", name="NVIDIA RTX 4090"))
     "process_item": "正在处理: {item_name}"
   }
 }
+
 ```
 
 1. 在 `src/i18n/locales/en_US.json` 中添加对应英文条目：
@@ -184,6 +194,7 @@ print(t.translate("gpu.init_success", name="NVIDIA RTX 4090"))
     "process_item": "Processing: {item_name}"
   }
 }
+
 ```
 
 1. 在代码中使用新翻译键：
@@ -193,6 +204,7 @@ from src.i18n import _t
 
 print(_t("mymodule.init_done"))
 print(_t("mymodule.process_item", item_name="block_001"))
+
 ```
 
 ---
@@ -223,8 +235,11 @@ print(_t("mymodule.process_item", item_name="block_001"))
 **命名约定**：
 
 - 使用小写字母和下划线
+
 - 层级不超过 3 层（如 `gpu.multi_gpu.enabled`）
+
 - 条目名称应为名词或动词短语，准确描述含义
+
 - 参数占位符使用 `{snake_case}` 格式（如 `{file_path}`、`{error_msg}`）
 
 ---
@@ -251,6 +266,7 @@ print(_t("mymodule.process_item", item_name="block_001"))
 
 5. 回退到 en_US
    └─ 当上述所有方式均无法确定语言时使用
+
 ```
 
 **语言代码规范化**：系统会自动将各种格式的语言代码规范化，例如：
@@ -276,6 +292,7 @@ print(_t("mymodule.process_item", item_name="block_001"))
 
 ```
 src/i18n/locales/ja_JP.json
+
 ```
 
 确保包含所有顶层命名空间（`common`、`cli`、`platform` 等），未翻译的条目会自动回退到英文。
@@ -286,6 +303,7 @@ src/i18n/locales/ja_JP.json
 
 ```python
 _SUPPORTED_LANGUAGES = ["zh_CN", "en_US", "ja_JP"]  # 添加 ja_JP
+
 ```
 
 在 `_LANG_MAP` 字典中添加系统语言代码映射：
@@ -299,6 +317,7 @@ _LANG_MAP = {
     "japanese": "ja_JP",
     "1041": "ja_JP",   # Windows LANGID: 日语
 }
+
 ```
 
 ### 步骤 3：验证新语言
@@ -312,6 +331,7 @@ print(t.translate("common.success"))  # 应显示日文翻译
 
 # 验证出现在支持列表中
 print(get_supported_languages())  # 应包含 "ja_JP"
+
 ```
 
 ---
@@ -323,8 +343,11 @@ print(get_supported_languages())  # 应包含 "ja_JP"
 `_t()` 具有三级回退机制：
 
 1. **当前语言**（如 `zh_CN`）：查找对应翻译
+
 2. **回退到英文**（`en_US`）：若当前语言缺少该键，自动使用英文翻译
+
 3. **硬编码默认值**：若英文翻译也不存在，返回硬编码的少量通用条目
+
 4. **返回键名**：最终兜底，直接返回键名（如 `"my.missing.key"`）
 
 因此，`_t()` **永远不会抛出异常**，即使键名不存在也能正常运行。
@@ -334,12 +357,14 @@ print(get_supported_languages())  # 应包含 "ja_JP"
 ```python
 from src.i18n import get_language
 print(get_language())  # 输出如 "zh_CN"
+
 ```
 
 或在命令行中：
 
 ```bash
 python -c "from src.i18n import get_language; print(get_language())"
+
 ```
 
 ### Q3：在多线程环境下切换语言是否安全？
@@ -355,7 +380,9 @@ python -c "from src.i18n import get_language; print(get_language())"
 可能原因及解决方法：
 
 1. **`BTC_LANGUAGE` 被显式设置为 `en_US`**：检查并清除该环境变量
+
 2. **Windows API 调用失败**：系统会回退到读取 `LANG` 等环境变量，若均未设置则使用 `en_US`
+
 3. **强制指定英文**：检查 config.json 中的 `i18n.language` 是否被设为 `en_US`
 
 手动强制使用中文：
@@ -363,6 +390,7 @@ python -c "from src.i18n import get_language; print(get_language())"
 ```bash
 $env:BTC_LANGUAGE = "zh_CN"
 python key_collision_cli.py --language zh_CN
+
 ```
 
 ### Q6：如何在 Docker 容器中设置语言？
@@ -375,11 +403,13 @@ services:
   btc-engine:
     environment:
       - BTC_LANGUAGE=zh_CN
+
 ```
 
 ```dockerfile
 # Dockerfile
 ENV BTC_LANGUAGE=zh_CN
+
 ```
 
 ---
@@ -387,12 +417,21 @@ ENV BTC_LANGUAGE=zh_CN
 ## 参考
 
 - **源码**：[`src/i18n/`](../src/i18n/)
+
   - [`__init__.py`](../src/i18n/__init__.py) — 公共 API 导出
+
   - [`translator.py`](../src/i18n/translator.py) — 核心翻译器
+
   - [`language_detector.py`](../src/i18n/language_detector.py) — 语言检测
+
   - [`locales/zh_CN.json`](../src/i18n/locales/zh_CN.json) — 中文翻译
+
   - [`locales/en_US.json`](../src/i18n/locales/en_US.json) — 英文翻译
+
 - **相关文档**：
+
   - [跨平台兼容性指南](cross-platform-compatibility.md)
+
   - [CLI 快速参考](CLI_QUICK_REFERENCE.md)
+
   - [配置使用示例](config-usage-examples.md)

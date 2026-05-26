@@ -22,12 +22,12 @@ from src.utils.first_run_wizard import FirstRunWizard
 class TestFirstRunWizardBasic:
     """基础功能测试"""
 
-    def setUp(self):
+    def setup_method(self):
         """创建临时项目目录"""
         self.test_dir = tempfile.mkdtemp()
         self.wizard = FirstRunWizard(project_root=self.test_dir)
 
-    def tearDown(self):
+    def teardown_method(self):
         """清理临时目录"""
         if pathlib.Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
@@ -35,7 +35,7 @@ class TestFirstRunWizardBasic:
     def test_initialization(self):
         """初始化测试"""
         assert self.wizard.project_root is not None
-        assert str(self.wizard.project_root)  ==  self.test_dir
+        assert str(self.wizard.project_root) == self.test_dir
         assert str(self.wizard.config_path).endswith("config.json")
         assert str(self.wizard.marker_path).endswith(".wizard_completed")
 
@@ -44,23 +44,23 @@ class TestFirstRunWizardBasic:
         config = FirstRunWizard.DEFAULT_CONFIG
 
         # 验证必需的配置节
-        assert config  in  "collision"
-        assert config  in  "gpu"
-        assert config  in  "logging"
-        assert config  in  "monitoring"
+        assert "collision" in config
+        assert "gpu" in config
+        assert "logging" in config
+        assert "monitoring" in config
 
         # 验证collision配置
-        assert config["collision"]  in  "mode"
-        assert config["collision"]  in  "batch_size"
-        assert ["random", "range", "brute_force"]  in  config["collision"]["mode"]
+        assert "mode" in config["collision"]
+        assert "batch_size" in config["collision"]
+        assert ["random", "range", "brute_force"] in config["collision"]["mode"]
 
         # 验证gpu配置
-        assert config["gpu"]  in  "enabled"
+        assert "enabled" in config["gpu"]
         assert isinstance(config["gpu"]["enabled"], bool)
 
         # 验证logging配置
-        assert config["logging"]  in  "level"
-        assert ["DEBUG", "INFO", "WARNING", "ERROR"]  in  config["logging"]["level"]
+        assert "level" in config["logging"]
+        assert ["DEBUG", "INFO", "WARNING", "ERROR"] in config["logging"]["level"]
 
     def test_should_run_no_config(self):
         """无配置文件时应运行向导"""
@@ -122,12 +122,12 @@ class TestFirstRunWizardBasic:
 class TestFirstRunWizardConfig:
     """配置管理测试"""
 
-    def setUp(self):
+    def setup_method(self):
         """创建临时项目目录"""
         self.test_dir = tempfile.mkdtemp()
         self.wizard = FirstRunWizard(project_root=self.test_dir)
 
-    def tearDown(self):
+    def teardown_method(self):
         """清理临时目录"""
         if pathlib.Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
@@ -148,8 +148,8 @@ class TestFirstRunWizardConfig:
         with pathlib.Path(self.wizard.config_path).open(encoding="utf-8") as f:
             loaded_config = json.load(f)
 
-        assert loaded_config["collision"]["mode"]  ==  "random"
-        assert loaded_config["gpu"]["enabled"]  ==  False
+        assert loaded_config["collision"]["mode"] == "random"
+        assert not loaded_config["gpu"]["enabled"]
 
     def test_load_example_config(self):
         """加载示例配置文件"""
@@ -179,13 +179,13 @@ class TestFirstRunWizardInteraction:
         """测试带默认值的提示"""
         with patch("builtins.input", return_value=""):
             result = FirstRunWizard._prompt("测试提示", default="默认值")
-            assert result  ==  "默认值"
+            assert result == "默认值"
 
     def test_prompt_with_input(self):
         """测试用户输入"""
         with patch("builtins.input", return_value="用户输入"):
             result = FirstRunWizard._prompt("测试提示", default="默认值")
-            assert result  ==  "用户输入"
+            assert result == "用户输入"
 
     def test_prompt_keyboard_interrupt(self):
         """测试键盘中断"""
@@ -195,7 +195,7 @@ class TestFirstRunWizardInteraction:
 
     def test_prompt_eof_error(self):
         """测试EOF错误"""
-        with patch("builtins.input", side_effect=EOFError), self.assertRaises(SystemExit):
+        with patch("builtins.input", side_effect=EOFError), pytest.raises(SystemExit):
             FirstRunWizard._prompt("测试提示")
 
     def test_choose_option(self):
@@ -204,7 +204,7 @@ class TestFirstRunWizardInteraction:
 
         with patch("builtins.input", return_value="2"):
             result = FirstRunWizard._choose("选择一个选项", options, default_idx=0)
-            assert result  ==  "选项2"
+            assert result == "选项2"
 
     def test_choose_default_option(self):
         """测试默认选项"""
@@ -213,7 +213,7 @@ class TestFirstRunWizardInteraction:
         with patch("builtins.input", return_value=""):
             result = FirstRunWizard._choose("选择一个选项", options, default_idx=0)
             # 空输入应返回默认值（选项1）
-            assert result  ==  "选项1"
+            assert result == "选项1"
 
     def test_choose_invalid_option(self):
         """测试无效选项后重新选择"""
@@ -222,7 +222,7 @@ class TestFirstRunWizardInteraction:
         # 第一次输入无效，第二次输入有效
         with patch("builtins.input", side_effect=["99", "1"]):
             result = FirstRunWizard._choose("选择一个选项", options)
-            assert result  ==  "选项1"
+            assert result == "选项1"
 
     def test_yes_no_yes(self):
         """测试是/否提问 - 是"""
@@ -256,11 +256,11 @@ class TestFirstRunWizardInteraction:
 class TestFirstRunWizardEdgeCases:
     """边界情况测试"""
 
-    def setUp(self):
+    def setup_method(self):
         """创建临时项目目录"""
         self.test_dir = tempfile.mkdtemp()
 
-    def tearDown(self):
+    def teardown_method(self):
         """清理临时目录"""
         if pathlib.Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
@@ -295,7 +295,7 @@ class TestFirstRunWizardEdgeCases:
         config2 = FirstRunWizard.DEFAULT_CONFIG
 
         # 两个引用应指向同一个对象
-        assert config1  is  config2
+        assert config1 is config2
 
     def test_multiple_wizard_instances(self):
         """多个向导实例独立性"""
@@ -303,7 +303,6 @@ class TestFirstRunWizardEdgeCases:
         wizard2 = FirstRunWizard(project_root=self.test_dir)
 
         # 两个实例应独立
-        assert wizard1  is not  wizard2
+        assert wizard1 is not wizard2
         # 但配置路径应相同
-        assert wizard1.config_path  ==  wizard2.config_path
-
+        assert wizard1.config_path == wizard2.config_path

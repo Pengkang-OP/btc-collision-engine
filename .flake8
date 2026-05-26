@@ -1,7 +1,7 @@
 [flake8]
 max-line-length = 105
 ignore = E203,W503
-exclude = .git,__pycache__,.mypy_cache,.pytest_cache,venv,build,dist
+exclude = .git,__pycache__,.mypy_cache,.pytest_cache,venv,build,dist,docs/archive,./docs/archive
 per-file-ignores =
     # Utility/long-line files in src
     src/web/dashboard.py: E501
@@ -16,6 +16,7 @@ per-file-ignores =
     src/collision/multiprocess_engine.py: E501
     src/cli/commands.py: E501
     src/cli/arg_parser.py: E501
+    .\src\cli\commands.py: E501
     # Scripts: long lines and late imports
     scripts/__init__.py: E501,E402
     scripts/**/*.py: E501,E402
@@ -28,3 +29,7 @@ per-file-ignores =
     run_audit_tools.py: E501,E231,E741
     run_full_audit.py: E501,E231,E226
     conftest.py: E501,E402
+    .\conftest.py: E501,E402
+    .\tests\*.py: E501
+    .\tests\gpu\*.py: E501
+    .\.qoder\hooks\block_risky.py: E501

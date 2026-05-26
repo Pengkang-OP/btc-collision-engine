@@ -4,8 +4,8 @@ import threading
 from contextlib import suppress
 from typing import Any
 
-from src.monitoring.data_logger import DataLogger
-from src.monitoring.monitor_config import MonitorConfig
+from .data_logger import DataLogger
+from .monitor_config import MonitorConfig
 
 from ..utils import get_configured_logger
 
@@ -20,6 +20,7 @@ class EnhancedMonitoringSystem:
     """
 
     def __init__(self, engine=None, config=None):
+        """Initialize the enhanced monitor."""
         self._engine = engine
         self._config = config if config is not None else MonitorConfig()
         self._lock = threading.Lock()

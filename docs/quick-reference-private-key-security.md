@@ -6,19 +6,33 @@
 ## 目录
 
 - [🚀 快速开始](#-快速开始)
+
   - [最简用法（推荐）](#最简用法推荐)
+
 - [📦 安装](#-安装)
+
 - [🔧 常用模式](#-常用模式)
+
   - [1. 单次使用](#1-单次使用)
+
 - [2. 批量处理](#2-批量处理)
+
   - [3. 异常安全](#3-异常安全)
+
   - [4. 已知私钥](#4-已知私钥)
+
 - [✅ DO / ❌ DON'T](#-do---dont)
+
   - [✅ 应该做](#-应该做)
+
   - [❌ 不应该做](#-不应该做)
+
 - [🔍 验证](#-验证)
+
 - [📊 安全等级](#-安全等级)
+
 - [📚 更多信息](#-更多信息)
+
 - [⚠️ Python限制](#-python限制)
 
 ## 🚀 快速开始
@@ -33,6 +47,7 @@ with SecureKeyManager() as key_mgr:
     private_key = key_mgr.get_key()
     # 使用私钥...
 # 自动清零 ✅
+
 ```python
 
 ---
@@ -43,6 +58,7 @@ with SecureKeyManager() as key_mgr:
 # 已安装（requirements.txt中）
 pip install cryptography  # ✅ 已安装
 pip install pynacl        # ✅ 已安装
+
 ```python
 
 ---
@@ -56,6 +72,7 @@ with SecureKeyManager() as km:
     km.generate_key()
     use_key(km.get_key())
 # 自动清零
+
 ```markdown
 
 ## 2. 批量处理
@@ -66,6 +83,7 @@ for i in range(100):
         km.generate_key()
         process(km.get_key())
     # 每次循环清零
+
 ```markdown
 
 ### 3. 异常安全
@@ -77,6 +95,7 @@ try:
         risky_operation(km.get_key())
 except:
     pass  # 仍然清零 ✅
+
 ```markdown
 
 ### 4. 已知私钥
@@ -85,6 +104,7 @@ except:
 with SecureKeyManager() as km:
     km.generate_key(known_key_bytes)
     use(km.get_key())
+
 ```yaml
 
 ---
@@ -94,17 +114,25 @@ with SecureKeyManager() as km:
 ### ✅ 应该做
 
 - 使用上下文管理器 `with SecureKeyManager()`
+
 - 最小化私钥存活时间
+
 - 安装cryptography库
+
 - 使用bytearray（不是bytes）
+
 - 异常也要清零
 
 ### ❌ 不应该做
 
 - 不要记录私钥到日志
+
 - 不要创建私钥副本
+
 - 不要传递给不可信函数
+
 - 不要忽略清零
+
 - 不要使用bytes类型
 
 ---
@@ -117,6 +145,7 @@ with SecureKeyManager() as km:
     km.generate_key()
 
 assert all(b == 0 for b in km._key)  # ✅
+
 ```
 
 ---
@@ -135,7 +164,9 @@ assert all(b == 0 for b in km._key)  # ✅
 ## 📚 更多信息
 
 - **完整指南**: `docs/secure-key-management.md`
+
 - **使用示例**: `examples/secure_key_manager_example.py`
+
 - **修复报告**: `docs/security-enhancement-report.md`
 
 ---
@@ -145,7 +176,9 @@ assert all(b == 0 for b in km._key)  # ✅
 即使使用最佳方案，仍有以下限制：
 
 1. ❌ GC可能复制对象
+
 2. ❌ 交换文件可能包含数据
+
 3. ❌ CPU缓存可能残留
 
 **最高安全要求必须使用HSM硬件！**

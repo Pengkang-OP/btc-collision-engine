@@ -247,4 +247,3 @@ class TestGPUBufferTracker:
         stats = self.tracker.get_stats()
         assert stats["count"] == 1
         assert stats["total_size_bytes"] == 2048
-

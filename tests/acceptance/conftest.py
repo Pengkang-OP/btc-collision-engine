@@ -243,7 +243,7 @@ def test_data_dir() -> Path:
 # 在导入任何可能导入 DataLogger 的模块之前，先 patch get_configured_logger
 # 这样所有后续导入都会使用 mock 的 logger
 
-import logging
+import logging  # noqa: E402
 
 # 创建一个简单的内存 logger，不写入任何文件
 _mock_test_logger = logging.getLogger("TestDataLogger")

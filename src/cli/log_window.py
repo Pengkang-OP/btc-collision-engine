@@ -9,6 +9,7 @@ class LogWindow:
     """Displays logs in a scrollable terminal window."""
 
     def __init__(self, max_lines: int = 100):
+        """Initialize log window."""
         self._lines: list[str] = []
         self._max_lines = max_lines
 

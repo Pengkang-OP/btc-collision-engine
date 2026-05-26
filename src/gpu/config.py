@@ -7,7 +7,7 @@ import os
 import pathlib
 from typing import Any
 
-from src.utils.fast_json import fast_dump, fast_load
+from ..utils.fast_json import fast_dump, fast_load
 
 from ..utils import get_configured_logger
 from .device import GPUDevice, GPUDeviceDetector

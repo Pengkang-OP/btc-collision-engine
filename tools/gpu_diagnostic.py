@@ -137,7 +137,8 @@ def check_gpu_driver():
 
         print("\n  [建议] Intel Arc驱动下载:")
         print(
-            "  https://www.intel.com/content/www/us/en/download/785597/intel-arc-iris-xe-graphics-windows.html"
+            "  https://www.intel.com/content/www/us/en/download/785597/"
+            "intel-arc-iris-xe-graphics-windows.html"
         )
 
         return True
@@ -157,12 +158,12 @@ def check_opencl_availability():
         platforms = cl.get_platforms()
         print(f"  [PASS] 检测到 {len(platforms)} 个OpenCL平台\n")
 
-        for i, platform in enumerate(platforms):
-            print(f"  平台 {i}: {platform.name}")
-            print(f"    厂商: {platform.vendor}")
-            print(f"    版本: {platform.version}")
+        for i, plat in enumerate(platforms):
+            print(f"  平台 {i}: {plat.name}")
+            print(f"    厂商: {plat.vendor}")
+            print(f"    版本: {plat.version}")
 
-            devices = platform.get_devices()
+            devices = plat.get_devices()
             print(f"    设备数: {len(devices)}")
 
             for j, device in enumerate(devices):

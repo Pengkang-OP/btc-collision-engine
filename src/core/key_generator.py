@@ -1,10 +1,11 @@
-"""Secure private key generator - compliant with Bitcoin Core specification"""
+"""Secure private key generator - compliant with Bitcoin Core specification."""
 
 import pathlib
 import secrets
 import threading
 import time
-from datetime import datetime
+from datetime import datetime, timezone
+from typing import Any
 
 from ..utils import get_configured_logger
 from .secp256k1 import Secp256k1
@@ -15,8 +16,7 @@ logger = get_configured_logger("SecureKeyGenerator")
 
 
 class SecureKeyGenerator:
-    """Secure private key generator - compliant with Bitcoin Core
-    specification.
+    """Secure private key generator compliant with Bitcoin Core specification.
 
     Uses CSPRNG (Cryptographically Secure Pseudo-Random Number
     Generator) to generate private keys, ensuring they meet
@@ -37,7 +37,7 @@ class SecureKeyGenerator:
 
     def __init__(
         self,
-        config: dict | None = None,
+        config: dict[str, Any] | None = None,
     ) -> None:
         """Initialize private key generator.
 
@@ -72,7 +72,7 @@ class SecureKeyGenerator:
         # Statistics
         self._total_generated = 0
         self._start_time = datetime.utcnow()
-        self.stats: dict = {
+        self.stats: dict[str, Any] = {
             "low_entropy_count": 0,
             "entropy_checks": 0,
             "warnings_issued": 0,
@@ -185,8 +185,9 @@ class SecureKeyGenerator:
         self,
         count: int,
     ) -> list[bytearray]:
-        """Generate private keys in batch - returns mutable bytearray
-        for secure clearing after use.
+        """Generate private keys in batch.
+
+        Returns mutable bytearray for secure clearing after use.
 
         Callers should use
         src.core.secure_key_manager.secure_clear_bytearray()
@@ -225,7 +226,7 @@ class SecureKeyGenerator:
 
                 # 2. Validate private key (1 <= k < n)
                 if not self._is_valid_private_key(
-                    private_key,
+                    bytes(private_key),
                 ):
                     logger.debug(
                         "Invalid private key generated, regenerating",
@@ -305,8 +306,7 @@ class SecureKeyGenerator:
         self,
         key: bytes,
     ) -> bool:
-        """Validate private key against secp256k1 curve
-        specification.
+        """Validate private key against secp256k1 curve specification.
 
         Args:
             key: 32-byte private key
@@ -324,7 +324,7 @@ class SecureKeyGenerator:
         # Validate range: 1 <= k < n
         return 1 <= key_int < Secp256k1.N
 
-    def get_statistics(self) -> dict:
+    def get_statistics(self) -> dict[str, Any]:
         """Get generation statistics.
 
         Returns:
@@ -332,7 +332,7 @@ class SecureKeyGenerator:
 
         """
         with self._lock:
-            elapsed = (datetime.utcnow() - self._start_time).total_seconds()
+            elapsed = (datetime.now(timezone.utc) - self._start_time).total_seconds()
             rate = self._total_generated / elapsed if elapsed > 0 else 0
 
             stats = {
@@ -358,8 +358,8 @@ class SecureKeyGenerator:
             return stats
 
     def reset_statistics(self) -> None:
-        """Reset statistics"""
+        """Reset statistics."""
         with self._lock:
             self._total_generated = 0
-            self._start_time = datetime.utcnow()
+            self._start_time = datetime.now(timezone.utc)
             logger.info("Statistics reset")

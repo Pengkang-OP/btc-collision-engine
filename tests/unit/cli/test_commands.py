@@ -15,7 +15,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.cli.commands import (
-    _dispatch_utility_commands,
+    dispatch_utility_commands,
     _handle_info_commands,
     _handle_system_commands,
     _handle_wizard_and_quickstart,
@@ -280,7 +280,7 @@ class TestHandleSystemCommands:
 
 
 # ============================================================================
-# _dispatch_utility_commands
+# dispatch_utility_commands
 # ============================================================================
 
 
@@ -303,7 +303,7 @@ class TestDispatchUtilityCommands:
         args.migrate_config = False
 
         with patch.object(Path, "exists", return_value=True):
-            result = _dispatch_utility_commands(args)
+            result = dispatch_utility_commands(args)
             assert result is False
 
 

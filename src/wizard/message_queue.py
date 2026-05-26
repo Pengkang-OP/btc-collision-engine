@@ -12,6 +12,7 @@ class WizardMessageQueue:
     """Message queue for wizard component communication."""
 
     def __init__(self):
+        """Initialize the wizard message queue."""
         self._queue: queue.Queue[Any] = queue.Queue()
 
     def send(self, message: Any) -> None:

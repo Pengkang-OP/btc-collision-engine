@@ -85,8 +85,7 @@ echo ================================================================
 echo   [ERROR] Python NOT found!
 echo ================================================================
 echo.
-echo   Please install Python 3.10+ and add to PATH
-  (Recommended: Python 3.12)
+echo   Please install Python 3.12+ and add to PATH
 echo   Download: https://www.python.org/downloads/
 echo.
 echo   Press any key to exit...

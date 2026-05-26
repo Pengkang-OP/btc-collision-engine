@@ -195,7 +195,7 @@ class TestMemoryLockingIntegration:
 
         # 验证密钥
         assert key is not None
-        assert len(key)  ==  32
+        assert len(key) == 32
         assert not manager.is_cleared
 
         # 清零密钥
@@ -218,7 +218,7 @@ class TestMemoryLockingIntegration:
             with patch.object(SecureKeyManager, "_lock_key_memory", return_value=True):
                 with secure_key_context() as key:
                     assert key is not None
-                    assert len(key)  ==  32
+                    assert len(key) == 32
 
                 # 退出上下文后密钥应被清零
                 # (无法直接测试，因为key是引用)
@@ -231,7 +231,7 @@ class TestMemoryLockingIntegration:
         for _i in range(3):
             manager.generate_key()
             key = manager.get_key()
-            assert len(key)  ==  32
+            assert len(key) == 32
             manager.clear()
             assert manager.is_cleared
 
@@ -244,10 +244,10 @@ class TestMemoryLockingIntegration:
         manager.clear()
 
         stats = SecureKeyManager.get_clear_stats()
-        assert stats["total"]  ==  1
-        assert stats["successful"]  ==  1
-        assert stats["failed"]  ==  0
-        assert stats["success_rate"]  ==  100.0
+        assert stats["total"] == 1
+        assert stats["successful"] == 1
+        assert stats["failed"] == 0
+        assert stats["success_rate"] == 100.0
 
 
 class TestMemoryLockingSecurity:
@@ -266,7 +266,7 @@ class TestMemoryLockingSecurity:
         manager.clear()
 
         # 验证密钥被清零
-        assert bytes(key)  ==  b"\x00" * 32
+        assert bytes(key) == b"\x00" * 32
 
     def test_no_key_duplication(self):
         """测试密钥不会被意外复制"""
@@ -279,7 +279,7 @@ class TestMemoryLockingSecurity:
         key_ref2 = manager.get_key()
 
         # 内容应相同（指向同一底层密钥数据）
-        assert bytes(key_ref1)  ==  bytes(key_ref2)
+        assert bytes(key_ref1) == bytes(key_ref2)
 
     @patch("src.core.secure_key_manager.os.name", "posix")
     @patch("src.core.secure_key_manager.sys.platform", "linux")
@@ -303,4 +303,3 @@ class TestMemoryLockingSecurity:
 
             # munlock应该被调用
             mock_libc.munlock.assert_called_once()
-

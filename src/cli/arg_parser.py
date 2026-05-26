@@ -14,14 +14,11 @@ from ._path_setup import ensure_project_root
 ensure_project_root()
 
 # 从包版本读取版本号
-try:
-    from src import __version__ as _version
-except ImportError:
-    _version = "5.0.0"
+from src import __version__ as _version  # noqa: E402
 
 
 def parse_args() -> argparse.Namespace:
-    """解析命令行参数"""
+    """解析命令行参数."""
     parser = argparse.ArgumentParser(
         prog="key_collision_cli",
         description=_t("cli.help.description"),

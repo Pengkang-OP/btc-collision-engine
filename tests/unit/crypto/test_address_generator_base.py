@@ -40,7 +40,7 @@ class TestBaseAddressGeneratorInheritance:
 
     def test_04_backward_compat_alias(self):
         """AddressGenerator 是 P2PKHAddressGenerator 的向后兼容别名"""
-        assert AddressGenerator  is  P2PKHAddressGenerator
+        assert AddressGenerator is P2PKHAddressGenerator
 
     def test_05_both_are_instances_of_base(self):
         """两个子类实例都是 BaseAddressGenerator 的实例"""
@@ -61,15 +61,15 @@ class TestP2PKHAddressGeneratorLSP:
         """无参数调用生成随机地址"""
         addr, compressed_pk, uncompressed_pk = self.gen.generate_address()
         assert addr.startswith("1")
-        assert len(compressed_pk)  ==  33
-        assert len(uncompressed_pk)  ==  65
+        assert len(compressed_pk) == 33
+        assert len(uncompressed_pk) == 65
 
     def test_02_generate_address_with_private_key(self):
         """传入私钥生成地址"""
         addr, cpk, upk = self.gen.generate_address(self.private_key)
         assert addr.startswith("1")
-        assert len(cpk)  ==  33
-        assert len(upk)  ==  65
+        assert len(cpk) == 33
+        assert len(upk) == 65
 
     def test_03_compressed_param_accepted(self):
         """compressed=True 参数被接受 (LSP 兼容)"""
@@ -80,8 +80,8 @@ class TestP2PKHAddressGeneratorLSP:
         """compressed=False 参数被接受 (P2PKH 始终返回双格式)"""
         addr, cpk, upk = self.gen.generate_address(self.private_key, compressed=False)
         # compressed=False 仍返回两种格式
-        assert len(cpk)  ==  33
-        assert len(upk)  ==  65
+        assert len(cpk) == 33
+        assert len(upk) == 65
 
     def test_05_invalid_key_len_raises(self):
         """无效私钥长度抛出 ValueError"""
@@ -113,7 +113,7 @@ class TestBaseViaSuperDelegation:
         pk = self.p2pkh.private_key_to_public_key(self.private_key)
         addr = self.p2pkh.public_key_to_address(pk)
         assert addr.startswith("1")
-        assert len(addr)  ==  34
+        assert len(addr) == 34
 
     def test_02_opt_public_key_to_address_via_super_fallback(self):
         """Optimized: public_key_to_address SIMD 失败回退到 base"""
@@ -125,26 +125,26 @@ class TestBaseViaSuperDelegation:
         """P2PKH: generate_private_key 返回有效范围私钥"""
         for _ in range(5):
             pk = self.p2pkh.generate_private_key()
-            assert len(pk)  ==  32
+            assert len(pk) == 32
             key_int = int.from_bytes(pk, "big")
-            assert key_int  >=  1
-            assert key_int  <  Secp256k1.N
+            assert key_int >= 1
+            assert key_int < Secp256k1.N
 
     def test_04_opt_generate_private_key_in_range(self):
         """Optimized: generate_private_key 返回有效范围私钥"""
         for _ in range(5):
             pk = self.opt.generate_private_key()
-            assert len(pk)  ==  32
+            assert len(pk) == 32
             key_int = int.from_bytes(pk, "big")
-            assert key_int  >=  1
-            assert key_int  <  Secp256k1.N
+            assert key_int >= 1
+            assert key_int < Secp256k1.N
 
     def test_05_both_generators_produce_same_address_from_same_key(self):
         """同一私钥在两个生成器中产生相同地址"""
         pk = self.p2pkh.generate_private_key()
         addr1, _, _ = self.p2pkh.generate_address(pk)
         addr2, _, _ = self.opt.generate_address(pk, compressed=True)
-        assert addr1  ==  addr2
+        assert addr1 == addr2
 
 
 class TestOptimizedAddressGeneratorEdge:
@@ -154,7 +154,7 @@ class TestOptimizedAddressGeneratorEdge:
         """batch_generate 空列表返回空 (cover line 178)"""
         gen = OptimizedP2PKHAddressGenerator()
         result = gen.batch_generate([])
-        assert result  ==  []
+        assert result == []
 
     def test_batch_generate_all_optimizations_off(self):
         """batch_generate 关闭所有优化 (cover lines 189, 204-205)"""
@@ -164,7 +164,7 @@ class TestOptimizedAddressGeneratorEdge:
             use_memory_pool=False,
         )
         result = gen.batch_generate([b"\x01" * 32, b"\x02" * 32])
-        assert len(result)  ==  2
+        assert len(result) == 2
         for addr in result:
             assert addr.startswith("1")
 
@@ -172,9 +172,9 @@ class TestOptimizedAddressGeneratorEdge:
         """get_optimization_info 返回优化配置信息 (cover lines 219-242)"""
         gen = OptimizedP2PKHAddressGenerator()
         info = gen.get_optimization_info()
-        assert info  in  "precomputed_table"
-        assert info  in  "simd_hash"
-        assert info  in  "memory_pool"
+        assert info in "precomputed_table"
+        assert info in "simd_hash"
+        assert info in "memory_pool"
         assert info["precomputed_table"]["enabled"]
 
     def test_get_optimization_info_all_disabled(self):
@@ -193,14 +193,14 @@ class TestOptimizedAddressGeneratorEdge:
         """private_key_to_public_key compressed=False (cover line 129)"""
         gen = OptimizedP2PKHAddressGenerator()
         pk = gen.private_key_to_public_key(b"\x01" * 32, compressed=False)
-        assert len(pk)  ==  65  # 未压缩公钥 65 字节
+        assert len(pk) == 65  # 未压缩公钥 65 字节
         assert pk.startswith(b"\x04")
 
     def test_private_key_to_public_key_no_precomputed(self):
         """private_key_to_public_key 无预计算表 → line 120"""
         gen = OptimizedP2PKHAddressGenerator(use_precomputed_table=False)
         pk = gen.private_key_to_public_key(b"\x01" * 32, compressed=True)
-        assert len(pk)  ==  33
+        assert len(pk) == 33
 
     def test_public_key_to_address_no_simd(self):
         """public_key_to_address SIMD 关闭回退到基类 → line 151"""
@@ -223,7 +223,6 @@ class TestOptimizedAddressGeneratorEdge:
             use_memory_pool=False,
         )
         result = gen.batch_generate([b"\x01" * 32, b"\x02" * 32])
-        assert len(result)  ==  2
+        assert len(result) == 2
         for addr in result:
             assert addr.startswith("1")
-

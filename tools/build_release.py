@@ -44,15 +44,15 @@ esac
 
 # ── Python version check ─────────────────────────────────────────
 if ! command -v python3 &>/dev/null; then
-  error "python3 not found. Please install Python 3.9 or higher."
+  error "python3 not found. Please install Python 3.12 or higher."
 fi
 
 PY_VER=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
 PY_MAJOR=$(echo "$PY_VER" | cut -d. -f1)
 PY_MINOR=$(echo "$PY_VER" | cut -d. -f2)
 
-if [ "$PY_MAJOR" -lt 3 ] || { [ "$PY_MAJOR" -eq 3 ] && [ "$PY_MINOR" -lt 9 ]; }; then
-  error "Python 3.9+ required. Found: $PY_VER"
+if [ "$PY_MAJOR" -lt 3 ] || { [ "$PY_MAJOR" -eq 3 ] && [ "$PY_MINOR" -lt 12 ]; }; then
+  error "Python 3.12+ required. Found: $PY_VER"
 fi
 success "Python $PY_VER detected"
 
@@ -119,7 +119,9 @@ fi
 # Network Connectivity
 echo ""
 info "Network Connectivity:"
-if pip install --dry-run pip >/dev/null 2>&1 || curl -s --max-time 5 https://pypi.org >/dev/null 2>&1 || wget -q --spider --timeout=5 https://pypi.org 2>/dev/null; then
+if pip install --dry-run pip >/dev/null 2>&1 || \
+   curl -s --max-time 5 https://pypi.org >/dev/null 2>&1 || \
+   wget -q --spider --timeout=5 https://pypi.org 2>/dev/null; then
     success "PyPI reachable"
 else
     warning "PyPI may be unreachable. Installation might fail if packages are not cached."
@@ -329,7 +331,7 @@ echo =======================================================
 :: ── Python version check ──────────────────────────────────────
 python --version >nul 2>&1
 if errorlevel 1 (
-    echo [ERROR] python not found. Please install Python 3.9 or higher.
+    echo [ERROR] python not found. Please install Python 3.12 or higher.
     pause & exit /b 1
 )
 
@@ -340,11 +342,11 @@ for /f "tokens=1,2 delims=." %%a in ("!PY_VER!") do (
 )
 
 if !PY_MAJOR! LSS 3 (
-    echo [ERROR] Python 3.9+ required. Found: !PY_VER!
+    echo [ERROR] Python 3.12+ required. Found: !PY_VER!
     pause & exit /b 1
 )
-if !PY_MAJOR! EQU 3 if !PY_MINOR! LSS 9 (
-    echo [ERROR] Python 3.9+ required. Found: !PY_VER!
+if !PY_MAJOR! EQU 3 if !PY_MINOR! LSS 12 (
+    echo [ERROR] Python 3.12+ required. Found: !PY_VER!
     pause & exit /b 1
 )
 echo [OK] Python !PY_VER! detected
@@ -359,7 +361,8 @@ echo.
 :: OS Detection
 echo [INFO] Operating System:
 for /f "tokens=2 delims==" %%a in ('wmic os get Caption /value 2^>nul ^| find "="') do echo   OS: %%a
-for /f "tokens=2 delims==" %%a in ('wmic os get Version /value 2^>nul ^| find "="') do echo   Version: %%a
+for /f "tokens=2 delims==" %%a in ('wmic os get Version /value 2^>nul ^| find "="') do ^
+    echo   Version: %%a
 
 :: CPU Architecture
 echo   CPU Architecture: %PROCESSOR_ARCHITECTURE%
@@ -368,11 +371,14 @@ if not "%PROCESSOR_ARCHITECTURE%"=="AMD64" (
 )
 
 :: CPU Info
-for /f "tokens=2 delims==" %%a in ('wmic cpu get NumberOfLogicalProcessors /value 2^>nul ^| find "="') do echo   CPU Cores: %%a
+for /f "tokens=2 delims==" %%a in (^
+    'wmic cpu get NumberOfLogicalProcessors /value 2^>nul ^| find "="' ^
+) do echo   CPU Cores: %%a
 for /f "tokens=2 delims==" %%a in ('wmic cpu get Name /value 2^>nul ^| find "="') do echo   CPU: %%a
 
 :: Memory Check
-for /f "tokens=2 delims==" %%a in ('wmic os get TotalVisibleMemorySize /value 2^>nul ^| find "="') do set TOTAL_MEM_KB=%%a
+for /f "tokens=2 delims==" %%a in ('wmic os get TotalVisibleMemorySize /value 2^>nul ^| find "="') do ^
+    set TOTAL_MEM_KB=%%a
 if defined TOTAL_MEM_KB (
     set /a TOTAL_MEM_MB=!TOTAL_MEM_KB! / 1024
     echo   Total Memory: !TOTAL_MEM_MB! MB
@@ -786,15 +792,15 @@ where python >nul 2>&1
 if errorlevel 1 (
     echo [ERROR] Python not found
     echo.
-    echo   Please download and install Python 3.9+ from https://www.python.org/downloads/
+    echo   Please download and install Python 3.12+ from https://www.python.org/downloads/
     echo   Make sure to check "Add Python to PATH" during installation
     exit /b 1
 )
 
 for /f "tokens=2" %%i in ('python --version 2^>^&1') do set "PY_VER=%%i"
-python -c "import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)" 2>nul
+python -c "import sys; sys.exit(0 if sys.version_info >= (3, 12) else 1)" 2>nul
 if errorlevel 1 (
-    echo [ERROR] Python version too low: !PY_VER! ^(requires 3.9+^)
+    echo [ERROR] Python version too low: !PY_VER! ^(requires 3.12+^)
     exit /b 1
 )
 echo [OK] Python !PY_VER!
@@ -866,7 +872,7 @@ RELEASE_NOTES_MD = """# BTC Collision Engine v__VERSION__ Release Notes
 __DATE__
 
 ## System Requirements
-- Python 3.9 or higher (tested up to 3.14)
+- Python 3.12 or higher (tested up to 3.14)
 - Supported OS: Windows 10/11, Linux (Ubuntu 20.04+, CentOS 8+), macOS 12+
 - Optional: OpenCL runtime for GPU acceleration
 
@@ -989,11 +995,11 @@ def _clean_output_dir(output_dir: Path) -> None:
 
     skipped = []
 
-    def on_rm_error(func, path, exc_info):
+    def on_rm_error(func, path, exc_info):  # pyright: ignore[reportDeprecated]
         """Handle removal errors - skip locked files."""
         skipped.append(path)
 
-    shutil.rmtree(output_dir, onerror=on_rm_error)
+    shutil.rmtree(output_dir, onerror=on_rm_error)  # pyright: ignore[reportDeprecated]
 
     if skipped:
         print(f"  [WARN] Could not remove {len(skipped)} file(s) (locked by another process):")
@@ -1016,7 +1022,7 @@ def copy_source(root: Path, out: Path) -> None:
     src = root / "src"
     dst = out / "src"
     log_step("SRC", f"{src} -> {dst}")
-    shutil.copytree(
+    _ = shutil.copytree(
         src,
         dst,
         ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo", ".git", "venv", ".pytest_cache"),
@@ -1029,7 +1035,7 @@ def copy_entry_files(root: Path, out: Path) -> None:
     for name in files:
         src = root / name
         if src.exists():
-            shutil.copy2(src, out / name)
+            _ = shutil.copy2(src, out / name)
             log_ok(f"Entry: {name}")
         else:
             log_skip(f"Entry not found: {name}")
@@ -1049,7 +1055,7 @@ def copy_batch_scripts(root: Path, out: Path) -> None:
     for name in bat_files:
         src = root / name
         if src.exists():
-            shutil.copy2(src, out / name)
+            _ = shutil.copy2(src, out / name)
             log_ok(f"Script: {name}")
             copied += 1
         else:
@@ -1069,12 +1075,13 @@ def copy_requirements(root: Path, out: Path) -> None:
     for name in files:
         src = root / name
         if src.exists():
-            shutil.copy2(src, req_dir / name)
+            _ = shutil.copy2(src, req_dir / name)
             log_ok(f"Req: {name}")
         else:
             log_skip(f"Req not found: {name}")
     # 生成发布版 requirements.txt（不含 dev 依赖引用）
     release_req = req_dir / "requirements.txt"
+    # pyright: next line is intentional implicit string concatenation for readability
     release_req.write_text(
         "# BTC 私钥碰撞工具依赖\n"
         "#\n"
@@ -1108,7 +1115,7 @@ def copy_configs(root: Path, out: Path) -> None:
     for name in files:
         src = root / name
         if src.exists():
-            shutil.copy2(src, cfg_dir / name)
+            _ = shutil.copy2(src, cfg_dir / name)
             log_ok(f"Config: {name}")
         else:
             log_skip(f"Config not found: {name}")
@@ -1116,7 +1123,7 @@ def copy_configs(root: Path, out: Path) -> None:
     # start.sh / start.bat expect config.example.json in the root directory
     example_src = root / "config.example.json"
     if example_src.exists():
-        shutil.copy2(example_src, out / "config.example.json")
+        _ = shutil.copy2(example_src, out / "config.example.json")
         log_ok("config.example.json copied to root (required by start scripts)")
     else:
         log_skip("config.example.json not found in source root")
@@ -1132,14 +1139,14 @@ def copy_docker(root: Path, out: Path) -> None:
     for name in files:
         src = root / name
         if src.exists():
-            shutil.copy2(src, docker_dir / name)
+            _ = shutil.copy2(src, docker_dir / name)
             log_ok(f"Docker: {name}")
         else:
             log_skip(f"Docker file not found: {name}")
 
     deploy_src = root / "deploy"
     if deploy_src.exists():
-        shutil.copytree(deploy_src, docker_dir / "deploy")
+        _ = shutil.copytree(deploy_src, docker_dir / "deploy")
         log_ok("deploy/ subdirectory copied")
 
 
@@ -1151,13 +1158,13 @@ def copy_docs(root: Path, out: Path) -> None:
     # Copy top-level files
     for item in docs_src.iterdir():
         if item.is_file():
-            shutil.copy2(item, docs_dst / item.name)
+            _ = shutil.copy2(item, docs_dst / item.name)
 
     # Copy selected subdirectories (skip archive/)
     keep_dirs = {"standards", "security", "audit-reports"}
     for item in docs_src.iterdir():
         if item.is_dir() and item.name in keep_dirs:
-            shutil.copytree(item, docs_dst / item.name)
+            _ = shutil.copytree(item, docs_dst / item.name)
             log_ok(f"Docs subdir: {item.name}/")
 
     log_ok("docs/ copied (archive/ excluded)")
@@ -1168,7 +1175,7 @@ def copy_root_docs(root: Path, out: Path) -> None:
     for name in files:
         src = root / name
         if src.exists():
-            shutil.copy2(src, out / name)
+            _ = shutil.copy2(src, out / name)
             log_ok(f"Doc: {name}")
         else:
             log_skip(f"Doc not found: {name}")
@@ -1177,21 +1184,21 @@ def copy_root_docs(root: Path, out: Path) -> None:
 def generate_install_sh(out: Path) -> None:
     content = INSTALL_SH.replace("__VERSION__", VERSION)
     target = out / "install.sh"
-    target.write_text(content, encoding="utf-8", newline="\n")
+    _ = target.write_text(content, encoding="utf-8", newline="\n")
     log_ok("install.sh generated (LF)")
 
 
 def generate_install_bat(out: Path) -> None:
     content = INSTALL_BAT.replace("__VERSION__", VERSION)
     target = out / "install.bat"
-    target.write_text(content, encoding="utf-8", newline="\r\n")
+    _ = target.write_text(content, encoding="utf-8", newline="\r\n")
     log_ok("install.bat generated (CRLF)")
 
 
 def generate_start_sh(out: Path) -> None:
     content = START_SH.replace("__VERSION__", VERSION)
     target = out / "start.sh"
-    target.write_text(content, encoding="utf-8", newline="\n")
+    _ = target.write_text(content, encoding="utf-8", newline="\n")
     log_ok("start.sh generated (LF)")
 
 
@@ -1200,20 +1207,20 @@ def generate_start_bat(out: Path) -> None:
     src = PROJECT_ROOT / "start.bat"
     if src.exists():
         # 直接复制源文件，保留所有功能
-        shutil.copy2(src, out / "start.bat")
+        _ = shutil.copy2(src, out / "start.bat")
         log_ok("start.bat copied from source (with menu)")
     else:
         # 如果源文件不存在，使用简化版模板
         content = START_BAT.replace("__VERSION__", VERSION)
         target = out / "start.bat"
-        target.write_text(content, encoding="utf-8", newline="\r\n")
+        _ = target.write_text(content, encoding="utf-8", newline="\r\n")
         log_ok("start.bat generated from template (CRLF)")
 
 
 def generate_release_notes(out: Path) -> None:
     content = RELEASE_NOTES_MD.replace("__VERSION__", VERSION).replace("__DATE__", RELEASE_DATE)
     target = out / "RELEASE_NOTES.md"
-    target.write_text(content, encoding="utf-8", newline="\n")
+    _ = target.write_text(content, encoding="utf-8", newline="\n")
     log_ok("RELEASE_NOTES.md generated")
 
 
@@ -1267,7 +1274,7 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description=f"BTC Collision Engine v{VERSION} - Release Build Script"
     )
-    parser.add_argument(
+    _ = parser.add_argument(
         "--output-dir",
         type=Path,
         default=DEFAULT_OUTPUT,

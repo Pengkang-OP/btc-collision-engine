@@ -62,16 +62,21 @@
 使用以下许可证的库需要在分发时保留原始版权声明：
 
 - MIT 许可证所有库
+
 - BSD-3-Clause 许可证所有库
+
 - Apache-2.0 许可证所有库
+
 - Python-2.0 许可证 (`bitarray`)
 
 ### 需提供修改声明的许可证
 
 - LGPL-3.0 (`gmpy2`, `pybloom-live`): 动态链接使用，无需修改
+
 - LGPL-2.1 (`chardet`): 动态链接使用，无需修改
 
 ## 相关文档
 
 - [许可证兼容性](license-compatibility.md)
+
 - [加密出口管制声明](export-control.md)

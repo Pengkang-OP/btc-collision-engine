@@ -7,7 +7,7 @@ name = "btc-collision-engine"
 version = "5.0.0"
 description = "比特币私钥碰撞引擎，支持CPU和GPU加速，多格式地址支持，用于学习和研究比特币地址碰撞"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 license = { text = "MIT" }
 authors = [{ name = "BTC Project" }]
 keywords = ["bitcoin", "collision", "gpu", "opencl", "cryptography"]
@@ -16,9 +16,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Topic :: Security :: Cryptography",
@@ -203,7 +200,7 @@ disable_error_code = [
 
 [tool.black]
 line-length = 105
-target-version = ["py39"]
+target-version = ["py312"]
 
 [tool.flake8]
 max-line-length = 105
@@ -224,6 +221,7 @@ exclude = [
     ".eggs",
 ]
 per-file-ignores = [
+    "src/gpu/_kernel_source.py:E501", # 嵌入式 OpenCL C 源码，常量注释无法断行
     "src/web/dashboard.py:E501",
     "src/monitoring/alert_notifications.py:E501",
     "src/utils/ui_tutorial.py:E501",
@@ -232,7 +230,7 @@ per-file-ignores = [
 
 [tool.ruff]
 line-length = 105 # 略高于标准100以容纳中文日志/长变量名
-target-version = "py39"
+target-version = "py312"
 fix = true
 exclude = [
     ".git",
@@ -248,10 +246,6 @@ exclude = [
     "dist",
     "*.egg-info",
     ".eggs",
-    # 以下文件使用 Python 3.12+ f-string 跨行语法，跳过 ruff parser 版本检查
-    "benchmarks/benchmark_runner.py",
-    "scripts/dev/diagnose.py",
-    "scripts/benchmarking/memory_leak_detection.py",
 ]
 
 [tool.ruff.lint]
@@ -267,8 +261,10 @@ convention = "google"
 [tool.ruff.lint.per-file-ignores]
 # ROADMAP #15: Docstring (D) rules — global exempt, fix & narrow file by file.
 # Method: remove "**/*.py" = ["D"] and add only unfixed files individually.
-# Currently fixed (12 files): benchmarks/__init__.py, scripts/{benchmarking,dev,install,testing}/__init__.py,
+# Phase 1-7 fixed (17 files): benchmarks/__init__.py, scripts/{benchmarking,dev,install,testing}/__init__.py,
 #   src/{gpu/vendors,gpu/profiles,utils/fast_json}.py, tests/{gpu,integration,performance,unit}/__init__.py
+# Phase 7 new: src/collision/collision_stats.py, src/core/{key_generator,simd_optimizer}.py,
+#   src/gpu/vendors/{amd,nvidia}.py
 "**/*.py" = ["D"]
 "src/web/dashboard.py" = ["E501"] # HTML/Jinja2 模板字符串无法有意义地拆分
 "src/monitoring/alert_notifications.py" = ["E501"] # HTML 邮件模板字符串
@@ -330,8 +326,6 @@ convention = "google"
 "key_collision_cli.py" = ["T201"]
 "key_collision.py" = [
     "E501",  # CLI 入口：长行可读性优先
-    "UP006", # 保留 List/Dict/Set/Tuple 保持旧 Python 兼容
-    "UP035", # 保留 typing 导入保持旧 Python 兼容
 ]
 "conftest.py" = ["SIM115"] # pytest fixture 中直接 open() 合法
 
@@ -364,3 +358,11 @@ exclude_dirs = ["tests", "docs", "benchmarks"]
 # B101: assert 语句在本项目中广泛用于防御性编程(非安全校验), 不构成安全风险
 # B105: Bandit 基于变量名模式匹配，误报率极高（配置版本号/延迟值被误标记为密码）
 skips = ["B101", "B105"]
+
+[tool.basedpyright]
+# ── 类型注解策略 ──────────────────────────────────────────────
+# reportExplicitAny: 代码中明确使用 Any 类型注解（如 dict[str, Any]）是合法的设计决策
+reportExplicitAny = "information"
+# reportAny: json.load()/dict.get()/device.get() 在 typeshed 中定义为返回 Any，
+#            这是 Python 类型系统的已知限制，而非代码问题
+reportAny = "information"

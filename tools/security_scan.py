@@ -20,7 +20,6 @@
 import json
 import subprocess
 import sys
-from datetime import datetime
 from pathlib import Path
 
 
@@ -73,7 +72,6 @@ def print_summary(report):
         print("❌ 无报告数据")
         return
 
-    metrics = report.get("metrics", {})
     issues = report.get("results", [])  # bandit使用results而非issues
 
     print("\n" + "=" * 80)
@@ -87,6 +85,7 @@ def print_summary(report):
         if severity in severity_counts:
             severity_counts[severity] += 1
 
+    metrics = report.get("metrics", {})
     print("\n📊 扫描统计:")
     print(f"   扫描文件数: {len(metrics) - 1}")  # 减去_totals
     print(f"   发现问题数: {len(issues)}")
@@ -127,28 +126,31 @@ def generate_html_report(report, output_file="security_report.html"):
         return
 
     issues = report.get("results", [])  # bandit 使用 results 而非 issues
-    metrics = report.get("metrics", {})
 
-    html_content = f"""<!DOCTYPE html>
+    html_content = """<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <title>安全扫描报告 - {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</title>
     <style>
         body {{ font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }}
-        .container {{ max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }}
+        .container {{ max-width: 1200px; margin: 0 auto; background: white;
+            padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }}
         h1 {{ color: #333; border-bottom: 3px solid #4CAF50; padding-bottom: 10px; }}
         h2 {{ color: #555; margin-top: 30px; }}
         .summary {{ background: #e8f5e9; padding: 15px; border-radius: 5px; margin: 20px 0; }}
-        .issue {{ background: #fff3cd; padding: 15px; margin: 10px 0; border-left: 4px solid #ffc107; border-radius: 4px; }}
+        .issue {{ background: #fff3cd; padding: 15px; margin: 10px 0;
+            border-left: 4px solid #ffc107; border-radius: 4px; }}
         .issue.high {{ background: #f8d7da; border-left-color: #dc3545; }}
         .issue.medium {{ background: #fff3cd; border-left-color: #ffc107; }}
         .issue.low {{ background: #d1ecf1; border-left-color: #17a2b8; }}
-        .code {{ background: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 0.9em; overflow-x: auto; }}
+        .code {{ background: #f8f9fa; padding: 10px; border-radius: 4px;
+            font-family: monospace; font-size: 0.9em; overflow-x: auto; }}
         table {{ width: 100%; border-collapse: collapse; margin: 20px 0; }}
         th, td {{ padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }}
         th {{ background: #4CAF50; color: white; }}
-        .badge {{ display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.85em; font-weight: bold; }}
+        .badge {{ display: inline-block; padding: 4px 8px;
+            border-radius: 4px; font-size: 0.85em; font-weight: bold; }}
         .badge.high {{ background: #dc3545; color: white; }}
         .badge.medium {{ background: #ffc107; color: #333; }}
         .badge.low {{ background: #17a2b8; color: white; }}
@@ -173,8 +175,7 @@ def generate_html_report(report, output_file="security_report.html"):
 """
 
     for issue in issues:
-        severity = issue.get("issue_severity", "LOW").lower()
-        html_content += f"""
+        html_content += """
         <div class="issue {severity}">
             <h3>
                 <span class="badge {severity}">{issue.get("issue_severity")}</span>
@@ -240,8 +241,7 @@ def main():
 
     # CI/CD模式检查
     if args.ci_mode:
-        metrics = report.get("metrics", {})
-        severity_counts = metrics.get("_issue_severity", {})
+        severity_counts = report.get("metrics", {}).get("_issue_severity", {})
 
         if severity_counts.get("HIGH", 0) > 0:
             print("\n❌ CI/CD检查失败: 发现高危安全问题")

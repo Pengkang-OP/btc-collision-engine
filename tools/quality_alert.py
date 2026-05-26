@@ -14,8 +14,8 @@ from utf8_helper import setup_windows_utf8
 
 setup_windows_utf8()
 
-from tools.check_document_quality import DocumentQualityChecker
-from tools.quality_trend import QualityTrendAnalyzer
+from tools.check_document_quality import DocumentQualityChecker  # noqa: E402
+from tools.quality_trend import QualityTrendAnalyzer  # noqa: E402
 
 
 class QualityAlertSystem:

@@ -207,7 +207,8 @@ def main():
         }
 
         print(
-            f"  → {mod_name}: {mod_cover:.1f}% ({mod_total_stmts - mod_total_miss}/{mod_total_stmts} stmts)"
+            f"  → {mod_name}: {mod_cover:.1f}% "
+            f"({mod_total_stmts - mod_total_miss}/{mod_total_stmts} stmts)"
         )
 
     print(f"\n\n{'=' * 60}")

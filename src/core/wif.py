@@ -1,4 +1,4 @@
-"""WIF (Wallet Import Format) encode/decode utility"""
+"""WIF (Wallet Import Format) encode/decode utility."""
 
 from .base58 import Base58
 from .hash_utils import HashUtils

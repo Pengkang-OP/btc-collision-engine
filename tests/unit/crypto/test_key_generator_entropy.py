@@ -158,4 +158,3 @@ class TestEntropyHealthCheck:
                 result = self.key_gen._check_entropy_health()
 
                 assert result
-

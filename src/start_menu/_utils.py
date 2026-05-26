@@ -1,11 +1,13 @@
-"""启动菜单工具函数 — 清屏、等待按键、终端宽度、GPU 检测、统计收集。"""
+"""启动菜单工具函数 — 清屏、等待按键、终端宽度、GPU 检测、统计收集."""
+from typing import Any
+
 import concurrent.futures
 import os
 import platform
 from pathlib import Path
 
-from src.start_menu._shared import (
-    _HAS_RICH,
+from ._shared import (
+    _has_rich,
     _PROJECT_ROOT,
     _console,
 )
@@ -26,7 +28,7 @@ def _wait_key() -> None:
 
 
 def _term_width() -> int:
-    if _HAS_RICH and _console is not None:
+    if _has_rich and _console is not None:
         w = _console.width
         return max(52, min(w - 4, 100))
     return 62
@@ -77,8 +79,8 @@ def _detect_gpu_quick() -> str | None:
         return None
 
 
-def _collect_dynamic_stats() -> dict:
-    stats: dict = {}
+def _collect_dynamic_stats() -> dict[str, Any]:
+    stats: dict[str, Any] = {}
     targets_file = os.path.join(_PROJECT_ROOT, "targets.txt")
     alt_targets = os.path.join(_PROJECT_ROOT, "btc_addresses_sorted.txt")
     tf = targets_file if os.path.isfile(targets_file) else (

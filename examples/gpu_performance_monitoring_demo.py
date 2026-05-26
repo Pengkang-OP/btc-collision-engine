@@ -3,6 +3,7 @@
 演示如何使用GPUPerformanceMonitor监控GPU碰撞引擎
 """
 
+import secrets
 import sys
 import time
 from pathlib import Path
@@ -10,7 +11,7 @@ from pathlib import Path
 # 添加项目根目录
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.collision.gpu.engine import GPUCollisionEngine
+from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
 
 
 def example_1_basic_gpu_monitoring():
@@ -191,14 +192,14 @@ def example_4_comparison_cpu_vs_gpu():
 
     # 测试CPU性能
     print("\n🔵 测试CPU引擎(5秒)...")
-    cpu_monitor = None
+    from src.gpu.engine_monitor import GPUEngineMonitor
+
+    cpu_monitor = GPUEngineMonitor()
     cpu_monitor.start()
 
     cpu_engine = KeyCollisionEngine(targets=targets, use_performance_optimization=True)
 
     # 手动生成一些地址
-    import secrets
-
     start_time = time.time()
     count = 0
     while time.time() - start_time < 5:

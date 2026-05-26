@@ -3,17 +3,22 @@
 > **版本**: v1.2.0 | **最后更新**: 2026-04-21  
 > **面向**: 开发者
 
-
 本文档提供BTC碰撞引擎项目日志系统的完整使用指南，包括配置、使用和最佳实践。
 
 ## 目录
 
 - [1. 快速开始](#1-快速开始)
+
 - [2. 日志配置](#2-日志配置)
+
 - [3. 基本使用](#3-基本使用)
+
 - [4. 性能监控](#4-性能监控)
+
 - [5. 采样日志](#5-采样日志)
+
 - [6. 高级用法](#6-高级用法)
+
 - [7. 最佳实践](#7-最佳实践)
 
 ---
@@ -36,6 +41,7 @@ logger.info("程序启动")
 logger.debug(f"配置值: {config_value}")
 logger.warning("潜在问题")
 logger.error("发生错误")
+
 ```markdown
 
 ## 1.2 在模块中使用
@@ -48,6 +54,7 @@ logger = logging.getLogger(__name__)
 # 在函数中使用
 def my_function():
     logger.info("函数被调用")
+
 ```python
 
 ---
@@ -68,6 +75,7 @@ def my_function():
     "enable_file": true
   }
 }
+
 ```markdown
 
 ### 2.2 编程方式配置
@@ -85,6 +93,7 @@ config = {
 }
 
 init_logging(config)
+
 ```markdown
 
 ### 2.3 环境特定配置
@@ -107,6 +116,7 @@ elif env == 'production':
         "enable_console": False,
         "enable_file": True
     })
+
 ```python
 
 ---
@@ -139,6 +149,7 @@ except Exception as e:
 
 # CRITICAL: 严重错误
 logger.critical(f"系统无法继续运行: {reason}")
+
 ```markdown
 
 ## 3.2 格式化输出
@@ -149,6 +160,7 @@ logger.info("用户%s登录，IP=%s", username, ip_address)
 
 # ❌ 不推荐: 提前格式化
 logger.info(f"用户{username}登录，IP={ip_address}")
+
 ```markdown
 
 ## 3.3 包含上下文
@@ -162,6 +174,7 @@ logger.error(
 
 # ❌ 不推荐: 缺少上下文
 logger.error(f"处理失败: {error}")
+
 ```python
 
 ---
@@ -181,6 +194,7 @@ with EnhancedPerformanceMonitor(logger, "GPU内核编译", level="INFO") as pm:
 
 # 输出:
 # [Performance] GPU内核编译: 215.34ms
+
 ```markdown
 
 ## 4.2 性能追踪器
@@ -202,6 +216,7 @@ for op in slow_ops:
 
 # 记录性能摘要
 log_performance_summary(logger, tracker)
+
 ```markdown
 
 ## 4.3 性能监控场景
@@ -221,6 +236,7 @@ with EnhancedPerformanceMonitor(logger, "批次处理", level="DEBUG"):
 # 场景3: 文件I/O性能
 with EnhancedPerformanceMonitor(logger, "断点保存", level="INFO"):
     save_checkpoint(data)
+
 ```python
 
 ---
@@ -239,6 +255,7 @@ sampled_logger = get_sampled_logger("MyModule.sampled", sample_rate=1000)
 for i in range(1000000):
     sampled_logger.info(f"进度: {i:,} / 1,000,000")
     # 实际只记录1000条日志
+
 ```markdown
 
 ## 5.2 采样率选择
@@ -257,6 +274,7 @@ medium_sampled = get_sampled_logger("medium", sample_rate=100)
 
 # 低频率（~10次/秒）
 low_sampled = get_sampled_logger("low", sample_rate=10)
+
 ```markdown
 
 ## 5.3 实际示例
@@ -277,6 +295,7 @@ def process_keys():
             f"批次处理完成: {len(results)} 个密钥, "
             f"速度: {speed:.0f} 次/秒"
         )
+
 ```python
 
 ---
@@ -296,6 +315,7 @@ import threading
 
 def worker():
     logger.info(f"工作线程 {threading.current_thread().name} 启动")
+
 ```markdown
 
 ## 6.2 彩色格式化器
@@ -312,6 +332,7 @@ formatter = ColoredFormatter(
 # 应用到处理器
 handler = logging.StreamHandler()
 handler.setFormatter(formatter)
+
 ```markdown
 
 ## 6.3 性能监控组合
@@ -335,6 +356,7 @@ with EnhancedPerformanceMonitor(logger, "操作2"):
 
 # 最后输出统计
 log_performance_summary(logger, tracker)
+
 ```markdown
 
 ## 6.4 条件日志
@@ -350,6 +372,7 @@ if logger.isEnabledFor(logging.DEBUG):
 
 # 避免不必要的计算
 logger.debug(f"详细数据: %s", compute_expensive_data())  # 总是执行
+
 ```python
 
 ---
@@ -369,6 +392,7 @@ def main():
 # ❌ 不推荐: 延迟初始化
 def some_function():
     init_logging()  # 可能导致日志丢失
+
 ```markdown
 
 ## 7.2 日志记录器命名
@@ -383,6 +407,7 @@ logger = logging.getLogger("GPUMonitor")
 
 # ❌ 不推荐: 使用根日志记录器
 logger = logging.getLogger()
+
 ```markdown
 
 ## 7.3 避免敏感信息
@@ -395,6 +420,7 @@ logger.info(f"WIF: {wif}")
 # ✅ 推荐
 logger.debug(f"地址: {address}")
 logger.info(f"地址数量: {len(targets)}")
+
 ```markdown
 
 ## 7.4 异常处理
@@ -417,6 +443,7 @@ try:
     do_something()
 except Exception:
     pass  # 没有日志！
+
 ```markdown
 
 ## 7.5 性能优化
@@ -436,6 +463,7 @@ for i in range(1000000):
 # ❌ 不推荐: 每次都记录
 for i in range(1000000):
     logger.info(f"进度: {i}")  # 太慢！
+
 ```markdown
 
 ## 7.6 资源管理日志
@@ -449,6 +477,7 @@ logger.info(f"GPU资源已清理: {device_name}")
 # ✅ 推荐: 使用性能监控
 with EnhancedPerformanceMonitor(logger, "资源清理"):
     cleanup_resources()
+
 ```python
 
 ---
@@ -504,6 +533,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 ```markdown
 
 ### A.2 模块示例
@@ -538,6 +568,7 @@ class GPUCollisionEngine:
             except Exception as e:
                 ExceptionHandler.handle_gpu_error("批次处理", e)
                 return []
+
 ```python
 
 ---
@@ -556,6 +587,7 @@ print(f"日志级别: {logger.level}")
 # 确保初始化
 from src.utils import init_logging
 init_logging()
+
 ```markdown
 
 ## Q2: 如何禁用文件日志？
@@ -564,6 +596,7 @@ init_logging()
 
 ```python
 init_logging({"enable_file": False})
+
 ```markdown
 
 ### Q3: 如何动态修改日志级别？
@@ -578,6 +611,7 @@ logging.getLogger().setLevel(logging.DEBUG)
 
 # 修改特定模块级别
 logging.getLogger("src.collision").setLevel(logging.DEBUG)
+
 ```markdown
 
 ## Q4: 采样日志不工作？
@@ -598,6 +632,7 @@ def func2():
 def func():
     sampled_logger = get_sampled_logger("mymodule", sample_rate=1000)
     sampled_logger.info("消息")
+
 ```
 
 ---

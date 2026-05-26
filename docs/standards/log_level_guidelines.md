@@ -27,7 +27,9 @@
 **使用场景**:
 
 - 功能无法继续执行
+
 - 数据可能丢失或损坏
+
 - 需要人工介入
 
 **示例**:
@@ -38,6 +40,7 @@ try:
 except RuntimeError as e:
     logger.error(f"GPU初始化失败: {e}")
     raise  # 必须抛出，调用方需要处理
+
 ```
 
 **禁止**:
@@ -49,6 +52,7 @@ try:
 except Exception as e:
     logger.error(f"失败: {e}")
     pass  # 不应该静默失败
+
 ```
 
 ---
@@ -58,7 +62,9 @@ except Exception as e:
 **使用场景**:
 
 - 功能降级但可继续
+
 - 性能问题但不影响正确性
+
 - 自动重试后成功
 
 **示例**:
@@ -72,6 +78,7 @@ except CompilationError as e:
         f"  性能可能下降10-20%"
     )
     self._use_cached_kernel()
+
 ```
 
 ---
@@ -81,7 +88,9 @@ except CompilationError as e:
 **使用场景**:
 
 - 未知异常需要完整堆栈
+
 - 仅用于DEBUG模式
+
 - 生产环境使用ERROR+简化消息
 
 **示例**:
@@ -94,6 +103,7 @@ except Exception as e:
         logger.exception(f"复杂计算失败: {e}")  # 包含堆栈
     else:
         logger.error(f"复杂计算失败: {type(e).__name__}: {e}")  # 简化
+
 ```
 
 ---
@@ -124,6 +134,7 @@ elif execution_time_ms > 1000:
         f"GPU批次执行缓慢: {execution_time_ms:.0f}ms\n"
         f"  建议: 启用异步执行模式"
     )
+
 ```
 
 ---
@@ -136,6 +147,7 @@ elif execution_time_ms > 1000:
 
 ```python
 logger.info(f"✅ 从配置文件读取异步设置: {enable_async}")
+
 ```
 
 **WARNING**: 配置值无效，使用默认值
@@ -145,6 +157,7 @@ logger.warning(
     f"配置值无效: batch_size={value}，使用默认值1024\n"
     f"  有效范围: 1024-16777216"
 )
+
 ```
 
 **ERROR**: 配置文件损坏
@@ -155,6 +168,7 @@ logger.error(
     f"  错误: {e}\n"
     f"  建议: 从备份恢复或使用默认配置"
 )
+
 ```
 
 ---
@@ -168,6 +182,7 @@ logger.error(
 ```python
 logger.debug(f"GPU Buffer追踪: 分配 _keys_buf (32.0 MB)")
 logger.debug(f"GPU Buffer追踪: 释放 _keys_buf")
+
 ```
 
 **WARNING**: 可能的内存泄漏
@@ -177,6 +192,7 @@ logger.warning(
     f"检测到{len(leaked)}个可能的GPU Buffer泄漏: {', '.join(leaked)}\n"
     f"  建议: 检查是否正确释放缓冲区"
 )
+
 ```
 
 **ERROR**: 内存分配失败
@@ -186,6 +202,7 @@ logger.error(
     f"GPU内存分配失败: 请求{size/1024/1024:.1f}MB，可用{available/1024/1024:.1f}MB\n"
     f"  建议: 降低batch_size或关闭其他GPU应用"
 )
+
 ```
 
 ---
@@ -198,6 +215,7 @@ logger.error(
 
 ```python
 logger.info(f"进度回调已注册: {callback.__name__}")
+
 ```
 
 **WARNING**: 回调执行缓慢
@@ -207,6 +225,7 @@ logger.warning(
     f"回调执行缓慢: {callback.__name__} ({execution_time_ms:.0f}ms)\n"
     f"  建议: 优化回调函数或减少调用频率"
 )
+
 ```
 
 **ERROR**: 回调失败
@@ -217,6 +236,7 @@ logger.error(
     f"  错误: {type(e).__name__}: {e}\n"
     f"  影响: 进度更新将跳过，不影响核心功能"
 )
+
 ```
 
 ---
@@ -242,6 +262,7 @@ except Exception as e:
 
 # 模式3: 调试信息 - DEBUG
 logger.debug(f"缓冲区分配: {name} ({size/1024:.1f} KB)")
+
 ```
 
 ### 7.2 ❌ 错误模式
@@ -261,6 +282,7 @@ except Exception as e:
 
 # 错误3: 信息不足
 logger.error("操作失败")  # 缺少上下文和错误详情
+
 ```
 
 ---
@@ -279,6 +301,7 @@ logger.error(
     f"  错误: {e}\n"
     f"  建议: 检查GPU驱动和OpenCL环境"
 )
+
 ```
 
 **未来**: 考虑使用i18n框架
@@ -291,6 +314,7 @@ logger.error(
 
 ```
 {timestamp} [{level}] {module}: {message}
+
 ```
 
 **示例**:
@@ -299,6 +323,7 @@ logger.error(
 2026-04-24 14:00:00 [ERROR] src.collision.gpu.engine: GPU初始化失败 [GPU_INIT_FAILED]
   错误: pyopencl not available
   建议: 安装pyopencl并验证OpenCL环境
+
 ```
 
 ### 9.2 多行日志
@@ -314,6 +339,7 @@ logger.error(
     f"  影响: {impact}\n"
     f"  建议: {suggestion}"
 )
+
 ```
 
 ---
@@ -323,11 +349,17 @@ logger.error(
 ### 10.1 Code Review检查项
 
 - [ ] ERROR级别是否包含完整错误信息？
+
 - [ ] WARNING级别是否可自动恢复？
+
 - [ ] 是否避免使用bare `except:`？
+
 - [ ] 异常堆栈是否仅在DEBUG模式输出？
+
 - [ ] 日志消息是否包含上下文？
+
 - [ ] 是否提供可操作的建议？
+
 - [ ] 敏感信息是否已过滤？
 
 ### 10.2 自动化检查
@@ -349,6 +381,7 @@ def check_log_levels(code: str):
         errors.append("禁止使用bare except")
 
     return errors
+
 ```
 
 ---
@@ -358,25 +391,33 @@ def check_log_levels(code: str):
 ### 阶段1: 制定规范 ✅
 
 - [x] 编写日志级别使用规范
+
 - [x] 创建示例代码
+
 - [x] 制定检查清单
 
 ### 阶段2: 代码审查
 
 - [ ] 审查现有代码日志使用
+
 - [ ] 标记不当使用的日志
+
 - [ ] 创建修复任务列表
 
 ### 阶段3: 批量修复
 
 - [ ] 修复ERROR级别不当使用
+
 - [ ] 修复WARNING级别不当使用
+
 - [ ] 添加缺失的上下文信息
 
 ### 阶段4: 自动化检查
 
 - [ ] 添加CI日志检查
+
 - [ ] 添加pre-commit hook
+
 - [ ] 生成日志质量报告
 
 ---
@@ -384,7 +425,9 @@ def check_log_levels(code: str):
 ## 12. 参考资料
 
 - [Python logging文档](https://docs.python.org/3/library/logging.html)
+
 - [Google日志风格指南](https://google.github.io/styleguide/pyguide.html#Logging)
+
 - [12-Factor App: Logs](https://12factor.net/logs)
 
 ---

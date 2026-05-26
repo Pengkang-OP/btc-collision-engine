@@ -16,7 +16,7 @@ import pytest
 # 标记为 GPU 测试，CI 中跳过
 pytestmark = pytest.mark.gpu
 
-from src.collision.gpu.engine import GPUCollisionEngine
+from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
 
 
 def test_memory_pool_fix():

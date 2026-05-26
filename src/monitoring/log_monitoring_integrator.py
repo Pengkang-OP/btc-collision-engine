@@ -9,6 +9,7 @@ class LogMonitoringIntegrator:
     """Integrates log events with the monitoring system."""
 
     def __init__(self):
+        """Initialize the log-monitoring integrator."""
         self._alert_system = None
         logger.info(
             "Log-monitoring integrator initialized",
@@ -30,6 +31,16 @@ class LogMonitoringIntegrator:
                 log_entry.get("message", ""),
                 log_entry.get("source", ""),
             )
+
+    def integrate_with_monitoring_system(self, monitoring_system) -> None:
+        """Integrate with a monitoring system (connect alert system, hooks, etc.).
+
+        Args:
+            monitoring_system: The monitoring system instance to integrate with.
+
+        """
+        if hasattr(monitoring_system, "alert_system"):
+            self.set_alert_system(monitoring_system.alert_system)
 
     def set_alert_system(self, alert_system) -> None:
         """Set alert system reference.

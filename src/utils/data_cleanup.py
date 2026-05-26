@@ -23,6 +23,7 @@ class DataCleaner:
         retention_days: int = 7,
         target_dirs: list[str] | None = None,
     ):
+        """Initialize data cleanup."""
         self._retention_seconds = retention_days * 86400
         if target_dirs is None:
             # 默认目录解析为项目根下的绝对路径，确保 CWD 无关

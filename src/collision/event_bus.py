@@ -57,6 +57,7 @@ class EventBus:
     """
 
     def __init__(self, async_mode: bool = False, max_queue_size: int = 1000):  # noqa: FBT001
+        """Initialize the event bus."""
         self._lock = threading.Lock()
         self._subscribers: dict[
             Any,

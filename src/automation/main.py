@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 from typing import cast
 
-from src.automation import (
+from . import (
     AnalysisReport,
     AuditModule,
     AuditResult,

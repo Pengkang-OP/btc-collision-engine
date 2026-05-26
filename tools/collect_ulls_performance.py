@@ -19,7 +19,7 @@ with open(log_file, encoding="utf-8") as f:
     lines = f.readlines()
 
 # 查找性能数据
-import re
+import re  # noqa: E402
 
 throughput_pattern = r"吞吐量:\s+([0-9,]+)\s*keys/s"
 peak_pattern = r"峰值=([0-9,]+)\s*keys/s"

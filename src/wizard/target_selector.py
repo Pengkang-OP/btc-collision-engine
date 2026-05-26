@@ -21,6 +21,7 @@ class TargetResolver:
     """Stub for target resolving logic."""
 
     def __init__(self, enable_cache: bool = True, cache_max_size: int = 10000) -> None:
+        """Initialize the target selector."""
         self.enable_cache = enable_cache
         self.cache_max_size = cache_max_size
         self._cache: dict[str, str] = {}

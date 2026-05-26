@@ -30,17 +30,17 @@ class TestEventType:
 
     def test_event_type_values(self):
         """测试事件类型值格式"""
-        assert EventType.ENGINE_START.value  ==  "engine_start"
-        assert EventType.ENGINE_PROGRESS.value  ==  "engine_progress"
-        assert EventType.ENGINE_MATCH.value  ==  "engine_match"
-        assert EventType.ENGINE_ERROR.value  ==  "engine_error"
-        assert EventType.ENGINE_COMPLETE.value  ==  "engine_complete"
+        assert EventType.ENGINE_START.value == "engine_start"
+        assert EventType.ENGINE_PROGRESS.value == "engine_progress"
+        assert EventType.ENGINE_MATCH.value == "engine_match"
+        assert EventType.ENGINE_ERROR.value == "engine_error"
+        assert EventType.ENGINE_COMPLETE.value == "engine_complete"
 
     def test_event_type_count(self):
         """测试事件类型数量"""
         # Phase 6：EventType 精简为 6 个核心事件
         event_types = list(EventType)
-        assert len(event_types)  >=  6
+        assert len(event_types) >= 6
 
 
 class TestCollisionEvent:
@@ -57,9 +57,9 @@ class TestCollisionEvent:
             memory_usage=60.5,
         )
 
-        assert event.total_checked  ==  1000000
-        assert event.speed  ==  537000.0
-        assert event.event_type  ==  EventType.ENGINE_PROGRESS
+        assert event.total_checked == 1000000
+        assert event.speed == 537000.0
+        assert event.event_type == EventType.ENGINE_PROGRESS
         assert event.timestamp is not None
 
     def test_engine_match_event(self):
@@ -70,17 +70,17 @@ class TestCollisionEvent:
             wif="5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ",
         )
 
-        assert event.address  ==  "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
-        assert event.private_key  ==  b"test_key"
-        assert event.event_type  ==  EventType.ENGINE_MATCH
+        assert event.address == "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
+        assert event.private_key == b"test_key"
+        assert event.event_type == EventType.ENGINE_MATCH
 
     def test_engine_error_event(self):
         """测试引擎错误事件"""
         error = ValueError("Test error")
         event = EngineErrorEvent(error_type="ValueError", error_message="Test error", exception=error)
 
-        assert event.error_type  ==  "ValueError"
-        assert event.event_type  ==  EventType.ENGINE_ERROR
+        assert event.error_type == "ValueError"
+        assert event.event_type == EventType.ENGINE_ERROR
 
 
 class TestEventBus:
@@ -106,8 +106,8 @@ class TestEventBus:
         bus.publish(event)
 
         # 验证
-        assert len(received_events)  ==  1
-        assert received_events[0].total_checked  ==  1000
+        assert len(received_events) == 1
+        assert received_events[0].total_checked == 1000
 
     def test_multiple_subscribers(self):
         """测试多个订阅者"""
@@ -126,9 +126,9 @@ class TestEventBus:
         event = EngineProgressEvent(total_checked=5000)
         bus.publish(event)
 
-        assert len(results)  ==  2
-        assert results  in  ("h1", 5000)
-        assert results  in  ("h2", 5000)
+        assert len(results) == 2
+        assert results in ("h1", 5000)
+        assert results in ("h2", 5000)
 
     def test_unsubscribe(self):
         """测试取消订阅"""
@@ -140,12 +140,12 @@ class TestEventBus:
 
         bus.subscribe(EventType.ENGINE_PROGRESS, handler)
         bus.publish(EngineProgressEvent())
-        assert call_count[0]  ==  1
+        assert call_count[0] == 1
 
         # 取消订阅
         bus.unsubscribe(EventType.ENGINE_PROGRESS, handler)
         bus.publish(EngineProgressEvent())
-        assert call_count[0]  ==  1  # 应该仍然为1
+        assert call_count[0] == 1  # 应该仍然为1
 
     def test_no_duplicate_subscribers(self):
         """测试不允许重复订阅"""
@@ -160,7 +160,7 @@ class TestEventBus:
         bus.subscribe(EventType.ENGINE_PROGRESS, handler)
 
         bus.publish(EngineProgressEvent())
-        assert call_count[0]  ==  1  # 只应该调用一次
+        assert call_count[0] == 1  # 只应该调用一次
 
     def test_handler_exception_not_crash_bus(self):
         """测试处理器异常不会使总线崩溃"""
@@ -181,7 +181,7 @@ class TestEventBus:
         bus.publish(event)
 
         # 好的处理器应该仍然被调用
-        assert len(received)  ==  1
+        assert len(received) == 1
 
     def test_handler_error_callback(self):
         """测试错误处理器回调"""
@@ -200,8 +200,8 @@ class TestEventBus:
         bus.publish(EngineProgressEvent())
 
         # 验证错误被捕获
-        assert len(errors)  ==  1
-        assert errors[0][0]  ==  EventType.ENGINE_PROGRESS
+        assert len(errors) == 1
+        assert errors[0][0] == EventType.ENGINE_PROGRESS
 
     def test_subscribe_to_all(self):
         """测试订阅所有事件"""
@@ -216,7 +216,7 @@ class TestEventBus:
         bus.publish(EngineProgressEvent())
         bus.publish(EngineMatchEvent(private_key=b"key", address="addr", wif="wif"))
 
-        assert len(all_events)  ==  2
+        assert len(all_events) == 2
 
 
 class TestEventBusAsync:
@@ -242,7 +242,7 @@ class TestEventBusAsync:
             if len(received) >= 1:
                 break
 
-        assert len(received)  ==  1
+        assert len(received) == 1
 
     def test_async_queue_full(self):
         """测试异步队列满时的行为"""
@@ -299,7 +299,7 @@ class TestEventBusThreadSafety:
             t.join()
 
         # 不应该有错误
-        assert len(errors)  ==  0
+        assert len(errors) == 0
 
     def test_concurrent_publish(self):
         """测试并发发布"""
@@ -328,7 +328,7 @@ class TestEventBusThreadSafety:
             t.join()
 
         # 应该处理了所有事件
-        assert counter[0]  ==  500
+        assert counter[0] == 500
 
 
 class TestGlobalEventBus:
@@ -342,7 +342,7 @@ class TestGlobalEventBus:
         bus1 = get_event_bus()
         bus2 = get_event_bus()
 
-        assert bus1  is  bus2
+        assert bus1 is bus2
 
     def test_reset_clears_instance(self):
         """测试重置清除实例"""
@@ -350,7 +350,7 @@ class TestGlobalEventBus:
         reset_event_bus()
         bus2 = get_event_bus()
 
-        assert bus1  is not  bus2
+        assert bus1 is not bus2
 
 
 class TestDataLoggerAdapter:
@@ -367,7 +367,7 @@ class TestDataLoggerAdapter:
 
         # 验证适配器创建成功
         assert adapter is not None
-        assert adapter.data_logger  ==  mock_logger
+        assert adapter.data_logger == mock_logger
 
     def test_adapter_handles_progress_event(self):
         """测试适配器处理进度事件"""
@@ -412,4 +412,3 @@ class TestDependencyInjection:
 
         mock_bus.subscribe.assert_called()
         mock_bus.publish.assert_called()
-

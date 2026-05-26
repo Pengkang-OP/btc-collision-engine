@@ -14,6 +14,7 @@ class DataStorageConfig:
         retention_days: int = 7,
         output_dir: str = "data_logs",
     ):
+        """Initialize storage configuration."""
         self.enabled = enabled
         self.max_size_mb = max_size_mb
         self.retention_days = retention_days

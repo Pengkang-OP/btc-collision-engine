@@ -1,5 +1,6 @@
 """SecureKeyGenerator 全面单元测试 - 覆盖构造/生成/验证/统计/熵池路径"""
 
+import unittest
 from unittest.mock import patch
 
 import pytest
@@ -14,19 +15,19 @@ class TestSecureKeyGeneratorInit:
     def test_init_default_config(self):
         """P0-1: 默认配置 - 无参数构造"""
         gen = SecureKeyGenerator()
-        assert gen.batch_size  ==  1000
-        assert gen.rate_limit  ==  0
-        assert gen.key_format  ==  "both"
+        assert gen.batch_size == 1000
+        assert gen.rate_limit == 0
+        assert gen.key_format == "both"
         assert gen.entropy_check_enabled
-        assert gen.min_entropy_bits  ==  1000
-        assert gen._total_generated  ==  0
+        assert gen.min_entropy_bits == 1000
+        assert gen._total_generated == 0
         assert gen.key_manager is not None
 
     def test_init_with_none_config(self):
         """P0-2: config=None 使用默认值"""
         gen = SecureKeyGenerator(config=None)
-        assert gen.batch_size  ==  1000
-        assert gen.rate_limit  ==  0
+        assert gen.batch_size == 1000
+        assert gen.rate_limit == 0
 
     def test_init_custom_config(self):
         """P0-3: 自定义 batch_size/rate_limit/key_format"""
@@ -37,9 +38,9 @@ class TestSecureKeyGeneratorInit:
                 "key_format": "compressed",
             },
         )
-        assert gen.batch_size  ==  500
-        assert gen.rate_limit  ==  100
-        assert gen.key_format  ==  "compressed"
+        assert gen.batch_size == 500
+        assert gen.rate_limit == 100
+        assert gen.key_format == "compressed"
 
     def test_init_entropy_config_enabled(self):
         """P0-4: 自定义熵池配置"""
@@ -50,7 +51,7 @@ class TestSecureKeyGeneratorInit:
             },
         )
         assert gen.entropy_check_enabled
-        assert gen.min_entropy_bits  ==  2000
+        assert gen.min_entropy_bits == 2000
 
     def test_init_entropy_config_disabled(self):
         """P0-5: 禁用熵池检查"""
@@ -64,10 +65,10 @@ class TestSecureKeyGeneratorInit:
     def test_init_stats_initialized(self):
         """P0-6: stats 字典初始化"""
         gen = SecureKeyGenerator()
-        assert gen.stats  in  "low_entropy_count"
-        assert gen.stats  in  "entropy_checks"
-        assert gen.stats  in  "warnings_issued"
-        assert gen.stats["low_entropy_count"]  ==  0
+        assert gen.stats in "low_entropy_count"
+        assert gen.stats in "entropy_checks"
+        assert gen.stats in "warnings_issued"
+        assert gen.stats["low_entropy_count"] == 0
 
 
 class TestGenerateBatch:
@@ -79,26 +80,26 @@ class TestGenerateBatch:
     def test_generate_batch_valid_keys(self):
         """P0-7: 正常批量生成 - 返回有效 secp256k1 私钥"""
         keys = self.gen.generate_batch(3)
-        assert len(keys)  ==  3
+        assert len(keys) == 3
         for key in keys:
             # generate_batch() 返回 bytearray 以支持安全清零，bytes 和 bytearray 均可
             assert isinstance(key, (bytes, bytearray))
-            assert len(key)  ==  32
+            assert len(key) == 32
             key_int = int.from_bytes(key, "big")
-            assert key_int  >=  1
-            assert key_int  <  Secp256k1.N
+            assert key_int >= 1
+            assert key_int < Secp256k1.N
 
     def test_generate_batch_single_key(self):
         """P0-8: 批量生成 1 个密钥"""
         keys = self.gen.generate_batch(1)
-        assert len(keys)  ==  1
-        assert len(keys[0])  ==  32
+        assert len(keys) == 1
+        assert len(keys[0]) == 32
 
     def test_generate_batch_zero_count(self):
         """P0-9: count=0 抛出 ValueError"""
         with self.assertRaises(ValueError) as ctx:
             self.gen.generate_batch(0)
-        assert str(ctx.exception)  in  "greater than 0"
+        assert str(ctx.exception) in "greater than 0"
 
     def test_generate_batch_negative_count(self):
         """P0-10: count<0 抛出 ValueError"""
@@ -109,10 +110,10 @@ class TestGenerateBatch:
         """P0-11: 批量生成后更新 total_generated"""
         before = self.gen._total_generated
         self.gen.generate_batch(5)
-        assert self.gen._total_generated  ==  before + 5
+        assert self.gen._total_generated == before + 5
 
         self.gen.generate_batch(3)
-        assert self.gen._total_generated  ==  before + 8
+        assert self.gen._total_generated == before + 8
 
     def test_generate_batch_all_keys_invalid_raises(self):
         """P1-1: 所有密钥无效时抛出 RuntimeError"""
@@ -120,7 +121,7 @@ class TestGenerateBatch:
             with patch("secrets.token_bytes", return_value=b"\x01" * 32):
                 with self.assertRaises(RuntimeError) as ctx:
                     self.gen.generate_batch(5)
-                assert str(ctx.exception)  in  "Cannot generate any valid private keys"
+                assert str(ctx.exception) in "Cannot generate any valid private keys"
 
     def test_generate_batch_with_rate_limit(self):
         """P1-2: 速率限制生效 - 10 keys at 100/s 至少耗时约 0.1s"""
@@ -131,10 +132,10 @@ class TestGenerateBatch:
         keys = gen.generate_batch(10)
         elapsed = time.perf_counter() - start
         # 10 keys at 100/s = minimum 0.1s; allow small epsilon for timer precision
-        assert elapsed  >=  0.05, f"速率限制未生效, 耗时仅 {elapsed:.4f}s"
-        assert len(keys)  ==  10
+        assert elapsed >= 0.05, f"速率限制未生效, 耗时仅 {elapsed:.4f}s"
+        assert len(keys) == 10
         for key in keys:
-            assert len(key)  ==  32
+            assert len(key) == 32
 
     def test_generate_batch_exception_handling(self):
         """P1-3: 单次生成异常时 continue 继续"""
@@ -150,7 +151,7 @@ class TestGenerateBatch:
             # key \x01*32 = int(1) which is valid
             keys = self.gen.generate_batch(3)
             # One failed, two succeeded, or all three with one retry
-            assert len(keys)  >  0
+            assert len(keys) > 0
 
 
 class TestGenerateSingle:
@@ -163,16 +164,16 @@ class TestGenerateSingle:
         """P0-12: 生成单个有效私钥"""
         key = self.gen.generate_single()
         assert isinstance(key, bytes)
-        assert len(key)  ==  32
+        assert len(key) == 32
         key_int = int.from_bytes(key, "big")
-        assert key_int  >=  1
-        assert key_int  <  Secp256k1.N
+        assert key_int >= 1
+        assert key_int < Secp256k1.N
 
     def test_generate_single_updates_total(self):
         """P0-13: generate_single 更新 total_generated"""
         before = self.gen._total_generated
         self.gen.generate_single()
-        assert self.gen._total_generated  ==  before + 1
+        assert self.gen._total_generated == before + 1
 
     def test_generate_single_max_attempts_exceeded(self):
         """P1-4: 100次尝试失败后抛出 RuntimeError"""
@@ -180,7 +181,7 @@ class TestGenerateSingle:
             with patch("secrets.token_bytes", return_value=b"\x00" * 32):
                 with self.assertRaises(RuntimeError) as ctx:
                     self.gen.generate_single()
-                assert str(ctx.exception)  in  "exceeded max attempts"
+                assert str(ctx.exception) in "exceeded max attempts"
 
     def test_generate_single_second_attempt_succeeds(self):
         """P1-5: 第一次无效、第二次有效"""
@@ -194,7 +195,7 @@ class TestGenerateSingle:
             with patch("secrets.token_bytes", return_value=b"\x01" * 32):
                 key = self.gen.generate_single()
                 assert isinstance(key, bytes)
-                assert len(key)  ==  32
+                assert len(key) == 32
 
 
 class TestIsValidPrivateKey:
@@ -250,32 +251,32 @@ class TestStatistics:
     def test_get_statistics_initial(self):
         """P0-21: 初始统计信息"""
         stats = self.gen.get_statistics()
-        assert stats["total_generated"]  ==  0
-        assert stats  in  "elapsed_seconds"
-        assert stats  in  "generation_rate"
-        assert stats["batch_size"]  ==  1000
-        assert stats["rate_limit"]  ==  0
-        assert stats["key_format"]  ==  "both"
-        assert stats  in  "entropy_check_enabled"
-        assert stats  in  "min_entropy_bits"
-        assert stats  in  "low_entropy_warnings"
-        assert stats  in  "entropy_checks"
+        assert stats["total_generated"] == 0
+        assert stats in "elapsed_seconds"
+        assert stats in "generation_rate"
+        assert stats["batch_size"] == 1000
+        assert stats["rate_limit"] == 0
+        assert stats["key_format"] == "both"
+        assert stats in "entropy_check_enabled"
+        assert stats in "min_entropy_bits"
+        assert stats in "low_entropy_warnings"
+        assert stats in "entropy_checks"
 
     def test_get_statistics_after_generation(self):
         """P0-22: 生成密钥后的统计信息"""
         self.gen.generate_batch(5)
         stats = self.gen.get_statistics()
-        assert stats["total_generated"]  ==  5
-        assert stats["generation_rate"]  >=  0
+        assert stats["total_generated"] == 5
+        assert stats["generation_rate"] >= 0
 
     def test_reset_statistics(self):
         """P0-23: 重置统计信息"""
         self.gen.generate_batch(10)
-        assert self.gen._total_generated  ==  10
+        assert self.gen._total_generated == 10
         self.gen.reset_statistics()
-        assert self.gen._total_generated  ==  0
+        assert self.gen._total_generated == 0
         stats = self.gen.get_statistics()
-        assert stats["total_generated"]  ==  0
+        assert stats["total_generated"] == 0
 
     def test_reset_statistics_then_regenerate(self):
         """P0-24: 重置后重新生成"""
@@ -283,7 +284,7 @@ class TestStatistics:
         self.gen.reset_statistics()
         self.gen.generate_batch(3)
         stats = self.gen.get_statistics()
-        assert stats["total_generated"]  ==  3
+        assert stats["total_generated"] == 3
 
 
 class TestEntropyCheck:
@@ -306,7 +307,7 @@ class TestEntropyCheck:
             result = self.gen._check_entropy_health()
             assert result
             # Should set entropy_checks to avoid repeat messages
-            assert self.gen.stats["entropy_checks"]  ==  1
+            assert self.gen.stats["entropy_checks"] == 1
 
     def test_entropy_windows_first_check_logs_platform(self):
         """P2-2: 非 Linux 系统首次检查记录平台信息"""
@@ -314,7 +315,7 @@ class TestEntropyCheck:
             with patch("platform.system", return_value="Windows"):
                 result = self.gen._check_entropy_health()
                 assert result
-                assert self.gen.stats["entropy_checks"]  ==  1
+                assert self.gen.stats["entropy_checks"] == 1
 
     def test_entropy_check_exception_handling(self):
         """P2-3: 熵池检查异常时假设健康"""

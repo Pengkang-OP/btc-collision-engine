@@ -289,4 +289,3 @@ class TestEntropyCheckConfiguration:
 
             result = generator._check_entropy_health()
             assert result
-

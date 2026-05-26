@@ -41,7 +41,7 @@ class TestWindowsAtomicOperations:
 
             # 4. 验证目标文件内容正确
             read_content = pathlib.Path(target_path).read_text(encoding="utf-8")
-            assert read_content  ==  content, "文件内容应该正确"
+            assert read_content == content, "文件内容应该正确"
 
         finally:
             shutil.rmtree(test_dir, ignore_errors=True)
@@ -86,7 +86,7 @@ class TestWindowsAtomicOperations:
             t.join(timeout=5)
 
         # 验证至少有一次写入成功
-        assert write_count  >  0, "至少有一次写入应该成功"
+        assert write_count > 0, "至少有一次写入应该成功"
 
         # 验证文件存在且可读取
         assert pathlib.Path(target_path).exists(), "目标文件应该存在"
@@ -124,12 +124,12 @@ class TestWindowsAtomicOperations:
 
             # 验证临时文件不存在（已被清理）
             temp_files = [f for f in os.listdir(test_dir) if f.endswith(".tmp")]
-            assert len(temp_files)  ==  0, "不应该有临时文件残留"
+            assert len(temp_files) == 0, "不应该有临时文件残留"
 
             # 验证内容正确（使用load方法）
             loaded = mgr.load()
             assert loaded is not None
-            assert loaded.get("mode")  ==  "random"
+            assert loaded.get("mode") == "random"
 
         finally:
             shutil.rmtree(test_dir, ignore_errors=True)
@@ -180,7 +180,7 @@ class TestWindowsMemoryLocking:
         key_manager.generate_key()
         key = key_manager.get_key()
         assert key is not None
-        assert len(key)  ==  32
+        assert len(key) == 32
 
         # 测试内存清理
         key_manager.clear()
@@ -195,15 +195,15 @@ class TestWindowsMemoryLocking:
 
         # 创建内存视图
         mv = memoryview(data)
-        assert len(mv)  ==  1024
+        assert len(mv) == 1024
 
         # 测试写入
         mv[:4] = b"test"
-        assert data[:4]  ==  b"test"
+        assert data[:4] == b"test"
 
         # 测试清零
         mv[:] = b"\x00" * 1024
-        assert data  ==  bytearray(1024)
+        assert data == bytearray(1024)
 
 
 @pytest.mark.skipunless(IS_WINDOWS, "仅在Windows环境运行")
@@ -227,13 +227,13 @@ class TestWindowsACL:
 
             # 测试文件可读
             content = pathlib.Path(test_file).read_text(encoding="utf-8")
-            assert content  ==  "测试内容"
+            assert content == "测试内容"
 
             # 测试文件可写
             with pathlib.Path(test_file).open("a", encoding="utf-8") as f:
                 f.write("追加内容")
             content = pathlib.Path(test_file).read_text(encoding="utf-8")
-            assert content  in  "追加内容"
+            assert content in "追加内容"
 
         finally:
             shutil.rmtree(test_dir, ignore_errors=True)
@@ -246,7 +246,7 @@ class TestPlatformDetection:
         """测试Windows平台检测"""
         if IS_WINDOWS:
             assert sys.platform.startswith("win")
-            assert os.name  ==  "nt"
+            assert os.name == "nt"
         else:
             pytest.skip("非Windows平台")
 

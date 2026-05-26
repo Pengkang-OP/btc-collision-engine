@@ -41,10 +41,8 @@ class _SyncFallbackMixin:
     @staticmethod
     def _log_cleanup(level: int, msg: str, *args: Any) -> None:
         """Cleanup 安全日志：抑制因日志基础设施关闭导致的异常。"""
-        try:
+        with suppress(OSError, RuntimeError, AttributeError):
             logger.log(level, msg, *args)
-        except (OSError, RuntimeError, AttributeError):
-            pass
 
     # ------------------------------------------------------------------
     # 同步执行（回退模式，PRNG 模式）

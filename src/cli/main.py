@@ -28,8 +28,8 @@ from ._path_setup import ensure_project_root
 ensure_project_root()
 
 # ── 模块级必需导入（仅保留被多处引用或模块级调用的轻量模块） ─────────────
-from src.cli.output import CLIOutput  # noqa: E402 — 被5个函数引用
-from src.utils import get_configured_logger, init_logging  # noqa: E402 — 模块级使用
+from .output import CLIOutput  # noqa: E402 — 被5个函数引用
+from ..utils import get_configured_logger, init_logging  # noqa: E402 — 模块级使用
 
 # 初始化日志
 init_logging()
@@ -198,7 +198,7 @@ def _run_main() -> None:
     """CLI 主逻辑（由 main() 包装异常处理）"""
     # 延迟导入：保留 ensure_project_root() 的调用顺序约束，同时避免模块级 E402
     from src.cli.arg_parser import parse_args
-    from src.cli.commands import _dispatch_utility_commands
+    from src.cli.commands import dispatch_utility_commands
     from src.cli.config_loader import load_config_with_validation
     from src.cli.stats_reporter import _print_final_summary
     from src.cli.validation import validate_args
@@ -220,7 +220,7 @@ def _run_main() -> None:
     _apply_output_flags(args)
 
     # 阶段1: 工具命令分发（提前处理，不需要 -t/-f，不触发重量级导入）
-    if _dispatch_utility_commands(args, _run_main):
+    if dispatch_utility_commands(args, _run_main):
         return  # 工具命令已处理，不再进行后续流程
 
     # 安全检查: 在碰撞引擎启动前自动验证加密后端安全性（非阻塞）

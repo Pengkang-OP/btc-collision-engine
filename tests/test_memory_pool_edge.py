@@ -30,14 +30,14 @@ class TestObjectPoolAutoTuneIdleShrink:
             objs.append(pool.acquire())
         for o in objs:
             pool.release(o)
-        assert len(pool._pool)  >  5 * 3
+        assert len(pool._pool) > 5 * 3
         pre_size = len(pool._pool)
 
         adjusted = pool.auto_tune(max_memory_mb=1024)
         assert adjusted
         # auto_tune 内部使用 del _pool[target:] 缩容到 initial_size
-        assert len(pool._pool)  ==  pool._initial_size
-        assert len(pool._pool)  <  pre_size
+        assert len(pool._pool) == pool._initial_size
+        assert len(pool._pool) < pre_size
 
 
 class TestGlobalPoolManagerAutoCleanupEdge:
@@ -118,8 +118,8 @@ class TestECPointPool:
         mgr.initialize()
         pool = mgr.get_ecpoint_pool()
         pt = pool.acquire(x=123, y=456, curve=None)
-        assert pt.x  ==  123
-        assert pt.y  ==  456
+        assert pt.x == 123
+        assert pt.y == 456
         assert pt.is_infinity is False
 
     def test_ecpoint_pool_acquire_infinity(self):
@@ -136,12 +136,12 @@ class TestECPointPool:
         mgr.initialize()
         pool = mgr.get_ecpoint_pool()
         pt = pool.acquire(x=1, y=2)
-        assert pt.x  ==  1
-        assert pt.y  ==  2
+        assert pt.x == 1
+        assert pt.y == 2
         pool.release(pt)
         # ECPoint 没有 reset 方法，坐标不变（由 ObjectPool.release 的 hasattr 跳过）
-        assert pt.x  ==  1
-        assert pt.y  ==  2
+        assert pt.x == 1
+        assert pt.y == 2
 
     def test_ecpoint_pool_get_stats(self):
         """ECPoint 池统计"""
@@ -149,5 +149,4 @@ class TestECPointPool:
         mgr.initialize()
         pool = mgr.get_ecpoint_pool()
         stats = pool.get_stats()
-        assert stats  in  "current_size"
-
+        assert stats in "current_size"

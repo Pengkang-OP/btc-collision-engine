@@ -225,7 +225,7 @@ class TestGPUDeviceScorerRankSelect:
 
     def test_03_select_best_empty_returns_none(self):
         """空列表 select_best 返回 None"""
-        assert self.scorer.select_best([] == None)
+        assert self.scorer.select_best([]) is None
 
 
 class TestGPUDeviceScorerTier:
@@ -390,7 +390,7 @@ class TestGPUDeviceScorerIdentifyModel:
 
     # ── Unknown ──
     def test_26_unknown_vendor(self):
-        assert self.scorer.identify_model("Some Totally Unknown GPU", "unknown" == None)
+        assert self.scorer.identify_model("Some Totally Unknown GPU", "unknown")
 
     # ── Cache ──
     def test_27_model_cache(self):
@@ -417,4 +417,3 @@ class TestGPUDeviceScorerSingleton:
         reset_gpu_scorer()
         s2 = get_gpu_scorer()
         assert s1 is not s2
-

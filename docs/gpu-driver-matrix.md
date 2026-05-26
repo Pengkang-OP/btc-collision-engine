@@ -27,13 +27,17 @@
 | GeForce RTX 40xx | 11.0 | 12.0+ | ~2.5M+ |
 
 **驱动安装**:
+
 - Windows: [NVIDIA 驱动下载](https://www.nvidia.com/Download/index.aspx)
+
 - Linux: `sudo apt install nvidia-driver-535` (Ubuntu) 或 `sudo dnf install akmod-nvidia` (Fedora)
 
 **验证命令**:
+
 ```bash
 nvidia-smi
 python -c "import pyopencl; print([d.name for p in pyopencl.get_platforms() for d in p.get_devices()])"
+
 ```
 
 ### AMD GPU
@@ -45,8 +49,11 @@ python -c "import pyopencl; print([d.name for p in pyopencl.get_platforms() for 
 | RX 7000 (RDNA 3) | 23.x | 24.x+ | ~800K |
 
 **驱动安装**:
+
 - Windows: [AMD 驱动下载](https://www.amd.com/en/support)
+
 - Linux (Ubuntu/Debian): `sudo apt install mesa-opencl-icd`
+
 - Linux (Fedora): `sudo dnf install mesa-libOpenCL`
 
 ### Intel GPU
@@ -60,8 +67,11 @@ python -c "import pyopencl; print([d.name for p in pyopencl.get_platforms() for 
 | UHD 6xx | 最新 | 最新 | ~30K |
 
 **驱动安装**:
+
 - Windows: [Intel 驱动下载](https://www.intel.com/content/www/us/en/download-center/home.html)
+
 - Linux: `sudo apt install intel-opencl-icd` (Ubuntu)
+
 - [Intel Arc 优化指南](intel-arc-gpu-compatibility-research.md)
 
 ## 多 GPU 配置
@@ -79,26 +89,37 @@ python -c "import pyopencl; print([d.name for p in pyopencl.get_platforms() for 
 
 ```bash
 python -c "import pyopencl as cl; [print(d.name) for p in cl.get_platforms() for d in p.get_devices()]"
+
 ```
 
 ### Q: GPU 初始化失败怎么办？
 
 1. 检查是否安装了 `pyopencl`
+
 2. 检查 GPU 驱动是否正确安装
+
 3. 运行 `python -m src.utils.health_check --gpu`
+
 4. 查看 [故障排查文档](../troubleshooting.md)
 
 ### Q: 性能低于预期？
 
 1. 检查 batch_size 配置 (推荐 1,048,576)
+
 2. 启用异步执行 (`async_execution: true`)
+
 3. 检查 GPU 温度和频率 (可能过热降频)
+
 4. 参考 [性能优化指南](../performance-optimization.md)
 
 ## 相关文档
 
 - [GPU 引擎使用指南](../gpu-engine-guide.md)
+
 - [性能优化指南](../performance-optimization.md)
+
 - [故障排查文档](../troubleshooting.md)
+
 - [Intel Arc 兼容性](../intel-arc-gpu-compatibility-research.md)
+
 - [环境变量配置](../environment/environment-variables.md)

@@ -14,6 +14,7 @@
 [可选的正文]
 
 [可选的脚注]
+
 ```
 
 ### 1.1 类型（type）
@@ -49,8 +50,11 @@
 ### 1.3 描述（description）
 
 - 使用中文编写
+
 - 不超过 50 个字符
+
 - 使用现在时、祈使语气（"添加"而非"添加了"）
+
 - 结尾不加句号
 
 ---
@@ -68,6 +72,7 @@
 
 <关联信息（可选）>
 Refs: #<issue编号>
+
 ```
 
 ### 2.2 完整示例
@@ -82,6 +87,7 @@ feat(gpu): 添加Intel Arc A770专项适配配置
 - 添加GPUProfileLoader自动识别Intel设备
 
 Refs: #42
+
 ```
 
 #### 缺陷修复
@@ -95,6 +101,7 @@ P1-3修复: 添加熵池健康检查，Windows下通过CryptGenRandom
 - 新增 _check_entropy_health() 方法
 - 新增 entropy_check_enabled / min_entropy_bits 配置项
 - 添加低熵环境自动告警逻辑
+
 ```
 
 #### 文档更新
@@ -105,6 +112,7 @@ docs(standards): 补充代码规范与测试规范文档
 - 新增 development_code_standards.md（Python代码规范）
 - 新增 development_test_standards.md（测试规范）
 - 新增 git_commit_standards.md（Git提交规范）
+
 ```
 
 #### 重构
@@ -117,6 +125,7 @@ tests/gpu_mock_factory.py，统一管理：
 - GPUMockFactory 类提供标准化 Mock 对象
 - 预置 NVIDIA/AMD/Intel 设备配置
 - 一站式 patch_gpu_collision_engine() 上下文管理器
+
 ```
 
 ### 2.3 不合规示例
@@ -133,6 +142,7 @@ fix(core): fix entropy check
 
 # ❌ 一个提交包含多个不相关变更
 feat: 添加GPU支持 + 修复地址解析 + 更新README
+
 ```
 
 ---
@@ -159,20 +169,27 @@ main ─────────────────────────
         ├── feature/gpu-intel-arc ──┘
         ├── feature/cli-audit ──────┘
         └── feature/health-check ───┘
+
 ```
 
 **规则**：
 
 1. `main` 分支始终可部署，禁止直接推送
+
 2. 所有变更通过 PR 合并到 `develop`，再从 `develop` 合并到 `main`
+
 3. 紧急修复从 `main` 创建 `hotfix/` 分支，修复后同时合并回 `main` 和 `develop`
+
 4. 功能分支从 `develop` 创建，完成后提 PR 回 `develop`
+
 5. 功能分支生命周期不超过 2 周，长期分支需定期 rebase
 
 ### 3.3 分支保护
 
 - `main`：强制 PR 审查 + 通过 CI
+
 - `develop`：强制 PR 审查 + 通过 CI
+
 - 功能分支：无保护，开发者自管
 
 ---
@@ -196,6 +213,7 @@ v4.2.1 - 2026-04-25   清理与维护（删除临时文件、修复重复导入�
 v4.2.1 - 2026-04-23   新增自动化安装、健康检查、数据清理
 v4.2.1 - ...          新增功能版本
 v4.2.1 - ...          主版本升级
+
 ```
 
 ### 4.3 打标签流程
@@ -216,6 +234,7 @@ git tag -a v4.2.1 -m "Release v4.2.1: 清理与维护"
 
 # 5. 推送标签
 git push origin v4.2.1
+
 ```
 
 ---
@@ -246,6 +265,7 @@ git push origin v4.2.1
 
 ## 关联 Issue
 <!-- Closes #xxx / Refs #xxx -->
+
 ```
 
 ### 5.2 合并方式
@@ -259,8 +279,11 @@ git push origin v4.2.1
 ### 5.3 审查要求
 
 - 至少 1 人 Review 通过
+
 - CI 全部通过（lint + test + coverage）
+
 - 无合并冲突
+
 - CHANGELOG.md 已更新（功能/修复类 PR）
 
 ---
@@ -285,6 +308,7 @@ git push origin v4.2.1
 
 ### 清理与维护
 - 清理、重构、文档更新等
+
 ```
 
 ### 6.2 分类规则
@@ -299,7 +323,9 @@ git push origin v4.2.1
 ### 6.3 维护时机
 
 - **功能/修复 PR**：在 PR 中同步更新 CHANGELOG.md 的 `[Unreleased]` 部分
+
 - **版本发布时**：将 `[Unreleased]` 替换为具体版本号和日期
+
 - **条目格式**：每条变更一行，以 `-` 开头，可附带文件路径或 Issue 编号
 
 ```markdown
@@ -312,6 +338,7 @@ git push origin v4.2.1
 
 - 修复 `src/collision/types.py` 中重复的 typing 导入
 - 修复 `src/gpu/device.py` 中厂商识别逻辑错误（Refs: #38）
+
 ```
 
 ---
@@ -321,11 +348,17 @@ git push origin v4.2.1
 每次提交前确认：
 
 - [ ] 提交消息符合 Conventional Commits 格式
+
 - [ ] 一个提交只做一件事（不混合功能/修复/重构）
+
 - [ ] 代码通过 `black` 格式化和 `flake8` 检查
+
 - [ ] 相关测试通过（`pytest tests/ -v`）
+
 - [ ] 功能/修复类变更已更新 CHANGELOG.md
+
 - [ ] 无调试代码残留（`print()`、`breakpoint()`、临时文件路径）
+
 - [ ] 敏感信息未提交（私钥、密码、API Token）
 
 ---
@@ -333,6 +366,9 @@ git push origin v4.2.1
 *参考文件*：
 
 - `CHANGELOG.md` — 版本历史与变更记录
+
 - `pyproject.toml` — 当前版本号 `version = "5.0.0"`
+
 - `.github/workflows/ci.yml` — CI 工作流配置
+
 - `.pre-commit-config.yaml` — 提交前自动检查

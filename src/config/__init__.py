@@ -1,4 +1,12 @@
-"""Configuration management package."""
+"""
+Configuration management package for BTC Collision Engine.
+
+Provides configuration loading, validation, hot-reloading (ConfigWatcher),
+migration between config versions, crypto backend selection (CryptoConfig),
+and performance/optimization tuning (PerformanceConfig, OptimizationConfig).
+"""
+
+from src import __version__ as __version__  # noqa: F401
 
 from .config_coordinator import ConfigCoordinator
 from .config_manager import ConfigManager

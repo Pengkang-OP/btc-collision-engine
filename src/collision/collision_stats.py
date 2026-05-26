@@ -23,7 +23,7 @@ class StatsSnapshot:
     total_errors: int = 0
     elapsed_seconds: float = 0.0
     throughput: float = 0.0
-    matches: list[dict] = field(default_factory=list)
+    matches: list[dict[str, str]] = field(default_factory=list)
 
     @property
     def total_checked(self) -> int:
@@ -46,14 +46,15 @@ DEFAULT_CPU_CACHE_INTERVAL_SEC = 1.0  # CPU使用率缓存更新间隔（秒）
 class CollisionStats:
     """Tracks and aggregates collision detection statistics."""
 
-    def __init__(self):
-        self._lock = threading.Lock()
-        self._start_time = time.time()
-        self._total_keys = 0
-        self._total_batches = 0
-        self._total_matches = 0
-        self._total_errors = 0
-        self.matches: list = []
+    def __init__(self) -> None:
+        """Initialize collision statistics tracker."""
+        self._lock: threading.Lock = threading.Lock()
+        self._start_time: float = time.time()
+        self._total_keys: int = 0
+        self._total_batches: int = 0
+        self._total_matches: int = 0
+        self._total_errors: int = 0
+        self.matches: list[dict[str, str]] = []
         # Error counters by category
         self._gpu_errors: int = 0
         self._worker_errors: int = 0
@@ -62,10 +63,17 @@ class CollisionStats:
         self._total_range: int = 0
 
     def record_key(self) -> None:
+        """Record a single key check."""
         with self._lock:
             self._total_keys += 1
 
     def record_keys(self, count: int) -> None:
+        """Record multiple key checks.
+
+        Args:
+            count: Number of keys to record
+
+        """
         with self._lock:
             self._total_keys += count
 
@@ -77,7 +85,7 @@ class CollisionStats:
 
         Raises:
             ValueError: If delta is negative
-            TypeError: If delta is not an int
+            TypeError: If delta is not an integer
 
         """
         if not isinstance(delta, int):
@@ -103,37 +111,37 @@ class CollisionStats:
         with self._lock:
             return self._total_batches
 
-    @property
-    def total_checked(self) -> int:
-        """Get total keys checked (backward compat alias for total_keys_checked)."""
-        with self._lock:
-            return self._total_keys
-
-    @property
-    def speed(self) -> float:
-        """Get current throughput in keys/second (backward compat)."""
-        return self.get_throughput()
-
-    @property
-    def elapsed(self) -> float:
-        """Get elapsed time in seconds (backward compat)."""
-        return max(time.time() - self._start_time, 0.001)
-
     def record_match(self) -> None:
+        """Record a collision match."""
         with self._lock:
             self._total_matches += 1
 
-    def add_match(self, pk=None, address=None, *args, **kwargs) -> None:
-        """Record a match and add to matches list."""
+    def add_match(
+        self,
+        pk: bytes | str | None = None,
+        address: str | None = None,
+    ) -> None:
+        """Record a match and add to matches list.
+
+        Args:
+            pk: Optional private key (bytes or str) to hash for record
+            address: Optional matched address string
+
+        """
         self.record_match()
         if pk is not None or address is not None:
-            entry = {}
+            entry: dict[str, str] = {}
             if address is not None:
                 entry["address"] = address
             if pk is not None:
-                entry["private_key_hash"] = hashlib.sha256(
-                    bytes(pk) if not isinstance(pk, bytes) else pk,
-                ).hexdigest()[:16]
+                # Convert to bytes: str -> .encode(), int -> to_bytes, bytes -> as-is
+                if isinstance(pk, str):
+                    pk_bytes = pk.encode()
+                elif isinstance(pk, int):
+                    pk_bytes = pk.to_bytes((pk.bit_length() + 7) // 8 or 1, "big")
+                else:
+                    pk_bytes = pk
+                entry["private_key_hash"] = hashlib.sha256(pk_bytes).hexdigest()[:16]
             self.matches.append(entry)
 
     def snapshot(self) -> StatsSnapshot:
@@ -154,9 +162,17 @@ class CollisionStats:
             )
 
     def record_error(self, error_type: str = "", error_msg: str = "") -> None:
-        """Record a general error with optional type/message."""
+        """Record a general error with optional type/message.
+
+        Args:
+            error_type: Category or tag for the error (e.g. "gpu", "worker")
+            error_msg: Descriptive error message for debugging
+
+        """
         with self._lock:
             self._total_errors += 1
+        if error_msg:
+            logger.debug("Error recorded: [%s] %s", error_type or "general", error_msg)
 
     def record_gpu_error(self, is_resource_error: bool = False) -> None:
         """Record a GPU error, optionally classifying as resource error.
@@ -203,10 +219,12 @@ class CollisionStats:
         )
 
     def get_throughput(self) -> float:
+        """Calculate current throughput in keys per second."""
         elapsed = max(time.time() - self._start_time, 0.001)
         return self._total_keys / elapsed
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, int | float]:
+        """Export current statistics as a dictionary."""
         with self._lock:
             elapsed = max(
                 time.time() - self._start_time,
@@ -231,7 +249,7 @@ class CollisionStats:
         with self._lock:
             self._start_time = value
 
-    def update(self, total_checked: int = 0, **kwargs) -> None:
+    def update(self, total_checked: int = 0, **kwargs: Any) -> None:
         """Update total keys checked.
 
         Args:
@@ -243,9 +261,9 @@ class CollisionStats:
             if total_checked:
                 self._total_keys = total_checked
             elif "total_range" in kwargs:
-                self._total_keys = kwargs["total_range"]
+                self._total_keys = int(kwargs["total_range"])
             if "total_range" in kwargs:
-                self._total_range = kwargs["total_range"]
+                self._total_range = int(kwargs["total_range"])
 
     @property
     def total_checked(self) -> int:
@@ -372,6 +390,7 @@ class CollisionStats:
         return mapping.get(key, default)
 
     def reset(self) -> None:
+        """Reset all statistics to initial state."""
         with self._lock:
             self._total_keys = 0
             self._total_batches = 0

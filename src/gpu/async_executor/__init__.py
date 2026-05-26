@@ -1,4 +1,4 @@
-"""GPU 异步执行器包
+"""GPU 异步执行器包.
 
 从 src/gpu/async_executor.py（1707行）拆分为 6 个模块：
 

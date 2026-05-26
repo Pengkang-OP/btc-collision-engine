@@ -22,10 +22,10 @@ if sys.platform == "win32":
 # 添加项目根目录到路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import secrets
+import secrets  # noqa: E402
 
-from src.core.bitcoin_key_validator import AddressType, BitcoinKeyValidator
-from src.core.secp256k1 import Secp256k1
+from src.core.bitcoin_key_validator import AddressType, BitcoinKeyValidator  # noqa: E402
+from src.core.secp256k1 import Secp256k1  # noqa: E402
 
 
 def print_section(title: str):

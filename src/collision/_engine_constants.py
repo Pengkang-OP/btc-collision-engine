@@ -1,4 +1,4 @@
-"""KeyCollisionEngine 模块级常量配置。
+"""KeyCollisionEngine 模块级常量配置.
 
 从 key_collision_engine.py 拆分，提高可维护性。
 """
@@ -9,8 +9,9 @@ BATCH_SIZE = 1000
 # 进度回调最小间隔（秒）
 PROGRESS_INTERVAL_SEC = 0.5
 
-# 每N次检测触发一次进度回调
+# 每N次检测触发一次进度回调（与 DEFAULT_BATCH_SIZE 区分：此为进度上报粒度）
 PROGRESS_INTERVAL_COUNT = 1000
+PROGRESS_INTERVAL_COUNT_DEFAULT = PROGRESS_INTERVAL_COUNT  # 别名，向后兼容
 
 # 每N次记录保存一次数据日志
 DATA_LOG_SAVE_FREQUENCY = 3
@@ -39,6 +40,5 @@ DEDUP_MAX_RECENT_SIZE = 10000  # 短期去重缓存大小
 COMPRESSION_AUTO_THRESHOLD = 10000  # 双格式检查自动切换阈值
 COMPRESSION_FORCE_SINGLE_THRESHOLD = 50000  # 强制仅压缩格式的阈值
 
-# 进度回调控制参数
-PROGRESS_INTERVAL_COUNT_DEFAULT = 1000  # 每N次检测触发一次进度回调
-MATCH_BATCH_FLUSH_THRESHOLD = 10  # P2-2修复: 匹配结果批量提交阈值
+# 匹配结果批量提交阈值（从 collision.constants 引入，避免重复定义）
+from .constants import MATCH_BATCH_FLUSH_THRESHOLD  # noqa: F401, E402

@@ -145,7 +145,8 @@ class TestSnapshotIsolation:
 
 
 @pytest.mark.skip(
-    reason="_safe_invoke_match_callback delegates to _result_processor.safe_invoke_match_callback; test needs refactor to test _result_processor directly"
+    reason="_safe_invoke_match_callback delegates to _result_processor."
+    "safe_invoke_match_callback; test needs refactor to test _result_processor directly"
 )
 class TestSafeInvokeMatchCallbackIsolation:
     """P0-2: 验证 GPU _safe_invoke_match_callback 能隔离回调异常

@@ -78,7 +78,7 @@ class BatchOptimizer:
         )
 
     def _precompute_constants(self):
-        """Precompute commonly used constants"""
+        """Precompute commonly used constants."""
         # Note: secp256k1 P and N are 256-bit large integers,
         # cannot use NumPy fixed-precision types
         # Python native int supports arbitrary precision,
@@ -216,7 +216,7 @@ class BatchOptimizer:
         hash160_list: list[bytes],
         version_byte: bytes = b"\x00",
     ) -> list[str]:
-        """Batch generate Bitcoin addresses from Hash160.
+        r"""Batch generate Bitcoin addresses from Hash160.
 
         Args:
             hash160_list: List of Hash160 results
@@ -369,7 +369,7 @@ class NumpyOptimizedAddressGenerator:
     """
 
     def __init__(self):
-        """Initialize optimized address generator"""
+        """Initialize optimized address generator."""
         from ..core.address_generator import (
             AddressGenerator,
         )

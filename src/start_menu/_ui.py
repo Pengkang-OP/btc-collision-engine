@@ -1,19 +1,19 @@
-"""启动菜单 UI 组件 — 渲染、子菜单、横幅。"""
+"""启动菜单 UI 组件 — 渲染、子菜单、横幅."""
 import os
 import shutil
 import subprocess
 from pathlib import Path
 
-from src.start_menu._i18n import _t
-from src.start_menu._shared import (
-    _HAS_RICH,
+from ._i18n import _t
+from ._shared import (
+    _has_rich,
     _PROJECT_ROOT,
     _PYTHON_EXE,
     _console,
     _RichPanel,
     _RichText,
 )
-from src.start_menu._utils import (
+from ._utils import (
     _clear_screen,
     _collect_dynamic_stats,
     _term_width,
@@ -24,6 +24,7 @@ from src.start_menu._utils import (
 
 
 def _show_cleanup_menu_rich() -> None:
+    assert _console is not None
     pw = max(46, _term_width() - 10)
     opts = _RichText()
     opts.append("  1. ", style="bold white")
@@ -62,6 +63,7 @@ def _show_cleanup_menu_plain() -> None:
 
 
 def _show_monitor_menu_rich() -> None:
+    assert _console is not None
     pw = max(44, _term_width() - 12)
     opts = _RichText()
     opts.append("  1. ", style="bold white")
@@ -104,7 +106,7 @@ def _show_monitor_menu_plain() -> None:
 def cleanup_menu() -> bool:
     while True:
         _clear_screen()
-        if _HAS_RICH and _console is not None:
+        if _has_rich and _console is not None:
             _show_cleanup_menu_rich()
         else:
             _show_cleanup_menu_plain()
@@ -202,7 +204,7 @@ def cleanup_menu() -> bool:
 def monitoring_menu() -> bool:
     while True:
         _clear_screen()
-        if _HAS_RICH and _console is not None:
+        if _has_rich and _console is not None:
             _show_monitor_menu_rich()
         else:
             _show_monitor_menu_plain()
@@ -254,13 +256,14 @@ def _show_banner() -> None:
     venv_ok = os.path.isfile(os.path.join(_PROJECT_ROOT, "venv", "Scripts", "activate.bat")) or \
         os.path.isfile(os.path.join(_PROJECT_ROOT, "venv", "bin", "activate"))
     targets_ok = os.path.isfile(os.path.join(_PROJECT_ROOT, "targets.txt"))
-    if _HAS_RICH and _console is not None:
+    if _has_rich and _console is not None:
         _show_banner_rich(venv_ok, targets_ok)
     else:
         _show_banner_plain(venv_ok, targets_ok)
 
 
 def _show_banner_rich(venv_ok: bool, targets_ok: bool) -> None:
+    assert _console is not None
     pw = _term_width()
     dyn = _collect_dynamic_stats()
     venv_tag = "[green]Found[/green]" if venv_ok else "[yellow]Not Found[/yellow]"
@@ -347,7 +350,7 @@ def _show_banner_plain(venv_ok: bool, targets_ok: bool) -> None:
 
 
 def _run_cli(args: list[str], label: str = "") -> int:
-    if _HAS_RICH and _console is not None:
+    if _has_rich and _console is not None:
         _console.print(
             _RichPanel(
                 f"[dim]Launching... {label}[/dim]" if label else "[dim]Launching...[/dim]",

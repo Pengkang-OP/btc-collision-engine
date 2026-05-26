@@ -9,6 +9,7 @@ class KeyAuditor:
     """Audits private key generation and usage for compliance."""
 
     def __init__(self):
+        """Initialize the key auditor."""
         self._audit_log: list[dict] = []
 
     def record_generation(

@@ -16,5 +16,6 @@
   "MD041": false,
   "MD046": { "style": "fenced" },
   "MD048": { "style": "backtick" },
+  "MD051": false,
   "MD060": false
 }

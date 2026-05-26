@@ -26,7 +26,7 @@ def fix_code_blocks(content: str, fname: str) -> str:
         elif s == "```" and in_code:
             result.append(line)
             in_code = False
-        elif in_code and not any(l.strip().startswith("```") for l in [line]):
+        elif in_code and not any(ln.strip().startswith("```") for ln in [line]):
             # 根据代码内容更新语言推断
             if lang == "text":
                 stripped = line.strip()

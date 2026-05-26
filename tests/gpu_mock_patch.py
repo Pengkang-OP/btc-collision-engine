@@ -17,7 +17,7 @@ import pytest
 
 pytestmark = pytest.mark.gpu
 
-from tests.gpu_mock_factory import GPUMockFactory
+from tests.gpu_mock_factory import GPUMockFactory  # noqa: E402
 
 
 def patch_pyopencl_buffer_for_test(test_func):

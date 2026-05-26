@@ -56,7 +56,7 @@ class TestKeyCollisionEngineBruteForce:
         engine.start(mode="brute_force", start=1, max_keys=10)
         time.sleep(1.0)
         engine.stop()
-        assert len(progress_called)  >  0
+        assert len(progress_called) > 0
 
     def test_brute_force_with_complete_callback(self):
         """暴力穷举：完成回调被调用"""
@@ -76,7 +76,7 @@ class TestKeyCollisionEngineBruteForce:
         engine.start(mode="brute_force", start=1, max_keys=10)
         complete_called.wait(timeout=10)
         engine.stop()
-        assert len(final_stats)  >  0
+        assert len(final_stats) > 0
 
 
 class TestKeyCollisionEngineBruteForceWorker:
@@ -91,7 +91,7 @@ class TestKeyCollisionEngineBruteForceWorker:
         )
         engine._current_position = 1
         count = engine._brute_force_worker(0, batch_size=2, max_keys=5)
-        assert count  >=  5
+        assert count >= 5
         engine.stop()
 
     def test_brute_force_worker_known_key_match(self):
@@ -106,8 +106,8 @@ class TestKeyCollisionEngineBruteForceWorker:
         engine._current_position = 1
         engine._stop_event.clear()
         count = engine._brute_force_worker(0, batch_size=3, max_keys=10)
-        assert count  >=  1
-        assert len(engine.stats.matches)  ==  1
+        assert count >= 1
+        assert len(engine.stats.matches) == 1
         engine.stop()
 
     def test_brute_force_worker_no_callback_stops(self):
@@ -122,7 +122,7 @@ class TestKeyCollisionEngineBruteForceWorker:
         engine._current_position = 1
         engine._stop_event.clear()
         count = engine._brute_force_worker(0, batch_size=3, max_keys=10)
-        assert count  >=  1
+        assert count >= 1
         assert engine._stop_event.is_set()
         engine.stop()
 
@@ -136,7 +136,7 @@ class TestKeyCollisionEngineBruteForceWorker:
         engine._current_position = 0
         engine._stop_event.clear()
         count = engine._brute_force_worker(0, batch_size=2, max_keys=5)
-        assert count  >  0, "k=0应被跳过，不应崩溃"
+        assert count > 0, "k=0应被跳过，不应崩溃"
         engine.stop()
 
     def test_brute_force_with_max_keys(self):
@@ -150,5 +150,5 @@ class TestKeyCollisionEngineBruteForceWorker:
         time.sleep(0.5)
         engine.stop()
         stats = engine.get_stats()
-        assert stats.total_checked  >  0
+        assert stats.total_checked > 0
         engine.stop()

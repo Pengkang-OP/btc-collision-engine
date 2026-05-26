@@ -5,11 +5,17 @@
 ## 目录
 
 - [C-1: 安全清零实现修复](#c-1-安全清零实现修复)
+
 - [C-2: OpenSSL 后端安全要求](#c-2-openssl-后端安全要求)
+
 - [H-4: 错误日志敏感数据脱敏](#h-4-错误日志敏感数据脱敏)
+
 - [C-3: 多线程清零统计线程安全](#c-3-多线程清零统计线程安全)
+
 - [H-2: 析构函数异常处理](#h-2-析构函数异常处理)
+
 - [H-5: 批量回调超时和批次数限制](#h-5-批量回调超时和批次数限制)
+
 - [M-3: 配置值边界验证](#m-3-配置值边界验证)
 
 ---
@@ -37,13 +43,17 @@ def _clear_secure(self):
         ctypes.memset(addr, 0, size)  # 直接调用底层函数
         if any(self._key):  # 验证清零成功
             raise SecureMemoryError("清零失败：内存未被正确清零")
+
 ```
 
 **修复要点：**
 
 1. 使用 `ctypes.memset` 直接操作系统内存，绕过 Python 对象系统
+
 2. 编译器无法优化掉对外部函数的调用
+
 3. 添加清零验证步骤，确保内存被正确清零
+
 4. 失败时抛出 `SecureMemoryError` 异常，避免静默失败
 
 ### 验证方法
@@ -52,6 +62,7 @@ def _clear_secure(self):
 
    ```bash
    pytest tests/test_secure_key_manager.py -v
+
    ```
 
 2. **手动验证脚本**
@@ -68,6 +79,7 @@ def _clear_secure(self):
    # 验证统计信息
    stats = SecureKeyManager.get_clear_stats()
    print(f"清零成功率: {stats['success_rate']:.2f}%")
+
    ```
 
 3. **内存检查**（高级用户）
@@ -75,12 +87,15 @@ def _clear_secure(self):
    ```bash
    # 使用 valgrind 检查内存泄漏
    valgrind --track-origins=yes python your_script.py
+
    ```
 
 ### 注意事项
 
 - `ctypes.memset` 需要有效的内存地址和大小
+
 - 验证步骤确保清零操作成功，但轻微的性能开销
+
 - 建议使用上下文管理器确保自动清理
 
 ---
@@ -104,18 +119,23 @@ def scalar_multiply(self, k: int, point_x: int, point_y: int) -> tuple[int, int]
     if not self._available:
         logger.critical("scalar_multiply回退到非恒定时间实现，存在侧信道风险")
         raise RuntimeError("安全要求：必须使用OpenSSL后端")
+
 ```
 
 **修复要点：**
 
 1. 检测到非恒定时间回退时立即抛出异常
+
 2. 记录 CRITICAL 级别日志，确保问题被关注
+
 3. 强制要求安全的后端实现
 
 **侧信道安全说明：**
 
 - 非恒定时间算法可能泄露私钥信息
+
 - 攻击者可通过分析执行时间推断私钥位
+
 - 恒定时间实现确保执行时间与输入无关
 
 ### 验证方法
@@ -132,6 +152,7 @@ def scalar_multiply(self, k: int, point_x: int, point_y: int) -> tuple[int, int]
    # 验证后端可用性
    assert backend.is_available, "后端不可用"
    assert backend.is_constant_time(), "后端不是恒定时间实现"
+
    ```
 
 2. **强制 OpenSSL 后端**
@@ -141,17 +162,23 @@ def scalar_multiply(self, k: int, point_x: int, point_y: int) -> tuple[int, int]
 
    # 设置为 OpenSSL 后端
    set_crypto_backend(BackendType.OPENSSL)
+
    ```
 
 3. **推荐的后端选择**
+
    - `CoincurveBackend`: libsecp256k1，完全恒定时间（推荐）
+
    - `OpenSSLBackend`: generate_public_key 是恒定的
+
    - `PurePythonBackend`: 可选恒定时间模式，性能较低
 
 ### 注意事项
 
 - 确保安装了 cryptography 库以获得最佳安全性
+
 - 优先使用 CoincurveBackend（libsecp256k1）
+
 - 定期检查后端可用性
 
 ---
@@ -182,13 +209,17 @@ def _log_throttled_error(
                 safe_exception = type(exception)(safe_exc_str)
             except (TypeError, ValueError):
                 safe_exception = RuntimeError(safe_exc_str)
+
 ```
 
 **修复要点：**
 
 1. 使用 `SensitiveDataFilter` 识别和替换敏感数据
+
 2. 保留异常类型用于诊断和调试
+
 3. 异常字符串中的敏感信息被替换为占位符
+
 4. 避免私钥等敏感数据泄露到日志文件
 
 ### 验证方法
@@ -209,6 +240,7 @@ def _log_throttled_error(
        redacted = SensitiveDataFilter.redact(msg)
        print(f"原始: {msg}")
        print(f"脱敏: {redacted}")
+
    ```
 
 2. **日志检查**
@@ -217,18 +249,22 @@ def _log_throttled_error(
    # 检查日志文件是否包含敏感数据
    grep -E "5[HJKLMNP][1-9A-HJ-NP-Za-km-z]{50}" logs/collision.log
    grep -E "0x[0-9a-fA-F]{64}" logs/collision.log
+
    ```
 
 3. **集成测试**
 
    ```bash
    pytest tests/test_log_security.py -v
+
    ```
 
 ### 注意事项
 
 - `SensitiveDataFilter` 覆盖常见的私钥格式
+
 - 日志文件应定期清理，避免积累敏感数据
+
 - 生产环境建议设置日志级别为 INFO 或 WARNING
 
 ---
@@ -264,13 +300,17 @@ class SecureKeyManager:
                 SecureKeyManager._total_clears += 1
                 SecureKeyManager._failed_clears += 1
             raise SecureMemoryError(f"安全清零失败: {e}") from e
+
 ```
 
 **修复要点：**
 
 1. 使用 `threading.Lock` 创建类级别锁
+
 2. 所有统计更新操作在锁内执行
+
 3. 确保 `_total_clears`, `_successful_clears`, `_failed_clears` 的原子更新
+
 4. 解决多线程并发访问时的竞态条件
 
 ### 验证方法
@@ -297,12 +337,14 @@ class SecureKeyManager:
    print(f"成功次数: {stats['successful']}")
    print(f"失败次数: {stats['failed']}")
    print(f"成功率: {stats['success_rate']:.2f}%")
+
    ```
 
 2. **竞态条件测试**
 
    ```bash
    pytest tests/test_thread_safety.py -v
+
    ```
 
 3. **统计准确性验证**
@@ -312,12 +354,15 @@ class SecureKeyManager:
    SecureKeyManager.reset_clear_stats()
    stats = SecureKeyManager.get_clear_stats()
    assert stats['total'] == 0
+
    ```
 
 ### 注意事项
 
 - 锁粒度适中，避免过度的性能开销
+
 - 统计重置是线程安全的
+
 - 建议在高并发场景下监控统计准确性
 
 ---
@@ -343,13 +388,17 @@ def __del__(self) -> None:
         import logging
         logger = logging.getLogger('KeyCollisionEngine')
         logger.warning(f'析构函数资源清理异常（非致命）: {type(e).__name__}: {e}')
+
 ```
 
 **修复要点：**
 
 1. 使用 `logging` 模块记录异常，提高问题可追溯性
+
 2. 避免静默失败，确保清理过程中的问题被记录
+
 3. 记录警告级别日志，不抛出异常（析构函数不能抛出异常）
+
 4. 推荐使用上下文管理器确保资源正确清理
 
 ### 验证方法
@@ -368,12 +417,14 @@ def __del__(self) -> None:
    engine.start()
    # 强制删除对象，观察日志输出
    del engine
+
    ```
 
 2. **日志检查**
 
    ```bash
    tail -f logs/collision.log | grep "析构函数"
+
    ```
 
 3. **上下文管理器测试**
@@ -382,12 +433,15 @@ def __del__(self) -> None:
    with KeyCollisionEngine(targets={'1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'}) as engine:
        engine.start()
        # 自动调用 stop()
+
    ```
 
 ### 注意事项
 
 - 记录警告级别日志，不抛出异常
+
 - 异常通常是资源清理问题，不影响主要功能
+
 - 更好的做法是使用上下文管理器确保资源正确清理
 
 ---
@@ -420,13 +474,17 @@ CALLBACK_TIMEOUT = 2.0  # 每批超时2秒
 for i in range(0, len(local_matches), CALLBACK_BATCH_SIZE):
     batch = local_matches[i:i + CALLBACK_BATCH_SIZE]
     # 处理当前批次...
+
 ```
 
 **修复要点：**
 
 1. 每批最多处理 5 个回调
+
 2. 每批超时 2 秒
+
 3. 分批处理避免主线程被回调卡死
+
 4. 提高引擎的响应性和稳定性
 
 ### 验证方法
@@ -452,6 +510,7 @@ for i in range(0, len(local_matches), CALLBACK_BATCH_SIZE):
    )
 
    # 触发多个匹配...
+
    ```
 
 2. **超时测试**
@@ -461,18 +520,22 @@ for i in range(0, len(local_matches), CALLBACK_BATCH_SIZE):
        time.sleep(10)  # 模拟超时
 
    # 验证超时处理
+
    ```
 
 3. **性能测试**
 
    ```bash
    pytest tests/test_callback_performance.py -v
+
    ```
 
 ### 注意事项
 
 - 回调函数应尽量快速完成
+
 - 超时设置应根据实际场景调整
+
 - 批处理会稍微增加处理延迟，但提高稳定性
 
 ---
@@ -516,13 +579,17 @@ def _validate_config_values(self, config: dict) -> dict:
                 validated[key] = default
 
     return validated
+
 ```
 
 **修复要点：**
 
 1. 验证数值类型配置参数是否在合理范围内
+
 2. 类型检查和范围检查双重验证
+
 3. 超出范围时自动使用默认值
+
 4. 记录警告日志，帮助用户发现配置问题
 
 ### 验证方法
@@ -542,24 +609,29 @@ def _validate_config_values(self, config: dict) -> dict:
    for config in invalid_configs:
        engine = MultiGPUCollisionEngine(config)
        # 验证引擎使用默认值初始化
+
    ```
 
 2. **警告日志检查**
 
    ```bash
    python your_script.py 2>&1 | grep "配置.*超出范围"
+
    ```
 
 3. **配置验证测试**
 
    ```bash
    pytest tests/test_config_validation.py -v
+
    ```
 
 ### 注意事项
 
 - 用户配置会被验证和修正
+
 - 建议在配置文件中使用合理的默认值
+
 - 警告日志帮助用户发现配置问题
 
 ---
@@ -567,23 +639,35 @@ def _validate_config_values(self, config: dict) -> dict:
 ## 安全最佳实践
 
 1. **私钥处理**
+
    - 始终使用 `SecureKeyManager` 管理私钥
+
    - 使用上下文管理器确保自动清理
+
    - 不要将私钥存储到日志文件
 
 2. **后端选择**
+
    - 优先使用 `CoincurveBackend`（完全恒定时间）
+
    - 确保 OpenSSL 后端可用
+
    - 定期检查后端状态
 
 3. **日志安全**
+
    - 生产环境设置日志级别为 INFO 或 WARNING
+
    - 定期清理日志文件
+
    - 使用 `SensitiveDataFilter` 过滤敏感数据
 
 4. **配置管理**
+
    - 使用边界验证确保配置有效
+
    - 避免硬编码敏感配置
+
    - 定期审查配置文件
 
 ---
@@ -603,6 +687,7 @@ def _validate_config_values(self, config: dict) -> dict:
 如果您发现任何安全漏洞，请通过以下方式报告：
 
 - 创建 GitHub Issue（标记为 Security）
+
 - 发送邮件至项目维护者
 
 我们将尽快评估并修复所有报告的安全问题。

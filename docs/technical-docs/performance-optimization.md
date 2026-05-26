@@ -6,66 +6,127 @@
 ## 目录
 
 - [1. 概述](#1-概述)
+
 - [2. 性能基准](#2-性能基准)
+
   - [2.1 测试环境](#21-测试环境)
+
   - [2.2 性能指标](#22-性能指标)
+
     - [2.2.1 纯Python后端](#221-纯python后端)
+
     - [2.2.2 Coincurve后端（推荐）](#222-coincurve后端推荐)
+
   - [2.3 性能瓶颈分析](#23-性能瓶颈分析)
+
 - [3. 后端选择优化](#3-后端选择优化)
+
   - [3.1 Coincurve后端安装](#31-coincurve后端安装)
+
 - [3.2 性能对比](#32-性能对比)
+
   - [3.3 后端切换方法](#33-后端切换方法)
+
 - [4. 当前优化策略](#4-当前优化策略)
+
   - [4.1 批量处理](#41-批量处理)
+
   - [4.2 线程池并行处理](#42-线程池并行处理)
+
   - [4.3 批量处理优化（新增）](#43-批量处理优化新增)
+
     - [4.3.1 _batch_size参数调优](#431-_batch_size参数调优)
+
     - [4.3.2 进度回调限流机制](#432-进度回调限流机制)
+
 - [4.3.3 减少锁竞争策略](#433-减少锁竞争策略)
+
 - [4.4 内存优化](#44-内存优化)
+
   - [3.3 去重过滤器](#33-去重过滤器)
+
   - [3.4 进度控制优化](#34-进度控制优化)
+
   - [3.5 内存预分配](#35-内存预分配)
+
 - [4. 椭圆曲线运算优化](#4-椭圆曲线运算优化)
+
   - [4.1 当前实现分析](#41-当前实现分析)
+
   - [4.2 优化方向](#42-优化方向)
+
     - [4.2.1 使用NumPy向量化](#421-使用numpy向量化)
+
     - [4.2.2 使用C扩展](#422-使用c扩展)
+
 - [4.2.3 预计算表](#423-预计算表)
+
   - [4.3 模运算优化](#43-模运算优化)
+
 - [5. 哈希运算优化](#5-哈希运算优化)
+
   - [5.1 当前实现](#51-当前实现)
+
   - [5.2 批量哈希](#52-批量哈希)
+
 - [6. Base58编码优化](#6-base58编码优化)
+
   - [6.1 当前实现分析](#61-当前实现分析)
+
   - [6.2 优化方案](#62-优化方案)
+
     - [6.2.1 使用数组预分配](#621-使用数组预分配)
+
     - [6.2.2 使用查表法](#622-使用查表法)
+
 - [7. 内存优化](#7-内存优化)
+
   - [7.1 内存使用分析](#71-内存使用分析)
+
   - [7.2 使用__slots__](#72-使用__slots__)
+
   - [7.3 布隆过滤器](#73-布隆过滤器)
+
 - [8. I/O优化](#8-io优化)
+
   - [8.1 CSV导出优化](#81-csv导出优化)
+
   - [8.2 断点保存优化](#82-断点保存优化)
+
 - [9. GPU加速](#9-gpu加速)
+
   - [9.1 可行性分析](#91-可行性分析)
+
   - [9.2 预期性能](#92-预期性能)
+
   - [9.3 实现挑战](#93-实现挑战)
+
 - [10. 性能监控](#10-性能监控)
+
   - [10.1 性能指标收集](#101-性能指标收集)
+
   - [10.2 实时监控](#102-实时监控)
+
 - [11. 优化建议汇总](#11-优化建议汇总)
+
   - [11.1 短期优化（已实现）](#111-短期优化已实现)
+
   - [11.2 中期优化](#112-中期优化)
+
   - [11.3 长期优化](#113-长期优化)
+
 - [12. 性能测试脚本](#12-性能测试脚本)
+
 - [13. 目标地址管理优化](#13-目标地址管理优化)
+
   - [13.1 地址解析缓存](#131-地址解析缓存)
+
 - [13.2 批量处理优化](#132-批量处理优化)
+
 - [13.3 大规模地址集匹配](#133-大规模地址集匹配)
+
 - [13.4 文件加载优化](#134-文件加载优化)
+
 - [14. 总结](#14-总结)
 
 ## 1. 概述
@@ -75,10 +136,15 @@
 **核心优化策略**:
 
 - 多后端支持（coincurve加速3-5x）
+
 - 批量处理和本地缓存
+
 - 线程池并行处理
+
 - 双缓冲去重过滤器
+
 - 进度回调限流
+
 - 数据日志系统优化
 
 ## 2. 性能基准
@@ -88,12 +154,15 @@
 **硬件配置**:
 
 - CPU: Intel Core i7-10700K @ 3.8GHz (8核16线程)
+
 - 内存: 32GB DDR4
+
 - 存储: NVMe SSD
 
 **软件配置**:
 
 - Python 3.11
+
 - Windows 11 / Ubuntu 22.04
 
 ### 2.2 性能指标
@@ -132,6 +201,7 @@
 │ Base58编码       10%         中 (Python大整数运算)          │
 │ 校验和计算       4%          低 (hashlib C实现)             │
 └─────────────────────────────────────────────────────────────┘
+
 ```
 
 **主要瓶颈**: 椭圆曲线标量乘法（纯Python实现）
@@ -148,10 +218,13 @@ pip install coincurve>=18.0.0
 
 # 验证安装
 python -c "import coincurve; print(coincurve.__version__)"
+
 ```python
 
 **依赖**:
+
 - libsecp256k1（会自动下载预编译版本）
+
 - 编译器（如果需要从源码编译）
 
 ## 3.2 性能对比
@@ -166,14 +239,17 @@ python -c "import coincurve; print(coincurve.__version__)"
 ### 3.3 后端切换方法
 
 **自动切换**:
+
 ```python
 from src.core.crypto_backend import crypto_manager
 
 # crypto_manager会自动选择最佳后端
 public_key = crypto_manager.generate_public_key(private_key, compressed=True)
+
 ```python
 
 **手动指定**:
+
 ```python
 from src.core.crypto_backend import CoincurveBackend, PurePythonBackend
 
@@ -184,6 +260,7 @@ public_key = backend.generate_public_key(private_key, compressed=True)
 # 使用纯Python后端
 backend = PurePythonBackend()
 public_key = backend.generate_public_key(private_key, compressed=True)
+
 ```markdown
 
 ## 4. 当前优化策略
@@ -193,6 +270,7 @@ public_key = backend.generate_public_key(private_key, compressed=True)
 **原理**: 减少函数调用开销和锁竞争
 
 **代码实现**:
+
 ```python
 def _random_search_worker(self, worker_id: int = 0) -> int:
     """随机碰撞模式的工作线程函数（优化版）"""
@@ -250,11 +328,15 @@ def _random_search_worker(self, worker_id: int = 0) -> int:
                 self.on_match(pk, addr, wif_str)
     
     return local_count
+
 ```python
 
 **优化效果**:
+
 - 批量处理减少锁竞争
+
 - 本地缓存减少共享状态更新
+
 - 批量提交匹配结果减少回调开销
 
 ### 4.2 线程池并行处理
@@ -262,6 +344,7 @@ def _random_search_worker(self, worker_id: int = 0) -> int:
 **原理**: 利用多核CPU并行生成私钥
 
 **代码实现**:
+
 ```python
 def random_search(self):
     """随机碰撞模式 - 使用线程池并行生成私钥并比对"""
@@ -283,6 +366,7 @@ def random_search(self):
                 timeout=0.1,
                 return_when=concurrent.futures.FIRST_COMPLETED
             )
+
 ```python
 
 **线程数选择**:
@@ -292,8 +376,11 @@ def random_search(self):
 | 8核 | 8-16 | 最佳性能区间 |
 
 **注意事项**:
+
 - Python GIL限制：CPU密集型操作无法完全并行
+
 - 线程数过多会导致上下文切换开销
+
 - 推荐：线程数 = CPU核心数
 
 ### 4.3 批量处理优化（新增）
@@ -310,12 +397,15 @@ def random_search(self):
 | 高性能 | 2000 | 减少锁竞争，增加内存 |
 
 **影响**:
+
 - 较大的batch_size：减少锁竞争，但增加内存占用
+
 - 较小的batch_size：更频繁的进度更新，但增加锁竞争
 
 #### 4.3.2 进度回调限流机制
 
 **实现**:
+
 ```python
 # 进度回调最小间隔（秒）
 self._progress_interval_sec = 0.5
@@ -327,21 +417,29 @@ if current_time - self._last_progress_time >= self._progress_interval_sec:
     if self.on_progress:
         self.on_progress(self.stats)
     self._last_progress_time = current_time
+
 ```python
 
 **效果**:
+
 - 避免过于频繁的回调（每次检查都触发）
+
 - 减少UI刷新开销
+
 - 降低日志记录频率
 
 ## 4.3.3 减少锁竞争策略
 
 1. **本地缓存**: 工作线程使用`local_matches`和`local_count`
+
 2. **批量提交**: 每批处理完后一次性更新共享状态
+
 3. **分离锁**: 计数器、匹配列表、去重过滤器使用独立锁
+
 4. **实时计数器**: `_live_range_count`无锁进度更新
 
 **代码示例**:
+
 ```python
 # 工作线程本地缓存
 local_matches = []
@@ -357,9 +455,11 @@ for private_key in batch:
 with self._count_lock:
     self.stats.total_checked += local_count
     self.stats.matches.extend(local_matches)
+
 ```markdown
 
 ## 4.4 内存优化
+
 | 16核+ | 16-32 | 避免过多上下文切换 |
 
 ### 3.3 去重过滤器
@@ -367,6 +467,7 @@ with self._count_lock:
 **原理**: 使用布隆过滤器或哈希集合避免重复计算
 
 **代码实现**:
+
 ```python
 class DeduplicationFilter:
     """去重过滤器 - 使用哈希集合避免重复检查"""
@@ -392,10 +493,13 @@ class DeduplicationFilter:
             
             self._filter.add(private_key)
             return True
+
 ```python
 
 **性能影响**:
+
 - 启用去重: 减少约5-10%重复计算
+
 - 内存占用: 约100MB/百万条目
 
 ### 3.4 进度控制优化
@@ -403,6 +507,7 @@ class DeduplicationFilter:
 **原理**: 减少UI更新频率，避免界面卡顿
 
 **代码实现**:
+
 ```python
 def _batch_generate_worker(self, count: int):
     """批量生成工作线程"""
@@ -423,6 +528,7 @@ def _batch_generate_worker(self, count: int):
         # 使用 after 确保线程安全，控制更新频率
         if (i + 1) % 10 == 0 or i == count - 1:
             self.root.after(0, self._update_batch_ui, i + 1, count, result)
+
 ```markdown
 
 ### 3.5 内存预分配
@@ -430,6 +536,7 @@ def _batch_generate_worker(self, count: int):
 **原理**: 预分配内存减少动态分配开销
 
 **代码实现**:
+
 ```python
 # 预分配结果列表
 self.batch_results = []
@@ -438,6 +545,7 @@ self.batch_results.reserve(count)  # 如果可能
 # 使用数组而非列表（大量数据时）
 import array
 results = array.array('Q', [0]) * count
+
 ```markdown
 
 ## 4. 椭圆曲线运算优化
@@ -445,6 +553,7 @@ results = array.array('Q', [0]) * count
 ### 4.1 当前实现分析
 
 **标准双倍-加法算法**:
+
 ```python
 def scalar_multiply(self, k: int, point: ECPoint) -> ECPoint:
     result = ECPoint(None, None, self.curve)
@@ -457,11 +566,15 @@ def scalar_multiply(self, k: int, point: ECPoint) -> ECPoint:
         k >>= 1
     
     return result
+
 ```python
 
 **性能瓶颈**:
+
 - Python大整数运算开销
+
 - 频繁的函数调用
+
 - 对象创建开销
 
 ### 4.2 优化方向
@@ -478,10 +591,13 @@ def batch_scalar_multiply_numpy(private_keys: np.ndarray, points: np.ndarray) ->
     # 将椭圆曲线运算转换为矩阵运算
     # 注意：需要特殊处理模运算
     pass
+
 ```python
 
 **限制**: 
+
 - 模运算难以向量化
+
 - 仅适用于特定场景
 
 #### 4.2.2 使用C扩展
@@ -498,6 +614,7 @@ cdef class EllipticCurve:
         cdef ECPoint result = ECPoint(0, 0)
         # ...
         return result
+
 ```python
 
 **预期性能提升**: 10-100倍
@@ -522,6 +639,7 @@ class EllipticCurve:
             if k & (1 << i):
                 result = self.point_add(result, self.precomputed[i])
         return result
+
 ```python
 
 **内存占用**: 256 × 64字节 ≈ 16KB
@@ -529,6 +647,7 @@ class EllipticCurve:
 ### 4.3 模运算优化
 
 **当前实现**:
+
 ```python
 def mod_inverse(self, a: int, m: int) -> int:
     # 扩展欧几里得算法
@@ -544,11 +663,15 @@ def mod_inverse(self, a: int, m: int) -> int:
         t = t + m
     
     return t
+
 ```python
 
 **优化方案**:
+
 - 使用Montgomery约减
+
 - 使用Barrett约减
+
 - 使用预计算表
 
 ## 5. 哈希运算优化
@@ -556,15 +679,20 @@ def mod_inverse(self, a: int, m: int) -> int:
 ### 5.1 当前实现
 
 **使用hashlib**:
+
 ```python
 @staticmethod
 def sha256(data: bytes) -> bytes:
     return hashlib.sha256(data).digest()
+
 ```python
 
 **性能特点**:
+
 - 底层使用OpenSSL实现
+
 - 已经是C级别优化
+
 - 进一步优化空间有限
 
 ### 5.2 批量哈希
@@ -578,6 +706,7 @@ def batch_hash160(public_keys: List[bytes]) -> List[bytes]:
     for pk in public_keys:
         results.append(HashUtils.hash160(pk))
     return results
+
 ```markdown
 
 ## 6. Base58编码优化
@@ -585,6 +714,7 @@ def batch_hash160(public_keys: List[bytes]) -> List[bytes]:
 ### 6.1 当前实现分析
 
 **编码算法**:
+
 ```python
 @staticmethod
 def encode(data: bytes) -> str:
@@ -597,10 +727,13 @@ def encode(data: bytes) -> str:
         result.append(Base58.ALPHABET[rem])
     
     return '1' * leading_zeros + ''.join(reversed(result))
+
 ```python
 
 **性能瓶颈**:
+
 - 大整数除法开销
+
 - 字符串拼接开销
 
 ### 6.2 优化方案
@@ -623,6 +756,7 @@ def encode_optimized(data: bytes) -> str:
         idx += 1
     
     return '1' * leading_zeros + ''.join(reversed(result[:idx]))
+
 ```markdown
 
 #### 6.2.2 使用查表法
@@ -630,6 +764,7 @@ def encode_optimized(data: bytes) -> str:
 ```python
 # 预计算查找表
 BASE58_TABLE = [Base58.ALPHABET[i] for i in range(58)]
+
 ```markdown
 
 ## 7. 内存优化
@@ -654,6 +789,7 @@ class ECPoint:
         self.y = y
         self.curve = curve
         self.is_infinity = (x is None or y is None)
+
 ```python
 
 **效果**: 减少约50%内存占用
@@ -661,6 +797,7 @@ class ECPoint:
 ### 7.3 布隆过滤器
 
 **替代哈希集合**:
+
 ```python
 import pybloom_live
 
@@ -675,6 +812,7 @@ class BloomDeduplicationFilter:
                 return False
             self.bloom.add(private_key)
             return True
+
 ```python
 
 **内存对比**:
@@ -688,6 +826,7 @@ class BloomDeduplicationFilter:
 ### 8.1 CSV导出优化
 
 **批量写入**:
+
 ```python
 def export_csv_optimized(self, filename: str, results: List[dict]):
     """优化CSV导出"""
@@ -705,11 +844,13 @@ def export_csv_optimized(self, filename: str, results: List[dict]):
         
         if batch:
             writer.writerows(batch)
+
 ```markdown
 
 ### 8.2 断点保存优化
 
 **增量保存**:
+
 ```python
 def save_checkpoint_incremental(self, filename: str, data: dict):
     """增量保存断点"""
@@ -722,6 +863,7 @@ def save_checkpoint_incremental(self, filename: str, data: dict):
     with open(filename, 'a') as f:
         json.dump(incremental_data, f)
         f.write('\n')
+
 ```yaml
 
 ## 9. GPU加速
@@ -729,12 +871,17 @@ def save_checkpoint_incremental(self, filename: str, data: dict):
 ### 9.1 可行性分析
 
 **适用场景**:
+
 - 大规模碰撞检测
+
 - 批量地址生成
 
 **技术方案**:
+
 - CUDA (NVIDIA GPU)
+
 - OpenCL (跨平台)
+
 - Metal (Apple Silicon)
 
 ### 9.2 实测性能（v3.2.0）
@@ -756,11 +903,15 @@ def save_checkpoint_incremental(self, filename: str, data: dict):
 ### 9.4 动态性能基准值计算（新增）
 
 **原理**:
+
 - 在GPU初始化时运行简短的性能测试，获取实际GPU性能数据
+
 - 使用实际性能的80%作为基准值，用于性能警告阈值计算
+
 - 避免使用固定的500K keys/s基准，适应不同GPU的实际性能
 
 **实现**:
+
 ```python
 def _calculate_dynamic_benchmark(self):
     """
@@ -791,17 +942,23 @@ def _calculate_dynamic_benchmark(self):
         logger.warning(f"动态性能基准计算失败，使用默认值: {e}")
         # 保持默认值
         pass
+
 ```
 
 **优势**:
+
 - 适应不同GPU的实际性能
+
 - 避免固定基准值导致的误报或漏报
+
 - 提供更准确的性能监控和警告
 
 ### 9.5 实现挑战
 
 - 椭圆曲线运算难以并行化
+
 - 内存传输开销
+
 - 代码复杂度增加
 
 ## 10. 性能监控
@@ -834,6 +991,7 @@ class PerformanceMonitor:
             'max': max(self.timings),
             'stdev': statistics.stdev(self.timings) if len(self.timings) > 1 else 0
         }
+
 ```markdown
 
 ### 10.2 实时监控
@@ -854,6 +1012,7 @@ def monitor_performance(engine: KeyCollisionEngine):
               f"CPU: {process.cpu_percent()}%")
         
         time.sleep(1)
+
 ```markdown
 
 ## 11. 优化建议汇总
@@ -933,6 +1092,7 @@ def benchmark_public_key_generation(count: int = 1000):
 if __name__ == "__main__":
     benchmark_public_key_generation(100)
     benchmark_address_generation(100)
+
 ```markdown
 
 ## 13. 目标地址管理优化
@@ -942,6 +1102,7 @@ if __name__ == "__main__":
 **原理**: 使用LRU缓存加速重复地址解析
 
 **代码实现**:
+
 ```python
 from src.collision.targets.resolver import TargetResolver
 
@@ -957,11 +1118,15 @@ address2 = resolver.resolve('5KJvsngHeMpm884wtkJNzQGaCErckhHJBGFsvd3VyK5qMZXj3hS
 # 查看缓存统计
 stats = resolver.get_cache_stats()
 print(f"缓存命中率: {stats['hit_rate']:.2%}")
+
 ```python
 
 **性能提升**:
+
 - 缓存命中: ~50,000次/秒
+
 - 缓存未命中: ~4,500次/秒
+
 - 提升幅度: **10x**
 
 ## 13.2 批量处理优化
@@ -969,6 +1134,7 @@ print(f"缓存命中率: {stats['hit_rate']:.2%}")
 **原理**: 批量地址验证,利用多核并行
 
 **代码实现**:
+
 ```python
 from src.collision.targets.validator import AddressBatchValidator
 
@@ -981,11 +1147,15 @@ results = validator.validate_batch(addresses)
 
 # 获取有效地址
 valid_addresses = validator.filter_valid(addresses)
+
 ```python
 
 **性能提升**:
+
 - 单线程验证: ~1,000地址/秒
+
 - 4线程并行: ~3,500地址/秒
+
 - 提升幅度: **3.5x**
 
 ## 13.3 大规模地址集匹配
@@ -993,6 +1163,7 @@ valid_addresses = validator.filter_valid(addresses)
 **原理**: 布隆过滤器优化大规模地址匹配,节省98%内存
 
 **代码实现**:
+
 ```python
 from src.collision.targets.matcher import AddressMatcher
 
@@ -1009,6 +1180,7 @@ matcher = AddressMatcher(
 
 # 检查匹配
 is_match = matcher.is_match('1TestAddress...')
+
 ```python
 
 **内存对比**:
@@ -1018,7 +1190,9 @@ is_match = matcher.is_match('1TestAddress...')
 | 布隆过滤器 | ~100KB | 0.1% |
 
 **适用场景**:
+
 - Hash集合: 目标地址 < 10万
+
 - 布隆过滤器: 目标地址 >= 10万
 
 ## 13.4 文件加载优化
@@ -1026,6 +1200,7 @@ is_match = matcher.is_match('1TestAddress...')
 **原理**: 批量解析+缓存加速文件加载
 
 **代码实现**:
+
 ```python
 from src.collision.targets.resolver import TargetResolver
 
@@ -1037,12 +1212,15 @@ targets = resolver.load_from_file('valid_addresses.txt')
 # 查看解析统计
 stats = resolver.get_cache_stats()
 print(f"解析了 {len(targets)} 个地址, 缓存命中率: {stats['hit_rate']:.2%}")
+
 ```
 
 **性能提升**:
 
 - 加载10万地址(旧版): ~2秒
+
 - 加载10万地址(新版): ~0.5秒
+
 - 提升幅度: **4x**
 
 ## 14. 总结
@@ -1052,6 +1230,9 @@ BTC项目在纯Python实现的基础上，通过批量处理、多线程并行�
 对于性能要求更高的场景，建议：
 
 1. 使用多线程充分利用多核CPU
+
 2. 考虑使用Cython或C扩展优化热点代码
+
 3. 对于大规模碰撞检测，考虑GPU加速方案
+
 4. 监控内存使用，必要时使用布隆过滤器优化

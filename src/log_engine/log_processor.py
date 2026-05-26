@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from ..utils import get_configured_logger
 
@@ -18,10 +18,11 @@ class LogProcessor:
     """Processes and transforms log events."""
 
     def __init__(self) -> None:
-        self._filters: list = []
-        self._transforms: list = []
+        """Initialize the log processor."""
+        self._filters: list[Any] = []
+        self._transforms: list[Any] = []
 
-    def process(self, event: LogEvent) -> dict | None:  # noqa: F821
+    def process(self, event: LogEvent) -> dict[str, Any] | None:  # noqa: F821
         """Process a log event into a dictionary.
 
         Args:
@@ -53,7 +54,7 @@ class SensitiveDataFilter(logging.Filter):
 
     # Class-level compiled patterns for address/private key detection
     # 注意：纯 64 字符 hex 可能是 txid 或哈希值，仅在特定上下文标记附近匹配
-    SENSITIVE_PATTERNS: list[re.Pattern] = [
+    SENSITIVE_PATTERNS: list[re.Pattern[str]] = [
         re.compile(r"(?<![0-9a-fA-F])[0-9a-fA-F]{64}(?![0-9a-fA-F])",
                    re.IGNORECASE),  # 裸 64-char hex（私钥/哈希）
         re.compile(r"PrivateKey\s*[=:]\s*\S+", re.IGNORECASE),  # PrivateKey=...
@@ -66,7 +67,8 @@ class SensitiveDataFilter(logging.Filter):
         re.compile(r"[KL5][1-9A-HJ-NP-Za-km-z]{50,51}"),  # WIF private key
     ]
 
-    def __init__(self, patterns: list[tuple[re.Pattern, str]] | None = None):
+    def __init__(self, patterns: list[tuple[re.Pattern[str], str]] | None = None):
+        """Initialize the log redactor."""
         super().__init__()
         self._patterns = patterns or []
 
@@ -132,7 +134,7 @@ class SensitiveDataFilter(logging.Filter):
         return message
 
     @staticmethod
-    def redact_data(data: dict | list | str) -> dict | list | str:
+    def redact_data(data: dict[str, Any] | list[Any] | str) -> dict[str, Any] | list[Any] | str:
         """Recursively redact sensitive data from dicts, lists, or strings.
 
         Args:

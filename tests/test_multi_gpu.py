@@ -72,8 +72,8 @@ class TestGPUDeviceSelector:
 
         best = self.selector.select_best_device(devices)
 
-        assert best["global_index"]  ==  1
-        assert best["score"]  ==  167.04
+        assert best["global_index"] == 1
+        assert best["score"] == 167.04
 
 
 class TestGPULoadBalancer:
@@ -110,7 +110,7 @@ class TestGPULoadBalancer:
         assert total == pytest.approx(1.0, abs=10**-2)
 
         # GPU 1(16GB)权重应大于GPU 0(6GB)
-        assert weights[1]  >  weights[0]
+        assert weights[1] > weights[0]
 
     def test_equal_weights(self):
         """测试平均分配权重"""
@@ -131,7 +131,7 @@ class TestGPULoadBalancer:
         start, end = balancer.assign_key_range(1000000, device_idx=0)
 
         # 50%权重应分配500K keys
-        assert end - start  ==  500000
+        assert end - start == 500000
 
 
 class TestGPUAutoConfigurator:
@@ -149,10 +149,10 @@ class TestGPUAutoConfigurator:
 
         config = self.configurator.get_nvidia_config(device)
 
-        assert config["use_uint32_workaround"]  ==  False
+        assert not config["use_uint32_workaround"]
         # 加密运算需要精度，快速数学必须禁用
-        assert config["use_fast_math"]  ==  False
-        assert [32768, 65536, 131072]  in  config["batch_size"]
+        assert not config["use_fast_math"]
+        assert [32768, 65536, 131072] in config["batch_size"]
 
     def test_intel_config(self):
         """测试Intel配置（v4.2.3: Arc A770 16GB优化为2097152 (2M)）"""
@@ -160,10 +160,10 @@ class TestGPUAutoConfigurator:
 
         config = self.configurator.get_intel_config(device)
 
-        assert config["use_uint32_workaround"]  ==  True
-        assert config["use_fast_math"]  ==  False
+        assert config["use_uint32_workaround"]
+        assert not config["use_fast_math"]
         # v4.2.3优化: Arc A770(16GB)使用2097152批次; 低显存设备使用更小批次
-        assert [65536, 131072, 262144, 1048576, 2097152]  in  config["batch_size"]
+        assert [65536, 131072, 262144, 1048576, 2097152] in config["batch_size"]
 
     def test_configure_for_device_intel_full_vendor_name(self):
         """测试完整厂商名称路由 - Intel(R) Corporation 应走 INTEL_ARC_CONFIG"""
@@ -176,7 +176,7 @@ class TestGPUAutoConfigurator:
         assert config["enable_async"], "Intel Arc 应启用异步执行"
         assert config["use_uint32_workaround"], "Intel Arc 应启用uint32 workaround"
         assert not config["use_fast_math"], "Intel Arc 应禁用快速数学"
-        assert config["batch_size"]  ==  2097152, "Intel Arc A770(≥15GB) 应使用2097152批次(v4.2.3优化: 2M)"
+        assert config["batch_size"] == 2097152, "Intel Arc A770(≥15GB) 应使用2097152批次(v4.2.3优化: 2M)"
 
     def test_configure_for_device_amd_full_vendor_name(self):
         """测试完整厂商名称路由 - Advanced Micro Devices, Inc. 应走 AMD_CONFIG"""
@@ -206,4 +206,3 @@ class TestGPUConfigValidator:
 
     def test_dummy(self):
         pass  # placeholder to satisfy unittest collection
-

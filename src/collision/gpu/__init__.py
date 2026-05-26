@@ -20,7 +20,7 @@
 更新日期: 2026-05-23
 """
 
-__version__ = "5.0.0"
+from src import __version__ as __version__  # noqa: F401 — 从包根统一读取
 __author__ = "BTC Project"
 
 # v4.2.2 S1: __init__.py 提供清晰的导入映射

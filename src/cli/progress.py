@@ -1,7 +1,7 @@
-"""Progress display utilities for CLI.
+r"""Progress display utilities for CLI.
 
 Uses rich.live.Live for smooth real-time stats display
-without the flicker of \\r overwrite approach.
+without the flicker of \r overwrite approach.
 """
 
 import time
@@ -148,6 +148,7 @@ class LiveStatsDisplay:
         description: str = "",
         refresh_rate: float = 4,
     ):
+        """Initialize the progress display."""
         self.engine_type = engine_type
         self.description = description or f"{engine_type} 引擎运行中"
         self.refresh_rate = refresh_rate
@@ -227,6 +228,7 @@ class ProgressBar:
     """Simple progress bar for CLI display (legacy)."""
 
     def __init__(self, total: int, width: int = 40):
+        """Initialize the simple progress bar."""
         self.total = total
         self.width = width
         self._start = time.time()

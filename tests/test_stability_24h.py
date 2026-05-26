@@ -19,8 +19,8 @@ from typing import Any
 
 # 添加项目根目录到路径
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
-from src.collision.gpu.engine import GPUCollisionEngine
-from src.monitoring.gpu_performance_monitor import GPUPerformanceMonitor
+from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
+from src.monitoring.gpu_performance_monitor import GPUPerformanceMonitor  # noqa: E402
 
 
 class StabilityTestRunner:
@@ -206,7 +206,7 @@ class StabilityTestRunner:
         print("  目标地址: 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
         print(f"\n开始时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print(
-            f"预计结束: {(datetime.now() + timedelta(hours=self.duration_hours)).strftime('%Y-%m-%d %H:%M:%S')}",
+            f"预计结束: {(datetime.now() + timedelta(hours=self.duration_hours)).strftime('%Y-%m-%d %H:%M:%S')}",  # noqa: E501
         )
 
         # 初始化引擎

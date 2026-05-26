@@ -1,5 +1,7 @@
 # BTC碰撞引擎 - 快速部署指南
 
+> **版本**: v5.0.0
+
 ## 🚀 30秒快速启动
 
 ### systemd方式（Linux服务器）
@@ -33,7 +35,7 @@ docker-compose --profile gpu --profile nvidia up -d
 | CPU | 2核 | 8核+ |
 | 内存 | 4GB | 16GB+ |
 | 磁盘 | 20GB | 100GB+ SSD |
-| Python | 3.9+ | 3.11 |
+| Python | 3.12+ | 3.12 |
 | GPU（可选） | OpenCL 1.2 | NVIDIA RTX 3060+ |
 
 ### 依赖安装
@@ -41,7 +43,7 @@ docker-compose --profile gpu --profile nvidia up -d
 ```bash
 # Ubuntu/Debian
 sudo apt update
-sudo apt install -y python3.11 python3.11-venv git curl
+sudo apt install -y python3.12 python3.12-venv git curl
 
 # Docker
 curl -fsSL https://get.docker.com | sh

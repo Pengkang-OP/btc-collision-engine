@@ -1,4 +1,4 @@
-"""GPU模块 - GPU设备检测、配置管理和厂商优化
+"""GPU模块 - GPU设备检测、配置管理和厂商优化.
 
 提供完整的GPU管理功能:
 - GPU设备自动检测和选择
@@ -75,7 +75,7 @@ from .scorer import GPUDeviceScorer, get_gpu_scorer, reset_gpu_scorer
 from .selector import GPUDeviceSelector, get_gpu_selector, reset_gpu_selector
 from .worker import SingleGPUWorker
 
-__version__ = "5.0.0"  # v5.0.0: 遗留问题清理，文档更新，代码注释优化
+from src import __version__ as __version__  # noqa: F401 — 从包根统一读取
 
 __all__ = [
     "GPUDeviceDetector",

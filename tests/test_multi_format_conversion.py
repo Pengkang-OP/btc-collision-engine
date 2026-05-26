@@ -23,6 +23,12 @@ print(f"Private Key: {test_private_key.hex()[:32]}...")
 print(f"Compressed Public Key: {compressed_pk.hex()}")
 print(f"Uncompressed Public Key: {uncompressed_pk.hex()[:64]}...")
 
+# AddressConverter removed, subsequent converter-dependent code will not execute
+converter = None
+bech32_address = None
+p2sh_address = None
+
+
 # 1. P2PKH地址生成
 print("\n" + "=" * 80)
 print("[1] P2PKH Address (Pay-to-Public-Key-Hash)")
@@ -169,8 +175,8 @@ print("=" * 80)
 
 test_results = {
     "P2PKH Generation": p2pkh_address[0] == "1",
-    "P2SH Generation": p2sh_address[0] == "3" if "p2sh_address" in locals() else False,
-    "Bech32 Generation": (bech32_address.startswith("bc1q") if "bech32_address" in locals() else False),
+    "P2SH Generation": False,
+    "Bech32 Generation": False,
     "Taproot Generation": (
         taproot_address.startswith("bc1p") if "taproot_address" in locals() else False
     ),

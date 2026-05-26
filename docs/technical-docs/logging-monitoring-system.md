@@ -7,9 +7,13 @@
 ### 1.1 核心组件
 
 - **日志收集规则配置系统**：支持基于模块的日志级别控制、关键字过滤、上下文增强和动态规则管理
+
 - **日志依赖管理机制**：明确日志组件与其他系统模块的依赖关系，确保正确的初始化顺序
+
 - **日志性能优化器**：利用异步处理、批量写入和平台特定优化提高日志处理性能
+
 - **平台适配器**：处理不同操作系统的特定问题，确保日志系统在所有平台上稳定运行
+
 - **日志监控集成器**：将新的日志监控系统与现有监控框架集成，实现数据共享和统一管理
 
 ### 1.2 数据流
@@ -24,6 +28,7 @@ flowchart TD
     F --> G[监控系统]
     G --> H[告警系统]
     G --> I[报告生成器]
+
 ```
 
 ## 2. 配置选项
@@ -48,6 +53,7 @@ flowchart TD
     "compress_backups": false
   }
 }
+
 ```
 
 ### 2.2 日志收集规则配置
@@ -102,6 +108,7 @@ flowchart TD
     }
   ]
 }
+
 ```
 
 ### 2.3 性能优化配置
@@ -143,6 +150,7 @@ init_log_collection_rules("logs/log_rules.json")
 
 # 初始化日志监控集成
 init_log_monitoring_integration()
+
 ```
 
 ### 3.2 基本日志记录
@@ -166,6 +174,7 @@ try:
     raise ValueError("测试异常")
 except ValueError:
     logger.exception("发生异常")
+
 ```
 
 ### 3.3 使用统一日志接口
@@ -191,6 +200,7 @@ log(
     error_code=404,
     details="资源未找到"
 )
+
 ```
 
 ### 3.4 使用采样日志
@@ -206,6 +216,7 @@ sampled_logger = get_sampled_logger("my_module", sample_rate=100)
 # 在循环中使用
 for i in range(10000):
     sampled_logger.debug(f"处理项目 {i}")
+
 ```
 
 ### 3.5 使用异步日志
@@ -229,6 +240,7 @@ logger.info("异步日志测试")
 
 # 程序结束前关闭处理器
 async_handler.close()
+
 ```
 
 ## 4. 监控与报告
@@ -241,6 +253,7 @@ from src.monitoring.log_monitoring_integrator import get_integration_stats
 # 获取日志统计信息
 stats = get_integration_stats()
 print(stats)
+
 ```
 
 ### 4.2 查看最近日志
@@ -255,6 +268,7 @@ integrator = get_log_monitoring_integrator()
 recent_logs = integrator.get_recent_logs(50)
 for log in recent_logs:
     print(log)
+
 ```
 
 ### 4.3 生成报告
@@ -278,6 +292,7 @@ print(weekly_report)
 # 生成每月报告
 monthly_report = data_logger.generate_report("monthly")
 print(monthly_report)
+
 ```
 
 ## 5. 平台适配
@@ -287,18 +302,23 @@ print(monthly_report)
 ### 5.1 Windows 平台
 
 - 使用 `SafeRotatingFileHandler` 避免文件锁问题
+
 - 处理控制台编码问题，确保中文日志正常显示
+
 - 使用平台特定的日志目录：`%APPDATA%\btc-collision-engine\logs`
 
 ### 5.2 Linux 平台
 
 - 设置日志文件权限为 0o600，确保安全性
+
 - 使用平台特定的日志目录：`~/.local/share/btc-collision-engine/logs`
+
 - 支持 syslog 集成（可选）
 
 ### 5.3 macOS 平台
 
 - 使用平台特定的日志目录：`~/Library/Logs/btc-collision-engine`
+
 - 支持 macOS 原生日志系统集成（可选）
 
 ## 6. 最佳实践
@@ -306,28 +326,39 @@ print(monthly_report)
 ### 6.1 日志级别使用建议
 
 - **DEBUG**：详细的调试信息，仅在开发和调试时使用
+
 - **INFO**：普通的信息性消息，如操作完成、状态变更等
+
 - **WARNING**：警告信息，如性能下降、资源不足等
+
 - **ERROR**：错误信息，如操作失败、异常发生等
+
 - **CRITICAL**：严重错误信息，如系统崩溃、数据丢失等
 
 ### 6.2 日志格式建议
 
 - 包含时间戳、模块名称、日志级别和消息
+
 - 对于错误日志，包含异常类型和堆栈信息
+
 - 对于性能日志，包含相关的性能指标
 
 ### 6.3 性能优化建议
 
 - 对于高频操作，使用采样日志
+
 - 对于高并发场景，使用异步日志
+
 - 合理设置日志级别，避免过多的低级别日志
+
 - 定期清理旧日志，避免磁盘空间不足
 
 ### 6.4 安全建议
 
 - 避免在日志中记录敏感信息，如私钥、密码等
+
 - 设置适当的文件权限，确保日志文件的安全性
+
 - 定期备份重要的日志文件
 
 ## 7. 故障排除
@@ -335,23 +366,29 @@ print(monthly_report)
 ### 7.1 日志文件未创建
 
 - 检查日志目录是否存在，是否有写入权限
+
 - 检查磁盘空间是否充足
+
 - 检查日志配置是否正确
 
 ### 7.2 日志内容乱码
 
 - 确保使用 UTF-8 编码
+
 - 在 Windows 平台，使用 `SafeStreamHandler` 处理控制台编码问题
 
 ### 7.3 日志性能问题
 
 - 启用异步日志
+
 - 使用采样日志减少日志量
+
 - 调整缓冲区大小和批量写入设置
 
 ### 7.4 依赖问题
 
 - 运行 `python -m src.utils.log_dependency_manager` 检查依赖状态
+
 - 确保所有必需的依赖都已安装
 
 ## 8. 示例配置
@@ -371,6 +408,7 @@ print(monthly_report)
     "rotation_type": "size"
   }
 }
+
 ```
 
 ### 8.2 开发环境配置
@@ -388,6 +426,7 @@ print(monthly_report)
     "rotation_type": "size"
   }
 }
+
 ```
 
 ## 9. 总结

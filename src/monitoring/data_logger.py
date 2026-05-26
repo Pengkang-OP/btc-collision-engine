@@ -21,13 +21,13 @@ from contextlib import suppress
 from datetime import datetime
 from typing import Any
 
-from src.log_engine.log_rotator import LogRotator
-from src.monitoring.storage_config import DataStorageConfig
+from ..log_engine.log_rotator import LogRotator
+from .storage_config import DataStorageConfig
 
 # 导入现有日志系统
-from src.utils import get_configured_logger
-from src.utils.fast_json import fast_dump, fast_load, fast_loads
-from src.utils.logging_config import LOG_DEFAULT_MAX_BYTES
+from ..utils import get_configured_logger
+from ..utils.fast_json import fast_dump, fast_load, fast_loads
+from ..utils.logging_config import LOG_DEFAULT_MAX_BYTES
 
 
 class DataLogger:
@@ -78,7 +78,10 @@ class DataLogger:
             # 记录错误并使用默认目录
             import sys
 
-            print(f"WARNING: storage_dir is {type(self.storage_dir)}, expected str", file=sys.stderr)  # noqa: T201
+            print(
+                f"WARNING: storage_dir is {type(self.storage_dir)}, expected str",
+                file=sys.stderr,
+            )  # noqa: T201
             self.storage_dir = "data_logs"
             pathlib.Path(self.storage_dir).mkdir(exist_ok=True, parents=True)
 
@@ -100,8 +103,8 @@ class DataLogger:
 
         # 数据缓存
         self._current_data: dict[str, Any] = {}
-        self._history_buffer: deque = deque(maxlen=1000)  # 限制历史数据数量
-        self._error_buffer: deque = deque(maxlen=500)  # 限制错误日志数量
+        self._history_buffer: deque[dict[str, float | int | str]] = deque(maxlen=1000)  # 限制历史数据数量
+        self._error_buffer: deque[dict[str, Any]] = deque(maxlen=500)  # 限制错误日志数量
 
         # 线程锁
         self._lock = threading.Lock()
@@ -159,7 +162,7 @@ class DataLogger:
         )
         os.close(fd)
         try:
-            with pathlib.Path(temp_file).open("w", encoding="utf-8") as f:
+            with pathlib.Path(temp_file).open("wb") as f:
                 fast_dump(data, f, ensure_ascii=False, indent=2)
                 f.flush()
                 os.fsync(f.fileno())  # 确保数据写入磁盘
@@ -187,7 +190,7 @@ class DataLogger:
         try:
             # 初始化当前数据文件
             if not pathlib.Path(self.current_data_file).exists():
-                with pathlib.Path(self.current_data_file).open("w", encoding="utf-8") as f:
+                with pathlib.Path(self.current_data_file).open("wb") as f:
                     fast_dump({}, f)
                 if os.name != "nt":
                     pathlib.Path(self.current_data_file).chmod(0o600)
@@ -198,12 +201,12 @@ class DataLogger:
                     "schema_version": self.HISTORY_SCHEMA_VERSION,
                     "data": [],
                 }
-                with pathlib.Path(self.history_data_file).open("w", encoding="utf-8") as f:
+                with pathlib.Path(self.history_data_file).open("wb") as f:
                     fast_dump(init_data, f)
 
             # 初始化错误日志文件
             if not pathlib.Path(self.error_log_file).exists():
-                with pathlib.Path(self.error_log_file).open("w", encoding="utf-8") as f:
+                with pathlib.Path(self.error_log_file).open("wb") as f:
                     fast_dump([], f)
                 if os.name != "nt":
                     pathlib.Path(self.error_log_file).chmod(0o600)
@@ -599,7 +602,7 @@ class DataLogger:
 
             errors = []
             if pathlib.Path(error_log_path).exists():
-                with open(error_log_path, encoding="utf-8") as f:
+                with open(error_log_path, "rb") as f:
                     errors = fast_load(f)
 
             errors.append(error_record)
@@ -609,7 +612,7 @@ class DataLogger:
             if len(errors) > max_errors:
                 errors = errors[-max_errors:]
 
-            with open(error_log_path, mode="w", encoding="utf-8") as f:
+            with open(error_log_path, "wb") as f:
                 fast_dump(errors, f, ensure_ascii=False, indent=2)
             self._record_pipeline_metric("record_error", success=True)
         except Exception as e:
@@ -671,7 +674,7 @@ class DataLogger:
             )
             os.close(temp_fd)
 
-            with pathlib.Path(temp_file).open("w", encoding="utf-8") as f:
+            with pathlib.Path(temp_file).open("wb") as f:
                 fast_dump(save_data, f, ensure_ascii=False, indent=2)
                 f.flush()
                 os.fsync(f.fileno())
@@ -982,7 +985,7 @@ class DataLogger:
                 "data": compacted,
             }
             temp_file = self.history_data_file + ".compact.tmp"
-            with pathlib.Path(temp_file).open("w", encoding="utf-8") as f:
+            with pathlib.Path(temp_file).open("wb") as f:
                 fast_dump(versioned, f, ensure_ascii=False, indent=2)
                 f.flush()
                 os.fsync(f.fileno())
@@ -1002,7 +1005,7 @@ class DataLogger:
                 with suppress(OSError):
                     pathlib.Path(temp_file).unlink()
 
-    def _load_history_with_recovery(self) -> list:
+    def _load_history_with_recovery(self) -> list[dict[str, Any]]:
         """加载历史数据，带损坏恢复机制
 
         P0: 支持新旧两种格式：
@@ -1013,7 +1016,7 @@ class DataLogger:
             return []
 
         try:
-            with pathlib.Path(self.history_data_file).open(encoding="utf-8") as f:
+            with pathlib.Path(self.history_data_file).open("rb") as f:
                 data = fast_load(f)
             if isinstance(data, list):
                 # 旧格式（无版本号），直接返回
@@ -1080,7 +1083,7 @@ class DataLogger:
                 i += 1
         return recovered
 
-    def _recover_history_data(self) -> list:
+    def _recover_history_data(self) -> list[dict[str, Any]]:
         """尝试从损坏的JSON文件中恢复数据（健壮的逐行解析）"""
         recovered = []
 
@@ -1128,7 +1131,7 @@ class DataLogger:
         """获取错误日志（从文件读取）"""
         try:
             if pathlib.Path(self.error_log_file).exists():
-                with pathlib.Path(self.error_log_file).open(encoding="utf-8") as f:
+                with pathlib.Path(self.error_log_file).open("rb") as f:
                     return fast_load(f)
         except Exception as e:
             self.logger.error("读取错误日志失败: %s", e)
@@ -1243,7 +1246,7 @@ class DataLogger:
             report_filename = f"report_{report_type}_{now.strftime('%Y%m%d_%H%M%S')}.json"
             report_path = os.path.join(self.storage_dir, report_filename)
 
-            with pathlib.Path(report_path).open("w", encoding="utf-8") as f:
+            with pathlib.Path(report_path).open("wb") as f:
                 fast_dump(report, f, ensure_ascii=False, indent=2)
 
             self.logger.info("%s报告已生成: %s", report_type, report_path)
@@ -1414,7 +1417,7 @@ class DataLogger:
         """
         current_time = time.time()
         if not hasattr(self, "_last_cleanup_time"):
-            self._last_cleanup_time: float = 0.0
+            self._last_cleanup_time = 0.0  # pyright: ignore[reportUninitializedInstanceVariable]
 
         # 每24小时最多执行一次清理
         if current_time - self._last_cleanup_time < 86400:
@@ -1481,19 +1484,19 @@ class DataLogger:
                         "schema_version": self.HISTORY_SCHEMA_VERSION,
                         "data": cleaned_history,
                     }
-                    with pathlib.Path(self.history_data_file).open("w", encoding="utf-8") as f:
+                    with pathlib.Path(self.history_data_file).open("wb") as f:
                         fast_dump(versioned, f, ensure_ascii=False, indent=2)
                     self.logger.info(f"清理了 {len(history) - len(cleaned_history)} 条过期历史数据")
 
             # 清理错误日志
             if pathlib.Path(self.error_log_file).exists():
-                with pathlib.Path(self.error_log_file).open(encoding="utf-8") as f:
+                with pathlib.Path(self.error_log_file).open("rb") as f:
                     errors = fast_load(f)
 
                 cleaned_errors = [e for e in errors if e.get("timestamp", 0) >= cutoff_time]
 
                 if len(cleaned_errors) != len(errors):
-                    with pathlib.Path(self.error_log_file).open("w", encoding="utf-8") as f:
+                    with pathlib.Path(self.error_log_file).open("wb") as f:
                         fast_dump(cleaned_errors, f, ensure_ascii=False, indent=2)
                     self.logger.info(f"清理了 {len(errors) - len(cleaned_errors)} 条过期错误日志")
 
@@ -1537,6 +1540,7 @@ class DataLogger:
                 "error": error,
             }
             if extra:
+                metric_entry: dict[str, Any] = metric_entry  # type: ignore[no-redef]
                 metric_entry["extra"] = extra
             self._pipeline_metrics.append(metric_entry)
 
@@ -1638,7 +1642,7 @@ class DataLogger:
                 errors = []
                 if pathlib.Path(self.error_log_file).exists():
                     try:
-                        with pathlib.Path(self.error_log_file).open(encoding="utf-8") as f:
+                        with pathlib.Path(self.error_log_file).open("rb") as f:
                             errors = fast_load(f)
                     except (json.JSONDecodeError, OSError) as e:
                         self.logger.warning("读取错误日志文件失败，将覆盖: %s", e)

@@ -1,6 +1,6 @@
-"""GPU引擎全局常量定义
+"""GPU引擎全局常量定义.
 
-统一管理GPU模块中的硬编码参数，避免重复定义，提升可维护性。
+统一管理GPU模块中的硬编码参数，避免重复定义，提升可维护性.
 """
 
 # ===== 内存相关常量 =====
@@ -66,7 +66,7 @@ OPENCL_UPGRADE_ADVICE: dict[str, dict[str, str]] = {
 
 
 def align_batch_size(batch_size: int, alignment: int = BATCH_SIZE_ALIGNMENT) -> int:
-    """将批次大小向下对齐到指定值的倍数
+    """将批次大小向下对齐到指定值的倍数.
 
     Args:
         batch_size: 原始批次大小
@@ -81,7 +81,7 @@ def align_batch_size(batch_size: int, alignment: int = BATCH_SIZE_ALIGNMENT) -> 
 
 
 def clamp_batch_size(batch_size: int) -> int:
-    """将批次大小限制在有效范围内
+    """将批次大小限制在有效范围内.
 
     Args:
         batch_size: 原始批次大小

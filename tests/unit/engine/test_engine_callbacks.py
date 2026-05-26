@@ -32,7 +32,7 @@ class TestKeyCollisionEngineCallbacks:
         time.sleep(2.5)
         engine.stop()
 
-        assert len(progress_events)  >  0, "进度回调应至少被调用一次"
+        assert len(progress_events) > 0, "进度回调应至少被调用一次"
 
     def test_complete_callback_called(self):
         """完成回调在停止后被调用"""
@@ -72,9 +72,9 @@ class TestKeyCollisionEngineCallbacks:
         engine.stop()
 
         assert match_event.is_set(), "应在范围[1,5]内找到匹配"
-        assert len(match_results)  >  0
+        assert len(match_results) > 0
         _, found_addr, wif = match_results[0]
-        assert found_addr  ==  known_addr
+        assert found_addr == known_addr
         assert wif.startswith(("K", "L", "5"))
 
 
@@ -100,7 +100,7 @@ class TestKeyCollisionEngineSafeCallback:
         exception_raised.wait(timeout=10)
         time.sleep(0.5)
         stats = engine.get_stats()
-        assert stats.total_checked  >  0, "引擎应继续运行"
+        assert stats.total_checked > 0, "引擎应继续运行"
         engine.stop()
 
     def test_match_callback_slow_isolation(self):
@@ -125,7 +125,7 @@ class TestKeyCollisionEngineSafeCallback:
         callback_started.wait(timeout=10)
         time.sleep(1.5)
         stats = engine.get_stats()
-        assert stats.total_checked  >  0
+        assert stats.total_checked > 0
         engine.stop()
 
     def test_safe_invoke_callback_no_handler(self):

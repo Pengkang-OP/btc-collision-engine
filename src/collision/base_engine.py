@@ -24,6 +24,7 @@ class BaseCollisionEngine(ABC):
     """
 
     def __init__(self, config: dict | None = None):
+        """Initialize the base collision engine."""
         self.config = config or {}
         self._lock = threading.Lock()
         self._running = False

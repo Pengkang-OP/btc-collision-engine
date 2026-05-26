@@ -61,8 +61,8 @@ class TestWindowsPermissionRetry:
         with pathlib.Path(history_file).open(encoding="utf-8") as f:
             raw = json.load(f)
         history = raw["data"] if isinstance(raw, dict) and "data" in raw else raw
-        assert len(history)  ==  1
-        assert history[0]["speed"]  ==  100.0
+        assert len(history) == 1
+        assert history[0]["speed"] == 100.0
 
     def test_save_current_data_with_permission_error(self):
         """测试保存当前数据时遇到权限错误的重试机制"""
@@ -98,8 +98,8 @@ class TestWindowsPermissionRetry:
         # 验证数据已保存
         with pathlib.Path(current_file).open(encoding="utf-8") as f:
             data = json.load(f)
-        assert data  in  "performance"
-        assert data["performance"]["speed"]  ==  200.0
+        assert data in "performance"
+        assert data["performance"]["speed"] == 200.0
 
     def test_retry_exhausted_returns_data_to_buffer(self):
         """测试重试耗尽后数据返回缓冲区"""
@@ -133,6 +133,5 @@ class TestWindowsPermissionRetry:
         with pathlib.Path(history_file).open(encoding="utf-8") as f:
             raw = json.load(f)
         history = raw["data"] if isinstance(raw, dict) and "data" in raw else raw
-        assert len(history)  ==  1
-        assert history[0]["speed"]  ==  300.0
-
+        assert len(history) == 1
+        assert history[0]["speed"] == 300.0

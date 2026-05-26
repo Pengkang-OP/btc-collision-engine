@@ -11,7 +11,7 @@ import pytest
 
 pytestmark = pytest.mark.gpu
 
-from src.gpu.gpu_recovery_manager import (
+from src.gpu.gpu_recovery_manager import (  # noqa: E402
     GPUFailureRecord,
     GPUFailureType,
     GPURecoveryManager,
@@ -400,4 +400,3 @@ class TestMultiGPURecovery:
         # 验证其他GPU仍然存在
         assert 1 in engine.workers
         assert 2 in engine.workers
-

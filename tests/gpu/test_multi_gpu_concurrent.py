@@ -291,4 +291,3 @@ class TestDeadlockPrevention:
                 deadlock_detected[0] = True
 
         assert not deadlock_detected[0], "检测到死锁!"
-

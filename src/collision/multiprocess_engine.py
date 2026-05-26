@@ -9,6 +9,8 @@ import multiprocessing
 import queue
 import time
 
+from typing import Any
+
 from ..utils import get_configured_logger
 
 logger = get_configured_logger("MultiProcessEngine")
@@ -21,15 +23,16 @@ class MultiProcessCollisionEngine:
     key generation, address computation, and matching.
     """
 
-    def __init__(self, config: dict | None = None):
+    def __init__(self, config: dict[str, Any] | None = None):
+        """Initialize the multiprocess collision engine."""
         self.config = config or {}
         self._num_workers = self.config.get(
             "max_workers",
             multiprocessing.cpu_count(),
         )
         self._running = False
-        self._task_queue: multiprocessing.Queue | None = None
-        self._result_queue: multiprocessing.Queue | None = None
+        self._task_queue: multiprocessing.Queue[bytes] | None = None
+        self._result_queue: multiprocessing.Queue[bytes] | None = None
         self._processes: list[multiprocessing.Process] = []
         self._total_keys = 0
         self._start_time: float | None = None
@@ -79,6 +82,7 @@ class MultiProcessCollisionEngine:
         """Worker process main loop."""
         while self._running:
             try:
+                assert self._task_queue is not None
                 task = self._task_queue.get(
                     timeout=1,
                 )
@@ -101,9 +105,11 @@ class MultiProcessCollisionEngine:
             task: Private key bytes
 
         """
+        assert self._result_queue is not None
         self._result_queue.put(task)
 
-    def get_stats(self) -> dict:
+    def get_stats(self) -> dict[str, Any]:
+        """Get current engine statistics."""
         elapsed = time.time() - self._start_time if self._start_time else 0
         return {
             "total_keys": self._total_keys,

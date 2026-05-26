@@ -416,7 +416,7 @@ class GPUMockFactory:
                 ...  # mock_buf 是 Buffer 的 Mock 返回值
         """
         mock_buf = Mock()
-        with patch("pyopencl.Buffer", return_value=mock_buf) as _patch:
+        with patch("pyopencl.Buffer", return_value=mock_buf):
             yield mock_buf
 
     @staticmethod

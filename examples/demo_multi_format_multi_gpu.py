@@ -2,9 +2,14 @@
 """快速演示: 使用多格式多GPU引擎
 """
 
+import os
+import secrets
 import sys
 
-sys.path.insert(0, "src")
+from src.core.multi_format_generator import MultiFormatAddressGenerator  # noqa: E402
+from src.gpu.multi_format_multi_gpu_engine import create_engine  # noqa: E402
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 print("=" * 80)
 print("快速演示: 多格式多GPU引擎")
@@ -12,7 +17,6 @@ print("=" * 80)
 
 # 1. 导入并创建引擎
 print("\n1. 创建多格式多GPU引擎...")
-from src.gpu.multi_format_multi_gpu_engine import create_engine
 
 engine = create_engine()
 print("   ✅ 引擎创建成功!")
@@ -42,7 +46,6 @@ for fmt, count in stats.items():
 
 # 4. 测试已知私钥 (私钥=1)
 print("\n4. 测试已知私钥 (私钥=1)...")
-from src.core.multi_format_generator import MultiFormatAddressGenerator
 
 gen = MultiFormatAddressGenerator()
 
@@ -67,7 +70,6 @@ else:
 
 # 5. 测试随机私钥
 print("\n5. 测试随机私钥...")
-import secrets
 
 for i in range(3):
     test_key = secrets.token_bytes(32)

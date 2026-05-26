@@ -157,7 +157,7 @@ def _apply_pyopencl_editable_install_fix():
         pass
 
 
-import time as _poll_time
+import time as _poll_time  # noqa: E402
 
 # ============================================================================
 # 共享测试工具

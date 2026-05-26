@@ -3,53 +3,94 @@
 > **版本**: v1.2.0 | **最后更新**: 2026-04-21  
 > **面向**: 运维/开发者
 
-
-
 ## 目录
 
 - [📋 目录](#-目录)
+
 - [系统架构概述](#系统架构概述)
+
   - [架构图](#架构图)
+
 - [核心组件](#核心组件)
+
   - [1. DataStorage - 数据存储](#1-datastorage---数据存储)
+
   - [2. DataCollector - 数据采集](#2-datacollector---数据采集)
+
   - [3. AnomalyDetector - 异常检测](#3-anomalydetector---异常检测)
+
   - [4. AlertSystem - 告警系统](#4-alertsystem---告警系统)
+
   - [5. ReportGenerator - 报告生成](#5-reportgenerator---报告生成)
+
 - [使用示例](#使用示例)
+
   - [示例1: 完整功能（推荐）](#示例1-完整功能推荐)
+
 - [示例2: 独立使用DataStorage](#示例2-独立使用datastorage)
+
 - [示例3: 独立使用AnomalyDetector](#示例3-独立使用anomalydetector)
+
 - [示例4: 独立使用AlertSystem](#示例4-独立使用alertsystem)
+
 - [示例5: 独立使用ReportGenerator](#示例5-独立使用reportgenerator)
+
 - [依赖注入模式](#依赖注入模式)
+
   - [什么是依赖注入？](#什么是依赖注入)
+
   - [监控系统的依赖关系](#监控系统的依赖关系)
+
   - [使用Optional类型提示](#使用optional类型提示)
+
   - [依赖注入的好处](#依赖注入的好处)
+
     - [1. 灵活组合](#1-灵活组合)
+
 - [2. 易于测试](#2-易于测试)
+
     - [3. 降级方案](#3-降级方案)
+
 - [最佳实践](#最佳实践)
+
   - [1. 始终检查依赖](#1-始终检查依赖)
+
 - [2. 使用try-except保护](#2-使用try-except保护)
+
 - [3. 实现降级方案](#3-实现降级方案)
+
 - [4. 原子写入保证数据完整性](#4-原子写入保证数据完整性)
+
 - [5. 限制数据量防止内存溢出](#5-限制数据量防止内存溢出)
+
 - [6. 使用Optional类型提示](#6-使用optional类型提示)
+
 - [7. 添加详细文档](#7-添加详细文档)
+
 - [常见问题](#常见问题)
+
   - [Q1: 什么时候应该使用完整功能，什么时候独立使用组件？](#q1-什么时候应该使用完整功能什么时候独立使用组件)
+
   - [Q2: 为什么不强制要求依赖？](#q2-为什么不强制要求依赖)
+
   - [Q3: 原子写入有什么作用？](#q3-原子写入有什么作用)
+
   - [Q4: 如何自定义异常检测阈值？](#q4-如何自定义异常检测阈值)
+
   - [Q5: 如何清理旧数据？](#q5-如何清理旧数据)
+
   - [Q6: 监控系统会影响性能吗？](#q6-监控系统会影响性能吗)
+
   - [Q7: 如何集成到现有的碰撞引擎？](#q7-如何集成到现有的碰撞引擎)
+
 - [附录](#附录)
+
   - [A. 配置文件示例](#a-配置文件示例)
+
   - [B. 错误码说明](#b-错误码说明)
+
   - [C. 性能指标参考](#c-性能指标参考)
+
 **文档版本**: v1.0  
 **创建日期**: 2026-04-20  
 **适用范围**: monitoring_system.py模块  
@@ -59,10 +100,15 @@
 ## 📋 目录
 
 1. [系统架构概述](#系统架构概述)
+
 2. [核心组件](#核心组件)
+
 3. [使用示例](#使用示例)
+
 4. [依赖注入模式](#依赖注入模式)
+
 5. [最佳实践](#最佳实践)
+
 6. [常见问题](#常见问题)
 
 ---
@@ -89,6 +135,7 @@ BTC碰撞引擎监控系统采用**模块化设计**和**依赖注入模式**，
 │  └──────────────┘  │ (报告生成)    │                    │
 │                    └──────────────┘                    │
 └─────────────────────────────────────────────────────────┘
+
 ```
 
 ---
@@ -100,14 +147,21 @@ BTC碰撞引擎监控系统采用**模块化设计**和**依赖注入模式**，
 **职责**: 安全地存储监控数据，支持原子写入和数据恢复
 
 **特性**:
+
 - ✅ 原子写入（防止数据损坏）
+
 - ✅ JSON损坏自动恢复
+
 - ✅ 数据量限制（历史1000条，错误500条）
+
 - ✅ 线程安全
 
 **文件**:
+
 - `current_data.json` - 当前状态
+
 - `history_data.json` - 历史数据
+
 - `error_log.json` - 错误日志
 
 ### 2. DataCollector - 数据采集
@@ -115,11 +169,17 @@ BTC碰撞引擎监控系统采用**模块化设计**和**依赖注入模式**，
 **职责**: 从引擎和系统收集性能数据
 
 **采集指标**:
+
 - CPU使用率
+
 - 内存使用量
+
 - 线程数量
+
 - 检测速率
+
 - 已检测总数
+
 - 匹配数
 
 ### 3. AnomalyDetector - 异常检测
@@ -127,9 +187,13 @@ BTC碰撞引擎监控系统采用**模块化设计**和**依赖注入模式**，
 **职责**: 检测性能异常和引擎状态异常
 
 **检测规则**:
+
 - 速度过低 (< 100/s) 或过高 (> 1,000,000/s)
+
 - CPU使用率过高 (> 90%)
+
 - 内存使用过高 (> 1024 MB)
+
 - 引擎运行但速率为0
 
 ### 4. AlertSystem - 告警系统
@@ -137,7 +201,9 @@ BTC碰撞引擎监控系统采用**模块化设计**和**依赖注入模式**，
 **职责**: 生成和处理告警信息
 
 **告警级别**:
+
 - `warning` - 性能异常
+
 - `critical` - 引擎异常
 
 ### 5. ReportGenerator - 报告生成
@@ -145,9 +211,13 @@ BTC碰撞引擎监控系统采用**模块化设计**和**依赖注入模式**，
 **职责**: 生成每日报告和优化建议
 
 **报告内容**:
+
 - 统计摘要（速度、CPU、内存）
+
 - 趋势分析
+
 - 错误汇总
+
 - 优化建议
 
 ---
@@ -186,6 +256,7 @@ print(f"当前速度: {status['current_data']['performance']['speed']}")
 # 生成报告
 report = monitoring.generate_report()
 print(f"平均速度: {report['summary']['average_speed']}")
+
 ```markdown
 
 ## 示例2: 独立使用DataStorage
@@ -218,6 +289,7 @@ storage.save_error({
     "type": "test_error",
     "message": "这是一个测试错误"
 })
+
 ```markdown
 
 ## 示例3: 独立使用AnomalyDetector
@@ -258,6 +330,7 @@ for anomaly in anomalies:
 history_data = storage.get_history_data()
 trends = detector.analyze_trends(history_data)
 print(f"速度趋势: {trends['speed']['trend']}")
+
 ```markdown
 
 ## 示例4: 独立使用AlertSystem
@@ -299,6 +372,7 @@ anomalies = [
     {"type": "engine", "metric": "speed", "message": "速度为0"}
 ]
 alert_system.process_anomalies(anomalies)
+
 ```markdown
 
 ## 示例5: 独立使用ReportGenerator
@@ -354,6 +428,7 @@ print(f"报告日期: {report['date']}")
 print(f"平均速度: {report['summary']['average_speed']}")
 print(f"趋势: {report['trends']['speed']['trend']}")
 print(f"建议: {report['recommendations']}")
+
 ```python
 
 ---
@@ -363,8 +438,11 @@ print(f"建议: {report['recommendations']}")
 ### 什么是依赖注入？
 
 依赖注入是一种设计模式，通过将依赖对象作为参数传入，而不是在类内部创建，实现：
+
 - ✅ 降低耦合度
+
 - ✅ 提高可测试性
+
 - ✅ 支持灵活组合
 
 ### 监控系统的依赖关系
@@ -376,6 +454,7 @@ MonitoringSystem
   ├── AnomalyDetector (注入 DataStorage)
   ├── AlertSystem (注入 DataStorage)
   └── ReportGenerator (注入 DataStorage + AnomalyDetector)
+
 ```markdown
 
 ### 使用Optional类型提示
@@ -393,6 +472,7 @@ class AnomalyDetector:
         # 使用时检查
         if self.storage is not None:
             self.storage.save_error(...)
+
 ```markdown
 
 ### 依赖注入的好处
@@ -411,6 +491,7 @@ detector = AnomalyDetector()  # 不需要storage
 
 # 仅告警功能
 alert = AlertSystem()  # 不需要storage
+
 ```markdown
 
 ## 2. 易于测试
@@ -428,6 +509,7 @@ def test_anomaly_detector():
     
     # 验证storage被正确调用
     mock_storage.save_error.assert_called_once()
+
 ```markdown
 
 #### 3. 降级方案
@@ -441,6 +523,7 @@ class ReportGenerator:
         else:
             # 降级方案
             trends = self._simple_trend_analysis(data)
+
 ```python
 
 ---
@@ -460,6 +543,7 @@ def generate_report(self):
 # ❌ 错误做法
 def generate_report(self):
     data = self.storage.get_history_data()  # 可能崩溃
+
 ```markdown
 
 ## 2. 使用try-except保护
@@ -474,6 +558,7 @@ except Exception as e:
 
 # ❌ 错误做法
 history = self.storage.get_history_data()  # 可能抛出异常
+
 ```markdown
 
 ## 3. 实现降级方案
@@ -487,6 +572,7 @@ else:
 
 # ❌ 错误做法
 trends = self.detector.analyze_trends(data)  # detector可能为None
+
 ```markdown
 
 ## 4. 原子写入保证数据完整性
@@ -506,6 +592,7 @@ def save_data(self, data):
         if os.path.exists(temp_file):
             os.remove(temp_file)  # 清理临时文件
         raise
+
 ```markdown
 
 ## 5. 限制数据量防止内存溢出
@@ -518,6 +605,7 @@ if len(history) > 1000:
 
 # ❌ 错误做法
 history.append(new_data)  # 无限增长
+
 ```markdown
 
 ## 6. 使用Optional类型提示
@@ -530,6 +618,7 @@ def __init__(self, storage: Optional['DataStorage'] = None):
 # ❌ 错误做法
 def __init__(self, storage: DataStorage = None):  # 类型提示不准确
     self.storage = storage
+
 ```markdown
 
 ## 7. 添加详细文档
@@ -548,6 +637,7 @@ class ReportGenerator:
         generator = ReportGenerator()
         generator.storage = custom_storage
     """
+
 ```yaml
 
 ---
@@ -557,57 +647,78 @@ class ReportGenerator:
 ### Q1: 什么时候应该使用完整功能，什么时候独立使用组件？
 
 **A**: 
+
 - **完整功能**: 生产环境，需要完整监控、告警、报告
+
 - **独立使用**: 
+
   - 单元测试（Mock依赖）
+
   - 特殊场景（只需要检测或告警）
+
   - 自定义组合（使用不同的storage实现）
 
 ### Q2: 为什么不强制要求依赖？
 
 **A**: 依赖注入设计为可选的原因：
+
 1. **灵活性**: 允许独立使用各个组件
+
 2. **可测试性**: 便于单元测试时Mock
+
 3. **降级能力**: 部分功能不可用时，其他功能仍可工作
 
 ### Q3: 原子写入有什么作用？
 
 **A**: 原子写入防止数据损坏：
+
 1. 先写入临时文件
+
 2. 确保数据完全写入磁盘（fsync）
+
 3. 原子替换原文件（os.replace）
+
 4. 如果写入失败，原文件不受影响
 
 ### Q4: 如何自定义异常检测阈值？
 
 **A**: 
+
 ```python
 detector = AnomalyDetector()
 detector.thresholds["speed"]["min"] = 200  # 修改最低速度阈值
 detector.thresholds["cpu_usage"]["max"] = 80  # 修改CPU阈值
+
 ```markdown
 
 ### Q5: 如何清理旧数据？
 
 **A**: 使用DataLogger的清理功能（如果需要更高级的数据管理）：
+
 ```python
 from src.monitoring.data_logger import DataLogger
 
 logger = DataLogger()
 logger.cleanup_old_data(max_age_days=30)  # 清理30天前的数据
+
 ```markdown
 
 ### Q6: 监控系统会影响性能吗？
 
 **A**: 影响很小：
+
 - 数据采集间隔默认5秒
+
 - 使用后台线程，不阻塞主线程
+
 - 数据采集使用psutil，开销极低
+
 - 建议生产环境保持默认配置
 
 ### Q7: 如何集成到现有的碰撞引擎？
 
 **A**: 非常简单：
+
 ```python
 from src.collision.key_collision_engine import KeyCollisionEngine
 
@@ -620,6 +731,7 @@ engine = KeyCollisionEngine(
 # - 创建MonitoringSystem
 # - 启动时自动启动监控
 # - 停止时自动停止监控
+
 ```python
 
 ---
@@ -641,6 +753,7 @@ engine = KeyCollisionEngine(
     }
   }
 }
+
 ```
 
 ### B. 错误码说明

@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
-from src.config.config_manager import ConfigManager  # 需 sys.path 前置
+from src.config.config_manager import ConfigManager  # noqa: E402
 
 # ROADMAP #5: Schema 从 config.schema.json 加载（单一真相源）
 _SCHEMA_PATH = Path(__file__).resolve().parent.parent.parent / "config.schema.json"

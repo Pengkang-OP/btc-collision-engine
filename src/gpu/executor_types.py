@@ -1,6 +1,6 @@
-"""异步GPU执行器的类型、常量和配置定义。
+"""异步GPU执行器的类型、常量和配置定义.
 
-从 async_executor.py 拆分，提高模块可维护性。
+从 async_executor.py 拆分，提高模块可维护性.
 """
 
 import types
@@ -80,7 +80,7 @@ GPU_SPECIFIC_CONFIG = types.MappingProxyType(
 
 
 class _PendingBatch:
-    """队列深度管理中，单个已提交到 GPU 但尚未取回结果的批次描述符。
+    """队列深度管理中，单个已提交到 GPU 但尚未取回结果的批次描述符.
 
     Attributes:
         read_event: OpenCL 事件，结果回读完成后触发
@@ -100,7 +100,7 @@ class _PendingBatch:
 
 
 class _SyncFallbackError(Exception):
-    """异步执行回退信号：已通过同步路径完成执行，携带结果。
+    """异步执行回退信号：已通过同步路径完成执行，携带结果.
 
     用于在 _allocate_buffer / _transfer_seed / _clear_matches_buffer 中
     当异步预处理失败时，已完成同步执行并把结果带回外层，避免二次执行和结果丢失。

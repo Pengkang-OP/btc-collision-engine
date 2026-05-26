@@ -1,6 +1,7 @@
 """secp256k1椭圆曲线运算扩展测试 - 覆盖核心算法"""
 
 import os
+import unittest
 
 import pytest
 
@@ -16,14 +17,14 @@ class TestModInverse:
 
     def test_mod_inverse_basic(self):
         """基础模逆元计算: 3 * 5 = 15 ≡ 1 (mod 7)"""
-        assert self.ec.mod_inverse(3, 7)  ==  5
+        assert self.ec.mod_inverse(3, 7) == 5
 
     def test_mod_inverse_secp256k1(self):
         """secp256k1曲线参数下的模逆元"""
         a = 12345
         inv = self.ec.mod_inverse(a, Secp256k1.P)
         # 验证: (a * inv) % P = 1
-        assert (a * inv) % Secp256k1.P  ==  1
+        assert (a * inv) % Secp256k1.P == 1
 
     def test_mod_inverse_invalid_not_coprime(self):
         """无效输入：不互质的情况"""
@@ -43,7 +44,7 @@ class TestModInverse:
     def test_mod_inverse_negative_input(self):
         """负数输入"""
         # -3 mod 7 = 4, 4的逆元是2 (4*2=8≡1 mod 7)
-        assert self.ec.mod_inverse(-3, 7)  ==  2
+        assert self.ec.mod_inverse(-3, 7) == 2
 
     def test_mod_inverse_must_be_positive(self):
         """模数必须是正整数"""
@@ -67,19 +68,19 @@ class TestPointAdd:
         """无穷远点 + P = P"""
         infinity = ECPoint(None, None)
         result = self.ec.point_add(infinity, self.G)
-        assert result  ==  self.G
+        assert result == self.G
 
     def test_point_add_identity_right(self):
         """P + 无穷远点 = P"""
         infinity = ECPoint(None, None)
         result = self.ec.point_add(self.G, infinity)
-        assert result  ==  self.G
+        assert result == self.G
 
     def test_point_add_double(self):
         """点倍乘：G + G = 2G"""
         result = self.ec.point_add(self.G, self.G)
         expected = self.ec.scalar_multiply_const_time(2, self.G)
-        assert result  ==  expected
+        assert result == expected
 
     def test_point_add_inverse(self):
         """P + (-P) = 无穷远点"""
@@ -94,7 +95,7 @@ class TestPointAdd:
         G3 = self.ec.scalar_multiply_const_time(3, self.G)
         result1 = self.ec.point_add(G2, G3)
         result2 = self.ec.point_add(G3, G2)
-        assert result1  ==  result2
+        assert result1 == result2
 
     def test_point_add_associative(self):
         """加法结合律：(P + Q) + R = P + (Q + R)"""
@@ -103,7 +104,7 @@ class TestPointAdd:
         G5 = self.ec.scalar_multiply_const_time(5, self.G)
         result1 = self.ec.point_add(self.ec.point_add(G2, G3), G5)
         result2 = self.ec.point_add(G2, self.ec.point_add(G3, G5))
-        assert result1  ==  result2
+        assert result1 == result2
 
     def test_point_add_type_error_p1(self):
         """类型错误：p1不是ECPoint"""
@@ -132,7 +133,7 @@ class TestScalarMultiply:
         """辅助: 断言 scalar_multiply 触发 RuntimeError"""
         with self.assertRaises(RuntimeError) as ctx:
             self.ec.scalar_multiply(k, point)
-        assert str(ctx.exception)  in  "已被永久禁用"
+        assert str(ctx.exception) in "已被永久禁用"
 
     def test_scalar_multiply_zero(self):
         """0 * G → RuntimeError (已锁定)"""
@@ -186,7 +187,7 @@ class TestScalarMultiplyConstTime:
             with self.subTest(k=k):
                 result_std = self.ec.scalar_multiply_const_time(k, self.G)
                 result_ct = self.ec.scalar_multiply_const_time(k, self.G)
-                assert result_std  ==  result_ct
+                assert result_std == result_ct
 
     def test_const_time_zero(self):
         """恒定时间：0 * G = 无穷远点"""
@@ -196,7 +197,7 @@ class TestScalarMultiplyConstTime:
     def test_const_time_one(self):
         """恒定时间：1 * G = G"""
         result = self.ec.scalar_multiply_const_time(1, self.G)
-        assert result  ==  self.G
+        assert result == self.G
 
     def test_const_time_order(self):
         """恒定时间：N * G = 无穷远点"""
@@ -210,14 +211,14 @@ class TestScalarMultiplyConstTime:
         addr, comp_pk, _ = gen.generate_address(pk_bytes)
         # 验证能成功生成地址
         assert addr.startswith("1")
-        assert len(comp_pk)  ==  33
+        assert len(comp_pk) == 33
 
     def test_const_time_deterministic(self):
         """恒定时间：确定性"""
         k = 987654321
         result1 = self.ec.scalar_multiply_const_time(k, self.G)
         result2 = self.ec.scalar_multiply_const_time(k, self.G)
-        assert result1  ==  result2
+        assert result1 == result2
 
     def test_const_time_type_error_k(self):
         """恒定时间：类型错误 - k不是整数"""
@@ -240,15 +241,15 @@ class TestGeneratePublicKey:
         """生成压缩公钥（33字节）"""
         pk = (42).to_bytes(32, "big")
         pub_key = self.ec.generate_public_key(pk, compressed=True)
-        assert len(pub_key)  ==  33
-        assert [2, 3]  in  pub_key[0]
+        assert len(pub_key) == 33
+        assert [2, 3] in pub_key[0]
 
     def test_generate_public_key_uncompressed(self):
         """生成非压缩公钥（65字节）"""
         pk = (42).to_bytes(32, "big")
         pub_key = self.ec.generate_public_key(pk, compressed=False)
-        assert len(pub_key)  ==  65
-        assert pub_key[0]  ==  4
+        assert len(pub_key) == 65
+        assert pub_key[0] == 4
 
     def test_generate_public_key_invalid_zero(self):
         """无效私钥：0导致无穷远点"""
@@ -266,14 +267,14 @@ class TestGeneratePublicKey:
         """从整数私钥生成公钥"""
         pk_int = 12345
         pub_key = self.ec.generate_public_key(pk_int, compressed=True)
-        assert len(pub_key)  ==  33
+        assert len(pub_key) == 33
 
     def test_generate_public_key_deterministic(self):
         """确定性：相同私钥生成相同公钥"""
         pk = (999).to_bytes(32, "big")
         pub1 = self.ec.generate_public_key(pk, compressed=True)
         pub2 = self.ec.generate_public_key(pk, compressed=True)
-        assert pub1  ==  pub2
+        assert pub1 == pub2
 
     def test_generate_public_key_const_time_default(self):
         """generate_public_key默认使用恒定时间算法"""
@@ -286,7 +287,7 @@ class TestGeneratePublicKey:
         expected_point = self.ec.scalar_multiply_const_time(k, G)
 
         # 验证x坐标一致
-        assert pub_key[1:]  ==  expected_point.x.to_bytes(32, "big")
+        assert pub_key[1:] == expected_point.x.to_bytes(32, "big")
 
 
 class TestECPoint:
@@ -296,25 +297,25 @@ class TestECPoint:
         """相同点相等"""
         p1 = ECPoint(100, 200)
         p2 = ECPoint(100, 200)
-        assert p1  ==  p2
+        assert p1 == p2
 
     def test_equality_different_points(self):
         """不同点不相等"""
         p1 = ECPoint(100, 200)
         p2 = ECPoint(100, 201)
-        assert p1  !=  p2
+        assert p1 != p2
 
     def test_equality_infinity(self):
         """无穷远点相等"""
         p1 = ECPoint(None, None)
         p2 = ECPoint(None, None)
-        assert p1  ==  p2
+        assert p1 == p2
 
     def test_equality_infinity_vs_point(self):
         """无穷远点与普通点不相等"""
         p1 = ECPoint(None, None)
         p2 = ECPoint(100, 200)
-        assert p1  !=  p2
+        assert p1 != p2
 
     def test_is_infinity_flag(self):
         """无穷远点标志"""
@@ -328,21 +329,21 @@ class TestECPoint:
         """复制点"""
         p1 = ECPoint(100, 200)
         p2 = p1.copy()
-        assert p1  ==  p2
-        assert p1  is not  p2  # 不同的对象
+        assert p1 == p2
+        assert p1 is not p2  # 不同的对象
 
     def test_repr_infinity(self):
         """无穷远点的字符串表示"""
         p = ECPoint(None, None)
         repr_str = repr(p)
-        assert repr_str  in  "Infinity"
+        assert repr_str in "Infinity"
 
     def test_repr_normal(self):
         """普通点的字符串表示"""
         p = ECPoint(100, 200)
         repr_str = repr(p)
-        assert repr_str  in  "ECPoint"
-        assert repr_str  in  "64"  # 十六进制长度
+        assert repr_str in "ECPoint"
+        assert repr_str in "64"  # 十六进制长度
 
 
 if __name__ == "__main__":

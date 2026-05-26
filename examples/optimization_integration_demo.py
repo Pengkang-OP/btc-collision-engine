@@ -9,8 +9,8 @@ from pathlib import Path
 # 添加项目根目录
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.core.address_generator import P2PKHAddressGenerator
-from src.core.optimized_address_generator import OptimizedP2PKHAddressGenerator
+from src.core.address_generator import P2PKHAddressGenerator  # noqa: E402
+from src.core.optimized_address_generator import OptimizedP2PKHAddressGenerator  # noqa: E402
 
 
 def example_1_basic_usage():
@@ -39,7 +39,8 @@ def example_1_basic_usage():
     info = generator.get_optimization_info()
     print("\n  优化配置:")
     print(
-        f"    预计算表: {info['precomputed_table']['enabled']}, window_size={info['precomputed_table']['window_size']}"
+        f"    预计算表: {info['precomputed_table']['enabled']}, "
+        f"window_size={info['precomputed_table']['window_size']}"
     )
     print(f"    SIMD哈希: {info['simd_hash']['enabled']}, backend={info['simd_hash']['backend']}")
     print(f"    内存池: {info['memory_pool']['enabled']}")
@@ -139,9 +140,9 @@ def example_5_integration_with_engine():
 
     print("""
     # 在KeyCollisionEngine中使用优化版生成器
-    
-    from src.core.optimized_address_generator import OptimizedP2PKHAddressGenerator
-    
+
+    from src.core.optimized_address_generator import OptimizedP2PKHAddressGenerator  # noqa: E402
+
     class OptimizedKeyCollisionEngine:
         def __init__(self, targets):
             self.targets = set(targets)
@@ -152,16 +153,16 @@ def example_5_integration_with_engine():
                 use_memory_pool=True,
                 window_size=8
             )
-        
+
         def check_private_key(self, private_key):
             # 生成地址(自动使用所有优化)
             address = self.generator.generate_from_private_key(private_key)
-            
+
             # 检查碰撞
             if address in self.targets:
                 return (private_key, address)
             return None
-    
+
     # 使用示例
     engine = OptimizedKeyCollisionEngine(targets=['1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'])
     engine.check_private_key(secrets.token_bytes(32))

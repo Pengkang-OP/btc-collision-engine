@@ -10,8 +10,8 @@ import pytest
 
 pytestmark = pytest.mark.gpu  # 需要真实GPU硬件
 
-from src.collision.gpu.engine import GPUCollisionEngine
-from src.utils import get_configured_logger, init_logging
+from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
+from src.utils import get_configured_logger, init_logging  # noqa: E402
 
 # 配置日志
 init_logging()

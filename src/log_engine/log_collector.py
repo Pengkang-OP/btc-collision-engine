@@ -12,6 +12,7 @@ class LogCollector:
     """Collects and aggregates log entries."""
 
     def __init__(self, max_queue_size: int = 1000):
+        """Initialize the log collector."""
         self._lock = threading.Lock()
         self._max_queue_size = max_queue_size
         self._entries: list[dict] = []

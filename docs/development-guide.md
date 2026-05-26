@@ -9,9 +9,13 @@
 BTC 碰撞引擎是一个比特币私钥碰撞研究项目，支持 CPU 和 GPU 加速。项目采用模块化架构，主要包含以下特性：
 
 - **多种碰撞模式**：随机碰撞、范围扫描、暴力穷举
+
 - **GPU 加速**：支持 NVIDIA、AMD、Intel 显卡（OpenCL）
+
 - **断点续传**：自动保存进度，支持从断点恢复
+
 - **去重过滤**：Bloom 过滤器防止重复检测
+
 - **实时监控**：性能指标统计、进度可视化
 
 ### 1.1 技术栈概览
@@ -32,7 +36,9 @@ BTC 碰撞引擎是一个比特币私钥碰撞研究项目，支持 CPU 和 GPU 
 ### 2.1 环境要求
 
 - Python >= 3.9
+
 - Git
+
 - OpenCL 运行时（可选，用于 GPU 支持）
 
 ### 2.2 快速安装
@@ -59,6 +65,7 @@ pip install -r requirements-gpu.txt
 
 # 安装开发依赖（可选）
 pip install -r requirements-dev.txt
+
 ```
 
 ### 2.3 依赖说明
@@ -78,6 +85,7 @@ python -c "import pyopencl; print([d.name for p in pyopencl.get_platforms() for 
 
 # 运行健康检查
 python -m src.utils.health_check --gpu
+
 ```
 
 ---
@@ -135,6 +143,7 @@ btc-collision-engine/
 ├── tools/                      # 工具脚本
 ├── config.example.json         # 配置示例
 └── pyproject.toml             # 项目配置
+
 ```
 
 ---
@@ -197,7 +206,6 @@ logger = get_configured_logger(__name__)
 
 MAX_BATCH_SIZE = 1_048_576
 
-
 class MyClass:
     """类文档描述"""
 
@@ -224,6 +232,7 @@ class MyClass:
             logger.error("处理失败: %s", e, exc_info=True)
             raise
         return count
+
 ```
 
 ### 5.2 测试编写规范
@@ -235,7 +244,6 @@ class MyClass:
 
 import pytest
 from tests.gpu_mock_factory import GPUMockFactory
-
 
 class TestMyClass:
     """MyClass 单元测试"""
@@ -253,7 +261,6 @@ class TestMyClass:
         with pytest.raises(RuntimeError):
             obj.process_batch(None)
 
-
 class TestMyClassIntegration:
     """MyClass 集成测试"""
 
@@ -262,6 +269,7 @@ class TestMyClassIntegration:
         with GPUMockFactory.patch_gpu_collision_engine() as mocks:
             # 测试代码
             pass
+
 ```
 
 ### 5.3 运行测试
@@ -285,6 +293,7 @@ pytest tests/ -m "not gpu_hardware" -v
 
 # 生成覆盖率报告
 pytest tests/ --cov=src --cov-report=html
+
 ```
 
 ### 5.4 代码质量检查
@@ -301,6 +310,7 @@ mypy src/
 
 # 安全扫描
 bandit -r src/
+
 ```
 
 ---
@@ -310,15 +320,18 @@ bandit -r src/
 ### 6.1 添加新碰撞模式
 
 1. 在 `src/collision/` 创建搜索模式类
+
 2. 实现 `BaseSearch` 接口
+
 3. 在 `src/gpu/search_modes/` 添加 GPU 支持
+
 4. 添加相应测试
+
 5. 更新配置解析
 
 ```python
 # src/collision/search_modes/base_search.py
 from abc import ABC, abstractmethod
-
 
 class BaseSearch(ABC):
     """碰撞搜索模式基类"""
@@ -332,19 +345,22 @@ class BaseSearch(ABC):
     def get_state(self) -> dict:
         """获取当前状态"""
         pass
+
 ```
 
 ### 6.2 添加新 GPU 厂商支持
 
 1. 在 `src/gpu/vendors/` 创建厂商类
+
 2. 继承 `BaseVendorStrategy`
+
 3. 实现厂商特定优化
+
 4. 在 `vendor_strategy.py` 注册
 
 ```python
 # src/gpu/vendors/new_vendor.py
 from .base import BaseVendorStrategy
-
 
 class NewVendorStrategy(BaseVendorStrategy):
     """新厂商优化策略"""
@@ -356,13 +372,17 @@ class NewVendorStrategy(BaseVendorStrategy):
             "use_local_memory": True,
             "work_group_size": 256,
         }
+
 ```
 
 ### 6.3 添加新地址类型
 
 1. 在 `src/core/address_converter.py` 添加解析逻辑
+
 2. 在 `src/core/address_generator.py` 添加生成支持
+
 3. 更新 `src/collision/target_resolver.py`
+
 4. 添加测试用例
 
 ---
@@ -393,6 +413,7 @@ class NewVendorStrategy(BaseVendorStrategy):
         "file": "logs/collision.log"
     }
 }
+
 ```
 
 ### 7.2 配置加载
@@ -403,6 +424,7 @@ from src.config.config_manager import ConfigManager
 config = ConfigManager()
 settings = config.get_all()
 gpu_batch_size = settings.get("gpu", {}).get("batch_size", 100000)
+
 ```
 
 ---
@@ -419,6 +441,7 @@ logger = get_configured_logger(__name__)
 logger.info("操作信息: %s", detail)
 logger.warning("警告信息: %s", detail)
 logger.error("错误信息: %s", e, exc_info=True)
+
 ```
 
 ### 8.2 性能监控
@@ -430,6 +453,7 @@ monitor = EnhancedMonitoring()
 monitor.start_monitoring()
 # ... 执行操作 ...
 stats = monitor.get_stats()
+
 ```
 
 ---
@@ -439,10 +463,15 @@ stats = monitor.get_stats()
 ### 9.1 提交前检查清单
 
 - [ ] 代码通过 `black` 格式化
+
 - [ ] 代码通过 `flake8` 检查
+
 - [ ] 所有公开函数有类型注解
+
 - [ ] 新功能有对应测试
+
 - [ ] 测试通过 `pytest`
+
 - [ ] 更新相关文档
 
 ### 9.2 Git 提交规范
@@ -453,6 +482,7 @@ stats = monitor.get_stats()
 详细说明（可选）
 
 类型: feat/fix/docs/style/refactor/test/chore
+
 ```
 
 示例：
@@ -463,6 +493,7 @@ feat(gpu): 添加 Intel Arc A770 支持
 - 新增 uint32 workaround 标志
 - 添加内存对齐优化
 - 更新性能基准测试
+
 ```
 
 ---
@@ -474,7 +505,9 @@ feat(gpu): 添加 Intel Arc A770 支持
 检查：
 
 1. 是否安装了 pyopencl
+
 2. OpenCL 驱动是否正确
+
 3. GPU 设备是否支持 OpenCL 1.2
 
 ### Q2: 测试在 CI 通过但本地失败？
@@ -482,7 +515,9 @@ feat(gpu): 添加 Intel Arc A770 支持
 可能是平台差异，检查：
 
 1. GPU Mock 是否正确注入
+
 2. 临时文件路径权限
+
 3. 环境变量配置
 
 ### Q3: 如何调试 GPU 内核？
@@ -493,6 +528,7 @@ feat(gpu): 添加 Intel Arc A770 支持
 import pyopencl as cl
 ctx = cl.create_some_context()
 prof = ctx.create_profiling_events()
+
 ```
 
 ---
@@ -500,9 +536,13 @@ prof = ctx.create_profiling_events()
 ## 11. 相关文档
 
 - [开发代码标准](standards/development_code_standards.md)
+
 - [测试标准](standards/development_test_standards.md)
+
 - [GPU 引擎指南](gpu-engine-guide.md)
+
 - [安全指南](security-guidelines.md)
+
 - [性能优化](performance-optimization.md)
 
 ---

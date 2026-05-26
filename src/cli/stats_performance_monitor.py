@@ -11,6 +11,7 @@ class StatsPerformanceMonitor:
     """Monitors and reports performance statistics."""
 
     def __init__(self):
+        """Initialize performance monitor."""
         self._start_time = time.time()
         self._last_report = time.time()
         self._total_keys = 0

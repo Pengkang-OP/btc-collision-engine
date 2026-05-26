@@ -2,7 +2,6 @@
 
 **版本**: v4.5.1
 
-
 本文档说明如何在多块 GPU 的系统上配置和运行 BTC 碰撞引擎。
 
 ---
@@ -10,11 +9,17 @@
 ## 目录
 
 1. [系统要求](#系统要求)
+
 2. [查看可用 GPU 设备](#查看可用-gpu-设备)
+
 3. [配置多 GPU](#配置多-gpu)
+
 4. [启动多 GPU 模式](#启动多-gpu-模式)
+
 5. [负载均衡策略](#负载均衡策略)
+
 6. [性能调优](#性能调优)
+
 7. [故障排除](#故障排除)
 
 ---
@@ -22,8 +27,11 @@
 ## 系统要求
 
 - **Python** >= 3.7
+
 - **PyOpenCL** >= 2020.1
+
 - **多块 GPU**，每块均需安装对应 OpenCL 驱动
+
 - **系统内存** >= 4 GB（多 GPU 并发时建议 8 GB+）
 
 ---
@@ -41,6 +49,7 @@ for i, platform in enumerate(cl.get_platforms()):
         mem_mb = device.global_mem_size // (1024*1024)
         print(f'  Device {j}: {device.name}  ({mem_mb} MB VRAM)')
 "
+
 ```
 
 示例输出：
@@ -50,6 +59,7 @@ Platform 0: Intel(R) OpenCL Graphics
   Device 0: Intel(R) Arc(TM) A770 Graphics  (16384 MB VRAM)
 Platform 1: NVIDIA CUDA
   Device 0: NVIDIA GeForce RTX 3080  (10240 MB VRAM)
+
 ```
 
 ---
@@ -69,6 +79,7 @@ Platform 1: NVIDIA CUDA
     "enable_vendor_optimizations": true
   }
 }
+
 ```
 
 > `auto_detect: true` 时，系统会自动选择性能最强的单 GPU。
@@ -84,6 +95,7 @@ Platform 1: NVIDIA CUDA
     "batch_size": 131072
   }
 }
+
 ```
 
 ### 方案三：启用多 GPU 并行（多卡系统）
@@ -114,6 +126,7 @@ print(stats)
 
 # 停止
 engine.stop()
+
 ```
 
 ---
@@ -128,6 +141,7 @@ copy config.multi_gpu.json config.json
 
 # 启动 CLI（multi_gpu 模式需通过代码接口）
 python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random --workers 4
+
 ```
 
 ---
@@ -150,6 +164,7 @@ python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random --wo
     "load_balance_strategy": "performance_weighted"
   }
 }
+
 ```
 
 ---
@@ -177,6 +192,7 @@ python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random --wo
     "enable_vendor_optimizations": true
   }
 }
+
 ```
 
 > Intel Arc 建议将 `memory_usage_ratio` 设为 0.45 以避免显存耗尽。
@@ -191,6 +207,7 @@ python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random --wo
     "max_workers": 4
   }
 }
+
 ```
 
 ---
@@ -200,13 +217,17 @@ python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random --wo
 ### 仅一块 GPU 工作
 
 - 确认所有 GPU 驱动都支持 OpenCL（用上面的查询命令验证）
+
 - 检查 `device_count` 参数是否 >= 2
+
 - 查看日志中是否有 GPU 初始化失败的 `ERROR` 信息
 
 ### 多 GPU 模式下速度没有成比例提升
 
 - 检查是否存在 CPU 瓶颈（`max_workers` 设置过高）
+
 - 降低单卡 `batch_size`，减少 GPU 内存传输延迟
+
 - 确认各卡 VRAM 未接近上限
 
 ### MemoryError / 显存不足
@@ -220,6 +241,7 @@ python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random --wo
     "memory_usage_ratio": 0.4
   }
 }
+
 ```
 
 ---

@@ -1,4 +1,4 @@
-"""启动菜单国际化 — 翻译字典和 _t() 包装函数。"""
+"""启动菜单国际化 — 翻译字典和 _t() 包装函数."""
 
 _FALLBACK_ZH = {
     "menu.title": "BTC 碰撞引擎 - 启动菜单",
@@ -95,9 +95,9 @@ _FALLBACK_EN = {
 }
 
 try:
-    from src.i18n import _t as _i18n_t
-    from src.i18n import set_language
-    from src.i18n.language_detector import LanguageDetector
+    from ..i18n import _t as _i18n_t
+    from ..i18n import set_language
+    from ..i18n.language_detector import LanguageDetector
 
     _lang = LanguageDetector.detect()
     set_language(_lang)

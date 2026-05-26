@@ -9,10 +9,15 @@
 ## 目录
 
 - [场景1: 学习比特币地址生成原理](#场景1-学习比特币地址生成原理)
+
 - [场景2: 测试GPU性能](#场景2-测试gpu性能)
+
 - [场景3: 研究地址碰撞概率](#场景3-研究地址碰撞概率)
+
 - [场景4: 批量地址验证](#场景4-批量地址验证)
+
 - [场景5: 断点续传长时间运行](#场景5-断点续传长时间运行)
+
 - [场景6: 多GPU加速碰撞](#场景6-多gpu加速碰撞)
 
 ---
@@ -26,6 +31,7 @@
 ### 前置条件
 
 - ✅ 已安装项目（使用 `scripts/install/install.bat` 或 `bash scripts/install/install.sh`）
+
 - ✅ 已运行健康检查（`python -m src.utils.health_check`）
 
 ### 步骤
@@ -35,6 +41,7 @@
 ```bash
 # 使用测试地址运行10秒
 python key_collision_cli.py -t 12ib7dApVFvg82TXKycWBNpN8kFyiAN1dr -m random --duration 10
+
 ```
 
 **预期输出**:
@@ -55,6 +62,7 @@ python key_collision_cli.py -t 12ib7dApVFvg82TXKycWBNpN8kFyiAN1dr -m random --du
   运行时间  : 00:00:10
   平均速度  : 2.54K/s
   发现匹配  : 0 个
+
 ```
 
 #### 步骤2: 观察地址格式
@@ -78,19 +86,24 @@ for addr in test_inputs:
     print(f"输入: {addr}")
     print(f"解析: {result}")
     print()
+
 ```
 
 运行:
 
 ```bash
 python test_address_formats.py
+
 ```
 
 ### 学习要点
 
 1. 私钥是256位随机数
+
 2. 公钥通过椭圆曲线运算从私钥生成
+
 3. 地址通过哈希运算从公钥生成
+
 4. 碰撞概率极低（2^-256）
 
 ### 常见问题
@@ -109,6 +122,7 @@ A: 这是正常的！比特币地址空间太大（2^256），随机碰撞的概
 ### 前置条件
 
 - ✅ 已安装GPU依赖（`pip install pyopencl`）
+
 - ✅ GPU支持OpenCL 1.2+
 
 ### 步骤
@@ -117,6 +131,7 @@ A: 这是正常的！比特币地址空间太大（2^256），随机碰撞的概
 
 ```bash
 python -c "import pyopencl as cl; [print(f'{i}: {d.name}') for i, p in enumerate(cl.get_platforms()) for d in p.get_devices()]"
+
 ```
 
 **预期输出**:
@@ -124,6 +139,7 @@ python -c "import pyopencl as cl; [print(f'{i}: {d.name}') for i, p in enumerate
 ```bash
 0: Intel(R) Arc(TM) A770 Graphics
 1: NVIDIA GeForce GTX 1660 Ti
+
 ```
 
 #### 步骤2: CPU基准测试
@@ -131,6 +147,7 @@ python -c "import pyopencl as cl; [print(f'{i}: {d.name}') for i, p in enumerate
 ```bash
 # CPU模式，运行30秒
 python key_collision_cli.py -f valid_addresses.txt -m random --duration 30
+
 ```
 
 记录CPU速度（例如：3,000 keys/s）
@@ -140,6 +157,7 @@ python key_collision_cli.py -f valid_addresses.txt -m random --duration 30
 ```bash
 # 单GPU模式
 python key_collision_cli.py -f valid_addresses.txt --use-gpu -m random --duration 30
+
 ```
 
 **预期输出**:
@@ -150,6 +168,7 @@ GPU 设备     : Intel(R) Arc(TM) A770 Graphics
 批次大小     : 65536
 ----------------------------------------------------------------------
 [00:00:30] GPU | 已检查: 6,102,450 | 速度: 203.41K/s | 匹配: 0
+
 ```
 
 #### 步骤4: 性能对比
@@ -172,6 +191,7 @@ GPU 设备     : Intel(R) Arc(TM) A770 Graphics
        "batch_size": 100000  # 尝试 50000-200000
      }
    }
+
    ```
 
 2. **选择最佳GPU**:
@@ -179,6 +199,7 @@ GPU 设备     : Intel(R) Arc(TM) A770 Graphics
    ```bash
    # 指定GPU索引
    python key_collision_cli.py -f valid_addresses.txt --use-gpu -m random --gpu-device 0
+
    ```
 
 ### 常见问题
@@ -187,7 +208,9 @@ GPU 设备     : Intel(R) Arc(TM) A770 Graphics
 A: 检查：
 
 1. 是否安装了pyopencl
+
 2. OpenCL驱动是否正确
+
 3. GPU设备是否支持OpenCL 1.2+
 
 ---
@@ -205,6 +228,7 @@ A: 检查：
 ```bash
 # 在小范围内搜索（1-1000000）
 python key_collision_cli.py -t 12ib7dApVFvg82TXKycWBNpN8kFyiAN1dr -m range --start 1 --end 1000000 --duration 60
+
 ```
 
 #### 步骤2: 统计碰撞率
@@ -231,12 +255,14 @@ for file in history_files:
 print(f"总检查数: {total_checked:,}")
 print(f"总匹配数: {total_matches}")
 print(f"碰撞率: {total_matches / total_checked if total_checked > 0 else 0:.2e}")
+
 ```
 
 运行:
 
 ```bash
 python collision_stats.py
+
 ```
 
 ### 理论分析
@@ -244,12 +270,15 @@ python collision_stats.py
 **生日悖论**:
 
 - 需要检查约 2^80 个地址才有50%概率找到碰撞
+
 - 以200K keys/s速度，需要约 10^15 年
 
 ### 学习要点
 
 1. 碰撞概率 = 检查数 / 地址空间
+
 2. 地址空间 = 2^256（极大）
+
 3. 实际碰撞几乎不可能
 
 ---
@@ -280,6 +309,7 @@ bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq
 # 无效地址（用于测试）
 invalid_address
 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfN
+
 ```
 
 #### 步骤2: 使用Python验证
@@ -315,12 +345,14 @@ for addr in addresses:
 print(f"\n验证结果:")
 print(f"  有效: {valid_count}")
 print(f"  无效: {invalid_count}")
+
 ```
 
 运行:
 
 ```bash
 python validate_addresses.py
+
 ```
 
 ### 输出示例
@@ -339,6 +371,7 @@ python validate_addresses.py
 验证结果:
   有效: 3
   无效: 2
+
 ```
 
 ---
@@ -356,6 +389,7 @@ python validate_addresses.py
 ```bash
 # 启用断点续传，运行1小时
 python key_collision_cli.py -f valid_addresses.txt -m random --checkpoint --checkpoint-interval 30 --duration 3600
+
 ```
 
 #### 步骤2: 中断任务
@@ -370,6 +404,7 @@ python key_collision_cli.py -f valid_addresses.txt -m random --checkpoint --chec
 ----------------------------------------------------------------------
   总检查数  : 1,234,567
   运行时间  : 00:15:23
+
 ```
 
 #### 步骤3: 从断点恢复
@@ -377,6 +412,7 @@ python key_collision_cli.py -f valid_addresses.txt -m random --checkpoint --chec
 ```bash
 # 再次运行相同命令，会自动检测断点
 python key_collision_cli.py -f valid_addresses.txt -m random --checkpoint --duration 3600
+
 ```
 
 **输出**:
@@ -389,17 +425,21 @@ python key_collision_cli.py -f valid_addresses.txt -m random --checkpoint --dura
 是否从断点继续? (Y/N): Y
 
 从断点恢复运行...
+
 ```
 
 ### 断点文件位置
 
 - **位置**: `data_logs/collision_checkpoint.json`
+
 - **内容**: 当前检查的私钥数量、时间戳、配置
 
 ### 注意事项
 
 1. 断点每30秒自动保存（可配置）
+
 2. 程序停止时也会保存
+
 3. 删除断点文件可重新开始
 
 ---
@@ -413,6 +453,7 @@ python key_collision_cli.py -f valid_addresses.txt -m random --checkpoint --dura
 ### 前置条件
 
 - ✅ 2个或更多GPU
+
 - ✅ 已安装pyopencl
 
 ### 步骤
@@ -421,6 +462,7 @@ python key_collision_cli.py -f valid_addresses.txt -m random --checkpoint --dura
 
 ```bash
 python -c "import pyopencl as cl; [print(f'GPU {i}: {d.name} ({d.global_mem_size // 1024**3}GB)') for i, p in enumerate(cl.get_platforms()) for d in p.get_devices()]"
+
 ```
 
 **输出**:
@@ -428,6 +470,7 @@ python -c "import pyopencl as cl; [print(f'GPU {i}: {d.name} ({d.global_mem_size
 ```bash
 GPU 0: NVIDIA GeForce GTX 1660 Ti (6GB)
 GPU 1: Intel(R) Arc(TM) A770 Graphics (16GB)
+
 ```
 
 #### 步骤2: 运行多GPU碰撞
@@ -438,6 +481,7 @@ python key_collision_cli.py -f valid_addresses.txt --multi-gpu -m random --durat
 
 # 或指定GPU
 python key_collision_cli.py -f valid_addresses.txt --multi-gpu --gpu-indices 0,1 -m random --duration 60
+
 ```
 
 **输出**:
@@ -457,6 +501,7 @@ python key_collision_cli.py -f valid_addresses.txt --multi-gpu --gpu-indices 0,1
   各GPU明细:
     GPU 0: 检查 2,345,678 | 速度 78.19K/s
     GPU 1: 检查 5,888,889 | 速度 196.30K/s
+
 ```
 
 ### 性能对比
@@ -479,6 +524,7 @@ python key_collision_cli.py -f valid_addresses.txt --multi-gpu --gpu-indices 0,1
     "auto_tuning": true
   }
 }
+
 ```
 
 ---
@@ -493,6 +539,7 @@ pip install coincurve gmpy2 pycryptodome
 
 # 启用所有优化
 python key_collision_cli.py -f valid_addresses.txt -m random --duration 60
+
 ```
 
 ### 2. 系统维护
@@ -504,6 +551,7 @@ python -m src.utils.health_check --gpu
 # 清理过期数据
 python -m src.utils.data_cleanup --dry-run  # 先试运行
 python -m src.utils.data_cleanup             # 实际清理
+
 ```
 
 ### 3. 日志查看
@@ -515,6 +563,7 @@ Get-Content logs/collision.log -Wait  # Windows PowerShell
 
 # 查看监控数据
 python -m src.monitoring.monitor_cli
+
 ```
 
 ---
@@ -522,9 +571,13 @@ python -m src.monitoring.monitor_cli
 ## 相关文档
 
 - [快速开始指南](getting-started.md)
+
 - [GPU引擎使用指南](gpu-engine-guide.md)
+
 - [配置使用示例](config-usage-examples.md)
+
 - [故障排除](troubleshooting.md)
+
 - [API参考](api-reference.md)
 
 ---

@@ -15,7 +15,9 @@
 ### 1.2 为什么需要内存锁定？
 
 - **安全性**: 私钥在内存中处理时，如果被交换到磁盘，可能被恢复
+
 - **合规性**: 某些安全标准要求敏感数据不得写入持久化存储
+
 - **性能**: 锁定的内存不会被页故障中断，提高性能
 
 ---
@@ -37,6 +39,7 @@ VirtualLock.restype = ctypes.wintypes.BOOL
 VirtualUnlock = ctypes.windll.kernel32.VirtualUnlock
 VirtualUnlock.argtypes = [ctypes.c_void_p, ctypes.c_size_t]
 VirtualUnlock.restype = ctypes.wintypes.BOOL
+
 ```
 
 ### 2.2 使用方法
@@ -82,6 +85,7 @@ def unlock_memory(buffer: bytes) -> bool:
         return False
 
     return True
+
 ```
 
 ---
@@ -93,6 +97,7 @@ def unlock_memory(buffer: bytes) -> bool:
 **管理员权限**:
 
 - Windows默认限制可锁定的内存大小
+
 - 需要管理员权限或使用`SeLockMemoryPrivilege`特权
 
 **获取特权**:
@@ -102,6 +107,7 @@ def unlock_memory(buffer: bytes) -> bool:
 2. 导航到: 本地策略 -> 用户权限分配
 3. 找到"锁定内存中的页"
 4. 添加需要的用户或服务账户
+
 ```
 
 ### 3.2 大小限制
@@ -109,6 +115,7 @@ def unlock_memory(buffer: bytes) -> bool:
 **默认限制**:
 
 - Windows 10/11: 约工作集大小的20%
+
 - Windows Server: 可配置，默认较高
 
 **检查限制**:
@@ -123,6 +130,7 @@ max_ws = ctypes.c_size_t()
 
 GetCurrentProcessWorkingSetSize(ctypes.byref(min_ws), ctypes.byref(max_ws))
 print(f"工作集大小: {min_ws.value} - {max_ws.value} 字节")
+
 ```
 
 ### 3.3 已知问题
@@ -133,6 +141,7 @@ print(f"工作集大小: {min_ws.value} - {max_ws.value} 字节")
 错误: 内存锁定失败: 错误码 1314 (ERROR_PRIVILEGE_NOT_HELD)
 原因: 缺少SeLockMemoryPrivilege特权
 解决: 以管理员身份运行或添加特权
+
 ```
 
 **问题2: 锁定过多内存**
@@ -141,6 +150,7 @@ print(f"工作集大小: {min_ws.value} - {max_ws.value} 字节")
 错误: 内存锁定失败: 错误码 8 (ERROR_NOT_ENOUGH_MEMORY)
 原因: 尝试锁定超过限制的内存
 解决: 减少锁定内存大小或增加工作集限制
+
 ```
 
 ---
@@ -175,6 +185,7 @@ def lock_memory_linux(buffer: bytes) -> bool:
         return False
 
     return True
+
 ```
 
 ### 4.2 macOS实现
@@ -182,6 +193,7 @@ def lock_memory_linux(buffer: bytes) -> bool:
 ```python
 # macOS使用与Linux相同的mlock API
 # 但可能需要禁用SIP或签名应用
+
 ```
 
 ---
@@ -200,6 +212,7 @@ lock_memory(private_key)
 # ❌ 错误: 锁定整个缓冲区
 large_buffer = bytearray(1024 * 1024 * 100)  # 100MB
 lock_memory(large_buffer)  # 可能失败
+
 ```
 
 ### 5.2 及时解锁
@@ -215,6 +228,7 @@ try:
 finally:
     unlock_memory(private_key)  # 确保解锁
     clear_memory(private_key)   # 清除敏感数据
+
 ```
 
 ### 5.3 错误处理
@@ -238,6 +252,7 @@ def safe_lock_memory(buffer: bytes) -> bool:
             f"  建议: 以管理员身份运行或配置权限"
         )
         return False
+
 ```
 
 ---
@@ -260,6 +275,7 @@ with key_manager.use("key1") as key:
 
 # 手动清除
 key_manager.clear("key1")
+
 ```
 
 ### 6.2 配置选项
@@ -272,6 +288,7 @@ key_manager.clear("key1")
     "auto_clear_on_exit": true
   }
 }
+
 ```
 
 ---
@@ -288,6 +305,7 @@ Get-Process -Id <PID> | Select-Object WorkingSet, PeakWorkingSet
 
 # 查看特权
 whoami /priv | findstr SeLockMemoryPrivilege
+
 ```
 
 **Linux**:
@@ -298,6 +316,7 @@ ulimit -l
 
 # 查看进程锁定内存
 cat /proc/<PID>/smaps | grep Locked
+
 ```
 
 ### 7.2 日志示例
@@ -306,6 +325,7 @@ cat /proc/<PID>/smaps | grep Locked
 2026-04-24 14:00:00 [DEBUG] src.core.secure_key_manager: 内存锁定成功: 32 字节
 2026-04-24 14:00:00 [INFO] src.core.secure_key_manager: SecureKeyManager初始化完成
 2026-04-24 14:00:05 [DEBUG] src.core.secure_key_manager: 内存解锁成功: 32 字节
+
 ```
 
 ---
@@ -317,14 +337,19 @@ cat /proc/<PID>/smaps | grep Locked
 **风险**:
 
 - 内存可能被core dump捕获
+
 - 调试器可以读取内存
+
 - DMA攻击可以访问内存
 
 **缓解措施**:
 
 1. 禁用core dump
+
 2. 使用安全启动
+
 3. 启用BitLocker/FileVault
+
 4. 定期清除敏感数据
 
 ### 8.2 内存清除
@@ -339,6 +364,7 @@ def secure_clear(buffer: bytearray):
         buffer[i] = 0xFF
     for i in range(len(buffer)):
         buffer[i] = 0
+
 ```
 
 ---
@@ -355,6 +381,7 @@ A: 按以下步骤排查:
    2. 检查SeLockMemoryPrivilege特权
    3. 检查尝试锁定的内存大小
    4. 查看Windows事件日志
+
 ```
 
 **Q2: 如何增加可锁定内存大小？**
@@ -368,6 +395,7 @@ A: 两种方法:
    方法2: 修改注册表
    - HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management
    - 修改DisablePagingExecutive = 1
+
 ```
 
 **Q3: 内存锁定会影响性能吗？**
@@ -377,6 +405,7 @@ A: 影响很小:
    - 正面: 减少页故障，提高性能
    - 负面: 减少可用物理内存
    - 建议: 只锁定必要的敏感数据
+
 ```
 
 ---
@@ -384,7 +413,9 @@ A: 影响很小:
 ## 10. 参考资料
 
 - [VirtualLock文档](https://docs.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-virtuallock)
+
 - [内存管理最佳实践](https://docs.microsoft.com/en-us/windows/win32/memory/memory-management-functions)
+
 - [Windows安全基线](https://docs.microsoft.com/en-us/windows/security/)
 
 ---

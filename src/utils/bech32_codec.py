@@ -28,15 +28,18 @@ def bech32_polymod(values: list[int]) -> int:
 
 
 def bech32_hrp_expand(hrp: str) -> list[int]:
+    """Expand HRP into values for checksum computation."""
     return [ord(c) >> 5 for c in hrp] + [0] + [ord(c) & 31 for c in hrp]
 
 
 def bech32_verify_checksum(hrp: str, data: list[int], spec: str) -> bool:
+    """Verify Bech32/Bech32m checksum."""
     const = 1 if spec == "bech32" else 0x2BC830A3
     return bech32_polymod(bech32_hrp_expand(hrp) + data) == const
 
 
 def bech32_create_checksum(hrp: str, data: list[int], spec: str) -> list[int]:
+    """Create Bech32/Bech32m checksum."""
     const = 1 if spec == "bech32" else 0x2BC830A3
     values = bech32_hrp_expand(hrp) + data
     polymod = bech32_polymod(values + [0, 0, 0, 0, 0, 0]) ^ const
@@ -62,9 +65,11 @@ def _convertbits(data: list[int], frombits: int, tobits: int) -> list[int] | Non
 
 
 def bech32_encode(hrp: str, witver: int, witprog: bytes, spec: str = "bech32") -> str:
-    data = [witver] + _convertbits(list(witprog), 8, 5)
-    if data is None:
+    """Encode a Bech32 or Bech32m address."""
+    converted = _convertbits(list(witprog), 8, 5)
+    if converted is None:
         raise ValueError("Witness program conversion failed")
+    data = [witver] + converted
     checksum = bech32_create_checksum(hrp, data, spec)
     combined = data + checksum
     return hrp + "1" + "".join(CHARSET[d] for d in combined)

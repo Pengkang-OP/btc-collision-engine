@@ -1,2 +1,1 @@
 # RELEASE_NOTES_v3.4.0
-

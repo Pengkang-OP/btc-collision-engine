@@ -33,7 +33,9 @@ GPU碰撞引擎在运行过程中会产生大量日志（每个batch都有性能
 **优点**:
 
 - 风险低，可以逐步验证
+
 - 出现问题容易回滚
+
 - 不影响现有功能
 
 **步骤**:
@@ -80,6 +82,7 @@ class GPUCollisionEngine:
         if self._async_log_handler:
             self._async_log_handler.close()
             logger.info("GPU异步日志已关闭")
+
 ```
 
 #### 步骤2: 配置文件支持
@@ -94,6 +97,7 @@ class GPUCollisionEngine:
     "async_log_backup_count": 5
   }
 }
+
 ```
 
 #### 步骤3: 性能监控
@@ -104,6 +108,7 @@ if self._async_log_handler:
     stats = self._async_log_handler.get_stats()
     if stats['dropped_count'] > 0:
         logger.warning(f"异步日志丢弃: {stats['dropped_count']} 条")
+
 ```
 
 ---
@@ -113,11 +118,13 @@ if self._async_log_handler:
 **优点**:
 
 - 性能提升最大
+
 - 统一日志策略
 
 **缺点**:
 
 - 改动较大
+
 - 需要充分测试
 
 **实施**:
@@ -148,6 +155,7 @@ class GPUCollisionEngine:
         # 关闭异步处理器
         if hasattr(self, '_async_handler'):
             self._async_handler.close()
+
 ```
 
 ---
@@ -167,12 +175,15 @@ class GPUCollisionEngine:
 **GPU引擎性能**:
 
 - 当前吞吐量: ~50k keys/s
+
 - 日志开销占比: ~10%
+
 - 预期提升: 吞吐量提升至 ~55k keys/s (+10%)
 
 **系统资源**:
 
 - 内存增加: ~5MB（队列缓冲）
+
 - CPU使用: 略降（I/O等待减少）
 
 ---
@@ -196,6 +207,7 @@ def check_async_log_health(engine):
             logger.warning("异步日志队列积压严重")
         if stats['dropped_count'] > 100:
             logger.error("异步日志丢弃过多")
+
 ```
 
 ### 降级策略
@@ -213,6 +225,7 @@ def _check_async_log_fallback(self):
             self._async_log_handler.close()
             logger.removeHandler(self._async_log_handler)
             self._async_log_handler = None
+
 ```
 
 ---
@@ -236,6 +249,7 @@ def _check_async_log_fallback(self):
     }
   }
 }
+
 ```
 
 ### 配置说明
@@ -307,6 +321,7 @@ class TestGPUAsyncLogging(unittest.TestCase):
 
         # 异步应该更快
         self.assertLess(async_time, sync_time)
+
 ```
 
 ---
@@ -320,8 +335,11 @@ class TestGPUAsyncLogging(unittest.TestCase):
 A: 检查以下项：
 
 1. 增加 `async_queue_size`
+
 2. 降低日志级别（DEBUG → INFO）
+
 3. 使用采样日志（SampledLogger）
+
 4. 检查磁盘I/O性能
 
 **Q2: 日志丢失如何排查？**
@@ -332,6 +350,7 @@ A:
 # 启用调试模式
 async_handler = AsyncFileHandler('logs/gpu_async.log')
 async_handler._async_logger._drop_callback = lambda: logger.warning("日志被丢弃")
+
 ```
 
 **Q3: 程序退出时日志未写完？**
@@ -343,6 +362,7 @@ try:
     engine.run()
 finally:
     engine.cleanup()  # 这会关闭异步日志
+
 ```
 
 ---
@@ -352,25 +372,33 @@ finally:
 ### 阶段1: 测试环境（1-2天）
 
 - [ ] 在测试环境启用异步日志
+
 - [ ] 运行基准测试验证性能
+
 - [ ] 监控日志丢弃率
 
 ### 阶段2: 灰度发布（3-5天）
 
 - [ ] 10% 流量启用异步日志
+
 - [ ] 对比同步/异步性能
+
 - [ ] 收集用户反馈
 
 ### 阶段3: 全面推广（1周）
 
 - [ ] 50% 流量启用
+
 - [ ] 优化配置参数
+
 - [ ] 编写使用文档
 
 ### 阶段4: 默认启用（2周）
 
 - [ ] 100% 流量启用
+
 - [ ] 设为默认配置
+
 - [ ] 移除同步日志选项
 
 ---
@@ -380,19 +408,25 @@ finally:
 ### 收益
 
 - ✅ 性能提升 10-15%
+
 - ✅ I/O等待减少 80%
+
 - ✅ GPU利用率提升
 
 ### 风险
 
 - ⚠️ 日志可能丢失（队列满时）
+
 - ⚠️ 内存占用增加 ~5MB
+
 - ⚠️ 需要确保 cleanup() 调用
 
 ### 建议
 
 1. **先测试后上线**: 充分测试验证
+
 2. **监控丢弃率**: 设置告警阈值
+
 3. **保留降级选项**: 可随时回退到同步
 
 ---

@@ -11,6 +11,7 @@
 ```bash
 start.bat qs          # Windows
 python key_collision_cli.py --quick-start    # Linux/Mac
+
 ```
 
 ### 方式2: 快速模式（推荐熟练用户）
@@ -18,12 +19,14 @@ python key_collision_cli.py --quick-start    # Linux/Mac
 ```bash
 start.bat qr          # Windows
 python key_collision_cli.py --quick-run      # Linux/Mac
+
 ```
 
 ### 方式3: 直接命令
 
 ```bash
 python key_collision_cli.py -t targets.txt -m random
+
 ```
 
 ---
@@ -50,6 +53,7 @@ python key_collision_cli.py -t targets.txt -m random
 -m, --mode MODE          碰撞模式 (random/range/brute)
 -e, --engine TYPE        引擎类型 (cpu/gpu/multi-gpu)
 -d, --duration SECONDS   运行时长 (0=无限制)
+
 ```
 
 ### 功能开关
@@ -60,6 +64,7 @@ python key_collision_cli.py -t targets.txt -m random
 --dedup                  启用去重过滤 (默认启用)
 --no-dedup               禁用去重过滤
 --compact                紧凑模式（跳过帮助信息）
+
 ```
 
 ### 帮助命令
@@ -70,6 +75,7 @@ python key_collision_cli.py -t targets.txt -m random
 --recommend              参数推荐
 --quick-start            交互式向导
 --quick-run              快速模式
+
 ```
 
 ---
@@ -93,13 +99,17 @@ python key_collision_cli.py -t targets.txt -m random
 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
 3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy
 bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh
+
 ```
 
 **规则**:
 
 - ✅ 每行一个地址
+
 - ✅ 支持`#`注释
+
 - ✅ 支持空行
+
 - ✅ 支持3种地址格式（1开头、3开头、bc1开头）
 
 ---
@@ -111,13 +121,17 @@ bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh
 ```bash
 # 使用交互式向导
 start.bat qs
+
 ```
 
 向导会引导您完成：
 
 1. 选择地址来源
+
 2. 选择碰撞模式
+
 3. 选择功能选项
+
 4. 确认并启动
 
 ### 场景2: 快速测试
@@ -128,6 +142,7 @@ echo "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa" > targets.txt
 
 # 2. 快速模式运行
 start.bat qr
+
 ```
 
 ### 场景3: 指定运行时长
@@ -135,6 +150,7 @@ start.bat qr
 ```bash
 # 运行1小时
 python key_collision_cli.py --quick-run --duration 3600
+
 ```
 
 ### 场景4: GPU加速
@@ -142,6 +158,7 @@ python key_collision_cli.py --quick-run --duration 3600
 ```bash
 # 使用GPU
 python key_collision_cli.py --quick-run --engine gpu
+
 ```
 
 ### 场景5: 后台运行
@@ -152,6 +169,7 @@ start /B python key_collision_cli.py --quick-run > log.txt 2>&1
 
 # Linux/Mac
 nohup python key_collision_cli.py --quick-run > log.txt 2>&1 &
+
 ```
 
 ---
@@ -162,17 +180,25 @@ nohup python key_collision_cli.py --quick-run > log.txt 2>&1 &
 
 ```bash
 [00:05] [CPU] ████░░░░░░░░░░░░ 25.0% | 1,234/4,936 | 速度: 246/s | ETA: 15s | 匹配: 0
+
 ```
 
 **说明**:
 
 - `[00:05]` - 已运行时间
+
 - `[CPU]` - 引擎类型（CPU/GPU/MULTI-GPU）
+
 - `████░░░░░░░░░░░░` - 可视化进度条
+
 - `25.0%` - 完成百分比
+
 - `1,234/4,936` - 已检查/总数
+
 - `速度: 246/s` - 每秒检查数量
+
 - `ETA: 15s` - 预计剩余时间
+
 - `匹配: 0` - 找到的匹配数
 
 ---
@@ -185,6 +211,7 @@ nohup python key_collision_cli.py --quick-run > log.txt 2>&1 &
 
 ```bash
 echo "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa" > targets.txt
+
 ```
 
 ### 问题: 启动失败
@@ -194,6 +221,7 @@ echo "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa" > targets.txt
 ```bash
 python --version
 pip install -r requirements.txt
+
 ```
 
 ### 问题: GPU不可用
@@ -206,6 +234,7 @@ start.bat qr
 
 # 或安装GPU依赖
 pip install -r requirements-gpu.txt
+
 ```
 
 ### 问题: 如何停止
@@ -214,6 +243,7 @@ pip install -r requirements-gpu.txt
 
 ```bash
 按 Ctrl+C 安全停止（进度会自动保存）
+
 ```
 
 ---
@@ -221,10 +251,15 @@ pip install -r requirements-gpu.txt
 ## 💡 提示
 
 - ✅ **新手**: 使用`start.bat qs`交互式向导
+
 - ✅ **熟练**: 使用`start.bat qr`快速模式
+
 - ✅ **测试**: 先用少量地址测试
+
 - ✅ **性能**: 启用GPU可提速10-100倍
+
 - ✅ **安全**: 启用断点续传防止进度丢失
+
 - ✅ **效率**: 启用去重过滤避免重复检查
 
 ---
@@ -232,8 +267,11 @@ pip install -r requirements-gpu.txt
 ## 📚 完整文档
 
 - [用户使用指南](docs/USER_GUIDE.md) - 详细使用指南
+
 - [README](README.md) - 项目概述
+
 - [CHANGELOG](CHANGELOG.md) - 版本历史
+
 - [配置示例](config.example.json) - 完整配置
 
 ---

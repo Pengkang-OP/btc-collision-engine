@@ -14,7 +14,7 @@ echo.
 echo [1/7] 检查Python版本...
 python --version > nul 2>&1
 if errorlevel 1 (
-    echo [错误] 未找到Python，请先安装Python 3.9+
+    echo [错误] 未找到Python，请先安装Python 3.12+
     echo 下载地址: https://www.python.org/downloads/
     pause
     exit /b 1
@@ -23,10 +23,10 @@ if errorlevel 1 (
 for /f "tokens=2" %%i in ('python --version 2^>^&1') do set PYTHON_VERSION=%%i
 echo [成功] Python版本: %PYTHON_VERSION%
 
-:: 检查Python版本是否 >= 3.9
-python -c "import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)" 2>nul
+:: 检查Python版本是否 >= 3.12
+python -c "import sys; sys.exit(0 if sys.version_info >= (3, 12) else 1)" 2>nul
 if errorlevel 1 (
-    echo [错误] Python版本过低，需要3.9或更高版本
+    echo [错误] Python版本过低，需要3.12或更高版本
     echo 当前版本: %PYTHON_VERSION%
     pause
     exit /b 1

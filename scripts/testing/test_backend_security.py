@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from src.core.crypto_backend import (  # 需 sys.path 前置
+from src.core.crypto_backend import (  # noqa: E402
     get_backend_security_info,
     is_secure_backend_available,
     verify_production_ready,

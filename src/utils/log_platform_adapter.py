@@ -277,7 +277,12 @@ class PlatformAdapter:
 
         return cast(
             "logging.Handler",
-            RotatingFileHandler(filename, maxBytes=LOG_DEFAULT_MAX_BYTES, backupCount=5, encoding="utf-8"),
+            RotatingFileHandler(
+                filename,
+                maxBytes=LOG_DEFAULT_MAX_BYTES,
+                backupCount=5,
+                encoding="utf-8",
+            ),
         )
 
     def _get_windows_console_handler(self, level: int) -> logging.Handler:

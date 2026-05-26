@@ -11,6 +11,7 @@ class LogManager:
     """Manages log configuration and lifecycle."""
 
     def __init__(self):
+        """Initialize the log manager."""
         self._loggers: dict[str, logging.Logger] = {}
 
     def get_logger(self, name: str) -> logging.Logger:

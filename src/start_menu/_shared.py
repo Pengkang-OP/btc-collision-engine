@@ -1,4 +1,4 @@
-"""启动菜单共享模块状态 — Rich 检测、Console 实例、项目根目录、Python 路径。"""
+"""启动菜单共享模块状态 — Rich 检测、Console 实例、项目根目录、Python 路径."""
 import os
 import sys
 from pathlib import Path
@@ -9,17 +9,22 @@ try:
     from rich.console import Console as _RichConsole
     from rich.panel import Panel as _RichPanel
     from rich.text import Text as _RichText
-    _HAS_RICH = True
+    _has_rich = True
 except ImportError:
-    _HAS_RICH = False
-    _RichConsole = None
-    _RichPanel = None
-    _RichText = None
+    _RichConsole = None  # type: ignore[assignment]
+    _RichPanel = None  # type: ignore[assignment]
+    _RichText = None  # type: ignore[assignment]
+    _has_rich = False
 
-if _HAS_RICH:
+if _has_rich:
     try:
-        if hasattr(sys.stdout, "reconfigure"):
-            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        _reconfigure = getattr(sys.stdout, "reconfigure", None)
+        if _reconfigure is not None:
+            _reconfigure(
+                encoding="utf-8",
+                errors="replace",
+            )
+        assert _RichConsole is not None
         _console = _RichConsole()
     except Exception:
         _console = None

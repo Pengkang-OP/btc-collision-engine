@@ -3,18 +3,57 @@
 Provides a Flask-based web monitoring dashboard for the BTC collision engine.
 """
 
-__version__ = "5.0.0"
+from __future__ import annotations
 
-try:
-    from src.web.dashboard import create_app, run_dashboard
+from pathlib import Path
 
-    __all__ = ["create_app", "run_dashboard"]
-except ImportError:
-    # Flask not available – web dashboard is optional
-    __all__ = ["create_app", "run_dashboard"]
+# pyright: reportImportCycles=false
 
-    def create_app(*args, **kwargs):  # type: ignore[misc]  # pragma: no cover
+from src import __version__ as __version__  # noqa: F401 — 从包根统一读取
+
+
+def create_app(data_dir: Path | None = None, debug: bool = False) -> object:
+    """Create a Flask app (lazy import for web dashboard).
+
+    Returns:
+        Flask application instance if Flask is available.
+
+    Raises:
+        ImportError: If Flask is not installed.
+    """
+    try:
+        from .dashboard import create_app as _app  # type: ignore[reportUnknownVariableType]
+    except ImportError:
         raise ImportError("Flask is not installed. Install with: pip install flask")
+    return _app(data_dir, debug)  # type: ignore[reportUnknownVariableType]
 
-    def run_dashboard(*args, **kwargs):  # type: ignore[misc]  # pragma: no cover
+
+def run_dashboard(
+    host: str = "0.0.0.0",  # nosec B104
+    port: int = 8080,
+    data_dir: str | None = None,
+    debug: bool = False,
+    use_reloader: bool = False,
+    api_key: str | None = None,
+) -> None:
+    """Run the web dashboard (lazy import for web dashboard).
+
+    Args:
+        host: Host to bind to.
+        port: Port to bind to.
+        data_dir: Data directory path.
+        debug: Enable debug mode.
+        use_reloader: Enable auto-reloader.
+        api_key: API key for authentication.
+
+    Raises:
+        ImportError: If Flask is not installed.
+    """
+    try:
+        from .dashboard import run_dashboard as _run_dashboard
+    except ImportError:
         raise ImportError("Flask is not installed. Install with: pip install flask")
+    _run_dashboard(host, port, data_dir, debug, use_reloader, api_key)
+
+
+__all__ = ["create_app", "run_dashboard"]

@@ -5,6 +5,7 @@
 """
 
 import sys
+import unittest
 
 
 class TestUTF8Helper:
@@ -28,8 +29,8 @@ class TestUTF8Helper:
         """测试模块有文档字符串"""
         from tools import utf8_helper
 
-        assert utf8_helper.__doc__, "模块应该有文档字符串" != None
-        assert utf8_helper.__doc__  in  "UTF-8", "文档应该提到UTF-8"
+        assert utf8_helper.__doc__ is not None, "模块应该有文档字符串"
+        assert utf8_helper.__doc__ in "UTF-8", "文档应该提到UTF-8"
 
     def test_helper_functions_exist(self):
         """测试所有辅助函数都存在"""
@@ -174,7 +175,7 @@ class TestUTF8HelperAuxiliary:
             mock_stdout = mock.MagicMock()
             mock_stdout.encoding = "utf-8"
             with mock.patch.object(utf8_helper.sys, "stdout", mock_stdout):
-                assert utf8_helper.get_console_encoding()  ==  "utf-8"
+                assert utf8_helper.get_console_encoding() == "utf-8"
 
     def test_get_console_encoding_returns_none(self):
         """测试无法获取编码时返回默认值"""
@@ -188,7 +189,7 @@ class TestUTF8HelperAuxiliary:
             del mock_stdout.encoding
             with mock.patch.object(utf8_helper.sys, "stdout", mock_stdout):
                 result = utf8_helper.get_console_encoding()
-                assert ("utf-8", "unknown")  in  result
+                assert ("utf-8", "unknown") in result
 
 
 if __name__ == "__main__":

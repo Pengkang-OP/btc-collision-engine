@@ -9,6 +9,8 @@ import json
 import threading
 import time
 import zlib
+from typing import Any
+
 from contextlib import suppress
 from pathlib import Path
 
@@ -40,12 +42,13 @@ class CheckpointManager:
         max_size: int = MAX_CHECKPOINT_SIZE,
         auto_save_interval: int | None = None,
     ):
+        """Initialize the checkpoint manager."""
         self.filepath = Path(filepath) if filepath else Path("checkpoint.json")
         # Support auto_save_interval as alias for interval
         self._interval = auto_save_interval if auto_save_interval is not None else interval
         self._max_size = max_size
         self._lock = threading.Lock()
-        self._buffer: dict | None = None
+        self._buffer: dict[str, Any] | None = None
         self._dirty = False
         self._last_save = 0.0
 
@@ -71,7 +74,7 @@ class CheckpointManager:
 
     def save(
         self,
-        state: dict | None = None,
+        state: dict[str, Any] | None = None,
         **kwargs,
     ) -> None:
         """Save checkpoint with state data.
@@ -102,7 +105,7 @@ class CheckpointManager:
             if kwargs.get("force", False) or self._dirty and self._last_save == 0.0:
                 self._flush_buffer()
 
-    def load(self) -> dict | None:
+    def load(self) -> dict[str, Any] | None:
         """Load checkpoint from file.
 
         Returns:

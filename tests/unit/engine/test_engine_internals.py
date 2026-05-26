@@ -24,7 +24,7 @@ class TestKeyCollisionEngineSecureGeneration:
             data_logging_enabled=False,
         )
         result = engine._generate_and_check_secure()
-        assert result, "无匹配应返回 None" == None
+        assert result is None, "无匹配应返回 None"
         engine.stop()
 
     def test_generate_and_check_secure_with_match(self):

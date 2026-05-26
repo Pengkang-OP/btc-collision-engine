@@ -33,7 +33,7 @@ class TestConfigWatcherBackend:
             with pathlib.Path(path).open("w") as f:
                 json.dump({"test": True}, f)
             w = ConfigWatcher(path, lambda: None)
-            assert ("watchdog", "polling")  in  w.backend
+            assert ("watchdog", "polling") in w.backend
         finally:
             pathlib.Path(path).unlink()
 
@@ -120,7 +120,7 @@ class TestConfigWatcherPolling:
             # 等待轮询检测
             time.sleep(1.0)
 
-            assert len(reloaded)  >  0, "轮询未检测到文件变更"
+            assert len(reloaded) > 0, "轮询未检测到文件变更"
         finally:
             w.stop()
 
@@ -136,7 +136,7 @@ class TestConfigWatcherPolling:
         w.start()
         try:
             time.sleep(1.0)
-            assert len(reloaded)  ==  0, "无变更时不应触发重载"
+            assert len(reloaded) == 0, "无变更时不应触发重载"
         finally:
             w.stop()
 
@@ -162,7 +162,7 @@ class TestConfigWatcherPolling:
             time.sleep(1.0)
 
             # 由于防抖，应该只触发一次
-            assert len(reload_count)  <=  1, f"防抖失效: {len(reload_count)}次触发"
+            assert len(reload_count) <= 1, f"防抖失效: {len(reload_count)}次触发"
         finally:
             w.stop()
 
@@ -232,7 +232,7 @@ class TestConfigManagerReload:
 
     def test_01_reload_valid_config(self):
         """重载合法配置成功"""
-        assert self.cm.get("logging.level")  ==  "DEBUG"
+        assert self.cm.get("logging.level") == "DEBUG"
 
         # 修改文件
         with pathlib.Path(self.config_path).open("w") as f:
@@ -240,7 +240,7 @@ class TestConfigManagerReload:
 
         result = self.cm.reload_config()
         assert result
-        assert self.cm.get("logging.level")  ==  "WARNING"
+        assert self.cm.get("logging.level") == "WARNING"
 
     def test_02_reload_invalid_config_preserved(self):
         """无效配置不覆盖原配置"""
@@ -253,7 +253,7 @@ class TestConfigManagerReload:
         result = self.cm.reload_config()
         assert not result
         # 原配置应保持不变
-        assert self.cm.get("logging.level")  ==  original_level
+        assert self.cm.get("logging.level") == original_level
 
     def test_03_reload_no_config_file(self):
         """无配置文件时返回 False"""
@@ -268,7 +268,7 @@ class TestConfigManagerReload:
 
         result = self.cm.reload_config()
         assert not result
-        assert self.cm.get("logging.level")  ==  original_level
+        assert self.cm.get("logging.level") == original_level
 
 
 class TestConfigManagerCallbacks:
@@ -295,7 +295,7 @@ class TestConfigManagerCallbacks:
             json.dump({"logging": {"level": "WARNING"}}, f)
 
         self.cm.reload_config()
-        assert len(called)  ==  1
+        assert len(called) == 1
 
     def test_02_callback_not_fired_on_failure(self):
         """重载失败时不触发回调"""
@@ -306,7 +306,7 @@ class TestConfigManagerCallbacks:
             json.dump({"logging": {"level": "INVALID"}}, f)
 
         self.cm.reload_config()
-        assert len(called)  ==  0
+        assert len(called) == 0
 
     def test_03_multiple_callbacks(self):
         """多个回调都被触发"""
@@ -318,7 +318,7 @@ class TestConfigManagerCallbacks:
             json.dump({"logging": {"level": "ERROR"}}, f)
 
         self.cm.reload_config()
-        assert results  ==  ["A", "B"]
+        assert results == ["A", "B"]
 
     def test_04_callback_exception_isolation(self):
         """单个回调异常不影响其他回调"""
@@ -338,7 +338,7 @@ class TestConfigManagerCallbacks:
 
         result = self.cm.reload_config()
         assert result  # 重载本身应成功
-        assert results  ==  ["ok"]  # 好的回调仍被调用
+        assert results == ["ok"]  # 好的回调仍被调用
 
 
 class TestConfigManagerWatching:
@@ -379,13 +379,13 @@ class TestConfigManagerWatching:
         self.cm.start_watching()
         new_watcher = self.cm._watcher
 
-        assert old_watcher  is not  new_watcher
+        assert old_watcher is not new_watcher
         assert not old_watcher.is_running
         assert new_watcher.is_running
 
     def test_04_watcher_detects_and_reloads(self):
         """监听器检测到文件变更并自动重载 (端到端)"""
-        assert self.cm.get("logging.level")  ==  "INFO"
+        assert self.cm.get("logging.level") == "INFO"
 
         self.cm.start_watching(poll_interval=0.3, debounce_seconds=0.0)
 
@@ -397,7 +397,7 @@ class TestConfigManagerWatching:
             # 等待轮询检测 + 重载
             time.sleep(1.5)
 
-            assert self.cm.get("logging.level")  ==  "ERROR"
+            assert self.cm.get("logging.level") == "ERROR"
         finally:
             self.cm.stop_watching()
 
@@ -415,7 +415,7 @@ class TestConfigManagerWatching:
             time.sleep(1.5)
 
             # 配置应保持不变
-            assert self.cm.get("logging.level")  ==  original_level
+            assert self.cm.get("logging.level") == original_level
         finally:
             self.cm.stop_watching()
 
@@ -465,7 +465,7 @@ class TestConfigManagerThreadSafety:
         for t in threads:
             t.join(timeout=15)
 
-        assert len(errors)  ==  0, f"并发错误: {errors}"
+        assert len(errors) == 0, f"并发错误: {errors}"
 
     def test_02_concurrent_watch_and_read(self):
         """并发监听和读取不崩溃"""
@@ -499,7 +499,7 @@ class TestConfigManagerThreadSafety:
             t.join(timeout=30)
 
         self.cm.stop_watching()
-        assert len(errors)  ==  0, f"并发错误: {errors}"
+        assert len(errors) == 0, f"并发错误: {errors}"
 
     def test_03_concurrent_start_stop_race(self):
         """S10: 并发 start_watching/stop_watching 不崩溃"""
@@ -531,7 +531,7 @@ class TestConfigManagerThreadSafety:
             t.join(timeout=20)
 
         self.cm.stop_watching()
-        assert len(errors)  ==  0, f"并发 start/stop 竞态错误: {errors}"
+        assert len(errors) == 0, f"并发 start/stop 竞态错误: {errors}"
 
     def test_04_concurrent_reload_and_set_no_write_loss(self):
         """S10: 并发 reload_config + set 验证无写入丢失"""
@@ -573,7 +573,7 @@ class TestConfigManagerThreadSafety:
         for t in threads:
             t.join(timeout=20)
 
-        assert len(errors)  ==  0, f"并发 reload+set 错误: {errors}"
+        assert len(errors) == 0, f"并发 reload+set 错误: {errors}"
 
 
 class TestNotificationChannelConcurrency:
@@ -632,4 +632,4 @@ class TestNotificationChannelConcurrency:
         for t in threads:
             t.join(timeout=15)
 
-        assert len(errors)  ==  0, f"并发 add+trigger 错误: {errors}"
+        assert len(errors) == 0, f"并发 add+trigger 错误: {errors}"

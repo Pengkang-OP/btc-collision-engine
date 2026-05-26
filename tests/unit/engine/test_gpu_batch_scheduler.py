@@ -136,6 +136,7 @@ class TestGPUBatchScheduler:
         # Fix: engine.get_stats() returns self.stats (a MagicMock).
         # Configure get_stats to return a proper object with real int attributes
         # so that maybe_adjust_batch_size() can compare total_checked with int.
+
         class FakeStats:
             total_checked = 1000
             gpu_errors = 0

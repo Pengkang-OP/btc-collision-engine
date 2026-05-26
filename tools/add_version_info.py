@@ -46,7 +46,10 @@ def add_version_info(
             break
 
     # 在标题后插入版本信息
-    version_block = f"\n> **版本**: {version} | **最后更新**: {datetime.now().strftime('%Y-%m-%d')}  \n> **面向**: {target_audience}\n"
+    version_block = (
+        f"\n> **版本**: {version} | **最后更新**: {datetime.now().strftime('%Y-%m-%d')}  \n"
+        f"> **面向**: {target_audience}\n"
+    )
 
     # 插入到标题后
     insert_idx = title_line_idx + 1

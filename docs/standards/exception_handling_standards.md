@@ -8,6 +8,7 @@
 
 ```
 捕获具体 → 记录完整 → 尽职传递 → 不静默失败
+
 ```
 
 | 原则 | 说明 |
@@ -57,12 +58,15 @@ try:
 except Exception as e:
     logger.error("加密后端初始化失败: %s", e)
     # 没有 raise — 后续代码在错误状态下运行
+
 ```
 
 **验证清单**：
 
 - [ ] `logger.error()` 包含 `exc_info=True`
+
 - [ ] 异常被 `raise` 或 `raise ... from e` 传递
+
 - [ ] 日志消息包含 操作名 + 异常详情（`%s`, `e`）
 
 ---
@@ -92,6 +96,7 @@ try:
 except Exception as e:
     logger.warning("支付处理失败: %s", e)  # ❌ 支付不能降级
     return False  # ❌ 调用方无法区分"支付失败"和"支付被拒"
+
 ```
 
 ---
@@ -122,6 +127,7 @@ try:
 except Exception as e:
     logger.exception("生成种子失败（已隔离）: %s", e)  # ❌ 种子是搜索的关键输入
     # raise 缺失 — 后续搜索使用无效种子
+
 ```
 
 ---
@@ -151,6 +157,7 @@ try:
     os.remove(temp_file)
 except:
     pass
+
 ```
 
 ---
@@ -177,6 +184,7 @@ try:
     self._validate_config(config)
 except (ValueError, TypeError) as e:
     raise ConfigError(f"GPU配置无效: {e}")  # 丢失 from
+
 ```
 
 ---
@@ -197,6 +205,7 @@ except Exception:
 # ❌ 无变量的 except（无法访问异常信息）
 except Exception:
     logger.error("操作失败")
+
 ```
 
 ### 3.2 条件禁止
@@ -218,6 +227,7 @@ except Exception as e:
 
 # ❌ 关键路径使用 f-string 而非 %s 格式化
 logger.error(f"操作失败: {e}")  # 应使用 logger.error("操作失败: %s", e)
+
 ```
 
 ---
@@ -242,6 +252,7 @@ logger.error(
 
 # ❌ 禁止 f-string（延迟求值增加开销，且与项目规范不一致）
 logger.error(f"操作失败: {e}")
+
 ```
 
 ### 4.2 消息内容要求
@@ -274,6 +285,7 @@ except OSError as cleanup_error:
 except RuntimeError as e:
     logger.error("GPU执行失败: %s", e, exc_info=True)
     raise
+
 ```
 
 ---
@@ -300,13 +312,21 @@ except RuntimeError as e:
 提交代码前请检查：
 
 - [ ] 无裸 `except:`（禁止）
+
 - [ ] 无 `except Exception: pass`（禁止）
+
 - [ ] 无 `except Exception:` 不带异常变量（禁止）
+
 - [ ] L1 路径中 `logger.error()` 后有 `raise`（必须）
+
 - [ ] `logger.error()` 在 except 块中包含 `exc_info=True`
+
 - [ ] 日志消息使用 `%s` 风格而非 f-string
+
 - [ ] L4 清理操作优先使用 `contextlib.suppress`
+
 - [ ] L5 包装异常使用 `raise ... from e` 保留链
+
 - [ ] 异常变量名遵循语义化命名规范
 
 ---
@@ -327,5 +347,7 @@ except RuntimeError as e:
 *参考文件*：
 
 - `docs/standards/development_code_standards.md` — 基础代码规范（第 7 节）
+
 - `docs/archive/EXCEPTION_HANDLING_REVIEW_20260423.md` — 异常审查历史
+
 - `docs/archive/security-related/EXCEPTION_NAMING_CONVENTION.md` — 命名约定
