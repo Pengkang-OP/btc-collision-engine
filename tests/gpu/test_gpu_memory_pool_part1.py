@@ -64,6 +64,7 @@ class TestInit:
         assert isinstance(pool._pool, dict)
         assert "input" in pool._type_pools
         from collections import OrderedDict
+
         assert isinstance(pool._lru_cache, OrderedDict)
 
     def test_init_dynamic_disabled(self):

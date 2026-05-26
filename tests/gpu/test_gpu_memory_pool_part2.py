@@ -202,7 +202,11 @@ class TestGlobalGPUMemoryManagerAutoCleanup:
         # 确保清理
         if GlobalGPUMemoryManager._instance is not None:
             mgr = GlobalGPUMemoryManager._instance
-            if hasattr(mgr, "_cleanup_state") and mgr._cleanup_state._cleanup_thread and mgr._cleanup_state._cleanup_thread.is_alive():
+            if (
+                hasattr(mgr, "_cleanup_state")
+                and mgr._cleanup_state._cleanup_thread
+                and mgr._cleanup_state._cleanup_thread.is_alive()
+            ):
                 mgr.stop_auto_cleanup(timeout=2.0)
         GlobalGPUMemoryManager._instance = None
 
