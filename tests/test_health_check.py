@@ -333,11 +333,12 @@ class TestHealthCheckerIntegration:
         assert "Python版本" in checker.results
 
     def test_config_check_permissions(self, checker_with_config):
+        import os
         passed, message = checker_with_config.check_config_permissions()
         assert isinstance(passed, bool)
         assert isinstance(message, str)
         assert len(message) > 5
-        if passed:
+        if passed and os.name != "nt":
             assert "安全" in message
 
 

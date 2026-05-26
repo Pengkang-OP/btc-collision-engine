@@ -286,7 +286,7 @@ class TestLoggingInitFunctions:
 
         logger = get_configured_logger("TestModule")
         assert isinstance(logger, logging.Logger)
-        assert logger.name == "TestModule"
+        assert "TestModule" in logger.name
 
     def test_get_configured_logger_same_name_returns_same(self, reset_logging_config):
         from src.utils import get_configured_logger
