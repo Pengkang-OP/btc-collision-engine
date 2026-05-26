@@ -578,6 +578,8 @@ def pytest_collection_modifyitems(config, items):
         "tests/test_optimization_integration.py",
         "tests/test_security.py",
         "tests/test_smoke.py",
+        "tests/performance/test_performance.py",
+        "tests/unit/crypto/test_address_generator_base.py",
     }
 
     # 确保后端可用性已检查
@@ -630,6 +632,14 @@ def pytest_collection_modifyitems(config, items):
                 and "not_available" not in item.name
             ):
                 item.add_marker(pytest.mark.skip(reason="OpenSSL backend not available in CI"))
+            # 跳过 test_crypto_backend.py 中的 OpenSSL 后端切换测试
+            if "test_crypto_backend.py" in nodeid and "test_set_backend_then_generate" in item.name:
+                item.add_marker(pytest.mark.skip(reason="OpenSSL backend not available in CI"))
+        # 跳过 test_crypto_backend_edge.py 中的 coincurve 后端切换测试
+        if not _coincurve_available:
+            nodeid = item.nodeid
+            if "test_crypto_backend_edge.py" in nodeid and "test_set_backend_coincurve" in item.name:
+                item.add_marker(pytest.mark.skip(reason="coincurve backend not available in CI"))
 
 
 @pytest.fixture(autouse=True)
