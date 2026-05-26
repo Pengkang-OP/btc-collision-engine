@@ -615,12 +615,20 @@ def pytest_collection_modifyitems(config, items):
                     item.add_marker(pytest.mark.skip(reason="coincurve backend not available in CI"))
                     break
             # 也跳过 crypto_backend_edge 中的 coincurve 特定测试
-            if "test_crypto_backend_edge.py" in nodeid and "Coincurve" in item.name and "not_available" not in item.name:
+            if (
+                "test_crypto_backend_edge.py" in nodeid
+                and "Coincurve" in item.name
+                and "not_available" not in item.name
+            ):
                 item.add_marker(pytest.mark.skip(reason="coincurve backend not available in CI"))
         # 当 OpenSSL 不可用时跳过 OpenSSL 特定测试
         if not _openssl_available:
             nodeid = item.nodeid
-            if "test_crypto_backend_edge.py" in nodeid and "OpenSSL" in item.name and "not_available" not in item.name:
+            if (
+                "test_crypto_backend_edge.py" in nodeid
+                and "OpenSSL" in item.name
+                and "not_available" not in item.name
+            ):
                 item.add_marker(pytest.mark.skip(reason="OpenSSL backend not available in CI"))
 
 
