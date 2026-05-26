@@ -7,6 +7,16 @@ import os
 import sys
 from pathlib import Path
 
+from src.automation import (
+    AnalysisReport,
+    AuditModule,
+    AuditResult,
+    AutoTestModule,
+    DataAnalysisModule,
+    LoopController,
+    TestSuiteResult,
+)
+
 _project_root = Path(__file__).resolve().parent.parent.parent
 
 # v5.2.2: 将 chdir 延迟到 main() 函数内执行，避免模块级副作用
@@ -55,7 +65,7 @@ def run_analysis_only(args: argparse.Namespace) -> "AnalysisReport":
     return report
 
 
-def run_tests_only(args: argparse.Namespace) -> "TestResult":
+def run_tests_only(args: argparse.Namespace) -> "TestSuiteResult":
     print("\n[2/4] 运行自动化测试模块...")
     module = AutoTestModule(Path(args.project_root) if args.project_root else None)
     results = module.run_all_tests()
@@ -136,20 +146,20 @@ def main() -> None:
 
     parser = argparse.ArgumentParser(description="端到端自动化闭环管理系统")
 
-    parser.add_argument("--project-root", "-p", type=str, default=None)
+    _ = parser.add_argument("--project-root", "-p", type=str, default=None)
 
     _ensure_cwd()
 
     mode_group = parser.add_mutually_exclusive_group()
-    mode_group.add_argument("--full", "-f", action="store_true", help="运行完整闭环")
-    mode_group.add_argument("--analyze", "-a", action="store_true", help="仅运行分析")
-    mode_group.add_argument("--test", "--test-only", action="store_true", help="仅运行测试")
-    mode_group.add_argument("--audit", "-u", action="store_true", help="仅运行审核")
+    _ = mode_group.add_argument("--full", "-f", action="store_true", help="运行完整闭环")
+    _ = mode_group.add_argument("--analyze", "-a", action="store_true", help="仅运行分析")
+    _ = mode_group.add_argument("--test", "--test-only", action="store_true", help="仅运行测试")
+    _ = mode_group.add_argument("--audit", "-u", action="store_true", help="仅运行审核")
 
-    parser.add_argument("--max-iterations", "-m", type=int, default=3)
-    parser.add_argument("--auto-fix", action="store_true")
-    parser.add_argument("--output", "-o", type=str, default=None)
-    parser.add_argument("--verbose", "-v", action="store_true")
+    _ = parser.add_argument("--max-iterations", "-m", type=int, default=3)
+    _ = parser.add_argument("--auto-fix", action="store_true")
+    _ = parser.add_argument("--output", "-o", type=str, default=None)
+    _ = parser.add_argument("--verbose", "-v", action="store_true")
 
     args = parser.parse_args()
 
@@ -158,11 +168,11 @@ def main() -> None:
 
     try:
         if args.analyze:
-            run_analysis_only(args)
+            _ = run_analysis_only(args)
         elif args.test:
-            run_tests_only(args)
+            _ = run_tests_only(args)
         elif args.audit:
-            run_audit_only(args)
+            _ = run_audit_only(args)
         elif args.full:
             result = run_full_loop(args)
             sys.exit(0 if result.is_approved else 1)

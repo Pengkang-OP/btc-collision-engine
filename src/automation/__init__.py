@@ -13,7 +13,7 @@ from .audit import AuditModule
 from .auto_test import AutoTestModule
 from .data_analysis import DataAnalysisModule
 from .loop_controller import LoopController
-from .models import AnalysisReport, AuditResult, SystemStatus, TestResult
+from .models import AnalysisReport, AuditResult, SystemStatus, TestResult, TestSuiteResult
 
 __version__ = "5.0.0"
 __all__ = [
@@ -25,4 +25,5 @@ __all__ = [
     "LoopController",
     "SystemStatus",
     "TestResult",
+    "TestSuiteResult",
 ]
