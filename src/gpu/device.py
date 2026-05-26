@@ -494,6 +494,9 @@ class GPUDevice:
         "_opencl_version",
         "_opencl_version_str",
         "_supports_svm",
+        "requires_uint32_workaround",
+        "timeout_seconds",
+        "memory_efficiency",
     )
 
     def __init__(self) -> None:
@@ -521,6 +524,18 @@ class GPUDevice:
         self._opencl_version = OPENCL_VERSION_UNKNOWN
         self._opencl_version_str = "Unknown"
         self._supports_svm = False
+
+        # Intel uint32 workaround标志
+        # v4.2.1新增: 用于标记Intel Arc GPU需要特殊处理(避免global char* hang bug)
+        self.requires_uint32_workaround = False
+
+        # Intel超时保护配置
+        # v4.2.1新增: 用于设置GPU操作的超时时间,防止内核hang
+        self.timeout_seconds = 30  # 默认30秒超时
+
+        # Intel显存效率配置
+        # v4.3.0新增: 用于控制GPU显存使用率
+        self.memory_efficiency = 0.70  # 默认70%
 
     def initialize(self, device_index: int = -1, enable_async: bool = True) -> None:
         """初始化GPU设备

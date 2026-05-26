@@ -101,6 +101,22 @@ class CollisionStats:
         with self._lock:
             return self._total_batches
 
+    @property
+    def total_checked(self) -> int:
+        """Get total keys checked (backward compat alias for total_keys_checked)."""
+        with self._lock:
+            return self._total_keys
+
+    @property
+    def speed(self) -> float:
+        """Get current throughput in keys/second (backward compat)."""
+        return self.get_throughput()
+
+    @property
+    def elapsed(self) -> float:
+        """Get elapsed time in seconds (backward compat)."""
+        return max(time.time() - self._start_time, 0.001)
+
     def record_match(self) -> None:
         with self._lock:
             self._total_matches += 1

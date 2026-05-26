@@ -12,6 +12,7 @@ from typing import Any, Optional, cast
 
 from ..core.base58 import Base58
 from ..utils import get_configured_logger
+from ..utils.bech32_codec import decode_segwit_address
 from ..utils.exception_handler import ExceptionHandler
 from ..utils.performance_monitor import EnhancedPerformanceMonitor
 from .amd_optimizer import AmdGPUOptimizer
@@ -352,31 +353,87 @@ class GPUDeviceManager:
         return "未知格式"
 
     def _prepare_targets(self, targets: set[str]):
-        """准备目标地址 (仅 P2PKH 格式通过 Base58 校验)
+        """准备目标地址 (支持 P2PKH 和 Bech32 P2WPKH 格式)
 
-        GPU 引擎仅支持 P2PKH (version=0x00, 以 '1' 开头) 地址的碰撞匹配。
-        非 P2PKH 目标（P2SH/Bech32/Taproot）在此被跳过，
-        并生成 WARNING 日志告知用户。
+        GPU 引擎支持以下目标格式:
+        1. P2PKH (version=0x00, 以 '1' 开头): 直接提取 hash160
+        2. Bech32 P2WPKH (以 'bc1q' 开头, 20字节 witness): 提取 witness_program 作为 hash160
+        3. 其他格式 (P2SH/P2WSH/Taproot): 被跳过，生成 WARNING 日志
 
-        Bech32 P2WPKH 地址应在到达此方法前由 TargetResolver
-        转换为 P2PKH（witness program 即 hash160）。
+        v4.3.0: 增强支持 Bech32 P2WPKH 地址
         """
         target_list = []
         hash160_list = []
         skipped_addresses: list[tuple[str, str, str]] = []  # (masked, format, reason)
+        bech32_p2wpkh_count = 0  # 统计Bech32 P2WPKH地址数量
 
         for address in sorted(targets):
+            address_lower = address.lower()
+
+            # 1. 首先尝试 Bech32 地址检测
+            if address_lower.startswith("bc1") or address_lower.startswith("tb1"):
+                # Taproot 地址 (bc1p/tb1p): 跳过
+                if address_lower.startswith(("bc1p", "tb1p")):
+                    masked = address[:8] + "..." + address[-6:] if len(address) >= 14 else address
+                    skipped_addresses.append((masked, "Bech32m (Taproot)", "Taproot的witness_program=x-only公钥，密码学上无法通过hash160(pubkey)匹配"))
+                    continue
+
+                # 尝试解码 Bech32 地址
+                try:
+                    hrp, witness_version, witness_program = decode_segwit_address(address)
+                    if witness_program is None:
+                        raise ValueError("Bech32解码失败")
+
+                    # 检查 witness version
+                    if witness_version != 0:
+                        masked = address[:8] + "..." + address[-6:] if len(address) >= 14 else address
+                        skipped_addresses.append((masked, f"Bech32 (witness v{witness_version})", "仅支持 witness v0"))
+                        continue
+
+                    # P2WPKH: 20字节 witness_program = hash160(pubkey) → 可匹配
+                    if len(witness_program) == 20:
+                        target_list.append(address)
+                        hash160_list.append(witness_program)
+                        bech32_p2wpkh_count += 1
+                        self.logger.debug(f"Bech32 P2WPKH 目标: {address[:15]}... -> hash160={witness_program.hex()[:16]}...")
+                        continue
+
+                    # P2WSH: 32字节 witness_program = sha256(redeemScript) → 不可匹配
+                    elif len(witness_program) == 32:
+                        masked = address[:8] + "..." + address[-6:] if len(address) >= 14 else address
+                        skipped_addresses.append((masked, "Bech32 (P2WSH)", "P2WSH的witness_program=sha256(redeemScript)，密码学上无法通过hash160(pubkey)匹配"))
+                        continue
+
+                    else:
+                        masked = address[:8] + "..." + address[-6:] if len(address) >= 14 else address
+                        skipped_addresses.append((masked, "Bech32", f"不支持的 witness_program 长度: {len(witness_program)}"))
+                        continue
+
+                except Exception as e:
+                    masked = address[:8] + "..." + address[-6:] if len(address) >= 14 else address
+                    skipped_addresses.append((masked, "Bech32", f"解码失败: {type(e).__name__}"))
+                    continue
+
+            # 2. 尝试 Base58 地址检测 (P2PKH / P2SH)
             try:
                 version, payload = Base58.check_decode(address)
+
+                # P2PKH: version=0x00, 20字节 payload = hash160(pubkey) → 可匹配
                 if version == 0x00 and len(payload) == 20:
                     target_list.append(address)
                     hash160_list.append(payload)
+
+                elif version == 0x05 and len(payload) == 20:
+                    # P2SH: payload = hash160(redeemScript) ≠ hash160(pubkey) → 不可匹配
+                    masked = address[:8] + "..." + address[-6:] if addr_len >= 14 else address
+                    skipped_addresses.append((masked, "P2SH", "P2SH的payload=hash160(redeemScript)，密码学上无法通过hash160(pubkey)匹配"))
                 else:
                     fmt = self._classify_address_format(address)
                     addr_len = len(address)
                     masked = address[:8] + "..." + address[-6:] if addr_len >= 14 else address
-                    reason = f"version=0x{version:02x} (仅接受 0x00)"
+                    reason = f"version=0x{version:02x} (仅接受 P2PKH/Bech32 P2WPKH)"
                     skipped_addresses.append((masked, fmt, reason))
+
             except (ValueError, TypeError) as e:
                 fmt = self._classify_address_format(address)
                 addr_len = len(address)
@@ -384,6 +441,7 @@ class GPUDeviceManager:
                 reason = f"{type(e).__name__}"
                 skipped_addresses.append((masked, fmt, reason))
                 continue
+
             except RuntimeError as e:
                 fmt = self._classify_address_format(address)
                 addr_len = len(address)
@@ -391,27 +449,40 @@ class GPUDeviceManager:
                 self.logger.warning("目标地址解析失败 [%s]: %s", masked, type(e).__name__)
                 continue
 
+        # 统计信息
+        p2pkh_count = len([a for a in target_list if a.startswith("1")])
+        total_targets = len(hash160_list)
+
+        # 输出警告日志
         if skipped_addresses:
             skipped_count = len(skipped_addresses)
             self.logger.warning(
-                "GPU 引擎仅支持 P2PKH 格式碰撞 — 已跳过 %d 个非 P2PKH 目标地址:",
+                "GPU 引擎跳过 %d 个不兼容目标 (支持: P2PKH/Bech32 P2WPKH):",
                 skipped_count,
             )
-            # 显示每个被跳过地址的格式和原因 (最多显示 10 条避免日志洪水)
-            for masked, fmt, reason in skipped_addresses[:10]:
+            # 显示每个被跳过地址的格式和原因 (最多显示 5 条避免日志洪水)
+            for masked, fmt, reason in skipped_addresses[:5]:
                 self.logger.warning("  [SKIP] %s | 格式: %s | 原因: %s", masked, fmt, reason)
-            if skipped_count > 10:
-                self.logger.warning("  ... 以及 %d 条未显示", skipped_count - 10)
+            if skipped_count > 5:
+                self.logger.warning("  ... 以及 %d 条未显示 (详情见上文)", skipped_count - 5)
             self.logger.warning(
-                "建议: P2SH/Bech32/Taproot 目标请在 CLI 加载前通过 TargetResolver 预处理，"
-                "或使用 CPU 模式。"
+                "建议: P2SH/P2WSH/Taproot 目标因密码学路径不同无法通过私钥碰撞匹配。"
+                " 请使用 P2PKH (1开头) 或 Bech32 P2WPKH (bc1q开头，20字节witness) 地址。"
+                " 详细信息请参考 README.md 的 '目标地址格式支持' 章节。"
             )
 
         if not hash160_list:
             raise NoValidTargetsError(
-                f"没有有效的 P2PKH 目标地址 (已跳过 {len(skipped_addresses)} 个非 P2PKH 目标)。"
-                " 请添加 '1' 开头的 P2PKH 地址，或使用 CPU 模式。"
+                f"没有有效的 P2PKH/Bech32 P2WPKH 目标地址 (已跳过 {len(skipped_addresses)} 个)。"
+                " 请添加 '1' 开头的 P2PKH 地址或 'bc1q' 开头的 Bech32 P2WPKH 地址。"
+                " 其他格式(P2SH/P2WSH/Taproot)因密码学路径不同无法通过私钥碰撞匹配。"
             )
+
+        # 输出统计信息
+        self.logger.info(
+            f"GPU 目标准备完成: P2PKH={p2pkh_count}, Bech32 P2WPKH={bech32_p2wpkh_count}, "
+            f"总目标={total_targets}, 跳过={len(skipped_addresses)}"
+        )
 
         target_hash160s = b"".join(hash160_list)
         return target_hash160s, target_list

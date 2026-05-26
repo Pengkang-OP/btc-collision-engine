@@ -58,8 +58,7 @@ class IntelGPUVendor(GPUVendorBase):
         # 1. uint32 workaround - 关键优化
         if "uint32_workaround" in optimizations:
             _rate_logger.info(
-                "[OK] 启用uint32 workaround(避免Intel Arc global char* hang bug)",
-                key="intel_uint32_workaround",
+                "[OK] 启用uint32 workaround(避免Intel Arc global char* hang bug)"
             )
             # 标记设备需要特殊处理
             device.requires_uint32_workaround = True
@@ -70,8 +69,7 @@ class IntelGPUVendor(GPUVendorBase):
         if "timeout_protection" in optimizations:
             timeout_seconds = profile.get("timeout_seconds", 30)
             _rate_logger.info(
-                "[OK] 启用超时保护机制: %s秒",
-                timeout_seconds,
+                f"[OK] 启用超时保护机制: {timeout_seconds}秒",
                 key="intel_timeout_protection",
             )
             # 在GPUKernel.run_batch中添加超时
@@ -91,15 +89,12 @@ class IntelGPUVendor(GPUVendorBase):
             )
             if not is_high_end:
                 _rate_logger.warning(
-                    "[WARN] Intel GPU: 禁用异步传输以确保稳定性",
-                    key="intel_async_disabled",
+                    "[WARN] Intel GPU: 禁用异步传输以确保稳定性"
                 )
                 device.enable_async_execution = False
             else:
                 _rate_logger.info(
-                    "[OK] Intel Arc 高端型号 (%s): 保持异步执行启用",
-                    device_name,
-                    key="intel_async_kept",
+                    f"[OK] Intel Arc 高端型号 ({device_name}): 保持异步执行启用"
                 )
 
         # 4. 专业驱动优化
@@ -133,9 +128,7 @@ class IntelGPUVendor(GPUVendorBase):
         memory_efficiency = profile.get("memory_efficiency", 0.70)
         device.memory_efficiency = memory_efficiency
         _rate_logger.info(
-            "[OK] Intel GPU内存效率: %.0f%% (v4.2.1优化)",
-            memory_efficiency * 100,
-            key="intel_memory_efficiency",
+            f"[OK] Intel GPU内存效率: {memory_efficiency * 100:.0f}% (v4.2.1优化)"
         )
 
     def _check_driver_version(self, device):
@@ -143,8 +136,7 @@ class IntelGPUVendor(GPUVendorBase):
         driver_version = device.driver_version
         if not driver_version:
             _rate_logger.warning(
-                "[WARN] 无法检测Intel驱动版本，使用保守模式",
-                key="intel_no_driver_version",
+                "[WARN] 无法检测Intel驱动版本，使用保守模式"
             )
             return
 
@@ -160,14 +152,12 @@ class IntelGPUVendor(GPUVendorBase):
                 # 检查是否为推荐版本
                 if (major, minor, build, revision) < (31, 0, 101, 4500):
                     _rate_logger.warning(
-                        "[WARN] Intel驱动 %s 较旧, 建议更新到 31.0.101.4500+ 以提升稳定性",
-                        driver_version,
+                        f"[WARN] Intel驱动 {driver_version} 较旧, 建议更新到 31.0.101.4500+ 以提升稳定性",
                         key=f"intel_driver_old_{driver_version}",
                     )
                 else:
                     _rate_logger.info(
-                        "[OK] Intel驱动版本 %s 符合要求",
-                        driver_version,
+                        f"[OK] Intel驱动版本 {driver_version} 符合要求",
                         key=f"intel_driver_ok_{driver_version}",
                     )
             else:
@@ -269,9 +259,7 @@ class IntelGPUVendor(GPUVendorBase):
             os.environ["OCL_CACHE_DIR"] = cache_dir
             applied["OCL_CACHE_DIR"] = cache_dir
             _rate_logger.info(
-                "✅ 设置 OCL_CACHE_DIR=%s (编译缓存)",
-                cache_dir,
-                key="intel_ocl_cache",
+                f"✅ 设置 OCL_CACHE_DIR={cache_dir} (编译缓存)"
             )
 
         return applied

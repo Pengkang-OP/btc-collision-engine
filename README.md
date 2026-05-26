@@ -106,6 +106,101 @@ python key_collision_cli.py --help
 python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random
 ```
 
+## 目标地址格式支持
+
+### 📋 支持的地址格式 (v4.3.0+)
+
+| 格式 | 前缀 | GPU支持 | CPU支持 | 说明 |
+|------|------|--------|---------|------|
+| **P2PKH** | `1` | ✅ | ✅ | 标准比特币地址，hash160(pubkey) |
+| **Bech32 P2WPKH** | `bc1q` | ✅ | ✅ | SegWit v0，witness_program = hash160(pubkey) |
+| **P2SH** | `3` | ❌ | ❌ | 脚本哈希，无法通过私钥碰撞匹配 |
+| **Bech32 P2WSH** | `bc1q` (42+字符) | ❌ | ❌ | SegWit v0脚本哈希，无法匹配 |
+| **Taproot** | `bc1p` | ❌ | ❌ | SegWit v1，密钥路径不同，无法匹配 |
+
+### 🔐 密码学原理
+
+**可匹配的格式**:
+```
+私钥 → ECDSA secp256k1 → 公钥
+                               ↓
+                    hash160(pubkey) [20字节]
+                               ↓
+         ┌──────────────────┬──────────────────┐
+         ↓                  ↓                  ↓
+    P2PKH地址          Bech32 P2WPKH      其他格式
+    (1开头)           (bc1q开头)
+```
+
+**不可匹配的格式**:
+```
+P2SH: payload = hash160(redeemScript) ≠ hash160(pubkey) ❌
+P2WSH: payload = sha256(redeemScript) ≠ hash160(pubkey) ❌
+Taproot: x-only pubkey + 密钥路径 ≠ 标准公钥 ❌
+```
+
+### 💡 使用建议
+
+**✅ 推荐的目标格式**:
+
+```bash
+# P2PKH地址 (最常用)
+python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa --use-gpu
+
+# Bech32 P2WPKH地址 (v4.3.0+ GPU支持)
+python key_collision_cli.py -t bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4 --use-gpu
+
+# 混合目标文件
+# 文件内容示例:
+# 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa  # P2PKH
+# bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4  # Bech32 P2WPKH
+python key_collision_cli.py -t targets.txt --use-gpu
+```
+
+**❌ 不推荐的目标格式** (会显示警告并被跳过):
+
+```bash
+# P2SH地址 - 无法匹配
+python key_collision_cli.py -t 3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy --use-gpu
+# 输出: WARNING - P2SH地址无法用于碰撞匹配
+
+# Taproot地址 - 无法匹配
+python key_collision_cli.py -t bc1p5d7rjq7g6rdk2yhzks9smlaqtedr4dekq08ge8qt2acpp2yx7tqsp6h3m --use-gpu
+# 输出: WARNING - Taproot无法通过私钥碰撞匹配
+```
+
+### 📊 格式检测示例
+
+引擎会自动检测地址格式:
+
+```
+输入: 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
+检测: P2PKH ✅
+引擎: 生成hash160(pubkey)进行比较
+
+输入: bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4
+检测: Bech32 P2WPKH ✅
+引擎: 提取witness_program作为hash160比较
+
+输入: 3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy
+检测: P2SH ⚠️
+引擎: 跳过 (显示警告)
+
+输入: bc1p5d7rjq7g6rdk2yhzks9smlaqtedr4dekq08ge8qt2acpp2yx7tqsp6h3m
+检测: Taproot ⚠️
+引擎: 跳过 (显示警告)
+```
+
+### 🔧 引擎差异
+
+| 特性 | GPU引擎 | CPU引擎 |
+|------|---------|---------|
+| P2PKH支持 | ✅ | ✅ |
+| Bech32 P2WPKH支持 | ✅ (v4.3.0+) | ✅ |
+| 匹配算法 | hash160直接比较 | 格式感知地址生成 |
+| 性能 | ~2-5M keys/s | ~100-1K keys/s |
+| 内存占用 | GPU显存 | 系统内存 |
+
 ## 项目结构
 
 ```
@@ -227,6 +322,8 @@ cp config.example.json config.json
 ### GPU加速（可选）
 
 > **要求**：Python 3.9+、已安装 GPU 驱动、支持 OpenCL 1.2+
+> 
+> **详细配置指南请查看：[⚙️ GPU配置指南](GPU_CONFIG_GUIDE.md)
 
 #### NVIDIA GPU
 
@@ -827,6 +924,7 @@ A:
 
 - [📚 文档索引](docs/DOCUMENT_INDEX.md) - 完整文档导航
 - [🚀 GPU引擎使用指南](docs/gpu-engine-guide.md) - GPU加速详细指南
+- [⚙️ GPU配置指南](GPU_CONFIG_GUIDE.md) - GPU配置优化指南（新增）
 - [🔑 Bech32/P2SH地址支持](docs/bech32-p2sh-support.md) - 多地址类型支持
 - [📖 API参考](docs/api-reference.md) - 完整API文档
 - [⚡ 性能优化](docs/technical-docs/performance-optimization.md) - 性能调优指南

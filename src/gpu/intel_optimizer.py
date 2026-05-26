@@ -240,11 +240,7 @@ class IntelGPUOptimizer:
         if not reporter_cls or engine is None:
             return
         try:
-            self._performance_reporter = reporter_cls(
-                gpu_engine=engine,
-                benchmark_suite=self._benchmark_suite,
-                auto_tuner=self._auto_tuner,
-            )
+            self._performance_reporter = reporter_cls()
             self._logger.info("✅ 性能报告生成器已初始化")
         except (RuntimeError, ValueError, TypeError, AttributeError) as e:
             self._logger.warning(
