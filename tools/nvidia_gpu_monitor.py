@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-NVIDIA GPU实时监控工具
+"""NVIDIA GPU实时监控工具
 
 监控内容:
 - GPU使用率

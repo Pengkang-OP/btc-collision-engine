@@ -8,6 +8,7 @@
 """
 
 import time
+
 import pytest
 
 from src.gpu.data_monitor import DataMonitor, DataQualityIssue

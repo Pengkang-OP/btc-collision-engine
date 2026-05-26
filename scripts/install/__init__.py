@@ -1,1 +1,1 @@
-# install scripts package
+"""Install scripts package."""

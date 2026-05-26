@@ -1,1 +1,1 @@
-# benchmarking scripts package
+"""Benchmarking scripts package."""

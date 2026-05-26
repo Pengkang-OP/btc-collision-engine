@@ -1,6 +1,5 @@
 """Base58 单元测试 - 覆盖剩余边界路径"""
 
-import pytest
 
 from src.core.base58 import Base58
 

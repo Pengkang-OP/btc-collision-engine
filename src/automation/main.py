@@ -6,6 +6,7 @@ import argparse
 import os
 import sys
 from pathlib import Path
+from typing import cast
 
 from src.automation import (
     AnalysisReport,
@@ -50,34 +51,40 @@ def print_banner() -> None:
 
 
 def run_analysis_only(args: argparse.Namespace) -> "AnalysisReport":
+    project_root: str | None = cast(str | None, args.project_root)
+    output: str | None = cast(str | None, args.output)
+
     print("\n[1/4] 运行数据分析模块...")
-    module = DataAnalysisModule(Path(args.project_root) if args.project_root else None)
+    module = DataAnalysisModule(Path(project_root) if project_root else None)
     report = module.analyze()
 
     print(f"   报告ID: {report.report_id}")
     print(f"   质量分数: {report.statistics.get('quality_score', 'N/A')}")
     print(f"   发现问题: {report.issue_count} 个")
 
-    if args.output:
-        report.save(args.output)
-        print(f"   已保存到: {args.output}")
+    if output:
+        report.save(output)
+        print(f"   已保存到: {output}")
 
     return report
 
 
 def run_tests_only(args: argparse.Namespace) -> "TestSuiteResult":
+    project_root: str | None = cast(str | None, args.project_root)
+    output: str | None = cast(str | None, args.output)
+
     print("\n[2/4] 运行自动化测试模块...")
-    module = AutoTestModule(Path(args.project_root) if args.project_root else None)
+    module = AutoTestModule(Path(project_root) if project_root else None)
     results = module.run_all_tests()
 
     print(f"   测试套件: {results.suite_id}")
     print(f"   通过率: {results.pass_rate:.1f}%")
     print(f"   通过: {results.passed} | 失败: {results.failed}")
 
-    if args.output:
+    if output:
         import json
 
-        with Path(args.output).open("w") as f:
+        with Path(output).open("w") as f:
             json.dump(
                 {
                     "suite_id": results.suite_id,
@@ -89,16 +96,19 @@ def run_tests_only(args: argparse.Namespace) -> "TestSuiteResult":
                 f,
                 indent=2,
             )
-        print(f"   已保存到: {args.output}")
+        print(f"   已保存到: {output}")
 
     return results
 
 
 def run_audit_only(args: argparse.Namespace) -> "AuditResult":
+    project_root: str | None = cast(str | None, args.project_root)
+    output: str | None = cast(str | None, args.output)
+
     print("\n[3/4] 运行智能审核模块...")
 
-    analysis_module = DataAnalysisModule(Path(args.project_root) if args.project_root else None)
-    test_module = AutoTestModule(Path(args.project_root) if args.project_root else None)
+    analysis_module = DataAnalysisModule(Path(project_root) if project_root else None)
+    test_module = AutoTestModule(Path(project_root) if project_root else None)
     audit_module = AuditModule()
 
     analysis_report = analysis_module.analyze()
@@ -108,22 +118,27 @@ def run_audit_only(args: argparse.Namespace) -> "AuditResult":
     print(f"   审核ID: {audit_result.audit_id}")
     print(f"   状态: {'通过' if audit_result.is_approved else '拒绝'}")
 
-    if args.output:
-        audit_result.save(args.output)
-        print(f"   已保存到: {args.output}")
+    if output:
+        audit_result.save(output)
+        print(f"   已保存到: {output}")
 
     return audit_result
 
 
 def run_full_loop(args: argparse.Namespace) -> "AuditResult":
+    project_root: str | None = cast(str | None, args.project_root)
+    output: str | None = cast(str | None, args.output)
+    max_iterations: int = cast(int, args.max_iterations)
+    auto_fix: bool = cast(bool, args.auto_fix)
+
     print_banner()
     print("\n启动端到端自动化闭环系统...")
-    print(f"最大迭代次数: {args.max_iterations}")
+    print(f"最大迭代次数: {max_iterations}")
 
     controller = LoopController(
-        project_root=Path(args.project_root) if args.project_root else None,
-        max_iterations=args.max_iterations,
-        auto_fix=args.auto_fix,
+        project_root=Path(project_root) if project_root else None,
+        max_iterations=max_iterations,
+        auto_fix=auto_fix,
     )
 
     result = controller.run()
@@ -135,9 +150,9 @@ def run_full_loop(args: argparse.Namespace) -> "AuditResult":
     for key, value in summary.items():
         print(f"  {key}: {value}")
 
-    if args.output:
-        controller.save_report(args.output)
-        print(f"\n完整报告已保存到: {args.output}")
+    if output:
+        controller.save_report(output)
+        print(f"\n完整报告已保存到: {output}")
 
     return result
 
@@ -163,17 +178,24 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    if not any([args.full, args.analyze, args.test, args.audit]):
+    full: bool = cast(bool, args.full)
+    analyze: bool = cast(bool, args.analyze)
+    test: bool = cast(bool, args.test)
+    audit: bool = cast(bool, args.audit)
+    verbose: bool = cast(bool, args.verbose)
+
+    if not any([full, analyze, test, audit]):
         args.full = True
+        full = True
 
     try:
-        if args.analyze:
+        if analyze:
             _ = run_analysis_only(args)
-        elif args.test:
+        elif test:
             _ = run_tests_only(args)
-        elif args.audit:
+        elif audit:
             _ = run_audit_only(args)
-        elif args.full:
+        elif full:
             result = run_full_loop(args)
             sys.exit(0 if result.is_approved else 1)
     except KeyboardInterrupt:
@@ -181,7 +203,7 @@ def main() -> None:
         sys.exit(130)
     except Exception as e:
         print(f"\n执行错误: {e!s}")
-        if args.verbose:
+        if verbose:
             import traceback
 
             traceback.print_exc()

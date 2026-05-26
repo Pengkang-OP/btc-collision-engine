@@ -2,7 +2,6 @@
 
 import io
 import os
-import pytest
 from unittest.mock import MagicMock, patch
 
 from src.cli.output import CLIOutput, _get_utf8_console

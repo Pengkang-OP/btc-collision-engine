@@ -3,7 +3,6 @@ NumpyOptimizedAddressGenerator 及工厂函数
 """
 
 import hashlib
-import pytest
 from unittest.mock import MagicMock, patch
 
 from src.core.simd_optimizer import (

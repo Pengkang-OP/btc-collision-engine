@@ -6,6 +6,7 @@
 """
 
 import time
+
 import pytest
 
 from src.collision.key_collision_engine import KeyCollisionEngine
@@ -23,7 +24,7 @@ class TestKeyCollisionEngineSecureGeneration:
             data_logging_enabled=False,
         )
         result = engine._generate_and_check_secure()
-        assert result, "无匹配应返回 None" is None
+        assert result, "无匹配应返回 None" == None
         engine.stop()
 
     def test_generate_and_check_secure_with_match(self):

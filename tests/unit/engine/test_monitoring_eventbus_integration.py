@@ -1,7 +1,7 @@
 """Tests for monitoring system EventBus integration."""
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -12,10 +12,8 @@ from src.collision.events import (
     EngineProgressEvent,
     EngineStartEvent,
     EngineStopEvent,
-    EventType,
 )
 from src.monitoring.event_adapters import DataLoggerAdapter, EnhancedMonitoringAdapter
-from src.monitoring.monitor_config import MonitorConfig
 
 
 @pytest.fixture

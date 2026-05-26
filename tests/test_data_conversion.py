@@ -10,6 +10,7 @@
 
 import pathlib
 import tempfile
+
 import pytest
 
 from src.core.base58 import Base58

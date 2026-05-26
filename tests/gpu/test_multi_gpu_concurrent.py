@@ -5,7 +5,6 @@
 
 import threading
 import time
-import unittest
 from unittest.mock import Mock
 
 import pytest

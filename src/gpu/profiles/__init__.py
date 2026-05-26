@@ -1,1 +1,1 @@
-"""GPU profiles subpackage"""
+"""GPU profiles subpackage."""

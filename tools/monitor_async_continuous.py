@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-持续监控GPU异步优化运行效果
+"""持续监控GPU异步优化运行效果
 每5秒检查一次性能指标
 """
 
@@ -11,7 +10,6 @@ from pathlib import Path
 
 def monitor_performance(duration_seconds=60):
     """监控指定时间的性能"""
-
     print("=" * 80)
     print("  GPU异步优化持续监控")
     print("=" * 80)

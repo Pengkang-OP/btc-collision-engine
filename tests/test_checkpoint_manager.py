@@ -5,7 +5,6 @@ import os
 import pathlib
 import tempfile
 import time
-import pytest
 from unittest.mock import patch
 
 from src.collision.checkpoint_manager import CheckpointManager

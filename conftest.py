@@ -1,5 +1,4 @@
-"""
-根目录 conftest.py - 防御性兼容性补丁
+"""根目录 conftest.py - 防御性兼容性补丁
 
 修复 pytest 在 io.TextIOWrapper 未设置 closefd=False 时的 capture 崩溃问题。
 

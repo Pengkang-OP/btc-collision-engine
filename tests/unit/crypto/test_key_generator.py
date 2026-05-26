@@ -1,7 +1,8 @@
 """SecureKeyGenerator 全面单元测试 - 覆盖构造/生成/验证/统计/熵池路径"""
 
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 from src.core.key_generator import SecureKeyGenerator
 from src.core.secp256k1 import Secp256k1

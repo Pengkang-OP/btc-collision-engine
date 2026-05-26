@@ -1,6 +1,5 @@
 """多GPU功能单元测试"""
 
-import unittest
 
 import pytest
 

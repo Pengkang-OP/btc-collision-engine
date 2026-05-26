@@ -6,7 +6,6 @@
 
 import threading
 import time
-import pytest
 from unittest.mock import patch
 
 from src.collision.collision_stats import CollisionStats

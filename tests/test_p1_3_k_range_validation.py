@@ -12,7 +12,6 @@ import unittest
 from src.gpu.kernel import OPENCL_KERNEL_SOURCE
 
 
-import pytest
 class TestP1_3_KeyRangeValidation:
     """P1-3: GPU 内核 k>=N 范围验证"""
 
@@ -129,7 +128,7 @@ class TestP1_3_KeyRangeValidation:
         import re
 
         n_match = re.search(r"SECP256K1_N\[8\]\s*=\s*\{([^}]+)\}", source)
-        assert n_match, "未找到 SECP256K1_N 定义" is not None
+        assert n_match, "未找到 SECP256K1_N 定义" != None
 
         n_values_str = n_match.group(1)
         n_values = [int(x.strip(), 0) for x in n_values_str.split(",")]

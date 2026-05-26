@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Intel Arc ULLS优化效果验证工具
+"""Intel Arc ULLS优化效果验证工具
 
 验证禁用ULLS(Ultra Low Latency Submission)后的性能提升效果。
 预期Compute性能提升14-31%。

@@ -10,10 +10,11 @@ import threading
 import time
 import unittest
 
+import pytest
+
 from src.collision.key_collision_engine import KeyCollisionEngine
 
 
-import pytest
 class TestLiveRangeCountFix:
     """P1-5: _live_range_count 双重计数修复验证"""
 

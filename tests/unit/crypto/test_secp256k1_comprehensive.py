@@ -2,6 +2,7 @@
 
 import math
 import os
+
 import pytest
 
 from src.core.secp256k1 import ECPoint, EllipticCurve, Secp256k1
@@ -390,7 +391,7 @@ class TestPointAddEdge:
 
     def test_same_point_doubling(self):
         G2 = self.ec.point_add(self.G, self.G)
-        assert G2  ==  self.ec.scalar_multiply_const_time(2, self.G)
+        assert self.ec.scalar_multiply_const_time(2, self.G)  ==  G2
 
 
 class TestModInverseSummary:

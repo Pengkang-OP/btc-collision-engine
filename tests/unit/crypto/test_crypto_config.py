@@ -11,7 +11,6 @@ import json
 import os
 import pathlib
 import tempfile
-import pytest
 
 from src.config.crypto_config import CryptoBackendType, CryptoConfig
 

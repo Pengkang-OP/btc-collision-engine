@@ -2,7 +2,6 @@
 
 import os
 import tempfile
-import pytest
 
 # 添加项目根目录到路径
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))

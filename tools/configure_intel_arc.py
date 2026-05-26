@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Intel Arc A770 GPU自动选择和配置工具
+"""Intel Arc A770 GPU自动选择和配置工具
 
 功能:
 1. 自动检测所有GPU设备

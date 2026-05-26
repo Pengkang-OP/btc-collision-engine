@@ -1,6 +1,5 @@
 """WIF (Wallet Import Format) 边界与错误路径覆盖测试"""
 
-import pytest
 from unittest.mock import patch
 
 from src.core.wif import WIF

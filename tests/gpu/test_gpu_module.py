@@ -8,7 +8,6 @@
 """
 
 import sys
-import unittest
 from unittest.mock import Mock, patch
 
 import pytest

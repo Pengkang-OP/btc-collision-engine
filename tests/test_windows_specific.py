@@ -7,6 +7,7 @@ import sys
 import unittest
 
 import pytest
+
 # 检测是否为Windows环境
 IS_WINDOWS = sys.platform.startswith("win")
 logger = logging.getLogger(__name__)

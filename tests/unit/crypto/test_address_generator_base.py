@@ -8,8 +8,9 @@
 - generate_address 双公钥返回行为
 """
 
-import pytest
 from abc import ABC
+
+import pytest
 
 from src.core.address_generator import (
     AddressGenerator,

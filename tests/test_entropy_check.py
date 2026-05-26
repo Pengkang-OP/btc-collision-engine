@@ -3,7 +3,6 @@
 验证P1-3修复：熵池健康检查完整实现
 """
 
-import unittest
 from unittest.mock import MagicMock, Mock, patch
 
 from src.core.key_generator import SecureKeyGenerator

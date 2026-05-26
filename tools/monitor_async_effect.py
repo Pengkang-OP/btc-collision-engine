@@ -249,7 +249,6 @@ def continuous_monitor(interval=10):
 
 def main():
     """主函数"""
-
     if "--continuous" in sys.argv or "-c" in sys.argv:
         # 持续监控模式
         continuous_monitor()

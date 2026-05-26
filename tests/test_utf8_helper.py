@@ -5,7 +5,6 @@
 """
 
 import sys
-import pytest
 
 
 class TestUTF8Helper:
@@ -29,7 +28,7 @@ class TestUTF8Helper:
         """测试模块有文档字符串"""
         from tools import utf8_helper
 
-        assert utf8_helper.__doc__, "模块应该有文档字符串" is not None
+        assert utf8_helper.__doc__, "模块应该有文档字符串" != None
         assert utf8_helper.__doc__  in  "UTF-8", "文档应该提到UTF-8"
 
     def test_helper_functions_exist(self):

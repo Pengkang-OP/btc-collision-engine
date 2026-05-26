@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-快速检查GPU异步功能状态
+"""快速检查GPU异步功能状态
 读取最新的日志文件,检查异步执行情况
 """
 
@@ -9,7 +8,6 @@ from pathlib import Path
 
 def check_async_status():
     """检查异步执行状态"""
-
     # 找到最新的日志文件
     log_dir = Path("logs")
     if not log_dir.exists():

@@ -7,7 +7,6 @@ from pathlib import Path
 
 def generate_report():
     """生成详细的状态报告"""
-
     print("=" * 80)
     print("  GPU碰撞引擎运行状态报告")
     print(f"  生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")

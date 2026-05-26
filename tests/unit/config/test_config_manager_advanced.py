@@ -4,7 +4,6 @@ import json
 import os
 import pathlib
 import tempfile
-import pytest
 
 from src.config.config_manager import ConfigManager
 

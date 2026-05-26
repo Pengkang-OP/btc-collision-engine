@@ -3,8 +3,9 @@
 验证P1-1修复：内存锁定功能完整实现
 """
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
 
 from src.core.secure_key_manager import SecureKeyManager, SecureMemoryError
 

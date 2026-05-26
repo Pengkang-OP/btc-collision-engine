@@ -1,7 +1,6 @@
 """HashUtils 全面测试"""
 
 import hashlib
-import pytest
 
 from src.core.hash_utils import HashUtils
 

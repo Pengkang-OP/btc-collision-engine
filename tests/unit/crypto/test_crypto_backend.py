@@ -1,6 +1,5 @@
 """crypto_backend加密后端管理器测试"""
 
-import pytest
 from unittest.mock import MagicMock, PropertyMock, patch
 
 from src.core.crypto_backend import (

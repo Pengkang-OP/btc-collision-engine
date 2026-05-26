@@ -10,7 +10,6 @@ import pathlib
 import shutil
 import tempfile
 import time
-import pytest
 
 from src.collision.key_collision_engine import KeyCollisionEngine
 

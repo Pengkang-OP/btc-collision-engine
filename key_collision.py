@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-比特币私钥碰撞引擎 - 向后兼容模块
+"""比特币私钥碰撞引擎 - 向后兼容模块
 
 v5.0.0: 已移除 _LegacyTargetResolver 回退路径和 CollisionCLI 旧版 CLI。
 请使用 key_collision_cli.py 或 start_menu.py 启动程序。
@@ -346,17 +345,16 @@ class KeyCollisionEngine:
         checkpoint_interval: int = 30,
         monitoring_enabled: bool = True,
     ):
-        """
-        Args:
-            targets: 目标地址集合 (set, O(1)查找)
-            on_progress: 进度回调 fn(stats: CollisionStats)
-            on_match: 匹配回调 fn(private_key: bytes, address: str, wif: str)
-            on_complete: 完成回调 fn(stats: CollisionStats)
-            checkpoint_enabled: 是否启用断点续传
-            dedup_enabled: 是否启用去重过滤
-            dedup_max_size: 去重过滤器最大容量
-            checkpoint_interval: 断点自动保存间隔(秒)
-            monitoring_enabled: 是否启用监控系统
+        """Args:
+        targets: 目标地址集合 (set, O(1)查找)
+        on_progress: 进度回调 fn(stats: CollisionStats)
+        on_match: 匹配回调 fn(private_key: bytes, address: str, wif: str)
+        on_complete: 完成回调 fn(stats: CollisionStats)
+        checkpoint_enabled: 是否启用断点续传
+        dedup_enabled: 是否启用去重过滤
+        dedup_max_size: 去重过滤器最大容量
+        checkpoint_interval: 断点自动保存间隔(秒)
+        monitoring_enabled: 是否启用监控系统
         """
         # v5.0.0 弃用警告：引导用户使用新的 API
         warnings.warn(
@@ -422,7 +420,8 @@ class KeyCollisionEngine:
         """生成一个随机私钥并检查是否匹配目标。
         使用 secrets.token_bytes(32) 生成加密安全随机私钥。
         验证 1 <= k < N。
-        返回 (private_key, address) 如果匹配，否则 None。"""
+        返回 (private_key, address) 如果匹配，否则 None。
+        """
         # 生成随机私钥
         private_key = secrets.token_bytes(32)
         k = int.from_bytes(private_key, "big")

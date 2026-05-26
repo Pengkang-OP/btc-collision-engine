@@ -12,8 +12,9 @@ import os
 import pathlib
 import shutil
 import tempfile
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 from src.utils.first_run_wizard import FirstRunWizard
 

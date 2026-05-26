@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-GPU 数据格式实时监控工具
+"""GPU 数据格式实时监控工具
 
 监控 GPU 生成的数据是否符合比特币标准：
 - 私钥格式（32字节，范围 1 到 N-1）
@@ -25,8 +24,7 @@ class GPUDataFormatMonitor:
     """GPU 数据格式监控器"""
 
     def __init__(self, target_addresses: list[str] = None):
-        """
-        初始化监控器
+        """初始化监控器
 
         Args:
             target_addresses: 目标地址列表
@@ -57,8 +55,7 @@ class GPUDataFormatMonitor:
         self.bech32_pattern = re.compile(r"^bc1[a-z0-9]{25,39}$")
 
     def validate_private_key(self, private_key: bytes) -> tuple[bool, str]:
-        """
-        验证私钥格式
+        """验证私钥格式
 
         Args:
             private_key: 私钥字节
@@ -83,8 +80,7 @@ class GPUDataFormatMonitor:
         return True, ""
 
     def validate_public_key(self, public_key: bytes) -> tuple[bool, str]:
-        """
-        验证公钥格式
+        """验证公钥格式
 
         Args:
             public_key: 公钥字节
@@ -110,8 +106,7 @@ class GPUDataFormatMonitor:
         return False, f"公钥长度错误: {len(public_key)} 字节（应为 33 或 65 字节）"
 
     def validate_address(self, address: str) -> tuple[bool, str]:
-        """
-        验证地址格式
+        """验证地址格式
 
         Args:
             address: 地址字符串
@@ -139,8 +134,7 @@ class GPUDataFormatMonitor:
         return False, f"未知地址格式: {address[:20]}..."
 
     def monitor_key_generation(self, engine: KeyCollisionEngine, display_interval: float = 2.0):
-        """
-        监控密钥生成过程
+        """监控密钥生成过程
 
         Args:
             engine: 碰撞引擎实例

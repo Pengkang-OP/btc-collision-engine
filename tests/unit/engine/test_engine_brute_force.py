@@ -6,7 +6,6 @@
 
 import threading
 import time
-import pytest
 
 from src.collision.key_collision_engine import KeyCollisionEngine
 from tests.conftest_engine import get_known_target

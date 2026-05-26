@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Intel Arc A770 GPU运算连续性优化方案
+"""Intel Arc A770 GPU运算连续性优化方案
 
 根据Intel官方开发者指南和社区反馈,针对GPU运算间隔问题的优化方案。
 
@@ -27,7 +26,6 @@ def apply_intel_arc_continuity_optimizations(engine):
     Returns:
         dict: 应用的优化项
     """
-
     optimizations = {"applied": [], "warnings": [], "recommendations": []}
 
     if not hasattr(engine, "_gpu_device"):
@@ -182,7 +180,6 @@ def apply_intel_arc_continuity_optimizations(engine):
 
 def print_optimization_report(optimizations):
     """打印优化报告"""
-
     print("=" * 80)
     print("  Intel Arc A770 GPU运算连续性优化报告")
     print("=" * 80)

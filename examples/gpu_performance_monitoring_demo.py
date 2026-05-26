@@ -1,5 +1,4 @@
-"""
-GPU性能监控使用示例
+"""GPU性能监控使用示例
 
 演示如何使用GPUPerformanceMonitor监控GPU碰撞引擎
 """

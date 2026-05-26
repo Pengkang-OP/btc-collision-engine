@@ -3,8 +3,9 @@
 覆盖缺失行: 61-76, 165-191, 236-250, 272-275
 """
 
-import pytest
 from unittest.mock import MagicMock, PropertyMock, patch
+
+import pytest
 
 from src.core.address_generator import (
     P2PKHAddressGenerator,

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-BTC Collision Engine - Release Build Script
+"""BTC Collision Engine - Release Build Script
 Packages the project into a distributable release at the output directory.
 
 Usage:

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Intel Arc A770 GPU诊断工具
+"""Intel Arc A770 GPU诊断工具
 
 功能:
 1. 检测GPU硬件状态

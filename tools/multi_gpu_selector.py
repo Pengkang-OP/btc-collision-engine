@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-多GPU环境选择工具
+"""多GPU环境选择工具
 
 功能:
 - 检测所有可用GPU设备

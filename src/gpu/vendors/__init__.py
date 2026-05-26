@@ -1,4 +1,4 @@
-"""GPU vendors subpackage"""
+"""GPU vendors subpackage."""
 
 from .amd import AMDGPUVendor
 from .base import GPUVendorBase

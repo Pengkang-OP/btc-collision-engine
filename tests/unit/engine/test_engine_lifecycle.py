@@ -7,6 +7,7 @@
 
 import threading
 import time
+
 import pytest
 
 from src.collision.collision_stats import CollisionStats

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Intel Arc A770 GPU深度优化工具
+"""Intel Arc A770 GPU深度优化工具
 
 针对: 驱动已更新、温度正常、电源正常情况下的间歇性问题
 优化方向:

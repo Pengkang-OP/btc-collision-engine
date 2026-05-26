@@ -54,4 +54,3 @@ def fast_dumps(obj: typing.Any, **kwargs: typing.Any) -> str:
 
     """
     return _json.dumps(obj, **kwargs)
-

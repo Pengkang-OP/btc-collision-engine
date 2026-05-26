@@ -1,6 +1,5 @@
 """memory_pool 边缘覆盖测试 — 补全剩余 7 行缺失"""
 
-import pytest
 from unittest.mock import patch
 
 from src.core.memory_pool import (

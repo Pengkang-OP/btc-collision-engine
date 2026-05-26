@@ -189,7 +189,10 @@ class TestGlobalGPUMemoryManager:
 
 
 @pytest.mark.skip(
-    reason="_CleanupThreadState/internal API changed (Phase 6): _cleanup_thread, _cleanup_stop_event renamed"
+    reason=(
+        "_CleanupThreadState/internal API changed (Phase 6): "
+        "_cleanup_thread, _cleanup_stop_event renamed"
+    )
 )
 class TestGlobalGPUMemoryManagerAutoCleanup:
     """P1-6 自动清理线程测试"""

@@ -60,6 +60,7 @@ except Exception as e:
 ```
 
 **验证清单**：
+
 - [ ] `logger.error()` 包含 `exc_info=True`
 - [ ] 异常被 `raise` 或 `raise ... from e` 传递
 - [ ] 日志消息包含 操作名 + 异常详情（`%s`, `e`）

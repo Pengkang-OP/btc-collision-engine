@@ -6,8 +6,9 @@
 """
 
 import os
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 from src.core.secp256k1 import ECPoint, EllipticCurve, Secp256k1
 

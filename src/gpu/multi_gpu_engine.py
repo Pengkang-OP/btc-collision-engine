@@ -27,7 +27,7 @@ from ..utils import get_configured_logger
 # 本模块内部导入
 from .data_monitor import DataMonitor
 from .gpu_config import MultiGPUConfig, WorkerConfig
-from .gpu_recovery_manager import GPURecoveryManager
+from .gpu_recovery_manager import GPURecoveryManager  # noqa: F401
 from .load_balancer import GPULoadBalancer
 from .memory_pool import GPUMemoryPool
 from .metrics import get_metrics_collector

@@ -42,7 +42,7 @@ if TYPE_CHECKING:
     from flask import Flask, abort, jsonify, redirect, render_template_string, request
 
 try:
-    from flask import (
+    from flask import (  # noqa: F811  # TYPE_CHECKING 块有同名导入，属条件导入兼容模式
         Flask,
         abort,
         jsonify,

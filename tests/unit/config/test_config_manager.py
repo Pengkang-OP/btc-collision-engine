@@ -5,7 +5,6 @@ import os
 import pathlib
 import shutil
 import tempfile
-import pytest
 
 from src.config.config_manager import ConfigManager
 

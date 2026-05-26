@@ -1,1 +1,1 @@
-# testing scripts package
+"""Testing scripts package."""

@@ -10,7 +10,6 @@ from typing import Any
 from unittest.mock import Mock, patch
 
 
-import pytest
 class TestUtils:
     """通用测试工具类"""
 
@@ -341,8 +340,6 @@ class TestCaseWithMocks:
 
 def skip_if_no_pyopencl(func):
     """如果没有安装pyopencl则跳过测试"""
-    import unittest
-
     try:
         return func
     except ImportError:
@@ -351,8 +348,6 @@ def skip_if_no_pyopencl(func):
 
 def skip_if_no_gpu(func):
     """如果没有GPU设备则跳过测试"""
-    import unittest
-
     try:
         import pyopencl as cl
 

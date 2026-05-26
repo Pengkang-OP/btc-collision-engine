@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-"""
-自动修复代码块语言类型
+"""自动修复代码块语言类型
 
 将所有未指定语言的代码块添加语言类型（python/bash/markdown等）
 

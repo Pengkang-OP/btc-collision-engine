@@ -1,6 +1,5 @@
 """GPU驱动管理器单元测试"""
 
-import unittest
 from unittest.mock import Mock, patch
 
 from src.gpu.driver_manager import DriverManager, DriverVersionParser

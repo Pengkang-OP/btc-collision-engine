@@ -1,7 +1,7 @@
 """Tests for GPUBatchScheduler."""
 from __future__ import annotations
 
-from unittest.mock import MagicMock, PropertyMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 

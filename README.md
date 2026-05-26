@@ -121,6 +121,7 @@ python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random
 ### 🔐 密码学原理
 
 **可匹配的格式**:
+
 ```
 私钥 → ECDSA secp256k1 → 公钥
                                ↓
@@ -133,6 +134,7 @@ python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random
 ```
 
 **不可匹配的格式**:
+
 ```
 P2SH: payload = hash160(redeemScript) ≠ hash160(pubkey) ❌
 P2WSH: payload = sha256(redeemScript) ≠ hash160(pubkey) ❌
@@ -322,7 +324,7 @@ cp config.example.json config.json
 ### GPU加速（可选）
 
 > **要求**：Python 3.9+、已安装 GPU 驱动、支持 OpenCL 1.2+
-> 
+>
 > **详细配置指南请查看：[⚙️ GPU配置指南](GPU_CONFIG_GUIDE.md)
 
 #### NVIDIA GPU

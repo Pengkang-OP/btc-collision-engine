@@ -3,8 +3,8 @@
 
 import json
 import logging
-import time
 import pathlib
+import time
 
 from src.collision.key_collision_engine import KeyCollisionEngine
 from src.collision.targets.storage import AddressStorage

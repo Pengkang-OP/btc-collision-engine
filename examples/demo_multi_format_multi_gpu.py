@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-快速演示: 使用多格式多GPU引擎
+"""快速演示: 使用多格式多GPU引擎
 """
 
 import sys

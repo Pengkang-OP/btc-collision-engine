@@ -5,7 +5,6 @@ import json
 import os
 import pathlib
 import tempfile
-import pytest
 from unittest.mock import patch
 
 from src.monitoring.data_logger import DataLogger

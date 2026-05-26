@@ -1,7 +1,6 @@
 """DeduplicationFilter 单元测试 - 基于集合的去重过滤器"""
 
 import threading
-import pytest
 
 from src.collision.deduplication_filter import DeduplicationFilter
 

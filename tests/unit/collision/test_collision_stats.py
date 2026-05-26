@@ -2,7 +2,6 @@
 
 import hashlib
 import threading
-import pytest
 
 from src.collision.collision_stats import CollisionStats, StatsSnapshot
 

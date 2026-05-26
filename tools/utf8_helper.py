@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Windows 控制台 UTF-8 编码修复工具
+"""Windows 控制台 UTF-8 编码修复工具
 
 在 Windows 平台上，默认控制台编码通常是 GBK/CP936，
 导致中文输出显示为乱码。此模块通过调用 Windows API
