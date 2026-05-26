@@ -204,6 +204,23 @@ tests/logs/
 !CHANGELOG.md
 !CONTRIBUTING.md
 
+# --- 根目录临时结果和日志文件 ---
+/ci_test_result.txt
+/device_lint.txt
+/final_check.txt
+/test_stats_output.txt
+/out.log
+
+# --- flake8 检查输出 ---
+/flake8_*.txt
+
+# --- 根目录临时批处理脚本 ---
+/run_ci_tests.bat
+/run_collision_stats_test.bat
+
+# --- 根目录纯数字命名文件 ---
+/[0-9][0-9][0-9]
+
 # --- Shell 集成错误产物（Trae CN IDE）---
 utput*
 s -File*
