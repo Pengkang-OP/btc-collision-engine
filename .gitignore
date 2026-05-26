@@ -209,6 +209,7 @@ tests/logs/
 /device_lint.txt
 /final_check.txt
 /test_stats_output.txt
+/tests_report.txt
 /out.log
 
 # --- flake8 检查输出 ---
