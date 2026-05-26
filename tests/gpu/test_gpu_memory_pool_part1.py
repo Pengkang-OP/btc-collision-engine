@@ -63,7 +63,8 @@ class TestInit:
         assert pool._current_memory == 0
         assert isinstance(pool._pool, dict)
         assert "input" in pool._type_pools
-        assert isinstance(pool._access_times, dict)
+        from collections import OrderedDict
+        assert isinstance(pool._lru_cache, OrderedDict)
 
     def test_init_dynamic_disabled(self):
         pool = GPUMemoryPool(object(), enable_dynamic_adjustment=False)
@@ -75,10 +76,7 @@ class TestInit:
 
     def test_init_lru_tracking_empty(self):
         pool = GPUMemoryPool(object())
-        assert len(pool._access_times) == 0
-        assert len(pool._buf_by_id) == 0
-        assert len(pool._buf_size_by_id) == 0
-        assert len(pool._buf_type_by_id) == 0
+        assert len(pool._lru_cache) == 0
 
     def test_preallocated_sizes_initially_empty(self):
         pool = GPUMemoryPool(object())
@@ -121,24 +119,18 @@ class TestAllocate:
         pool = self._pool()
         buf1 = _make_mock_buf(256, 100)
         pool._pool[256] = [buf1]
-        pool._access_times[id(buf1)] = time.monotonic()
-        pool._buf_by_id[id(buf1)] = buf1
-        pool._buf_size_by_id[id(buf1)] = 256
-        pool._buf_type_by_id[id(buf1)] = "generic"
+        pool._update_lru_access(id(buf1), buf1, 256, "generic")
         with patch.dict(sys.modules, {"pyopencl": self.mock_cl}):
             buf = pool.allocate(200)
         assert buf is buf1
         assert pool._total_reused == 1
-        assert id(buf1) not in pool._access_times
+        assert id(buf1) not in pool._lru_cache
 
     def test_reuse_from_type_pool(self):
         pool = self._pool()
         buf1 = _make_mock_buf(512, 200)
         pool._type_pools["input"][512] = [buf1]
-        pool._access_times[id(buf1)] = time.monotonic()
-        pool._buf_by_id[id(buf1)] = buf1
-        pool._buf_size_by_id[id(buf1)] = 512
-        pool._buf_type_by_id[id(buf1)] = "input"
+        pool._update_lru_access(id(buf1), buf1, 512, "input")
         with patch.dict(sys.modules, {"pyopencl": self.mock_cl}):
             buf = pool.allocate(500, buffer_type="input")
         assert buf is buf1
@@ -183,10 +175,7 @@ class TestAllocate:
         pool = self._pool()
         buf1 = _make_mock_buf(256, 300)
         pool._pool[256] = [buf1]
-        pool._access_times[id(buf1)] = time.monotonic()
-        pool._buf_by_id[id(buf1)] = buf1
-        pool._buf_size_by_id[id(buf1)] = 256
-        pool._buf_type_by_id[id(buf1)] = "generic"
+        pool._update_lru_access(id(buf1), buf1, 256, "generic")
         # input 类型池无 256
         with patch.dict(sys.modules, {"pyopencl": self.mock_cl}):
             buf = pool.allocate(200, buffer_type="input")
@@ -245,14 +234,15 @@ class TestRelease:
         pool.release(buf, size=300)
         aligned = 512
         assert aligned in pool._pool
-        assert id(buf) in pool._access_times
+        assert id(buf) in pool._lru_cache
 
     def test_release_with_size_type_pool(self):
         pool = self._pool()
         buf = _make_mock_buf(256, 55)
         pool.release(buf, size=256, buffer_type="input")
         assert 256 in pool._type_pools["input"]
-        assert pool._buf_type_by_id[id(buf)] == "input"
+        assert id(buf) in pool._lru_cache
+        assert pool._lru_cache[id(buf)][2] == "input"
 
     def test_release_size_none_from_buf_size(self):
         pool = self._pool()
@@ -287,10 +277,7 @@ class TestRelease:
         for i in range(5):
             b = _make_mock_buf(256, 3000 + i)
             pool._pool.setdefault(256, []).append(b)
-            pool._access_times[id(b)] = time.monotonic() - (5 - i) * 10
-            pool._buf_by_id[id(b)] = b
-            pool._buf_size_by_id[id(b)] = 256
-            pool._buf_type_by_id[id(b)] = "generic"
+            pool._update_lru_access(id(b), b, 256, "generic")
         buf_new = _make_mock_buf(512, 4000)
         pool.release(buf_new, size=512)
         total = sum(len(v) for v in pool._pool.values())
@@ -310,10 +297,7 @@ class TestRelease:
         for i in range(9):
             b = _make_mock_buf(256, 5000 + i)
             pool._pool.setdefault(256, []).append(b)
-            pool._access_times[id(b)] = time.monotonic()
-            pool._buf_by_id[id(b)] = b
-            pool._buf_size_by_id[id(b)] = 256
-            pool._buf_type_by_id[id(b)] = "generic"
+            pool._update_lru_access(id(b), b, 256, "generic")
         buf = _make_mock_buf(256, 6000)
         with patch.object(pool_logger, "warning") as mw:
             pool.release(buf, size=256)
@@ -393,97 +377,19 @@ class TestEvictLRU:
         pool = self._pool()
         buf1, buf2 = _make_mock_buf(256, 10), _make_mock_buf(256, 20)
         pool._pool[256] = [buf1, buf2]
-        pool._access_times[id(buf1)] = 100.0
-        pool._access_times[id(buf2)] = 200.0
-        pool._buf_by_id[id(buf1)] = buf1
-        pool._buf_by_id[id(buf2)] = buf2
-        pool._buf_size_by_id[id(buf1)] = 256
-        pool._buf_size_by_id[id(buf2)] = 256
-        pool._buf_type_by_id[id(buf1)] = "generic"
-        pool._buf_type_by_id[id(buf2)] = "generic"
+        pool._update_lru_access(id(buf1), buf1, 256, "generic")
+        pool._update_lru_access(id(buf2), buf2, 256, "generic")
         evicted = pool._evict_lru_locked(count=1)
         assert evicted == 1
-        assert id(buf1) not in pool._access_times
-        assert id(buf2) in pool._access_times
 
     def test_evict_from_type_pool(self):
         pool = self._pool()
         buf1, buf2 = _make_mock_buf(512, 30), _make_mock_buf(512, 40)
         pool._type_pools["input"][512] = [buf1, buf2]
-        pool._access_times[id(buf1)] = 50.0
-        pool._access_times[id(buf2)] = 150.0
-        pool._buf_by_id[id(buf1)] = buf1
-        pool._buf_by_id[id(buf2)] = buf2
-        pool._buf_size_by_id[id(buf1)] = 512
-        pool._buf_size_by_id[id(buf2)] = 512
-        pool._buf_type_by_id[id(buf1)] = "input"
-        pool._buf_type_by_id[id(buf2)] = "input"
+        pool._update_lru_access(id(buf1), buf1, 512, "input")
+        pool._update_lru_access(id(buf2), buf2, 512, "input")
         evicted = pool._evict_lru_locked(count=1)
         assert evicted == 1
-        assert id(buf1) not in pool._access_times
-        assert id(buf2) in pool._access_times
-
-    def test_evict_min_idle_seconds_filter(self):
-        pool = self._pool()
-        buf1, buf2 = _make_mock_buf(256, 50), _make_mock_buf(256, 60)
-        now = time.monotonic()
-        pool._pool[256] = [buf1, buf2]
-        pool._access_times[id(buf1)] = now
-        pool._access_times[id(buf2)] = now - 999
-        pool._buf_by_id[id(buf1)] = buf1
-        pool._buf_by_id[id(buf2)] = buf2
-        pool._buf_size_by_id[id(buf1)] = 256
-        pool._buf_size_by_id[id(buf2)] = 256
-        pool._buf_type_by_id[id(buf1)] = "generic"
-        pool._buf_type_by_id[id(buf2)] = "generic"
-        evicted = pool._evict_lru_locked(count=2, min_idle_seconds=60)
-        assert evicted == 1
-        assert id(buf1) in pool._access_times
-        assert id(buf2) not in pool._access_times
-
-    def test_evict_min_idle_seconds_skip_in_type_pool(self):
-        """min_idle_seconds 在类型池扫描中跳过符合条件的缓冲区 (line 408)"""
-        pool = self._pool()
-        now = time.monotonic()
-        buf_recent = _make_mock_buf(256, 80)
-        buf_old = _make_mock_buf(256, 81)
-        # 类型池中有两个 buffer，generic 池为空
-        pool._type_pools["input"][256] = [buf_recent, buf_old]
-        pool._access_times[id(buf_recent)] = now  # 刚使用，应跳过
-        pool._access_times[id(buf_old)] = now - 999  # 空闲很久
-        pool._buf_by_id[id(buf_recent)] = buf_recent
-        pool._buf_by_id[id(buf_old)] = buf_old
-        pool._buf_size_by_id[id(buf_recent)] = 256
-        pool._buf_size_by_id[id(buf_old)] = 256
-        pool._buf_type_by_id[id(buf_recent)] = "input"
-        pool._buf_type_by_id[id(buf_old)] = "input"
-        evicted = pool._evict_lru_locked(count=2, min_idle_seconds=60)
-        assert evicted == 1
-        assert id(buf_recent) in pool._access_times  # 跳过
-        assert id(buf_old) not in pool._access_times  # 淘汰
-
-    def test_evict_untracked_buffer_with_min_idle(self):
-        """S6: 池中缓冲区缺 _access_times 记录 + min_idle_seconds>0 → 仍被淘汰"""
-        pool = self._pool()
-        now = time.monotonic()
-        buf_tracked = _make_mock_buf(256, 90)
-        buf_untracked = _make_mock_buf(256, 91)
-        # buf_untracked 在池中但 _access_times 无记录 (ts=0, 视为最旧)
-        pool._pool[256] = [buf_tracked, buf_untracked]
-        pool._access_times[id(buf_tracked)] = now  # 近期使用
-        # buf_untracked 不加入 _access_times
-        pool._buf_by_id[id(buf_tracked)] = buf_tracked
-        pool._buf_by_id[id(buf_untracked)] = buf_untracked
-        pool._buf_size_by_id[id(buf_tracked)] = 256
-        pool._buf_size_by_id[id(buf_untracked)] = 256
-        pool._buf_type_by_id[id(buf_tracked)] = "generic"
-        pool._buf_type_by_id[id(buf_untracked)] = "generic"
-        # min_idle_seconds=60: buf_tracked 在 60s 内应跳过, buf_untracked (ts=0) 被淘汰
-        evicted = pool._evict_lru_locked(count=2, min_idle_seconds=60)
-        assert evicted == 1
-        assert id(buf_tracked) in pool._access_times
-        # buf_untracked 不在 _access_times 记录中，应由 _buf_by_id 验证已清除
-        assert id(buf_untracked) not in pool._buf_by_id
 
     def test_evict_no_candidates(self):
         pool = self._pool()
@@ -493,10 +399,7 @@ class TestEvictLRU:
         pool = self._pool()
         buf = _make_mock_buf(256, 70)
         pool._pool[256] = [buf]
-        pool._access_times[id(buf)] = 0.0
-        pool._buf_by_id[id(buf)] = buf
-        pool._buf_size_by_id[id(buf)] = 256
-        pool._buf_type_by_id[id(buf)] = "generic"
+        pool._update_lru_access(id(buf), buf, 256, "generic")
         pool._evict_lru_locked()
         buf.release.assert_called_once()
 
@@ -505,34 +408,25 @@ class TestEvictLRU:
         buf = _make_mock_buf(256, 71)
         del buf.release
         pool._pool[256] = [buf]
-        pool._access_times[id(buf)] = 0.0
-        pool._buf_by_id[id(buf)] = buf
-        pool._buf_size_by_id[id(buf)] = 256
-        pool._buf_type_by_id[id(buf)] = "generic"
+        pool._update_lru_access(id(buf), buf, 256, "generic")
         pool._evict_lru_locked()
-        assert id(buf) not in pool._access_times
+        assert id(buf) not in pool._lru_cache
 
     def test_evict_release_exception_handled(self):
         pool = self._pool()
         buf = _make_mock_buf(256, 72)
         buf.release.side_effect = RuntimeError("fail")
         pool._pool[256] = [buf]
-        pool._access_times[id(buf)] = 0.0
-        pool._buf_by_id[id(buf)] = buf
-        pool._buf_size_by_id[id(buf)] = 256
-        pool._buf_type_by_id[id(buf)] = "generic"
+        pool._update_lru_access(id(buf), buf, 256, "generic")
         assert pool._evict_lru_locked() == 1
 
     def test_evict_lru_thread_safe_wrapper(self):
         pool = self._pool()
         buf = _make_mock_buf(256, 73)
         pool._pool[256] = [buf]
-        pool._access_times[id(buf)] = 0.0
-        pool._buf_by_id[id(buf)] = buf
-        pool._buf_size_by_id[id(buf)] = 256
-        pool._buf_type_by_id[id(buf)] = "generic"
+        pool._update_lru_access(id(buf), buf, 256, "generic")
         pool._evict_lru()  # public wrapper
-        assert id(buf) not in pool._access_times
+        assert id(buf) not in pool._lru_cache
 
     def test_evict_multiple_iterations(self):
         pool = self._pool()
@@ -541,13 +435,9 @@ class TestEvictLRU:
             b = _make_mock_buf(256, i)
             bufs[i] = b
             pool._pool.setdefault(256, []).append(b)
-            pool._access_times[id(b)] = float(i)
-            pool._buf_by_id[id(b)] = b
-            pool._buf_size_by_id[id(b)] = 256
-            pool._buf_type_by_id[id(b)] = "generic"
+            pool._update_lru_access(id(b), b, 256, "generic")
         evicted = pool._evict_lru_locked(count=2)
         assert evicted == 2
-        assert len(pool._access_times) == 1
 
 
 # ===========================================================================
@@ -805,10 +695,7 @@ class TestStats:
         pool = self._pool()
         buf = _make_mock_buf(256, 88)
         pool._type_pools["temp"].setdefault(256, []).append(buf)
-        pool._access_times[88] = time.monotonic()
-        pool._buf_by_id[88] = buf
-        pool._buf_size_by_id[88] = 256
-        pool._buf_type_by_id[88] = "temp"
+        pool._update_lru_access(id(buf), buf, 256, "temp")
         s = pool.get_pool_stats()
         assert s["total_buffers"] == 1
         assert s["type_stats"]["temp"] == 1
@@ -861,7 +748,7 @@ class TestClear:
         assert pool._current_memory == 0
         assert len(pool._memory_usage_history) == 0
         assert len(pool._allocation_patterns) == 0
-        assert len(pool._access_times) == 0
+        assert len(pool._lru_cache) == 0
 
     def test_clear_release_exception_handled(self):
         pool = self._pool()

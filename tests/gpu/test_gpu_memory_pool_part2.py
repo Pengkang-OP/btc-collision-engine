@@ -202,7 +202,7 @@ class TestGlobalGPUMemoryManagerAutoCleanup:
         # 确保清理
         if GlobalGPUMemoryManager._instance is not None:
             mgr = GlobalGPUMemoryManager._instance
-            if mgr._cleanup_state._cleanup_thread and mgr._cleanup_state._cleanup_thread.is_alive():
+            if hasattr(mgr, "_cleanup_state") and mgr._cleanup_state._cleanup_thread and mgr._cleanup_state._cleanup_thread.is_alive():
                 mgr.stop_auto_cleanup(timeout=2.0)
         GlobalGPUMemoryManager._instance = None
 
@@ -252,10 +252,7 @@ class TestGlobalGPUMemoryManagerAutoCleanup:
         # 放入一个 buffer
         b = _make_mock_buf(256, 1)
         pool._pool[256] = [b]
-        pool._access_times[id(b)] = time.monotonic() - 9999  # 空闲很久
-        pool._buf_by_id[id(b)] = b
-        pool._buf_size_by_id[id(b)] = 256
-        pool._buf_type_by_id[id(b)] = "generic"
+        pool._update_lru_access(id(b), b, 256, "generic")
 
         # 让循环运行一次
         call_count = [0]
@@ -317,10 +314,7 @@ class TestGlobalGPUMemoryManagerAutoCleanup:
         pool = mgr.get_pool(ctx)
         b = _make_mock_buf(256, 1)
         pool._pool[256] = [b]
-        pool._access_times[id(b)] = time.monotonic() - 9999
-        pool._buf_by_id[id(b)] = b
-        pool._buf_size_by_id[id(b)] = 256
-        pool._buf_type_by_id[id(b)] = "generic"
+        pool._update_lru_access(id(b), b, 256, "generic")
 
         mm = _make_mock_buf(100 * 1024 * 1024, 99)
 
@@ -428,13 +422,11 @@ class TestConcurrentSafety:
 
         # 无异常
         assert len(errors) == 0, f"并发异常: {errors}"
-        # 所有缓冲区都正常归还（access_times 数量 = 池中缓冲区总数）
+        # 所有缓冲区都正常归还（lru_cache 数量 = 池中缓冲区总数）
         total_pooled = sum(len(v) for v in pool._pool.values()) + sum(
             sum(len(vv) for vv in v.values()) for v in pool._type_pools.values()
         )
-        assert len(pool._access_times) == total_pooled
-        assert len(pool._buf_by_id) == total_pooled
-        assert len(pool._buf_size_by_id) == total_pooled
+        assert len(pool._lru_cache) == total_pooled
 
     def test_concurrent_get_pool_singleton_safety(self):
         """多线程并发获取 GlobalGPUMemoryManager 单例"""
