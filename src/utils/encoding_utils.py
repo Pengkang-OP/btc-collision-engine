@@ -54,7 +54,7 @@ class EncodingUtils:
         return int.from_bytes(data, "big")
 
     @staticmethod
-    def read_file_lines(file_path: str, try_multiple: bool = True):
+    def read_file_lines(file_path: str, try_multiple: bool = True) -> list[str]:
         """Read file lines with multiple encoding fallback."""
         encodings = ["utf-8", "gbk", "latin-1"]
         errors = []

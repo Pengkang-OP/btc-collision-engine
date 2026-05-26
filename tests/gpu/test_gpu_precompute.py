@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 
-# ---- 绕过 src.gpu.__init__ 导入链 ----
+# ---- 绕过 src.gpu.__init__ 导入链（架构必要：sys.modules 注入必须在 src 导入前） ----
 _mock_kernel_impl = MagicMock()
 _mock_kernel_impl.compile_kernel_with_retry = MagicMock()
 sys.modules["src.gpu.kernel_impl"] = _mock_kernel_impl
@@ -18,7 +18,7 @@ _mock_context = MagicMock()
 _mock_context.GPUContext = MagicMock()
 sys.modules["src.gpu.context"] = _mock_context
 
-from src.gpu.precompute import (  # noqa: E402
+from src.gpu.precompute import (  # noqa: E402  # 架构必要：sys.modules mock 注入后立即导入
     _int_to_uint32_le,
     _point_add,
     generate_secp256k1_precomp_table,

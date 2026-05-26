@@ -16,11 +16,12 @@ from queue import Empty, Queue
 from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
-    from ..collision.gpu.engine import GPUCollisionEngine
+    from ._engine_protocol import GPUEngineProtocol as GPUCollisionEngine
 
 # 统一日志获取
 from ..config.optimization_config import is_feature_enabled
 from ..utils import get_configured_logger
+from .gpu_config import WorkerConfig
 
 # 根据配置条件导入优化模块
 _delta_stats_available = is_feature_enabled("delta_stats")
@@ -30,8 +31,6 @@ if _delta_stats_available:
     from ..collision.delta_stats import ThreadLocalDeltaStats
 if _monitor_available:
     from ..cli.stats_performance_monitor import profile_stats_update
-
-from .gpu_config import WorkerConfig  # noqa: E402
 
 logger = get_configured_logger("GPUWorker")
 
@@ -211,7 +210,8 @@ class SingleGPUWorker(threading.Thread):
             # 确保异常时也清理资源
             self._cleanup()
             with self._lock:
-                self._stats["status"] = "stopped"
+                if self._stats["status"] not in ("error", "stopping"):
+                    self._stats["status"] = "stopped"
             logger.info(f"GPU {self.device_idx} 工作器已停止")
 
     def _initialize_gpu_engine(self):
@@ -356,13 +356,16 @@ class SingleGPUWorker(threading.Thread):
             self._handle_memory_error_retry(_depth=_retry_depth)
         except RuntimeError as e:
             self._record_search_error(e, "运行时")
+            raise
         except ValueError as e:
             self._record_search_error(e, "数据")
+            raise
         except Exception as e:
             logger.exception(f"GPU {self.device_idx} 搜索未知异常: {type(e).__name__}: {e}")
             with self._lock:
                 self._stats["error_count"] += 1
                 self._stats["last_error"] = f"{type(e).__name__}: {e}"
+            raise
 
     def _compute_throughput(self) -> None:
         """计算并更新吞吐量统计（需在锁内调用）。"""
@@ -462,7 +465,7 @@ class SingleGPUWorker(threading.Thread):
     if _monitor_available:
         _update_stats = profile_stats_update(_update_stats)
 
-    def _cleanup(self):
+    def _cleanup(self) -> None:
         """清理资源"""
         try:
             if self._gpu_engine:

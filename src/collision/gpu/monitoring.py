@@ -14,14 +14,14 @@
 更新日期: 2026-04-30
 """
 
-import logging
+from ...utils import get_configured_logger
 import time
 from typing import Any
 
 from .data_logger_adapter import DataLoggerAdapter
 from .protocols import IMonitoringPipeline
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger(__name__)
 
 
 class PerformanceMonitoringPipeline(IMonitoringPipeline):

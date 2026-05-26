@@ -45,7 +45,7 @@ jobs:
         run: mypy src/ --config-file pyproject.toml
 
       - name: 导入路径检查
-        run: python scripts/check_import_paths.py
+        run: python scripts/dev/check_import_paths.py
 
       - name: GPU Python 模块语法检查
         run: |
@@ -167,18 +167,22 @@ jobs:
   # 3. 核心测试 (pytest + coverage + config validation)
   # ──────────────────────────────────────────
   test:
-    name: 测试
+    name: 测试 (py${{ matrix.python-version }})
     runs-on: ubuntu-latest
     timeout-minutes: 50
     needs: [static-analysis]
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+      fail-fast: false
 
     steps:
       - uses: actions/checkout@v6
 
-      - name: 设置 Python
+      - name: 设置 Python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
           cache: "pip"
 
       - name: 安装系统依赖

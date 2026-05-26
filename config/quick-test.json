@@ -20,10 +20,17 @@
     },
     "gpu": {
         "device_index": -1,
-        "batch_size": 1024
+        "batch_size": 1024,
+        "driver_check": {
+            "enabled": true,
+            "require_minimum_version": true,
+            "warn_on_unstable": true,
+            "auto_fallback_conservative": true
+        },
+        "key_generation_strategy": "PRNG_SEED"
     },
     "optimization": {
         "uint32_workaround": false,
-        "async_transfer": false
+        "disable_async_transfer": false
     }
 }

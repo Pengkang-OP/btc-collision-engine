@@ -45,10 +45,6 @@ LABEL maintainer="BTC Project" \
     org.label-schema.vcs-ref="${VCS_REF}" \
     org.label-schema.vcs-url="https://github.com/your-repo/btc-collision-engine"
 
-# 运行时参数
-# cpu 或 gpu（注意：此 ARG 在 production stage 中未被引用，保留供后续扩展）
-ARG RUN_MODE="cpu"
-
 # 环境变量
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -88,7 +84,7 @@ RUN mkdir -p ${APP_HOME} ${DATA_DIR} ${LOG_DIR} ${MONITOR_DIR}
 WORKDIR ${APP_HOME}
 
 # 复制应用代码
-COPY --chown=1000:1000 . .
+COPY --chown=btc-engine:btc-engine . .
 
 # 创建数据目录（如果不存在）
 RUN mkdir -p data_logs monitoring_data logs

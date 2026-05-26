@@ -228,8 +228,6 @@ per-file-ignores = [
     "src/monitoring/alert_notifications.py:E501",
     "src/utils/ui_tutorial.py:E501",
     "src/collision/targets/validator.py:E501",
-    "scripts/_batch_p1.py:E501",
-    "scripts/extract_opencl_kernels.py:E501",
 ]
 
 [tool.ruff]
@@ -252,16 +250,20 @@ exclude = [
     ".eggs",
     # 以下文件使用 Python 3.12+ f-string 跨行语法，跳过 ruff parser 版本检查
     "benchmarks/benchmark_runner.py",
-    "scripts/ai_auto_sort_execute.py",
-    "scripts/deep_performance_analysis.py",
-    "scripts/diagnose.py",
-    "scripts/gpu_kernel_validation_report.py",
-    "scripts/memory_leak_detection.py",
+    "scripts/dev/diagnose.py",
+    "scripts/benchmarking/memory_leak_detection.py",
 ]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "C90", "I", "N", "UP", "SIM", "B", "T20"]
 ignore = ["E203"]
+
+# TODO: Add pydocstyle Google convention enforcement incrementally:
+# 1. Add "D" to select list above
+# 2. Add per-file-ignores for known violations
+# 3. Gradually fix violations to reduce ignore list
+# [tool.ruff.lint.pydocstyle]
+# convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
 "src/web/dashboard.py" = ["E501"] # HTML/Jinja2 模板字符串无法有意义地拆分
@@ -319,7 +321,8 @@ ignore = ["E203"]
 ]
 # ── 根目录入口脚本允许 print() ──────────────────────────
 "start.py" = ["T201"]
-"start_menu.py" = ["T201", "C901", "SIM105", "UP036"] # CLI 菜单：复杂度+print+版本块合法
+"start_menu.py" = ["E402"] # 薄引导：sys.path 操作需在 import 之前
+"src/start_menu/*.py" = ["T201", "C901", "SIM105"] # 启动菜单：print+复杂度+简化写法合法
 "key_collision_cli.py" = ["T201"]
 "key_collision.py" = [
     "E501",  # CLI 入口：长行可读性优先

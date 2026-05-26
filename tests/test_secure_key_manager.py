@@ -1,6 +1,6 @@
 """SecureKeyManager 单元测试 - 覆盖密钥管理、清零、统计、上下文等可测试路径"""
 
-import unittest
+import pytest
 from unittest.mock import patch
 
 from src.core.secure_key_manager import (
@@ -11,23 +11,23 @@ from src.core.secure_key_manager import (
 )
 
 
-class TestSecureKeyManagerInit(unittest.TestCase):
+class TestSecureKeyManagerInit:
     """初始化测试"""
 
     def test_init_default(self):
         """默认初始化"""
         mgr = SecureKeyManager()
-        self.assertFalse(mgr.is_cleared)
-        self.assertFalse(mgr.is_memory_locked)
-        self.assertIn(mgr.backend, ("cryptography", "pynacl", "ctypes"))
+        assert not mgr.is_cleared
+        assert not mgr.is_memory_locked
+        assert ("cryptography", "pynacl", "ctypes")  in  mgr.backend
 
     def test_init_lock_memory_disabled(self):
         """禁用内存锁定"""
         mgr = SecureKeyManager(lock_memory=False)
-        self.assertEqual(mgr.backend, mgr.backend)  # backend property works
+        assert mgr.backend  ==  mgr.backend  # backend property works
 
 
-class TestSecureKeyManagerGenerateKey(unittest.TestCase):
+class TestSecureKeyManagerGenerateKey:
     """generate_key 测试"""
 
     def setUp(self):
@@ -38,23 +38,23 @@ class TestSecureKeyManagerGenerateKey(unittest.TestCase):
         self.mgr.generate_key()
         key = self.mgr.get_key()
         # 现在返回只读视图，但也可以验证是可读写的内存对象
-        self.assertIsInstance(key, memoryview)
-        self.assertEqual(len(key), 32)
+        assert isinstance(key, memoryview)
+        assert len(key)  ==  32
         # 验证只读
         with self.assertRaises((TypeError, ValueError)):
             key[0] = 0  # 尝试写入应该失败
-        self.assertFalse(self.mgr.is_cleared)
+        assert not self.mgr.is_cleared
 
     def test_generate_from_bytes(self):
         """从字节串生成密钥"""
         key_bytes = b"\x01" * 32
         self.mgr.generate_key(key_bytes)
         key = self.mgr.get_key()
-        self.assertEqual(bytes(key), key_bytes)
+        assert bytes(key)  ==  key_bytes
 
     def test_generate_invalid_length(self):
         """密钥长度不为 32 时抛出 ValueError"""
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             self.mgr.generate_key(b"\x01" * 31)
 
     def test_generate_replaces_existing(self):
@@ -62,10 +62,10 @@ class TestSecureKeyManagerGenerateKey(unittest.TestCase):
         self.mgr.generate_key(b"\x01" * 32)
         self.mgr.generate_key(b"\x02" * 32)
         key = self.mgr.get_key()
-        self.assertEqual(bytes(key), b"\x02" * 32)
+        assert bytes(key)  ==  b"\x02" * 32
 
 
-class TestSecureKeyManagerGetKey(unittest.TestCase):
+class TestSecureKeyManagerGetKey:
     """get_key 测试"""
 
     def test_get_key_not_generated(self):
@@ -73,7 +73,7 @@ class TestSecureKeyManagerGetKey(unittest.TestCase):
         mgr = SecureKeyManager()
         with self.assertRaises(SecureMemoryError) as ctx:
             mgr.get_key()
-        self.assertIn("not generated", str(ctx.exception))
+        assert str(ctx.exception)  in  "not generated"
 
     def test_get_key_after_clear(self):
         """清零后获取密钥抛出 SecureMemoryError"""
@@ -82,10 +82,10 @@ class TestSecureKeyManagerGetKey(unittest.TestCase):
         mgr.clear()
         with self.assertRaises(SecureMemoryError) as ctx:
             mgr.get_key()
-        self.assertIn("has been cleared", str(ctx.exception))
+        assert str(ctx.exception)  in  "has been cleared"
 
 
-class TestSecureKeyManagerClear(unittest.TestCase):
+class TestSecureKeyManagerClear:
     """clear 测试"""
 
     def setUp(self):
@@ -95,14 +95,14 @@ class TestSecureKeyManagerClear(unittest.TestCase):
         """清零成功"""
         self.mgr.generate_key()
         self.mgr.clear()
-        self.assertTrue(self.mgr.is_cleared)
+        assert self.mgr.is_cleared
 
     def test_clear_idempotent(self):
         """重复清零不报错"""
         self.mgr.generate_key()
         self.mgr.clear()
         self.mgr.clear()  # no-op
-        self.assertTrue(self.mgr.is_cleared)
+        assert self.mgr.is_cleared
 
     @patch.object(SecureKeyManager, "_clear_secure")
     def test_clear_counts_stats(self, mock_clear):
@@ -110,54 +110,54 @@ class TestSecureKeyManagerClear(unittest.TestCase):
         self.mgr.generate_key()
         self.mgr.clear()
         stats = SecureKeyManager.get_clear_stats()
-        self.assertGreaterEqual(stats["total"], 1)
-        self.assertGreaterEqual(stats["successful"], 1)
+        assert stats["total"]  >=  1
+        assert stats["successful"]  >=  1
 
     @patch.object(SecureKeyManager, "_clear_secure", side_effect=RuntimeError("fail"))
     def test_clear_failure_updates_stats(self, mock_clear):
         """清零失败更新失败统计"""
         self.mgr.generate_key()
-        with self.assertRaises(SecureMemoryError):
+        with pytest.raises(SecureMemoryError):
             self.mgr.clear()
         stats = SecureKeyManager.get_clear_stats()
-        self.assertGreaterEqual(stats["failed"], 1)
+        assert stats["failed"]  >=  1
 
 
-class TestSecureKeyManagerContextManager(unittest.TestCase):
+class TestSecureKeyManagerContextManager:
     """上下文管理器测试"""
 
     def test_context_manager_auto_clear(self):
         """上下文管理器自动清零"""
         with SecureKeyManager(lock_memory=False) as mgr:
             mgr.generate_key()
-            self.assertFalse(mgr.is_cleared)
-        self.assertTrue(mgr.is_cleared)
+            assert not mgr.is_cleared
+        assert mgr.is_cleared
 
 
-class TestSecureKeyManagerProperties(unittest.TestCase):
+class TestSecureKeyManagerProperties:
     """属性测试"""
 
     def test_is_cleared(self):
         """is_cleared 属性"""
         mgr = SecureKeyManager(lock_memory=False)
-        self.assertFalse(mgr.is_cleared)
+        assert not mgr.is_cleared
         mgr.generate_key()
-        self.assertFalse(mgr.is_cleared)
+        assert not mgr.is_cleared
         mgr.clear()
-        self.assertTrue(mgr.is_cleared)
+        assert mgr.is_cleared
 
     def test_backend(self):
         """Backend 属性"""
         mgr = SecureKeyManager()
-        self.assertIsInstance(mgr.backend, str)
+        assert isinstance(mgr.backend, str)
 
     def test_is_memory_locked(self):
         """is_memory_locked 属性"""
         mgr = SecureKeyManager(lock_memory=False)
-        self.assertFalse(mgr.is_memory_locked)
+        assert not mgr.is_memory_locked
 
 
-class TestSecureKeyManagerStats(unittest.TestCase):
+class TestSecureKeyManagerStats:
     """统计测试"""
 
     def setUp(self):
@@ -169,8 +169,8 @@ class TestSecureKeyManagerStats(unittest.TestCase):
     def test_get_clear_stats_initial(self):
         """初始统计"""
         stats = SecureKeyManager.get_clear_stats()
-        self.assertEqual(stats["total"], 0)
-        self.assertEqual(stats["success_rate"], 100.0)
+        assert stats["total"]  ==  0
+        assert stats["success_rate"]  ==  100.0
 
     def test_reset_clear_stats(self):
         """重置统计"""
@@ -179,14 +179,14 @@ class TestSecureKeyManagerStats(unittest.TestCase):
         mgr.clear()
 
         stats = SecureKeyManager.get_clear_stats()
-        self.assertGreater(stats["total"], 0)
+        assert stats["total"]  >  0
 
         SecureKeyManager.reset_clear_stats()
         stats = SecureKeyManager.get_clear_stats()
-        self.assertEqual(stats["total"], 0)
+        assert stats["total"]  ==  0
 
 
-class TestSecureKeyManagerDel(unittest.TestCase):
+class TestSecureKeyManagerDel:
     """析构函数测试"""
 
     def test_del_triggers_clear(self):
@@ -197,7 +197,7 @@ class TestSecureKeyManagerDel(unittest.TestCase):
         # 模拟 __del__ 行为
         if not mgr.is_cleared:
             mgr.clear()
-        self.assertTrue(mgr.is_cleared)
+        assert mgr.is_cleared
 
     @patch.object(SecureKeyManager, "clear", side_effect=OSError("test"))
     def test_del_handles_oserror(self, mock_clear):
@@ -211,24 +211,24 @@ class TestSecureKeyManagerDel(unittest.TestCase):
         # 不应抛出异常
 
 
-class TestSecureKeyManagerTryLockMemory(unittest.TestCase):
+class TestSecureKeyManagerTryLockMemory:
     """_try_lock_memory 测试"""
 
     def test_try_lock_memory_disabled(self):
         """禁用锁定时返回 False"""
         mgr = SecureKeyManager(lock_memory=False)
         result = mgr._try_lock_memory()
-        self.assertFalse(result)
+        assert not result
 
 
-class TestConvenienceFunctions(unittest.TestCase):
+class TestConvenienceFunctions:
     """便捷函数测试"""
 
     def test_secure_key_context_random(self):
         """secure_key_context 随机生成"""
         with secure_key_context() as key:
-            self.assertIsInstance(key, memoryview)
-            self.assertEqual(len(key), 32)
+            assert isinstance(key, memoryview)
+            assert len(key)  ==  32
             # 验证只读
             with self.assertRaises((TypeError, ValueError)):
                 key[0] = 0
@@ -237,47 +237,47 @@ class TestConvenienceFunctions(unittest.TestCase):
         """secure_key_context 从字节串生成"""
         key_bytes = b"\x03" * 32
         with secure_key_context(key_bytes) as key:
-            self.assertEqual(bytes(key), key_bytes)
+            assert bytes(key)  ==  key_bytes
 
     def test_generate_secure_key(self):
         """generate_secure_key 生成密钥"""
         key = generate_secure_key()
-        self.assertIsInstance(key, bytearray)
-        self.assertEqual(len(key), 32)
+        assert isinstance(key, bytearray)
+        assert len(key)  ==  32
 
 
-class TestSecureKeyManagerMemoryLock(unittest.TestCase):
+class TestSecureKeyManagerMemoryLock:
     """内存锁定测试（Windows 平台）"""
 
     def test_lock_key_memory_no_key(self):
         """无密钥时锁定返回 False"""
         mgr = SecureKeyManager(lock_memory=True)
         result = mgr._lock_key_memory()
-        self.assertFalse(result)
+        assert not result
 
     def test_lock_key_memory_disabled(self):
         """锁定禁用时返回 False"""
         mgr = SecureKeyManager(lock_memory=False)
         mgr.generate_key()
         result = mgr._lock_key_memory()
-        self.assertFalse(result)
+        assert not result
 
     def test_unlock_key_memory_not_locked(self):
         """未锁定时解锁返回 False"""
         mgr = SecureKeyManager(lock_memory=False)
         mgr.generate_key()
         result = mgr._unlock_key_memory()
-        self.assertFalse(result)
+        assert not result
 
     def test_unlock_key_memory_no_key(self):
         """无密钥时解锁返回 False"""
         mgr = SecureKeyManager(lock_memory=True)
         mgr._memory_locked = True  # 强制设置
         result = mgr._unlock_key_memory()
-        self.assertFalse(result)
+        assert not result
 
 
-class TestSecureKeyManagerClearBackends(unittest.TestCase):
+class TestSecureKeyManagerClearBackends:
     """不同后端清零测试"""
 
     def test_clear_with_ctypes_backend(self):
@@ -286,9 +286,9 @@ class TestSecureKeyManagerClearBackends(unittest.TestCase):
         mgr._backend = "ctypes"
         mgr.generate_key(b"\x01" * 32)
         mgr.clear()
-        self.assertTrue(mgr.is_cleared)
+        assert mgr.is_cleared
         # 验证密钥已清零
-        self.assertTrue(all(b == 0 for b in mgr._key))
+        assert all(b == 0 for b in mgr._key)
 
     def test_clear_with_retry_fallback(self):
         """Pynacl 后端清零（带回退路径）"""
@@ -296,8 +296,8 @@ class TestSecureKeyManagerClearBackends(unittest.TestCase):
         mgr._backend = "pynacl"
         mgr.generate_key(b"\x02" * 32)
         mgr.clear()
-        self.assertTrue(mgr.is_cleared)
-        self.assertTrue(all(b == 0 for b in mgr._key))
+        assert mgr.is_cleared
+        assert all(b == 0 for b in mgr._key)
 
     def test_clear_with_memory_locked(self):
         """内存已锁定时清零（先解锁）"""
@@ -307,8 +307,5 @@ class TestSecureKeyManagerClearBackends(unittest.TestCase):
         with patch.object(mgr, "_unlock_key_memory", return_value=True) as mock_unlock:
             mgr.clear()
             mock_unlock.assert_called_once()
-        self.assertTrue(mgr.is_cleared)
+        assert mgr.is_cleared
 
-
-if __name__ == "__main__":
-    unittest.main()

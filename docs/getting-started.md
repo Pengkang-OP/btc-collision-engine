@@ -63,10 +63,10 @@
 
 ```bash
 # Windows
-scripts\install.bat
+scripts/install/install.bat
 
 # Linux/macOS
-bash scripts/install.sh
+bash scripts/install/install.sh
 ```
 
 安装脚本会自动完成所有设置，包括：

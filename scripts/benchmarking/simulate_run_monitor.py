@@ -5,10 +5,10 @@
 输出吞吐量、引擎状态与系统指标。
 
 用法:
-    python scripts/simulate_run_monitor.py
-    python scripts/simulate_run_monitor.py --duration 30
-    python scripts/simulate_run_monitor.py --use-gpu --duration 60
-    python scripts/simulate_run_monitor.py --monitor-only   # 仅读取已有监控数据
+    python scripts/benchmarking/simulate_run_monitor.py
+    python scripts/benchmarking/simulate_run_monitor.py --duration 30
+    python scripts/benchmarking/simulate_run_monitor.py --use-gpu --duration 60
+    python scripts/benchmarking/simulate_run_monitor.py --monitor-only   # 仅读取已有监控数据
 """
 
 from __future__ import annotations

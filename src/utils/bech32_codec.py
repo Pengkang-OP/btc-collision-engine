@@ -4,9 +4,9 @@ Implements the Bech32 and Bech32m encoding schemes as defined in
 BIP-0173 and BIP-0350.
 """
 
-import logging
+from .logging_config import get_configured_logger
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger(__name__)
 
 CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
 

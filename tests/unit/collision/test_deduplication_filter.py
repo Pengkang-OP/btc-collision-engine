@@ -1,41 +1,41 @@
 """DeduplicationFilter 单元测试 - 基于集合的去重过滤器"""
 
 import threading
-import unittest
+import pytest
 
 from src.collision.deduplication_filter import DeduplicationFilter
 
 
-class TestDeduplicationFilterBasic(unittest.TestCase):
+class TestDeduplicationFilterBasic:
     """基础功能测试"""
 
     def test_first_check_passes(self):
         """首次检查返回 True（允许通过）"""
         f = DeduplicationFilter(max_size=100)
         pk = bytes(range(32))
-        self.assertTrue(f.check_and_add(pk))
+        assert f.check_and_add(pk)
 
     def test_duplicate_blocked(self):
         """重复私钥被拦截"""
         f = DeduplicationFilter(max_size=100)
         pk = bytes(range(32))
         f.check_and_add(pk)
-        self.assertFalse(f.check_and_add(pk))
+        assert not f.check_and_add(pk)
 
     def test_different_keys_pass(self):
         """不同私钥都能通过"""
         f = DeduplicationFilter(max_size=1000)
         for i in range(100):
             pk = i.to_bytes(32, "big")
-            self.assertTrue(f.check_and_add(pk), f"私钥 {i} 应通过")
+            assert f.check_and_add(pk), f"私钥 {i} 应通过"
 
     def test_disabled_always_returns_true(self):
         """禁用状态始终返回 True"""
         f = DeduplicationFilter(max_size=100, enabled=False)
         pk = bytes(32)
-        self.assertTrue(f.check_and_add(pk))
-        self.assertTrue(f.check_and_add(pk))
-        self.assertTrue(f.check_and_add(pk))
+        assert f.check_and_add(pk)
+        assert f.check_and_add(pk)
+        assert f.check_and_add(pk)
 
     def test_stats_tracking(self):
         """统计计数正确"""
@@ -47,25 +47,25 @@ class TestDeduplicationFilterBasic(unittest.TestCase):
         f.check_and_add(pk2)
 
         stats = f.get_stats()
-        self.assertEqual(stats["checks_total"], 3)
-        self.assertEqual(stats["duplicates_found"], 1)
+        assert stats["checks_total"]  ==  3
+        assert stats["duplicates_found"]  ==  1
 
 
-class TestDeduplicationFilterAddress(unittest.TestCase):
+class TestDeduplicationFilterAddress:
     """地址去重测试"""
 
     def test_address_duplicate_blocked(self):
         """相同地址的私钥被拦截"""
         f = DeduplicationFilter(max_size=100)
         f.check_and_add(b"\x01" * 32, address="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
-        self.assertFalse(f.check_and_add(b"\x02" * 32, address="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"))
+        assert not f.check_and_add(b"\x02" * 32, address="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
 
     def test_address_case_insensitive(self):
         """地址比较大小写不敏感"""
         f = DeduplicationFilter(max_size=100)
         f.check_and_add(b"\x01" * 32, address="1ABCdef")
         result = f.check_and_add(b"\x02" * 32, address="1abcDEF")
-        self.assertFalse(result)
+        assert not result
 
     def test_is_duplicate_method(self):
         """is_duplicate 只检查不添加"""
@@ -74,17 +74,17 @@ class TestDeduplicationFilterAddress(unittest.TestCase):
         addr = "1TestAddress"
         f.check_and_add(pk, address=addr)
 
-        self.assertTrue(f.is_duplicate(pk, addr))
+        assert f.is_duplicate(pk, addr)
         # 不同的 key/address 不应重复
-        self.assertFalse(f.is_duplicate(b"\x02" * 32, "1OtherAddress"))
+        assert not f.is_duplicate(b"\x02" * 32, "1OtherAddress")
 
     def test_is_duplicate_disabled(self):
         """禁用时 is_duplicate 始终返回 False"""
         f = DeduplicationFilter(max_size=100, enabled=False)
-        self.assertFalse(f.is_duplicate(b"\x01" * 32, "1Test"))
+        assert not f.is_duplicate(b"\x01" * 32, "1Test")
 
 
-class TestDeduplicationFilterMaxSize(unittest.TestCase):
+class TestDeduplicationFilterMaxSize:
     """容量限制测试"""
 
     def test_exceed_max_size_no_crash(self):
@@ -95,7 +95,7 @@ class TestDeduplicationFilterMaxSize(unittest.TestCase):
             pk = i.to_bytes(32, "big")
             f.check_and_add(pk)
         # 超过了 max_size 但不崩溃
-        self.assertGreater(len(f._seen_keys), max_size)
+        assert len(f._seen_keys)  >  max_size
 
     def test_check_and_add_still_works_after_exceed(self):
         """超过 max_size 后仍可正常使用"""
@@ -104,10 +104,10 @@ class TestDeduplicationFilterMaxSize(unittest.TestCase):
             f.check_and_add(i.to_bytes(32, "big"))
         # 仍然可以检测重复
         result = f.check_and_add((0).to_bytes(32, "big"))
-        self.assertFalse(result)  # 第0个已添加，是重复
+        assert not result  # 第0个已添加，是重复
 
 
-class TestDeduplicationFilterConcurrency(unittest.TestCase):
+class TestDeduplicationFilterConcurrency:
     """多线程并发测试"""
 
     def test_concurrent_checks_no_crash(self):
@@ -129,7 +129,7 @@ class TestDeduplicationFilterConcurrency(unittest.TestCase):
         for t in threads:
             t.join()
 
-        self.assertEqual(errors, [])
+        assert errors  ==  []
 
     def test_concurrent_count_accuracy(self):
         """并发下 checks_total 准确"""
@@ -149,7 +149,7 @@ class TestDeduplicationFilterConcurrency(unittest.TestCase):
             t.join()
 
         stats = f.get_stats()
-        self.assertEqual(stats["checks_total"], n_threads * n_per_thread)
+        assert stats["checks_total"]  ==  n_threads * n_per_thread
 
     def test_duplicate_detection_concurrent(self):
         """并发下重复检测有效（同一批私钥多个线程并发检查）"""
@@ -172,10 +172,10 @@ class TestDeduplicationFilterConcurrency(unittest.TestCase):
 
         # 总通过数不超过 100（每个键最多通过一次）
         total_pass = sum(pass_counts)
-        self.assertLessEqual(total_pass, 100)
+        assert total_pass  <=  100
 
 
-class TestDeduplicationFilterGetStats(unittest.TestCase):
+class TestDeduplicationFilterGetStats:
     """get_stats() 测试"""
 
     def test_get_stats_structure(self):
@@ -185,12 +185,12 @@ class TestDeduplicationFilterGetStats(unittest.TestCase):
             f.check_and_add(i.to_bytes(32, "big"))
         stats = f.get_stats()
 
-        self.assertIn("unique_keys", stats)
-        self.assertIn("unique_addresses", stats)
-        self.assertIn("duplicates_found", stats)
-        self.assertIn("checks_total", stats)
-        self.assertIn("max_size", stats)
-        self.assertIn("enabled", stats)
+        assert stats  in  "unique_keys"
+        assert stats  in  "unique_addresses"
+        assert stats  in  "duplicates_found"
+        assert stats  in  "checks_total"
+        assert stats  in  "max_size"
+        assert stats  in  "enabled"
 
     def test_get_stats_values(self):
         """get_stats 返回正确的数值"""
@@ -200,15 +200,15 @@ class TestDeduplicationFilterGetStats(unittest.TestCase):
         f.check_and_add(pk)  # 重复
 
         stats = f.get_stats()
-        self.assertEqual(stats["checks_total"], 2)
-        self.assertEqual(stats["duplicates_found"], 1)
-        self.assertEqual(stats["unique_keys"], 1)
-        self.assertEqual(stats["unique_addresses"], 0)
-        self.assertEqual(stats["enabled"], True)
-        self.assertEqual(stats["max_size"], 1000)
+        assert stats["checks_total"]  ==  2
+        assert stats["duplicates_found"]  ==  1
+        assert stats["unique_keys"]  ==  1
+        assert stats["unique_addresses"]  ==  0
+        assert stats["enabled"]  ==  True
+        assert stats["max_size"]  ==  1000
 
 
-class TestDeduplicationFilterReset(unittest.TestCase):
+class TestDeduplicationFilterReset:
     """reset() / clear() 测试"""
 
     def test_reset_clears_all_tracking(self):
@@ -217,15 +217,15 @@ class TestDeduplicationFilterReset(unittest.TestCase):
         for i in range(10):
             f.check_and_add(i.to_bytes(32, "big"))
         # 确认有数据
-        self.assertGreater(f.get_stats()["checks_total"], 0)
+        assert f.get_stats()["checks_total"]  >  0
 
         f.reset()
 
         stats = f.get_stats()
-        self.assertEqual(stats["checks_total"], 0)
-        self.assertEqual(stats["duplicates_found"], 0)
-        self.assertEqual(len(f._seen_keys), 0)
-        self.assertEqual(len(f._seen_addresses), 0)
+        assert stats["checks_total"]  ==  0
+        assert stats["duplicates_found"]  ==  0
+        assert len(f._seen_keys)  ==  0
+        assert len(f._seen_addresses)  ==  0
 
     def test_reset_then_reuse(self):
         """Reset 后可正常使用"""
@@ -233,8 +233,8 @@ class TestDeduplicationFilterReset(unittest.TestCase):
         f.check_and_add(b"key1".ljust(32, b"\x00"))
         f.reset()
         # 重置后可以再次添加
-        self.assertTrue(f.check_and_add(b"key2".ljust(32, b"\x00")))
-        self.assertEqual(f.get_stats()["checks_total"], 1)
+        assert f.check_and_add(b"key2".ljust(32, b"\x00"))
+        assert f.get_stats()["checks_total"]  ==  1
 
     def test_reset_with_duplicates(self):
         """Reset 清除重复计数"""
@@ -242,19 +242,19 @@ class TestDeduplicationFilterReset(unittest.TestCase):
         pk = b"dup".ljust(32, b"\x00")
         f.check_and_add(pk)
         f.check_and_add(pk)  # 重复
-        self.assertEqual(f.get_stats()["duplicates_found"], 1)
+        assert f.get_stats()["duplicates_found"]  ==  1
 
         f.reset()
-        self.assertEqual(f.get_stats()["duplicates_found"], 0)
+        assert f.get_stats()["duplicates_found"]  ==  0
         # 之前的重复键可以再次通过
-        self.assertTrue(f.check_and_add(pk))
+        assert f.check_and_add(pk)
 
     def test_clear_alias(self):
         """clear() 是 reset() 的别名"""
         f = DeduplicationFilter(max_size=100)
         f.check_and_add(b"\x01" * 32)
         f.clear()
-        self.assertEqual(f.get_stats()["checks_total"], 0)
+        assert f.get_stats()["checks_total"]  ==  0
 
 
 if __name__ == "__main__":

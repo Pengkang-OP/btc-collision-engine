@@ -4,7 +4,7 @@
 检查项目中是否使用了已弃用的导入路径。
 
 使用方法:
-    python scripts/check_import_paths.py
+    python scripts/dev/check_import_paths.py
 
 返回值:
     0 - 所有导入路径正确

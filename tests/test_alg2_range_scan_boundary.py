@@ -369,6 +369,8 @@ class TestCLIValidationBoundary:
         mock_args.checkpoint = False
         mock_args.batch_size = None
         mock_args.progress_interval = None
+        mock_args.gpu_count = -1
+        mock_args.gpu_indices = None
 
         result = validate_args(mock_args)
         assert result is False, "start>=end 应被拒绝"
@@ -406,6 +408,8 @@ class TestCLIValidationBoundary:
         mock_args.checkpoint = False
         mock_args.batch_size = None
         mock_args.progress_interval = None
+        mock_args.gpu_count = -1
+        mock_args.gpu_indices = None
 
         result = validate_args(mock_args)
         assert result is False, "start<1 应被拒绝"
@@ -443,6 +447,8 @@ class TestCLIValidationBoundary:
         mock_args.checkpoint = False
         mock_args.batch_size = None
         mock_args.progress_interval = None
+        mock_args.gpu_count = -1
+        mock_args.gpu_indices = None
 
         result = validate_args(mock_args)
         assert result is True, "start=1 end=2 应被接受"

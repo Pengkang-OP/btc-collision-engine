@@ -21,6 +21,8 @@
 - 性能影响最小化
 """
 
+from collections.abc import Callable
+
 from src.collision.targets.format_aware_manager import FormatAwareTargetManager
 from src.core.multi_format_generator import AddressFormat, MultiFormatAddressGenerator
 from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
@@ -48,7 +50,13 @@ class MultiFormatMultiGPUEngine:
         "_enable_cpu_fallback",
     )
 
-    def __init__(self, multi_gpu_config: dict | None = None):
+    def __init__(self, multi_gpu_config: dict | None = None) -> None:
+        """初始化多格式多GPU引擎
+
+        Args:
+            multi_gpu_config: 多GPU配置字典，None则使用默认配置
+
+        """
         self._multi_gpu_engine = MultiGPUCollisionEngine(multi_gpu_config)
         self._format_manager = FormatAwareTargetManager()
         self._address_generator = MultiFormatAddressGenerator()
@@ -59,7 +67,12 @@ class MultiFormatMultiGPUEngine:
 
         logger.info("多格式多GPU引擎已创建")
 
-    def initialize(self, device_indices=None, device_count=-1, strategy="performance"):
+    def initialize(
+        self,
+        device_indices: list[int] | None = None,
+        device_count: int = -1,
+        strategy: str = "performance",
+    ) -> bool:
         """初始化GPU设备"""
         return self._multi_gpu_engine.initialize(
             device_indices=device_indices,
@@ -85,13 +98,13 @@ class MultiFormatMultiGPUEngine:
 
     def start(
         self,
-        targets=None,
-        mode="random",
-        total_keys=10000000,
-        match_callback=None,
-        range_start=None,
-        range_end=None,
-    ):
+        targets: set[str] | list[str] | None = None,
+        mode: str = "random",
+        total_keys: int = 10000000,
+        match_callback: Callable | None = None,
+        range_start: int | None = None,
+        range_end: int | None = None,
+    ) -> bool:
         """启动多GPU碰撞 (P0: API兼容)
 
         Args:
@@ -197,7 +210,7 @@ class MultiFormatMultiGPUEngine:
         """CPU路径: 检查私钥是否匹配所有格式目标"""
         return self._format_manager.check_match_all(private_key)
 
-    def stop(self):
+    def stop(self) -> None:
         """停止碰撞"""
         self._multi_gpu_engine.stop()
 
@@ -205,12 +218,12 @@ class MultiFormatMultiGPUEngine:
         """检查引擎是否运行中"""
         return self._multi_gpu_engine.is_running()
 
-    def pause(self):
+    def pause(self) -> None:
         """暂停碰撞"""
         if hasattr(self._multi_gpu_engine, "pause"):
             self._multi_gpu_engine.pause()
 
-    def resume(self):
+    def resume(self) -> None:
         """恢复碰撞"""
         if hasattr(self._multi_gpu_engine, "resume"):
             self._multi_gpu_engine.resume()
@@ -225,24 +238,31 @@ class MultiFormatMultiGPUEngine:
         """获取基础统计信息（兼容CPU引擎接口）"""
         return self.get_combined_stats()
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """清理资源"""
         self._multi_gpu_engine.cleanup()
 
-    def __enter__(self):
+    def __enter__(self) -> "MultiFormatMultiGPUEngine":
+        """上下文管理器入口"""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: object,
+    ) -> None:
+        """上下文管理器退出时清理资源"""
         self.cleanup()
 
 
 # 工厂函数（向后兼容）
-def create_multi_format_multi_gpu_engine():
+def create_multi_format_multi_gpu_engine() -> MultiFormatMultiGPUEngine:
     """创建支持多格式的多GPU引擎 (工厂函数, 向后兼容)"""
     return MultiFormatMultiGPUEngine()
 
 
-def create_engine():
+def create_engine() -> MultiFormatMultiGPUEngine:
     """创建多格式多GPU引擎的便捷函数"""
     return MultiFormatMultiGPUEngine()
 

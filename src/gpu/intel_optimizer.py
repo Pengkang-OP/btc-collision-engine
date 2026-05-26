@@ -99,33 +99,31 @@ class IntelGPUOptimizer:
 
         # 3. 读取超时配置
         timeout = getattr(self._device, "timeout_seconds", 30)
-        self._logger.info("[OK] Intel 超时保护: %s秒", timeout)
+        self._logger.debug("Intel 超时保护: %s秒", timeout)
         result["timeout_seconds"] = timeout
 
         # 4. 异步执行状态
         async_enabled = getattr(self._device, "enable_async_execution", False)
         if async_enabled:
-            self._logger.info("[OK] Intel 异步执行: 已启用(双缓冲优化)")
+            self._logger.debug("Intel 异步执行: 已启用(双缓冲优化)")
         else:
-            self._logger.info("Intel 异步执行: 未启用(传统模式)")
+            self._logger.debug("Intel 异步执行: 未启用(传统模式)")
         result["async_enabled"] = async_enabled
 
         # 5. 显存效率
         memory_efficiency = getattr(self._device, "memory_efficiency", 0.70)
-        self._logger.info("[OK] Intel 显存效率: %.0f%%", memory_efficiency * 100)
+        self._logger.debug("[OK] Intel 显存效率: %.0f%%", memory_efficiency * 100)
         result["memory_efficiency"] = memory_efficiency
 
         # 6. 驱动版本检查
         if hasattr(self._device, "driver_version") and self._device.driver_version:
-            self._logger.info("[OK] Intel 驱动版本: %s", self._device.driver_version)
+            self._logger.debug("[OK] Intel 驱动版本: %s", self._device.driver_version)
             result["driver_version"] = self._device.driver_version
         else:
-            self._logger.warning("[WARN] 无法检测 Intel 驱动版本")
+            self._logger.debug("[WARN] 无法检测 Intel 驱动版本 (使用保守模式)")
             result["driver_version"] = None
 
-        self._logger.info("=" * 60)
-        self._logger.info("[OK] Intel GPU 特殊优化应用完成")
-        self._logger.info("=" * 60)
+        self._logger.debug("[OK] Intel GPU 特殊优化应用完成")
 
         return result
 

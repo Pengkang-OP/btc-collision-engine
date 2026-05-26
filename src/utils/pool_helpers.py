@@ -1,10 +1,10 @@
 """Thread pool cleanup helpers for memory pool management."""
 
-import logging
+from .logging_config import get_configured_logger
 import threading
 import time
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger(__name__)
 
 
 class _CleanupThreadState:

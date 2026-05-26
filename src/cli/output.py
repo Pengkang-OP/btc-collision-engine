@@ -2,10 +2,14 @@
 
 import io
 import json
+from ..utils import get_configured_logger
 import os
 import platform
 import sys
+import threading
 from typing import Any, Optional
+
+logger = get_configured_logger(__name__)
 
 try:
     from rich.console import Console
@@ -29,8 +33,8 @@ def _get_utf8_console(stderr: bool = False, no_color: bool = False):
                     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
             elif hasattr(sys.stdout, "reconfigure"):
                 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-        except (OSError, AttributeError, io.UnsupportedOperation):
-            pass  # 静默失败
+        except (OSError, AttributeError, io.UnsupportedOperation) as e:
+            logger.debug("Failed to reconfigure stdout/stderr encoding: %s", e)
     # 检查 NO_COLOR 环境变量
     env_no_color = "NO_COLOR" in os.environ
     actual_no_color = no_color or env_no_color
@@ -61,33 +65,43 @@ class CLIOutput:
     """CLI 输出管理器单例类。"""
 
     _instance: Optional["CLIOutput"] = None
+    _instance_lock: threading.Lock = threading.Lock()
+    _adaptive_console: Optional["Console"] = None  # 缓存用于自适应宽度的 Console 实例
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
-            cls._instance = super().__new__(cls)
+            with cls._instance_lock:
+                if cls._instance is None:
+                    cls._instance = super().__new__(cls)
         return cls._instance
 
     @classmethod
     def get_instance(cls) -> "CLIOutput":
-        """获取单例实例。"""
+        """获取单例实例（线程安全）。"""
         if cls._instance is None:
-            cls._instance = cls()
+            with cls._instance_lock:
+                if cls._instance is None:
+                    cls._instance = cls()
         return cls._instance
 
     @classmethod
     def init(cls, quiet: bool = False, no_color: bool = False, compact: bool = False) -> "CLIOutput":
-        """初始化/重置单例（绕过 `__new__` 的单例限制，确保创建全新实例）。"""
-        instance = object.__new__(cls)
-        instance.__init__(quiet=quiet, no_color=no_color, compact=compact)
-        cls._instance = instance
+        """初始化/重置单例（创建全新实例）。"""
+        # v5.2.2: 使用 reset_instance 后通过正常构造创建，避免绕过 __new__
+        cls.reset_instance()
+        instance = cls(quiet=quiet, no_color=no_color, compact=compact)
         return instance
 
     @classmethod
     def reset_instance(cls):
-        """重置单例（仅用于测试。"""
+        """重置单例（仅用于测试）。"""
         cls._instance = None
+        cls._adaptive_console = None
 
     def __init__(self, quiet: bool = False, no_color: bool = False, compact: bool = False):
+        if getattr(self, "_initialized", False):
+            return  # 单例已初始化，跳过
+        self._initialized = True
         self.quiet = quiet
         self.compact = compact
         self.console = _get_utf8_console(stderr=False, no_color=no_color)
@@ -165,28 +179,128 @@ class CLIOutput:
             if not self.compact:
                 self.print()
 
-    def startup_panel(self, config: dict):
-        """打印启动配置面板。"""
-        if not self.quiet:
-            if Panel is not None and Table is not None:
-                table = Table(show_header=False, box=None)
-                for k, v in config.items():
-                    table.add_row(f"{k}:", str(v))
-                panel = Panel(table, title="[bold]配置[/bold]", border_style="cyan")
-                self.console.print(panel)
-            else:
-                # 降级方案
-                self.console.print("配置:")
-                for k, v in config.items():
-                    self.console.print(f"  {k}: {v}")
+    def startup_panel(self, title_or_config, rows=None):
+        """打印启动配置面板 (Rich Panel + Table)，自适应终端宽度。
+
+        支持两种调用方式:
+            startup_panel("标题", [("key", "value"), ...])  # 新版
+            startup_panel({"key": "value", ...})               # 旧版兼容
+
+        Args:
+            title_or_config: 面板标题(str) 或 配置字典(dict)
+            rows: 可选的行列表
+        """
+        if self.quiet:
+            return
+
+        # 兼容旧版单参数调用：startup_panel(dict_config)
+        if isinstance(title_or_config, dict):
+            config = title_or_config
+            title = "配置"
+            rows = [(k, str(v)) for k, v in config.items()]
+        else:
+            title = title_or_config
+
+        if not rows:
+            return
+        if Panel is not None and Table is not None:
+            from rich.box import ROUNDED
+
+            # 自适应宽度：根据终端宽度计算面板最大宽度
+            panel_width = self._adaptive_width()
+
+            table = Table(
+                show_header=False,
+                box=None,
+                padding=(0, 1),
+                expand=False,
+                width=panel_width - 8 if panel_width else None,
+            )
+            table.add_column("key", style="dim", width=12)
+            table.add_column("value", style="white")
+            for k, v in rows:
+                table.add_row(f"{k}:", v)
+            panel = Panel(
+                table,
+                title=f"[bold cyan]{title}[/bold cyan]",
+                border_style="cyan",
+                box=ROUNDED,
+                padding=(1, 2),
+                width=panel_width,
+            )
+            self.console.print(panel)
+        else:
+            self.console.print(f"\n  {title}")
+            for k, v in rows:
+                self.console.print(f"    {k}: {v}")
+
+    def dynamic_stats_panel(self, stats: dict[str, str], title: str = "System Status"):
+        """打印动态统计面板（自适应宽度）。
+
+        Args:
+            stats: 统计数据字典，key 为标签，value 为值
+            title: 面板标题
+        """
+        if self.quiet or not stats:
+            return
+
+        panel_width = self._adaptive_width()
+        if Panel is not None and Table is not None:
+            from rich.box import ROUNDED
+
+            table = Table(
+                show_header=False,
+                box=None,
+                padding=(0, 1),
+                expand=False,
+                width=panel_width - 8 if panel_width else None,
+            )
+            table.add_column("label", style="dim", width=14)
+            table.add_column("value", style="white")
+            for k, v in stats.items():
+                table.add_row(f"  {k}:", v)
+
+            panel = Panel(
+                table,
+                title=f"[bold cyan]{title}[/bold cyan]",
+                border_style="cyan",
+                box=ROUNDED,
+                padding=(1, 2),
+                width=panel_width,
+            )
+            self.console.print(panel)
+        else:
+            print(f"\n  {title}")
+            for k, v in stats.items():
+                print(f"    {k}: {v}")
+
+    @classmethod
+    def _adaptive_width(cls) -> int | None:
+        """获取自适应面板宽度（缓存 Console 实例）。返回 None 表示不限制。"""
+        try:
+            if Console is not None:
+                if cls._adaptive_console is None:
+                    cls._adaptive_console = Console()
+                w = cls._adaptive_console.width
+                if w and w > 40:
+                    return max(56, min(w - 4, 100))
+        except Exception:
+            logger.debug("Failed to create adaptive console, using fallback")
+        return None
 
     def final_summary(self, title: str, stats: dict):
-        """打印最终摘要。"""
+        """打印最终摘要（自适应宽度）。"""
+        panel_width = self._adaptive_width()
         if Panel is not None and Table is not None:
-            table = Table(show_header=False, box=None)
+            table = Table(show_header=False, box=None, width=panel_width - 8 if panel_width else None)
             for k, v in stats.items():
                 table.add_row(f"{k}:", str(v))
-            panel = Panel(table, title=f"[bold]{title}[/bold]", border_style="green")
+            panel = Panel(
+                table,
+                title=f"[bold]{title}[/bold]",
+                border_style="green",
+                width=panel_width,
+            )
             self.console.print(panel)
         else:
             self.console.print(title)
@@ -194,9 +308,10 @@ class CLIOutput:
                 self.console.print(f"  {k}: {v}")
 
     def stats_panel(self, title: str, rows: list):
-        """打印统计面板。"""
+        """打印统计面板（自适应宽度）。"""
+        panel_width = self._adaptive_width()
         if Panel is not None and Table is not None:
-            table = Table(show_header=False, box=None)
+            table = Table(show_header=False, box=None, width=panel_width - 8 if panel_width else None)
             for row in rows:
                 if len(row) == 3:
                     k, v, style = row
@@ -204,7 +319,12 @@ class CLIOutput:
                 elif len(row) == 2:
                     k, v = row
                     table.add_row(f"{k}:", str(v))
-            panel = Panel(table, title=f"[bold]{title}[/bold]", border_style="blue")
+            panel = Panel(
+                table,
+                title=f"[bold]{title}[/bold]",
+                border_style="blue",
+                width=panel_width,
+            )
             self.console.print(panel)
         else:
             self.console.print(title)
@@ -276,3 +396,102 @@ def format_json(data) -> str:
 
     """
     return json.dumps(data, indent=2, default=str)
+
+
+def paginate(
+    lines: list[str],
+    *,
+    title: str = "",
+    page_size: int = 20,
+    console: "Console | None" = None,
+) -> None:
+    """Display long content with page-by-page navigation.
+
+    Shows *page_size* lines at a time, prompting user to continue.
+    Uses Rich Console if available, falls back to plain print.
+
+    In non-interactive environments (pytest capture, piped stdin), all content
+    is printed at once without pausing.
+
+    Args:
+        lines: Content lines to display.
+        title: Optional header shown above each page.
+        page_size: Lines per page (default 20).
+        console: Optional Rich Console instance. If None, uses _get_utf8_console().
+    """
+    if not lines:
+        return
+
+    # 检测是否处于非交互式环境（测试、管道等），如果是则跳过分页暂停
+    import sys as _sys
+
+    def _is_interactive() -> bool:
+        try:
+            return _sys.stdin.isatty()
+        except Exception as e:
+            logger.debug("Failed to check stdin interactivity: %s", e)
+            return False
+
+    interactive = _is_interactive()
+
+    # 尝试获取 Rich Console
+    _con = console
+    if _con is None:
+        try:
+            from rich.console import Console as _RC
+
+            _con = _RC()
+        except Exception as e:
+            logger.debug("Failed to create Rich Console for pagination: %s", e)
+            _con = None
+
+    total = len(lines)
+
+    # 非交互模式或内容不超过一页：直接全部显示
+    if not interactive or total <= page_size:
+        if _con is not None:
+            if title:
+                _con.print(f"[bold dim]-- {title} --[/bold dim]")
+            for line in lines:
+                _con.print(line)
+        else:
+            if title:
+                print(f"-- {title} --")
+            for line in lines:
+                print(line)
+        return
+
+    # 交互模式 + 需要分页
+    for start in range(0, total, page_size):
+        chunk = lines[start : start + page_size]
+        current_page = start // page_size + 1
+        total_pages = (total + page_size - 1) // page_size
+
+        if _con is not None:
+            if title:
+                _con.print(
+                    f"[bold dim]-- {title} (Page {current_page}/{total_pages}) --[/bold dim]"
+                )
+            else:
+                _con.print(f"[bold dim]-- Page {current_page}/{total_pages} --[/bold dim]")
+            for line in chunk:
+                _con.print(line)
+            footer = (
+                f"[dim]({total} total lines, press Enter for next, q=quit)[/dim]"
+            )
+            _con.print(footer)
+        else:
+            if title:
+                print(f"-- {title} (Page {current_page}/{total_pages}) --")
+            else:
+                print(f"-- Page {current_page}/{total_pages} --")
+            for line in chunk:
+                print(line)
+            print(f"--- ({total} total lines) ---")
+
+        # 最后一页后不需要暂停
+        if start + page_size < total:
+            try:
+                input("   Press Enter to continue (q=quit)...")
+            except (EOFError, KeyboardInterrupt):
+                break

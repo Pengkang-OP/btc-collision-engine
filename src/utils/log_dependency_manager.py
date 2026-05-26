@@ -9,10 +9,10 @@ modules, ensuring:
 """
 
 import importlib
-import logging
+from .logging_config import get_configured_logger
 from dataclasses import dataclass, field
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger(__name__)
 
 
 @dataclass

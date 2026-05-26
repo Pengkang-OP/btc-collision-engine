@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """GPU自适应性能优化器测试"""
 
-import unittest
-
 import pytest
 
 from src.gpu.performance_optimizer import (
@@ -14,7 +12,7 @@ from src.gpu.performance_optimizer import (
 
 
 @pytest.mark.skip(reason="Optimizer API changed in Phase 6 refactor")
-class TestGPUPerformanceOptimizer(unittest.TestCase):
+class TestGPUPerformanceOptimizer:
     """测试GPU性能优化器"""
 
     def setUp(self):
@@ -28,7 +26,7 @@ class TestGPUPerformanceOptimizer(unittest.TestCase):
             self.optimizer.detect_vendor("NVIDIA GeForce RTX 3080", "NVIDIA Corporation"),
             GPUVendor.NVIDIA,
         )
-        self.assertEqual(self.optimizer.detect_vendor("RTX 4090", ""), GPUVendor.NVIDIA)
+        assert self.optimizer.detect_vendor("RTX 4090" == "", GPUVendor.NVIDIA)
 
         # AMD
         self.assertEqual(
@@ -43,7 +41,7 @@ class TestGPUPerformanceOptimizer(unittest.TestCase):
         )
 
         # Unknown
-        self.assertEqual(self.optimizer.detect_vendor("Unknown GPU", "Unknown"), GPUVendor.UNKNOWN)
+        assert self.optimizer.detect_vendor("Unknown GPU" == "Unknown", GPUVendor.UNKNOWN)
 
     def test_create_optimized_profile_nvidia(self):
         """测试NVIDIA GPU配置优化"""
@@ -54,11 +52,11 @@ class TestGPUPerformanceOptimizer(unittest.TestCase):
             compile_time_ms=15000,
         )
 
-        self.assertEqual(profile.vendor, GPUVendor.NVIDIA)
-        self.assertTrue(profile.max_batch_size >= 1048576)  # 至少1M
-        self.assertTrue(profile.memory_usage_ratio >= 0.7)
-        self.assertFalse(profile.use_uint32_workaround)  # NVIDIA不需要
-        self.assertTrue(profile.enable_async_execution)
+        assert profile.vendor == GPUVendor.NVIDIA
+        assert profile.max_batch_size >= 1048576  # 至少1M
+        assert profile.memory_usage_ratio >= 0.7
+        assert not profile.use_uint32_workaround  # NVIDIA不需要
+        assert profile.enable_async_execution
 
     def test_create_optimized_profile_intel(self):
         """测试Intel GPU配置优化"""
@@ -69,10 +67,10 @@ class TestGPUPerformanceOptimizer(unittest.TestCase):
             compile_time_ms=22000,
         )
 
-        self.assertEqual(profile.vendor, GPUVendor.INTEL)
-        self.assertTrue(profile.use_uint32_workaround)  # Intel需要workaround
-        self.assertTrue(profile.enable_async_execution)  # P3修复: Intel Arc必须开启异步执行
-        self.assertEqual(profile.preferred_mode, "range_scan")
+        assert profile.vendor == GPUVendor.INTEL
+        assert profile.use_uint32_workaround  # Intel需要workaround
+        assert profile.enable_async_execution  # P3修复: Intel Arc必须开启异步执行
+        assert profile.preferred_mode == "range_scan"
 
     def test_create_optimized_profile_amd(self):
         """测试AMD GPU配置优化"""
@@ -83,9 +81,9 @@ class TestGPUPerformanceOptimizer(unittest.TestCase):
             compile_time_ms=18000,
         )
 
-        self.assertEqual(profile.vendor, GPUVendor.AMD)
-        self.assertTrue(profile.max_batch_size >= 524288)  # 至少512K
-        self.assertTrue(profile.memory_usage_ratio >= 0.6)
+        assert profile.vendor == GPUVendor.AMD
+        assert profile.max_batch_size >= 524288  # 至少512K
+        assert profile.memory_usage_ratio >= 0.6
 
     def test_record_performance(self):
         """测试性能指标记录"""
@@ -100,8 +98,8 @@ class TestGPUPerformanceOptimizer(unittest.TestCase):
         self.optimizer.record_performance(metrics)
 
         # 验证记录已保存
-        self.assertEqual(len(self.optimizer._metrics_history), 1)
-        self.assertEqual(self.optimizer._metrics_history[0].keys_per_second, 100000)
+        assert len(self.optimizer._metrics_history) == 1
+        assert self.optimizer._metrics_history[0].keys_per_second == 100000
 
     def test_analyze_and_adjust_error_rate_too_high(self):
         """测试错误率过高时的调整"""
@@ -125,8 +123,8 @@ class TestGPUPerformanceOptimizer(unittest.TestCase):
         )
 
         # 应该减小batch_size
-        self.assertLess(new_batch_size, 100000)
-        self.assertIn("error_rate_too_high", adjustments)
+        assert new_batch_size < 100000
+        assert "error_rate_too_high" in adjustments
 
     def test_analyze_and_adjust_execution_too_slow(self):
         """测试执行时间过长时的调整"""
@@ -154,8 +152,8 @@ class TestGPUPerformanceOptimizer(unittest.TestCase):
         )
 
         # 应该减小batch_size
-        self.assertLess(new_batch_size, 100000)
-        self.assertIn("execution_too_slow", adjustments)
+        assert new_batch_size < 100000
+        assert "execution_too_slow" in adjustments
 
     def test_analyze_and_adjust_performance_good(self):
         """测试性能良好时的调整"""
@@ -183,8 +181,8 @@ class TestGPUPerformanceOptimizer(unittest.TestCase):
         )
 
         # 应该增大batch_size
-        self.assertGreater(new_batch_size, 100000)
-        self.assertIn("performance_good", adjustments)
+        assert new_batch_size > 100000
+        assert "performance_good" in adjustments
 
     def test_get_optimization_report(self):
         """测试优化报告生成"""
@@ -202,11 +200,11 @@ class TestGPUPerformanceOptimizer(unittest.TestCase):
 
         report = self.optimizer.get_optimization_report()
 
-        self.assertEqual(report["status"], "active")
-        self.assertIn("profile", report)
-        self.assertIn("performance", report)
-        self.assertIn("recommendations", report)
-        self.assertEqual(report["profile"]["vendor"], "nvidia")
+        assert report["status"] == "active"
+        assert "profile" in report
+        assert "performance" in report
+        assert "recommendations" in report
+        assert report["profile"]["vendor"] == "nvidia"
 
     def test_singleton_pattern(self):
         """测试单例模式"""
@@ -214,7 +212,7 @@ class TestGPUPerformanceOptimizer(unittest.TestCase):
         optimizer2 = get_gpu_optimizer()
 
         # 应该是同一个实例
-        self.assertIs(optimizer1, optimizer2)
+        assert optimizer1 is optimizer2
 
     def test_reset(self):
         """测试重置功能"""
@@ -226,9 +224,9 @@ class TestGPUPerformanceOptimizer(unittest.TestCase):
         self.optimizer.reset()
 
         # 验证数据已清空
-        self.assertEqual(len(self.optimizer._metrics_history), 0)
-        self.assertIsNone(self.optimizer._current_profile)
-        self.assertEqual(self.optimizer._adjustment_count, 0)
+        assert len(self.optimizer._metrics_history) == 0
+        assert self.optimizer._current_profile is None
+        assert self.optimizer._adjustment_count == 0
 
     def test_memory_based_batch_adjustment(self):
         """测试基于显存的batch_size调整"""
@@ -247,7 +245,7 @@ class TestGPUPerformanceOptimizer(unittest.TestCase):
         )
 
         # 大显存应该允许更大的batch_size
-        self.assertGreater(profile_large.max_batch_size, profile_small.max_batch_size)
+        assert profile_large.max_batch_size > profile_small.max_batch_size
 
     def test_compile_time_based_adjustment(self):
         """测试基于编译时间的调整"""
@@ -268,8 +266,5 @@ class TestGPUPerformanceOptimizer(unittest.TestCase):
         )
 
         # 慢编译应该使用更小的batch_size
-        self.assertGreater(profile_fast.max_batch_size, profile_slow.max_batch_size)
+        assert profile_fast.max_batch_size > profile_slow.max_batch_size
 
-
-if __name__ == "__main__":
-    unittest.main()

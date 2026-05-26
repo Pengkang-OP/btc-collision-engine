@@ -9,6 +9,7 @@ features, including:
 """
 
 import logging
+from .logging_config import get_configured_logger
 import os
 import platform
 import queue
@@ -56,7 +57,7 @@ class AsyncLogBuffer:
         self._dropped_count = 0
         self._started_at = time.time()
 
-        _logger = logging.getLogger(__name__)
+        _logger = get_configured_logger(__name__)
         _logger.info(
             f"AsyncLogBuffer 已初始化: buffer_size={config.buffer_size}, "
             f"batch_size={config.batch_size}, flush_interval={config.flush_interval}s",
@@ -79,7 +80,7 @@ class AsyncLogBuffer:
             # 队列满时丢弃最旧日志
             self._dropped_count += 1
             if self._dropped_count % 1000 == 0:
-                _warn_logger = logging.getLogger(__name__)
+                _warn_logger = get_configured_logger(__name__)
                 _warn_logger.warning("日志缓冲区已满，已丢弃 %d 条记录", self._dropped_count)
 
     def _flush_loop(self) -> None:
@@ -100,7 +101,7 @@ class AsyncLogBuffer:
                 if records:
                     self._batch_write(records)
             except Exception as e:
-                _flush_logger = logging.getLogger(__name__)
+                _flush_logger = get_configured_logger(__name__)
                 _flush_logger.error("日志刷新循环错误: %s", e)
 
     def _batch_write(self, records: list[logging.LogRecord]) -> None:
@@ -110,7 +111,7 @@ class AsyncLogBuffer:
                 for record in records:
                     handler.emit(record)
             except Exception as e:
-                _batch_logger = logging.getLogger(__name__)
+                _batch_logger = get_configured_logger(__name__)
                 _batch_logger.error("批量写入错误: %s", e)
 
     def flush(self) -> None:
@@ -129,7 +130,7 @@ class AsyncLogBuffer:
 
     def close(self) -> None:
         """关闭缓冲区"""
-        _logger = logging.getLogger(__name__)
+        _logger = get_configured_logger(__name__)
         _logger.info(
             f"AsyncLogBuffer 正在关闭: queue_size={self.queue.qsize()}, "
             f"dropped_count={self._dropped_count}, "

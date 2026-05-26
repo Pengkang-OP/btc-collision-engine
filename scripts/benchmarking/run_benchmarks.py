@@ -3,10 +3,10 @@
 自动运行多项性能测试，汇总对比结果，生成基准报告。
 
 用法:
-    python scripts/run_benchmarks.py               # 运行所有基准测试
-    python scripts/run_benchmarks.py --quick       # 快速模式（仅CPU）
-    python scripts/run_benchmarks.py --json        # 以 JSON 格式输出
-    python scripts/run_benchmarks.py --duration 30 # 每项测试 30 秒
+    python scripts/benchmarking/run_benchmarks.py               # 运行所有基准测试
+    python scripts/benchmarking/run_benchmarks.py --quick       # 快速模式（仅CPU）
+    python scripts/benchmarking/run_benchmarks.py --json        # 以 JSON 格式输出
+    python scripts/benchmarking/run_benchmarks.py --duration 30 # 每项测试 30 秒
 """
 
 import argparse

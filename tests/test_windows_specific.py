@@ -6,13 +6,14 @@ import pathlib
 import sys
 import unittest
 
+import pytest
 # 检测是否为Windows环境
 IS_WINDOWS = sys.platform.startswith("win")
 logger = logging.getLogger(__name__)
 
 
-@unittest.skipUnless(IS_WINDOWS, "仅在Windows环境运行")
-class TestWindowsAtomicOperations(unittest.TestCase):
+@pytest.mark.skipunless(IS_WINDOWS, "仅在Windows环境运行")
+class TestWindowsAtomicOperations:
     """Windows原子操作测试"""
 
     def test_file_atomic_write(self):
@@ -35,11 +36,11 @@ class TestWindowsAtomicOperations(unittest.TestCase):
             pathlib.Path(temp_path).replace(target_path)
 
             # 3. 验证临时文件已被清理
-            self.assertFalse(pathlib.Path(temp_path).exists(), "临时文件应该被清理")
+            assert not pathlib.Path(temp_path).exists(), "临时文件应该被清理"
 
             # 4. 验证目标文件内容正确
             read_content = pathlib.Path(target_path).read_text(encoding="utf-8")
-            self.assertEqual(read_content, content, "文件内容应该正确")
+            assert read_content  ==  content, "文件内容应该正确"
 
         finally:
             shutil.rmtree(test_dir, ignore_errors=True)
@@ -84,14 +85,14 @@ class TestWindowsAtomicOperations(unittest.TestCase):
             t.join(timeout=5)
 
         # 验证至少有一次写入成功
-        self.assertGreater(write_count, 0, "至少有一次写入应该成功")
+        assert write_count  >  0, "至少有一次写入应该成功"
 
         # 验证文件存在且可读取
-        self.assertTrue(pathlib.Path(target_path).exists(), "目标文件应该存在")
+        assert pathlib.Path(target_path).exists(), "目标文件应该存在"
 
         # 验证文件内容不为空
         content = pathlib.Path(target_path).read_text(encoding="utf-8")
-        self.assertTrue(len(content) > 0, "文件内容不应为空")
+        assert len(content) > 0, "文件内容不应为空"
 
         shutil.rmtree(test_dir, ignore_errors=True)
 
@@ -118,23 +119,23 @@ class TestWindowsAtomicOperations(unittest.TestCase):
             )
 
             # 验证文件存在
-            self.assertTrue(pathlib.Path(checkpoint_file).exists(), "断点文件应该存在")
+            assert pathlib.Path(checkpoint_file).exists(), "断点文件应该存在"
 
             # 验证临时文件不存在（已被清理）
             temp_files = [f for f in os.listdir(test_dir) if f.endswith(".tmp")]
-            self.assertEqual(len(temp_files), 0, "不应该有临时文件残留")
+            assert len(temp_files)  ==  0, "不应该有临时文件残留"
 
             # 验证内容正确（使用load方法）
             loaded = mgr.load()
-            self.assertIsNotNone(loaded)
-            self.assertEqual(loaded.get("mode"), "random")
+            assert loaded is not None
+            assert loaded.get("mode")  ==  "random"
 
         finally:
             shutil.rmtree(test_dir, ignore_errors=True)
 
 
-@unittest.skipUnless(IS_WINDOWS, "仅在Windows环境运行")
-class TestWindowsMemoryLocking(unittest.TestCase):
+@pytest.mark.skipunless(IS_WINDOWS, "仅在Windows环境运行")
+class TestWindowsMemoryLocking:
     """Windows内存锁定测试"""
 
     def test_memory_locking_availability(self):
@@ -154,21 +155,18 @@ class TestWindowsMemoryLocking(unittest.TestCase):
             if result:
                 # 解锁内存
                 kernel32.VirtualUnlock(buffer, buffer_size)
-                self.assertTrue(True, "内存锁定成功")
+                assert True, "内存锁定成功"
             else:
                 # 获取错误码
                 error_code = ctypes.get_last_error()
                 # ERROR_NOT_ENOUGH_MEMORY (14) 或 ERROR_WORKING_SET_QUOTA (1453)
                 # 或 ERROR_PRIVILEGE_NOT_HELD (1314) 是预期的
                 # 这些错误表示功能存在但当前用户没有权限
-                self.assertTrue(
-                    error_code in [14, 1453, 1314],
-                    f"预期的权限或内存不足错误，实际: {error_code}",
-                )
+                assert error_code in [14, 1453, 1314], f"预期的权限或内存不足错误，实际: {error_code}"
 
         except Exception as e:
             # 如果ctypes不可用，跳过此测试
-            self.skipTest(f"无法测试内存锁定: {e}")
+            pytest.skip(f"无法测试内存锁定: {e}")
 
     def test_secure_key_manager_memory_protection(self):
         """测试SecureKeyManager的内存保护功能"""
@@ -180,8 +178,8 @@ class TestWindowsMemoryLocking(unittest.TestCase):
         # 测试密钥生成和获取
         key_manager.generate_key()
         key = key_manager.get_key()
-        self.assertIsNotNone(key)
-        self.assertEqual(len(key), 32)
+        assert key is not None
+        assert len(key)  ==  32
 
         # 测试内存清理
         key_manager.clear()
@@ -196,19 +194,19 @@ class TestWindowsMemoryLocking(unittest.TestCase):
 
         # 创建内存视图
         mv = memoryview(data)
-        self.assertEqual(len(mv), 1024)
+        assert len(mv)  ==  1024
 
         # 测试写入
         mv[:4] = b"test"
-        self.assertEqual(data[:4], b"test")
+        assert data[:4]  ==  b"test"
 
         # 测试清零
         mv[:] = b"\x00" * 1024
-        self.assertEqual(data, bytearray(1024))
+        assert data  ==  bytearray(1024)
 
 
-@unittest.skipUnless(IS_WINDOWS, "仅在Windows环境运行")
-class TestWindowsACL(unittest.TestCase):
+@pytest.mark.skipunless(IS_WINDOWS, "仅在Windows环境运行")
+class TestWindowsACL:
     """Windows ACL权限测试"""
 
     def test_file_permissions(self):
@@ -224,32 +222,32 @@ class TestWindowsACL(unittest.TestCase):
             pathlib.Path(test_file).write_text("测试内容", encoding="utf-8")
 
             # 测试文件存在
-            self.assertTrue(pathlib.Path(test_file).exists())
+            assert pathlib.Path(test_file).exists()
 
             # 测试文件可读
             content = pathlib.Path(test_file).read_text(encoding="utf-8")
-            self.assertEqual(content, "测试内容")
+            assert content  ==  "测试内容"
 
             # 测试文件可写
             with pathlib.Path(test_file).open("a", encoding="utf-8") as f:
                 f.write("追加内容")
             content = pathlib.Path(test_file).read_text(encoding="utf-8")
-            self.assertIn("追加内容", content)
+            assert content  in  "追加内容"
 
         finally:
             shutil.rmtree(test_dir, ignore_errors=True)
 
 
-class TestPlatformDetection(unittest.TestCase):
+class TestPlatformDetection:
     """平台检测测试（跨平台）"""
 
     def test_windows_detection(self):
         """测试Windows平台检测"""
         if IS_WINDOWS:
-            self.assertTrue(sys.platform.startswith("win"))
-            self.assertEqual(os.name, "nt")
+            assert sys.platform.startswith("win")
+            assert os.name  ==  "nt"
         else:
-            self.skipTest("非Windows平台")
+            pytest.skip("非Windows平台")
 
     def test_checkpoint_manager_platform_handling(self):
         """测试CheckpointManager的平台特定处理"""
@@ -266,12 +264,12 @@ class TestPlatformDetection(unittest.TestCase):
 
         try:
             mgr = CheckpointManager(checkpoint_file)
-            self.assertIsNotNone(mgr)
+            assert mgr is not None
 
             # 测试基本功能
             mgr.save(mode="test", targets=set(), current_position=0, total_checked=0, matches=[])
             loaded = mgr.load()
-            self.assertIsNotNone(loaded)
+            assert loaded is not None
 
         finally:
             shutil.rmtree(test_dir, ignore_errors=True)

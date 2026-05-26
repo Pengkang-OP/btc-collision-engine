@@ -19,7 +19,7 @@ Extended checks:
 
 import importlib
 import json
-import logging
+from .logging_config import get_configured_logger
 import os
 import pathlib
 import shutil
@@ -27,7 +27,7 @@ import socket
 import sys
 from contextlib import suppress
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger(__name__)
 
 
 class HealthChecker:
@@ -50,7 +50,7 @@ class HealthChecker:
     def __init__(self, project_root: str | None = None) -> None:
         """初始化健康检查器
 
-        参数:
+        Args:
             project_root: 项目根目录路径
         """
         self.project_root = project_root or os.path.dirname(
@@ -111,7 +111,7 @@ class HealthChecker:
     def check_disk_space(self, min_mb: int = 100) -> tuple[bool, str]:
         """检查磁盘空间
 
-        参数:
+        Args:
             min_mb: 最小可用空间要求（MB）
         """
         try:
@@ -381,11 +381,11 @@ class HealthChecker:
     ) -> dict[str, tuple[bool, str]]:
         """运行所有健康检查
 
-        参数:
+        Args:
             include_gpu: 是否包含GPU检查
             include_network: 是否包含网络检查
 
-        返回:
+        Returns:
             检查结果字典 {检查项: (是否通过, 详细信息)}
         """
         print("=" * 70)

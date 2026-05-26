@@ -10,12 +10,12 @@ import os
 import tempfile
 import time
 from pathlib import Path
-from unittest import TestCase
+import pytest
 
 from src.utils.data_cleanup import DataCleaner
 
 
-class TestDataCleanerBasic(TestCase):
+class TestDataCleanerBasic:
     """DataCleaner 基础功能测试"""
 
     def setUp(self):
@@ -39,22 +39,22 @@ class TestDataCleanerBasic(TestCase):
     def test_initialization_default(self):
         """默认初始化 — retention_days=7, 默认 target_dirs 解析为项目根路径"""
         cleaner = DataCleaner()
-        self.assertEqual(cleaner._retention_seconds, 7 * 86400)
-        self.assertEqual(len(cleaner._target_dirs), 3)
+        assert cleaner._retention_seconds  ==  7 * 86400
+        assert len(cleaner._target_dirs)  ==  3
         # 默认路径解析为 PROJECT_ROOT 下的绝对路径
-        self.assertTrue(all(isinstance(p, Path) for p in cleaner._target_dirs))
-        self.assertTrue(all(p.is_absolute() for p in cleaner._target_dirs))
+        assert all(isinstance(p, Path) for p in cleaner._target_dirs)
+        assert all(p.is_absolute() for p in cleaner._target_dirs)
         names = [p.name for p in cleaner._target_dirs]
-        self.assertEqual(names, ["data_logs", "logs", "temp"])
+        assert names  ==  ["data_logs", "logs", "temp"]
 
     def test_initialization_custom(self):
         """自定义参数初始化"""
         cleaner = DataCleaner(retention_days=3, target_dirs=["custom_dir"])
-        self.assertEqual(cleaner._retention_seconds, 3 * 86400)
-        self.assertEqual(cleaner._target_dirs, [Path("custom_dir")])
+        assert cleaner._retention_seconds  ==  3 * 86400
+        assert cleaner._target_dirs  ==  [Path("custom_dir")]
 
 
-class TestDataCleanerCleanAll(TestCase):
+class TestDataCleanerCleanAll:
     """clean_all() 测试"""
 
     def setUp(self):
@@ -81,7 +81,7 @@ class TestDataCleanerCleanAll(TestCase):
             target_dirs=[str(Path(d)) for d in ["data_logs", "logs", "temp"]],
         )
         result = cleaner.clean_all()
-        self.assertEqual(result, 0)
+        assert result  ==  0
 
     def test_clean_all_old_files(self):
         """清理过期文件"""
@@ -95,8 +95,8 @@ class TestDataCleanerCleanAll(TestCase):
         os.utime(str(old_file), (old_time, old_time))
 
         result = cleaner.clean_all()
-        self.assertEqual(result, 1)
-        self.assertFalse(old_file.exists())
+        assert result  ==  1
+        assert not old_file.exists()
 
     def test_clean_all_new_files_preserved(self):
         """新文件不被清理"""
@@ -108,8 +108,8 @@ class TestDataCleanerCleanAll(TestCase):
         new_file.write_text("new data")
 
         result = cleaner.clean_all()
-        self.assertEqual(result, 0)
-        self.assertTrue(new_file.exists())
+        assert result  ==  0
+        assert new_file.exists()
 
     def test_clean_all_multiple_dirs(self):
         """清理多个目录中的过期文件"""
@@ -123,7 +123,7 @@ class TestDataCleanerCleanAll(TestCase):
             os.utime(str(old_file), (old_time, old_time))
 
         result = cleaner.clean_all()
-        self.assertEqual(result, 3)
+        assert result  ==  3
 
     def test_clean_all_mixed_old_new(self):
         """混合新旧文件 — 只清理过期的"""
@@ -142,12 +142,12 @@ class TestDataCleanerCleanAll(TestCase):
         new_file.write_text("new")
 
         result = cleaner.clean_all()
-        self.assertEqual(result, 1)
-        self.assertFalse(old_file.exists())
-        self.assertTrue(new_file.exists())
+        assert result  ==  1
+        assert not old_file.exists()
+        assert new_file.exists()
 
 
-class TestDataCleanerEdgeCases(TestCase):
+class TestDataCleanerEdgeCases:
     """边界情况测试"""
 
     def setUp(self):
@@ -166,7 +166,7 @@ class TestDataCleanerEdgeCases(TestCase):
         """目标目录不存在时不报错"""
         cleaner = DataCleaner(target_dirs=["nonexistent_dir"])
         result = cleaner.clean_all()
-        self.assertEqual(result, 0)
+        assert result  ==  0
 
     def test_zero_retention_days(self):
         """retention_days=0 — 所有文件都被清理"""
@@ -181,7 +181,7 @@ class TestDataCleanerEdgeCases(TestCase):
             target_dirs=["data_logs"],
         )
         result = cleaner.clean_all()
-        self.assertEqual(result, 1)
+        assert result  ==  1
 
     def test_custom_target_dirs(self):
         """自定义 target_dirs"""
@@ -193,4 +193,4 @@ class TestDataCleanerEdgeCases(TestCase):
 
         cleaner = DataCleaner(retention_days=7, target_dirs=["custom"])
         result = cleaner.clean_all()
-        self.assertEqual(result, 1)
+        assert result  ==  1

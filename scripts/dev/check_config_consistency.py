@@ -10,17 +10,30 @@ import sys
 from pathlib import Path
 from typing import Any
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 from src.config.config_manager import ConfigManager  # 需 sys.path 前置
+
+# ROADMAP #5: Schema 从 config.schema.json 加载（单一真相源）
+_SCHEMA_PATH = Path(__file__).resolve().parent.parent.parent / "config.schema.json"
 
 
 class ConfigFixer:
     """配置修复器"""
 
     def __init__(self):
-        self.schema = ConfigManager.CONFIG_SCHEMA
+        self.schema = self._load_schema()
         self.defaults = ConfigManager.DEFAULT_CONFIG
         self.fixes_applied: list[str] = []
+
+    @staticmethod
+    def _load_schema() -> dict:
+        """从 config.schema.json 文件加载 Schema。"""
+        schema_path = _SCHEMA_PATH
+        if not schema_path.exists():
+            print(f"ERROR: Schema 文件不存在: {schema_path}", file=sys.stderr)
+            sys.exit(1)
+        with open(schema_path, encoding="utf-8") as f:
+            return json.load(f)
 
     def find_missing_fields(self) -> list[dict[str, str]]:
         """查找缺失的配置字段"""

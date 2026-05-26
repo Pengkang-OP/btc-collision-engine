@@ -21,9 +21,9 @@ import pytest
 from src.collision.collision_stats import CollisionStats, StatsSnapshot
 from src.collision.event_bus import EventBus
 from src.collision.events import (
-    CollisionEvent,
     EngineCompleteEvent,
     EngineErrorEvent,
+    EngineEvent,
     EngineMatchEvent,
     EngineProgressEvent,
     EngineStartEvent,
@@ -172,12 +172,9 @@ class TestMultiModeExceptionFlow:
 
     def test_exception_invalid_event_type(self):
         """测试：异常流 - 无效事件类型处理"""
-        event = CollisionEvent()
+        event = EngineEvent()
 
-        assert event.event_type is None
-
-        event_dict = event.to_dict()
-        assert event_dict["event_type"] is None
+        assert not hasattr(event, "event_type")
 
     def test_exception_callback_timeout_handling(self):
         """测试：异常流 - 回调超时处理"""

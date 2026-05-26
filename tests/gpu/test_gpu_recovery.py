@@ -20,7 +20,7 @@ from src.gpu.gpu_recovery_manager import (
 )
 
 
-class TestGPUFailureClassification(unittest.TestCase):
+class TestGPUFailureClassification:
     """GPU失败分类测试"""
 
     def setUp(self):
@@ -37,7 +37,7 @@ class TestGPUFailureClassification(unittest.TestCase):
 
         for error in errors:
             failure_type = self.manager._classify_failure(error)
-            self.assertEqual(failure_type, GPUFailureType.OUT_OF_MEMORY)
+            assert failure_type == GPUFailureType.OUT_OF_MEMORY
 
     def test_classify_compute_error(self):
         """测试计算错误分类"""
@@ -50,7 +50,7 @@ class TestGPUFailureClassification(unittest.TestCase):
 
         for error in errors:
             failure_type = self.manager._classify_failure(error)
-            self.assertEqual(failure_type, GPUFailureType.COMPUTE_ERROR)
+            assert failure_type == GPUFailureType.COMPUTE_ERROR
 
     def test_classify_device_lost(self):
         """测试设备丢失分类"""
@@ -63,7 +63,7 @@ class TestGPUFailureClassification(unittest.TestCase):
 
         for error in errors:
             failure_type = self.manager._classify_failure(error)
-            self.assertEqual(failure_type, GPUFailureType.DEVICE_LOST)
+            assert failure_type == GPUFailureType.DEVICE_LOST
 
     def test_classify_timeout(self):
         """测试超时分类"""
@@ -74,16 +74,16 @@ class TestGPUFailureClassification(unittest.TestCase):
 
         for error in errors:
             failure_type = self.manager._classify_failure(error)
-            self.assertEqual(failure_type, GPUFailureType.TIMEOUT)
+            assert failure_type == GPUFailureType.TIMEOUT
 
     def test_classify_unknown(self):
         """测试未知错误分类"""
         error = Exception("Some random error")
         failure_type = self.manager._classify_failure(error)
-        self.assertEqual(failure_type, GPUFailureType.UNKNOWN)
+        assert failure_type == GPUFailureType.UNKNOWN
 
 
-class TestRecoveryStrategy(unittest.TestCase):
+class TestRecoveryStrategy:
     """恢复策略选择测试"""
 
     def setUp(self):
@@ -95,7 +95,7 @@ class TestRecoveryStrategy(unittest.TestCase):
             gpu_id=0,
             failure_type=GPUFailureType.OUT_OF_MEMORY,
         )
-        self.assertEqual(strategy, RecoveryStrategy.RETRY_IMMEDIATE)
+        assert strategy == RecoveryStrategy.RETRY_IMMEDIATE
 
     def test_second_failure_retry_immediate(self):
         """测试第二次失败：仍然立即重试"""
@@ -110,7 +110,7 @@ class TestRecoveryStrategy(unittest.TestCase):
             failure_type=GPUFailureType.OUT_OF_MEMORY,
         )
         # 第2次仍然是RETRY_IMMEDIATE（failure_count=1 <= 1）
-        self.assertEqual(strategy, RecoveryStrategy.RETRY_IMMEDIATE)
+        assert strategy == RecoveryStrategy.RETRY_IMMEDIATE
 
     def test_third_failure_retry_with_delay(self):
         """测试第三次失败：延迟重试"""
@@ -130,7 +130,7 @@ class TestRecoveryStrategy(unittest.TestCase):
             failure_type=GPUFailureType.OUT_OF_MEMORY,
         )
         # 第3次是RETRY_WITH_DELAY（failure_count=2）
-        self.assertEqual(strategy, RecoveryStrategy.RETRY_WITH_DELAY)
+        assert strategy == RecoveryStrategy.RETRY_WITH_DELAY
 
     def test_fourth_failure_reduce_batch_size(self):
         """测试第四次失败：减小批次"""
@@ -149,7 +149,7 @@ class TestRecoveryStrategy(unittest.TestCase):
             gpu_id=0,
             failure_type=GPUFailureType.OUT_OF_MEMORY,
         )
-        self.assertEqual(strategy, RecoveryStrategy.REDUCE_BATCH_SIZE)
+        assert strategy == RecoveryStrategy.REDUCE_BATCH_SIZE
 
     def test_fifth_failure_reinitialize(self):
         """测试第五次失败：重新初始化"""
@@ -183,10 +183,10 @@ class TestRecoveryStrategy(unittest.TestCase):
             )
 
         strategy = manager._select_recovery_strategy(gpu_id=0, failure_type=GPUFailureType.OUT_OF_MEMORY)
-        self.assertEqual(strategy, RecoveryStrategy.REINITIALIZE)
+        assert strategy == RecoveryStrategy.REINITIALIZE
 
 
-class TestRecoveryExecution(unittest.TestCase):
+class TestRecoveryExecution:
     """恢复执行测试"""
 
     def setUp(self):
@@ -202,7 +202,7 @@ class TestRecoveryExecution(unittest.TestCase):
             failure_type=GPUFailureType.OUT_OF_MEMORY,
             strategy=RecoveryStrategy.RETRY_IMMEDIATE,
         )
-        self.assertTrue(success)
+        assert success
 
     def test_retry_with_delay_execution(self):
         """测试延迟重试执行"""
@@ -214,8 +214,8 @@ class TestRecoveryExecution(unittest.TestCase):
         )
         elapsed = time.time() - start_time
 
-        self.assertTrue(success)
-        self.assertGreaterEqual(elapsed, 0.1)  # 至少延迟0.1秒
+        assert success
+        assert elapsed >= 0.1  # 至少延迟0.1秒
 
     def test_reduce_batch_size_execution(self):
         """测试减小批次执行"""
@@ -234,16 +234,16 @@ class TestRecoveryExecution(unittest.TestCase):
         )
 
         # 验证回调被调用2次：reduce_batch_size + health_check
-        self.assertTrue(success)
-        self.assertEqual(len(callback_called), 2)
+        assert success
+        assert len(callback_called) == 2
 
         # 第1次调用：减小批次大小
-        self.assertEqual(callback_called[0][0], "reduce_batch_size")
-        self.assertEqual(callback_called[0][1], 0.5)
+        assert callback_called[0][0] == "reduce_batch_size"
+        assert callback_called[0][1] == 0.5
 
         # 第2次调用：健康检查
-        self.assertEqual(callback_called[1][0], "health_check")
-        self.assertIsNone(callback_called[1][1])
+        assert callback_called[1][0] == "health_check"
+        assert callback_called[1][1] is None
 
     def test_disable_gpu_execution(self):
         """测试禁用GPU执行"""
@@ -252,10 +252,10 @@ class TestRecoveryExecution(unittest.TestCase):
             failure_type=GPUFailureType.OUT_OF_MEMORY,
             strategy=RecoveryStrategy.DISABLE_GPU,
         )
-        self.assertFalse(success)
+        assert not success
 
 
-class TestGPURecoveryIntegration(unittest.TestCase):
+class TestGPURecoveryIntegration:
     """GPU恢复集成测试"""
 
     def test_handle_gpu_failure_success(self):
@@ -272,8 +272,8 @@ class TestGPURecoveryIntegration(unittest.TestCase):
             alert_callback=lambda gid, ft, err: alert_called.append((gid, ft)),
         )
 
-        self.assertTrue(success)
-        self.assertEqual(manager._total_failures, 1)
+        assert success
+        assert manager._total_failures == 1
 
     def test_handle_gpu_failure_marks_failed_after_max_retries(self):
         """测试GPU失败标记（超过最大重试后）"""
@@ -289,9 +289,9 @@ class TestGPURecoveryIntegration(unittest.TestCase):
             )
 
         # 超过max_retry_count后应该被标记为失败
-        self.assertTrue(manager.is_gpu_failed(0))
+        assert manager.is_gpu_failed(0)
         failed_gpus = manager.get_failed_gpus()
-        self.assertIn(0, failed_gpus)
+        assert 0 in failed_gpus
 
     def test_recovery_stats(self):
         """测试恢复统计"""
@@ -306,8 +306,8 @@ class TestGPURecoveryIntegration(unittest.TestCase):
         )
 
         stats = manager.get_recovery_stats()
-        self.assertEqual(stats["total_failures"], 1)
-        self.assertIn("success_rate", stats)
+        assert stats["total_failures"] == 1
+        assert "success_rate" in stats
 
     def test_reset_failure_history(self):
         """测试重置失败历史"""
@@ -323,12 +323,12 @@ class TestGPURecoveryIntegration(unittest.TestCase):
         with manager._failed_gpus_lock:
             manager._failed_gpus.add(0)
 
-        self.assertTrue(manager.is_gpu_failed(0))
+        assert manager.is_gpu_failed(0)
 
         # 重置
         manager.reset_failure_history(gpu_id=0)
 
-        self.assertFalse(manager.is_gpu_failed(0))
+        assert not manager.is_gpu_failed(0)
 
     def test_concurrent_failure_handling(self):
         """测试并发失败处理"""
@@ -356,12 +356,12 @@ class TestGPURecoveryIntegration(unittest.TestCase):
         for t in threads:
             t.join()
 
-        self.assertEqual(len(errors), 0)
-        self.assertEqual(manager._total_failures, 5)
+        assert len(errors) == 0
+        assert manager._total_failures == 5
 
 
 @pytest.mark.skip(reason="Multi-GPU recovery API changed")
-class TestMultiGPURecovery(unittest.TestCase):
+class TestMultiGPURecovery:
     """多GPU恢复测试"""
 
     @patch("src.gpu.multi_gpu_engine.GPURecoveryManager")
@@ -397,11 +397,8 @@ class TestMultiGPURecovery(unittest.TestCase):
         engine._redistribute_workload(failed_gpu_id=0)
 
         # 验证GPU 0被移除
-        self.assertNotIn(0, engine.workers)
+        assert 0 not in engine.workers
         # 验证其他GPU仍然存在
-        self.assertIn(1, engine.workers)
-        self.assertIn(2, engine.workers)
+        assert 1 in engine.workers
+        assert 2 in engine.workers
 
-
-if __name__ == "__main__":
-    unittest.main()

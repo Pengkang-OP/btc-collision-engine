@@ -1,6 +1,6 @@
 # 配置参考文档
 
-**版本**: v4.5.1
+**版本**: v5.2.1
 
 
 本文件说明 `config.json` 中所有配置项的类型、默认值、有效范围及用途。
@@ -50,7 +50,7 @@
 | 配置项 | 类型 | 默认值 | 有效值 / 范围 | 说明 |
 |--------|------|--------|--------------|------|
 | `use_gpu` | bool | `true` | `true` / `false` | 是否启用 GPU 加速。GPU 不可用时自动降级为 CPU |
-| `device_index` | int | `0` | `>= 0` | GPU 设备索引，多卡时使用 |
+| `device_index` | int | `-1` | `>= -1` | GPU 设备索引。`-1` 表示自动选择最佳设备 |
 | `batch_size` | int | `65536` | `1` ~ `16777216` (16M) | GPU 每批次处理的密钥数量。超过 16M 会被拒绝（防止显存耗尽） |
 | `auto_detect` | bool | `true` | `true` / `false` | 自动检测并选择最优 GPU 设备 |
 | `memory_usage_ratio` | float | `0.7` | `(0, 1]` | GPU 显存使用率上限（Intel Arc 建议 0.45） |
@@ -102,13 +102,20 @@
 | `max_buffers` | int | `100` | `>= 1` | GPU 内存池最大缓冲区数量 |
 | `max_memory_mb` | int | `512` | `>= 1` | GPU 内存池最大内存（MB） |
 | `async_execution` | bool | `true` | `true` / `false` | 启用 GPU 异步执行（双缓冲优化） |
-| `queue_depth` | int | `4` | `1` ~ `16` | GPU 命令队列深度 |
+| `queue_depth` | int | `4` | `1` ~ `64` | GPU 命令队列深度 |
 | `timeout_protection` | bool | `true` | `true` / `false` | 启用 GPU 超时保护机制 |
 | `base_timeout_seconds` | int | `60` | `>= 1` | GPU 内核执行基础超时（秒） |
 | `mode` | string | `"auto"` | `auto` / `single` / `multi` | GPU 模式 |
-| `device_indices` | array | `[-1]` | 整数数组 | GPU 设备索引列表，`-1` 表示自动选择 |
+| `device_indices` | array | `[-1]` | 整数数组（元素 >= -1） | GPU 设备索引列表，`-1` 表示自动选择 |
 | `load_balancing` | string | `"performance"` | `performance` / `equal` | 负载均衡策略 |
 | `auto_tuning` | bool | `true` | `true` / `false` | 自动根据设备型号调优参数 |
+| `seed_prefetch_size` | int | `64` | `1` ~ `4096` | 种子预生成缓存深度。Intel Arc 等需要大预取的场景可设为 256~1024 |
+| `driver_check.enabled` | bool | `true` | `true` / `false` | 是否启用 GPU 驱动检查 |
+| `driver_check.require_minimum_version` | bool | `true` | `true` / `false` | 是否要求最低驱动版本 |
+| `driver_check.warn_on_unstable` | bool | `true` | `true` / `false` | 不稳定驱动是否发出警告 |
+| `driver_check.auto_fallback_conservative` | bool | `true` | `true` / `false` | 不稳定驱动是否自动降级为保守模式 |
+| `per_device_config` | object | `{}` | 任意 JSON 对象 | 每设备独立配置（允许附加属性） |
+| `key_generation_strategy` | string | `"PRNG_SEED"` | `PRNG_SEED` / `SEQUENTIAL_UINT32` / `PRNG_STREAM` | 私钥生成策略 |
 
 ---
 

@@ -62,7 +62,8 @@
             "require_minimum_version": true,
             "warn_on_unstable": true,
             "auto_fallback_conservative": true
-        }
+        },
+        "key_generation_strategy": "PRNG_SEED"
     },
     "monitoring": {
         "enabled": true,

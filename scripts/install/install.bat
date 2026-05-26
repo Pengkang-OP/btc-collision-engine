@@ -3,7 +3,7 @@ chcp 65001 > nul
 setlocal enabledelayedexpansion
 
 :: 切换到项目根目录（脚本所在目录的上一级）
-cd /d "%~dp0.."
+cd /d "%~dp0../.."
 
 echo ========================================
 echo BTC 碰撞引擎 - 安装脚本

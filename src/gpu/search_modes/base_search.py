@@ -5,6 +5,9 @@
 
 v4.2.2: H5修复 - 设备丢失恢复失败时发布 ENGINE_ERROR 事件。
          S4改进 - WIF 导入提升到模块级别，避免循环内重复导入。
+v5.2.2: 修复 engine._target_list -> engine._device_manager.target_list
+         添加事件总线进度/匹配事件发布
+         修复 _save_checkpoint 传入 total_checked 而非 batch_count
 """
 
 import struct
@@ -21,7 +24,8 @@ from ...utils.exception_handler import ExceptionHandler
 from ...utils.timeout import invoke_with_timeout
 
 if TYPE_CHECKING:
-    from ...collision.gpu.engine import GPUCollisionEngine
+    # ROADMAP #13: 使用协议接口替代直接引用，消除反向依赖
+    from ...gpu._engine_protocol import GPUEngineProtocol as GPUCollisionEngine
 
 logger = get_configured_logger("BaseSearchMode")
 
@@ -55,6 +59,8 @@ class BaseSearchMode:
     ) -> None:
         """处理一批 GPU 匹配结果：提取私钥、WIF 编码、触发回调。"""
         engine = self.engine
+        # v5.2.2: 获取 target_list 引用，避免每次匹配重复访问
+        target_list = engine._device_manager.target_list
         for match in matches:
             key_idx = match["key_index"]
             if key_extractor_fn is not None:
@@ -71,9 +77,30 @@ class BaseSearchMode:
                     continue
                 private_key = batch_data[key_idx * 32 : (key_idx + 1) * 32]
             target_idx = match["target_index"]
-            address = engine._target_list[target_idx]  # type: ignore[attr-defined]
+            # v5.2.2: 修复 — 使用 _device_manager.target_list 替代不存在的 _target_list
+            if target_idx >= len(target_list):
+                logger.warning(
+                    "目标索引越界: %d >= %d，跳过匹配",
+                    target_idx,
+                    len(target_list),
+                )
+                continue
+            address = target_list[target_idx]
             wif = WIF.encode(private_key, compressed=True)
-            engine.stats.add_match(private_key, address)  # type: ignore[attr-defined]
+            engine.stats.add_match(private_key, address)
+            # v5.2.2: 发布匹配事件到事件总线
+            if hasattr(engine, "event_bus") and engine.event_bus:
+                from ...collision.events import EngineMatchEvent
+
+                engine.event_bus.publish(
+                    EngineMatchEvent(
+                        private_key=private_key,
+                        address=address,
+                        wif=wif,
+                        target_address=address,
+                        source="gpu_collision_engine",
+                    ),
+                )
             if engine.on_match:
                 timeout_val = (
                     engine._match_callback_timeout if hasattr(engine, "_match_callback_timeout") else 5.0
@@ -189,6 +216,21 @@ class BaseSearchMode:
 
                 current_time = time.time()
                 if current_time - engine._last_progress_time >= engine._progress_interval_sec:
+                    # v5.2.2: 发布进度事件到事件总线
+                    if hasattr(engine, "event_bus") and engine.event_bus and engine.stats:
+                        from ...collision.events import EngineProgressEvent
+
+                        stats_snapshot = engine.stats.snapshot()
+                        engine.event_bus.publish(
+                            EngineProgressEvent(
+                                keys_checked=stats_snapshot["total_keys_checked"],
+                                elapsed_seconds=stats_snapshot["elapsed_seconds"],
+                                throughput=stats_snapshot["throughput"],
+                                matches_found=stats_snapshot["total_matches"],
+                                source="gpu_collision_engine",
+                            ),
+                        )
+
                     if engine.on_progress:
                         invoke_with_timeout(
                             engine.on_progress,
@@ -196,7 +238,8 @@ class BaseSearchMode:
                             timeout=5.0,
                             callback_name="on_progress",
                         )
-                    engine._save_checkpoint(batch_count)
+                    # v5.2.2: 修复 — 传入 total_checked 而非 batch_count
+                    engine._save_checkpoint(engine.stats.total_checked)
                     engine._last_progress_time = current_time
 
             except Exception as e:

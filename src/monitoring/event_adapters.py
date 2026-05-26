@@ -1,8 +1,8 @@
 """Event adapters for monitoring system integration."""
 
-import logging
+from ..utils import get_configured_logger
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger(__name__)
 
 
 class DataLoggerAdapter:
@@ -12,7 +12,7 @@ class DataLoggerAdapter:
         self.data_logger = data_logger
 
 
-def setup_data_logging(event_bus, data_logger):
+def setup_data_logging(event_bus: "Any", data_logger: "Any") -> DataLoggerAdapter:
     """Set up data logging via event bus.
 
     Args:
@@ -52,6 +52,51 @@ class EnhancedMonitoringAdapter:
     def _on_progress(self, event):
         keys = getattr(event, "keys_checked", 0) or getattr(event, "total_checked", 0)
         self._monitoring.record_metric("keys_checked", keys)
+
+
+class AlertSystemAdapter:
+    """Adapter that subscribes AlertSystem to engine EventBus events.
+
+    Enables event-driven alerting (R3 fix) — alerts are triggered by
+    EngineProgressEvent and EngineErrorEvent rather than only via
+    poll-based check_metrics() in the runtime loop.
+    """
+
+    def __init__(self, alert_system):
+        self._alert_system = alert_system
+
+    def subscribe_to(self, event_bus):
+        """Subscribe to relevant events on the event bus."""
+        from src.collision.events import EngineErrorEvent, EngineProgressEvent
+
+        event_bus.subscribe(EngineProgressEvent, self._on_progress)
+        event_bus.subscribe(EngineErrorEvent, self._on_error)
+
+    def _on_progress(self, event):
+        """Handle progress events — check metrics for alert conditions."""
+        try:
+            metrics = {
+                "throughput": getattr(event, "throughput", 0) or getattr(event, "speed", 0),
+                "error_rate": getattr(event, "error_rate", 0),
+                "memory_usage_percent": getattr(event, "memory_usage", 0),
+                "gpu_temperature": getattr(event, "gpu_temp", 0),
+            }
+            self._alert_system.check_metrics(metrics)
+        except Exception:
+            logger.debug("AlertSystemAdapter: progress alert check failed (non-fatal)", exc_info=True)
+
+    def _on_error(self, event):
+        """Handle error events — check error rate for alert conditions."""
+        try:
+            metrics = {
+                "error_rate": 0.1,  # Any error event implies elevated error rate
+                "throughput": 0,
+                "memory_usage_percent": 0,
+                "gpu_temperature": 0,
+            }
+            self._alert_system.check_metrics(metrics)
+        except Exception:
+            logger.debug("AlertSystemAdapter: error alert check failed (non-fatal)", exc_info=True)
 
 
 class EventAdapter:

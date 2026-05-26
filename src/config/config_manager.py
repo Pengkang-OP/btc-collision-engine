@@ -10,6 +10,7 @@ from typing import Any, Optional
 # 导入日志配置
 from ..i18n import _t
 from ..utils import get_configured_logger
+from ..utils.logging_config import LOG_DEFAULT_MAX_BYTES
 from .config_watcher import ConfigWatcher  # noqa: F401 — type annotation reference
 
 # v4.2.2 M3: 日志初始化统一由 CLI 入口 (main.py) 和 utils/__init__.py 处理
@@ -17,9 +18,9 @@ from .config_watcher import ConfigWatcher  # noqa: F401 — type annotation refe
 # 获取模块日志记录器
 logger = get_configured_logger("ConfigManager")
 
-# DF-3修复: 添加JSON Schema验证
+# DF-3修复: 添加JSON Schema验证 — 从 config.schema.json 文件加载（单一真相源）
 try:
-    from jsonschema import Draft7Validator
+    from jsonschema import Draft202012Validator
 
     HAS_JSONSCHEMA = True
 except ImportError:
@@ -31,233 +32,17 @@ class ConfigManager:
     """配置管理器 - 统一管理应用配置"""
 
     # 审查修复#5: 将Schema提取为类常量，避免每次验证都重新创建
-    # 优化: 将Draft7Validator实例缓存为类变量，避免重复创建开销
+    # 优化: 将Draft202012Validator实例缓存为类变量，避免重复创建开销
     _cached_validator = None  # 类级缓存的Schema验证器实例
     _validator_lock = threading.Lock()  # 类级锁，保护验证器初始化
-    CONFIG_SCHEMA = {
-        "type": "object",
-        "properties": {
-            "version": {
-                "type": "string",
-                "pattern": "^\\d+\\.\\d+\\.\\d+$",
-            },
-            "collision": {
-                "type": "object",
-                "properties": {
-                    "max_workers": {"type": ["integer", "null"], "minimum": 1, "maximum": 1024},
-                    "progress_interval": {"type": "integer", "minimum": 1},
-                    "checkpoint_interval": {"type": "integer", "minimum": -1},
-                    "dedup_max_size": {"type": "integer", "minimum": 1},
-                    # D-2修复: 补充 config.example.json 中存在的性能优化字段
-                    "use_performance_optimization": {"type": "boolean"},
-                    "precomputed_window_size": {"type": "integer", "minimum": 1, "maximum": 16},
-                    "use_simd_hash": {"type": "boolean"},
-                    "use_memory_pool": {"type": "boolean"},
-                    "use_gpu_memory_pool": {"type": "boolean"},
-                    "gpu_pool_max_buffers": {"type": "integer", "minimum": 1},
-                    "gpu_pool_max_memory_mb": {"type": "integer", "minimum": 1},
-                },
-                "additionalProperties": False,
-            },
-            "logging": {
-                "type": "object",
-                "properties": {
-                    "level": {"enum": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]},
-                    "format": {"type": "string"},
-                    "file": {"type": "string"},
-                    "max_bytes": {"type": "integer", "minimum": 1},
-                    "backup_count": {"type": "integer", "minimum": 0},
-                    "enable_console": {"type": "boolean"},
-                    "enable_file": {"type": "boolean"},
-                    "rotation_type": {"enum": ["size", "time"]},
-                    "rotation_when": {"type": "string"},
-                    "rotation_interval": {"type": "integer", "minimum": 1},
-                    "compress_backups": {"type": "boolean"},
-                },
-                "additionalProperties": False,
-            },
-            "gpu": {
-                "type": "object",
-                "properties": {
-                    "use_gpu": {"type": "boolean"},
-                    "device_index": {"type": "integer"},
-                    "batch_size": {"type": "integer", "minimum": 1, "maximum": 16777216},
-                    "auto_detect": {"type": "boolean"},
-                    "memory_usage_ratio": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
-                    "enable_vendor_optimizations": {"type": "boolean"},
-                    # CFG-1修复: 添加缺失的GPU配置项
-                    "async_execution": {"type": "boolean"},
-                    "work_group_size": {"type": "integer", "minimum": 64, "maximum": 2048},
-                    "use_fast_math": {"type": "boolean"},
-                    "use_uint32_workaround": {"type": "boolean"},
-                    "compiler_flags": {"type": "string"},
-                    # D-2修复: 补充 config.example.json gpu区块字段
-                    "use_new_module": {"type": "boolean"},
-                    "mode": {"enum": ["auto", "single", "multi"]},
-                    "device_indices": {"type": "array", "items": {"type": "integer"}},
-                    "load_balancing": {"enum": ["performance", "equal"]},
-                    "auto_tuning": {"type": "boolean"},
-                    # 队列深度优化 v4.2.1: GPU 命令队列预提交批次数
-                    "queue_depth": {"type": "integer", "minimum": 0, "maximum": 64},
-                    # 内存池相关配置
-                    "gpu_memory_pool": {"type": "boolean"},
-                    "max_buffers": {"type": "integer", "minimum": 1},
-                    "max_memory_mb": {"type": "integer", "minimum": 64},
-                    # 超时保护配置
-                    "timeout_protection": {"type": "boolean"},
-                    "base_timeout_seconds": {"type": "number", "minimum": 1},
-                    "max_error_retries": {"type": "integer", "minimum": 1},
-                    # 种子预生成缓存
-                    "seed_prefetch_size": {"type": "integer", "minimum": 1, "maximum": 4096},
-                    # 驱动检查配置
-                    "driver_check": {"type": "object"},
-                    # 每设备独立配置
-                    "per_device_config": {"type": "object"},
-                    # 异步日志配置
-                    "use_async_logging": {"type": "boolean"},
-                    "async_log_file": {"type": "string"},
-                    "async_log_max_bytes": {"type": "integer", "minimum": 1},
-                    "async_log_backup_count": {"type": "integer", "minimum": 1},
-                    # 非压缩地址检查
-                    "check_uncompressed": {"type": ["boolean", "null"]},
-                    # 私钥生成策略
-                    "key_generation_strategy": {"type": "string"},
-                },
-                "additionalProperties": False,
-            },
-            "performance_monitoring": {
-                "type": "object",
-                "properties": {
-                    "enabled": {"type": "boolean"},
-                    "track_slow_operations": {"type": "boolean"},
-                    "slow_threshold_ms": {"type": "number", "minimum": 0},
-                    "max_records": {"type": "integer", "minimum": 1},
-                    "log_level": {"enum": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]},
-                },
-                "additionalProperties": False,
-            },
-            "crypto": {
-                "type": "object",
-                "properties": {
-                    "backend": {
-                        "enum": [
-                            "auto",
-                            "pure_python",
-                            "pure_python_const_time",
-                            "openssl",
-                            "coincurve",
-                            "ecdsa",
-                        ],
-                    },
-                    "constant_time": {"type": "boolean"},
-                    "verify_checksums": {"type": "boolean"},
-                    "strict_wif_validation": {"type": "boolean"},
-                    # D-2修复: 补充 config.example.json crypto区块字段
-                    "use_gpu": {"type": "boolean"},
-                    "gpu_device_index": {"type": "integer"},
-                    "gpu_batch_size": {"type": "integer", "minimum": 1, "maximum": 16777216},
-                },
-                "additionalProperties": False,
-            },
-            # D-2修复: 补充 config.example.json 中的 monitoring 顶层区块
-            "monitoring": {
-                "type": "object",
-                "properties": {
-                    "enabled": {"type": "boolean"},
-                    "collection_interval": {"type": "integer", "minimum": 1},
-                    "storage_dir": {"type": "string"},
-                    "history_max_size": {"type": "integer", "minimum": 1},
-                    "error_max_size": {"type": "integer", "minimum": 1},
-                    "report_interval": {"type": "integer", "minimum": 1},
-                    "log_level": {"enum": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]},
-                    "enable_memory_monitoring": {"type": "boolean"},
-                    "enable_timeout_monitoring": {"type": "boolean"},
-                    "anomaly_thresholds": {
-                        "type": "object",
-                        "properties": {
-                            "speed": {
-                                "type": "object",
-                                "properties": {
-                                    "min": {"type": "number"},
-                                    "max": {"type": "number"},
-                                },
-                                "additionalProperties": False,
-                            },
-                            "cpu_usage": {
-                                "type": "object",
-                                "properties": {"max": {"type": "number"}},
-                                "additionalProperties": False,
-                            },
-                            "memory_usage": {
-                                "type": "object",
-                                "properties": {"max": {"type": "number"}},
-                                "additionalProperties": False,
-                            },
-                        },
-                        "additionalProperties": False,
-                    },
-                    "auto_cleanup": {
-                        "type": "object",
-                        "properties": {
-                            "enabled": {"type": "boolean"},
-                            "max_age_days": {"type": "integer", "minimum": 1},
-                        },
-                        "additionalProperties": False,
-                    },
-                },
-                "additionalProperties": False,
-            },
-            # i18n 国际化配置节
-            "i18n": {
-                "type": "object",
-                "properties": {
-                    "language": {"type": "string"},
-                    "fallback_language": {"type": "string"},
-                },
-                "additionalProperties": False,
-            },
-            # CFG-2修复: 补充 config.json 中的 engine 区块
-            "engine": {
-                "type": "object",
-                "properties": {
-                    "mode": {"enum": ["random", "sequential", "range", "brute_force"]},
-                    "batch_size": {"type": "integer", "minimum": 1, "maximum": 16777216},
-                    "max_threads": {"type": "integer", "minimum": 1, "maximum": 1024},
-                    "checkpoint_interval": {"type": "integer", "minimum": -1},
-                },
-                "additionalProperties": False,
-            },
-            # CFG-2修复: 补充 config.json 中的 optimization 区块
-            "optimization": {
-                "type": "object",
-                "properties": {
-                    "uint32_workaround": {"type": "boolean"},
-                    "disable_async_transfer": {"type": "boolean"},
-                    "conservative_memory_policy": {"type": "boolean"},
-                    "adaptive_timeout": {"type": "boolean"},
-                },
-                "additionalProperties": False,
-            },
-            # D-2修复: 补充 config.example.json 中的 gui 区块
-            "gui": {
-                "type": "object",
-                "properties": {
-                    "theme": {"type": "string"},
-                    "font": {"type": "string"},
-                    "font_size": {"type": "integer", "minimum": 8, "maximum": 72},
-                    "window_width": {"type": "integer", "minimum": 400},
-                    "window_height": {"type": "integer", "minimum": 300},
-                },
-                "additionalProperties": False,
-            },
-        },
-        "additionalProperties": False,  # 审查修复#3: 顶层也禁止额外属性
-        "patternProperties": {
-            "^_comment": {"type": "string"},  # 允许 _comment / _comment_xxx 文档注解字段
-        },
-    }
+    # ROADMAP #5: CONFIG_SCHEMA 已迁移至 config.schema.json（单一真相源）
+    # 内联字典已删除，由 _get_validator() 从文件加载
+    _CONFIG_SCHEMA_PATH = str(
+        pathlib.Path(__file__).resolve().parent.parent.parent / "config.schema.json"
+    )
 
     DEFAULT_CONFIG = {
+        "version": "5.0.0",
         "engine": {
             "mode": "random",  # 碰撞模式: random, sequential, range, brute_force
             "batch_size": 1048576,  # 批次大小 (1M, Intel Arc A770 最优)
@@ -283,7 +68,7 @@ class ConfigManager:
             "level": "INFO",
             "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
             "file": "logs/collision.log",
-            "max_bytes": 10485760,
+            "max_bytes": LOG_DEFAULT_MAX_BYTES,
             "backup_count": 5,
             "enable_console": True,
             "enable_file": True,
@@ -324,7 +109,7 @@ class ConfigManager:
             # 异步日志配置 (来自 config.example.json)
             "use_async_logging": False,
             "async_log_file": "logs/gpu_async.log",
-            "async_log_max_bytes": 10485760,
+            "async_log_max_bytes": LOG_DEFAULT_MAX_BYTES,
             "async_log_backup_count": 5,
             # 非压缩地址检查
             "check_uncompressed": None,
@@ -379,7 +164,7 @@ class ConfigManager:
     def __init__(self, config_file: str | None = None) -> None:
         """初始化配置管理器
 
-        参数:
+        Args:
             config_file: 配置文件路径，None表示使用默认配置
         """
         self.config_file = config_file
@@ -417,10 +202,10 @@ class ConfigManager:
         """D-2修复: 递归移除所有以 '_comment' 开头的注释键，使 config.example.json
         可直接作为合法配置使用（与 additionalProperties:False 的 JSON Schema 兼容）。
 
-        参数:
+        Args:
             config: 配置字典或任意值
 
-        返回:
+        Returns:
             过滤后的配置字典（不修改原对象）
         """
         if isinstance(config, dict):
@@ -434,7 +219,7 @@ class ConfigManager:
     def load_config(self) -> bool:
         """从文件加载配置（线程安全）
 
-        返回:
+        Returns:
             加载成功返回True，失败返回False
         """
         try:
@@ -473,7 +258,7 @@ class ConfigManager:
         3. 成功重载后通知所有 on_config_changed 回调
         4. 应用过程中异常则回滚到原配置
 
-        返回:
+        Returns:
             重载成功返回 True，失败返回 False
         """
         if not self.config_file:
@@ -524,7 +309,7 @@ class ConfigManager:
         当配置文件通过 reload_config() 成功重载后，所有注册的回调都会被调用。
         回调在触发 reload 的线程中同步执行（后台线程）。
 
-        参数:
+        Args:
             callback: 无参数的可调用对象
         """
         self._change_callbacks.append(callback)
@@ -549,11 +334,11 @@ class ConfigManager:
         - watchdog (事件驱动, 响应快)
         - polling  (定期检查 mtime, 无需外部依赖)
 
-        参数:
+        Args:
             debounce_seconds: 防抖间隔 (秒)，避免连续写入触发多次重载
             poll_interval: 轮询模式下的检查间隔 (秒)，仅 polling 后端使用
 
-        返回:
+        Returns:
             启动成功返回 True
         """
         if not self.config_file:
@@ -600,7 +385,7 @@ class ConfigManager:
     def save_config(self) -> bool:
         """保存配置到文件（线程安全）
 
-        返回:
+        Returns:
             保存成功返回True，失败返回False
         """
         if not self.config_file:
@@ -638,11 +423,11 @@ class ConfigManager:
     def get(self, key: str, default: Any = None) -> Any:
         """获取配置值（线程安全）
 
-        参数:
+        Args:
             key: 配置键，支持点号分隔的路径，如 "collision.max_workers"
             default: 默认值
 
-        返回:
+        Returns:
             配置值
         """
         keys = key.split(".")
@@ -660,11 +445,11 @@ class ConfigManager:
     def set(self, key: str, value: Any) -> bool:
         """设置配置值（线程安全）
 
-        参数:
+        Args:
             key: 配置键，支持点号分隔的路径
             value: 配置值
 
-        返回:
+        Returns:
             设置成功返回True，失败返回False
         """
         keys = key.split(".")
@@ -683,7 +468,7 @@ class ConfigManager:
     def _merge_config(self, base: dict[str, Any], update: dict[str, Any]) -> None:
         """递归合并配置（必须在锁内调用）
 
-        参数:
+        Args:
             base: 基础配置
             update: 更新配置
         """
@@ -696,10 +481,10 @@ class ConfigManager:
     def _deep_copy_config(self, config: dict[str, Any]) -> dict[str, Any]:
         """深拷贝配置字典（避免在写文件时持有锁）
 
-        参数:
+        Args:
             config: 要拷贝的配置字典
 
-        返回:
+        Returns:
             配置字典的深拷贝
         """
         # 一般问题修复: copy 已在文件顶部导入
@@ -710,10 +495,10 @@ class ConfigManager:
 
         优先使用JSON Schema验证（如果可用），否则使用手动验证。
 
-        参数:
+        Args:
             config: 要验证的配置字典，None表示验证当前配置
 
-        返回:
+        Returns:
             验证失败的配置项和错误信息字典
         """
         if config is None:
@@ -729,18 +514,18 @@ class ConfigManager:
     def _validate_with_schema(self, config: dict[str, Any]) -> dict[str, str]:
         """DF-3修复: 使用JSON Schema验证配置
 
-        参数:
+        Args:
             config: 用户配置字典
 
-        返回:
+        Returns:
             错误信息字典，空字典表示验证通过
         """
         if not HAS_JSONSCHEMA:
             return {}  # 没有jsonschema库，返回空
 
         # 优化: 使用缓存的验证器实例，避免每次验证都重新创建
-        # 审查修复#5: 使用类常量Schema，避免重复创建
-        # 审查修复#1: 使用Draft7Validator收集所有错误，而非只捕获第一个
+        # ROADMAP #5: Schema 从 config.schema.json 文件加载
+        # 审查修复#1: 使用 Draft202012Validator 收集所有错误，而非只捕获第一个
         errors = {}
         validator = self._get_validator()
         if validator is None:
@@ -756,14 +541,30 @@ class ConfigManager:
         return errors
 
     @classmethod
-    def _get_validator(cls) -> Optional["Draft7Validator"]:
-        """获取缓存的Schema验证器实例（懒加载，双重检查锁定）"""
+    def _get_validator(cls) -> Optional["Draft202012Validator"]:
+        """获取缓存的Schema验证器实例（懒加载，双重检查锁定）
+
+        从 config.schema.json 文件加载 Schema（ROADMAP #5: 单一真相源）。
+        """
         if cls._cached_validator is None:
             with cls._validator_lock:
                 # 双重检查：持有锁后再次检查
                 if cls._cached_validator is None and HAS_JSONSCHEMA:
-                    cls._cached_validator = Draft7Validator(cls.CONFIG_SCHEMA)
-                    logger.debug("Draft7Validator实例已初始化并缓存")
+                    schema_path = pathlib.Path(cls._CONFIG_SCHEMA_PATH)
+                    if not schema_path.exists():
+                        logger.error("Schema文件不存在: %s", cls._CONFIG_SCHEMA_PATH)
+                        return None
+                    try:
+                        with schema_path.open(encoding="utf-8") as f:
+                            schema = json.load(f)
+                        cls._cached_validator = Draft202012Validator(schema)
+                        logger.debug(
+                            "Draft202012Validator实例已从 %s 初始化并缓存",
+                            cls._CONFIG_SCHEMA_PATH,
+                        )
+                    except Exception as e:
+                        logger.error("加载Schema文件失败: %s", e)
+                        return None
         return cls._cached_validator
 
     @staticmethod
@@ -773,10 +574,10 @@ class ConfigManager:
         在Python中，bool是int的子类，isinstance(True, int)返回True。
         此方法确保只接受真正的布尔值，不接受整数（但JSON解析的True/False是bool类型）。
 
-        参数:
+        Args:
             value: 要检查的值
 
-        返回:
+        Returns:
             如果是严格的布尔值返回True，否则返回False
         """
         # JSON解析的True/False是bool类型，isinstance返回True
@@ -843,7 +644,7 @@ class ConfigManager:
     ) -> int | None:
         """验证正整数配置
 
-        参数:
+        Args:
             name: 字段名（用于错误消息）
             value: 要验证的值
             errors: 错误字典
@@ -921,7 +722,7 @@ class ConfigManager:
     def _validate_log_level(self, value: str, errors: dict[str, str], prefix: str = "") -> str | None:
         """验证日志级别
 
-        参数:
+        Args:
             value: 日志级别字符串
             errors: 错误字典
             prefix: 错误键前缀（如 "logging."）
@@ -946,10 +747,10 @@ class ConfigManager:
 
         v4.3.1: 清理 8 个死代码引用，所有校验路径对齐实际 CONFIG_SCHEMA 结构。
 
-        参数:
+        Args:
             config: 配置字典（嵌套结构，与 CONFIG_SCHEMA 一致）
 
-        返回:
+        Returns:
             错误字典 {字段名: 错误信息}，空字典表示验证通过
         """
         errors: dict[str, str] = {}

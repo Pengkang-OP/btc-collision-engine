@@ -15,34 +15,37 @@ Security:
     python -m src.web.dashboard --host 0.0.0.0 --port 8080 --api-key YOUR_SECRET_KEY
 
 API 端点:
-    GET  /api/status        - 当前运行状态
-    GET  /api/history       - 历史数据 (支持 ?limit=N)
-    GET  /api/errors        - 错误日志 (支持 ?limit=N)
-    GET  /api/report        - 日报告摘要
-    GET  /api/security-audit - 安全审计状态 (已脱敏)
+    GET  /api/v1/status     - 当前运行状态
+    GET  /api/v1/history    - 历史数据 (支持 ?limit=N)
+    GET  /api/v1/errors     - 错误日志 (支持 ?limit=N)
+    GET  /api/v1/report     - 日报告摘要
+    GET  /api/v1/security-audit - 安全审计状态 (已脱敏)
+    GET  /api/*             - 旧路径自动 301 重定向至 /api/v1/*
     GET  /health            - 健康检查 (无需认证)
     GET  /                  - 仪表板 HTML 页面
 """
 
 import argparse
 import json
-import logging
+from ..utils import get_configured_logger
 import os
 import secrets
 import sys
 import time
 from functools import wraps
 from pathlib import Path
+from collections import defaultdict
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from flask import Flask, abort, jsonify, render_template_string, request
+    from flask import Flask, abort, jsonify, redirect, render_template_string, request
 
 try:
     from flask import (
         Flask,
         abort,
         jsonify,
+        redirect,
         render_template_string,
         request,
     )
@@ -56,7 +59,7 @@ except ImportError:
     request: "Any | None" = None  # type: ignore[no-redef]
     abort: "Any | None" = None  # type: ignore[no-redef]
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger(__name__)
 
 # ──────────────────────────────────────────────────────────────────
 # API Key 认证
@@ -89,6 +92,37 @@ def require_auth(f):
             return f(*args, **kwargs)
         if not _validate_api_key():
             abort(401)
+        return f(*args, **kwargs)
+
+    return decorated
+
+
+# ──────────────────────────────────────────────────────────────────
+# API 版本前缀 & 速率限制
+# ──────────────────────────────────────────────────────────────────
+
+API_PREFIX = "/api/v1"
+RATE_LIMIT = 120  # 每分钟允许请求数
+RATE_LIMIT_WINDOW = 60  # 窗口大小（秒）
+_request_history: defaultdict[str, list[float]] = defaultdict(list)
+
+
+def rate_limit(f):
+    """滑动窗口速率限制装饰器（基于客户端 IP + 端点）"""
+
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        client_ip = request.remote_addr or "unknown"
+        endpoint = request.endpoint or "unknown"
+        key = f"{client_ip}:{endpoint}"
+        now = time.time()
+        cutoff = now - RATE_LIMIT_WINDOW
+        _request_history[key] = [t for t in _request_history[key] if t > cutoff]
+        if len(_request_history[key]) >= RATE_LIMIT:
+            return jsonify(
+                {"error": "rate_limit_exceeded", "message": "请求过于频繁，请稍后再试"},
+            ), 429
+        _request_history[key].append(now)
         return f(*args, **kwargs)
 
     return decorated
@@ -507,17 +541,16 @@ def get_security_audit_data(data_dir: Path) -> dict[str, Any]:
         "crypto_backend_message": "",
     }
 
-    # 1. 尝试从 KeyAuditLogger 获取运行内存统计
+    # 1. 尝试从 KeyAuditor 获取运行内存统计
     try:
-        from src.utils.key_audit import get_audit_logger
+        from src.utils.key_audit import KeyAuditor
 
-        audit_logger = get_audit_logger()
-        stats = audit_logger.get_statistics()
-        audit_info["key_audit_active"] = stats.get("total_operations", 0) > 0
-        audit_info["total_key_operations"] = stats.get("total_operations", 0)
-        audit_info["operations_by_type"] = stats.get("operations_by_type", {})
+        audit_logger = KeyAuditor()
+        report = audit_logger.get_report()
+        audit_info["key_audit_active"] = len(report) > 0
+        audit_info["total_key_operations"] = len(report)
     except Exception as e:
-        logger.debug("无法获取 KeyAuditLogger 统计: %s", e)
+        logger.debug("无法获取 KeyAuditor 统计: %s", e)
         audit_info["key_audit_active"] = False
 
     # 2. 读取 key_audit.log（如果有的话）获取最近审计事件
@@ -741,13 +774,15 @@ def create_app(data_dir: Path | None = None, debug: bool = False) -> "Flask":
             generated_at=time.strftime("%Y-%m-%d %H:%M:%S"),
         )
 
-    @app.route("/api/status")
+    @app.route(f"{API_PREFIX}/status")
+    @rate_limit
     @require_auth
     def api_status():
         """API: 当前运行状态"""
         return jsonify(get_current_stats(data_logs_dir))
 
-    @app.route("/api/history")
+    @app.route(f"{API_PREFIX}/history")
+    @rate_limit
     @require_auth
     def api_history():
         """API: 历史数据
@@ -759,7 +794,8 @@ def create_app(data_dir: Path | None = None, debug: bool = False) -> "Flask":
         limit = min(limit, 200)
         return jsonify(get_history(data_logs_dir, limit=limit))
 
-    @app.route("/api/errors")
+    @app.route(f"{API_PREFIX}/errors")
+    @rate_limit
     @require_auth
     def api_errors():
         """API: 错误日志
@@ -771,7 +807,8 @@ def create_app(data_dir: Path | None = None, debug: bool = False) -> "Flask":
         limit = min(limit, 200)
         return jsonify(get_errors(data_logs_dir, limit=limit))
 
-    @app.route("/api/report")
+    @app.route(f"{API_PREFIX}/report")
+    @rate_limit
     @require_auth
     def api_report():
         """API: 日报告摘要"""
@@ -801,7 +838,8 @@ def create_app(data_dir: Path | None = None, debug: bool = False) -> "Flask":
             },
         )
 
-    @app.route("/api/security-audit")
+    @app.route(f"{API_PREFIX}/security-audit")
+    @rate_limit
     @require_auth
     def api_security_audit():
         """API: 安全审计状态（已脱敏，不暴露私钥等敏感信息）
@@ -818,6 +856,11 @@ def create_app(data_dir: Path | None = None, debug: bool = False) -> "Flask":
     def health():
         """健康检查端点"""
         return jsonify({"status": "ok", "timestamp": time.time()})
+
+    @app.route("/api/<path:subpath>")
+    def api_redirect(subpath: str):
+        """旧 /api/* 路径自动 301 重定向至 /api/v1/*"""
+        return redirect(f"{API_PREFIX}/{subpath}"), 301
 
     return app
 
@@ -855,13 +898,14 @@ def run_dashboard(
         "BTC 碰撞引擎 - Web 监控仪表板 v4.2.1",
         f"本地访问: http://127.0.0.1:{port}",
         f"API Key: {auth_status}",
-        "API 端点:",
-        "  GET /api/status         - 当前运行状态",
-        "  GET /api/history        - 历史数据 (?limit=N)",
-        "  GET /api/errors         - 错误日志 (?limit=N)",
-        "  GET /api/report         - 日报告摘要",
-        "  GET /api/security-audit - 安全审计状态",
+        f"API 端点 (v{API_PREFIX.split('/')[-1]}):",
+        f"  GET {API_PREFIX}/status         - 当前运行状态",
+        f"  GET {API_PREFIX}/history        - 历史数据 (?limit=N)",
+        f"  GET {API_PREFIX}/errors         - 错误日志 (?limit=N)",
+        f"  GET {API_PREFIX}/report         - 日报告摘要",
+        f"  GET {API_PREFIX}/security-audit - 安全审计状态",
         "  GET /health             - 健康检查",
+        f"  旧 /api/* 路径自动 301 重定向至 {API_PREFIX}/*",
     )
     logger.info("\n".join(_startup_banner))
 
@@ -883,7 +927,7 @@ def main():
         description="BTC 碰撞引擎 - Web 监控仪表板",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
-示例:
+Example:
   python -m src.web.dashboard                              # 默认 0.0.0.0:8080, 无认证
   python -m src.web.dashboard --port 3000                  # 自定义端口
   python -m src.web.dashboard --host 127.0.0.1             # 仅本地访问

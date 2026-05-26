@@ -4,11 +4,11 @@ Provides unified error log frequency control to prevent log
 flooding.
 """
 
-import logging
+from .logging_config import get_configured_logger
 import time
 from collections.abc import Callable
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger(__name__)
 
 
 class LogThrottle:

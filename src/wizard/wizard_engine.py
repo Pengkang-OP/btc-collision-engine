@@ -4,7 +4,7 @@
 协调各选择器工作，实现完整的交互式引导流程。
 """
 
-import logging
+from ..utils import get_configured_logger
 import sys
 import time
 from collections.abc import Callable
@@ -26,7 +26,7 @@ from .mode_selector import ModeSelector
 from .option_selector import OptionSelector
 from .target_selector import TargetSelector
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger(__name__)
 
 
 class WizardEngine:

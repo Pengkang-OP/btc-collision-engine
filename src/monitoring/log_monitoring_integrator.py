@@ -1,8 +1,8 @@
 """Integration between logging and monitoring systems."""
 
-import logging
+from ..utils import get_configured_logger
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger(__name__)
 
 
 class LogMonitoringIntegrator:

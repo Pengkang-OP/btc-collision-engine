@@ -1,4 +1,5 @@
 {
+  "version": "5.0.0",
   "_comment": "BTC私钥碰撞工具优化配置 - 高性能场景",
   "crypto": {
     "backend": "auto",
@@ -35,6 +36,7 @@
     "async_execution": true,
     "queue_depth": 0,
     "seed_prefetch_size": 256,
+    "key_generation_strategy": "PRNG_SEED",
     "timeout_protection": true,
     "base_timeout_seconds": 30,
     "max_error_retries": 100,

@@ -4,10 +4,10 @@
 import os
 import sys
 
+import pytest
+
 # 禁用pytest的capture插件以避免Python 3.14问题
 os.environ["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = ""
-
-import pytest  # noqa: E402
 
 
 def main():

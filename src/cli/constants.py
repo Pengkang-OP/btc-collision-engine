@@ -13,6 +13,7 @@ DEFAULT_PAGE_SIZE = 20
 # Config file paths
 CONFIG_FILE_NAME = "config.json"
 CONFIG_EXAMPLE_FILE = "config.example.json"
+# 向导标记文件路径（相对项目根目录；调用方需解析为绝对路径）
 WIZARD_MARKER_PATH = ".wizard_completed"
 
 # Required config sections

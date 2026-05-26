@@ -1,6 +1,6 @@
 """memory_pool 边缘覆盖测试 — 补全剩余 7 行缺失"""
 
-import unittest
+import pytest
 from unittest.mock import patch
 
 from src.core.memory_pool import (
@@ -19,7 +19,7 @@ class _DummyObj:
         self.data = None
 
 
-class TestObjectPoolAutoTuneIdleShrink(unittest.TestCase):
+class TestObjectPoolAutoTuneIdleShrink:
     """覆盖 auto_tune 中空闲缩容路径 (lines 334-349)"""
 
     def test_auto_tune_shrink_idle_branch(self):
@@ -31,17 +31,17 @@ class TestObjectPoolAutoTuneIdleShrink(unittest.TestCase):
             objs.append(pool.acquire())
         for o in objs:
             pool.release(o)
-        self.assertGreater(len(pool._pool), 5 * 3)
+        assert len(pool._pool)  >  5 * 3
         pre_size = len(pool._pool)
 
         adjusted = pool.auto_tune(max_memory_mb=1024)
-        self.assertTrue(adjusted)
+        assert adjusted
         # auto_tune 内部使用 del _pool[target:] 缩容到 initial_size
-        self.assertEqual(len(pool._pool), pool._initial_size)
-        self.assertLess(len(pool._pool), pre_size)
+        assert len(pool._pool)  ==  pool._initial_size
+        assert len(pool._pool)  <  pre_size
 
 
-class TestGlobalPoolManagerAutoCleanupEdge(unittest.TestCase):
+class TestGlobalPoolManagerAutoCleanupEdge:
     """覆盖 _auto_cleanup_loop 中 tuned/released > 0 的日志分支 (lines 600-603)"""
 
     def setUp(self):
@@ -74,7 +74,7 @@ class TestGlobalPoolManagerAutoCleanupEdge(unittest.TestCase):
                     mgr._auto_cleanup_loop(0.01)
 
 
-class TestGlobalPoolManagerStopCleanupTimeout(unittest.TestCase):
+class TestGlobalPoolManagerStopCleanupTimeout:
     """覆盖 stop_auto_cleanup 超时警告分支 (line 654)"""
 
     def setUp(self):
@@ -104,7 +104,7 @@ class TestGlobalPoolManagerStopCleanupTimeout(unittest.TestCase):
             mgr._cleanup_state.thread.join(timeout=2.0)
 
 
-class TestECPointPool(unittest.TestCase):
+class TestECPointPool:
     """ECPointPool 覆盖 — 当前未测 acquire(x,y,curve) / release / get_stats"""
 
     def setUp(self):
@@ -119,9 +119,9 @@ class TestECPointPool(unittest.TestCase):
         mgr.initialize()
         pool = mgr.get_ecpoint_pool()
         pt = pool.acquire(x=123, y=456, curve=None)
-        self.assertEqual(pt.x, 123)
-        self.assertEqual(pt.y, 456)
-        self.assertTrue(pt.is_infinity is False)
+        assert pt.x  ==  123
+        assert pt.y  ==  456
+        assert pt.is_infinity is False
 
     def test_ecpoint_pool_acquire_infinity(self):
         """获取无穷远点 (x=None, y=None)"""
@@ -129,7 +129,7 @@ class TestECPointPool(unittest.TestCase):
         mgr.initialize()
         pool = mgr.get_ecpoint_pool()
         pt = pool.acquire(x=None, y=None)
-        self.assertTrue(pt.is_infinity)
+        assert pt.is_infinity
 
     def test_ecpoint_pool_release(self):
         """归还 ECPoint（ECPoint 无 reset 方法，归还后坐标不变）"""
@@ -137,12 +137,12 @@ class TestECPointPool(unittest.TestCase):
         mgr.initialize()
         pool = mgr.get_ecpoint_pool()
         pt = pool.acquire(x=1, y=2)
-        self.assertEqual(pt.x, 1)
-        self.assertEqual(pt.y, 2)
+        assert pt.x  ==  1
+        assert pt.y  ==  2
         pool.release(pt)
         # ECPoint 没有 reset 方法，坐标不变（由 ObjectPool.release 的 hasattr 跳过）
-        self.assertEqual(pt.x, 1)
-        self.assertEqual(pt.y, 2)
+        assert pt.x  ==  1
+        assert pt.y  ==  2
 
     def test_ecpoint_pool_get_stats(self):
         """ECPoint 池统计"""
@@ -150,8 +150,5 @@ class TestECPointPool(unittest.TestCase):
         mgr.initialize()
         pool = mgr.get_ecpoint_pool()
         stats = pool.get_stats()
-        self.assertIn("current_size", stats)
+        assert stats  in  "current_size"
 
-
-if __name__ == "__main__":
-    unittest.main()

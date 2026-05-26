@@ -119,10 +119,10 @@ def _sanitize_error_message(message: str) -> str:
     移除可能泄漏的敏感信息（私钥、WIF、完整地址等），
     同时截断过长消息以避免日志膨胀。
 
-    参数:
+    Args:
         message: 原始错误消息
 
-    返回:
+    Returns:
         脱敏后的错误消息
     """
     import re
@@ -147,10 +147,10 @@ def classify_recoverable_error(error: Exception) -> RecoverableErrorCategory | N
 
     先按错误消息关键字匹配（细粒度），再按异常类型匹配（粗粒度兜底）。
 
-    参数:
+    Args:
         error: 被捕获的异常
 
-    返回:
+    Returns:
         RecoverableErrorCategory 或 None（不可恢复）
     """
     if isinstance(error, (SystemExit, KeyboardInterrupt)):
@@ -181,7 +181,7 @@ def retry_on_error(
 ) -> Callable[[F], F]:
     """带指数退避和抖动的函数重试装饰器
 
-    参数:
+    Args:
         max_retries: 最大重试次数（不含首次调用）
         delay: 初始延迟（秒）
         backoff: 退避因子（每次重试将延迟乘以该因子）
@@ -190,7 +190,7 @@ def retry_on_error(
         recoverable_only: True=仅重试可恢复错误，False=重试所有错误
         on_retry: 重试时的回调函数，签名为(error, attempt, next_delay)
 
-    返回:
+    Returns:
         装饰后的函数
 
     使用示例:
@@ -303,7 +303,7 @@ class FallbackStrategy:
     def execute(self) -> tuple[bool, str | None]:
         """顺序执行降级方案，直到某个成功
 
-        返回:
+        Returns:
             (是否成功, 最终执行的方案标签)
         """
         for label, action in self._fallbacks:
@@ -507,14 +507,14 @@ class ErrorRecoveryManager:
         - 重试耗尽后自动触发降级策略
         - 尊重 disabled_categories 设置
 
-        参数:
+        Args:
             max_retries: 最大重试次数
             delay: 初始延迟
             backoff: 退避因子
             max_delay: 最大延迟
             category: 错误类别（None=自动检测）
 
-        返回:
+        Returns:
             装饰后的函数
         """
         manager = self

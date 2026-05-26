@@ -4,12 +4,12 @@ import json
 import os
 import pathlib
 import tempfile
-import unittest
+import pytest
 
 from src.config.config_manager import ConfigManager
 
 
-class TestConfigManagerAdvanced(unittest.TestCase):
+class TestConfigManagerAdvanced:
     """ConfigManager 高级功能测试 — _validate_manual 验证逻辑"""
 
     def setUp(self):
@@ -22,291 +22,291 @@ class TestConfigManagerAdvanced(unittest.TestCase):
             "logging": {"level": "DEBUG", "_comment_log": "log comment"},
         }
         stripped = ConfigManager._strip_comments(config)
-        self.assertNotIn("_comment", stripped)
-        self.assertIn("collision", stripped)
-        self.assertNotIn("_comment_section", stripped["collision"])
-        self.assertEqual(stripped["collision"]["max_workers"], 8)
-        self.assertNotIn("_comment_log", stripped["logging"])
-        self.assertEqual(stripped["logging"]["level"], "DEBUG")
+        assert stripped  not in  "_comment"
+        assert stripped  in  "collision"
+        assert stripped["collision"]  not in  "_comment_section"
+        assert stripped["collision"]["max_workers"]  ==  8
+        assert stripped["logging"]  not in  "_comment_log"
+        assert stripped["logging"]["level"]  ==  "DEBUG"
 
     def test_strip_comments_non_dict(self):
         result = ConfigManager._strip_comments(42)
-        self.assertEqual(result, 42)
+        assert result  ==  42
         result = ConfigManager._strip_comments("hello")
-        self.assertEqual(result, "hello")
+        assert result  ==  "hello"
 
     def test_is_strict_bool_true_false(self):
-        self.assertTrue(ConfigManager._is_strict_bool(True))
-        self.assertTrue(ConfigManager._is_strict_bool(False))
+        assert ConfigManager._is_strict_bool(True)
+        assert ConfigManager._is_strict_bool(False)
 
     def test_is_strict_bool_int_rejected(self):
-        self.assertFalse(ConfigManager._is_strict_bool(1))
-        self.assertFalse(ConfigManager._is_strict_bool(0))
+        assert not ConfigManager._is_strict_bool(1)
+        assert not ConfigManager._is_strict_bool(0)
 
     def test_is_strict_bool_none_rejected(self):
-        self.assertFalse(ConfigManager._is_strict_bool(None))
+        assert not ConfigManager._is_strict_bool(None)
 
     def test_is_strict_bool_string_rejected(self):
-        self.assertFalse(ConfigManager._is_strict_bool("true"))
+        assert not ConfigManager._is_strict_bool("true")
 
     def test_validate_empty_config(self):
         errors = self.cm._validate_manual({})
-        self.assertEqual(errors, {})
+        assert errors  ==  {}
 
     def test_validate_collision_max_workers_positive(self):
         errors = self.cm._validate_manual({"collision": {"max_workers": 4}})
-        self.assertNotIn("collision.max_workers", errors)
+        assert errors  not in  "collision.max_workers"
 
     def test_validate_collision_max_workers_zero(self):
         errors = self.cm._validate_manual({"collision": {"max_workers": 0}})
-        self.assertIn("collision.max_workers", errors)
+        assert errors  in  "collision.max_workers"
 
     def test_validate_collision_max_workers_negative(self):
         errors = self.cm._validate_manual({"collision": {"max_workers": -1}})
-        self.assertIn("collision.max_workers", errors)
+        assert errors  in  "collision.max_workers"
 
     def test_validate_collision_max_workers_over_limit(self):
         errors = self.cm._validate_manual({"collision": {"max_workers": 9999}})
-        self.assertIn("collision.max_workers", errors)
+        assert errors  in  "collision.max_workers"
 
     def test_validate_collision_progress_interval_valid(self):
         errors = self.cm._validate_manual({"collision": {"progress_interval": 100}})
-        self.assertNotIn("collision.progress_interval", errors)
+        assert errors  not in  "collision.progress_interval"
 
     def test_validate_collision_progress_interval_negative(self):
         errors = self.cm._validate_manual({"collision": {"progress_interval": -1}})
-        self.assertIn("collision.progress_interval", errors)
+        assert errors  in  "collision.progress_interval"
 
     def test_validate_collision_checkpoint_interval_valid(self):
         errors = self.cm._validate_manual({"collision": {"checkpoint_interval": 30}})
-        self.assertNotIn("collision.checkpoint_interval", errors)
+        assert errors  not in  "collision.checkpoint_interval"
 
     def test_validate_collision_dedup_max_size_invalid(self):
         errors = self.cm._validate_manual({"collision": {"dedup_max_size": 0}})
-        self.assertIn("collision.dedup_max_size", errors)
+        assert errors  in  "collision.dedup_max_size"
 
     def test_validate_logging_level_valid(self):
         errors = self.cm._validate_manual({"logging": {"level": "DEBUG"}})
-        self.assertNotIn("logging.level", errors)
+        assert errors  not in  "logging.level"
 
     def test_validate_logging_level_invalid(self):
         errors = self.cm._validate_manual({"logging": {"level": "VERBOSE"}})
-        self.assertIn("logging.level", errors)
+        assert errors  in  "logging.level"
 
     def test_validate_logging_format_valid(self):
         errors = self.cm._validate_manual({"logging": {"format": "%(message)s"}})
-        self.assertNotIn("logging.format", errors)
+        assert errors  not in  "logging.format"
 
     def test_validate_logging_format_invalid(self):
         errors = self.cm._validate_manual({"logging": {"format": 123}})
-        self.assertIn("logging.format", errors)
+        assert errors  in  "logging.format"
 
     def test_validate_logging_file_valid(self):
         errors = self.cm._validate_manual({"logging": {"file": "app.log"}})
-        self.assertNotIn("logging.file", errors)
+        assert errors  not in  "logging.file"
 
     def test_validate_logging_file_invalid(self):
         errors = self.cm._validate_manual({"logging": {"file": 456}})
-        self.assertIn("logging.file", errors)
+        assert errors  in  "logging.file"
 
     def test_validate_logging_max_bytes_valid(self):
         errors = self.cm._validate_manual({"logging": {"max_bytes": 1048576}})
-        self.assertNotIn("logging.max_bytes", errors)
+        assert errors  not in  "logging.max_bytes"
 
     def test_validate_logging_max_bytes_invalid(self):
         errors = self.cm._validate_manual({"logging": {"max_bytes": -1}})
-        self.assertIn("logging.max_bytes", errors)
+        assert errors  in  "logging.max_bytes"
 
     def test_validate_logging_backup_count_valid(self):
         errors = self.cm._validate_manual({"logging": {"backup_count": 5}})
-        self.assertNotIn("logging.backup_count", errors)
+        assert errors  not in  "logging.backup_count"
 
     def test_validate_logging_backup_count_negative(self):
         errors = self.cm._validate_manual({"logging": {"backup_count": -1}})
-        self.assertIn("logging.backup_count", errors)
+        assert errors  in  "logging.backup_count"
 
     def test_validate_logging_enable_console_bool(self):
         errors = self.cm._validate_manual({"logging": {"enable_console": True}})
-        self.assertNotIn("logging.enable_console", errors)
+        assert errors  not in  "logging.enable_console"
 
     def test_validate_logging_enable_console_int(self):
         errors = self.cm._validate_manual({"logging": {"enable_console": 1}})
-        self.assertIn("logging.enable_console", errors)
+        assert errors  in  "logging.enable_console"
 
     def test_validate_logging_enable_file_bool(self):
         errors = self.cm._validate_manual({"logging": {"enable_file": False}})
-        self.assertNotIn("logging.enable_file", errors)
+        assert errors  not in  "logging.enable_file"
 
     def test_validate_logging_enable_file_int(self):
         errors = self.cm._validate_manual({"logging": {"enable_file": 0}})
-        self.assertIn("logging.enable_file", errors)
+        assert errors  in  "logging.enable_file"
 
     def test_validate_logging_rotation_type_valid(self):
         errors = self.cm._validate_manual({"logging": {"rotation_type": "size"}})
-        self.assertNotIn("logging.rotation_type", errors)
+        assert errors  not in  "logging.rotation_type"
 
     def test_validate_logging_rotation_type_invalid(self):
         errors = self.cm._validate_manual({"logging": {"rotation_type": "daily"}})
-        self.assertIn("logging.rotation_type", errors)
+        assert errors  in  "logging.rotation_type"
 
     def test_validate_logging_rotation_when_valid(self):
         errors = self.cm._validate_manual({"logging": {"rotation_when": "midnight"}})
-        self.assertNotIn("logging.rotation_when", errors)
+        assert errors  not in  "logging.rotation_when"
 
     def test_validate_logging_rotation_when_invalid(self):
         errors = self.cm._validate_manual({"logging": {"rotation_when": 12345}})
-        self.assertIn("logging.rotation_when", errors)
+        assert errors  in  "logging.rotation_when"
 
     def test_validate_logging_rotation_interval_valid(self):
         errors = self.cm._validate_manual({"logging": {"rotation_interval": 1}})
-        self.assertNotIn("logging.rotation_interval", errors)
+        assert errors  not in  "logging.rotation_interval"
 
     def test_validate_logging_rotation_interval_invalid(self):
         errors = self.cm._validate_manual({"logging": {"rotation_interval": 0}})
-        self.assertIn("logging.rotation_interval", errors)
+        assert errors  in  "logging.rotation_interval"
 
     def test_validate_logging_compress_backups_bool(self):
         errors = self.cm._validate_manual({"logging": {"compress_backups": True}})
-        self.assertNotIn("logging.compress_backups", errors)
+        assert errors  not in  "logging.compress_backups"
 
     def test_validate_logging_compress_backups_int(self):
         errors = self.cm._validate_manual({"logging": {"compress_backups": 1}})
-        self.assertIn("logging.compress_backups", errors)
+        assert errors  in  "logging.compress_backups"
 
     def test_validate_gpu_batch_size_valid(self):
         errors = self.cm._validate_manual({"gpu": {"batch_size": 65536}})
-        self.assertNotIn("gpu.batch_size", errors)
+        assert errors  not in  "gpu.batch_size"
 
     def test_validate_gpu_batch_size_invalid(self):
         errors = self.cm._validate_manual({"gpu": {"batch_size": 0}})
-        self.assertIn("gpu.batch_size", errors)
+        assert errors  in  "gpu.batch_size"
 
     def test_validate_gpu_batch_size_over_limit(self):
         errors = self.cm._validate_manual({"gpu": {"batch_size": 99999999}})
-        self.assertIn("gpu.batch_size", errors)
+        assert errors  in  "gpu.batch_size"
 
     def test_validate_gpu_device_index_valid(self):
         errors = self.cm._validate_manual({"gpu": {"device_index": 0}})
-        self.assertNotIn("gpu.device_index", errors)
+        assert errors  not in  "gpu.device_index"
 
     def test_validate_gpu_device_index_invalid(self):
         errors = self.cm._validate_manual({"gpu": {"device_index": "zero"}})
-        self.assertIn("gpu.device_index", errors)
+        assert errors  in  "gpu.device_index"
 
     def test_validate_gpu_memory_ratio_valid(self):
         errors = self.cm._validate_manual({"gpu": {"memory_usage_ratio": 0.5}})
-        self.assertNotIn("gpu.memory_usage_ratio", errors)
+        assert errors  not in  "gpu.memory_usage_ratio"
 
     def test_validate_gpu_memory_ratio_zero(self):
         errors = self.cm._validate_manual({"gpu": {"memory_usage_ratio": 0}})
-        self.assertIn("gpu.memory_usage_ratio", errors)
+        assert errors  in  "gpu.memory_usage_ratio"
 
     def test_validate_gpu_memory_ratio_negative(self):
         errors = self.cm._validate_manual({"gpu": {"memory_usage_ratio": -0.5}})
-        self.assertIn("gpu.memory_usage_ratio", errors)
+        assert errors  in  "gpu.memory_usage_ratio"
 
     def test_validate_gpu_memory_ratio_over_one(self):
         errors = self.cm._validate_manual({"gpu": {"memory_usage_ratio": 1.5}})
-        self.assertIn("gpu.memory_usage_ratio", errors)
+        assert errors  in  "gpu.memory_usage_ratio"
 
     def test_validate_gpu_use_gpu_bool(self):
         errors = self.cm._validate_manual({"gpu": {"use_gpu": True}})
-        self.assertNotIn("gpu.use_gpu", errors)
+        assert errors  not in  "gpu.use_gpu"
 
     def test_validate_gpu_use_gpu_int(self):
         errors = self.cm._validate_manual({"gpu": {"use_gpu": 1}})
-        self.assertIn("gpu.use_gpu", errors)
+        assert errors  in  "gpu.use_gpu"
 
     def test_validate_gpu_auto_detect_bool(self):
         errors = self.cm._validate_manual({"gpu": {"auto_detect": False}})
-        self.assertNotIn("gpu.auto_detect", errors)
+        assert errors  not in  "gpu.auto_detect"
 
     def test_validate_gpu_auto_detect_int(self):
         errors = self.cm._validate_manual({"gpu": {"auto_detect": 0}})
-        self.assertIn("gpu.auto_detect", errors)
+        assert errors  in  "gpu.auto_detect"
 
     def test_validate_gpu_vendor_opts_bool(self):
         errors = self.cm._validate_manual({"gpu": {"enable_vendor_optimizations": True}})
-        self.assertNotIn("gpu.enable_vendor_optimizations", errors)
+        assert errors  not in  "gpu.enable_vendor_optimizations"
 
     def test_validate_perf_enabled_bool(self):
         errors = self.cm._validate_manual({"performance_monitoring": {"enabled": True}})
-        self.assertNotIn("performance_monitoring.enabled", errors)
+        assert errors  not in  "performance_monitoring.enabled"
 
     def test_validate_perf_enabled_int(self):
         errors = self.cm._validate_manual({"performance_monitoring": {"enabled": 1}})
-        self.assertIn("performance_monitoring.enabled", errors)
+        assert errors  in  "performance_monitoring.enabled"
 
     def test_validate_perf_track_slow_bool(self):
         errors = self.cm._validate_manual({"performance_monitoring": {"track_slow_operations": False}})
-        self.assertNotIn("performance_monitoring.track_slow_operations", errors)
+        assert errors  not in  "performance_monitoring.track_slow_operations"
 
     def test_validate_perf_threshold_valid(self):
         errors = self.cm._validate_manual({"performance_monitoring": {"slow_threshold_ms": 500}})
-        self.assertNotIn("performance_monitoring.slow_threshold_ms", errors)
+        assert errors  not in  "performance_monitoring.slow_threshold_ms"
 
     def test_validate_perf_threshold_negative(self):
         errors = self.cm._validate_manual({"performance_monitoring": {"slow_threshold_ms": -1}})
-        self.assertIn("performance_monitoring.slow_threshold_ms", errors)
+        assert errors  in  "performance_monitoring.slow_threshold_ms"
 
     def test_validate_perf_max_records_valid(self):
         errors = self.cm._validate_manual({"performance_monitoring": {"max_records": 1000}})
-        self.assertNotIn("performance_monitoring.max_records", errors)
+        assert errors  not in  "performance_monitoring.max_records"
 
     def test_validate_perf_max_records_invalid(self):
         errors = self.cm._validate_manual({"performance_monitoring": {"max_records": 0}})
-        self.assertIn("performance_monitoring.max_records", errors)
+        assert errors  in  "performance_monitoring.max_records"
 
     def test_validate_perf_log_level_valid(self):
         errors = self.cm._validate_manual({"performance_monitoring": {"log_level": "WARNING"}})
-        self.assertNotIn("performance_monitoring.log_level", errors)
+        assert errors  not in  "performance_monitoring.log_level"
 
     def test_validate_perf_log_level_invalid(self):
         errors = self.cm._validate_manual({"performance_monitoring": {"log_level": "FATAL"}})
-        self.assertIn("performance_monitoring.log_level", errors)
+        assert errors  in  "performance_monitoring.log_level"
 
     def test_validate_crypto_backend_valid(self):
         errors = self.cm._validate_manual({"crypto": {"backend": "coincurve"}})
-        self.assertNotIn("crypto.backend", errors)
+        assert errors  not in  "crypto.backend"
 
     def test_validate_crypto_backend_invalid(self):
         errors = self.cm._validate_manual({"crypto": {"backend": "bitcoinj"}})
-        self.assertIn("crypto.backend", errors)
+        assert errors  in  "crypto.backend"
 
     def test_validate_crypto_constant_time_bool(self):
         errors = self.cm._validate_manual({"crypto": {"constant_time": True}})
-        self.assertNotIn("crypto.constant_time", errors)
+        assert errors  not in  "crypto.constant_time"
 
     def test_validate_crypto_constant_time_int(self):
         errors = self.cm._validate_manual({"crypto": {"constant_time": 0}})
-        self.assertIn("crypto.constant_time", errors)
+        assert errors  in  "crypto.constant_time"
 
     def test_validate_crypto_verify_checksums_bool(self):
         errors = self.cm._validate_manual({"crypto": {"verify_checksums": False}})
-        self.assertNotIn("crypto.verify_checksums", errors)
+        assert errors  not in  "crypto.verify_checksums"
 
     def test_validate_crypto_verify_checksums_int(self):
         errors = self.cm._validate_manual({"crypto": {"verify_checksums": 1}})
-        self.assertIn("crypto.verify_checksums", errors)
+        assert errors  in  "crypto.verify_checksums"
 
     def test_validate_crypto_strict_wif_bool(self):
         errors = self.cm._validate_manual({"crypto": {"strict_wif_validation": False}})
-        self.assertNotIn("crypto.strict_wif_validation", errors)
+        assert errors  not in  "crypto.strict_wif_validation"
 
     def test_validate_crypto_strict_wif_int(self):
         errors = self.cm._validate_manual({"crypto": {"strict_wif_validation": 1}})
-        self.assertIn("crypto.strict_wif_validation", errors)
+        assert errors  in  "crypto.strict_wif_validation"
 
     def test_validate_size_rotation_needs_max_bytes(self):
         errors = self.cm._validate_manual({"logging": {"rotation_type": "size"}})
-        self.assertIn("logging.max_bytes", errors)
+        assert errors  in  "logging.max_bytes"
 
     def test_validate_time_rotation_needs_rotation_when(self):
         errors = self.cm._validate_manual({"logging": {"rotation_type": "time"}})
-        self.assertIn("logging.rotation_when", errors)
+        assert errors  in  "logging.rotation_when"
 
 
-class TestConfigManagerLifecycle(unittest.TestCase):
+class TestConfigManagerLifecycle:
     """ConfigManager 生命周期测试"""
 
     def setUp(self):
@@ -314,22 +314,22 @@ class TestConfigManagerLifecycle(unittest.TestCase):
 
     def test_init_no_file_uses_defaults(self):
         cm = ConfigManager()
-        self.assertIsNone(cm.config_file)
-        self.assertEqual(cm.get("collision.progress_interval"), 1000)
+        assert cm.config_file is None
+        assert cm.get("collision.progress_interval")  ==  1000
 
     def test_init_with_file_that_doesnt_exist(self):
         cm = ConfigManager(config_file="/nonexistent/config.json")
-        self.assertEqual(cm.get("collision.progress_interval"), 1000)
+        assert cm.get("collision.progress_interval")  ==  1000
 
     def test_load_config_no_file(self):
         cm = ConfigManager()
         result = cm.load_config()
-        self.assertFalse(result)
+        assert not result
 
     def test_save_config_no_file(self):
         cm = ConfigManager()
         result = cm.save_config()
-        self.assertFalse(result)
+        assert not result
 
     def test_on_config_changed(self):
         called = []
@@ -339,7 +339,7 @@ class TestConfigManagerLifecycle(unittest.TestCase):
 
         self.cm.on_config_changed(callback)
         self.cm._notify_change_callbacks()
-        self.assertEqual(len(called), 1)
+        assert len(called)  ==  1
 
     def test_on_config_changed_multiple(self):
         results = []
@@ -353,7 +353,7 @@ class TestConfigManagerLifecycle(unittest.TestCase):
         self.cm.on_config_changed(cb1)
         self.cm.on_config_changed(cb2)
         self.cm._notify_change_callbacks()
-        self.assertEqual(results, [1, 2])
+        assert results  ==  [1, 2]
 
     def test_on_config_changed_exception_doesnt_block(self):
         results = []
@@ -367,17 +367,17 @@ class TestConfigManagerLifecycle(unittest.TestCase):
         self.cm.on_config_changed(bad_cb)
         self.cm.on_config_changed(good_cb)
         self.cm._notify_change_callbacks()
-        self.assertEqual(results, [1])
+        assert results  ==  [1]
 
     def test_reload_config_no_file(self):
         cm = ConfigManager()
         result = cm.reload_config()
-        self.assertFalse(result)
+        assert not result
 
     def test_start_watching_no_file(self):
         cm = ConfigManager()
         result = cm.start_watching()
-        self.assertFalse(result)
+        assert not result
 
     def test_stop_watching_no_watcher(self):
         cm = ConfigManager()
@@ -385,40 +385,40 @@ class TestConfigManagerLifecycle(unittest.TestCase):
 
     def test_get_nonexistent_key(self):
         result = self.cm.get("nonexistent.key")
-        self.assertIsNone(result)
+        assert result is None
 
     def test_get_with_default(self):
         result = self.cm.get("nonexistent.key", "default_value")
-        self.assertEqual(result, "default_value")
+        assert result  ==  "default_value"
 
     def test_get_partial_path(self):
         result = self.cm.get("collision.nonexistent", 42)
-        self.assertEqual(result, 42)
+        assert result  ==  42
 
     def test_set_and_get(self):
         self.cm.set("collision.max_workers", 16)
-        self.assertEqual(self.cm.get("collision.max_workers"), 16)
+        assert self.cm.get("collision.max_workers")  ==  16
 
     def test_set_nested_key(self):
         self.cm.set("custom.section.key", "value")
-        self.assertEqual(self.cm.get("custom.section.key"), "value")
+        assert self.cm.get("custom.section.key")  ==  "value"
 
     def test_validate_with_schema_valid(self):
         config = {"collision": {"max_workers": 8}}
         errors = self.cm.validate(config)
-        self.assertEqual(errors, {})
+        assert errors  ==  {}
 
     def test_validate_with_schema_invalid_type(self):
         config = {"collision": {"max_workers": "not_a_number"}}
         errors = self.cm.validate(config)
-        self.assertTrue(len(errors) > 0)
+        assert len(errors) > 0
 
     def test_validate_no_config_uses_current(self):
         errors = self.cm.validate()
-        self.assertEqual(errors, {})
+        assert errors  ==  {}
 
 
-class TestConfigManagerWithTempFile(unittest.TestCase):
+class TestConfigManagerWithTempFile:
     """ConfigManager 文件操作测试"""
 
     def setUp(self):
@@ -436,17 +436,17 @@ class TestConfigManagerWithTempFile(unittest.TestCase):
 
         cm = ConfigManager(config_file=self.tmpfile)
         cm.load_config()
-        self.assertEqual(cm.get("collision.max_workers"), 32)
+        assert cm.get("collision.max_workers")  ==  32
 
     def test_save_config_to_file(self):
         cm = ConfigManager(config_file=self.tmpfile)
         cm.set("collision.max_workers", 64)
         result = cm.save_config()
-        self.assertTrue(result)
+        assert result
 
         cm2 = ConfigManager(config_file=self.tmpfile)
         cm2.load_config()
-        self.assertEqual(cm2.get("collision.max_workers"), 64)
+        assert cm2.get("collision.max_workers")  ==  64
 
     def test_load_config_with_comments(self):
         config_with_comments = {
@@ -458,8 +458,8 @@ class TestConfigManagerWithTempFile(unittest.TestCase):
 
         cm = ConfigManager(config_file=self.tmpfile)
         result = cm.load_config()
-        self.assertTrue(result)
-        self.assertEqual(cm.get("collision.max_workers"), 16)
+        assert result
+        assert cm.get("collision.max_workers")  ==  16
 
     def test_reload_config_file(self):
         with pathlib.Path(self.tmpfile).open("w") as f:
@@ -467,14 +467,14 @@ class TestConfigManagerWithTempFile(unittest.TestCase):
 
         cm = ConfigManager(config_file=self.tmpfile)
         cm.load_config()
-        self.assertEqual(cm.get("collision.max_workers"), 8)
+        assert cm.get("collision.max_workers")  ==  8
 
         with pathlib.Path(self.tmpfile).open("w") as f:
             json.dump({"collision": {"max_workers": 16}}, f)
 
         result = cm.reload_config()
-        self.assertTrue(result)
-        self.assertEqual(cm.get("collision.max_workers"), 16)
+        assert result
+        assert cm.get("collision.max_workers")  ==  16
 
 
 if __name__ == "__main__":

@@ -297,7 +297,7 @@ jobs:
 
       - name: 检查Schema同步
         run: |
-          python scripts/check_schema_sync.py
+          python scripts/dev/check_schema_sync.py
 ```
 
 ### 5.2 Schema同步检查脚本
@@ -445,7 +445,7 @@ print(json.dumps(cm.config, indent=2))
 
 ```
 A: 使用默认配置:
-   python main.py --use-default-config
+   python key_collision_cli.py --use-default-config
 
    或从备份恢复:
    cp config.json.backup config.json

@@ -281,7 +281,7 @@ class GPUPerformanceMonitor:
             try:
                 pynvml.nvmlInit()
                 self._pynvml_initialized = True
-                logger.info("NVIDIA GPU监控已初始化 (pynvml)")
+                logger.debug("NVIDIA GPU监控已初始化 (pynvml)")
 
                 # 尝试获取设备句柄
                 try:
@@ -311,7 +311,7 @@ class GPUPerformanceMonitor:
         ) and INTEL_GPU_MONITORING_AVAILABLE:
             try:
                 self._intel_initialized = True
-                logger.info("Intel Arc GPU监控已初始化")
+                logger.debug("Intel Arc GPU监控已初始化")
 
                 # 检测Intel GPU索引
                 if "Intel(R) Arc(TM)" in self._device_name:
@@ -327,7 +327,7 @@ class GPUPerformanceMonitor:
         elif "amd" in vendor or "radeon" in self._device_name.lower():
             try:
                 self._amd_initialized = True
-                logger.info("AMD GPU监控已初始化 (占位模式, 实时数据需 ROCm-SMI)")
+                logger.debug("AMD GPU监控已初始化 (占位模式, 需 ROCm-SMI)")
 
                 # AMD GPU 典型规格 (RX 7900 XTX / RX 6900 XT 等)
                 # 生产环境应使用 ROCm-SMI (rocm-smi) 获取实时数据
@@ -1057,12 +1057,19 @@ class GPUPerformanceMonitor:
 
 
 # 全局GPU性能监控器实例
+# 线程安全：_monitor_lock 双重检查锁定模式确保并发安全
+# 外部模块级缓存（如 engine.py 的 _gpu_performance_monitor）仅存储引用，
+# 不涉及竞态条件，GIL 保护下安全。
 _global_gpu_monitor: GPUPerformanceMonitor | None = None
 _monitor_lock = threading.Lock()
 
 
 def get_gpu_performance_monitor(engine: Any = None) -> GPUPerformanceMonitor:
-    """获取全局GPU性能监控器"""
+    """获取全局GPU性能监控器
+
+    线程安全：使用 _monitor_lock 双重检查锁定，确保并发安全。
+    外部调用方（如 engine.py 的 _get_gpu_monitor）可安全缓存返回的引用。
+    """
     global _global_gpu_monitor
 
     with _monitor_lock:

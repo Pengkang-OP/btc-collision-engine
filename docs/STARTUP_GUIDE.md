@@ -332,7 +332,7 @@ send_to_monitoring_system(statistics)
 
 1. 日志文件: `data_logs/error_log.json`
 2. 系统日志: 控制台输出
-3. GPU诊断: `python scripts/diagnose.py`
+3. GPU诊断: `python scripts/dev/diagnose.py`
 
 ## 许可证
 

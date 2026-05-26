@@ -1,0 +1,16 @@
+include README.md
+include LICENSE
+include CHANGELOG.md
+include CONTRIBUTING.md
+include SECURITY.md
+include pyproject.toml
+include requirements*.txt
+include config.example.json
+include config.schema.json
+recursive-include src/i18n/locales *.json
+recursive-include src/gpu/pyopencl_stubs *.pyi
+recursive-exclude tests *
+recursive-exclude benchmarks *
+recursive-exclude scripts *
+recursive-exclude tools *
+recursive-exclude docs *

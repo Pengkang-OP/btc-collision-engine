@@ -32,7 +32,7 @@ class AddressMatcher:
     - bloom_filter: 目标地址 >= 10万(节省98%内存,极低误判率)
     - trie: 需要前缀匹配场景
 
-    示例:
+    Example:
         >>> targets = {'1A1z...', '1B2x...'}
         >>> matcher = AddressMatcher(strategy='hash_set', targets=targets)
         >>> matcher.is_match('1A1z...')
@@ -48,7 +48,7 @@ class AddressMatcher:
     ) -> None:
         """初始化地址匹配引擎
 
-        参数:
+        Args:
             strategy: 匹配策略,可选 'hash_set', 'bloom_filter', 'trie'
             targets: 目标地址集合
             bloom_capacity: 布隆过滤器容量(仅bloom_filter策略)
@@ -121,10 +121,10 @@ class AddressMatcher:
     def is_match(self, address: str) -> bool:
         """检查地址是否匹配目标集
 
-        参数:
+        Args:
             address: 待检查的地址
 
-        返回:
+        Returns:
             True表示匹配,False表示不匹配
         """
         # 输入验证
@@ -163,7 +163,7 @@ class AddressMatcher:
     def add_target(self, address: str) -> None:
         """添加单个目标地址
 
-        参数:
+        Args:
             address: 目标地址
         """
         # 输入验证
@@ -193,7 +193,7 @@ class AddressMatcher:
     def add_targets(self, addresses: set[str]) -> None:
         """批量添加目标地址
 
-        参数:
+        Args:
             addresses: 目标地址集合
         """
         # 输入验证和转换
@@ -229,10 +229,10 @@ class AddressMatcher:
 
         注意: 布隆过滤器不支持删除操作
 
-        参数:
+        Args:
             address: 要移除的地址
 
-        返回:
+        Returns:
             True表示成功移除,False表示地址不存在
         """
         # 标准化地址为小写
@@ -259,7 +259,7 @@ class AddressMatcher:
     def get_stats(self) -> dict[str, Any]:
         """获取匹配引擎统计信息
 
-        返回:
+        Returns:
             包含统计信息的字典
         """
         with self._lock:

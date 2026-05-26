@@ -1,10 +1,12 @@
 """CLI input validation utilities."""
 
 import argparse
-from contextlib import suppress
+from ..utils import get_configured_logger
 from pathlib import Path
 
 from .output import CLIOutput
+
+logger = get_configured_logger(__name__)
 
 
 def validate_args(args: argparse.Namespace) -> bool:  # noqa: C901
@@ -22,6 +24,17 @@ def validate_args(args: argparse.Namespace) -> bool:  # noqa: C901
     mode = getattr(args, "mode", "random")
     if mode not in ("random", "range", "brute_force"):
         output.error(f"无效模式: {mode}，有效值: random, range, brute_force")
+        return False
+
+    # ── GPU 参数互斥校验 ────────────────────────────────────────────────
+    # 注意: --use-gpu 与 --multi-gpu 已在 argparse 中通过
+    # add_mutually_exclusive_group 保证互斥。
+    # --gpu-count 与 --gpu-indices 无 argparse 级互斥，需手动校验。
+    gpu_count = getattr(args, "gpu_count", -1)
+    gpu_indices = getattr(args, "gpu_indices", None)
+    if gpu_count != -1 and gpu_indices is not None:
+        output.error("--gpu-count 与 --gpu-indices 不能同时使用")
+        output.hint("--gpu-count: 自动选择前 N 个 GPU｜--gpu-indices: 手动指定 GPU 索引")
         return False
 
     # ── Duration validation (must be >= 0, 0 = indefinite) ──────────────────
@@ -96,36 +109,39 @@ def validate_args(args: argparse.Namespace) -> bool:  # noqa: C901
 
 
 def validate_file_path(file_path: str) -> bool:
-    """Security check: validate file path for path traversal and existence."""
+    """Validate file path format and accessibility (allowing arbitrary locations).
+
+    Users may place target files anywhere on disk (Desktop, Downloads, etc.).
+    Only blocks obviously malformed paths and warns about non-existent files.
+    """
     output = CLIOutput.get_instance()
 
     if not file_path or not isinstance(file_path, str):
-        output.error("无效的文件路径")
+        output.error("Invalid file path")
         return False
 
-    # Convert to absolute path and resolve
+    # Convert to absolute path and resolve (handles .. and symlinks)
     try:
         resolved = Path(file_path).resolve()
     except (OSError, RuntimeError):
-        output.error(f"无法解析文件路径: {file_path}")
+        output.error("Cannot resolve file path: %s", file_path)
         return False
 
-    # Check for path traversal attempts
-    project_root = _get_project_root()
-    if project_root:
-        with suppress(ValueError):
-            resolved.relative_to(project_root)
+    # Warn but do NOT block if file doesn't exist (caller handles it separately)
+    if not resolved.exists():
+        output.warning("File not found: %s (will be checked by caller)", file_path)
 
     return True
 
 
 def _get_project_root() -> Path | None:
-    """Get the project root directory."""
+    """Get the project root directory (reserved for future use)."""
     try:
         from ._path_setup import _get_project_root as _pr
 
         return Path(_pr()).resolve()
-    except Exception:
+    except Exception as e:
+        logger.debug("Failed to get project root: %s", e)
         return None
 
 

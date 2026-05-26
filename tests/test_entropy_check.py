@@ -9,26 +9,26 @@ from unittest.mock import MagicMock, Mock, patch
 from src.core.key_generator import SecureKeyGenerator
 
 
-class TestEntropyHealthCheck(unittest.TestCase):
+class TestEntropyHealthCheck:
     """熵池健康检查测试"""
 
     def test_entropy_check_enabled_by_default(self):
         """测试熵池检查默认启用"""
         generator = SecureKeyGenerator()
-        self.assertTrue(generator.entropy_check_enabled)
-        self.assertEqual(generator.min_entropy_bits, 1000)
+        assert generator.entropy_check_enabled
+        assert generator.min_entropy_bits == 1000
 
     def test_entropy_check_can_be_disabled(self):
         """测试熵池检查可以禁用"""
         config = {"entropy_check_enabled": False}
         generator = SecureKeyGenerator(config)
-        self.assertFalse(generator.entropy_check_enabled)
+        assert not generator.entropy_check_enabled
 
     def test_custom_min_entropy_bits(self):
         """测试自定义最小熵值阈值"""
         config = {"min_entropy_bits": 2000}
         generator = SecureKeyGenerator(config)
-        self.assertEqual(generator.min_entropy_bits, 2000)
+        assert generator.min_entropy_bits == 2000
 
     @patch("pathlib.Path.exists")
     @patch("pathlib.Path.open")
@@ -46,9 +46,9 @@ class TestEntropyHealthCheck(unittest.TestCase):
         result = generator._check_entropy_health()
 
         # 应该返回False（熵池不健康）
-        self.assertFalse(result)
+        assert not result
         # 应该记录低熵次数
-        self.assertGreater(generator.stats["low_entropy_count"], 0)
+        assert generator.stats["low_entropy_count"] > 0
 
     @patch("pathlib.Path.exists")
     @patch("pathlib.Path.open")
@@ -65,8 +65,8 @@ class TestEntropyHealthCheck(unittest.TestCase):
         result = generator._check_entropy_health()
 
         # 应该返回True（熵池健康）
-        self.assertTrue(result)
-        self.assertEqual(generator.stats["low_entropy_count"], 0)
+        assert result
+        assert generator.stats["low_entropy_count"] == 0
 
     @patch("pathlib.Path.exists")
     def test_windows_no_entropy_check(self, mock_exists):
@@ -78,7 +78,7 @@ class TestEntropyHealthCheck(unittest.TestCase):
         result = generator._check_entropy_health()
 
         # 应该返回True（假设健康）
-        self.assertTrue(result)
+        assert result
 
     def test_entropy_check_disabled_skips_check(self):
         """测试禁用熵池检查时跳过检查"""
@@ -94,10 +94,10 @@ class TestEntropyHealthCheck(unittest.TestCase):
             mock_open.return_value = mock_file
 
             result = generator._check_entropy_health()
-            self.assertTrue(result)
+            assert result
 
 
-class TestKeyGenerationWithEntropyCheck(unittest.TestCase):
+class TestKeyGenerationWithEntropyCheck:
     """密钥生成与熵池检查集成测试"""
 
     @patch.object(SecureKeyGenerator, "_check_entropy_health")
@@ -109,9 +109,9 @@ class TestKeyGenerationWithEntropyCheck(unittest.TestCase):
         keys = generator.generate_batch(10)
 
         # 应该成功生成10个密钥
-        self.assertEqual(len(keys), 10)
+        assert len(keys) == 10
         for key in keys:
-            self.assertEqual(len(key), 32)
+            assert len(key) == 32
 
     @patch.object(SecureKeyGenerator, "_check_entropy_health")
     def test_generate_batch_with_low_entropy(self, mock_check):
@@ -122,7 +122,7 @@ class TestKeyGenerationWithEntropyCheck(unittest.TestCase):
         keys = generator.generate_batch(10)
 
         # 仍然应该生成密钥（不阻塞）
-        self.assertEqual(len(keys), 10)
+        assert len(keys) == 10
 
     def test_generate_batch_validates_keys(self):
         """测试生成的密钥有效性"""
@@ -131,14 +131,14 @@ class TestKeyGenerationWithEntropyCheck(unittest.TestCase):
 
         # 所有密钥都应该有效
         for key in keys:
-            self.assertEqual(len(key), 32)
+            assert len(key) == 32
             key_int = int.from_bytes(key, "big")
             # 验证范围: 1 <= k < n
-            self.assertGreaterEqual(key_int, 1)
-            self.assertLess(key_int, 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141)
+            assert key_int >= 1
+            assert key_int < 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
 
 
-class TestEntropyStatistics(unittest.TestCase):
+class TestEntropyStatistics:
     """熵池统计测试"""
 
     def test_statistics_include_entropy_info(self):
@@ -149,10 +149,10 @@ class TestEntropyStatistics(unittest.TestCase):
         stats = generator.get_statistics()
 
         # 应该包含熵池统计
-        self.assertIn("entropy_check_enabled", stats)
-        self.assertIn("min_entropy_bits", stats)
-        self.assertIn("low_entropy_warnings", stats)
-        self.assertIn("entropy_checks", stats)
+        assert "entropy_check_enabled" in stats
+        assert "min_entropy_bits" in stats
+        assert "low_entropy_warnings" in stats
+        assert "entropy_checks" in stats
 
     def test_statistics_track_low_entropy_warnings(self):
         """测试统计信息跟踪低熵警告"""
@@ -173,8 +173,8 @@ class TestEntropyStatistics(unittest.TestCase):
         stats = generator.get_statistics()
 
         # 应该记录3次低熵
-        self.assertEqual(stats["low_entropy_warnings"], 3)
-        self.assertEqual(stats["entropy_checks"], 3)
+        assert stats["low_entropy_warnings"] == 3
+        assert stats["entropy_checks"] == 3
 
     def test_reset_statistics(self):
         """测试重置统计信息"""
@@ -183,17 +183,17 @@ class TestEntropyStatistics(unittest.TestCase):
 
         # 重置前
         stats_before = generator.get_statistics()
-        self.assertGreater(stats_before["total_generated"], 0)
+        assert stats_before["total_generated"] > 0
 
         # 重置
         generator.reset_statistics()
 
         # 重置后
         stats_after = generator.get_statistics()
-        self.assertEqual(stats_after["total_generated"], 0)
+        assert stats_after["total_generated"] == 0
 
 
-class TestEntropyCheckEdgeCases(unittest.TestCase):
+class TestEntropyCheckEdgeCases:
     """熵池检查边界情况测试"""
 
     @patch("pathlib.Path.exists")
@@ -207,7 +207,7 @@ class TestEntropyCheckEdgeCases(unittest.TestCase):
         result = generator._check_entropy_health()
 
         # 应该返回True（假设健康）
-        self.assertTrue(result)
+        assert result
 
     @patch("pathlib.Path.exists")
     @patch("pathlib.Path.open")
@@ -224,7 +224,7 @@ class TestEntropyCheckEdgeCases(unittest.TestCase):
         result = generator._check_entropy_health()
 
         # 应该返回True（异常处理）
-        self.assertTrue(result)
+        assert result
 
     @patch("pathlib.Path.exists")
     @patch("pathlib.Path.open")
@@ -252,34 +252,34 @@ class TestEntropyCheckEdgeCases(unittest.TestCase):
             generator = SecureKeyGenerator()
             result = generator._check_entropy_health()
 
-            self.assertEqual(result, expected, f"熵值 {entropy_str} 应该返回 {expected}")
+            assert result == expected, f"熵值 {entropy_str} 应该返回 {expected}"
 
 
-class TestEntropyCheckConfiguration(unittest.TestCase):
+class TestEntropyCheckConfiguration:
     """熵池检查配置测试"""
 
     def test_default_configuration(self):
         """测试默认配置"""
         generator = SecureKeyGenerator()
 
-        self.assertTrue(generator.entropy_check_enabled)
-        self.assertEqual(generator.min_entropy_bits, 1000)
+        assert generator.entropy_check_enabled
+        assert generator.min_entropy_bits == 1000
 
     def test_custom_configuration(self):
         """测试自定义配置"""
         config = {"entropy_check_enabled": True, "min_entropy_bits": 2000, "batch_size": 500}
         generator = SecureKeyGenerator(config)
 
-        self.assertTrue(generator.entropy_check_enabled)
-        self.assertEqual(generator.min_entropy_bits, 2000)
-        self.assertEqual(generator.batch_size, 500)
+        assert generator.entropy_check_enabled
+        assert generator.min_entropy_bits == 2000
+        assert generator.batch_size == 500
 
     def test_disable_entropy_check(self):
         """测试禁用熵池检查"""
         config = {"entropy_check_enabled": False}
         generator = SecureKeyGenerator(config)
 
-        self.assertFalse(generator.entropy_check_enabled)
+        assert not generator.entropy_check_enabled
         # 即使熵池低也应该返回True
         with patch("pathlib.Path.exists", return_value=True), patch("pathlib.Path.open") as mock_open:
             mock_file = MagicMock()
@@ -289,8 +289,5 @@ class TestEntropyCheckConfiguration(unittest.TestCase):
             mock_open.return_value = mock_file
 
             result = generator._check_entropy_health()
-            self.assertTrue(result)
+            assert result
 
-
-if __name__ == "__main__":
-    unittest.main()

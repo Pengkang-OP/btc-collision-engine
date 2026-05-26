@@ -5,7 +5,7 @@ Usage:
     python -m src.cli.main [选项]
     python key_collision_cli.py [选项]
 
-示例:
+Example:
     # 随机碰撞（无限运行）
     python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7Divf -m random
 
@@ -26,19 +26,9 @@ from ._path_setup import ensure_project_root
 
 ensure_project_root()
 
-# ── 仅导入轻量级模块（--help/--version 等命令不触发重量级导入） ─────────────
-from src.cli.arg_parser import parse_args  # noqa: E402
-from src.cli.commands import _dispatch_utility_commands  # noqa: E402
-from src.cli.config_loader import load_config_with_validation  # noqa: E402
-from src.cli.output import CLIOutput  # noqa: E402
-from src.cli.progress import (  # noqa: E402, F401
-    format_progress,
-)  # re-export for backward compat
-from src.cli.stats_reporter import _print_final_summary  # noqa: E402
-from src.cli.validation import validate_args, validate_file_path  # noqa: E402
-from src.core.crypto_backend import verify_production_ready  # noqa: E402
-from src.i18n import _t, set_language  # noqa: E402
-from src.utils import get_configured_logger, init_logging  # noqa: E402
+# ── 模块级必需导入（仅保留被多处引用或模块级调用的轻量模块） ─────────────
+from src.cli.output import CLIOutput  # noqa: E402 — 被5个函数引用
+from src.utils import get_configured_logger, init_logging  # noqa: E402 — 模块级使用
 
 # 初始化日志
 init_logging()
@@ -53,6 +43,10 @@ def _apply_output_flags(args) -> None:
     quiet = getattr(args, "quiet", False)
     no_color = getattr(args, "no_color", False)
 
+    # 遵循 https://no-color.org/ 标准：环境变量 NO_COLOR 也启用无颜色模式
+    if not no_color and os.environ.get("NO_COLOR", "").strip():
+        no_color = True
+
     # --no-color: 设置环境变量供 Rich 等库感知
     if no_color:
         os.environ["NO_COLOR"] = "1"
@@ -63,115 +57,91 @@ def _apply_output_flags(args) -> None:
         logging.getLogger().setLevel(logging.WARNING)
         for h in logging.getLogger().handlers:
             h.setLevel(logging.WARNING)
-    elif verbose >= 3:
-        # -vvv: 全部调试信息（DEBUG）
-        logging.getLogger().setLevel(logging.DEBUG)
-        for h in logging.getLogger().handlers:
-            h.setLevel(logging.DEBUG)
-        logger.debug("详细级别 -vvv：启用所有调试输出")
-    elif verbose >= 2:
-        # -vv: DEBUG + 稍后在配置信息阶段额外打印
-        logging.getLogger().setLevel(logging.DEBUG)
-        for h in logging.getLogger().handlers:
-            h.setLevel(logging.DEBUG)
-        logger.debug("详细级别 -vv：启用调试输出（含配置详情）")
     elif verbose >= 1:
-        # -v: DEBUG
+        # -v/-vv/-vvv: DEBUG（vvv/vv 的区别在后续阶段区分）
+        level_name = {1: "-v", 2: "-vv", 3: "-vvv"}.get(verbose, "-v")
         logging.getLogger().setLevel(logging.DEBUG)
         for h in logging.getLogger().handlers:
             h.setLevel(logging.DEBUG)
-        logger.debug("详细级别 -v：启用调试输出")
+        if verbose >= 3:
+            logger.debug("详细级别 %s：启用所有调试输出", level_name)
+        elif verbose >= 2:
+            logger.debug("详细级别 %s：启用调试输出（含配置详情）", level_name)
+        else:
+            logger.debug("详细级别 %s：启用调试输出", level_name)
 
 
 def load_targets(args: Any) -> set[str]:
-    """加载目标地址集合"""
+    """加载目标地址集合，显示详细的加载/丢弃统计。"""
     # 延迟导入 TargetResolver（属于重量级依赖链）
     from src.collision.targets.resolver import TargetResolver
 
     resolver = TargetResolver()
     quiet = getattr(args, "quiet", False)
+    output = CLIOutput.get_instance()
+
     if args.file:
+        from src.cli.validation import validate_file_path
+
         if not validate_file_path(args.file):
-            print("[Error] 文件路径验证失败", file=sys.stderr)
+            output.error("文件路径验证失败")
             sys.exit(1)
         targets = resolver.load_from_file(args.file)
+        # 获取不支持类型的丢弃统计
+        dropped = resolver.get_unsupported_types()
+        total_dropped = sum(dropped.values()) if dropped else 0
+
         if not targets:
-            print(
-                _t("address.load_failed", error=f"从文件 '{args.file}' 未加载到任何有效地址"),
-                file=sys.stderr,
-            )
+            output.error(f"从文件 '{args.file}' 未加载到任何有效地址")
+            if total_dropped > 0:
+                _print_dropped_summary(output, dropped)
             sys.exit(1)
         if not quiet:
-            print(_t("address.loaded", count=len(targets)))
+            _print_load_result(output, len(targets), total_dropped, dropped)
     else:
         # resolve_multiple returns dict[str,str] (input→resolved), extract values as set
         resolved = resolver.resolve_multiple(args.targets)
-        targets = set(resolved.values())
+        targets = set(v for v in resolved.values() if v is not None)
+        dropped_inputs = [k for k, v in resolved.items() if v is None]
         if not targets:
-            print(_t("address.load_failed", error="未能解析任何有效的目标地址"), file=sys.stderr)
+            output.error("未能解析任何有效的目标地址")
+            if dropped_inputs:
+                output.hint(f"已跳过 {len(dropped_inputs)} 条无法解析的输入")
             sys.exit(1)
-        if not quiet:
-            print(_t("address.loaded", count=len(targets)))
-
-    # v4.3.1: 分析目标格式并给出兼容性警告（始终执行分析，输出模式由 quiet 控制）
-    fmt_counts = TargetResolver.analyze_target_formats(targets)
-    if not quiet:
-        _print_format_summary(fmt_counts)
-    else:
-        incompatible = (
-            fmt_counts.get("p2sh", 0) + fmt_counts.get("bech32", 0) + fmt_counts.get("taproot", 0)
-        )
-        if incompatible > 0:
-            logger.warning(_t("targets.incompatible_warning", count=incompatible))
+        if not quiet and dropped_inputs:
+            output.warning(f"已跳过 {len(dropped_inputs)} 条不兼容格式的输入")
 
     return targets
 
 
-def _print_format_summary(fmt_counts: dict[str, int]) -> None:
-    """打印目标格式统计及不兼容格式警告"""
-    total = sum(fmt_counts.values())
-    if total == 0:
-        return
+def _print_load_result(
+    output: "CLIOutput",
+    valid_count: int,
+    dropped_count: int,
+    dropped_detail: dict[str, int] | None,
+) -> None:
+    """打印文件加载结果摘要。"""
+    output.success(f"已加载 {valid_count} 个有效目标地址")
+    if dropped_count > 0 and dropped_detail:
+        _print_dropped_summary(output, dropped_detail)
 
-    # 格式统计
-    parts = []
-    if fmt_counts.get("p2pkh", 0) > 0:
-        parts.append(f"P2PKH: {fmt_counts['p2pkh']}")
-    if fmt_counts.get("p2sh", 0) > 0:
-        parts.append(f"P2SH: {fmt_counts['p2sh']}")
-    if fmt_counts.get("bech32", 0) > 0:
-        parts.append(f"Bech32: {fmt_counts['bech32']}")
-    if fmt_counts.get("taproot", 0) > 0:
-        parts.append(f"Taproot: {fmt_counts['taproot']}")
-    if fmt_counts.get("unknown", 0) > 0:
-        parts.append(f"Unknown: {fmt_counts['unknown']}")
-    print(_t("targets.format_breakdown", breakdown=", ".join(parts)))
 
-    # 不兼容格式警告
-    incompatible = fmt_counts.get("p2sh", 0) + fmt_counts.get("bech32", 0) + fmt_counts.get("taproot", 0)
-    if incompatible > 0:
-        # 使用 Rich Panel 输出醒目警告
-        try:
-            from rich.console import Console
-            from rich.panel import Panel
-            from rich.text import Text
-
-            console = Console()
-            warning_text = Text()
-            warning_text.append(
-                _t("targets.incompatible_warning", count=incompatible),
-                style="bold yellow",
-            )
-            warning_text.append("\n\n")
-            warning_text.append(_t("targets.incompatible_detail"))
-            warning_text.append("\n")
-            warning_text.append(_t("targets.incompatible_suggestion"))
-            console.print(Panel(warning_text, title=_t("common.warning"), border_style="yellow"))
-        except (RuntimeError, OSError, ValueError):
-            logger.debug("Rich Panel 渲染失败，降级纯文本警告", exc_info=True)
-            print(_t("targets.incompatible_warning", count=incompatible))
-            print(_t("targets.incompatible_detail"))
-            print(_t("targets.incompatible_suggestion"))
+def _print_dropped_summary(
+    output: "CLIOutput",
+    dropped_detail: dict[str, int],
+) -> None:
+    """打印被丢弃的不兼容格式统计。"""
+    total = sum(dropped_detail.values())
+    type_names = {
+        "p2sh_address": "P2SH (3...)",
+        "p2wsh_address": "P2WSH (bc1q... 32B witness)",
+        "taproot_address": "Taproot (bc1p...)",
+    }
+    output.warning(f"已跳过 {total} 条密码学上不兼容的输入格式:")
+    for key, count in sorted(dropped_detail.items()):
+        label = type_names.get(key, key)
+        output.print(f"  - {label}: {count} 条")
+    output.hint("提示: 仅 P2PKH (1...)、P2WPKH (bc1q... 20B)、WIF私钥、公钥格式可被碰撞匹配")
 
 
 def _run_security_check(args) -> None:
@@ -183,6 +153,8 @@ def _run_security_check(args) -> None:
     if getattr(args, "skip_security_check", False):
         logger.info("跳过安全加密后端检查（--skip-security-check）")
         return
+
+    from src.core.crypto_backend import verify_production_ready
 
     is_ready, message = verify_production_ready()
     output = CLIOutput.get_instance()
@@ -223,6 +195,14 @@ def _run_security_check(args) -> None:
 
 def _run_main() -> None:
     """CLI 主逻辑（由 main() 包装异常处理）"""
+    # 延迟导入：保留 ensure_project_root() 的调用顺序约束，同时避免模块级 E402
+    from src.cli.arg_parser import parse_args
+    from src.cli.commands import _dispatch_utility_commands
+    from src.cli.config_loader import load_config_with_validation
+    from src.cli.stats_reporter import _print_final_summary
+    from src.cli.validation import validate_args
+    from src.i18n import _t, set_language
+
     args = parse_args()
 
     # 语言设置（优先级：命令行 > 环境变量 > 系统语言）
@@ -255,9 +235,6 @@ def _run_main() -> None:
         logger.warning(_t("config.using_default"))
         config = {}
     targets = load_targets(args)
-    if not targets:
-        print(_t("address.load_failed", error="解析后无有效目标地址"), file=sys.stderr)
-        sys.exit(1)
 
     # ── 以下阶段才延迟导入重量级模块 ────────────────────────────────────────
     from src.cli.engine_runner import (
@@ -297,17 +274,50 @@ def _run_main() -> None:
     # 阶段8: 等待引擎完全停止（带超时轮询）
     if engine.is_running():
         engine.stop()
-    for _ in range(50):  # 最多等待5秒
-        if not engine.is_running():
-            break
-        time.sleep(0.1)
+    try:
+        engine.stop_event.wait(timeout=5.0)
+    except AttributeError:
+        # 回退到轮询方式（引擎可能没有 stop_event）
+        logger.debug("引擎无 stop_event 属性，回退到轮询等待停止")
+        for _ in range(50):  # 最多等待5秒
+            if not engine.is_running():
+                break
+            time.sleep(0.1)
 
     # 阶段9: 最终统计
+    _export_progress_data(engine, args)
     _print_final_summary(engine, engine_type, args)
 
 
+def _export_progress_data(engine: Any, args: Any) -> None:
+    """如果指定了 --export-progress，将进度数据导出为 JSON。"""
+    export_path = getattr(args, "export_progress", None)
+    if not export_path:
+        return
+    try:
+        import json
+
+        stats = {}
+        if hasattr(engine, "get_stats"):
+            stats = engine.get_stats() or {}
+        elif hasattr(engine, "get_combined_stats"):
+            stats = engine.get_combined_stats() or {}
+
+        with open(export_path, "w", encoding="utf-8") as f:
+            json.dump(stats, f, indent=2, default=str, ensure_ascii=False)
+        logger.info("进度数据已导出到: %s", export_path)
+        CLIOutput.get_instance().success(f"进度数据已导出: {export_path}")
+    except OSError as e:
+        logger.warning("导出进度数据失败: %s", e)
+        CLIOutput.get_instance().warning(f"导出失败: {e}")
+
+
 def _handle_error(e: Exception) -> None:
-    """统一错误处理 — 向用户显示友好消息并将完整堆栈写入日志"""
+    """统一错误处理 — 向用户显示友好消息并将完整堆栈写入日志
+
+    可在 CLIOutput 未初始化时安全调用（get_instance() 自动创建默认实例）。
+    ROADMAP #11: 增强兜底逻辑，确保所有入口路径（key_collision_cli.py / -m / btc-collision）一致。
+    """
     output = CLIOutput.get_instance()
     error_type = type(e).__name__
 
@@ -331,30 +341,48 @@ def _handle_error(e: Exception) -> None:
         output.print("  提示: 检查文件/目录权限或磁盘空间")
     else:
         output.error(f"运行时错误 ({error_type}): {e}")
-        output.print("  详细日志: 请查看 logs/ 目录下的日志文件")
+        try:
+            from src.i18n import _t
+            output.print(_t("cli.entry.check_log"))
+        except Exception:
+            output.print("  详细日志: 请查看 logs/ 目录下的日志文件")
 
     # 记录完整堆栈到日志（不显示给用户）
     logger.exception("CLI 运行错误: %s", error_type)
 
 
 def main() -> None:
-    """CLI 主入口"""
+    """CLI 主入口（单一真相源）
+
+    ROADMAP #11: 此函数是所有入口路径（key_collision_cli.py / -m / btc-collision）
+    的单一实现。顶层异常处理已集成在此，代理文件无需重复。
+    """
     # 确保 stdout/stderr 在非 UTF-8 环境下不会因无法编码字符而崩溃
     try:
         if hasattr(sys.stdout, "reconfigure"):
             cast("Any", sys.stdout).reconfigure(errors="replace")
             cast("Any", sys.stderr).reconfigure(errors="replace")
-    except (OSError, AttributeError):
-        pass
+    except (OSError, AttributeError) as e:
+        logger.debug("Failed to reconfigure stdout/stderr for UTF-8: %s", e)
     try:
         _run_main()
     except KeyboardInterrupt:
-        print()  # 换行，避免 ^C 粘连
+        print()
+        try:
+            from src.i18n import _t
+
+            print(_t("cli.entry.keyboard_interrupt"))
+        except Exception:
+            pass
         sys.exit(130)
     except SystemExit:
         # argparse 的 --help/--version 以及主动调用 sys.exit() 均透传
         raise
     except Exception as e:
+        # 最终兜底：确保 logging 已初始化（即使 _run_main 早期失败）
+        import logging as _logging
+
+        _logging.basicConfig(level=_logging.CRITICAL)
         _handle_error(e)
         sys.exit(1)
 

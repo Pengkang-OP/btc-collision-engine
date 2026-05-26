@@ -729,7 +729,7 @@ f:/Qoder/btc-collision-engine/
 ├── tests/                        # 测试套件 (157 文件)
 ├── benchmarks/                   # 性能基准
 ├── docs/                         # 文档中心
-├── scripts/                      # 运维脚本
+├── scripts/                      # 辅助脚本（分类子目录）（分类子目录）
 ├── examples/                     # 使用示例
 └── deploy/                       # 部署配置 (Docker/K8s)
 ```

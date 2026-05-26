@@ -53,7 +53,7 @@ if [ -z "${VIRTUAL_ENV:-}" ]; then
             echo -e "${GREEN}[成功]${NC} 虚拟环境已激活: .venv/"
         fi
     else
-        echo -e "${YELLOW}[信息]${NC} 未找到虚拟环境，建议先运行: bash scripts/install.sh"
+        echo -e "${YELLOW}[信息]${NC} 未找到虚拟环境，建议先运行: bash scripts/install/install.sh"
     fi
 else
     echo -e "${GREEN}[成功]${NC} 虚拟环境已激活: $VIRTUAL_ENV"

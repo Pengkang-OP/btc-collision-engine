@@ -5,10 +5,10 @@ based on system resource detection. Used by the performance tuning
 group in arg_parser.py.
 """
 
-import logging
+from ..utils import get_configured_logger
 import os
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger(__name__)
 
 
 class OptimizationCLI:

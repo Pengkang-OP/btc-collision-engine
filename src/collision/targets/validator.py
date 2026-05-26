@@ -24,7 +24,7 @@ logger = get_configured_logger("AddressValidator")
 class ValidationResult:
     """地址验证结果
 
-    字段说明:
+    Fields:
         address: 被验证的比特币地址
         valid: 验证结果（True=通过，False=失败或未验证）
         validated: 是否实际进行了验证
@@ -69,7 +69,7 @@ class AddressBatchValidator:
 
     使用线程池并行验证多个比特币地址,提供详细的验证结果。
 
-    示例:
+    Example:
         >>> validator = AddressBatchValidator(max_workers=4)
         >>> results = validator.validate_batch(['1A1z...', 'invalid'])
         >>> for addr, result in results.items():
@@ -79,7 +79,7 @@ class AddressBatchValidator:
     def __init__(self, max_workers: int = 4) -> None:
         """初始化批量地址验证器
 
-        参数:
+        Args:
             max_workers: 最大工作线程数,默认4
         """
         self.max_workers = max_workers
@@ -235,10 +235,10 @@ class AddressBatchValidator:
     def _validate_single(self, address: str) -> ValidationResult:
         """验证单个地址
 
-        参数:
+        Args:
             address: 待验证的地址
 
-        返回:
+        Returns:
             验证结果
         """
         try:
@@ -249,10 +249,10 @@ class AddressBatchValidator:
                 format_type = "P2PKH"
                 version, payload = Base58.check_decode(address)
                 if version == 0x00 and len(payload) == 20:
-                    logger.debug(f"地址验证成功: {address[:15]}... (P2PKH)")
+                    logger.debug(f"地址验证成功: {address[:8]}... (P2PKH)")
                     return ValidationResult(address=address, valid=True, format_type=format_type)
                 logger.debug(
-                    f"地址验证失败: {address[:15]}... (P2PKH, version=0x{version:02x})",
+                    f"地址验证失败: {address[:8]}... (P2PKH, version=0x{version:02x})",
                 )
                 return ValidationResult(
                     address=address,
@@ -265,9 +265,9 @@ class AddressBatchValidator:
                 format_type = "P2SH"
                 version, payload = Base58.check_decode(address)
                 if version == 0x05 and len(payload) == 20:
-                    logger.debug(f"地址验证成功: {address[:15]}... (P2SH)")
+                    logger.debug(f"地址验证成功: {address[:8]}... (P2SH)")
                     return ValidationResult(address=address, valid=True, format_type=format_type)
-                logger.debug(f"地址验证失败: {address[:15]}... (P2SH, version=0x{version:02x})")
+                logger.debug(f"地址验证失败: {address[:8]}... (P2SH, version=0x{version:02x})")
                 return ValidationResult(
                     address=address,
                     valid=False,
@@ -278,7 +278,7 @@ class AddressBatchValidator:
             if address.lower().startswith("bc1p"):
                 format_type = "Bech32m"
                 if 62 <= len(address) <= 74:
-                    logger.debug(f"Bech32m地址基本验证通过: {address[:15]}...")
+                    logger.debug(f"Bech32m地址基本验证通过: {address[:8]}...")
                     return ValidationResult(address=address, valid=True, format_type=format_type)
                 return ValidationResult(
                     address=address,
@@ -290,7 +290,7 @@ class AddressBatchValidator:
             if address.lower().startswith("bc1"):
                 format_type = "Bech32"
                 if 42 <= len(address) <= 62:
-                    logger.debug(f"Bech32地址基本验证通过: {address[:15]}...")
+                    logger.debug(f"Bech32地址基本验证通过: {address[:8]}...")
                     return ValidationResult(address=address, valid=True, format_type=format_type)
                 return ValidationResult(
                     address=address,
@@ -307,16 +307,16 @@ class AddressBatchValidator:
             )
 
         except Exception as e:
-            logger.error(f"地址验证异常: {address[:15]}..., 错误={e}")
+            logger.error(f"地址验证异常: {address[:8]}..., 错误={e}")
             return ValidationResult(address=address, valid=False, error=str(e))
 
     def filter_valid(self, addresses: list[str | Any]) -> list[str]:
         """过滤出有效地址
 
-        参数:
+        Args:
             addresses: 待过滤的地址列表
 
-        返回:
+        Returns:
             有效地址列表
         """
         logger.debug(f"开始过滤有效地址: 输入数={len(addresses)}")
@@ -331,7 +331,7 @@ class AddressBatchValidator:
     def get_summary(self) -> dict[str, float | int]:
         """获取验证统计摘要
 
-        返回:
+        Returns:
             统计信息字典
         """
         with self._lock:
@@ -350,10 +350,10 @@ class AddressBatchValidator:
     def get_validation_summary(self, results: dict[str, ValidationResult]) -> dict[str, Any]:
         """获取验证结果摘要(别名方法,保持向后兼容)
 
-        参数:
+        Args:
             results: validate_batch返回的结果字典
 
-        返回:
+        Returns:
             摘要字典
         """
         valid_count = sum(1 for r in results.values() if r.valid)
@@ -375,10 +375,10 @@ class AddressBatchValidator:
         用于分析批量验证的执行情况,特别是在严格模式下区分
         "已验证"和"未验证"的地址。
 
-        参数:
+        Args:
             results: validate_batch 返回的验证结果字典
 
-        返回:
+        Returns:
             包含覆盖率统计的字典:
             - total: 总地址数
             - validated: 已验证地址数(无论成功或失败)
@@ -387,7 +387,7 @@ class AddressBatchValidator:
             - valid: 验证成功的地址数
             - invalid: 已验证但失败的地址数（注意：不包括未验证的地址）
 
-        示例:
+        Example:
             >>> results = validator.validate_batch(addresses, strict_mode=True)
             >>> coverage = validator.get_validation_coverage(results)
             >>> print(f"验证覆盖率: {coverage['coverage']:.1f}%")

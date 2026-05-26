@@ -43,8 +43,8 @@ git clone <repository-url>
 cd btc-collision-engine
 
 # 运行安装脚本（推荐）
-scripts\install.bat    # Windows
-bash scripts/install.sh  # Linux/macOS
+scripts/install/install.bat    # Windows
+bash scripts/install/install.sh  # Linux/macOS
 
 # 或手动安装
 python -m venv venv
@@ -131,7 +131,7 @@ btc-collision-engine/
 ├── tests/                      # 测试文件
 ├── docs/                       # 文档
 ├── benchmarks/                  # 性能基准
-├── scripts/                    # 辅助脚本
+├── scripts/                    # 辅助脚本（分类子目录）
 ├── tools/                      # 工具脚本
 ├── config.example.json         # 配置示例
 └── pyproject.toml             # 项目配置

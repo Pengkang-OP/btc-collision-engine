@@ -14,11 +14,12 @@ from pathlib import Path
 
 from ..utils import get_configured_logger
 from ..utils.fast_json import fast_dumps, fast_loads
+from ..utils.logging_config import LOG_DEFAULT_MAX_BYTES
 
 logger = get_configured_logger("CheckpointManager")
 
 CHECKPOINT_VERSION = 2
-MAX_CHECKPOINT_SIZE = 10 * 1024 * 1024  # 10MB
+MAX_CHECKPOINT_SIZE = LOG_DEFAULT_MAX_BYTES  # 10MB
 
 
 class CheckpointError(Exception):

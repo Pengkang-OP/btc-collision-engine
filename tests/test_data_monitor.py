@@ -8,12 +8,12 @@
 """
 
 import time
-import unittest
+import pytest
 
 from src.gpu.data_monitor import DataMonitor, DataQualityIssue
 
 
-class TestDataMonitor(unittest.TestCase):
+class TestDataMonitor:
     """测试数据监控器"""
 
     def setUp(self):
@@ -34,10 +34,10 @@ class TestDataMonitor(unittest.TestCase):
     def test_monitor_start_stop(self):
         """测试监控器启动和停止"""
         self.monitor.start()
-        self.assertTrue(self.monitor._running)
+        assert self.monitor._running
 
         self.monitor.stop()
-        self.assertFalse(self.monitor._running)
+        assert not self.monitor._running
 
     def test_report_keys_generated(self):
         """测试报告私钥生成"""
@@ -46,8 +46,8 @@ class TestDataMonitor(unittest.TestCase):
         self.monitor.report_keys_generated(device_idx=0, count=1000, key_range=(0, 1000))
 
         stats = self.monitor.get_stats()
-        self.assertEqual(stats["total_keys_monitored"], 1000)
-        self.assertEqual(stats["devices"][0]["total_keys"], 1000)
+        assert stats["total_keys_monitored"]  ==  1000
+        assert stats["devices"][0]["total_keys"]  ==  1000
 
     def test_report_match(self):
         """测试报告匹配结果"""
@@ -63,8 +63,8 @@ class TestDataMonitor(unittest.TestCase):
         self.monitor.report_match(device_idx=0, match_data=match_data)
 
         stats = self.monitor.get_stats()
-        self.assertEqual(stats["total_matches_verified"], 1)
-        self.assertEqual(stats["devices"][0]["total_matches"], 1)
+        assert stats["total_matches_verified"]  ==  1
+        assert stats["devices"][0]["total_matches"]  ==  1
 
     def test_report_error(self):
         """测试报告错误"""
@@ -73,7 +73,7 @@ class TestDataMonitor(unittest.TestCase):
         self.monitor.report_error(device_idx=0, error_msg="测试错误", error_type="test_error")
 
         stats = self.monitor.get_stats()
-        self.assertEqual(stats["devices"][0]["total_errors"], 1)
+        assert stats["devices"][0]["total_errors"]  ==  1
 
     def test_detect_duplicate_key(self):
         """测试检测重复私钥"""
@@ -94,7 +94,7 @@ class TestDataMonitor(unittest.TestCase):
         issues = self.monitor.get_issues()
         duplicate_issues = [i for i in issues if i["issue_type"] == DataQualityIssue.DUPLICATE_KEY]
 
-        self.assertGreater(len(duplicate_issues), 0)
+        assert len(duplicate_issues)  >  0
 
     def test_detect_invalid_key(self):
         """测试检测无效私钥"""
@@ -110,7 +110,7 @@ class TestDataMonitor(unittest.TestCase):
         issues = self.monitor.get_issues()
         invalid_issues = [i for i in issues if i["issue_type"] == DataQualityIssue.INVALID_KEY]
 
-        self.assertGreater(len(invalid_issues), 0)
+        assert len(invalid_issues)  >  0
 
     def test_detect_stale_data(self):
         """测试检测过期数据"""
@@ -126,7 +126,7 @@ class TestDataMonitor(unittest.TestCase):
         issues = self.monitor.get_issues()
         stale_issues = [i for i in issues if i["issue_type"] == DataQualityIssue.STALE_DATA]
 
-        self.assertGreater(len(stale_issues), 0)
+        assert len(stale_issues)  >  0
 
     def test_throughput_tracking(self):
         """测试吞吐量跟踪"""
@@ -141,7 +141,7 @@ class TestDataMonitor(unittest.TestCase):
         avg_throughput = stats["devices"][0]["avg_throughput"]
 
         # 应该有正的吞吐量
-        self.assertGreater(avg_throughput, 0)
+        assert avg_throughput  >  0
 
     def test_anomaly_callback(self):
         """测试异常回调"""
@@ -163,8 +163,8 @@ class TestDataMonitor(unittest.TestCase):
         # 等待回调执行
         time.sleep(0.5)
 
-        self.assertGreater(len(anomalies), 0)
-        self.assertEqual(anomalies[0][0], 0)
+        assert len(anomalies)  >  0
+        assert anomalies[0][0]  ==  0
 
     def test_get_issues_filter(self):
         """测试问题过滤"""
@@ -192,8 +192,8 @@ class TestDataMonitor(unittest.TestCase):
         issues_device0 = self.monitor.get_issues(device_idx=0)
         issues_device1 = self.monitor.get_issues(device_idx=1)
 
-        self.assertGreater(len(issues_device0), 0)
-        self.assertEqual(len(issues_device1), 0)  # 设备1没有问题
+        assert len(issues_device0)  >  0
+        assert len(issues_device1)  ==  0  # 设备1没有问题
 
     def test_validation_statistics(self):
         """测试验证统计"""
@@ -204,8 +204,8 @@ class TestDataMonitor(unittest.TestCase):
         self.monitor.report_validation_result(device_idx=0, passed=False)
 
         stats = self.monitor.get_stats()
-        self.assertEqual(stats["total_validations"], 3)
-        self.assertAlmostEqual(stats["validation_pass_rate"], 2 / 3, places=2)
+        assert stats["total_validations"]  ==  3
+        assert stats["validation_pass_rate"] == pytest.approx(2 / 3, abs=10**-2)
 
     def test_monitor_thread_runs_independently(self):
         """测试监控线程独立运行"""
@@ -220,7 +220,7 @@ class TestDataMonitor(unittest.TestCase):
         elapsed = time.time() - start_time
 
         # 应该非常快(<0.1秒)
-        self.assertLess(elapsed, 0.1)
+        assert elapsed  <  0.1
 
     def test_issue_severity_levels(self):
         """测试问题严重级别"""
@@ -243,11 +243,11 @@ class TestDataMonitor(unittest.TestCase):
         low_issues = self.monitor.get_issues(severity="low")
         critical_issues = self.monitor.get_issues(severity="critical")
 
-        self.assertEqual(len(low_issues), 1)
-        self.assertEqual(len(critical_issues), 1)
+        assert len(low_issues)  ==  1
+        assert len(critical_issues)  ==  1
 
 
-class TestDataQualityIssue(unittest.TestCase):
+class TestDataQualityIssue:
     """测试数据质量问题类"""
 
     def test_issue_creation(self):
@@ -260,11 +260,11 @@ class TestDataQualityIssue(unittest.TestCase):
             details={"key": "value"},
         )
 
-        self.assertEqual(issue.issue_type, DataQualityIssue.INVALID_KEY)
-        self.assertEqual(issue.severity, "high")
-        self.assertEqual(issue.device_idx, 0)
-        self.assertIsNotNone(issue.timestamp)
-        self.assertIsNotNone(issue.datetime)
+        assert issue.issue_type  ==  DataQualityIssue.INVALID_KEY
+        assert issue.severity  ==  "high"
+        assert issue.device_idx  ==  0
+        assert issue.timestamp is not None
+        assert issue.datetime is not None
 
     def test_issue_to_dict(self):
         """测试问题转字典"""
@@ -272,13 +272,10 @@ class TestDataQualityIssue(unittest.TestCase):
 
         issue_dict = issue.to_dict()
 
-        self.assertIsInstance(issue_dict, dict)
-        self.assertEqual(issue_dict["issue_type"], "test")
-        self.assertEqual(issue_dict["severity"], "medium")
-        self.assertEqual(issue_dict["device_idx"], 1)
-        self.assertIn("timestamp", issue_dict)
-        self.assertIn("datetime", issue_dict)
+        assert isinstance(issue_dict, dict)
+        assert issue_dict["issue_type"]  ==  "test"
+        assert issue_dict["severity"]  ==  "medium"
+        assert issue_dict["device_idx"]  ==  1
+        assert issue_dict  in  "timestamp"
+        assert issue_dict  in  "datetime"
 
-
-if __name__ == "__main__":
-    unittest.main()

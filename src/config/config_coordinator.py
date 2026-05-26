@@ -3,14 +3,14 @@
 提供统一的配置访问接口,协调ConfigManager、CryptoConfig和GPUConfig之间的配置同步。
 """
 
-import logging
+from ..utils import get_configured_logger
 import threading
 from typing import Any
 
 from .config_manager import ConfigManager
 from .crypto_config import CryptoConfig
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger(__name__)
 
 
 class ConfigCoordinator:
@@ -26,7 +26,7 @@ class ConfigCoordinator:
     def __init__(self, config_file: str = "config.json") -> None:
         """初始化配置协调器
 
-        参数:
+        Args:
             config_file: 配置文件路径
         """
         # W13修复: 添加实例级锁，避免多线程访问时的竞态条件
@@ -110,7 +110,7 @@ class ConfigCoordinator:
     def get_unified_config(self) -> dict[str, Any]:
         """获取统一的配置视图（线程安全）
 
-        返回:
+        Returns:
             包含所有配置的统一字典
         """
         # S1修复: 使用锁保护读取操作，防止多线程并发访问导致的数据不一致
@@ -125,11 +125,11 @@ class ConfigCoordinator:
     def get(self, key: str, default: Any = None) -> Any:
         """获取配置值(统一接口，线程安全)
 
-        参数:
+        Args:
             key: 配置键,支持点号分隔的路径,如 "gpu.batch_size"
             default: 默认值
 
-        返回:
+        Returns:
             配置值
         """
         # S1修复: 使用锁保护读取操作
@@ -148,11 +148,11 @@ class ConfigCoordinator:
     def set(self, key: str, value: Any) -> bool:
         """设置配置值(统一接口，线程安全)
 
-        参数:
+        Args:
             key: 配置键,支持点号分隔的路径
             value: 配置值
 
-        返回:
+        Returns:
             设置成功返回True
         """
         # S1修复: 使用锁保护写入操作
@@ -165,7 +165,7 @@ class ConfigCoordinator:
     def validate_all(self) -> dict[str, Any]:
         """验证所有配置
 
-        返回:
+        Returns:
             验证错误字典,key为配置管理器名称,value为错误列表
         """
         errors: dict[str, Any] = {}
@@ -190,7 +190,7 @@ class ConfigCoordinator:
     def save_all(self) -> bool:
         """保存所有配置到文件
 
-        返回:
+        Returns:
             保存成功返回True
         """
         success = True

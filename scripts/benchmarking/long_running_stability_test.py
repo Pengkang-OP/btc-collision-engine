@@ -5,10 +5,10 @@
 
 使用方法:
     # 运行 1 小时稳定性测试
-    python scripts/long_running_stability_test.py --duration 3600
+    python scripts/benchmarking/long_running_stability_test.py --duration 3600
 
     # 运行 8 小时长时间测试
-    python scripts/long_running_stability_test.py --duration 28800
+    python scripts/benchmarking/long_running_stability_test.py --duration 28800
 """
 
 import argparse

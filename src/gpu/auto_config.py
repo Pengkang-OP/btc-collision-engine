@@ -14,6 +14,51 @@ logger = get_configured_logger("GPUAutoConfig")
 # 字节到GB的转换常量
 _BYTES_TO_GB = 1024**3  # 1,073,741,824
 
+# ──────────────────────────────────────────
+# 显存阈值常量 (GB)
+# ──────────────────────────────────────────
+_NVIDIA_HIGH_END_MEMORY_GB = 24
+_NVIDIA_MID_END_MEMORY_GB = 12
+_NVIDIA_LOW_END_MEMORY_GB = 8
+_AMD_HIGH_END_MEMORY_GB = 16
+_AMD_MID_END_MEMORY_GB = 8
+_INTEL_ARC_HIGH_END_MEMORY_GB = 15
+_INTEL_ARC_MID_END_MEMORY_GB = 8
+_UNKNOWN_HIGH_END_MEMORY_GB = 8
+_UNKNOWN_MID_END_MEMORY_GB = 4
+
+# ──────────────────────────────────────────
+# 批次大小常量
+# ──────────────────────────────────────────
+_BATCH_SIZE_2M = 2097152       # 2M - Intel Arc A770
+_BATCH_SIZE_256K = 262144      # 256K - NVIDIA 高端 / Intel Arc
+_BATCH_SIZE_128K = 131072      # 128K - NVIDIA 中端 / AMD 高端
+_BATCH_SIZE_64K = 65536        # 64K - NVIDIA 低端 / AMD 中端 / Intel Arc A380
+_BATCH_SIZE_32K = 32768        # 32K - 最低保守值
+_BATCH_SIZE_16K = 16384        # 16K - 未知 GPU 保守配置
+_BATCH_SIZE_MIN = 1024         # 最小批次对齐值
+_BATCH_SIZE_1M = 1048576       # 1M - 批次过大警告阈值
+
+# ──────────────────────────────────────────
+# 工作组大小常量
+# ──────────────────────────────────────────
+_WGS_DEFAULT = 256
+_WGS_INTEL_ARC = 512
+_WGS_MAX_DEFAULT = 1024
+_WGS_ALIGN_NVIDIA = 32
+_WGS_ALIGN_AMD = 64
+_WGS_ALIGN_INTEL = 32
+_WGS_ALIGN_DEFAULT = 32
+
+# ──────────────────────────────────────────
+# 显存使用率常量
+# ──────────────────────────────────────────
+_RATIO_AGGRESSIVE = 0.8      # NVIDIA 高端
+_RATIO_HIGH = 0.75            # NVIDIA 中端
+_RATIO_MEDIUM = 0.70          # NVIDIA 低端 / Intel Arc
+_RATIO_MODERATE = 0.6         # AMD / Intel Arc A750
+_RATIO_CONSERVATIVE = 0.5     # 未知 / Intel Arc A380
+
 
 def _align_work_group_size(recommended: int, max_wgs: int, alignment: int) -> int:
     """将work_group_size对齐到厂商最优值，且不超过设备限制"""
@@ -90,9 +135,9 @@ class GPUAutoConfigurator:
 
     # NVIDIA GPU配置模板
     NVIDIA_CONFIG = {
-        "batch_size": 131072,  # 128K - NVIDIA适合大批次
-        "work_group_size": 512,  # 大工作组
-        "memory_usage_ratio": 0.7,  # 较高显存使用率
+        "batch_size": _BATCH_SIZE_128K,  # 128K - NVIDIA适合大批次
+        "work_group_size": _WGS_INTEL_ARC,  # 大工作组
+        "memory_usage_ratio": _RATIO_MEDIUM,  # 较高显存使用率
         "enable_async": True,  # 异步执行
         "use_fast_math": False,  # 禁用快速数学(加密运算需要精度)
         "use_uint32_workaround": False,
@@ -101,9 +146,9 @@ class GPUAutoConfigurator:
 
     # AMD GPU配置模板
     AMD_CONFIG = {
-        "batch_size": 65536,  # 64K - 中等批次
-        "work_group_size": 256,  # 中等工作组
-        "memory_usage_ratio": 0.6,  # 中等显存使用率
+        "batch_size": _BATCH_SIZE_64K,  # 64K - 中等批次
+        "work_group_size": _WGS_DEFAULT,  # 中等工作组
+        "memory_usage_ratio": _RATIO_MODERATE,  # 中等显存使用率
         "enable_async": True,
         "use_fast_math": True,
         "use_uint32_workaround": False,
@@ -111,12 +156,10 @@ class GPUAutoConfigurator:
     }
 
     # Intel Arc GPU配置模板
-    # v4.2.1修复: memory_usage_ratio 从 INTEL_SAFE_MEMORY_RATIO(0.45) 改为 0.70
-    # 与 IntelGPUVendor.apply_optimizations() 设置的 memory_efficiency=0.70 保持一致
     INTEL_ARC_CONFIG = {
-        "batch_size": 262144,  # v4.2.1优化: 262K - 经测试最优批次大小
-        "work_group_size": 512,  # v4.2.1优化: 512 - 匹配A770的512个EU(原256)
-        "memory_usage_ratio": 0.70,  # v4.2.1: 统一为0.70，与memory_efficiency一致
+        "batch_size": _BATCH_SIZE_256K,  # v4.2.1优化: 262K - 经测试最优批次大小
+        "work_group_size": _WGS_INTEL_ARC,  # v4.2.1优化: 512 - 匹配A770的512个EU(原256)
+        "memory_usage_ratio": _RATIO_MEDIUM,  # v4.2.1: 统一为0.70，与memory_efficiency一致
         "enable_async": True,  # 异步执行(必须)
         "use_fast_math": False,  # 禁用快速数学(加密运算需要精度)
         "use_uint32_workaround": True,  # uint32溢出workaround(必须)
@@ -125,9 +168,9 @@ class GPUAutoConfigurator:
 
     # 未知GPU保守配置
     UNKNOWN_CONFIG = {
-        "batch_size": 32768,
-        "work_group_size": 256,
-        "memory_usage_ratio": 0.5,
+        "batch_size": _BATCH_SIZE_32K,
+        "work_group_size": _WGS_DEFAULT,
+        "memory_usage_ratio": _RATIO_CONSERVATIVE,
         "enable_async": False,
         "use_fast_math": False,
         "use_uint32_workaround": False,
@@ -194,27 +237,27 @@ class GPUAutoConfigurator:
 
         # v4.2.1修复: 使用统一的显存获取方法
         memory_gb = _get_memory_gb(device)
-        if memory_gb >= 24:
+        if memory_gb >= _NVIDIA_HIGH_END_MEMORY_GB:
             # RTX 3090/4090等高端卡
-            config["batch_size"] = 262144  # 256K
-            config["memory_usage_ratio"] = 0.8
-        elif memory_gb >= 12:
+            config["batch_size"] = _BATCH_SIZE_256K
+            config["memory_usage_ratio"] = _RATIO_AGGRESSIVE
+        elif memory_gb >= _NVIDIA_MID_END_MEMORY_GB:
             # RTX 3080/4070等
-            config["batch_size"] = 131072  # 128K
-            config["memory_usage_ratio"] = 0.75
-        elif memory_gb >= 8:
+            config["batch_size"] = _BATCH_SIZE_128K
+            config["memory_usage_ratio"] = _RATIO_HIGH
+        elif memory_gb >= _NVIDIA_LOW_END_MEMORY_GB:
             # RTX 3070/2080等
-            config["batch_size"] = 65536  # 64K
-            config["memory_usage_ratio"] = 0.7
+            config["batch_size"] = _BATCH_SIZE_64K
+            config["memory_usage_ratio"] = _RATIO_MEDIUM
         else:
             # GTX 1660 Ti等
-            config["batch_size"] = 32768  # 32K
-            config["memory_usage_ratio"] = 0.6
+            config["batch_size"] = _BATCH_SIZE_32K
+            config["memory_usage_ratio"] = _RATIO_MODERATE
 
         # 自适应 work_group_size: NVIDIA Warp大小对齕32
-        max_wgs = device.get("max_work_group_size", 1024)
-        recommended_wgs = 256
-        adjusted_wgs = _align_work_group_size(recommended_wgs, max_wgs, 32)
+        max_wgs = device.get("max_work_group_size", _WGS_MAX_DEFAULT)
+        recommended_wgs = _WGS_DEFAULT
+        adjusted_wgs = _align_work_group_size(recommended_wgs, max_wgs, _WGS_ALIGN_NVIDIA)
         if adjusted_wgs != recommended_wgs:
             logger.info(
                 "[NVIDIA] wgs: %s->%s (max=%s, align=32)",
@@ -238,19 +281,19 @@ class GPUAutoConfigurator:
 
         # v4.2.1修复: 使用统一的显存获取方法
         memory_gb = _get_memory_gb(device)
-        if memory_gb >= 16:
+        if memory_gb >= _AMD_HIGH_END_MEMORY_GB:
             # RX 6800 XT/7900 XTX等
-            config["batch_size"] = 131072  # 128K
-        elif memory_gb >= 8:
+            config["batch_size"] = _BATCH_SIZE_128K
+        elif memory_gb >= _AMD_MID_END_MEMORY_GB:
             # RX 6700 XT/7600等
-            config["batch_size"] = 65536  # 64K
+            config["batch_size"] = _BATCH_SIZE_64K
         else:
-            config["batch_size"] = 32768  # 32K
+            config["batch_size"] = _BATCH_SIZE_32K
 
         # 自适应 work_group_size: AMD Wavefront大小对齕64 (GCN架构, RDNA为32)
-        max_wgs = device.get("max_work_group_size", 1024)
-        recommended_wgs = 256
-        adjusted_wgs = _align_work_group_size(recommended_wgs, max_wgs, 64)
+        max_wgs = device.get("max_work_group_size", _WGS_MAX_DEFAULT)
+        recommended_wgs = _WGS_DEFAULT
+        adjusted_wgs = _align_work_group_size(recommended_wgs, max_wgs, _WGS_ALIGN_AMD)
         if adjusted_wgs != recommended_wgs:
             logger.info("[AMD] wgs: %s->%s (max=%s, align=64)", recommended_wgs, adjusted_wgs, max_wgs)
         config["work_group_size"] = adjusted_wgs
@@ -270,25 +313,25 @@ class GPUAutoConfigurator:
 
         # v4.2.1修复: 使用统一的显存获取方法
         memory_gb = _get_memory_gb(device)
-        if memory_gb >= 15:  # v4.2.1修改: 15.56GB的A770也能匹配
+        if memory_gb >= _INTEL_ARC_HIGH_END_MEMORY_GB:  # v4.2.1修改: 15.56GB的A770也能匹配
             # Arc A770 16GB - v4.2.1优化: 提升到 2M（原1M），kernel优化后单线程显存降低
-            config["batch_size"] = 2097152  # 2M，~84MB显存占用（A770 16GB有充足余量）
-            config["memory_usage_ratio"] = 0.70
-            recommended_wgs = 512  # v4.2.1优化: 匹配512个EU
-        elif memory_gb >= 8:
+            config["batch_size"] = _BATCH_SIZE_2M  # 2M，~84MB显存占用（A770 16GB有充足余量）
+            config["memory_usage_ratio"] = _RATIO_MEDIUM
+            recommended_wgs = _WGS_INTEL_ARC  # v4.2.1优化: 匹配512个EU
+        elif memory_gb >= _INTEL_ARC_MID_END_MEMORY_GB:
             # Arc A750/A580 - v4.2.1优化: 提升到131K
-            config["batch_size"] = 131072  # 131K
-            config["memory_usage_ratio"] = 0.6
-            recommended_wgs = 512
+            config["batch_size"] = _BATCH_SIZE_128K  # 131K
+            config["memory_usage_ratio"] = _RATIO_MODERATE
+            recommended_wgs = _WGS_INTEL_ARC
         else:
             # Arc A380等低端卡
-            config["batch_size"] = 65536  # 65K
-            config["memory_usage_ratio"] = 0.5
-            recommended_wgs = 512
+            config["batch_size"] = _BATCH_SIZE_64K  # 65K
+            config["memory_usage_ratio"] = _RATIO_CONSERVATIVE
+            recommended_wgs = _WGS_INTEL_ARC
 
         # 自适应 work_group_size: Intel Arc EU对齕32
-        max_wgs = device.get("max_work_group_size", 1024)
-        adjusted_wgs = _align_work_group_size(recommended_wgs, max_wgs, 32)
+        max_wgs = device.get("max_work_group_size", _WGS_MAX_DEFAULT)
+        adjusted_wgs = _align_work_group_size(recommended_wgs, max_wgs, _WGS_ALIGN_INTEL)
         if adjusted_wgs != recommended_wgs:
             logger.info(
                 "[Intel Arc] wgs: %s->%s (max=%s, align=32)",
@@ -309,17 +352,17 @@ class GPUAutoConfigurator:
 
         # v4.2.1修复: 使用统一的显存获取方法
         memory_gb = _get_memory_gb(device)
-        if memory_gb >= 8:
-            config["batch_size"] = 65536
-        elif memory_gb >= 4:
-            config["batch_size"] = 32768
+        if memory_gb >= _UNKNOWN_HIGH_END_MEMORY_GB:
+            config["batch_size"] = _BATCH_SIZE_64K
+        elif memory_gb >= _UNKNOWN_MID_END_MEMORY_GB:
+            config["batch_size"] = _BATCH_SIZE_32K
         else:
-            config["batch_size"] = 16384
+            config["batch_size"] = _BATCH_SIZE_16K
 
         # 自适应 work_group_size: 保守配置对齕32
-        max_wgs = device.get("max_work_group_size", 1024)
-        recommended_wgs = 256
-        adjusted_wgs = _align_work_group_size(recommended_wgs, max_wgs, 32)
+        max_wgs = device.get("max_work_group_size", _WGS_MAX_DEFAULT)
+        recommended_wgs = _WGS_DEFAULT
+        adjusted_wgs = _align_work_group_size(recommended_wgs, max_wgs, _WGS_ALIGN_DEFAULT)
         if adjusted_wgs != recommended_wgs:
             logger.info(
                 "[Unknown GPU] wgs: %s->%s (max=%s, align=32)",
@@ -355,7 +398,7 @@ class GPUAutoConfigurator:
         # - 匹配缓冲区 (_match_buf): 4 字节
         # - 安全边际: 15% (6 字节)
         # 总计: 42 字节
-        estimated_memory_gb = (batch_size * 42) / (1024**3)
+        estimated_memory_gb = (batch_size * 42) / _BYTES_TO_GB
 
         # 如果估算显存超过可用显存的安全比例,减小批次
         max_safe_memory = memory_gb * config["memory_usage_ratio"]
@@ -365,9 +408,9 @@ class GPUAutoConfigurator:
             ratio = max_safe_memory / estimated_memory_gb
             new_batch_size = int(batch_size * ratio)
 
-            # 确保最小batch_size为1024
-            if new_batch_size < 1024:
-                new_batch_size = 1024
+            # 确保最小batch_size为_BATCH_SIZE_MIN
+            if new_batch_size < _BATCH_SIZE_MIN:
+                new_batch_size = _BATCH_SIZE_MIN
                 logger.warning(f"显存不足,批次大小从 {batch_size:,} 调整为最小值 {new_batch_size:,}")
             else:
                 # 对齐到2的幂
@@ -393,19 +436,19 @@ class GPUAutoConfigurator:
 
         # 检查批次大小
         batch_size = config.get("batch_size", 0)
-        if batch_size < 1024:
+        if batch_size < _BATCH_SIZE_MIN:
             warnings.append(f"批次大小过小({batch_size}),性能可能较差")
-        elif batch_size > 1048576:
+        elif batch_size > _BATCH_SIZE_1M:
             warnings.append(f"批次大小过大({batch_size}),可能导致显存不足")
 
         # 检查工作組大小
         work_group = config.get("work_group_size", 0)
-        max_work_group = device.get("max_work_group_size", 1024)
+        max_work_group = device.get("max_work_group_size", _WGS_MAX_DEFAULT)
         if work_group > max_work_group:
             warnings.append(f"工作组大小({work_group})超过设备最大值({max_work_group})")
 
         # 检查显存使用率
-        memory_ratio = config.get("memory_usage_ratio", 0.5)
+        memory_ratio = config.get("memory_usage_ratio", _RATIO_CONSERVATIVE)
         if memory_ratio > 0.9:
             warnings.append(f"显存使用率过高({memory_ratio}),可能导致不稳定")
         elif memory_ratio < 0.3:

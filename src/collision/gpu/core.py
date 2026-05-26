@@ -19,7 +19,7 @@
 - start/stop/pause等状态修改操作使用线程锁保护
 """
 
-import logging
+from ...utils import get_configured_logger
 import threading
 import time
 from collections.abc import Callable
@@ -32,7 +32,7 @@ from .protocols import ICollisionCore
 if TYPE_CHECKING:
     from .engine import GPUCollisionEngine
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger(__name__)
 
 
 class CollisionCore(ICollisionCore):

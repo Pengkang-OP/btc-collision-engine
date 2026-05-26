@@ -460,14 +460,14 @@ pytest tests/ --cov=src --cov-report=html -q
 
 ### Q2: 测试在 pytest 下失败，但直接运行脚本正常？
 
-部分 GPU 集成脚本（`scripts/test_gpu_*.py`）需要直接运行：
+部分 GPU 集成脚本（`scripts/testing/test_gpu_*.py`）需要直接运行：
 
 ```bash
 # ❌ 不通过 pytest 运行
-pytest scripts/test_gpu_collision_actual.py
+pytest scripts/testing/test_gpu_collision_actual.py
 
 # ✅ 直接运行
-python scripts/test_gpu_collision_actual.py
+python scripts/testing/test_gpu_collision_actual.py
 ```
 
 ### Q3: Windows 下 pytest 导入失败如何处理？

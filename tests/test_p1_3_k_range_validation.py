@@ -12,7 +12,8 @@ import unittest
 from src.gpu.kernel import OPENCL_KERNEL_SOURCE
 
 
-class TestP1_3_KeyRangeValidation(unittest.TestCase):
+import pytest
+class TestP1_3_KeyRangeValidation:
     """P1-3: GPU 内核 k>=N 范围验证"""
 
     def test_kernel_source_contains_n_check_batch_check(self):
@@ -20,21 +21,13 @@ class TestP1_3_KeyRangeValidation(unittest.TestCase):
         source = OPENCL_KERNEL_SOURCE
 
         # 检查包含 SECP256K1_N 的使用
-        self.assertIn("SECP256K1_N", source, "内核源码中应使用 SECP256K1_N 常量")
+        assert source  in  "SECP256K1_N", "内核源码中应使用 SECP256K1_N 常量"
 
         # 检查包含 uint256_cmp 与 N 的比较
-        self.assertIn(
-            "uint256_cmp(&k, &n_val) >= 0",
-            source,
-            "batch_check 应使用 uint256_cmp 检查 k >= N",
-        )
+        assert source  in  "uint256_cmp(&k, &n_val) >= 0", "batch_check 应使用 uint256_cmp 检查 k >= N"
 
         # 检查 uint256_is_zero 和 k>=N 在同一条件中
-        self.assertIn(
-            "uint256_is_zero(&k) || uint256_cmp(&k, &n_val) >= 0",
-            source,
-            "应组合检查 k==0 和 k>=N",
-        )
+        assert source  in  "uint256_is_zero(&k) || uint256_cmp(&k, &n_val) >= 0", "应组合检查 k==0 和 k>=N"
 
         print("\n[P1-3-A ✓] batch_check: k>=N 验证代码存在")
 
@@ -71,11 +64,7 @@ class TestP1_3_KeyRangeValidation(unittest.TestCase):
 
         old_pattern = re.findall(r"if\s*\(\s*uint256_is_zero\(&k\)\s*\)\s*\{", source)
 
-        self.assertEqual(
-            len(old_pattern),
-            0,
-            f"旧代码 'if (uint256_is_zero(&k)) {{{{' 应已被替换，但仍找到 {len(old_pattern)} 处",
-        )
+        assert len(old_pattern)  ==  0, f"旧代码 'if (uint256_is_zero(&k)) {{{{' 应已被替换，但仍找到 {len(old_pattern)} 处"
 
         print("\n[P1-3-B ✓] 旧独占条件已全部替换")
 
@@ -84,9 +73,9 @@ class TestP1_3_KeyRangeValidation(unittest.TestCase):
         source = OPENCL_KERNEL_SOURCE
 
         # 检查 n_val 的声明和加载
-        self.assertIn("uint256_t n_val;", source, "应声明 n_val 局部变量")
+        assert source  in  "uint256_t n_val;", "应声明 n_val 局部变量"
 
-        self.assertIn("n_val.d[i] = SECP256K1_N[i]", source, "应从 SECP256K1_N 常量加载 N 值")
+        assert source  in  "n_val.d[i] = SECP256K1_N[i]", "应从 SECP256K1_N 常量加载 N 值"
 
         # 应该有循环加载
         import re
@@ -96,7 +85,7 @@ class TestP1_3_KeyRangeValidation(unittest.TestCase):
             source,
         )
         # 应该有4处（kernel.py和.cl各两个内核）
-        self.assertGreaterEqual(len(load_loops), 2, f"不应少于2处N值加载循环，找到{len(load_loops)}处")
+        assert len(load_loops)  >=  2, f"不应少于2处N值加载循环，找到{len(load_loops)}处"
 
         print(f"\n[P1-3-C ✓] n_val加载正确 (找到{len(load_loops)}处)")
 
@@ -109,8 +98,8 @@ class TestP1_3_KeyRangeValidation(unittest.TestCase):
 
         kernels = re.findall(r"__kernel\s+void\s+(\w+)", source)
 
-        self.assertIn("batch_check", kernels)
-        self.assertIn("batch_check_local_mem", kernels)
+        assert kernels  in  "batch_check"
+        assert kernels  in  "batch_check_local_mem"
 
         # 对于每个包含 batch_check 的内核，检查是否都有 N 验证
         # 通过在 batch_check 之后到下一个 __kernel 之间搜索
@@ -124,13 +113,9 @@ class TestP1_3_KeyRangeValidation(unittest.TestCase):
 
                 kernel_body = source[kernel_pos:next_kernel]
 
-                self.assertIn(
-                    "uint256_cmp(&k, &n_val) >= 0",
-                    kernel_body,
-                    f"{kernel_name} 内核应包含 k>=N 验证",
-                )
+                assert kernel_body  in  "uint256_cmp(&k, &n_val) >= 0", f"{kernel_name} 内核应包含 k>=N 验证"
 
-                self.assertIn("SECP256K1_N", kernel_body, f"{kernel_name} 内核应引用 SECP256K1_N")
+                assert kernel_body  in  "SECP256K1_N", f"{kernel_name} 内核应引用 SECP256K1_N"
 
                 print(f"  [{kernel_name}] ✓ k>=N 验证存在")
 
@@ -144,7 +129,7 @@ class TestP1_3_KeyRangeValidation(unittest.TestCase):
         import re
 
         n_match = re.search(r"SECP256K1_N\[8\]\s*=\s*\{([^}]+)\}", source)
-        self.assertIsNotNone(n_match, "未找到 SECP256K1_N 定义")
+        assert n_match, "未找到 SECP256K1_N 定义" is not None
 
         n_values_str = n_match.group(1)
         n_values = [int(x.strip(), 0) for x in n_values_str.split(",")]
@@ -161,10 +146,10 @@ class TestP1_3_KeyRangeValidation(unittest.TestCase):
             0xFFFFFFFF,
         ]
 
-        self.assertEqual(len(n_values), 8, f"N应有8个值，实际{len(n_values)}")
+        assert len(n_values)  ==  8, f"N应有8个值，实际{len(n_values)}"
 
         for i, (actual, expected) in enumerate(zip(n_values, expected_n, strict=False)):
-            self.assertEqual(actual, expected, f"N[{i}] = {hex(actual)} 不等于预期 {hex(expected)}")
+            assert actual  ==  expected, f"N[{i}] = {hex(actual)} 不等于预期 {hex(expected)}"
 
         print("\n[P1-3-F ✓] SECP256K1_N 常量值正确")
 

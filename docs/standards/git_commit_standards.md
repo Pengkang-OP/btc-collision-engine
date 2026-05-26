@@ -305,7 +305,7 @@ git push origin v4.2.1
 ```markdown
 ### 新增
 
-- 🚀 **Windows安装脚本** (`scripts/install.bat`): 7步自动化安装流程
+- 🚀 **Windows安装脚本** (`scripts/install/install.bat`): 7步自动化安装流程
 - 🏥 **健康检查模块** (`src/utils/health_check.py`): 依赖验证、磁盘空间检查
 
 ### 修复

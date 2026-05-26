@@ -2,9 +2,12 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://btc-collision-engine/config.schema.json",
   "title": "BTC Collision Engine Configuration Schema",
-  "description": "验证 config.json 的结构、类型和取值范围。所有以 _comment 开头的字段会被自动忽略。",
+  "description": "配置文件的统一 JSON Schema（单一真相源）。所有以 _comment 开头的字段会被自动忽略。",
   "type": "object",
-  "additionalProperties": true,
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_comment": { "type": "string" }
+  },
   "properties": {
     "version": {
       "type": "string",
@@ -13,7 +16,7 @@
     },
     "engine": {
       "type": "object",
-      "additionalProperties": true,
+      "additionalProperties": false,
       "properties": {
         "mode": { "type": "string", "enum": ["random", "sequential", "range", "brute_force"] },
         "batch_size": { "type": "integer", "minimum": 1, "maximum": 16777216 },
@@ -23,27 +26,29 @@
     },
     "collision": {
       "type": "object",
-      "additionalProperties": true,
+      "additionalProperties": false,
       "properties": {
         "max_workers": {
           "oneOf": [
-            { "type": "integer", "minimum": 1 },
+            { "type": "integer", "minimum": 1, "maximum": 1024 },
             { "type": "null" }
           ]
         },
         "progress_interval": { "type": "integer", "minimum": 1 },
-        "checkpoint_interval": { "type": "integer", "minimum": 1 },
+        "checkpoint_interval": { "type": "integer", "minimum": -1 },
         "dedup_max_size": { "type": "integer", "minimum": 1 },
         "use_performance_optimization": { "type": "boolean" },
         "precomputed_window_size": { "type": "integer", "minimum": 1, "maximum": 16 },
         "use_simd_hash": { "type": "boolean" },
         "use_memory_pool": { "type": "boolean" },
-        "use_gpu_memory_pool": { "type": "boolean" }
+        "use_gpu_memory_pool": { "type": "boolean" },
+        "gpu_pool_max_buffers": { "type": "integer", "minimum": 1 },
+        "gpu_pool_max_memory_mb": { "type": "integer", "minimum": 1 }
       }
     },
     "logging": {
       "type": "object",
-      "additionalProperties": true,
+      "additionalProperties": false,
       "properties": {
         "level": { "type": "string", "enum": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] },
         "format": { "type": "string" },
@@ -60,7 +65,7 @@
     },
     "gpu": {
       "type": "object",
-      "additionalProperties": true,
+      "additionalProperties": false,
       "properties": {
         "use_gpu": { "type": "boolean" },
         "device_index": { "type": "integer", "minimum": -1 },
@@ -68,16 +73,12 @@
         "auto_detect": { "type": "boolean" },
         "memory_usage_ratio": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
         "enable_vendor_optimizations": { "type": "boolean" },
-        "queue_depth": { "type": "integer", "minimum": 1, "maximum": 64 },
-        "use_new_module": { "type": "boolean" },
         "async_execution": { "type": "boolean" },
-        "seed_prefetch_size": { "type": "integer", "minimum": 1, "maximum": 64 },
-        "timeout_protection": { "type": "boolean" },
-        "base_timeout_seconds": { "type": "number", "minimum": 1 },
-        "max_error_retries": { "type": "integer", "minimum": 1 },
-        "gpu_memory_pool": { "type": "boolean" },
-        "max_buffers": { "type": "integer", "minimum": 1 },
-        "max_memory_mb": { "type": "integer", "minimum": 1 },
+        "work_group_size": { "type": "integer", "minimum": 64, "maximum": 2048 },
+        "use_fast_math": { "type": "boolean" },
+        "use_uint32_workaround": { "type": "boolean" },
+        "compiler_flags": { "type": "string" },
+        "use_new_module": { "type": "boolean" },
         "mode": { "type": "string", "enum": ["auto", "single", "multi"] },
         "device_indices": {
           "type": "array",
@@ -85,13 +86,17 @@
         },
         "load_balancing": { "type": "string", "enum": ["performance", "equal"] },
         "auto_tuning": { "type": "boolean" },
-        "work_group_size": { "type": "integer", "minimum": 64, "maximum": 2048 },
-        "use_fast_math": { "type": "boolean" },
-        "use_uint32_workaround": { "type": "boolean" },
-        "compiler_flags": { "type": "string" },
+        "queue_depth": { "type": "integer", "minimum": 1, "maximum": 64 },
+        "gpu_memory_pool": { "type": "boolean" },
+        "max_buffers": { "type": "integer", "minimum": 1 },
+        "max_memory_mb": { "type": "integer", "minimum": 64 },
+        "timeout_protection": { "type": "boolean" },
+        "base_timeout_seconds": { "type": "number", "minimum": 1 },
+        "max_error_retries": { "type": "integer", "minimum": 1 },
+        "seed_prefetch_size": { "type": "integer", "minimum": 1, "maximum": 4096 },
         "driver_check": {
           "type": "object",
-          "additionalProperties": true,
+          "additionalProperties": false,
           "properties": {
             "enabled": { "type": "boolean" },
             "require_minimum_version": { "type": "boolean" },
@@ -118,20 +123,48 @@
     },
     "monitoring": {
       "type": "object",
-      "additionalProperties": true,
+      "additionalProperties": false,
       "properties": {
         "enabled": { "type": "boolean" },
         "collection_interval": { "type": "integer", "minimum": 1 },
         "storage_dir": { "type": "string" },
         "history_max_size": { "type": "integer", "minimum": 1 },
         "error_max_size": { "type": "integer", "minimum": 1 },
+        "report_interval": { "type": "integer", "minimum": 1 },
+        "log_level": { "type": "string", "enum": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] },
+        "enable_memory_monitoring": { "type": "boolean" },
+        "enable_timeout_monitoring": { "type": "boolean" },
         "anomaly_thresholds": {
           "type": "object",
-          "additionalProperties": true
+          "additionalProperties": false,
+          "properties": {
+            "speed": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "min": { "type": "number" },
+                "max": { "type": "number" }
+              }
+            },
+            "cpu_usage": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "max": { "type": "number" }
+              }
+            },
+            "memory_usage": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "max": { "type": "number" }
+              }
+            }
+          }
         },
         "auto_cleanup": {
           "type": "object",
-          "additionalProperties": true,
+          "additionalProperties": false,
           "properties": {
             "enabled": { "type": "boolean" },
             "max_age_days": { "type": "integer", "minimum": 1 }
@@ -141,7 +174,7 @@
     },
     "optimization": {
       "type": "object",
-      "additionalProperties": true,
+      "additionalProperties": false,
       "properties": {
         "uint32_workaround": { "type": "boolean" },
         "disable_async_transfer": { "type": "boolean" },
@@ -151,18 +184,18 @@
     },
     "performance_monitoring": {
       "type": "object",
-      "additionalProperties": true,
+      "additionalProperties": false,
       "properties": {
         "enabled": { "type": "boolean" },
         "track_slow_operations": { "type": "boolean" },
-        "slow_threshold_ms": { "type": "integer", "minimum": 1 },
+        "slow_threshold_ms": { "type": "number", "minimum": 0 },
         "max_records": { "type": "integer", "minimum": 1 },
         "log_level": { "type": "string", "enum": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] }
       }
     },
     "crypto": {
       "type": "object",
-      "additionalProperties": true,
+      "additionalProperties": false,
       "properties": {
         "backend": { "type": "string", "enum": ["auto", "pure_python", "pure_python_const_time", "openssl", "coincurve", "ecdsa"] },
         "constant_time": { "type": "boolean" },
@@ -170,12 +203,12 @@
         "strict_wif_validation": { "type": "boolean" },
         "use_gpu": { "type": "boolean" },
         "gpu_device_index": { "type": "integer", "minimum": -1 },
-        "gpu_batch_size": { "type": "integer", "minimum": 1 }
+        "gpu_batch_size": { "type": "integer", "minimum": 1, "maximum": 16777216 }
       }
     },
     "i18n": {
       "type": "object",
-      "additionalProperties": true,
+      "additionalProperties": false,
       "properties": {
         "language": { "type": "string" },
         "fallback_language": { "type": "string" }
@@ -183,7 +216,7 @@
     },
     "gui": {
       "type": "object",
-      "additionalProperties": true,
+      "additionalProperties": false,
       "properties": {
         "theme": { "type": "string" },
         "font": { "type": "string" },

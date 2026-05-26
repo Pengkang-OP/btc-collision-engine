@@ -8,11 +8,11 @@ DataLogger 的实际 API (`record_performance_data()` 等)。
 创建日期: 2026-04-30
 """
 
-import logging
+from ...utils import get_configured_logger
 from contextlib import suppress
 from typing import Any
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger(__name__)
 
 
 class DataLoggerAdapter:

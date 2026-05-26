@@ -414,7 +414,7 @@ class GPUPerformanceOptimizer:
                     stats = monitor.get_stats()
                     gpu_utilization = stats.get("avg_gpu_utilization", 0.0)
             except (AttributeError, RuntimeError, TypeError):
-                pass
+                logger.debug("Failed to get GPU utilization stats from monitor")
 
         min_target = profile.min_gpu_utilization_target
         growth_ratio = self._analyze_compute_growth_ratio(gpu_utilization, min_target, strategy)

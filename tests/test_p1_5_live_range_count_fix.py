@@ -13,7 +13,8 @@ import unittest
 from src.collision.key_collision_engine import KeyCollisionEngine
 
 
-class TestLiveRangeCountFix(unittest.TestCase):
+import pytest
+class TestLiveRangeCountFix:
     """P1-5: _live_range_count 双重计数修复验证"""
 
     def setUp(self):
@@ -57,7 +58,7 @@ class TestLiveRangeCountFix(unittest.TestCase):
 
         # 最终 _live_range_count 应为0（已重置）
         final_live = self.engine._live_range_count
-        self.assertEqual(final_live, 0, f"_live_range_count 应为0(已重置)，实际为 {final_live}")
+        assert final_live  ==  0, f"_live_range_count 应为0(已重置)，实际为 {final_live}"
 
         print(f"\n[P1-5-A ✓] _live_range_count 已正确重置: {final_live}")
 
@@ -88,11 +89,11 @@ class TestLiveRangeCountFix(unittest.TestCase):
             # 核心断言：最终计数应该是合理值（远小于翻倍值）
             # 修复前：_live_range_count 被重复计入，导致计数虚高约100%
             # 修复后：计数应为实际处理的私钥数
-            self.assertGreater(final_count, 0, "应处理了一些私钥")
+            assert final_count  >  0, "应处理了一些私钥"
 
             # 如果存在双重计数bug，计数会异常偏高
             # 批次=50，单worker 2秒大约处理2000-5000个，不会到100k
-            self.assertLess(final_count, 100000, f"计数 {final_count} 异常偏高，可能存在双重计数")
+            assert final_count  <  100000, f"计数 {final_count} 异常偏高，可能存在双重计数"
 
             print(f"\n[P1-5-B ✓] 最终计数: {final_count} (在合理范围内)")
 
@@ -120,17 +121,13 @@ class TestLiveRangeCountFix(unittest.TestCase):
             final_live = self.engine._live_range_count
 
         # 停止后 _live_range_count 应为0（已重置）
-        self.assertEqual(final_live, 0, f"_live_range_count 应为0(已重置)，实际为 {final_live}")
+        assert final_live  ==  0, f"_live_range_count 应为0(已重置)，实际为 {final_live}"
 
         # 运行中 _live_range_count 不应异常大（通过进度回调间接验证）
         # 修复前：每批次 batch_count 被重复加入
         # batch_size=32, 1秒大约有多个批次
         stats = self.engine.get_stats()
-        self.assertLess(
-            stats.total_checked,
-            100000,
-            f"total_checked={stats.total_checked} 异常偏高，可能存在 batch_end 重复提交",
-        )
+        assert stats.total_checked  <  100000, f"total_checked={stats.total_checked} 异常偏高，可能存在 batch_end 重复提交"
 
         print(
             f"\n[P1-5-C ✓] 引擎停止后 _live_range_count={final_live}, "
@@ -158,19 +155,19 @@ class TestLiveRangeCountFix(unittest.TestCase):
         # 等待范围扫描完成（coincurve加速下500条不到1秒）
         if not complete_event.wait(timeout=60):
             self.engine.stop()
-            self.fail("范围扫描未在60秒内完成")
+            pytest.fail("范围扫描未在60秒内完成")
 
         # range_scan最终应正确计数（500个私钥）
         stats = self.engine.get_stats()
         final_count = stats.total_checked
 
         # 实际检查数应接近500（排除跳过无效值的）
-        self.assertGreater(final_count, 0, f"final_count={final_count}")
-        self.assertLessEqual(final_count, 500, f"final_count={final_count} 超出范围")
+        assert final_count  >  0, f"final_count={final_count}"
+        assert final_count  <=  500, f"final_count={final_count} 超出范围"
 
         # 引擎结束后 _live_range_count 应为0（已重置）
         live_after = self.engine._live_range_count
-        self.assertEqual(live_after, 0, f"_live_range_count 应为0(已重置)，实际为 {live_after}")
+        assert live_after  ==  0, f"_live_range_count 应为0(已重置)，实际为 {live_after}"
 
         print(
             f"\n[P1-5-D ✓] range_scan 最终计数: {final_count} (范围1-500), "
@@ -189,30 +186,15 @@ class TestLiveRangeCountFix(unittest.TestCase):
         exec_lines = [line for line in lines if "self._live_range_count += batch_count" in line]
         for line in exec_lines:
             stripped = line.strip()
-            self.assertTrue(
-                stripped.startswith("#"),
-                f"非注释行仍包含旧代码! 行内容: {line.strip()[:80]}",
-            )
+            assert stripped.startswith("#"), f"非注释行仍包含旧代码! 行内容: {line.strip()[:80]}"
 
         # 确认 remainder 提交代码存在（CODE-2 重构后仍在 worker 中）
-        self.assertIn(
-            "remainder = local_count % 32",
-            worker_source,
-            "缺少worker退出时的剩余计数提交代码",
-        )
+        assert worker_source  in  "remainder = local_count % 32", "缺少worker退出时的剩余计数提交代码"
 
         # CODE-2 重构后：random_search 的 live 计数合并在 _random_search_finalize 中
         finalize_source = inspect.getsource(KeyCollisionEngine._random_search_finalize)
-        self.assertIn(
-            "final_count = max(total_count, self._live_range_count)",
-            finalize_source,
-            "缺少 _random_search_finalize 中的 live 计数合并代码",
-        )
-        self.assertIn(
-            "self._live_range_count = 0",
-            finalize_source,
-            "缺少 _random_search_finalize 中的 live 计数重置代码",
-        )
+        assert finalize_source  in  "final_count = max(total_count, self._live_range_count)", "缺少 _random_search_finalize 中的 live 计数合并代码"
+        assert finalize_source  in  "self._live_range_count = 0", "缺少 _random_search_finalize 中的 live 计数重置代码"
 
         print("\n[P1-5-E ✓] 代码中无重复提交，余数提交和计数合并代码均存在")
 
@@ -238,11 +220,7 @@ class TestLiveRangeCountFix(unittest.TestCase):
         if len(progress_counts) >= 2:
             # 单调递增检查
             for i in range(1, len(progress_counts)):
-                self.assertGreaterEqual(
-                    progress_counts[i],
-                    progress_counts[i - 1],
-                    f"进度计数应单调递增: {progress_counts[i - 1]} -> {progress_counts[i]}",
-                )
+                assert progress_counts[i]  >=  progress_counts[i - 1], f"进度计数应单调递增: {progress_counts[i - 1]} -> {progress_counts[i]}"
 
             # 检查没有异常跳跃（翻倍迹象）
             for i in range(1, len(progress_counts)):
@@ -252,12 +230,7 @@ class TestLiveRangeCountFix(unittest.TestCase):
                 if progress_counts[i - 1] == 0:
                     continue
                 # 允许小跳跃（批次完成），但不应该有翻倍
-                self.assertLess(
-                    ratio,
-                    5.0,
-                    f"进度计数跳跃异常 (ratio={ratio:.2f}): "
-                    f"{progress_counts[i - 1]} -> {progress_counts[i]}",
-                )
+                assert ratio  <  5.0, f"进度计数跳跃异常 (ratio={ratio:.2f}): " f"{progress_counts[i - 1]} -> {progress_counts[i]}"
 
             print(f"\n[P1-5-F ✓] 进度计数单调递增: {progress_counts}")
         else:

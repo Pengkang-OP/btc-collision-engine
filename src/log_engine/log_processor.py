@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import logging
+from ..utils import get_configured_logger
 import re
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from src.log_engine.events import LogEvent  # pragma: no cover
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger(__name__)
 
 
 class LogProcessor:
@@ -50,9 +51,13 @@ class SensitiveDataFilter(logging.Filter):
     """Filters sensitive data from log records."""
 
     # Class-level compiled patterns for address/private key detection
+    # 注意：纯 64 字符 hex 可能是 txid 或哈希值，仅在特定上下文标记附近匹配
     SENSITIVE_PATTERNS: list[re.Pattern] = [
-        re.compile(r"[0-9a-fA-F]{64}"),  # private key hex
+        re.compile(r"(?<![0-9a-fA-F])[0-9a-fA-F]{64}(?![0-9a-fA-F])",
+                   re.IGNORECASE),  # 裸 64-char hex（私钥/哈希）
         re.compile(r"PrivateKey\s*[=:]\s*\S+", re.IGNORECASE),  # PrivateKey=...
+        re.compile(r"(?:private_key|privkey|secret)\s*[=:]\s*[0-9a-fA-F]{64}",
+                   re.IGNORECASE),  # 带标记的私钥 hex
         re.compile(r"[x-z]prv[a-zA-Z0-9]{107,111}", re.IGNORECASE),  # BIP32 extended private keys
         re.compile(r"[13][a-km-zA-HJ-NP-Z1-9]{25,34}"),  # P2PKH + P2SH
         re.compile(r"bc1[ac-hj-np-z02-9]{6,87}", re.IGNORECASE),  # Bech32
@@ -151,7 +156,8 @@ class SensitiveDataFilter(logging.Filter):
             record: Log record
 
         Returns:
-            False if sensitive data detected, True otherwise
+            False if sensitive data was detected in record.data (filter it out);
+            True otherwise (let the record through after normal msg redaction).
 
         """
         # Check record.msg for sensitive patterns
@@ -171,6 +177,10 @@ class SensitiveDataFilter(logging.Filter):
             data_str = str(record_data)
             for pattern in SensitiveDataFilter.SENSITIVE_PATTERNS:
                 if pattern.search(data_str):
-                    return False
+                    # Redact in-place instead of discarding the record
+                    redacted = SensitiveDataFilter.redact(data_str)
+                    record.data = {"_redacted": True, "_original_type": type(record_data).__name__}
+                    record.msg = f"[Sensitive data redacted] {redacted[:200]}"
+                    return False  # Filter out records containing raw sensitive data in .data
 
         return True

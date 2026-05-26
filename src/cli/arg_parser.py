@@ -5,7 +5,6 @@ Provides parse_args() function defining all CLI parameters.
 """
 
 import argparse
-import os
 
 from ..i18n import _t
 
@@ -71,8 +70,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--no-color",
         action="store_true",
-        # 遵循 https://no-color.org/ 标准：检测环境变量 NO_COLOR
-        default=os.environ.get("NO_COLOR", "") != "",
+        default=False,
         help="禁用彩色输出；也可设置环境变量 NO_COLOR=1",
     )
 
@@ -251,7 +249,7 @@ def parse_args() -> argparse.Namespace:
         help="禁用内存池优化（调试用）",
     )
 
-    # 集成 optimization_cli 参数
+    # 集成 optimization_cli 参数（延迟导入，避免模块加载时触发）
     from .optimization_cli import OptimizationCLI
 
     OptimizationCLI.add_arguments(parser)

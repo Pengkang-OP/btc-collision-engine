@@ -11,9 +11,10 @@
 import argparse
 import concurrent.futures
 import json
-import logging
+from ..utils import get_configured_logger
 import string
 import sys
+import time
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -32,7 +33,7 @@ from src.cli.validation import validate_file_path
 from src.i18n import _t
 from src.utils.platform_utils import PlatformUtils
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger(__name__)
 
 # 快速模式默认配置常量
 QUICK_RUN_DEFAULTS: dict[str, Any] = {
@@ -51,6 +52,18 @@ PREVIEW_CONFIG = {
 }
 
 
+def _format_file_size(size_bytes: int) -> str:
+    """格式化文件大小为可读字符串。"""
+    if size_bytes < 1024:
+        return f"{size_bytes} B"
+    elif size_bytes < 1024 * 1024:
+        return f"{size_bytes / 1024:.1f} KB"
+    elif size_bytes < 1024 * 1024 * 1024:
+        return f"{size_bytes / (1024 * 1024):.1f} MB"
+    else:
+        return f"{size_bytes / (1024 * 1024 * 1024):.2f} GB"
+
+
 def _cmd_validate_addresses(file_path: str) -> None:
     """--validate-addresses 命令实现：批量验证文件中所有比特币地址"""
     # 路径安全验证：防止路径遍历攻击
@@ -62,11 +75,8 @@ def _cmd_validate_addresses(file_path: str) -> None:
         print(_t("errors.file_not_found", path=file_path), file=sys.stderr)
         sys.exit(1)
 
-    # 尝试导入地址验证器
-    try:
-        from src.collision.targets.validator import AddressBatchValidator
-    except ImportError:
-        from ..collision.targets.validator import AddressBatchValidator
+    # 导入地址验证器（优先使用相对导入）
+    from ..collision.targets.validator import AddressBatchValidator
 
     print(f"[BTC地址验证] 文件: {file_path}")
     print(SEPARATOR_DASHED_SHORT)
@@ -125,13 +135,15 @@ def _cmd_validate_addresses(file_path: str) -> None:
 
 
 def _cmd_examples() -> None:
-    """--examples 命令实现：显示常用使用示例"""
+    """--examples 命令实现：显示常用使用示例（带分页）"""
     # 确保UTF-8输出
     PlatformUtils.ensure_utf8_output()
 
-    print(SEPARATOR_EQUAL)
-    print("[Examples] " + _t("cli.commands.examples_title"))
-    print(SEPARATOR_EQUAL)
+    # 构建所有输出行
+    all_lines: list[str] = []
+    all_lines.append(SEPARATOR_EQUAL)
+    all_lines.append("[Examples] " + _t("cli.commands.examples_title"))
+    all_lines.append(SEPARATOR_EQUAL)
 
     examples = [
         {
@@ -193,27 +205,35 @@ def _cmd_examples() -> None:
     ]
 
     for ex in examples:
-        print(f"\n{ex['title']}")
-        print(f"   {ex['desc']}")
-        print(f"   $ {ex['cmd']}")
+        all_lines.append("")
+        all_lines.append(ex["title"])
+        all_lines.append(f"   {ex['desc']}")
+        all_lines.append(f"   $ {ex['cmd']}")
 
-    print("\n" + SEPARATOR_EQUAL)
-    print("[TIP] " + _t("cli.commands.examples_tips_title") + ":")
-    print("   - " + _t("cli.commands.tip_quick_start"))
-    print("   - " + _t("cli.commands.tip_help"))
-    print("   - " + _t("cli.commands.tip_config_check"))
+    all_lines.append("")
+    all_lines.append(SEPARATOR_EQUAL)
+    all_lines.append("[TIP] " + _t("cli.commands.examples_tips_title") + ":")
+    all_lines.append("   - " + _t("cli.commands.tip_quick_start"))
+    all_lines.append("   - " + _t("cli.commands.tip_help"))
+    all_lines.append("   - " + _t("cli.commands.tip_config_check"))
 
-    print("\n" + SEPARATOR_DASHED)
-    print("[快捷命令别名]")
-    print("   qs      = --quick-start  (交互式向导)")
-    print("   qr      = --quick-run    (快速模式)")
-    print("   hc      = --health-check (健康检查)")
-    print("   cc      = --config-check (配置验证)")
-    print("   ex      = --examples     (显示示例)")
-    print("   rec     = --recommend    (参数推荐)")
-    print(SEPARATOR_DASHED)
-    print("提示: Windows 用户也可双击 start.bat 启动统一菜单入口")
-    print(SEPARATOR_EQUAL)
+    all_lines.append("")
+    all_lines.append(SEPARATOR_DASHED)
+    all_lines.append("[快捷命令别名]")
+    all_lines.append("   qs      = --quick-start  (交互式向导)")
+    all_lines.append("   qr      = --quick-run    (快速模式)")
+    all_lines.append("   hc      = --health-check (健康检查)")
+    all_lines.append("   cc      = --config-check (配置验证)")
+    all_lines.append("   ex      = --examples     (显示示例)")
+    all_lines.append("   rec     = --recommend    (参数推荐)")
+    all_lines.append(SEPARATOR_DASHED)
+    all_lines.append("提示: Windows 用户也可双击 start.bat 启动统一菜单入口")
+    all_lines.append(SEPARATOR_EQUAL)
+
+    # 使用分页显示（内容较长）
+    from .output import paginate
+
+    paginate(all_lines, title="使用示例", page_size=18)
 
 
 # JSON Schema 路径 (P2-9: 配置文件 schema 验证)
@@ -229,6 +249,7 @@ def _validate_config_schema(config: dict[str, Any]) -> list[str]:
     try:
         import jsonschema
     except ImportError:
+        logger.debug("jsonschema not available, skipping schema validation (optional dependency)")
         return []  # 静默跳过（jsonschema 为可选依赖）
 
     schema_path = Path(_CONFIG_SCHEMA_PATH)
@@ -246,6 +267,7 @@ def _validate_config_schema(config: dict[str, Any]) -> list[str]:
             if not (e.absolute_path and str(e.absolute_path[0]).startswith("_comment"))
         ]
     except Exception:
+        logger.warning("Schema validation failed, returning empty list")
         return []  # schema 文件损坏时静默跳过
 
 
@@ -355,8 +377,6 @@ def _save_address_to_targets_file(address: str, output) -> None:
     # 使用文件锁实现跨进程安全
     lock_file = None
     try:
-        import sys
-
         # 根据平台选择文件锁实现
         if sys.platform == "win32":
             import msvcrt
@@ -379,8 +399,8 @@ def _save_address_to_targets_file(address: str, output) -> None:
                         stripped = line.strip()
                         if stripped and not stripped.startswith("#"):
                             existing.add(stripped)
-            except OSError:
-                pass
+            except OSError as e:
+                logger.debug("Failed to read existing targets file for dedup: %s", e)
 
         if address in existing:
             output.print("   [INFO] 地址已存在于 targets.txt，无需重复添加")
@@ -424,15 +444,21 @@ def _save_address_to_targets_file(address: str, output) -> None:
 
                     fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
                 lock_file.close()
-            except (OSError, RuntimeError):
-                pass
+            except (OSError, RuntimeError) as e:
+                logger.debug("Failed to release file lock: %s", e)
+            try:
+                # 清理锁文件
+                if lock_path.exists():
+                    lock_path.unlink()
+            except OSError as e:
+                logger.debug("Failed to remove lock file: %s", e)
 
 
 def _scan_target_file_lines(target_file: str, max_scan: int = 50000) -> tuple[int, bool]:
     """用多编码扫描目标文件中的有效地址行数。返回 (valid_count, truncated)。"""
     valid_count = 0
     truncated = False
-    for enc in ("utf-8", "gbk", "latin-1"):
+    for enc in ("utf-8", "gbk"):
         try:
             with Path(target_file).open(encoding=enc, errors="ignore") as f:
                 for i, line in enumerate(f):
@@ -443,7 +469,8 @@ def _scan_target_file_lines(target_file: str, max_scan: int = 50000) -> tuple[in
                     if stripped and not stripped.startswith("#"):
                         valid_count += 1
             break
-        except (UnicodeDecodeError, LookupError):
+        except (UnicodeDecodeError, LookupError) as e:
+            logger.debug("Failed to read file with encoding '%s': %s", enc, e)
             continue
     return valid_count, truncated
 
@@ -509,10 +536,15 @@ def _quick_start_select_target(compact: bool = False) -> tuple[list[str], str | 
 
     # 紧凑模式下跳过详细帮助信息
     if not compact:
-        output.print("\n   [?] " + _t("cli.commands.help_address_formats"))
-        output.print("      - P2PKH: " + _t("cli.commands.help_p2pkh"))
-        output.print("      - P2SH: " + _t("cli.commands.help_p2sh"))
-        output.print("      - Bech32: " + _t("cli.commands.help_bech32") + "\n")
+        help_lines = [
+            "[?] " + _t("cli.commands.help_address_formats"),
+            "   - P2PKH: " + _t("cli.commands.help_p2pkh"),
+            "   - P2SH: " + _t("cli.commands.help_p2sh"),
+            "   - Bech32: " + _t("cli.commands.help_bech32") + "",
+        ]
+        from .output import paginate
+
+        paginate(help_lines, title="支持的地址格式", page_size=8)
     else:
         output.print("")  # 简单换行
     while True:
@@ -580,10 +612,15 @@ def _quick_start_select_mode(compact: bool = False) -> tuple[str, str | None, st
 
     # 紧凑模式下跳过详细帮助信息
     if not compact:
-        output.print("\n   [?] " + _t("cli.commands.help_mode_description"))
-        output.print("      - random: " + _t("cli.commands.help_mode_random_detail"))
-        output.print("      - range: " + _t("cli.commands.help_mode_range_detail"))
-        output.print("      - brute_force: " + _t("cli.commands.help_mode_brute_detail") + "\n")
+        help_lines = [
+            "[?] " + _t("cli.commands.help_mode_description"),
+            "   - random: " + _t("cli.commands.help_mode_random_detail"),
+            "   - range: " + _t("cli.commands.help_mode_range_detail"),
+            "   - brute_force: " + _t("cli.commands.help_mode_brute_detail") + "",
+        ]
+        from .output import paginate
+
+        paginate(help_lines, title="碰撞模式说明", page_size=8)
     else:
         output.print("")
     while True:
@@ -667,10 +704,15 @@ def _quick_start_select_options(compact: bool = False) -> tuple[bool, bool, int]
     output = CLIOutput.get_instance()
     output.print("\n[bold cyan]【步骤 3/4】[/bold cyan] " + _t("cli.commands.step3_title"))
     if not compact:
-        output.print("\n   [?] " + _t("cli.commands.help_feature_description"))
-        output.print("      - checkpoint: " + _t("cli.commands.help_checkpoint"))
-        output.print("      - dedup: " + _t("cli.commands.help_dedup"))
-        output.print("      - duration: " + _t("cli.commands.help_duration") + "\n")
+        help_lines = [
+            "[?] " + _t("cli.commands.help_feature_description"),
+            "   - checkpoint: " + _t("cli.commands.help_checkpoint"),
+            "   - dedup: " + _t("cli.commands.help_dedup"),
+            "   - duration: " + _t("cli.commands.help_duration") + "",
+        ]
+        from .output import paginate
+
+        paginate(help_lines, title="功能选项说明", page_size=8)
     else:
         output.print("")
     checkpoint = _yn_prompt(output, _t("cli.commands.enable_checkpoint"))
@@ -907,7 +949,7 @@ def _cmd_quick_run(executor: Callable[[], None] | None = None) -> None:
                         f"  ... 及其他 {address_count - PREVIEW_CONFIG['max_preview_addresses']} 个地址",
                     )
                 output.print("")
-            cmd_parts: list[str] = ["python", "key_collision_cli.py", "-f", target_file]
+            cmd_parts: list[str] = ["python", "-m", "src.cli", "-f", target_file]
         else:
             output.warning(f"未找到 {target_file}，请使用 -t 或 -f 指定目标")
             output.print("\n[TIP] 快速模式示例:")
@@ -1038,8 +1080,8 @@ def _cmd_quick_start(executor: Callable[[], None] | None = None, compact: bool =
         # 步骤4: GPU加速
         gpu_args = _quick_start_select_gpu()
 
-        # 构建命令（始终使用 key_collision_cli.py，含完整参数）
-        cmd_parts = ["python", "key_collision_cli.py"]
+        # 构建命令（使用入口模块名，兼容 pip install -e . 安装方式）
+        cmd_parts = ["python", "-m", "src.cli"]
         if target_file:
             cmd_parts.extend(["-f", target_file])
         elif targets:
@@ -1152,15 +1194,31 @@ def _handle_wizard_and_quickstart(args: argparse.Namespace, run_main_fn=None) ->
 
     # ── 自动检测首次运行 ───────────────────────────────────────
     config_path = Path(CONFIG_FILE_NAME)
+    # v5.2.2: 使用项目根目录下的路径，支持绝对/相对路径
     wizard_marker = Path(WIZARD_MARKER_PATH)
+    if not wizard_marker.is_absolute():
+        try:
+            from ._path_setup import _get_project_root as _pr
+            wizard_marker = Path(_pr()) / WIZARD_MARKER_PATH
+        except Exception:
+            logger.debug("Path setup failed, using default path")
 
-    if not config_path.exists() and not wizard_marker.exists():
+    # v5.2.2: wizard marker 有效期 7 天，过期后重新触发
+    _should_show_wizard = not config_path.exists()
+    if _should_show_wizard and wizard_marker.exists():
+        try:
+            marker_age = time.time() - wizard_marker.stat().st_mtime
+            if marker_age > 604800:  # 7 天
+                wizard_marker.unlink()
+            else:
+                _should_show_wizard = False
+        except OSError:
+            _should_show_wizard = False
+
+    if _should_show_wizard:
         print("\n" + _t("cli.main.first_run_detected"))
         print(_t("cli.main.first_run_tip") + "\n")
-        try:
-            from src.utils.first_run_wizard import FirstRunWizard
-        except ImportError:
-            from ..utils.first_run_wizard import FirstRunWizard
+        from ..utils.first_run_wizard import FirstRunWizard
 
         wizard = FirstRunWizard()
         wizard.run()
@@ -1175,10 +1233,7 @@ def _handle_system_commands(args: argparse.Namespace) -> bool:
     """处理系统工具命令：--health-check, --platform-check, --cleanup, --validate-addresses"""
     # --health-check
     if getattr(args, "health_check", False):
-        try:
-            from src.utils.health_check import HealthChecker
-        except ImportError:
-            from ..utils.health_check import HealthChecker
+        from ..utils.health_check import HealthChecker
         checker = HealthChecker()
         results = checker.run_all_checks()
         checker.generate_report()
@@ -1188,14 +1243,11 @@ def _handle_system_commands(args: argparse.Namespace) -> bool:
     # --platform-check
     if getattr(args, "platform_check", False):
         try:
-            from src.utils.platform_check import PlatformChecker
+            from ..utils.platform_check import PlatformChecker
         except ImportError:
-            try:
-                from ..utils.platform_check import PlatformChecker
-            except ImportError:
-                logger.error("PlatformChecker not available in platform_check module")
-                print("[ERROR] PlatformChecker 类未在 platform_check 中实现", file=sys.stderr)
-                sys.exit(1)
+            logger.error("PlatformChecker not available in platform_check module")
+            print("[ERROR] PlatformChecker 类未在 platform_check 中实现", file=sys.stderr)
+            sys.exit(1)
         platform_checker = PlatformChecker()
         all_passed, _ = platform_checker.run_all_checks()
         platform_checker.print_report()
@@ -1203,18 +1255,47 @@ def _handle_system_commands(args: argparse.Namespace) -> bool:
 
     # --cleanup
     if getattr(args, "cleanup", False):
-        try:
-            from src.utils.data_cleanup import DataCleaner
-        except ImportError:
-            from ..utils.data_cleanup import DataCleaner
+        from ..utils.data_cleanup import DataCleaner
         cleaner = DataCleaner()
         dry_run = getattr(args, "dry_run", False)
         if dry_run:
-            # DataCleaner.clean_all() directly removes files, no dry_run mode
-            # Preview: just list what would be cleaned
-            logger.info("dry_run 模式: 预览待清理文件 (clean_all 不支持 dry_run 参数)")
-            print("[预览] 将清理 data_logs/, logs/, temp/ 目录下超过 7 天的过期文件")
-            print("[预览] 实际清理请运行: python key_collision_cli.py --cleanup")
+            # 预览模式：收集并列出实际待删除文件
+            from pathlib import Path
+            from datetime import datetime, timedelta
+
+            print("[预览模式] 扫描待清理文件 (超过 7 天)...")
+            print(SEPARATOR_DASHED)
+            scan_dirs = ["data_logs", "logs", "temp"]
+            cutoff_time = datetime.now() - timedelta(days=7)
+            total_files = 0
+            total_size = 0
+            found_any = False
+            for dir_name in scan_dirs:
+                dir_path = Path(dir_name)
+                if not dir_path.is_dir():
+                    continue
+                files_in_dir = 0
+                for f in dir_path.rglob("*"):
+                    if f.is_file():
+                        try:
+                            mtime = datetime.fromtimestamp(f.stat().st_mtime)
+                            if mtime < cutoff_time:
+                                size = f.stat().st_size
+                                if not found_any:
+                                    found_any = True
+                                print(f"  [待删除] {f} ({_format_file_size(size)}, {mtime.strftime('%Y-%m-%d')})")
+                                files_in_dir += 1
+                                total_size += size
+                        except OSError:
+                            pass
+                if files_in_dir > 0:
+                    total_files += files_in_dir
+            print(SEPARATOR_DASHED)
+            if not found_any:
+                print("[预览] 没有发现需要清理的过期文件")
+            else:
+                print(f"[预览] 共 {total_files} 个文件, 约 {_format_file_size(total_size)}")
+                print("[预览] 实际清理请运行: python key_collision_cli.py --cleanup")
         else:
             total = cleaner.clean_all()
             print(f"[完成] 清理完成: {total} 个文件")
@@ -1229,14 +1310,11 @@ def _handle_system_commands(args: argparse.Namespace) -> bool:
     # --migrate-config
     if getattr(args, "migrate_config", False):
         try:
-            from src.config.config_migration import migrate_config_file
+            from ..config.config_migration import migrate_config_file
         except ImportError:
-            try:
-                from ..config.config_migration import migrate_config_file
-            except ImportError:
-                logger.error("config_migration module not available")
-                print("[ERROR] 配置迁移模块不可用", file=sys.stderr)
-                sys.exit(1)
+            logger.error("config_migration module not available")
+            print("[ERROR] 配置迁移模块不可用", file=sys.stderr)
+            sys.exit(1)
         success = migrate_config_file()
         if success:
             print("[完成] 配置已成功迁移至最新格式（原文件已备份）")

@@ -205,7 +205,7 @@ python key_collision_cli.py -t bc1p5d7rjq7g6rdk2yhzks9smlaqtedr4dekq08ge8qt2acpp
 
 ```
 btc-collision-engine/
-├── key_collision_cli.py      # 命令行主入口（推荐使用）
+├── key_collision_cli.py      # 统一命令行入口（根级代理 → src/cli/main.py）
 ├── key_collision.py          # 旧版主引擎（兼容保留）
 ├── gpu_engine.py             # GPU引擎实现
 ├── src/                      # 核心模块
@@ -267,13 +267,13 @@ btc-collision-engine/
 **Windows**:
 
 ```bash
-scripts\install.bat
+scripts/install/install.bat
 ```
 
 **Linux / macOS**:
 
 ```bash
-bash scripts/install.sh
+bash scripts/install/install.sh
 ```
 
 安装脚本会自动完成：

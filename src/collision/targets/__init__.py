@@ -7,7 +7,7 @@
 - 高效地址匹配 (matcher)
 - 地址持久化存储 (storage)
 
-示例:
+Example:
     >>> from src.collision.targets import TargetResolver, AddressMatcher
     >>> resolver = TargetResolver(enable_cache=True)
     >>> address = resolver.resolve('1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa')

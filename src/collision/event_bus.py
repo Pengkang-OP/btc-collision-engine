@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Event bus for decoupled communication between components."""
 
-import logging
+from ..utils import get_configured_logger
 import threading
 from collections.abc import Callable
 from contextlib import suppress
 from typing import Any
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger(__name__)
 
 # Global event bus instance
 _event_bus: "EventBus | None" = None

@@ -9,6 +9,7 @@ Provides detailed log collection rule configuration supporting:
 
 import json
 import logging
+from .logging_config import get_configured_logger
 import os
 import pathlib
 import re
@@ -142,7 +143,7 @@ class LogCollectionRuleManager:
                 self.save_rules()
         except Exception as e:
             # 加载失败，使用默认规则
-            _logger = logging.getLogger(__name__)
+            _logger = get_configured_logger(__name__)
             _logger.warning("加载日志收集规则失败: %s", e)
             self._load_default_rules()
 
@@ -204,7 +205,7 @@ class LogCollectionRuleManager:
             with pathlib.Path(self.config_file).open("w", encoding="utf-8") as f:
                 json.dump({"rules": rules_data}, f, ensure_ascii=False, indent=2)
         except Exception as e:
-            _save_logger = logging.getLogger(__name__)
+            _save_logger = get_configured_logger(__name__)
             _save_logger.warning("保存日志收集规则失败: %s", e)
 
     def add_rule(self, rule: LogCollectionRule) -> None:

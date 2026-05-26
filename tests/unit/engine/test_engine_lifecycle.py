@@ -7,26 +7,26 @@
 
 import threading
 import time
-import unittest
+import pytest
 
 from src.collision.collision_stats import CollisionStats
 from src.collision.key_collision_engine import KeyCollisionEngine
 
 
-class TestKeyCollisionEngineLifecycle(unittest.TestCase):
+class TestKeyCollisionEngineLifecycle:
     """引擎生命周期测试"""
 
     def test_initial_state_not_running(self):
         """初始状态为未运行"""
         engine = KeyCollisionEngine(targets={"1TestAddr"})
-        self.assertFalse(engine.is_running())
+        assert not engine.is_running()
 
     def test_start_sets_running(self):
         """start() 后引擎处于运行状态"""
         engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1)
         engine.start(mode="random")
         time.sleep(0.2)
-        self.assertTrue(engine.is_running())
+        assert engine.is_running()
         engine.stop()
 
     def test_stop_ends_running(self):
@@ -36,7 +36,7 @@ class TestKeyCollisionEngineLifecycle(unittest.TestCase):
         time.sleep(0.2)
         engine.stop()
         time.sleep(0.3)
-        self.assertFalse(engine.is_running())
+        assert not engine.is_running()
 
     def test_double_start_ignored(self):
         """重复 start() 不崩溃"""
@@ -55,10 +55,10 @@ class TestKeyCollisionEngineLifecycle(unittest.TestCase):
         """get_stats() 返回 CollisionStats 对象"""
         engine = KeyCollisionEngine(targets={"1TestAddr"})
         stats = engine.get_stats()
-        self.assertIsInstance(stats, CollisionStats)
+        assert isinstance(stats, CollisionStats)
 
 
-class TestKeyCollisionEngineContextManager(unittest.TestCase):
+class TestKeyCollisionEngineContextManager:
     """上下文管理器 + 析构函数"""
 
     def test_context_manager_enter_exit(self):
@@ -68,13 +68,13 @@ class TestKeyCollisionEngineContextManager(unittest.TestCase):
             max_workers=1,
             data_logging_enabled=False,
         ) as engine:
-            self.assertFalse(engine.is_running())
+            assert not engine.is_running()
             engine.start(mode="random")
             time.sleep(0.2)
-            self.assertTrue(engine.is_running())
+            assert engine.is_running()
         # __exit__ 应调用 stop()
         time.sleep(0.3)
-        self.assertFalse(engine.is_running())
+        assert not engine.is_running()
 
     def test_del_with_running_engine(self):
         """__del__ 在引擎运行时安全停止"""
@@ -82,7 +82,7 @@ class TestKeyCollisionEngineContextManager(unittest.TestCase):
         engine.start(mode="random")
         time.sleep(0.2)
         engine.__del__()
-        self.assertFalse(engine.is_running())
+        assert not engine.is_running()
 
     def test_del_with_stopped_engine(self):
         """__del__ 在引擎已停止时不报错"""
@@ -90,7 +90,7 @@ class TestKeyCollisionEngineContextManager(unittest.TestCase):
         engine.__del__()
 
 
-class TestKeyCollisionEngineResumeAndStop(unittest.TestCase):
+class TestKeyCollisionEngineResumeAndStop:
     """start() resume 路径 + stop() 边界条件"""
 
     def test_start_empty_targets_warning(self):
@@ -102,7 +102,7 @@ class TestKeyCollisionEngineResumeAndStop(unittest.TestCase):
         )
         engine.start(mode="random")
         time.sleep(0.2)
-        self.assertTrue(engine.is_running())
+        assert engine.is_running()
         engine.stop()
 
     def test_stop_with_thread_timeout(self):
@@ -115,7 +115,7 @@ class TestKeyCollisionEngineResumeAndStop(unittest.TestCase):
         engine.start(mode="random")
         time.sleep(0.2)
         engine.stop(timeout=0.001)
-        self.assertFalse(engine.is_running())
+        assert not engine.is_running()
 
     def test_del_with_exception_during_stop(self):
         """__del__ 中 stop 抛出异常时静默处理"""
@@ -129,7 +129,7 @@ class TestKeyCollisionEngineResumeAndStop(unittest.TestCase):
         try:
             engine.__del__()
         except Exception:
-            self.fail("__del__ 不应向上抛出异常")
+            pytest.fail("__del__ 不应向上抛出异常")
         engine._stop_event = threading.Event()
         engine._running = False
 
@@ -143,7 +143,7 @@ class TestKeyCollisionEngineResumeAndStop(unittest.TestCase):
         engine._live_range_count = 100
         engine.stats.total_checked = 50
         stats = engine.get_stats()
-        self.assertGreaterEqual(stats.total_checked, 100)
+        assert stats.total_checked  >=  100
         engine.stop()
 
     def test_stop_save_checkpoint_error(self):
@@ -158,4 +158,4 @@ class TestKeyCollisionEngineResumeAndStop(unittest.TestCase):
         time.sleep(0.2)
         engine.checkpoint_mgr = None
         engine.stop()
-        self.assertFalse(engine.is_running())
+        assert not engine.is_running()

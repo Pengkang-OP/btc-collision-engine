@@ -23,6 +23,7 @@ from typing import Any
 
 from src.log_engine.log_rotator import LogRotator
 from src.monitoring.storage_config import DataStorageConfig
+from src.utils.logging_config import LOG_DEFAULT_MAX_BYTES
 
 # 导入现有日志系统
 from src.utils import get_configured_logger
@@ -132,7 +133,7 @@ class DataLogger:
         self._pipeline_error_count: int = 0
         self._pipeline_metrics: list[dict[str, Any]] = []
 
-        self.logger.info("数据日志系统初始化完成")
+        self.logger.debug("数据日志系统初始化完成")
 
     def _atomic_write_json(self, filepath: str, data: Any) -> None:
         """原子写入JSON文件
@@ -1086,7 +1087,7 @@ class DataLogger:
         try:
             # 防御性编程：检查文件大小，避免读取超大文件耗尽内存
             file_size = pathlib.Path(self.history_data_file).stat().st_size
-            max_size = 10 * 1024 * 1024  # 10MB限制
+            max_size = LOG_DEFAULT_MAX_BYTES  # 10MB限制
             if file_size > max_size:
                 self.logger.warning(
                     f"历史文件过大({file_size / 1024 / 1024:.2f}MB)，"
@@ -1359,7 +1360,7 @@ class DataLogger:
     def _load_auto_cleanup_config(self) -> tuple[bool, int]:
         """从 ConfigManager 读取 monitoring.auto_cleanup 配置
 
-        返回:
+        Returns:
             (enabled: bool, max_age_days: int) 元组，读取失败时返回默认值 (True, 7)
         """
         # 默认值（向后兼容）

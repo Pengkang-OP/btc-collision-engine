@@ -10,6 +10,7 @@ all platforms, including:
 
 import ctypes
 import logging
+from .logging_config import get_configured_logger
 import os
 import pathlib
 import platform
@@ -95,7 +96,7 @@ class PlatformAdapter:
             pathlib.Path(directory).mkdir(mode=0o750, exist_ok=True, parents=True)
             return True
         except Exception as e:
-            _logger = logging.getLogger(__name__)
+            _logger = get_configured_logger(__name__)
             _logger.warning("创建目录失败: %s", e)
             return False
 
@@ -246,13 +247,13 @@ class PlatformAdapter:
             文件处理器
 
         """
-        from .logging_config import SafeRotatingFileHandler
+        from .logging_config import LOG_DEFAULT_MAX_BYTES, SafeRotatingFileHandler
 
         return cast(
             "logging.Handler",
             SafeRotatingFileHandler(
                 filename,
-                maxBytes=10 * 1024 * 1024,
+                maxBytes=LOG_DEFAULT_MAX_BYTES,
                 backupCount=5,
                 encoding="utf-8",
             ),
@@ -269,11 +270,12 @@ class PlatformAdapter:
             文件处理器
 
         """
+        from .logging_config import LOG_DEFAULT_MAX_BYTES
         from logging.handlers import RotatingFileHandler
 
         return cast(
             "logging.Handler",
-            RotatingFileHandler(filename, maxBytes=10 * 1024 * 1024, backupCount=5, encoding="utf-8"),
+            RotatingFileHandler(filename, maxBytes=LOG_DEFAULT_MAX_BYTES, backupCount=5, encoding="utf-8"),
         )
 
     def _get_windows_console_handler(self, level: int) -> logging.Handler:

@@ -2,7 +2,7 @@
 """性能衰减曲线监控脚本 - 长时间运行性能记录
 
 使用方法:
-    python scripts/monitor_performance_decay.py --duration 3600 --interval 60
+    python scripts/benchmarking/monitor_performance_decay.py --duration 3600 --interval 60
 
 这将在 1 小时内每分钟记录一次性能数据，生成性能衰减曲线 CSV 文件。
 """

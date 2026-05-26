@@ -10,7 +10,7 @@
 
 import pathlib
 import tempfile
-import unittest
+import pytest
 
 from src.core.base58 import Base58
 from src.core.wif import WIF
@@ -36,7 +36,7 @@ _EXPECTED_ADDRESS_UNCOMPRESSED = "1GAehh7TsJAHuUAeKZcXf5CnwuGuGgyX2S"
 # ---------------------------------------------------------------------------
 
 
-class TestEncodingUtils(unittest.TestCase):
+class TestEncodingUtils:
     """文件编码检测和转换工具测试"""
 
     def test_detect_utf8_encoding(self):
@@ -48,7 +48,7 @@ class TestEncodingUtils(unittest.TestCase):
 
         try:
             encoding = EncodingUtils.detect_file_encoding(temp_path)
-            self.assertEqual(encoding, "utf-8")
+            assert encoding  ==  "utf-8"
         finally:
             pathlib.Path(temp_path).unlink()
 
@@ -61,7 +61,7 @@ class TestEncodingUtils(unittest.TestCase):
         try:
             EncodingUtils.write_file(temp_path, content)
             read_content = EncodingUtils.read_file(temp_path)
-            self.assertEqual(read_content, content)
+            assert read_content  ==  content
         finally:
             pathlib.Path(temp_path).unlink()
 
@@ -76,11 +76,11 @@ class TestEncodingUtils(unittest.TestCase):
         try:
             EncodingUtils.write_file(src_path, content, encoding="gbk")
             result = EncodingUtils.convert_file_encoding(src_path, dst_path, dst_encoding="utf-8")
-            self.assertTrue(result)
+            assert result
 
             # 验证转换后的内容
             converted_content = EncodingUtils.read_file(dst_path, encoding="utf-8")
-            self.assertEqual(converted_content, content)
+            assert converted_content  ==  content
         finally:
             pathlib.Path(src_path).unlink()
             pathlib.Path(dst_path).unlink()
@@ -89,13 +89,13 @@ class TestEncodingUtils(unittest.TestCase):
         """从字节数据检测编码"""
         utf8_data = "Hello 世界".encode()
         encoding = EncodingUtils.detect_encoding_from_bytes(utf8_data)
-        self.assertEqual(encoding, "utf-8")
+        assert encoding  ==  "utf-8"
 
     def test_ensure_utf8_compatible(self):
         """确保UTF-8兼容性处理"""
         text = "Test\x00text"
         result = EncodingUtils.ensure_utf8_compatible(text)
-        self.assertIsInstance(result, str)
+        assert isinstance(result, str)
 
 
 # ---------------------------------------------------------------------------
@@ -103,7 +103,7 @@ class TestEncodingUtils(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestBase58(unittest.TestCase):
+class TestBase58:
     """Base58编解码测试"""
 
     def test_encode_decode_roundtrip(self):
@@ -111,7 +111,7 @@ class TestBase58(unittest.TestCase):
         data = b"\x00\x01\x02\x03\x04"
         encoded = Base58.encode(data)
         decoded = Base58.decode(encoded)
-        self.assertEqual(decoded, data)
+        assert decoded  ==  data
 
     def test_check_encode_decode(self):
         """Base58Check编码解码测试"""
@@ -120,26 +120,26 @@ class TestBase58(unittest.TestCase):
         encoded = Base58.check_encode(version, payload)
 
         decoded_version, decoded_payload = Base58.check_decode(encoded)
-        self.assertEqual(decoded_version, version)
-        self.assertEqual(decoded_payload, payload)
+        assert decoded_version  ==  version
+        assert decoded_payload  ==  payload
 
     def test_encode_empty(self):
         """空数据编码"""
-        self.assertEqual(Base58.encode(b""), "")
+        assert Base58.encode(b"")  ==  ""
 
     def test_decode_empty(self):
         """空字符串解码"""
-        self.assertEqual(Base58.decode(""), b"")
+        assert Base58.decode("")  ==  b""
 
     def test_invalid_base58_char(self):
         """无效Base58字符应抛出异常"""
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             Base58.decode("O")  # 'O'不在Base58字符集
 
     def test_check_decode_invalid_checksum(self):
         """无效校验和应抛出异常"""
         invalid_addr = "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNb"  # 篡改最后一位
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             Base58.check_decode(invalid_addr)
 
 
@@ -148,49 +148,49 @@ class TestBase58(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
-class TestWIF(unittest.TestCase):
+class TestWIF:
     """WIF编解码测试"""
 
     def test_encode_compressed(self):
         """压缩WIF编码"""
         wif = WIF.encode(_TEST_PRIVATE_KEY, compressed=True)
-        self.assertEqual(wif, _EXPECTED_WIF_COMPRESSED)
-        self.assertTrue(wif.startswith(("K", "L")))
+        assert wif  ==  _EXPECTED_WIF_COMPRESSED
+        assert wif.startswith(("K", "L"))
 
     def test_encode_uncompressed(self):
         """非压缩WIF编码"""
         wif = WIF.encode(_TEST_PRIVATE_KEY, compressed=False)
-        self.assertEqual(wif, _EXPECTED_WIF_UNCOMPRESSED)
-        self.assertTrue(wif.startswith("5"))
+        assert wif  ==  _EXPECTED_WIF_UNCOMPRESSED
+        assert wif.startswith("5")
 
     def test_decode_compressed(self):
         """压缩WIF解码"""
         private_key, is_compressed = WIF.decode(_EXPECTED_WIF_COMPRESSED)
-        self.assertEqual(private_key, _TEST_PRIVATE_KEY)
-        self.assertTrue(is_compressed)
+        assert private_key  ==  _TEST_PRIVATE_KEY
+        assert is_compressed
 
     def test_decode_uncompressed(self):
         """非压缩WIF解码"""
         private_key, is_compressed = WIF.decode(_EXPECTED_WIF_UNCOMPRESSED)
-        self.assertEqual(private_key, _TEST_PRIVATE_KEY)
-        self.assertFalse(is_compressed)
+        assert private_key  ==  _TEST_PRIVATE_KEY
+        assert not is_compressed
 
     def test_roundtrip(self):
         """WIF编码解码往返测试"""
         for compressed in [True, False]:
             wif = WIF.encode(_TEST_PRIVATE_KEY, compressed=compressed)
             decoded_key, is_compressed_result = WIF.decode(wif)
-            self.assertEqual(decoded_key, _TEST_PRIVATE_KEY)
-            self.assertEqual(is_compressed_result, compressed)
+            assert decoded_key  ==  _TEST_PRIVATE_KEY
+            assert is_compressed_result  ==  compressed
 
     def test_invalid_private_key_length(self):
         """无效私钥长度应抛出异常"""
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             WIF.encode(b"\x00" * 31)  # 31字节，应为32字节
 
     def test_invalid_wif(self):
         """无效WIF字符串应抛出异常"""
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             WIF.decode("invalid_wif_string")
 
 

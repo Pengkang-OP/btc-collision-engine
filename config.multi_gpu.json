@@ -1,4 +1,5 @@
 {
+  "version": "5.0.0",
   "gpu": {
     "use_gpu": true,
     "device_index": 1,

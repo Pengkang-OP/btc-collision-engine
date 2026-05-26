@@ -4,14 +4,13 @@
 import json
 import logging
 import time
+import pathlib
+
+from src.collision.key_collision_engine import KeyCollisionEngine
+from src.collision.targets.storage import AddressStorage
 
 # 禁用日志以避免文件锁定问题
 logging.basicConfig(level=logging.CRITICAL)
-
-import pathlib
-
-from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
-from src.collision.targets.storage import AddressStorage  # noqa: E402
 
 
 def test_end_to_end_address_import():

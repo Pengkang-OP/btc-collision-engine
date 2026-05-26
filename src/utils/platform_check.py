@@ -1,13 +1,13 @@
 """Platform detection utilities for OS-specific features."""
 
-import logging
+from .logging_config import get_configured_logger
 import os
 import platform
 import shutil
 import sys
 from pathlib import Path
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger(__name__)
 
 
 class PlatformChecker:
@@ -16,7 +16,14 @@ class PlatformChecker:
     def __init__(self):
         self._results: list[tuple[bool, str]] = []
 
-    def _add(self, passed: bool, message: str):
+    def _add(self, passed: bool, message: str) -> None:
+        """添加一条检查结果
+
+        Args:
+            passed: 检查是否通过
+            message: 检查描述信息
+
+        """
         self._results.append((passed, message))
 
     def run_all_checks(self) -> tuple[bool, list[tuple[bool, str]]]:
@@ -59,8 +66,8 @@ class PlatformChecker:
         all_passed = all(passed for passed, _ in self._results)
         return all_passed, self._results
 
-    def print_report(self):
-        """Print platform check report."""
+    def print_report(self) -> None:
+        """打印跨平台兼容性检查报告"""
         print(f"\n{'=' * 60}")  # noqa: T201
         print("  跨平台兼容性检查")  # noqa: T201
         print(f"{'=' * 60}")  # noqa: T201

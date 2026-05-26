@@ -12,7 +12,7 @@ import pytest
 pytestmark = pytest.mark.gpu
 
 
-class TestLockPerformance(unittest.TestCase):
+class TestLockPerformance:
     """测试锁性能"""
 
     def test_state_lock_throughput(self):
@@ -45,11 +45,11 @@ class TestLockPerformance(unittest.TestCase):
         elapsed = time.time() - start_time
 
         # 验证完成20000次操作
-        self.assertEqual(operations[0], 20000)
+        assert operations[0] == 20000
 
         # 验证性能(应该<5秒)
         print(f"\n状态锁吞吐量: {operations[0] / elapsed:.0f} ops/sec")
-        self.assertLess(elapsed, 5.0, f"锁吞吐量过低: {elapsed:.2f}s")
+        assert elapsed < 5.0, f"锁吞吐量过低: {elapsed:.2f}s"
 
     def test_workers_lock_throughput(self):
         """测试工作器锁吞吐量"""
@@ -82,14 +82,14 @@ class TestLockPerformance(unittest.TestCase):
         elapsed = time.time() - start_time
 
         # 验证完成5000次操作
-        self.assertEqual(operations[0], 5000)
+        assert operations[0] == 5000
 
         # 验证性能
         print(f"\n工作器锁吞吐量: {operations[0] / elapsed:.0f} ops/sec")
-        self.assertLess(elapsed, 10.0, f"锁吞吐量过低: {elapsed:.2f}s")
+        assert elapsed < 10.0, f"锁吞吐量过低: {elapsed:.2f}s"
 
 
-class TestLockFairness(unittest.TestCase):
+class TestLockFairness:
     """测试锁公平性"""
 
     def test_no_thread_starvation(self):
@@ -124,14 +124,14 @@ class TestLockFairness(unittest.TestCase):
             t.join()
 
         # 验证所有线程都有访问
-        self.assertEqual(len(thread_access), 5)
+        assert len(thread_access) == 5
 
         # 验证没有线程饥饿(所有线程至少完成80%的操作)
         for thread_id, count in thread_access.items():
-            self.assertGreaterEqual(count, 80, f"线程{thread_id}饥饿: 只完成{count}/100次操作")
+            assert count >= 80, f"线程{thread_id}饥饿: 只完成{count}/100次操作"
 
 
-class TestLockContention(unittest.TestCase):
+class TestLockContention:
     """测试锁竞争"""
 
     def test_high_contention_scenario(self):
@@ -171,16 +171,16 @@ class TestLockContention(unittest.TestCase):
 
         # 验证有成功启动(但不会太多,因为互斥)
         print(f"\n高竞争场景成功启动次数: {success_count[0]}")
-        self.assertGreater(success_count[0], 0, "应该有成功启动")
+        assert success_count[0] > 0, "应该有成功启动"
         # 由于启动/停止非常快,成功次数可能较多,只验证不超过总尝试次数的50%
-        self.assertLess(success_count[0], 500, "成功次数不应过多")
+        assert success_count[0] < 500, "成功次数不应过多"
 
         # 验证性能
         print(f"高竞争场景耗时: {elapsed:.2f}s")
-        self.assertLess(elapsed, 15.0, f"高竞争场景耗时过长: {elapsed:.2f}s")
+        assert elapsed < 15.0, f"高竞争场景耗时过长: {elapsed:.2f}s"
 
 
-class TestScalability(unittest.TestCase):
+class TestScalability:
     """测试可扩展性"""
 
     @pytest.mark.skip(reason="ZeroDivisionError: 压测时序中 sequential_time 为零，依赖真实硬件负载")
@@ -222,8 +222,5 @@ class TestScalability(unittest.TestCase):
 
         # 验证吞吐量随线程数增加(至少不应该急剧下降)
         # 由于锁竞争,吞吐量可能不会线性增长,但不应下降超过50%
-        self.assertGreater(results[20], results[1] * 0.5, "20线程吞吐量不应低于单线程的50%")
+        assert results[20] > results[1] * 0.5, "20线程吞吐量不应低于单线程的50%"
 
-
-if __name__ == "__main__":
-    unittest.main()

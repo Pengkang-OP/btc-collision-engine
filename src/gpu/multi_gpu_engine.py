@@ -12,6 +12,7 @@
 - 分布式统计聚合（减少锁竞争，可配置）
 """
 
+import contextlib
 import pathlib
 import threading
 import time
@@ -23,16 +24,18 @@ from ..config.optimization_config import is_feature_enabled
 # 统一日志获取
 from ..utils import get_configured_logger
 
+# 本模块内部导入
+from .data_monitor import DataMonitor
+from .gpu_config import MultiGPUConfig, WorkerConfig
+from .gpu_recovery_manager import GPUFailureType, GPURecoveryManager
+from .load_balancer import GPULoadBalancer
+from .memory_pool import GPUMemoryPool
+from .metrics import get_metrics_collector
+from .selector import get_gpu_selector
+from .worker import SingleGPUWorker
+
 # 根据配置条件导入优化模块
 _aggregator_available = is_feature_enabled("distributed_aggregator")
-from .data_monitor import DataMonitor  # noqa: E402
-from .gpu_config import MultiGPUConfig, WorkerConfig  # noqa: E402
-from .gpu_recovery_manager import GPURecoveryManager  # noqa: E402
-from .load_balancer import GPULoadBalancer  # noqa: E402
-from .memory_pool import GPUMemoryPool  # noqa: E402
-from .metrics import get_metrics_collector  # noqa: E402
-from .selector import get_gpu_selector  # noqa: E402
-from .worker import SingleGPUWorker  # noqa: E402
 
 if _aggregator_available:
     from .distributed_stats_aggregator import DistributedStatsAggregator
@@ -280,11 +283,16 @@ class MultiGPUCollisionEngine:
             with self._state_lock:
                 self._initialized = True
 
-            logger.info("多GPU引擎初始化成功")
+            logger.debug("多GPU引擎初始化成功")
             return True
 
         except Exception as e:
-            logger.error("多GPU引擎初始化失败: %s", e)
+            logger.error("多GPU引擎初始化失败: %s", e, exc_info=True)
+            # 清理已初始化的资源，防止泄漏
+            self._devices.clear()
+            if self.recovery_manager:
+                with contextlib.suppress(Exception):
+                    self.recovery_manager.cleanup()
             return False
 
     def _validate_config_values(self, config: dict) -> dict:
@@ -611,7 +619,7 @@ class MultiGPUCollisionEngine:
                 self._running = False
                 self._stopping = False
 
-    def _do_stop(self):
+    def _do_stop(self) -> None:
         """执行停止逻辑（内部方法，调用者需持有 _stopping 标志）"""
         logger.info("停止多GPU碰撞...")
 
@@ -813,7 +821,7 @@ class MultiGPUCollisionEngine:
         """
         return self.load_balancer
 
-    def _on_match_found(self, device_idx: int, match: dict):
+    def _on_match_found(self, device_idx: int, match: dict) -> None:
         """处理匹配结果(回调)
 
         Args:
@@ -848,7 +856,7 @@ class MultiGPUCollisionEngine:
             except Exception as e:
                 logger.error("匹配回调异常: %s", e)
 
-    def _on_anomaly_detected(self, device_idx: int, issue: dict):
+    def _on_anomaly_detected(self, device_idx: int, issue: dict) -> None:
         """处理数据异常检测回调
 
         Args:
@@ -877,7 +885,7 @@ class MultiGPUCollisionEngine:
         else:  # low
             logger.debug("GPU %s 低级别数据异常: %s", device_idx, message)
 
-    def _pause_device(self, device_idx: int):
+    def _pause_device(self, device_idx: int) -> None:
         """暂停指定GPU工作器
 
         Args:
@@ -1017,7 +1025,7 @@ class MultiGPUCollisionEngine:
         logger.info("注册厂商 '%s' 编译配置: options='%s'", vendor_key, build_options)
         return compile_config
 
-    def _handle_gpu_worker_failure(self, gpu_id: int, error: Exception):
+    def _handle_gpu_worker_failure(self, gpu_id: int, error: Exception) -> None:
         """处理GPU工作器失败
 
         Args:
@@ -1035,7 +1043,7 @@ class MultiGPUCollisionEngine:
             alert_callback=self._send_failure_alert,
         )
 
-    def _redistribute_workload(self, failed_gpu_id: int):
+    def _redistribute_workload(self, failed_gpu_id: int) -> None:
         """重新分配工作负载
 
         Args:
@@ -1044,19 +1052,17 @@ class MultiGPUCollisionEngine:
         """
         logger.info("GPU %s 失败，正在重新分配工作负载...", failed_gpu_id)
 
-        # 获取健康GPU列表
+        # 获取健康GPU列表及失败GPU信息（需持锁读取 workers）
         failed_gpus = self.recovery_manager.get_failed_gpus()
-        healthy_gpus = [idx for idx in self.workers if idx not in failed_gpus]
-
-        if not healthy_gpus:
-            logger.critical("所有GPU都已失败，无法继续运行")
-            self.stop()
-            return
-
-        logger.info("健康GPU列表: %s", healthy_gpus)
-
-        # 获取失败GPU的剩余工作量
         with self._workers_lock:
+            healthy_gpus = [idx for idx in self.workers if idx not in failed_gpus]
+            if not healthy_gpus:
+                logger.critical("所有GPU都已失败，无法继续运行")
+                self.stop()
+                return
+
+            logger.info("健康GPU列表: %s", healthy_gpus)
+
             if failed_gpu_id not in self.workers:
                 logger.warning("GPU %s 不在工作器列表中", failed_gpu_id)
                 return
@@ -1124,7 +1130,27 @@ class MultiGPUCollisionEngine:
         # if self.alert_system:
         # self.alert_system.send_alert(alert_message)
 
-    def _update_combined_stats(self):
+    def _check_worker_health(self) -> None:
+        """检查所有worker线程健康状态，检测崩溃的worker并触发故障恢复。
+
+        由工作量监控循环周期性调用。
+        """
+        with self._workers_lock:
+            workers_snapshot = dict(self.workers)
+
+        for idx, worker in workers_snapshot.items():
+            try:
+                if not worker.is_alive() and worker.is_running():
+                    logger.error(
+                        "GPU %s worker线程已终止但状态仍为running，触发故障恢复", idx
+                    )
+                    self._handle_gpu_worker_failure(
+                        idx, RuntimeError(f"GPU {idx} worker线程意外终止")
+                    )
+            except Exception as e:
+                logger.debug("检查GPU %s worker健康状态时出错: %s", idx, e)
+
+    def _update_combined_stats(self) -> None:
         """更新汇总统计"""
         # 使用锁保护workers访问
         with self._workers_lock:
@@ -1190,7 +1216,7 @@ class MultiGPUCollisionEngine:
         """上下文管理器出口"""
         self.cleanup()
 
-    def _start_workload_monitor(self):
+    def _start_workload_monitor(self) -> None:
         """启动工作负载监控线程"""
         if self._monitor_thread and self._monitor_thread.is_alive():
             logger.warning("工作负载监控线程已在运行")
@@ -1201,7 +1227,7 @@ class MultiGPUCollisionEngine:
         self._monitor_thread.start()
         logger.info("工作负载监控线程已启动")
 
-    def _stop_workload_monitor(self):
+    def _stop_workload_monitor(self) -> None:
         """停止工作负载监控线程"""
         if self._monitor_thread and self._monitor_thread.is_alive():
             # 等待线程结束
@@ -1216,7 +1242,7 @@ class MultiGPUCollisionEngine:
             finally:
                 self._monitor_thread = None
 
-    def _workload_monitor_loop(self):
+    def _workload_monitor_loop(self) -> None:
         """工作负载监控循环"""
         while True:
             try:
@@ -1227,6 +1253,9 @@ class MultiGPUCollisionEngine:
 
                 # 收集性能数据
                 self._collect_performance_data()
+
+                # 检查worker线程健康状态
+                self._check_worker_health()
 
                 # 检查是否需要自动重平衡
                 if self._auto_rebalance:
@@ -1298,7 +1327,7 @@ class MultiGPUCollisionEngine:
         except Exception as e:
             logger.error("收集性能数据失败: %s", e)
 
-    def _check_auto_rebalance(self):
+    def _check_auto_rebalance(self) -> None:
         """检查是否需要自动重平衡"""
         try:
             if not self.load_balancer:
@@ -1370,9 +1399,15 @@ class MultiGPUCollisionEngine:
         注意：建议使用上下文管理器或显式调用cleanup()方法，
         以确保资源能够被正确释放。
 
-        示例:
+        Example:
             with MultiGPUEngine(...) as engine:
                 engine.run()
+
+        风险说明（评估为低风险，暂不修改）：
+        - cleanup() 内部涉及多 GPU 队列 finish() 和资源释放，
+          在解释器关闭时可能因模块卸载顺序导致异常
+        - 但已有 try/except 包裹，异常写入 stderr 后静默处理
+        - 守护线程在进程退出时会自动清理，不依赖 __del__ 的完整执行
         """
         try:
             self.cleanup()

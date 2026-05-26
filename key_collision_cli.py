@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """
-比特币私钥对撞工具 - 命令行入口
+比特币私钥对撞工具 - 统一命令行入口
+
+此为项目的**唯一根级 CLI 入口**。逻辑委托至 src/cli/main.py。
+安装后也可通过 `btc-collision` 命令直接调用。
 
 用法:
     python key_collision_cli.py --help
@@ -8,26 +11,13 @@
     python key_collision_cli.py -f targets.txt -m range --start 1 --end FFFFFFFF
 """
 
-import logging
 import os
 import sys
 
-# 确保项目根目录在路径中
+# 确保项目根目录在路径中（必须在 src 导入之前执行）
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from src.cli.main import main  # noqa: E402
-from src.i18n import _t  # noqa: E402
+from src.cli.main import main  # noqa: E402  # 架构必要：sys.path.insert 后立即导入
 
 if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        print("\n" + _t("cli.entry.keyboard_interrupt"))
-        sys.exit(0)
-    except Exception as e:
-        logging.basicConfig(level=logging.CRITICAL)
-        logger = logging.getLogger(__name__)
-        logger.critical(_t("cli.entry.fatal_error", error=e), exc_info=True)
-        error_msg = _t("cli.entry.error_prefix", error=e)
-        print("\n" + error_msg + "\n" + _t("cli.entry.check_log"), file=sys.stderr)
-        sys.exit(1)
+    main()

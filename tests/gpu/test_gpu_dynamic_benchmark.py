@@ -1,9 +1,9 @@
 import pytest
 
-pytestmark = pytest.mark.gpu_hardware  # 需要真实GPU，CI中自动skip
+from src.collision.gpu.engine import GPUCollisionEngine
+from src.collision.targets.resolver import TargetResolver
 
-from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
-from src.collision.targets.resolver import TargetResolver  # noqa: E402
+pytestmark = pytest.mark.gpu_hardware  # 需要真实GPU，CI中自动skip
 
 
 @pytest.mark.gpu

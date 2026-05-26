@@ -8,20 +8,26 @@ import sys
 from pathlib import Path
 
 _project_root = Path(__file__).resolve().parent.parent.parent
-os.chdir(str(_project_root))
 
-from src.automation import (  # noqa: E402
-    AuditModule,
-    AutoTestModule,
-    DataAnalysisModule,
-    LoopController,
-)
+# v5.2.2: 将 chdir 延迟到 main() 函数内执行，避免模块级副作用
+_os_chdir_done = False
 
 
-def print_banner():
+def _ensure_cwd() -> None:
+    """确保工作目录为项目根目录（延迟执行）。"""
+    global _os_chdir_done
+    if not _os_chdir_done:
+        os.chdir(str(_project_root))
+        _os_chdir_done = True
+
+
+# 导入延迟到 main() 函数内执行，避免模块级副作用
+
+
+def print_banner() -> None:
     banner = """
 =================================================================
-       End-to-End Automation Loop Control System v4.2.2
+       End-to-End Automation Loop Control System v5.0.0
 =================================================================
   Modules:
   1. Data Analysis Module
@@ -33,7 +39,7 @@ def print_banner():
     print(banner)
 
 
-def run_analysis_only(args):
+def run_analysis_only(args: argparse.Namespace) -> "AnalysisReport":
     print("\n[1/4] 运行数据分析模块...")
     module = DataAnalysisModule(Path(args.project_root) if args.project_root else None)
     report = module.analyze()
@@ -49,7 +55,7 @@ def run_analysis_only(args):
     return report
 
 
-def run_tests_only(args):
+def run_tests_only(args: argparse.Namespace) -> "TestResult":
     print("\n[2/4] 运行自动化测试模块...")
     module = AutoTestModule(Path(args.project_root) if args.project_root else None)
     results = module.run_all_tests()
@@ -78,7 +84,7 @@ def run_tests_only(args):
     return results
 
 
-def run_audit_only(args):
+def run_audit_only(args: argparse.Namespace) -> "AuditResult":
     print("\n[3/4] 运行智能审核模块...")
 
     analysis_module = DataAnalysisModule(Path(args.project_root) if args.project_root else None)
@@ -99,7 +105,7 @@ def run_audit_only(args):
     return audit_result
 
 
-def run_full_loop(args):
+def run_full_loop(args: argparse.Namespace) -> "AuditResult":
     print_banner()
     print("\n启动端到端自动化闭环系统...")
     print(f"最大迭代次数: {args.max_iterations}")
@@ -126,15 +132,24 @@ def run_full_loop(args):
     return result
 
 
-def main():
+def main() -> None:
+    from src.automation import (
+        AuditModule,
+        AutoTestModule,
+        DataAnalysisModule,
+        LoopController,
+    )
+
     parser = argparse.ArgumentParser(description="端到端自动化闭环管理系统")
 
     parser.add_argument("--project-root", "-p", type=str, default=None)
 
+    _ensure_cwd()
+
     mode_group = parser.add_mutually_exclusive_group()
     mode_group.add_argument("--full", "-f", action="store_true", help="运行完整闭环")
     mode_group.add_argument("--analyze", "-a", action="store_true", help="仅运行分析")
-    mode_group.add_argument("--test", "-t", action="store_true", help="仅运行测试")
+    mode_group.add_argument("--test", "--test-only", action="store_true", help="仅运行测试")
     mode_group.add_argument("--audit", "-u", action="store_true", help="仅运行审核")
 
     parser.add_argument("--max-iterations", "-m", type=int, default=3)

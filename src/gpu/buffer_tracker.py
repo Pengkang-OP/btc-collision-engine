@@ -367,7 +367,7 @@ class GPUBufferTracker:
                 self._periodic_check_thread.join(timeout=10)
             logger.info("GPU缓冲区追踪器：定期检查已停止")
 
-    def _periodic_check_loop(self):
+    def _periodic_check_loop(self) -> None:
         """定期检查循环"""
         while not self._periodic_check_stop.is_set():
             self._periodic_check_stop.wait(timeout=self._check_interval)
@@ -393,7 +393,7 @@ class GPUBufferTracker:
             except Exception as e:
                 logger.error("定期泄漏检查失败: %s", e)
 
-    def _record_memory_usage(self):
+    def _record_memory_usage(self) -> None:
         """记录内存使用情况"""
         total_size = sum(info["size"] for info in self._allocated_buffers.values())
         self._memory_usage_history.append(
@@ -409,7 +409,7 @@ class GPUBufferTracker:
         if len(self._memory_usage_history) > self.MAX_MEMORY_HISTORY:
             self._memory_usage_history = self._memory_usage_history[-self.MAX_MEMORY_HISTORY :]
 
-    def _check_memory_trend(self):
+    def _check_memory_trend(self) -> None:
         """检查内存使用趋势"""
         if len(self._memory_usage_history) < self.MEMORY_TREND_WINDOW:
             return

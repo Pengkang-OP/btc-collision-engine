@@ -11,12 +11,12 @@ import json
 import os
 import pathlib
 import tempfile
-import unittest
+import pytest
 
 from src.config.crypto_config import CryptoBackendType, CryptoConfig
 
 
-class TestCryptoConfig(unittest.TestCase):
+class TestCryptoConfig:
     """CryptoConfig 核心方法测试"""
 
     def setUp(self):
@@ -32,10 +32,10 @@ class TestCryptoConfig(unittest.TestCase):
             cfg = CryptoConfig(config_file=tmpfile)
             cfg.set("backend", "coincurve")
             result = cfg.save()
-            self.assertTrue(result)
+            assert result
             with pathlib.Path(tmpfile).open(encoding="utf-8") as f:
                 saved = json.load(f)
-            self.assertEqual(saved["backend"], "coincurve")
+            assert saved["backend"]  ==  "coincurve"
         finally:
             import shutil
 
@@ -44,7 +44,7 @@ class TestCryptoConfig(unittest.TestCase):
     def test_save_no_config_file(self):
         """无 config_file 时 save() 返回 False"""
         result = self.cfg.save()
-        self.assertFalse(result)
+        assert not result
 
     # ── load() ─────────────────────────────────────────────────
 
@@ -56,7 +56,7 @@ class TestCryptoConfig(unittest.TestCase):
             pathlib.Path(tmpfile).write_text("{invalid json", encoding="utf-8")
             cfg = CryptoConfig(config_file=tmpfile)
             result = cfg.load()
-            self.assertFalse(result)
+            assert not result
         finally:
             import shutil
 
@@ -65,20 +65,20 @@ class TestCryptoConfig(unittest.TestCase):
     def test_load_no_config_file(self):
         """无 config_file 时 load() 返回 False"""
         result = self.cfg.load()
-        self.assertFalse(result)
+        assert not result
 
     # ── get_backend_type() ─────────────────────────────────────
 
     def test_get_backend_type_valid(self):
         """get_backend_type() 返回有效的后端类型"""
         self.cfg.set("backend", "coincurve")
-        self.assertEqual(self.cfg.get_backend_type(), CryptoBackendType.COINCURVE)
+        assert self.cfg.get_backend_type()  ==  CryptoBackendType.COINCURVE
 
     def test_get_backend_type_invalid_fallback(self):
         """get_backend_type() 无效值时回退到 AUTO"""
         self.cfg.set("backend", "invalid_backend")
         result = self.cfg.get_backend_type()
-        self.assertEqual(result, CryptoBackendType.AUTO)
+        assert result  ==  CryptoBackendType.AUTO
 
     # ── reset / to_dict ────────────────────────────────────────
 
@@ -87,47 +87,47 @@ class TestCryptoConfig(unittest.TestCase):
         self.cfg.set("backend", "coincurve")
         self.cfg.set("constant_time", True)
         self.cfg.reset_to_defaults()
-        self.assertEqual(self.cfg.config, CryptoConfig.DEFAULT_CONFIG)
+        assert self.cfg.config  ==  CryptoConfig.DEFAULT_CONFIG
 
     def test_to_dict(self):
         """to_dict() 返回 config 副本"""
         self.cfg.set("backend", "ecdsa")
         d = self.cfg.to_dict()
-        self.assertEqual(d["backend"], "ecdsa")
-        self.assertIsNot(d, self.cfg.config)  # 确保是副本
+        assert d["backend"]  ==  "ecdsa"
+        assert d  is not  self.cfg.config  # 确保是副本
 
     # ── set / get ──────────────────────────────────────────────
 
     def test_set_and_get(self):
         """set()/get() 设置和获取配置值"""
         self.cfg.set("constant_time", True)
-        self.assertEqual(self.cfg.get("constant_time"), True)
-        self.assertEqual(self.cfg.get("nonexistent", 42), 42)
+        assert self.cfg.get("constant_time")  ==  True
+        assert self.cfg.get("nonexistent", 42)  ==  42
 
     def test_set_backend_type(self):
         """set_backend_type() 设置后端类型"""
         result = self.cfg.set_backend_type(CryptoBackendType.ECDSA)
-        self.assertTrue(result)
-        self.assertEqual(self.cfg.get("backend"), "ecdsa")
+        assert result
+        assert self.cfg.get("backend")  ==  "ecdsa"
 
     # ── validate ──────────────────────────────────────────────
 
     def test_validate_valid_config(self):
         """validate() 有效配置返回空列表"""
         errors = self.cfg.validate()
-        self.assertEqual(errors, [])
+        assert errors  ==  []
 
     def test_validate_invalid_backend(self):
         """validate() 检测无效后端类型"""
         self.cfg.set("backend", "bitcoinj")
         errors = self.cfg.validate()
-        self.assertIn("无效的后端类型", errors[0])
+        assert errors[0]  in  "无效的后端类型"
 
     def test_validate_non_bool_fields(self):
         """validate() 检测非布尔字段"""
         self.cfg.set("constant_time", "yes")
         errors = self.cfg.validate()
-        self.assertTrue(any("constant_time" in e for e in errors))
+        assert any("constant_time" in e for e in errors)
 
 
 if __name__ == "__main__":

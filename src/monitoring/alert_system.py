@@ -5,7 +5,7 @@ anomaly alerting.
 支持多种告警规则和通知方式。
 """
 
-import logging
+from ..utils import get_configured_logger
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -16,7 +16,7 @@ from typing import Any, cast
 
 from src.utils.fast_json import fast_dump, fast_load
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger(__name__)
 
 # 告警系统常量
 MAX_ALERT_HISTORY = 1000  # 最大保存告警记录数
@@ -142,7 +142,7 @@ class AlertSystem:
         # 加载历史告警
         self._load_alert_history()
 
-        logger.info(f"告警系统初始化完成: {len(self.rules)} 条规则")
+        logger.debug("告警系统初始化完成: %d 条规则", len(self.rules))
 
     def add_rule(self, rule: AlertRule) -> None:
         """添加告警规则

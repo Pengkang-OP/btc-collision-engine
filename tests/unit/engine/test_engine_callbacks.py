@@ -6,7 +6,7 @@
 
 import threading
 import time
-import unittest
+import pytest
 from unittest.mock import patch
 
 from src.collision.collision_stats import CollisionStats
@@ -14,7 +14,7 @@ from src.collision.key_collision_engine import KeyCollisionEngine
 from tests.conftest_engine import get_known_target
 
 
-class TestKeyCollisionEngineCallbacks(unittest.TestCase):
+class TestKeyCollisionEngineCallbacks:
     """回调函数测试"""
 
     def test_progress_callback_called(self):
@@ -33,7 +33,7 @@ class TestKeyCollisionEngineCallbacks(unittest.TestCase):
         time.sleep(2.5)
         engine.stop()
 
-        self.assertGreater(len(progress_events), 0, "进度回调应至少被调用一次")
+        assert len(progress_events)  >  0, "进度回调应至少被调用一次"
 
     def test_complete_callback_called(self):
         """完成回调在停止后被调用"""
@@ -51,7 +51,7 @@ class TestKeyCollisionEngineCallbacks(unittest.TestCase):
         time.sleep(1.0)
         engine.stop()
         complete_called.wait(timeout=15)
-        self.assertTrue(complete_called.is_set(), "完成回调应在stop后触发")
+        assert complete_called.is_set(), "完成回调应在stop后触发"
 
     def test_match_callback_called_for_known_key(self):
         """使用已知私钥-地址对，range 扫描找到匹配后触发回调"""
@@ -72,14 +72,14 @@ class TestKeyCollisionEngineCallbacks(unittest.TestCase):
         match_event.wait(timeout=10)
         engine.stop()
 
-        self.assertTrue(match_event.is_set(), "应在范围[1,5]内找到匹配")
-        self.assertGreater(len(match_results), 0)
+        assert match_event.is_set(), "应在范围[1,5]内找到匹配"
+        assert len(match_results)  >  0
         _, found_addr, wif = match_results[0]
-        self.assertEqual(found_addr, known_addr)
-        self.assertTrue(wif.startswith(("K", "L", "5")))
+        assert found_addr  ==  known_addr
+        assert wif.startswith(("K", "L", "5"))
 
 
-class TestKeyCollisionEngineSafeCallback(unittest.TestCase):
+class TestKeyCollisionEngineSafeCallback:
     """安全回调 _safe_invoke_match_callback 异常/超时路径"""
 
     def test_match_callback_exception_isolation(self):
@@ -101,7 +101,7 @@ class TestKeyCollisionEngineSafeCallback(unittest.TestCase):
         exception_raised.wait(timeout=10)
         time.sleep(0.5)
         stats = engine.get_stats()
-        self.assertGreater(stats.total_checked, 0, "引擎应继续运行")
+        assert stats.total_checked  >  0, "引擎应继续运行"
         engine.stop()
 
     def test_match_callback_slow_isolation(self):
@@ -126,7 +126,7 @@ class TestKeyCollisionEngineSafeCallback(unittest.TestCase):
         callback_started.wait(timeout=10)
         time.sleep(1.5)
         stats = engine.get_stats()
-        self.assertGreater(stats.total_checked, 0)
+        assert stats.total_checked  >  0
         engine.stop()
 
     def test_safe_invoke_callback_no_handler(self):
@@ -138,7 +138,7 @@ class TestKeyCollisionEngineSafeCallback(unittest.TestCase):
             data_logging_enabled=False,
         )
         result = engine._safe_invoke_match_callback((1).to_bytes(32, "big"), "1TestAddr", "WIF123")
-        self.assertTrue(result)
+        assert result
         engine.stop()
 
     def test_safe_invoke_callback_outer_exception(self):
@@ -156,5 +156,5 @@ class TestKeyCollisionEngineSafeCallback(unittest.TestCase):
         )
         with patch("threading.Thread", side_effect=RuntimeError("线程创建失败")):
             result = engine._safe_invoke_match_callback((1).to_bytes(32, "big"), known_addr, "WIF123")
-            self.assertFalse(result, "线程创建失败应返回 False")
+            assert not result, "线程创建失败应返回 False"
         engine.stop()

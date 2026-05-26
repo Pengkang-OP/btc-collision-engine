@@ -23,6 +23,9 @@ from .security_log_filter import SecurityLogFilter
 # v4.5.1: 项目根目录缓存，用于解析相对日志路径
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# 默认日志文件最大字节数（10MB），作为 RotatingFileHandler maxBytes 的 fallback 值
+LOG_DEFAULT_MAX_BYTES: int = 10 * 1024 * 1024  # 10MB
+
 # 模块级可重入锁，序列化所有 SafeRotatingFileHandler 实例的 rollover 操作，
 # 防止并发测试场景下多个处理器同时竞争同一日志文件的 rename/delete。
 # 使用 RLock 对齐 Python logging.Handler 内置锁类型，提供防御性可重入安全。
@@ -74,7 +77,7 @@ class LoggingConfig:
         "level": "INFO",
         "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         "file": "logs/collision.log",
-        "max_bytes": 10 * 1024 * 1024,  # 10MB
+        "max_bytes": LOG_DEFAULT_MAX_BYTES,  # 10MB
         "backup_count": 5,
         "enable_console": True,
         "enable_file": True,
@@ -96,7 +99,7 @@ class LoggingConfig:
     def init(self, config: dict[str, Any] | None = None) -> None:
         """初始化日志配置
 
-        参数:
+        Args:
             config: 自定义配置字典，None则使用默认配置
         """
         if self._initialized:
@@ -272,7 +275,7 @@ class LoggingConfig:
                 # 基于大小的轮转（默认）
                 handler = SafeRotatingFileHandler(
                     log_file,
-                    maxBytes=self._config.get("max_bytes", 10 * 1024 * 1024),
+                    maxBytes=self._config.get("max_bytes", LOG_DEFAULT_MAX_BYTES),
                     backupCount=self._config.get("backup_count", 5),
                     encoding="utf-8-sig",  # 修复: 使用UTF-8-BOM解决Windows中文乱码
                 )
@@ -365,7 +368,7 @@ class LoggingConfig:
                                     self._log_file,
                                     maxBytes=(self._config_snapshot or {}).get(
                                         "max_bytes",
-                                        10 * 1024 * 1024,
+                                        LOG_DEFAULT_MAX_BYTES,
                                     ),
                                     backupCount=(self._config_snapshot or {}).get("backup_count", 5),
                                     encoding="utf-8-sig",
@@ -410,10 +413,10 @@ class LoggingConfig:
     def get_logger(self, name: str) -> logging.Logger:
         """获取配置好的日志记录器
 
-        参数:
+        Args:
             name: 日志记录器名称
 
-        返回:
+        Returns:
             配置好的日志记录器
         """
         if not self._initialized:
@@ -429,7 +432,7 @@ logging_config = LoggingConfig()
 def init_logging(config: dict[str, Any] | None = None) -> None:
     """初始化日志系统
 
-    参数:
+    Args:
         config: 自定义配置字典
     """
     logging_config.init(config)
@@ -525,10 +528,10 @@ def _setup_security_filter() -> None:
 def get_configured_logger(name: str) -> logging.Logger:
     """获取统一配置的日志记录器
 
-    参数:
+    Args:
         name: 日志记录器名称
 
-    返回:
+    Returns:
         配置好的日志记录器
     """
     return logging_config.get_logger(name)

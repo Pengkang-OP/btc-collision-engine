@@ -253,7 +253,7 @@ class GPUDeviceManager:
 
         return self
 
-    def _init_device(self):
+    def _init_device(self) -> None:
         """初始化GPU设备"""
         with EnhancedPerformanceMonitor(self.logger, "GPU设备初始化", level="DEBUG"):
             self._gpu_device = GPUDevice()
@@ -375,7 +375,10 @@ class GPUDeviceManager:
                 # Taproot 地址 (bc1p/tb1p): 跳过
                 if address_lower.startswith(("bc1p", "tb1p")):
                     masked = address[:8] + "..." + address[-6:] if len(address) >= 14 else address
-                    skipped_addresses.append((masked, "Bech32m (Taproot)", "Taproot的witness_program=x-only公钥，密码学上无法通过hash160(pubkey)匹配"))
+                    skipped_addresses.append((
+                        masked, "Bech32m (Taproot)",
+                        "Taproot的witness_program=x-only公钥，密码学上无法通过hash160(pubkey)匹配",
+                    ))
                     continue
 
                 # 尝试解码 Bech32 地址
@@ -387,7 +390,10 @@ class GPUDeviceManager:
                     # 检查 witness version
                     if witness_version != 0:
                         masked = address[:8] + "..." + address[-6:] if len(address) >= 14 else address
-                        skipped_addresses.append((masked, f"Bech32 (witness v{witness_version})", "仅支持 witness v0"))
+                        skipped_addresses.append((
+                            masked, f"Bech32 (witness v{witness_version})",
+                            "仅支持 witness v0",
+                        ))
                         continue
 
                     # P2WPKH: 20字节 witness_program = hash160(pubkey) → 可匹配
@@ -395,18 +401,27 @@ class GPUDeviceManager:
                         target_list.append(address)
                         hash160_list.append(witness_program)
                         bech32_p2wpkh_count += 1
-                        self.logger.debug(f"Bech32 P2WPKH 目标: {address[:15]}... -> hash160={witness_program.hex()[:16]}...")
+                        short_hash = witness_program.hex()[:8]
+                        self.logger.debug(
+                            f"Bech32 P2WPKH 目标: {address[:8]}... -> hash160={short_hash}...",
+                        )
                         continue
 
                     # P2WSH: 32字节 witness_program = sha256(redeemScript) → 不可匹配
                     elif len(witness_program) == 32:
                         masked = address[:8] + "..." + address[-6:] if len(address) >= 14 else address
-                        skipped_addresses.append((masked, "Bech32 (P2WSH)", "P2WSH的witness_program=sha256(redeemScript)，密码学上无法通过hash160(pubkey)匹配"))
+                        skipped_addresses.append((
+                            masked, "Bech32 (P2WSH)",
+                            "P2WSH的witness_program=sha256(redeemScript)，密码学上无法通过hash160(pubkey)匹配",
+                        ))
                         continue
 
                     else:
                         masked = address[:8] + "..." + address[-6:] if len(address) >= 14 else address
-                        skipped_addresses.append((masked, "Bech32", f"不支持的 witness_program 长度: {len(witness_program)}"))
+                        skipped_addresses.append((
+                            masked, "Bech32",
+                            f"不支持的 witness_program 长度: {len(witness_program)}",
+                        ))
                         continue
 
                 except Exception as e:
@@ -425,8 +440,12 @@ class GPUDeviceManager:
 
                 elif version == 0x05 and len(payload) == 20:
                     # P2SH: payload = hash160(redeemScript) ≠ hash160(pubkey) → 不可匹配
+                    addr_len = len(address)
                     masked = address[:8] + "..." + address[-6:] if addr_len >= 14 else address
-                    skipped_addresses.append((masked, "P2SH", "P2SH的payload=hash160(redeemScript)，密码学上无法通过hash160(pubkey)匹配"))
+                    skipped_addresses.append((
+                        masked, "P2SH",
+                        "P2SH的payload=hash160(redeemScript)，密码学上无法通过hash160(pubkey)匹配",
+                    ))
                 else:
                     fmt = self._classify_address_format(address)
                     addr_len = len(address)
@@ -515,7 +534,7 @@ class GPUDeviceManager:
         self.logger.info("自动计算 batch_size: %d (基于GPU显存)", estimated_batch_size)
         return estimated_batch_size
 
-    def _init_context(self):
+    def _init_context(self) -> None:
         """初始化GPU上下文"""
         with EnhancedPerformanceMonitor(self.logger, "GPU上下文初始化", level="DEBUG"):
             self._gpu_context = GPUContext(self._require_device())
@@ -523,7 +542,7 @@ class GPUDeviceManager:
             # 应用优化
             self._gpu_context.apply_optimizations()
 
-    def _init_kernel(self, batch_size: int):
+    def _init_kernel(self, batch_size: int) -> None:
         """初始化GPU内核"""
         with EnhancedPerformanceMonitor(self.logger, "OpenCL内核编译", level="INFO"):
             ctx = self._require_context()
@@ -538,7 +557,7 @@ class GPUDeviceManager:
                 program=cast(Any, self._gpu_context.program),  # type: ignore[union-attr]
             )
 
-    def _init_memory_pool(self, batch_size: int = 0):
+    def _init_memory_pool(self, batch_size: int = 0) -> None:
         """初始化GPU内存池（含常用缓冲区预分配）
 
         在池创建后立即预分配常用大小的缓冲区，
@@ -596,7 +615,7 @@ class GPUDeviceManager:
             sizes.add(batch_size * 4)  # 匹配结果缓冲区
         return sorted(sizes)
 
-    def _init_async_executor(self, batch_size: int):
+    def _init_async_executor(self, batch_size: int) -> None:
         """初始化异步执行器"""
         dev = self._require_device()
         if dev.enable_async_execution:
@@ -638,16 +657,16 @@ class GPUDeviceManager:
             # v5.1: 启动后台结果收集器（消除主循环阻塞，实现流水线并行）
             executor.start_result_collector()
 
-            self.logger.info(
-                "[OK] GPU异步执行器已初始化(流水线并行, 队列深度: %d, 初始批次: %d, 后台收集器: 启用)",
+            self.logger.debug(
+                "[OK] GPU异步执行器已初始化(队列=%d, 批次=%d)",
                 queue_depth,
                 init_batch,
             )
         else:
             self._async_executor = None
-            self.logger.info("GPU异步执行器未初始化(使用同步模式)")
+            self.logger.debug("GPU异步执行器未初始化(使用同步模式)")
 
-    def _apply_vendor_optimizations(self):
+    def _apply_vendor_optimizations(self) -> None:
         """应用厂商特定优化
 
         v4.2.1 修复: Intel 优化路径现在传递 self 引用作为 engine，

@@ -1,4 +1,5 @@
 {
+  "version": "5.0.0",
   "_comment": "BTC 碰撞引擎配置示例文件",
   "_comment_description": "复制此文件为 config.json 并根据需要修改。'按需配置' 原则：只需配置与默认值不同的项。",
   "_comment_note": "所有以 _comment 开头的字段为文档注释，会被自动过滤，不影响配置验证。",

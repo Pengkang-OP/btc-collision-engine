@@ -173,7 +173,7 @@ from src.utils.logger import get_configured_logger
 提交前运行检查脚本：
 
 ```bash
-python scripts/check_import_paths.py
+python scripts/dev/check_import_paths.py
 ```
 
 ---
@@ -189,10 +189,9 @@ python scripts/check_import_paths.py
 面向用户和开发者的主要文档，保持最新：
 
 - **快速开始**: README.md, getting-started.md, project-status.md
-- **架构设计**: architecture.md, workflow_diagrams.md, api-reference.md
+- **架构设计**: architecture.md, workflow_diagrams.md
 - **功能文档**: 各功能模块的使用指南和API文档
 - **配置部署**: config-usage-examples.md, document-archive-strategy.md
-- **界面使用**: user-interface.md
 - **故障排除**: troubleshooting.md
 
 #### 归档文档 (docs/archive/)
@@ -471,7 +470,7 @@ python -m pytest tests/ -v
 pylint src/collision/
 
 # 检查导入路径
-python scripts/check_import_paths.py
+python scripts/dev/check_import_paths.py
 
 # 类型检查（如适用）
 mypy src/collision/
@@ -598,7 +597,6 @@ A:
 
 - [README](README.md) - 项目概述
 - [架构文档](docs/architecture.md) - 系统架构
-- [API参考](docs/api-reference.md) - API文档
 - [文档索引](docs/DOCUMENT_INDEX.md) - 文档导航
 - [性能优化指南](docs/technical-docs/performance-optimization.md) - 性能优化
 

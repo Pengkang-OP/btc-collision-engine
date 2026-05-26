@@ -2,11 +2,13 @@
 
 import locale
 import os
+import threading
 
 from .translator import Translator
 
 _translator = Translator()
 _lang_loaded = False
+_load_lock = threading.Lock()
 
 
 def _auto_load_language() -> None:
@@ -14,7 +16,10 @@ def _auto_load_language() -> None:
     global _lang_loaded
     if _lang_loaded:
         return
-    _lang_loaded = True
+    with _load_lock:
+        if _lang_loaded:
+            return
+        _lang_loaded = True
 
     # Priority: LANG env > system locale
     lang_env = os.environ.get("LANG", os.environ.get("LC_ALL", ""))

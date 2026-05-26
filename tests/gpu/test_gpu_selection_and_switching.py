@@ -119,7 +119,7 @@ def make_mock_platform(name: str = "Mock Platform") -> Mock:
     return platform
 
 
-class TestGPUDeviceDetection(unittest.TestCase):
+class TestGPUDeviceDetection:
     """测试1: GPU设备检测功能"""
 
     def setUp(self):
@@ -146,10 +146,10 @@ class TestGPUDeviceDetection(unittest.TestCase):
         with patch("src.gpu.device.cl.get_platforms", return_value=[mock_platform]):
             devices = GPUDeviceDetector.detect_devices()
 
-            self.assertEqual(len(devices), 1)
-            self.assertEqual(devices[0]["name"], "NVIDIA GeForce RTX 3080")
-            self.assertEqual(devices[0]["vendor"], "NVIDIA Corporation")
-            self.assertEqual(devices[0]["type"], "GPU")
+            assert len(devices) == 1
+            assert devices[0]["name"] == "NVIDIA GeForce RTX 3080"
+            assert devices[0]["vendor"] == "NVIDIA Corporation"
+            assert devices[0]["type"] == "GPU"
             print(f"  ✅ 成功检测到: {devices[0]['name']}")
 
     def test_02_detect_multi_gpu(self):
@@ -187,13 +187,13 @@ class TestGPUDeviceDetection(unittest.TestCase):
         with patch("src.gpu.device.cl.get_platforms", return_value=[platform1, platform2]):
             devices = GPUDeviceDetector.detect_devices()
 
-            self.assertEqual(len(devices), 3)
+            assert len(devices) == 3
 
             # 验证每个设备信息
             vendors = [d["vendor"] for d in devices]
-            self.assertTrue(any("NVIDIA" in v for v in vendors))
-            self.assertTrue(any("AMD" in v or "Advanced" in v for v in vendors))
-            self.assertTrue(any("Intel" in v for v in vendors))
+            assert any("NVIDIA" in v for v in vendors)
+            assert any("AMD" in v or "Advanced" in v for v in vendors)
+            assert any("Intel" in v for v in vendors)
 
             print(f"  ✅ 检测到 {len(devices)} 个GPU设备:")
             for i, dev in enumerate(devices):
@@ -225,8 +225,8 @@ class TestGPUDeviceDetection(unittest.TestCase):
             devices = GPUDeviceDetector.detect_devices()
 
             # 应该只检测到GPU,CPU被过滤
-            self.assertEqual(len(devices), 1)
-            self.assertIn("GTX 1660", devices[0]["name"])
+            assert len(devices) == 1
+            assert "GTX 1660" in devices[0]["name"]
             print(f"  ✅ CPU设备已过滤,仅保留GPU: {devices[0]['name']}")
 
     def test_04_filter_integrated_gpu(self):
@@ -254,8 +254,8 @@ class TestGPUDeviceDetection(unittest.TestCase):
             devices = GPUDeviceDetector.detect_devices()
 
             # 应该只检测到独显,核显被过滤
-            self.assertEqual(len(devices), 1)
-            self.assertIn("Arc", devices[0]["name"])
+            assert len(devices) == 1
+            assert "Arc" in devices[0]["name"]
             print(f"  ✅ 核显已过滤,仅保留独显: {devices[0]['name']}")
 
     def test_05_availability_cache(self):
@@ -282,16 +282,16 @@ class TestGPUDeviceDetection(unittest.TestCase):
         with patch("src.gpu.device.cl.get_platforms", side_effect=mock_get_platforms):
             # 第一次调用 - 应该执行实际检测
             result1 = GPUDeviceDetector.is_gpu_available()
-            self.assertTrue(result1)
+            assert result1
             first_call_count = call_count
 
             # 第二次调用 - 应该使用缓存
             result2 = GPUDeviceDetector.is_gpu_available()
-            self.assertTrue(result2)
+            assert result2
             second_call_count = call_count
 
             # 验证缓存生效(调用次数未增加)
-            self.assertEqual(first_call_count, second_call_count)
+            assert first_call_count == second_call_count
             print(
                 f"  ✅ 缓存机制正常: 检测{first_call_count}次,缓存命中{second_call_count - first_call_count}次",
             )
@@ -299,12 +299,12 @@ class TestGPUDeviceDetection(unittest.TestCase):
             # 清除缓存后再次调用 - 应该重新检测
             GPUDeviceDetector.clear_availability_cache()
             result3 = GPUDeviceDetector.is_gpu_available()
-            self.assertTrue(result3)
-            self.assertEqual(call_count, first_call_count + 1)
+            assert result3
+            assert call_count == first_call_count + 1
             print("  ✅ 缓存清除后重新检测成功")
 
 
-class TestGPUVendorIdentification(unittest.TestCase):
+class TestGPUVendorIdentification:
     """测试2: GPU厂商识别功能"""
 
     def test_01_identify_nvidia(self):
@@ -320,7 +320,7 @@ class TestGPUVendorIdentification(unittest.TestCase):
 
         for name, vendor in test_cases:
             result = identify_vendor(name, vendor)
-            self.assertEqual(result, "nvidia", f"Failed for {name}")
+            assert result == "nvidia", f"Failed for {name}"
             print(f"  ✅ {name} -> {result}")
 
     def test_02_identify_amd(self):
@@ -335,7 +335,7 @@ class TestGPUVendorIdentification(unittest.TestCase):
 
         for name, vendor in test_cases:
             result = identify_vendor(name, vendor)
-            self.assertEqual(result, "amd", f"Failed for {name}")
+            assert result == "amd", f"Failed for {name}"
             print(f"  ✅ {name} -> {result}")
 
     def test_03_identify_intel(self):
@@ -350,7 +350,7 @@ class TestGPUVendorIdentification(unittest.TestCase):
 
         for name, vendor in test_cases:
             result = identify_vendor(name, vendor)
-            self.assertEqual(result, "intel", f"Failed for {name}")
+            assert result == "intel", f"Failed for {name}"
             print(f"  ✅ {name} -> {result}")
 
     def test_04_identify_unknown(self):
@@ -358,11 +358,11 @@ class TestGPUVendorIdentification(unittest.TestCase):
         print("\n📋 测试2.4: 识别未知厂商GPU")
 
         result = identify_vendor("Unknown GPU", "Unknown Vendor")
-        self.assertEqual(result, "unknown")
+        assert result == "unknown"
         print(f"  ✅ 未知厂商正确识别: {result}")
 
 
-class TestGPUDeviceScoring(unittest.TestCase):
+class TestGPUDeviceScoring:
     """测试3: GPU评分和选择算法"""
 
     def setUp(self):
@@ -387,7 +387,7 @@ class TestGPUDeviceScoring(unittest.TestCase):
         # P3-11 统一评分: (10*10 + 68*0.05 + gen_bonus_rtx30=10.0) * 1.0 = 113.4
         expected_score = (10.0 * 10.0 + 68 * 0.05 + 10.0) * 1.0
 
-        self.assertAlmostEqual(score, expected_score, places=1)
+        assert score == pytest.approx(expected_score, places=1)
         print(f"  ✅ {device['name']} 评分: {score:.1f} (预期: {expected_score:.1f})")
 
     def test_02_score_amd_gpu(self):
@@ -407,7 +407,7 @@ class TestGPUDeviceScoring(unittest.TestCase):
         # P3-11 统一评分: (16*10 + 72*0.05 + gen_bonus_rx6000=8.0) * 0.95 = 163.02
         expected_score = (16.0 * 10.0 + 72 * 0.05 + 8.0) * 0.95
 
-        self.assertAlmostEqual(score, expected_score, places=1)
+        assert score == pytest.approx(expected_score, places=1)
         print(f"  ✅ {device['name']} 评分: {score:.1f} (预期: {expected_score:.1f})")
 
     def test_03_score_intel_gpu(self):
@@ -427,7 +427,7 @@ class TestGPUDeviceScoring(unittest.TestCase):
         # P3-11 统一评分: (16*10 + 512*0.05 + gen_bonus_arc=5.0) * 0.9 = 171.54
         expected_score = (16.0 * 10.0 + 512 * 0.05 + 5.0) * 0.9
 
-        self.assertAlmostEqual(score, expected_score, places=1)
+        assert score == pytest.approx(expected_score, places=1)
         print(f"  ✅ {device['name']} 评分: {score:.1f} (预期: {expected_score:.1f})")
 
     def test_04_select_best_device(self):
@@ -465,9 +465,9 @@ class TestGPUDeviceScoring(unittest.TestCase):
         # 选择最佳设备
         best = self.selector.select_best_device(devices)
 
-        self.assertIsNotNone(best)
+        assert best is not None
         # Intel Arc A770仍然分数最高 (171.54 > 163.02 > 113.4)
-        self.assertIn("Arc A770", best["name"])
+        assert "Arc A770" in best["name"]
 
         print(f"  ✅ 最佳GPU选择: {best['name']} (评分: {best['score']:.1f})")
         print("     所有设备评分:")
@@ -499,17 +499,17 @@ class TestGPUDeviceScoring(unittest.TestCase):
         with patch.object(GPUDeviceSelector, "detect_all_devices", return_value=devices):
             # 选择索引0
             device0 = self.selector.get_device_info(0)
-            self.assertIsNotNone(device0)
-            self.assertIn("NVIDIA", device0["name"])
+            assert device0 is not None
+            assert "NVIDIA" in device0["name"]
 
             # 选择索引1
             device1 = self.selector.get_device_info(1)
-            self.assertIsNotNone(device1)
-            self.assertIn("AMD", device1["name"])
+            assert device1 is not None
+            assert "AMD" in device1["name"]
 
             # 选择不存在的索引
             device_invalid = self.selector.get_device_info(99)
-            self.assertIsNone(device_invalid)
+            assert device_invalid is None
 
             print("  ✅ 索引选择功能正常")
 
@@ -536,14 +536,14 @@ class TestGPUDeviceScoring(unittest.TestCase):
 
             # Intel和AMD有调整,允许小误差
             if vendor == "amd":
-                self.assertAlmostEqual(recommended, expected, delta=100)
+                assert recommended == pytest.approx(expected, delta=100)
             else:
-                self.assertEqual(recommended, expected)
+                assert recommended == expected
 
             print(f"  ✅ {vendor.upper()} {mem_gb}GB -> {recommended:,}")
 
 
-class TestGPUSwitching(unittest.TestCase):
+class TestGPUSwitching:
     """测试4: GPU切换功能"""
 
     def setUp(self):
@@ -571,7 +571,7 @@ class TestGPUSwitching(unittest.TestCase):
 
                     # 第一次: 使用GPU 0
                     gpu_device.initialize(device_index=0)
-                    self.assertIn("RTX 3080", gpu_device.device_info["name"])
+                    assert "RTX 3080" in gpu_device.device_info["name"]
                     print(f"  ✅ 切换到GPU 0: {gpu_device.device_info['name']}")
 
                     # 清理
@@ -579,7 +579,7 @@ class TestGPUSwitching(unittest.TestCase):
 
                     # 第二次: 使用GPU 1
                     gpu_device.initialize(device_index=1)
-                    self.assertIn("RX 6800 XT", gpu_device.device_info["name"])
+                    assert "RX 6800 XT" in gpu_device.device_info["name"]
                     print(f"  ✅ 切换到GPU 1: {gpu_device.device_info['name']}")
 
                     # 清理
@@ -609,7 +609,7 @@ class TestGPUSwitching(unittest.TestCase):
                     gpu_device.initialize(device_index=-1)
 
                     # 应该选择AMD RX 6800 XT(显存最大)
-                    self.assertIn("RX 6800 XT", gpu_device.device_info["name"])
+                    assert "RX 6800 XT" in gpu_device.device_info["name"]
                     print(f"  ✅ 自动选择最佳GPU: {gpu_device.device_info['name']}")
 
                     gpu_device.cleanup()
@@ -632,16 +632,16 @@ class TestGPUSwitching(unittest.TestCase):
             gpu_device = GPUDevice()
 
             # 尝试使用不存在的索引
-            with self.assertRaises(ValueError) as context:
+            with pytest.raises(ValueError):
                 gpu_device.initialize(device_index=5)
 
             # 验证错误信息包含可用设备列表
             error_msg = str(context.exception)
-            self.assertIn("超出范围", error_msg)
+            assert "超出范围" in error_msg
             print(f"  ✅ 正确处理无效索引: {error_msg[:50]}...")
 
 
-class TestGPUConfigurationAdaptation(unittest.TestCase):
+class TestGPUConfigurationAdaptation:
     """测试5: 配置适配功能"""
 
     def setUp(self):
@@ -671,8 +671,8 @@ class TestGPUConfigurationAdaptation(unittest.TestCase):
 
             batch_size = self.selector.recommend_batch_size(device)
 
-            self.assertGreaterEqual(batch_size, min_batch)
-            self.assertLessEqual(batch_size, max_batch)
+            assert batch_size >= min_batch
+            assert batch_size <= max_batch
 
             print(f"  ✅ {name}: {batch_size:,} (范围: {min_batch:,}-{max_batch:,})")
 
@@ -695,7 +695,7 @@ class TestGPUConfigurationAdaptation(unittest.TestCase):
 
             work_group = self.selector.recommend_work_group_size(device)
 
-            self.assertEqual(work_group, expected)
+            assert work_group == expected
             print(f"  ✅ {name}: 工作组大小 {work_group}")
 
     def test_03_memory_pool_configuration(self):
@@ -721,7 +721,7 @@ class TestGPUConfigurationAdaptation(unittest.TestCase):
             print(f"       估算内存: {estimated_memory_mb:.2f} MB")
 
 
-class TestGPURunningStability(unittest.TestCase):
+class TestGPURunningStability:
     """测试6: GPU运行稳定性"""
 
     def test_01_multiple_init_cleanup(self):
@@ -750,12 +750,12 @@ class TestGPURunningStability(unittest.TestCase):
                     # 循环5次初始化/清理
                     for i in range(5):
                         gpu_device.initialize(device_index=0)
-                        self.assertIsNotNone(gpu_device.context)
-                        self.assertIsNotNone(gpu_device.queue)
+                        assert gpu_device.context is not None
+                        assert gpu_device.queue is not None
 
                         gpu_device.cleanup()
-                        self.assertIsNone(gpu_device.context)
-                        self.assertIsNone(gpu_device.queue)
+                        assert gpu_device.context is None
+                        assert gpu_device.queue is None
 
                         print(f"  ✅ 循环 {i + 1}/5: 初始化/清理成功")
 
@@ -793,23 +793,23 @@ class TestGPURunningStability(unittest.TestCase):
                     gpu_device.initialize(device_index=0, enable_async=True)
 
                     # 验证所有队列已创建
-                    self.assertIsNotNone(gpu_device.compute_queue)
-                    self.assertIsNotNone(gpu_device.transfer_queue)
+                    assert gpu_device.compute_queue is not None
+                    assert gpu_device.transfer_queue is not None
 
                     # 清理
                     gpu_device.cleanup()
 
                     # 验证所有资源已清理
-                    self.assertIsNone(gpu_device.context)
-                    self.assertIsNone(gpu_device.queue)
-                    self.assertIsNone(gpu_device.compute_queue)
-                    self.assertIsNone(gpu_device.transfer_queue)
-                    self.assertIsNone(gpu_device.device)
+                    assert gpu_device.context is None
+                    assert gpu_device.queue is None
+                    assert gpu_device.compute_queue is None
+                    assert gpu_device.transfer_queue is None
+                    assert gpu_device.device is None
 
                     print("  ✅ 所有资源已完全清理")
 
 
-class TestMultiGPUIntegration(unittest.TestCase):
+class TestMultiGPUIntegration:
     """测试7: 多GPU集成测试"""
 
     def setUp(self):
@@ -824,7 +824,7 @@ class TestMultiGPUIntegration(unittest.TestCase):
         selector2 = get_gpu_selector()
 
         # 应该是同一个实例
-        self.assertIs(selector1, selector2)
+        assert selector1 is selector2
         print(f"  ✅ 单例模式正常: selector1 is selector2 = {selector1 is selector2}")
 
     def test_02_detect_and_score_all_devices(self):
@@ -844,12 +844,12 @@ class TestMultiGPUIntegration(unittest.TestCase):
             selector = get_gpu_selector()
             devices = selector.detect_all_devices()
 
-            self.assertEqual(len(devices), 3)
+            assert len(devices) == 3
 
             # 验证所有设备都有评分
             for device in devices:
-                self.assertIn("score", device)
-                self.assertGreater(device["score"], 0)
+                assert "score" in device
+                assert device["score"] > 0
 
             print(f"  ✅ 检测到 {len(devices)} 个设备,均已评分:")
             for dev in sorted(devices, key=lambda d: d["score"], reverse=True):
@@ -877,13 +877,13 @@ class TestMultiGPUIntegration(unittest.TestCase):
 
         # 简洁格式
         brief = selector.format_device_info(device, detailed=False)
-        self.assertIn("RTX 3080", brief)
-        self.assertIn("10.00 GB", brief)
+        assert "RTX 3080" in brief
+        assert "10.00 GB" in brief
 
         # 详细格式
         detailed = selector.format_device_info(device, detailed=True)
-        self.assertIn("131,072", detailed)
-        self.assertIn("512", detailed)
+        assert "131 in 072", detailed
+        assert "512" in detailed
 
         print(f"  ✅ 简洁格式:\n{brief}")
         print(f"\n  ✅ 详细格式:\n{detailed}")
@@ -922,9 +922,9 @@ class TestMultiGPUIntegration(unittest.TestCase):
             # 选择索引0和2
             selected = selector.select_devices_by_indices([0, 2])
 
-            self.assertEqual(len(selected), 2)
-            self.assertEqual(selected[0]["global_index"], 0)
-            self.assertEqual(selected[1]["global_index"], 2)
+            assert len(selected) == 2
+            assert selected[0]["global_index"] == 0
+            assert selected[1]["global_index"] == 2
 
             print(f"  ✅ 成功选择 {len(selected)} 个设备:")
             for dev in selected:

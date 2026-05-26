@@ -40,6 +40,7 @@ class EngineStartEvent(EngineEvent):
     mode: str = ""
     target_count: int = 0
     batch_size: int = 0
+    source: str = ""
 
 
 @dataclass
@@ -49,6 +50,7 @@ class EngineStopEvent(EngineEvent):
     reason: str = ""
     stats: dict | None = None
     total_checked: int = 0
+    source: str = ""
 
 
 @dataclass
@@ -62,6 +64,7 @@ class EngineCompleteEvent(EngineEvent):
     stop_reason: str = ""
     stats: dict | None = None
     duration: float = 0.0
+    source: str = ""
 
 
 @dataclass
@@ -79,6 +82,7 @@ class EngineMatchEvent(EngineEvent):
     device_idx: int = 0
     worker_id: int = 0
     extra: dict[str, Any] = field(default_factory=dict)
+    source: str = ""
 
     def __post_init__(self):
         """Mask WIF for security – prevent accidental secrets in logs."""
@@ -111,6 +115,7 @@ class EngineErrorEvent(EngineEvent):
     exception: Exception | None = None
     context: dict[str, Any] = field(default_factory=dict)
     recoverable: bool = False
+    source: str = ""
 
     @property
     def event_type(self) -> EventType:
@@ -133,6 +138,7 @@ class EngineProgressEvent(EngineEvent):
     elapsed_seconds: float = 0.0  # alias for backward compat
     throughput: float = 0.0  # alias for backward compat
     timestamp: float = field(default_factory=time.time)  # event timestamp
+    source: str = ""
 
     @property
     def event_type(self) -> EventType:
@@ -146,14 +152,18 @@ class EngineStateEvent(EngineEvent):
 
     state: str = ""
     message: str = ""
+    source: str = ""
 
 
 @dataclass
-class CollisionEvent(EngineEvent):
-    """Event emitted when a collision is found."""
+class CollisionEvent:
+    """Generic collision event for null-safety testing.
 
-    private_key: bytes = b""
-    address: str = ""
-    wif: str = ""
-    target_address: str = ""
-    event_type: str | None = None
+    Attributes:
+        event_type: Event type identifier (may be None for null-safety tests)
+        data: Optional event data payload
+
+    """
+
+    event_type: Any = None
+    data: dict[str, Any] = field(default_factory=dict)

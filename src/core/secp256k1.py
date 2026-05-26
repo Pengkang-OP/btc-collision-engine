@@ -38,7 +38,7 @@ class Secp256k1:
     定义比特币使用的secp256k1椭圆曲线的所有数学参数。
     曲线方程: y² = x³ + 7 (mod p)
 
-    属性:
+    Attributes:
         P: 素数域模数，有限域F_p的大小
         N: 曲线阶，基点G的阶
         Gx, Gy: 基点G的坐标（生成元）
@@ -122,9 +122,9 @@ class Secp256k1:
         """
         if n < 2:
             return False
-        import logging
+        from ..utils import get_configured_logger
 
-        _logger = logging.getLogger(__name__)
+        _logger = get_configured_logger(__name__)
         try:
             ec = EllipticCurve()
             g = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
@@ -196,13 +196,13 @@ class ECPoint:
 
     表示椭圆曲线上的一个点，支持普通点和无穷远点（单位元）。
 
-    属性:
+    Attributes:
         x: 点的x坐标，None表示无穷远点
         y: 点的y坐标，None表示无穷远点
         curve: 椭圆曲线参数类
         is_infinity: 是否为无穷远点
 
-    示例:
+    Example:
         >>> point = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
         >>> infinity = ECPoint(None, None)
     """
@@ -210,7 +210,7 @@ class ECPoint:
     def __init__(self, x: int | None, y: int | None, curve: Any = Secp256k1) -> None:
         """初始化椭圆曲线点
 
-        参数:
+        Args:
             x: x坐标，None表示无穷远点
             y: y坐标，None表示无穷远点
             curve: 椭圆曲线参数类，默认Secp256k1
@@ -223,10 +223,10 @@ class ECPoint:
     def __eq__(self, other: object) -> bool:
         """判断两个点是否相等
 
-        参数:
+        Args:
             other: 另一个ECPoint对象
 
-        返回:
+        Returns:
             两点相等返回True，否则返回False
         """
         if not isinstance(other, ECPoint):
@@ -240,7 +240,7 @@ class ECPoint:
     def __repr__(self) -> str:
         """返回点的字符串表示
 
-        返回:
+        Returns:
             点的十六进制坐标表示或"Infinity"
         """
         if self.is_infinity:
@@ -250,7 +250,7 @@ class ECPoint:
     def copy(self) -> "ECPoint":
         """创建点的副本
 
-        返回:
+        Returns:
             当前点的深拷贝
         """
         return ECPoint(self.x, self.y, self.curve)
@@ -268,10 +268,10 @@ class EllipticCurve:
     实现椭圆曲线上的核心运算，包括模逆元、点加法、标量乘法和公钥生成。
     使用双倍-加法算法实现高效的标量乘法。
 
-    属性:
+    Attributes:
         curve: 椭圆曲线参数类
 
-    示例:
+    Example:
         >>> ec = EllipticCurve()
         >>> public_key = ec.generate_public_key(private_key_int)
     """
@@ -279,7 +279,7 @@ class EllipticCurve:
     def __init__(self, curve: Any = Secp256k1) -> None:
         """初始化椭圆曲线运算器
 
-        参数:
+        Args:
             curve: 椭圆曲线参数类，默认Secp256k1
         """
         self.curve = curve
@@ -294,14 +294,14 @@ class EllipticCurve:
         ⚠️ 侧信道风险: 扩展欧几里得算法非恒定时间，存在侧信道泄露风险。
         对于安全敏感场景，建议使用 mod_inverse_const_time() 方法。
 
-        参数:
+        Args:
             a: 被求逆元的整数
             m: 模数
 
-        返回:
+        Returns:
             a在模m下的逆元
 
-        异常:
+        Raises:
             ValueError: 当逆元不存在时（a和m不互质）
             TypeError: 当输入参数类型不正确时
         """
@@ -343,14 +343,14 @@ class EllipticCurve:
 
         ⚠️ 限制: 仅适用于素数模数。对于secp256k1曲线，p和N都是素数。
 
-        参数:
+        Args:
             a: 被求逆元的整数
             m: 模数（必须为素数）
 
-        返回:
+        Returns:
             a在模m下的逆元
 
-        异常:
+        Raises:
             ValueError: 当逆元不存在时（a和m不互质）
             TypeError: 当输入参数类型不正确时
         """
@@ -398,14 +398,14 @@ class EllipticCurve:
         - 普通点加法（P ≠ Q）
         - 点倍乘（P = Q）
 
-        参数:
+        Args:
             p1: 第一个点
             p2: 第二个点
 
-        返回:
+        Returns:
             两点的和点
 
-        异常:
+        Raises:
             TypeError: 当输入参数类型不正确时
         """
         # 输入参数验证
@@ -463,10 +463,10 @@ class EllipticCurve:
         检查点是否满足曲线方程: y² = x³ + ax + b (mod p)
         对于secp256k1: y² = x³ + 7 (mod p)
 
-        参数:
+        Args:
             point: 要验证的椭圆曲线点
 
-        返回:
+        Returns:
             如果点在曲线上返回True，否则返回False
         """
         if point.is_infinity:
@@ -488,11 +488,11 @@ class EllipticCurve:
 
         提取公共验证逻辑，避免代码重复。
 
-        参数:
+        Args:
             k: 标量（正整数）
             point: 椭圆曲线点
 
-        异常:
+        Raises:
             TypeError: 当输入参数类型不正确时
         """
         if not isinstance(k, int):
@@ -506,11 +506,11 @@ class EllipticCurve:
         ⚠️ v5.0.0: 已永久禁用 — 此实现未使用恒定时间算法，存在侧信道攻击风险。
         请使用 scalar_multiply_const_time() 替代。
 
-        参数:
+        Args:
             k: 标量（正整数）
             point: 椭圆曲线点
 
-        异常:
+        Raises:
             RuntimeError: 始终抛出 — 非恒定时间实现已被锁定
         """
         raise RuntimeError(
@@ -561,12 +561,12 @@ class EllipticCurve:
         在本地离线环境中可忽略。对于严格的侧信道威胁模型，建议使用 C 扩展。
         此处添加 # nosec 标记表示已在代码审查中确认该分支取决于预计算点类型。
 
-        参数:
+        Args:
             condition: 0 或 1
             a: 第一个点
             b: 第二个点
 
-        返回:
+        Returns:
             根据条件选择的点
         """
         # 构造位掩码: condition=1 → mask=-1 (全1), condition=0 → mask=0
@@ -614,14 +614,14 @@ class EllipticCurve:
 
         性能: 比标准双倍-加法算法略慢（约10-20%），但安全性更高。
 
-        参数:
+        Args:
             k: 标量（正整数）
             point: 椭圆曲线点
 
-        返回:
+        Returns:
             k倍的点
 
-        异常:
+        Raises:
             TypeError: 当输入参数类型不正确时
         """
         # 输入参数验证（使用公共验证方法）
@@ -684,16 +684,16 @@ class EllipticCurve:
         注意: 默认使用恒定时间标量乘法（Montgomery Ladder算法），
         执行时间不依赖于私钥的位模式，可有效防御侧信道攻击（如时序攻击、功耗分析）。
 
-        参数:
+        Args:
             private_key: 私钥，可以是32字节bytes或整数
             compressed: 是否使用压缩格式，默认True
 
-        返回:
+        Returns:
             公钥字节串
             - 压缩格式: 33字节 (0x02/0x03 + 32字节x坐标)
             - 非压缩格式: 65字节 (0x04 + 32字节x坐标 + 32字节y坐标)
 
-        异常:
+        Raises:
             ValueError: 当生成的公钥为无穷远点时
         """
         # 将私钥转换为整数

@@ -26,7 +26,7 @@ psutil>=5.9.0               # 系统资源监控
 numpy>=1.24.0,<2.0.0         # 数值计算，SIMD 优化支持（锁定 1.x，与 pyproject.toml 一致）
 
 # 地址解析
-cachetools>=5.3.0            # LRU/TTL 缓存，加速地址解析
+cachetools>=5.3.0,<7.0.0      # LRU/TTL 缓存，加速地址解析
 pybloom-live>=2.2.0          # Bloom 过滤器，大规模地址去重
 bech32>=1.2.0                # Bech32 地址解析（工具脚本备用；核心引擎使用内置 bech32_codec）
 bitarray>=2.6.0              # Bloom 过滤器底层位数组

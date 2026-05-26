@@ -131,11 +131,11 @@ class IntelGPUVendor(GPUVendorBase):
             f"[OK] Intel GPU内存效率: {memory_efficiency * 100:.0f}% (v4.2.1优化)"
         )
 
-    def _check_driver_version(self, device):
+    def _check_driver_version(self, device: Any) -> None:
         """检查驱动版本并给出建议"""
         driver_version = device.driver_version
         if not driver_version:
-            _rate_logger.warning(
+            _rate_logger.debug(
                 "[WARN] 无法检测Intel驱动版本，使用保守模式"
             )
             return
@@ -252,7 +252,7 @@ class IntelGPUVendor(GPUVendorBase):
         # 5. 设置 OpenCL 缓存目录
         if "OCL_CACHE_DIR" not in os.environ:
             if os.name == "nt":  # Windows
-                cache_dir = os.path.join(os.environ.get("TEMP", ""), "intel_ocl_cache")
+                cache_dir = os.path.join(tempfile.gettempdir(), "intel_ocl_cache")
             else:  # Linux/macOS
                 cache_dir = os.path.join(tempfile.gettempdir(), "intel_ocl_cache")
             pathlib.Path(cache_dir).mkdir(exist_ok=True, parents=True)

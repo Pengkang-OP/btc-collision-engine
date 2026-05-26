@@ -4,11 +4,11 @@
 提供 GPU 性能基准测试，用于检测设备理论吞吐量和内存带宽。
 """
 
-import logging
+from ..utils import get_configured_logger
 import time
 from typing import Any
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger(__name__)
 
 
 class GPUBenchmarkSuite:

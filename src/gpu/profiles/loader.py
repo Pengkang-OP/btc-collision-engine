@@ -34,7 +34,7 @@ class GPUProfileLoader:
         self.profiles: dict[str, Any] = {}
         self._load_profiles()
 
-    def _load_profiles(self):
+    def _load_profiles(self) -> None:
         """加载JSON配置文件"""
         try:
             if not pathlib.Path(self.profile_file).exists():

@@ -1,6 +1,6 @@
 """Enhanced monitoring with advanced metrics tracking."""
 
-import logging
+from ..utils import get_configured_logger
 import threading
 from contextlib import suppress
 from typing import Any
@@ -8,7 +8,7 @@ from typing import Any
 from src.monitoring.data_logger import DataLogger
 from src.monitoring.monitor_config import MonitorConfig
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger(__name__)
 
 
 class EnhancedMonitoringSystem:
@@ -56,7 +56,7 @@ class EnhancedMonitoringSystem:
         # Validate configuration
         self._validate_config()
 
-        logger.info("增强版监控系统初始化完成")
+        logger.debug("增强版监控系统初始化完成")
 
     def _validate_config(self) -> bool:
         """Validate monitoring configuration.
@@ -95,6 +95,7 @@ class EnhancedMonitoringSystem:
         """Initialize monitoring data components."""
         self.storage = {}
         self.detector = {}
+        # v5.2.2: alert_system 初始化为桩实现，实际告警由 AlertSystem 在 engine_runner 层处理
         self.alert_system = {}
         self.report_generator = {}
 
@@ -135,7 +136,7 @@ class EnhancedMonitoringSystem:
             daemon=True,
         )
         self._thread.start()
-        logger.info("增强版监控系统已启动")
+        logger.debug("增强版监控系统已启动")
 
     def _monitoring_loop(self) -> None:
         """Background monitoring loop.
@@ -251,7 +252,7 @@ class EnhancedMonitoringSystem:
                 stats = self.data_logger.get_statistics()
                 status["stats"] = stats
             except Exception:
-                pass
+                logger.debug("Failed to get data logger statistics")
 
         return status
 

@@ -76,29 +76,35 @@ class TestPrintConfigInfo:
 
     def test_random_mode_output(self, capsys):
         args = Mock(
-            mode="random", use_gpu=False, checkpoint=False, dedup=False, workers="auto", duration=None
+            mode="random", use_gpu=False, checkpoint=False, dedup=False, workers="auto",
+            duration=None, sensitive_mode="masked",
         )
         _print_config_info(args, {"addr1", "addr2"}, None, None, None)
         captured = capsys.readouterr().out
-        assert "random" in captured
+        assert "随机扫描" in captured
 
     def test_range_mode_with_range(self, capsys):
-        args = Mock(mode="range", use_gpu=False, checkpoint=True, dedup=False, workers=4, duration=None)
+        args = Mock(
+            mode="range", use_gpu=False, checkpoint=True, dedup=False, workers=4,
+            duration=None, sensitive_mode="masked",
+        )
         _print_config_info(args, {"addr1"}, "0", "FF", 256)
         captured = capsys.readouterr().out
-        assert "range" in captured
+        assert "范围扫描" in captured
 
     def test_gpu_mode(self, capsys):
         args = Mock(
-            mode="random", use_gpu=True, checkpoint=False, dedup=False, workers="auto", duration=None
+            mode="random", use_gpu=True, checkpoint=False, dedup=False, workers="auto",
+            duration=None, sensitive_mode="masked",
         )
         _print_config_info(args, {"addr1"}, None, None, None)
         captured = capsys.readouterr().out
-        assert "random" in captured
+        assert "GPU" in captured
 
     def test_duration_output(self, capsys):
         args = Mock(
-            mode="random", use_gpu=False, checkpoint=False, dedup=False, workers="auto", duration=3600
+            mode="random", use_gpu=False, checkpoint=False, dedup=False, workers="auto",
+            duration=3600, sensitive_mode="masked",
         )
         _print_config_info(args, {"addr1"}, None, None, None)
         captured = capsys.readouterr().out

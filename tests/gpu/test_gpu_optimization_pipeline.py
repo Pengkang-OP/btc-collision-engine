@@ -61,15 +61,15 @@ def _make_mock_reporter(report_path="/tmp/mock_report.json"):
 
 @pytest.mark.unit
 @pytest.mark.gpu
-class TestPipelineInit(unittest.TestCase):
+class TestPipelineInit:
     """测试 PerformanceOptimizationPipeline 初始化"""
 
     def test_default_init_all_none(self):
         """默认初始化时所有组件应为 None"""
         pipeline = PerformanceOptimizationPipeline()
-        self.assertIsNone(pipeline.auto_tuner)
-        self.assertIsNone(pipeline.benchmark_suite)
-        self.assertIsNone(pipeline.performance_reporter)
+        assert pipeline.auto_tuner is None
+        assert pipeline.benchmark_suite is None
+        assert pipeline.performance_reporter is None
 
     def test_init_with_components(self):
         """传入组件时应正确赋值"""
@@ -82,25 +82,25 @@ class TestPipelineInit(unittest.TestCase):
             benchmark_suite=suite,
             reporter=reporter,
         )
-        self.assertIs(pipeline.auto_tuner, tuner)
-        self.assertIs(pipeline.benchmark_suite, suite)
-        self.assertIs(pipeline.performance_reporter, reporter)
+        assert pipeline.auto_tuner is tuner
+        assert pipeline.benchmark_suite is suite
+        assert pipeline.performance_reporter is reporter
 
     def test_custom_logger_is_used(self):
         """传入自定义 logger 时应使用该 logger"""
         custom_logger = logging.getLogger("test_custom")
         pipeline = PerformanceOptimizationPipeline(logger_instance=custom_logger)
-        self.assertIs(pipeline._logger, custom_logger)
+        assert pipeline._logger is custom_logger
 
     def test_default_logger_is_module_logger(self):
         """不传 logger 时应使用模块级 logger（非 None）"""
         pipeline = PerformanceOptimizationPipeline()
-        self.assertIsNotNone(pipeline._logger)
+        assert pipeline._logger is not None
 
 
 @pytest.mark.unit
 @pytest.mark.gpu
-class TestInitialize(unittest.TestCase):
+class TestInitialize:
     """测试 initialize() 方法"""
 
     def test_initialize_does_not_raise(self):
@@ -117,14 +117,14 @@ class TestInitialize(unittest.TestCase):
 
 @pytest.mark.unit
 @pytest.mark.gpu
-class TestOptimizeBatchSize(unittest.TestCase):
+class TestOptimizeBatchSize:
     """测试 optimize_batch_size() 方法"""
 
     def test_no_auto_tuner_returns_current_size(self):
         """无 auto_tuner 时应原样返回 current_size"""
         pipeline = PerformanceOptimizationPipeline()
         result = pipeline.optimize_batch_size(100_000, {"keys_per_second": 500_000})
-        self.assertEqual(result, 100_000)
+        assert result == 100_000
 
     def test_with_auto_tuner_returns_suggestion(self):
         """有 auto_tuner 时应返回调优器建议的值"""
@@ -132,7 +132,7 @@ class TestOptimizeBatchSize(unittest.TestCase):
         pipeline = PerformanceOptimizationPipeline(auto_tuner=tuner)
 
         result = pipeline.optimize_batch_size(100_000, {"keys_per_second": 500_000})
-        self.assertEqual(result, 200_000)
+        assert result == 200_000
         tuner.suggest_batch_size.assert_called_once_with(100_000, {"keys_per_second": 500_000})
 
     def test_auto_tuner_returns_none_falls_back(self):
@@ -141,7 +141,7 @@ class TestOptimizeBatchSize(unittest.TestCase):
         pipeline = PerformanceOptimizationPipeline(auto_tuner=tuner)
 
         result = pipeline.optimize_batch_size(150_000, {})
-        self.assertEqual(result, 150_000)
+        assert result == 150_000
 
     def test_auto_tuner_raises_attribute_error_falls_back(self):
         """auto_tuner.suggest_batch_size 抛出 AttributeError 时应回退"""
@@ -150,7 +150,7 @@ class TestOptimizeBatchSize(unittest.TestCase):
         pipeline = PerformanceOptimizationPipeline(auto_tuner=tuner)
 
         result = pipeline.optimize_batch_size(80_000, {})
-        self.assertEqual(result, 80_000)
+        assert result == 80_000
 
     def test_auto_tuner_raises_type_error_falls_back(self):
         """auto_tuner.suggest_batch_size 抛出 TypeError 时应回退"""
@@ -159,7 +159,7 @@ class TestOptimizeBatchSize(unittest.TestCase):
         pipeline = PerformanceOptimizationPipeline(auto_tuner=tuner)
 
         result = pipeline.optimize_batch_size(120_000, {})
-        self.assertEqual(result, 120_000)
+        assert result == 120_000
 
     def test_auto_tuner_raises_value_error_falls_back(self):
         """auto_tuner.suggest_batch_size 抛出 ValueError 时应回退"""
@@ -168,14 +168,14 @@ class TestOptimizeBatchSize(unittest.TestCase):
         pipeline = PerformanceOptimizationPipeline(auto_tuner=tuner)
 
         result = pipeline.optimize_batch_size(60_000, {})
-        self.assertEqual(result, 60_000)
+        assert result == 60_000
 
     def test_returns_int_type(self):
         """返回值应为整数类型"""
         tuner = _make_mock_auto_tuner(suggest_return=300_000)
         pipeline = PerformanceOptimizationPipeline(auto_tuner=tuner)
         result = pipeline.optimize_batch_size(100_000, {})
-        self.assertIsInstance(result, int)
+        assert isinstance(result, int)
 
     def test_auto_tuner_string_return_converted_to_int(self):
         """auto_tuner 返回字符串数字时应转换为 int"""
@@ -183,26 +183,26 @@ class TestOptimizeBatchSize(unittest.TestCase):
         tuner.suggest_batch_size = Mock(return_value="250000")
         pipeline = PerformanceOptimizationPipeline(auto_tuner=tuner)
         result = pipeline.optimize_batch_size(100_000, {})
-        self.assertEqual(result, 250_000)
-        self.assertIsInstance(result, int)
+        assert result == 250_000
+        assert isinstance(result, int)
 
 
 @pytest.mark.unit
 @pytest.mark.gpu
-class TestRunBenchmark(unittest.TestCase):
+class TestRunBenchmark:
     """测试 run_benchmark() 方法"""
 
     def test_no_benchmark_suite_returns_empty_dict(self):
         """无 benchmark_suite 时应返回空字典"""
         pipeline = PerformanceOptimizationPipeline()
         result = pipeline.run_benchmark()
-        self.assertEqual(result, {})
+        assert result == {}
 
     def test_no_benchmark_suite_returns_dict_type(self):
         """无 benchmark_suite 时返回值类型应为 dict"""
         pipeline = PerformanceOptimizationPipeline()
         result = pipeline.run_benchmark(iterations=3)
-        self.assertIsInstance(result, dict)
+        assert isinstance(result, dict)
 
     def test_with_benchmark_suite_calls_run_all(self):
         """有 benchmark_suite 时应调用 run_all_benchmarks"""
@@ -212,7 +212,7 @@ class TestRunBenchmark(unittest.TestCase):
 
         result = pipeline.run_benchmark(iterations=5)
         suite.run_all_benchmarks.assert_called_once_with(5)
-        self.assertEqual(result, mock_results)
+        assert result == mock_results
 
     def test_with_benchmark_suite_calls_get_summary(self):
         """有 benchmark_suite 时应调用 get_summary"""
@@ -245,25 +245,25 @@ class TestRunBenchmark(unittest.TestCase):
         pipeline = PerformanceOptimizationPipeline(benchmark_suite=suite)
 
         result = pipeline.run_benchmark()
-        self.assertIs(result, expected)
+        assert result is expected
 
 
 @pytest.mark.unit
 @pytest.mark.gpu
-class TestStartAutoTuning(unittest.TestCase):
+class TestStartAutoTuning:
     """测试 start_auto_tuning() 方法"""
 
     def test_no_auto_tuner_returns_empty_dict(self):
         """无 auto_tuner 时应返回空字典"""
         pipeline = PerformanceOptimizationPipeline()
         result = pipeline.start_auto_tuning()
-        self.assertEqual(result, {})
+        assert result == {}
 
     def test_no_auto_tuner_returns_dict_type(self):
         """无 auto_tuner 时返回值应为 dict 类型"""
         pipeline = PerformanceOptimizationPipeline()
         result = pipeline.start_auto_tuning(max_iterations=10)
-        self.assertIsInstance(result, dict)
+        assert isinstance(result, dict)
 
     def test_with_auto_tuner_calls_start_tuning(self):
         """有 auto_tuner 时应调用 start_tuning"""
@@ -280,7 +280,7 @@ class TestStartAutoTuning(unittest.TestCase):
 
         pipeline.start_auto_tuning(max_iterations=50)
         call_kwargs = tuner.start_tuning.call_args[1]
-        self.assertEqual(call_kwargs.get("max_iterations"), 50)
+        assert call_kwargs.get("max_iterations") == 50
 
     def test_callback_passed_to_tuner(self):
         """on_new_batch_size 回调应传递给 auto_tuner.start_tuning"""
@@ -290,7 +290,7 @@ class TestStartAutoTuning(unittest.TestCase):
         callback = Mock()
         pipeline.start_auto_tuning(on_new_batch_size=callback)
         call_kwargs = tuner.start_tuning.call_args[1]
-        self.assertIs(call_kwargs.get("callback"), callback)
+        assert call_kwargs.get("callback") is callback
 
     def test_returns_tuner_results(self):
         """应返回 auto_tuner.start_tuning 的结果"""
@@ -302,7 +302,7 @@ class TestStartAutoTuning(unittest.TestCase):
         pipeline = PerformanceOptimizationPipeline(auto_tuner=tuner)
 
         result = pipeline.start_auto_tuning()
-        self.assertIs(result, expected_result)
+        assert result is expected_result
 
     def test_default_max_iterations_is_30(self):
         """默认 max_iterations 应为 30"""
@@ -311,25 +311,25 @@ class TestStartAutoTuning(unittest.TestCase):
 
         pipeline.start_auto_tuning()
         call_kwargs = tuner.start_tuning.call_args[1]
-        self.assertEqual(call_kwargs.get("max_iterations"), 30)
+        assert call_kwargs.get("max_iterations") == 30
 
 
 @pytest.mark.unit
 @pytest.mark.gpu
-class TestGenerateReport(unittest.TestCase):
+class TestGenerateReport:
     """测试 generate_report() 方法"""
 
     def test_no_reporter_returns_empty_string(self):
         """无 reporter 时应返回空字符串"""
         pipeline = PerformanceOptimizationPipeline()
         result = pipeline.generate_report()
-        self.assertEqual(result, "")
+        assert result == ""
 
     def test_no_reporter_returns_str_type(self):
         """无 reporter 时返回值类型应为 str"""
         pipeline = PerformanceOptimizationPipeline()
         result = pipeline.generate_report()
-        self.assertIsInstance(result, str)
+        assert isinstance(result, str)
 
     def test_with_reporter_import_error_returns_empty_string(self):
         """ReportConfig 导入失败时应返回空字符串"""
@@ -343,7 +343,7 @@ class TestGenerateReport(unittest.TestCase):
                 return_value="",
             ):
                 result = pipeline.generate_report()
-                self.assertEqual(result, "")
+                assert result == ""
 
     def test_with_reporter_calls_generate_report(self):
         """有 reporter 且 ReportConfig 可导入时应调用 reporter.generate_report"""
@@ -360,39 +360,36 @@ class TestGenerateReport(unittest.TestCase):
             return_value=mock_path,
         ) as mock_gen:  # noqa: F841
             result = pipeline.generate_report()
-            self.assertEqual(result, mock_path)
+            assert result == mock_path
 
 
 @pytest.mark.unit
 @pytest.mark.gpu
-class TestPipelineComponentAccess(unittest.TestCase):
+class TestPipelineComponentAccess:
     """测试管道组件的属性访问"""
 
     def test_auto_tuner_attribute_readable(self):
         """auto_tuner 属性应可读"""
         tuner = _make_mock_auto_tuner()
         pipeline = PerformanceOptimizationPipeline(auto_tuner=tuner)
-        self.assertIs(pipeline.auto_tuner, tuner)
+        assert pipeline.auto_tuner is tuner
 
     def test_benchmark_suite_attribute_readable(self):
         """benchmark_suite 属性应可读"""
         suite = _make_mock_benchmark_suite()
         pipeline = PerformanceOptimizationPipeline(benchmark_suite=suite)
-        self.assertIs(pipeline.benchmark_suite, suite)
+        assert pipeline.benchmark_suite is suite
 
     def test_performance_reporter_attribute_readable(self):
         """performance_reporter 属性应可读"""
         reporter = _make_mock_reporter()
         pipeline = PerformanceOptimizationPipeline(reporter=reporter)
-        self.assertIs(pipeline.performance_reporter, reporter)
+        assert pipeline.performance_reporter is reporter
 
     def test_none_components_are_falsy(self):
         """None 组件在布尔上下文中应为 falsy"""
         pipeline = PerformanceOptimizationPipeline()
-        self.assertFalse(pipeline.auto_tuner)
-        self.assertFalse(pipeline.benchmark_suite)
-        self.assertFalse(pipeline.performance_reporter)
+        assert not pipeline.auto_tuner
+        assert not pipeline.benchmark_suite
+        assert not pipeline.performance_reporter
 
-
-if __name__ == "__main__":
-    unittest.main()

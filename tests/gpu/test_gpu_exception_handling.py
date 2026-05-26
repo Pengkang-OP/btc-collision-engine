@@ -343,7 +343,8 @@ class TestEdgeCases:
             targets = set()
 
             # 验证初始化失败（ValueError被包装成RuntimeError）
-            with pytest.raises(RuntimeError, match="没有有效的 P2PKH 目标地址"):
+            # 错误消息已更新为包含 P2PKH/Bech32 P2WPKH 两种格式
+            with pytest.raises(RuntimeError, match="没有有效的 P2PKH/Bech32 P2WPKH 目标地址"):
                 GPUCollisionEngine(targets)
 
     def test_single_target(self):

@@ -95,8 +95,8 @@ jobs:
       - name: 运行内存泄漏检测脚本
         continue-on-error: true
         run: |
-          if [ -f scripts/memory_leak_detection.py ]; then
-            python scripts/memory_leak_detection.py
+          if [ -f scripts/benchmarking/memory_leak_detection.py ]; then
+            python scripts/benchmarking/memory_leak_detection.py
           else
             echo "⚠️ 内存泄漏检测脚本不存在，跳过"
           fi

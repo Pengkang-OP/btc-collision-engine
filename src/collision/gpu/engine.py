@@ -26,6 +26,7 @@
 
 import contextlib
 import logging
+from ...utils import get_configured_logger
 import os
 import pathlib
 import threading
@@ -33,6 +34,7 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, cast
+from ...utils.logging_config import LOG_DEFAULT_MAX_BYTES
 
 # 跨包依赖
 from ...gpu.device import GPUDeviceDetector
@@ -52,7 +54,42 @@ from .core import CollisionCore
 from .monitoring import PerformanceMonitoringPipeline
 from .vendor_strategy import VendorOptimizationFactory  # noqa: F401 # 保留供测试 patch 目标
 
-# GPU 常量
+# 其余依赖
+from ...monitoring.enhanced_monitoring import EnhancedMonitoringSystem
+from ...monitoring.event_adapters import (
+    DataLoggerAdapter,
+    EnhancedMonitoringAdapter,
+)
+from ...monitoring.gpu_performance_monitor import (
+    GPUPerformanceMonitor,
+    get_gpu_performance_monitor,
+)
+from ...monitoring.monitor_config import MonitorConfig
+from ..base_engine import BaseCollisionEngine
+
+# 碰撞基础
+from ..collision_stats import CollisionStats
+
+# v3.2.0: 事件系统支持
+from ..event_bus import EventBus
+from ..events import (
+    # EngineErrorEvent, # 暂未使用
+    EngineCompleteEvent,
+    EngineMatchEvent,
+    EngineProgressEvent,
+    EngineStartEvent,
+    EngineStopEvent,
+    EventType,
+)
+
+# v3.2.1: 增强私钥生成器
+from .key_generator import (
+    KeyGenerationStrategy,
+)
+
+logger = get_configured_logger(__name__)
+
+# GPU 常量（必须位于所有导入之后、类定义之前）
 UINT32_MAX = 0xFFFFFFFF
 GPU_MAX_BATCH_SIZE = UINT32_MAX
 INITIAL_BATCH_SIZE = 1_000_000
@@ -85,47 +122,20 @@ ASYNC_LOG_AVAILABLE = True
 # GPU_CONFIG_MANAGER_AVAILABLE: 保留供外部导入兼容（不再使用）
 GPU_CONFIG_MANAGER_AVAILABLE = False
 
-# 其余依赖
-from ...monitoring.enhanced_monitoring import EnhancedMonitoringSystem  # noqa: E402
-from ...monitoring.event_adapters import (  # noqa: E402
-    DataLoggerAdapter,
-    EnhancedMonitoringAdapter,
-)
-from ...monitoring.gpu_performance_monitor import (  # noqa: E402
-    GPUPerformanceMonitor,
-    get_gpu_performance_monitor,
-)
-from ...monitoring.monitor_config import MonitorConfig  # noqa: E402
-from ..base_engine import BaseCollisionEngine  # noqa: E402
-
-# 碰撞基础
-from ..collision_stats import CollisionStats  # noqa: E402
-
-# v3.2.0: 事件系统支持
-from ..event_bus import EventBus  # noqa: E402
-from ..events import (  # noqa: E402
-    # EngineErrorEvent, # 暂未使用
-    EngineCompleteEvent,
-    EngineMatchEvent,
-    EngineProgressEvent,
-    EngineStartEvent,
-    EngineStopEvent,
-    EventType,
-)
-
-# v3.2.1: 增强私钥生成器
-from .key_generator import (  # noqa: E402
-    KeyGenerationStrategy,
-)
-
-logger = logging.getLogger(__name__)
-
-# 预导入 GPU 监控器
+# 预导入 GPU 监控器（模块级缓存）
+# 线程安全说明：
+# - 模块导入时单线程执行，GIL 保证 _gpu_performance_monitor 赋值安全
+# - get_gpu_performance_monitor() 自身已有 _monitor_lock 保护
+# - 此缓存仅存储引用，不涉及竞态条件，无需额外线程锁
 _gpu_performance_monitor = None
 
 
 def _get_gpu_monitor() -> "GPUPerformanceMonitor":
-    """获取 GPU 性能监控器(懒加载)"""
+    """获取 GPU 性能监控器(懒加载)
+
+    线程安全：模块级缓存仅赋值一次，GIL 保护下安全。
+    底层 get_gpu_performance_monitor() 已有 _monitor_lock 双重检查锁定。
+    """
     global _gpu_performance_monitor
     if _gpu_performance_monitor is None:
         _gpu_performance_monitor = get_gpu_performance_monitor()
@@ -163,7 +173,7 @@ class GPUEngineConfig:
     gpu_pool_max_memory_mb: int = 512
     use_async_logging: bool = False
     async_log_file: str = "logs/gpu_async.log"
-    async_log_max_bytes: int = 10 * 1024 * 1024
+    async_log_max_bytes: int = LOG_DEFAULT_MAX_BYTES
     async_log_backup_count: int = 5
     check_uncompressed: bool | None = None
     key_generation_strategy: KeyGenerationStrategy = field(default=KeyGenerationStrategy.PRNG_SEED)
@@ -231,7 +241,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         gpu_pool_max_memory_mb: int = 512,
         use_async_logging: bool = False,
         async_log_file: str = "logs/gpu_async.log",
-        async_log_max_bytes: int = 10 * 1024 * 1024,
+        async_log_max_bytes: int = LOG_DEFAULT_MAX_BYTES,
         async_log_backup_count: int = 5,
         check_uncompressed: bool | None = None,
         key_generation_strategy: KeyGenerationStrategy = KeyGenerationStrategy.PRNG_SEED,
@@ -311,6 +321,15 @@ class GPUCollisionEngine(BaseCollisionEngine):
         # 用 (seed_int + key_idx) % 2^256 重建，均不依赖此 KeyGenerator。
         # key_generation_strategy 参数保留用于未来 CPU 路径集成。
         logger.debug(f"GPU引擎：私钥生成策略参数: {key_generation_strategy.value} (GPU路径不使用)")
+
+        # 初始化基类（提供 self.config, self._lock 等基础设施）
+        super().__init__(config={
+            "mode": "gpu",
+            "device_index": device_index,
+            "batch_size": batch_size,
+            "checkpoint_enabled": checkpoint_enabled,
+            "dedup_enabled": dedup_enabled,
+        })
 
         # v4.2.1: 事件总线初始化
         self.event_bus = event_bus or EventBus()
@@ -457,7 +476,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
 
         # === Phase 3: PerformanceMonitoringPipeline (懒加载) ===
         self._perf_pipeline: PerformanceMonitoringPipeline | None = None
-        self._perf_pipeline_config = {
+        self._perf_pipeline_config: dict[str, Any] = {
             "batch_size": batch_size,
             "device_index": device_index,
         }
@@ -476,13 +495,15 @@ class GPUCollisionEngine(BaseCollisionEngine):
                         self.enhanced_monitoring,
                     )
                     self._enhanced_monitoring_adapter.subscribe_to(self.event_bus)
-                    logger.info("GPU引擎：增强监控系统已启用（事件适配器模式）")
+                    # v5.2.2: 修复 — 启动增强监控线程
+                    self.enhanced_monitoring.start()
+                    logger.debug("GPU引擎：增强监控系统已启用并启动（事件适配器模式）")
                 else:
                     # v4.2.1: 使用数据日志事件适配器
                     self.data_logger = DataLogger()
                     self._data_logger_adapter = DataLoggerAdapter(self.data_logger)
                     self._data_logger_adapter.subscribe_to(self.event_bus)
-                    logger.info("GPU引擎：数据日志系统已启用（事件适配器模式）")
+                    logger.debug("GPU引擎：数据日志系统已启用（事件适配器模式）")
             except Exception as e:
                 logger.warning("GPU引擎：监控系统初始化失败: %s", e, exc_info=True)
                 self.data_logging_enabled = False
@@ -496,7 +517,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         self._progress_interval_sec = 0.5
 
         # GPU 性能监控器
-        self.gpu_performance_monitor = None
+        self.gpu_performance_monitor = _get_gpu_monitor()
 
         # 自适应批处理
         self._adaptive_batch_enabled = True
@@ -586,8 +607,10 @@ class GPUCollisionEngine(BaseCollisionEngine):
             return
         with self._batch_size_lock:
             self._consecutive_gpu_errors = 0
+        self._adaptive_error_count = 0
         self._stop_event.clear()
         self._running = True
+        self._current_mode = mode
 
         # 每次 start 重新初始化 Core 组件（stats/checkpoint/dedup）
         self._core._init_stats()
@@ -610,8 +633,8 @@ class GPUCollisionEngine(BaseCollisionEngine):
             mode=mode,
             target_count=len(self.targets),
             batch_size=self.batch_size,
+            source="gpu_collision_engine",
         )
-        start_event.source = "gpu_collision_engine"
         self.event_bus.publish(start_event)
 
         # 在后台线程中启动搜索（start() 非阻塞，stop() 负责终止）
@@ -655,17 +678,20 @@ class GPUCollisionEngine(BaseCollisionEngine):
         """
         if self.stats is None:
             raise RuntimeError("GPUCollisionEngine.stats is None when publishing stop events")
+        # v5.2.2: 修复 — 填充 stats 和 total_checked 字段
         stop_event = EngineStopEvent(
             reason="user_request",
+            source="gpu_collision_engine",
+            stats=self.stats.to_dict(),
+            total_checked=self.stats.total_checked,
         )
-        stop_event.source = "gpu_collision_engine"
         self.event_bus.publish(stop_event)
 
         complete_event = EngineCompleteEvent(
             stats=self.stats.to_dict(),
             duration=time.time() - self.stats.start_time,
+            source="gpu_collision_engine",
         )
-        complete_event.source = "gpu_collision_engine"
         self.event_bus.publish(complete_event)
 
     def _cleanup_stop_components(self) -> None:
@@ -681,6 +707,12 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 self.gpu_performance_monitor.stop()
             except Exception as e:
                 logger.error("停止GPU性能监控器失败: %s", e, exc_info=True)
+
+        if self._perf_pipeline:
+            try:
+                self._perf_pipeline.stop()
+            except Exception as e:
+                logger.error("停止性能监控管道失败: %s", e, exc_info=True)
 
         if self.dedup_filter and self.dedup_filter.enabled:
             self.dedup_filter.reset()
@@ -724,7 +756,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         self._stop_event.set()
         self._running = False
         if self._thread:
-            self._thread.join(timeout=timeout or 5)
+            self._thread.join(timeout=timeout if timeout is not None else 5)
 
         self._save_checkpoint_on_stop()
         self._publish_stop_events()
@@ -776,11 +808,22 @@ class GPUCollisionEngine(BaseCollisionEngine):
         1. stop() 会尝试获取锁，在多线程环境中可能导致死锁
         2. 析构期间可能存在部分初始化的对象
         3. 守护线程会在进程退出时自动清理资源
+
+        风险说明（评估为低风险，暂不修改）：
+        - __del__ 中调用 checkpoint 保存涉及文件 I/O，在解释器关闭时可能失败
+        - 但已有 try/except 包裹，异常被 contextlib.suppress 静默处理
+        - 推荐使用上下文管理器（with 语句）确保资源正确释放
         """
         try:
             # 检查对象是否已完全初始化
             if not hasattr(self, "_stop_event"):
                 return
+
+            # Q7增强: 尽力保存断点（仅在引擎完全初始化且有数据时尝试）
+            if hasattr(self, "checkpoint_mgr") and self.checkpoint_mgr is not None:
+                if hasattr(self, "stats") and self.stats is not None:
+                    with contextlib.suppress(Exception):
+                        self._save_checkpoint_on_stop()
 
             # 只设置停止事件，不调用完整的 stop() 方法
             if not self._stop_event.is_set():
@@ -1175,7 +1218,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         """
         logger.info(
             "GPU引擎匹配事件: address=%s...%s",
-            event.address[:6] if event.address else "?",
+            event.address[:4] if event.address else "?",
             event.address[-4:] if event.address else "?",
         )
 

@@ -317,7 +317,7 @@ class GPURecoveryManager:
         with self._fallback_lock:
             self._recovery_callback = callback
 
-    def _check_and_trigger_fallback(self, gpu_id: int):
+    def _check_and_trigger_fallback(self, gpu_id: int) -> None:
         """检查是否需要降级到CPU模式
 
         当失败GPU数量超过阈值时，触发降级。
@@ -340,7 +340,7 @@ class GPURecoveryManager:
                 f"{failed_count}个GPU失败，超过阈值{self.max_failed_gpus_before_fallback}",
             )
 
-    def _trigger_cpu_fallback(self, reason: str):
+    def _trigger_cpu_fallback(self, reason: str) -> None:
         """触发降级到CPU模式
 
         Args:
@@ -497,7 +497,7 @@ class GPURecoveryManager:
             logger.error("GPU %s 恢复执行失败: %s", gpu_id, e)
             return False
 
-    def _record_failure(self, gpu_id: int, record: GPUFailureRecord):
+    def _record_failure(self, gpu_id: int, record: GPUFailureRecord) -> None:
         """记录失败历史（带容量上限防止内存无限增长）
 
         Args:

@@ -84,7 +84,7 @@ def _get_gpu_context():
 
 
 @pytest.mark.gpu_kernel
-class TestGPUKernelArithmetic(unittest.TestCase):
+class TestGPUKernelArithmetic:
     """GPU 内核算术正确性回归测试"""
 
     @classmethod
@@ -168,8 +168,8 @@ class TestGPUKernelArithmetic(unittest.TestCase):
         x_val = _uint256_to_int(result_x)
         y_val = _uint256_to_int(result_y)
 
-        self.assertNotEqual(x_val, 0, "2*G X 坐标不应为零")
-        self.assertNotEqual(y_val, 0, "2*G Y 坐标不应为零")
+        assert x_val != 0, "2*G X 坐标不应为零"
+        assert y_val != 0, "2*G Y 坐标不应为零"
 
     # ── 结果一致性 ─────────────────────────────
 
@@ -192,39 +192,36 @@ class TestGPUKernelArithmetic(unittest.TestCase):
         x1, y1 = compute_2G()
         x2, y2 = compute_2G()
 
-        self.assertEqual(x1, x2, "连续计算 X 坐标应一致")
-        self.assertEqual(y1, y2, "连续计算 Y 坐标应一致")
+        assert x1 == x2, "连续计算 X 坐标应一致"
+        assert y1 == y2, "连续计算 Y 坐标应一致"
 
 
 @pytest.mark.gpu_kernel
-class TestGPUKernelSourceValidation(unittest.TestCase):
+class TestGPUKernelSourceValidation:
     """GPU 内核源码结构验证（无需 GPU 设备）"""
 
     def test_kernel_contains_verify_arithmetic(self):
         """内核源码应包含 verify_arithmetic 函数"""
         from src.gpu.kernel import OPENCL_KERNEL_SOURCE
 
-        self.assertIn("__kernel void verify_arithmetic", OPENCL_KERNEL_SOURCE)
+        assert "__kernel void verify_arithmetic" in OPENCL_KERNEL_SOURCE
 
     def test_kernel_contains_G_point(self):
         """内核源码应包含基点 G 的坐标定义"""
         from src.gpu.kernel import OPENCL_KERNEL_SOURCE
 
-        self.assertIn("GX", OPENCL_KERNEL_SOURCE)
-        self.assertIn("GY", OPENCL_KERNEL_SOURCE)
+        assert "GX" in OPENCL_KERNEL_SOURCE
+        assert "GY" in OPENCL_KERNEL_SOURCE
 
     def test_kernel_contains_ec_point_double(self):
         """内核源码应包含点倍乘函数 ec_point_double"""
         from src.gpu.kernel import OPENCL_KERNEL_SOURCE
 
-        self.assertIn("ec_point_double", OPENCL_KERNEL_SOURCE)
+        assert "ec_point_double" in OPENCL_KERNEL_SOURCE
 
     def test_kernel_contains_secp256k1_N(self):
         """内核源码应包含 SECP256K1_N 常量"""
         from src.gpu.kernel import OPENCL_KERNEL_SOURCE
 
-        self.assertIn("SECP256K1_N", OPENCL_KERNEL_SOURCE)
+        assert "SECP256K1_N" in OPENCL_KERNEL_SOURCE
 
-
-if __name__ == "__main__":
-    unittest.main()

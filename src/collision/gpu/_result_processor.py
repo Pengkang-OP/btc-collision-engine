@@ -12,7 +12,7 @@
 创建日期: 2026-05-20
 """
 
-import logging
+from ...utils import get_configured_logger
 from typing import TYPE_CHECKING
 
 from ...utils.timeout import invoke_with_timeout
@@ -23,7 +23,7 @@ from ..events import EngineMatchEvent
 if TYPE_CHECKING:
     from .engine import GPUCollisionEngine
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger(__name__)
 
 
 class GPUResultProcessor:
@@ -127,8 +127,8 @@ class GPUResultProcessor:
                 address=address,
                 wif=wif,
                 target_address=address,
+                source="gpu_collision_engine",
             )
-            match_event.source = "gpu_collision_engine"
             engine.event_bus.publish(match_event)
 
             # 向后兼容: 调用传统回调
@@ -189,14 +189,14 @@ class GPUResultProcessor:
             if engine.stats is not None:
                 engine.stats.add_match(private_key, address)
 
-            # v3.2.0: 发布匹配事件
+            # v3.2.0: 发布匹配事件 (PRNG模式)
             match_event = EngineMatchEvent(
                 private_key=private_key,
                 address=address,
                 wif=wif,
                 target_address=address,
+                source="gpu_collision_engine",
             )
-            match_event.source = "gpu_collision_engine"
             engine.event_bus.publish(match_event)
 
             # 向后兼容: 调用传统回调

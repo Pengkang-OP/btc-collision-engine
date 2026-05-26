@@ -25,7 +25,7 @@
 
 ### 前置条件
 
-- ✅ 已安装项目（使用 `scripts/install.bat` 或 `bash scripts/install.sh`）
+- ✅ 已安装项目（使用 `scripts/install/install.bat` 或 `bash scripts/install/install.sh`）
 - ✅ 已运行健康检查（`python -m src.utils.health_check`）
 
 ### 步骤

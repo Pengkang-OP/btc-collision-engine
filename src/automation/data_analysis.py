@@ -5,7 +5,7 @@
 
 import ast
 import json
-import logging
+from ..utils import get_configured_logger
 import os
 import re
 import uuid
@@ -16,7 +16,7 @@ from typing import Any
 
 from .models import AnalysisReport, Issue, Severity
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger(__name__)
 
 
 class DataAnalysisModule:

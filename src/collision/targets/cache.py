@@ -34,13 +34,13 @@ class AddressCache:
     提供多层缓存策略以优化地址解析性能。
     适用于频繁解析相同地址或WIF私钥的场景。
 
-    属性:
+    Attributes:
         lru_cache: LRU缓存，存储最近使用的解析结果
         ttl_cache: TTL缓存，存储带过期时间的临时数据
         hits: 缓存命中次数
         misses: 缓存未命中次数
 
-    示例:
+    Example:
         >>> cache = AddressCache(lru_size=10000, ttl_seconds=3600)
         >>> cache.put('5KJvs...', '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa')
         >>> address = cache.get('5KJvs...')
@@ -54,7 +54,7 @@ class AddressCache:
     ) -> None:
         """初始化地址缓存
 
-        参数:
+        Args:
             lru_size: LRU缓存最大容量，默认10000条目
             ttl_seconds: TTL缓存过期时间(秒)，默认3600秒(1小时)
             enable_stats: 是否启用缓存统计，默认True
@@ -82,11 +82,11 @@ class AddressCache:
     def get(self, key: str, use_ttl: bool = False) -> str | None:
         """获取缓存的地址解析结果
 
-        参数:
+        Args:
             key: 缓存键(原始输入字符串)
             use_ttl: 是否使用TTL缓存，默认False(使用LRU缓存)
 
-        返回:
+        Returns:
             缓存的地址，未命中返回None
         """
         # 输入验证
@@ -117,7 +117,7 @@ class AddressCache:
     def put(self, key: str, value: str, use_ttl: bool = False) -> None:
         """存入缓存
 
-        参数:
+        Args:
             key: 缓存键(原始输入字符串)
             value: 缓存值(解析后的地址)
             use_ttl: 是否使用TTL缓存，默认False(使用LRU缓存)
@@ -168,7 +168,7 @@ class AddressCache:
     def get_stats(self) -> dict[str, Any]:
         """获取缓存统计信息
 
-        返回:
+        Returns:
             包含缓存统计信息的字典
         """
         with self._lock:

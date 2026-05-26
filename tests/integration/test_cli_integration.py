@@ -256,8 +256,8 @@ class TestEngineRunnerLifecycle:
     def test_collision_loop_timeout_stops(self):
         """碰撞循环在超时后自动停止。"""
         engine = MagicMock()
-        # Simulate engine running initially, then stop
-        engine.is_running.side_effect = [True, True, False]
+        # Simulate engine running (always True — timeout triggers stop)
+        engine.is_running.return_value = True
         engine.get_stats.return_value = {
             "total_checked": 1000,
             "speed": 500,

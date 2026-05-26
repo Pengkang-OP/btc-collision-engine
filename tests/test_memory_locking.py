@@ -3,13 +3,13 @@
 验证P1-1修复：内存锁定功能完整实现
 """
 
-import unittest
+import pytest
 from unittest.mock import Mock, patch
 
 from src.core.secure_key_manager import SecureKeyManager, SecureMemoryError
 
 
-class TestMemoryLockingPosix(unittest.TestCase):
+class TestMemoryLockingPosix:
     """POSIX系统内存锁定测试"""
 
     @patch("src.core.secure_key_manager.os.name", "posix")
@@ -31,7 +31,7 @@ class TestMemoryLockingPosix(unittest.TestCase):
             # 验证libc被加载
             mock_cdll.assert_called_once_with("libc.so.6")
             # 验证libc被保存
-            self.assertTrue(hasattr(manager, "_libc"))
+            assert hasattr(manager, "_libc")
 
     @patch("src.core.secure_key_manager.os.name", "posix")
     @patch("src.core.secure_key_manager.sys.platform", "darwin")
@@ -61,7 +61,7 @@ class TestMemoryLockingPosix(unittest.TestCase):
             manager.generate_key()
 
             # 验证内存锁定状态
-            self.assertTrue(manager.is_memory_locked)
+            assert manager.is_memory_locked
 
     @patch("src.core.secure_key_manager.os.name", "posix")
     @patch("src.core.secure_key_manager.sys.platform", "linux")
@@ -76,14 +76,14 @@ class TestMemoryLockingPosix(unittest.TestCase):
             manager = SecureKeyManager(lock_memory=True)
             manager._try_lock_memory()
             manager.generate_key()
-            self.assertTrue(manager.is_memory_locked)
+            assert manager.is_memory_locked
 
             manager.clear()
             # 验证内存已解锁
-            self.assertFalse(manager.is_memory_locked)
+            assert not manager.is_memory_locked
 
 
-class TestMemoryLockingWindows(unittest.TestCase):
+class TestMemoryLockingWindows:
     """Windows系统内存锁定测试"""
 
     @patch("src.core.secure_key_manager.os.name", "nt")
@@ -102,7 +102,7 @@ class TestMemoryLockingWindows(unittest.TestCase):
 
             # 验证kernel32被加载
             mock_windll.assert_called_once_with("kernel32.dll")
-            self.assertTrue(hasattr(manager, "_kernel32"))
+            assert hasattr(manager, "_kernel32")
 
     @patch("src.core.secure_key_manager.os.name", "nt")
     def test_virtual_lock_key_memory_success(self):
@@ -116,7 +116,7 @@ class TestMemoryLockingWindows(unittest.TestCase):
             manager._try_lock_memory()
             manager.generate_key()
 
-            self.assertTrue(manager.is_memory_locked)
+            assert manager.is_memory_locked
 
     @patch("src.core.secure_key_manager.os.name", "nt")
     def test_virtual_unlock_key_memory_success(self):
@@ -130,13 +130,13 @@ class TestMemoryLockingWindows(unittest.TestCase):
             manager = SecureKeyManager(lock_memory=True)
             manager._try_lock_memory()
             manager.generate_key()
-            self.assertTrue(manager.is_memory_locked)
+            assert manager.is_memory_locked
 
             manager.clear()
-            self.assertFalse(manager.is_memory_locked)
+            assert not manager.is_memory_locked
 
 
-class TestMemoryLockingFallback(unittest.TestCase):
+class TestMemoryLockingFallback:
     """内存锁定降级和错误处理测试"""
 
     def test_lock_memory_disabled(self):
@@ -145,7 +145,7 @@ class TestMemoryLockingFallback(unittest.TestCase):
         manager.generate_key()
 
         # 内存不应被锁定
-        self.assertFalse(manager.is_memory_locked)
+        assert not manager.is_memory_locked
 
     @patch("src.core.secure_key_manager.os.name", "posix")
     @patch("src.core.secure_key_manager.sys.platform", "linux")
@@ -162,9 +162,9 @@ class TestMemoryLockingFallback(unittest.TestCase):
             manager.generate_key()
 
             # 即使mlock失败，密钥仍应生成
-            self.assertIsNotNone(manager.get_key())
+            assert manager.get_key() is not None
             # 但内存未锁定
-            self.assertFalse(manager.is_memory_locked)
+            assert not manager.is_memory_locked
 
     @patch("src.core.secure_key_manager.os.name", "posix")
     def test_unsupported_os(self):
@@ -175,10 +175,10 @@ class TestMemoryLockingFallback(unittest.TestCase):
                 result = manager._try_lock_memory()
 
                 # 应该优雅失败
-                self.assertFalse(result)
+                assert not result
 
 
-class TestMemoryLockingIntegration(unittest.TestCase):
+class TestMemoryLockingIntegration:
     """内存锁定集成测试"""
 
     def test_full_lifecycle_with_locking(self):
@@ -193,19 +193,19 @@ class TestMemoryLockingIntegration(unittest.TestCase):
         key = manager.get_key()
 
         # 验证密钥
-        self.assertIsNotNone(key)
-        self.assertEqual(len(key), 32)
-        self.assertFalse(manager.is_cleared)
+        assert key is not None
+        assert len(key)  ==  32
+        assert not manager.is_cleared
 
         # 清零密钥
         manager.clear()
 
         # 验证清零
-        self.assertTrue(manager.is_cleared)
-        self.assertFalse(manager.is_memory_locked)
+        assert manager.is_cleared
+        assert not manager.is_memory_locked
 
         # 验证无法再次获取
-        with self.assertRaises(SecureMemoryError):
+        with pytest.raises(SecureMemoryError):
             manager.get_key()
 
     def test_context_manager_with_locking(self):
@@ -216,8 +216,8 @@ class TestMemoryLockingIntegration(unittest.TestCase):
         with patch.object(SecureKeyManager, "_try_lock_memory", return_value=True):
             with patch.object(SecureKeyManager, "_lock_key_memory", return_value=True):
                 with secure_key_context() as key:
-                    self.assertIsNotNone(key)
-                    self.assertEqual(len(key), 32)
+                    assert key is not None
+                    assert len(key)  ==  32
 
                 # 退出上下文后密钥应被清零
                 # (无法直接测试，因为key是引用)
@@ -230,9 +230,9 @@ class TestMemoryLockingIntegration(unittest.TestCase):
         for _i in range(3):
             manager.generate_key()
             key = manager.get_key()
-            self.assertEqual(len(key), 32)
+            assert len(key)  ==  32
             manager.clear()
-            self.assertTrue(manager.is_cleared)
+            assert manager.is_cleared
 
     def test_statistics_tracking(self):
         """测试清零统计跟踪"""
@@ -243,13 +243,13 @@ class TestMemoryLockingIntegration(unittest.TestCase):
         manager.clear()
 
         stats = SecureKeyManager.get_clear_stats()
-        self.assertEqual(stats["total"], 1)
-        self.assertEqual(stats["successful"], 1)
-        self.assertEqual(stats["failed"], 0)
-        self.assertEqual(stats["success_rate"], 100.0)
+        assert stats["total"]  ==  1
+        assert stats["successful"]  ==  1
+        assert stats["failed"]  ==  0
+        assert stats["success_rate"]  ==  100.0
 
 
-class TestMemoryLockingSecurity(unittest.TestCase):
+class TestMemoryLockingSecurity:
     """内存锁定安全性测试"""
 
     def test_key_cleared_with_random_first(self):
@@ -265,7 +265,7 @@ class TestMemoryLockingSecurity(unittest.TestCase):
         manager.clear()
 
         # 验证密钥被清零
-        self.assertEqual(bytes(key), b"\x00" * 32)
+        assert bytes(key)  ==  b"\x00" * 32
 
     def test_no_key_duplication(self):
         """测试密钥不会被意外复制"""
@@ -278,7 +278,7 @@ class TestMemoryLockingSecurity(unittest.TestCase):
         key_ref2 = manager.get_key()
 
         # 内容应相同（指向同一底层密钥数据）
-        self.assertEqual(bytes(key_ref1), bytes(key_ref2))
+        assert bytes(key_ref1)  ==  bytes(key_ref2)
 
     @patch("src.core.secure_key_manager.os.name", "posix")
     @patch("src.core.secure_key_manager.sys.platform", "linux")
@@ -295,7 +295,7 @@ class TestMemoryLockingSecurity(unittest.TestCase):
             manager.generate_key()
 
             # 验证已锁定
-            self.assertTrue(manager.is_memory_locked)
+            assert manager.is_memory_locked
 
             # 清零应该解锁
             manager.clear()
@@ -303,6 +303,3 @@ class TestMemoryLockingSecurity(unittest.TestCase):
             # munlock应该被调用
             mock_libc.munlock.assert_called_once()
 
-
-if __name__ == "__main__":
-    unittest.main()

@@ -308,7 +308,10 @@ btc-collision-engine/
 ├── src/                      # 源代码
 ├── docs/                     # 文档
 ├── tools/                    # 工具脚本
-└── scripts/                  # 辅助脚本
+├── scripts/dev/              # 开发工具脚本
+├── scripts/testing/          # 测试脚本
+├── scripts/benchmarking/     # 性能基准脚本
+└── scripts/install/          # 安装脚本
 ```
 
 ## 系统要求

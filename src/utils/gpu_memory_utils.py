@@ -14,11 +14,11 @@
     - 对于碰撞引擎，该函数只在初始化时调用一次，性能影响可忽略
 """
 
-import logging
+from .logging_config import get_configured_logger
 from dataclasses import dataclass
 from typing import Any, Protocol
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger(__name__)
 
 
 @dataclass
@@ -120,7 +120,7 @@ def calculate_optimal_batch_size(
         6. 限制在[min_batch_size, max_batch_size]范围内
         7. 向下对齐到memory_alignment的倍数
 
-    示例:
+    Example:
         >>> from src.utils.gpu_memory_utils import calculate_optimal_batch_size
         >>> # device = GPUDevice() # 已初始化的GPU设备
         >>> # device.initialize(0)

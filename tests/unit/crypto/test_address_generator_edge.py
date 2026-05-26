@@ -3,7 +3,7 @@
 覆盖缺失行: 61-76, 165-191, 236-250, 272-275
 """
 
-import unittest
+import pytest
 from unittest.mock import MagicMock, PropertyMock, patch
 
 from src.core.address_generator import (
@@ -17,18 +17,18 @@ from src.core.address_generator import (
 # ===========================================================================
 
 
-class TestSecureClearBytearray(unittest.TestCase):
+class TestSecureClearBytearray:
     """secure_clear_bytearray 边界测试"""
 
     def test_non_bytearray_raises_typeerror(self):
         """传入 bytes 触发 TypeError → lines 61-65"""
         with self.assertRaises(TypeError) as ctx:
             secure_clear_bytearray(b"\x00" * 32)
-        self.assertIn("bytearray", str(ctx.exception))
+        assert str(ctx.exception)  in  "bytearray"
 
     def test_non_bytearray_list_raises_typeerror(self):
         """传入 list 触发 TypeError"""
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             secure_clear_bytearray([0] * 32)
 
     def test_successful_clear(self):
@@ -36,7 +36,7 @@ class TestSecureClearBytearray(unittest.TestCase):
         buf = bytearray(b"\xff" * 32)
         secure_clear_bytearray(buf)
         # 所有字节应被清零
-        self.assertEqual(buf, bytearray(b"\x00" * 32))
+        assert buf  ==  bytearray(b"\x00" * 32)
 
     def test_exception_handler(self):
         """ctypes.memset 异常处理 → lines 70-76"""
@@ -45,7 +45,7 @@ class TestSecureClearBytearray(unittest.TestCase):
             # 不应抛出异常（静默失败）
             secure_clear_bytearray(buf)
             # buf 未被清零
-            self.assertNotEqual(buf, bytearray(b"\x00" * 32))
+            assert buf  !=  bytearray(b"\x00" * 32)
 
 
 # ===========================================================================
@@ -53,7 +53,7 @@ class TestSecureClearBytearray(unittest.TestCase):
 # ===========================================================================
 
 
-class TestGeneratePrivateKeyEdge(unittest.TestCase):
+class TestGeneratePrivateKeyEdge:
     """generate_private_key 异常处理与重试耗尽"""
 
     def setUp(self):
@@ -65,12 +65,12 @@ class TestGeneratePrivateKeyEdge(unittest.TestCase):
             # 零私钥始终无效, 耗尽 max_retries
             with self.assertRaises(Exception) as ctx:
                 self.gen.generate_private_key(max_retries=3)
-            self.assertIn("Cannot generate valid private key within 3 attempts", str(ctx.exception))
+            assert str(ctx.exception)  in  "Cannot generate valid private key within 3 attempts"
 
     def test_generate_private_key_valueerror_handler(self):
         """secrets.token_bytes 抛 ValueError → lines 173-179"""
         with patch("secrets.token_bytes", side_effect=ValueError("模拟")):
-            with self.assertRaises(Exception):  # noqa: B017
+            with pytest.raises(Exception):  # noqa: B017
                 self.gen.generate_private_key(max_retries=2)
 
     def test_generate_private_key_keygenerror_handler(self):
@@ -89,7 +89,7 @@ class TestGeneratePrivateKeyEdge(unittest.TestCase):
     def test_generate_private_key_other_exception_handler(self):
         """secrets.token_bytes 抛其他异常 → lines 180-188"""
         with patch("secrets.token_bytes", side_effect=RuntimeError("未知错误")):
-            with self.assertRaises(Exception):  # noqa: B017
+            with pytest.raises(Exception):  # noqa: B017
                 self.gen.generate_private_key(max_retries=2)
 
 
@@ -98,7 +98,7 @@ class TestGeneratePrivateKeyEdge(unittest.TestCase):
 # ===========================================================================
 
 
-class TestCryptoBackendPerformance(unittest.TestCase):
+class TestCryptoBackendPerformance:
     """_check_crypto_backend_performance 路径"""
 
     def test_pure_python_backend_warns(self):
@@ -128,7 +128,7 @@ class TestCryptoBackendPerformance(unittest.TestCase):
         with patch("builtins.__import__", side_effect=mock_import):
             # 不应抛出异常
             gen = P2PKHAddressGenerator()
-            self.assertIsNotNone(gen)
+            assert gen is not None
 
 
 # ===========================================================================
@@ -136,7 +136,7 @@ class TestCryptoBackendPerformance(unittest.TestCase):
 # ===========================================================================
 
 
-class TestPubKeyFallback(unittest.TestCase):
+class TestPubKeyFallback:
     """private_key_to_public_key 纯 Python 回退"""
 
     def test_fallback_to_pure_python(self):
@@ -151,7 +151,7 @@ class TestPubKeyFallback(unittest.TestCase):
 
         with patch("builtins.__import__", side_effect=mock_import):
             pk = gen.private_key_to_public_key(b"\x01" * 32, compressed=True)
-            self.assertEqual(len(pk), 33)
+            assert len(pk)  ==  33
 
 
 if __name__ == "__main__":

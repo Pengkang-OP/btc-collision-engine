@@ -6,15 +6,13 @@
 """
 
 import time
-import unittest
-
 import pytest
 
 from src.collision.key_collision_engine import KeyCollisionEngine
 from tests.conftest_engine import get_known_target
 
 
-class TestKeyCollisionEngineSecureGeneration(unittest.TestCase):
+class TestKeyCollisionEngineSecureGeneration:
     """安全密钥生成 _generate_and_check_secure + 匹配处理 _process_key_match"""
 
     def test_generate_and_check_secure_no_match(self):
@@ -25,7 +23,7 @@ class TestKeyCollisionEngineSecureGeneration(unittest.TestCase):
             data_logging_enabled=False,
         )
         result = engine._generate_and_check_secure()
-        self.assertIsNone(result, "无匹配应返回 None")
+        assert result, "无匹配应返回 None" is None
         engine.stop()
 
     def test_generate_and_check_secure_with_match(self):
@@ -37,7 +35,7 @@ class TestKeyCollisionEngineSecureGeneration(unittest.TestCase):
             data_logging_enabled=False,
         )
         result = engine._generate_and_check_secure()
-        self.assertIsNone(result)
+        assert result is None
         engine.stop()
 
     def test_process_key_match_valid(self):
@@ -58,8 +56,8 @@ class TestKeyCollisionEngineSecureGeneration(unittest.TestCase):
             local_matches=local_matches,
             worker_id=0,
         )
-        self.assertTrue(should_continue)
-        self.assertEqual(len(local_matches), 1)
+        assert should_continue
+        assert len(local_matches) == 1
         engine.stop()
 
     def test_process_key_match_no_callback_stops(self):
@@ -80,8 +78,8 @@ class TestKeyCollisionEngineSecureGeneration(unittest.TestCase):
             local_matches=local_matches,
             worker_id=0,
         )
-        self.assertFalse(should_continue, "无回调时应返回 False 停止引擎")
-        self.assertTrue(engine._stop_event.is_set())
+        assert not should_continue, "无回调时应返回 False 停止引擎"
+        assert engine._stop_event.is_set()
         engine.stop()
 
     def test_process_key_match_batch_flush(self):
@@ -102,12 +100,12 @@ class TestKeyCollisionEngineSecureGeneration(unittest.TestCase):
             local_matches=local_matches,
             worker_id=0,
         )
-        self.assertTrue(should_continue)
-        self.assertEqual(len(local_matches), 0)
+        assert should_continue
+        assert len(local_matches) == 0
         engine.stop()
 
 
-class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
+class TestKeyCollisionEngineInternalHelpers:
     """内部辅助方法直接测试：内存降级、batch调优、断点、限频日志"""
 
     def _generate_test_addresses(self, count: int) -> set[str]:
@@ -128,8 +126,8 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
         old_batch = engine._batch_size
         old_workers = engine.max_workers
         engine._check_memory_and_downgrade(3500.0, time.time())
-        self.assertLess(engine._batch_size, old_batch, "临界状态应降低batch_size")
-        self.assertLess(engine.max_workers, old_workers, "临界状态应降低max_workers")
+        assert engine._batch_size < old_batch, "临界状态应降低batch_size"
+        assert engine.max_workers < old_workers, "临界状态应降低max_workers"
         engine.stop()
 
     def test_memory_high_downgrade_single_worker(self):
@@ -138,7 +136,7 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
         old_batch = engine._batch_size
         engine._check_memory_and_downgrade(2500.0, time.time())
         if engine._batch_size < old_batch:
-            self.assertLess(engine._batch_size, old_batch)
+            assert engine._batch_size < old_batch
         engine.stop()
 
     def test_memory_high_downgrade_multi_worker(self):
@@ -146,7 +144,7 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
         engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=4, data_logging_enabled=False)
         engine._batch_size = 2000
         engine._check_memory_and_downgrade(2500.0, time.time())
-        self.assertEqual(engine._batch_size, 1500)
+        assert engine._batch_size == 1500
         engine.stop()
 
     def test_memory_downgrade_cooldown(self):
@@ -156,7 +154,7 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
         engine._check_memory_and_downgrade(3500.0, now)
         batch_after_first = engine._batch_size
         engine._check_memory_and_downgrade(3500.0, now + 1.0)
-        self.assertEqual(engine._batch_size, batch_after_first, "冷却期内不应再次降级")
+        assert engine._batch_size == batch_after_first, "冷却期内不应再次降级"
         engine.stop()
 
     def test_tune_batch_size_dual_core(self):
@@ -165,7 +163,7 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
         engine._cpu_count = 2
         engine._auto_tune_batch_size = True
         engine._tune_batch_size()
-        self.assertEqual(engine._batch_size, 500)
+        assert engine._batch_size == 500
         engine.stop()
 
     def test_tune_batch_size_quad_core(self):
@@ -174,7 +172,7 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
         engine._cpu_count = 4
         engine._auto_tune_batch_size = True
         engine._tune_batch_size()
-        self.assertEqual(engine._batch_size, 1000)
+        assert engine._batch_size == 1000
         engine.stop()
 
     def test_tune_batch_size_disabled(self):
@@ -183,7 +181,7 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
         engine._auto_tune_batch_size = False
         old_batch = engine._batch_size
         engine._tune_batch_size()
-        self.assertEqual(engine._batch_size, old_batch)
+        assert engine._batch_size == old_batch
         engine.stop()
 
     def test_tune_batch_size_octa_core(self):
@@ -192,7 +190,7 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
         engine._cpu_count = 8
         engine._auto_tune_batch_size = True
         engine._tune_batch_size()
-        self.assertEqual(engine._batch_size, 2000)
+        assert engine._batch_size == 2000
         engine.stop()
 
     def test_tune_batch_size_hexadeca_core(self):
@@ -202,7 +200,7 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
         engine._auto_tune_batch_size = True
         engine._batch_size = 500
         engine._tune_batch_size()
-        self.assertEqual(engine._batch_size, 4000)
+        assert engine._batch_size == 4000
         engine.stop()
 
     def test_save_checkpoint_enabled(self):
@@ -240,7 +238,7 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
             use_enhanced_monitoring=True,
             max_workers=1,
         )
-        self.assertIsNotNone(engine.data_logger)
+        assert engine.data_logger is not None
         engine._log_throttled_error("test_error", "测试错误消息", ValueError("test"), worker_id=0)
         engine.stop()
 
@@ -254,7 +252,7 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
         """目标地址>=10000时仅检查压缩格式"""
         many_targets = self._generate_test_addresses(15000)
         engine = KeyCollisionEngine(targets=many_targets, max_workers=1, data_logging_enabled=False)
-        self.assertFalse(engine.check_uncompressed)
+        assert not engine.check_uncompressed
         engine.stop()
 
     def test_init_crypto_backend_unknown_type(self):
@@ -268,7 +266,7 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
             max_workers=1,
             data_logging_enabled=False,
         )
-        self.assertFalse(engine.is_running())
+        assert not engine.is_running()
         engine.stop()
 
     def test_process_key_match_wif_error(self):
@@ -288,11 +286,11 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
             local_matches=local_matches,
             worker_id=0,
         )
-        self.assertTrue(should_continue, "WIF编码错误应继续运行")
+        assert should_continue, "WIF编码错误应继续运行"
         engine.stop()
 
 
-class TestKeyCollisionEngineDedup(unittest.TestCase):
+class TestKeyCollisionEngineDedup:
     """去重过滤器集成测试"""
 
     @pytest.mark.flaky(reruns=2, reruns_delay=1)
@@ -312,4 +310,4 @@ class TestKeyCollisionEngineDedup(unittest.TestCase):
         if stats.total_checked == 0:
             time.sleep(1.0)
             stats = engine.get_stats()
-        self.assertGreater(stats.total_checked, 0)
+        assert stats.total_checked > 0

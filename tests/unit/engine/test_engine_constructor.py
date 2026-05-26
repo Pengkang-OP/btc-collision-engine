@@ -5,12 +5,12 @@
 """
 
 import time
-import unittest
+import pytest
 
 from src.collision.key_collision_engine import KeyCollisionEngine
 
 
-class TestKeyCollisionEngineConstructorBranches(unittest.TestCase):
+class TestKeyCollisionEngineConstructorBranches:
     """构造函数分支覆盖：非优化路径、显式参数"""
 
     def test_constructor_standard_generator(self):
@@ -21,7 +21,7 @@ class TestKeyCollisionEngineConstructorBranches(unittest.TestCase):
             max_workers=1,
             data_logging_enabled=False,
         )
-        self.assertFalse(engine.is_running())
+        assert not engine.is_running()
         engine.stop()
 
     def test_constructor_explicit_check_uncompressed_true(self):
@@ -32,7 +32,7 @@ class TestKeyCollisionEngineConstructorBranches(unittest.TestCase):
             max_workers=1,
             data_logging_enabled=False,
         )
-        self.assertTrue(engine.check_uncompressed)
+        assert engine.check_uncompressed
         engine.stop()
 
     def test_constructor_explicit_check_uncompressed_false(self):
@@ -43,7 +43,7 @@ class TestKeyCollisionEngineConstructorBranches(unittest.TestCase):
             max_workers=1,
             data_logging_enabled=False,
         )
-        self.assertFalse(engine.check_uncompressed)
+        assert not engine.check_uncompressed
         engine.stop()
 
     def test_constructor_data_logging_disabled(self):
@@ -53,8 +53,8 @@ class TestKeyCollisionEngineConstructorBranches(unittest.TestCase):
             data_logging_enabled=False,
             max_workers=1,
         )
-        self.assertFalse(engine.data_logging_enabled)
-        self.assertIsNone(engine.data_logger)
+        assert not engine.data_logging_enabled
+        assert engine.data_logger is None
         engine.stop()
 
     def test_constructor_enhanced_monitoring_disabled(self):
@@ -64,8 +64,8 @@ class TestKeyCollisionEngineConstructorBranches(unittest.TestCase):
             use_enhanced_monitoring=False,
             max_workers=1,
         )
-        self.assertIsNone(engine.enhanced_monitoring)
-        self.assertIsNotNone(engine.data_logger)
+        assert engine.enhanced_monitoring is None
+        assert engine.data_logger is not None
         engine.stop()
 
     def test_constructor_explicit_crypto_backend(self):
@@ -76,7 +76,7 @@ class TestKeyCollisionEngineConstructorBranches(unittest.TestCase):
             max_workers=1,
             data_logging_enabled=False,
         )
-        self.assertFalse(engine.is_running())
+        assert not engine.is_running()
         engine.stop()
 
     def test_constructor_verbose_logging_enabled(self):
@@ -87,7 +87,7 @@ class TestKeyCollisionEngineConstructorBranches(unittest.TestCase):
             max_workers=1,
             data_logging_enabled=False,
         )
-        self.assertTrue(engine.verbose_logging)
+        assert engine.verbose_logging
         engine.stop()
 
     def test_constructor_performance_with_custom_window_size(self):
@@ -101,7 +101,7 @@ class TestKeyCollisionEngineConstructorBranches(unittest.TestCase):
             max_workers=1,
             data_logging_enabled=False,
         )
-        self.assertFalse(engine.is_running())
+        assert not engine.is_running()
         engine.stop()
 
     def test_constructor_data_logger_init_exception(self):
@@ -117,54 +117,54 @@ class TestKeyCollisionEngineConstructorBranches(unittest.TestCase):
                 use_enhanced_monitoring=True,
                 max_workers=1,
             )
-            self.assertFalse(engine.data_logging_enabled)
-            self.assertIsNone(engine.data_logger)
-            self.assertIsNone(engine.enhanced_monitoring)
+            assert not engine.data_logging_enabled
+            assert engine.data_logger is None
+            assert engine.enhanced_monitoring is None
             engine.stop()
 
 
-class TestKeyCollisionEngineStartValidation(unittest.TestCase):
+class TestKeyCollisionEngineStartValidation:
     """start() 参数验证 + 断点恢复路径"""
 
     def test_start_invalid_mode_raises(self):
         """未知模式抛出 ValueError"""
         engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             engine.start(mode="invalid_mode")
         engine.stop()
 
     def test_start_range_missing_params(self):
         """range模式缺少参数抛出 ValueError"""
         engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             engine.start(mode="range")
         engine.stop()
 
     def test_start_range_non_int_params(self):
         """range模式非整数参数抛出 ValueError"""
         engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             engine.start(mode="range", start="abc", end=100)
         engine.stop()
 
     def test_start_range_invalid_range(self):
         """Start < 1 或 end < start 抛出 ValueError"""
         engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             engine.start(mode="range", start=100, end=50)
         engine.stop()
 
     def test_start_brute_force_non_int_start(self):
         """brute_force模式非整数start抛出 ValueError"""
         engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             engine.start(mode="brute_force", start="abc")
         engine.stop()
 
     def test_start_brute_force_negative_start(self):
         """brute_force模式start<1抛出 ValueError"""
         engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             engine.start(mode="brute_force", start=-5)
         engine.stop()
 
@@ -178,5 +178,5 @@ class TestKeyCollisionEngineStartValidation(unittest.TestCase):
         )
         engine.start(mode="random", resume=True)
         time.sleep(0.3)
-        self.assertTrue(engine.is_running())
+        assert engine.is_running()
         engine.stop()

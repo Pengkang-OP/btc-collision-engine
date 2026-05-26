@@ -1,9 +1,12 @@
 """Wizard interface definitions."""
 
+from ..utils import get_configured_logger
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
+
+logger = get_configured_logger(__name__)
 
 
 class WizardMode(Enum):
@@ -93,7 +96,8 @@ class WizardResult:
             for key, value in data.items():
                 setattr(result, key, value)
             return result
-        except (FileNotFoundError, json.JSONDecodeError, OSError):
+        except (FileNotFoundError, json.JSONDecodeError, OSError) as e:
+            logger.debug("Failed to load wizard result from file '%s': %s", filepath, e)
             return None
 
 

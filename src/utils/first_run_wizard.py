@@ -18,6 +18,8 @@ interactively guides the user through:
 import json
 import os
 import re
+
+from .logging_config import LOG_DEFAULT_MAX_BYTES
 import shutil
 import sys
 from contextlib import suppress
@@ -55,7 +57,7 @@ class FirstRunWizard:
         "logging": {
             "level": "INFO",
             "file": "logs/collision.log",
-            "max_bytes": 10485760,
+            "max_bytes": LOG_DEFAULT_MAX_BYTES,
             "backup_count": 5,
         },
         "monitoring": {"enabled": True, "report_interval": 30},
@@ -136,7 +138,7 @@ class FirstRunWizard:
     # 向导步骤
     # -------------------------------------------------------------------------
 
-    def _welcome(self):
+    def _welcome(self) -> None:
         """显示欢迎页面"""
         print("\n" + "=" * 65)
         print("  欢迎使用 BTC 碰撞引擎 v4.2.3")
@@ -322,7 +324,7 @@ class FirstRunWizard:
             return False
 
     @staticmethod
-    def _deep_merge(base: dict, override: dict):
+    def _deep_merge(base: dict, override: dict) -> None:
         """递归合并字典"""
         for k, v in override.items():
             if k in base and isinstance(base[k], dict) and isinstance(v, dict):
@@ -330,7 +332,7 @@ class FirstRunWizard:
             else:
                 base[k] = v
 
-    def _mark_completed(self):
+    def _mark_completed(self) -> None:
         """写入向导完成标记"""
         with suppress(OSError):
             self.marker_path.parent.mkdir(parents=True, exist_ok=True)

@@ -43,8 +43,8 @@
 
 | 文件 | 说明 | 用途 |
 |------|------|------|
-| `scripts/backup_manager.py` | 备份管理器 | 创建、恢复、管理备份 |
-| `scripts/schedule_backup.py` | 定时备份调度器 | 设置自动备份任务 |
+| `scripts/dev/backup_manager.py` | 备份管理器 | 创建、恢复、管理备份 |
+| `scripts/dev/schedule_backup.py` | 定时备份调度器 | 设置自动备份任务 |
 
 ---
 
@@ -426,26 +426,26 @@ sudo journalctl --vacuum-time=7d
 python -m src.utils.data_cleanup --temp-days 14 --data-days 30
 
 # 定期：备份数据
-python scripts/backup_manager.py create --desc "定期备份"
+python scripts/dev/backup_manager.py create --desc "定期备份"
 
 # 查看备份列表
-python scripts/backup_manager.py list
+python scripts/dev/backup_manager.py list
 
 # 恢复备份
-python scripts/backup_manager.py restore btc-collision-backup_20240101_120000.tar.gz
+python scripts/dev/backup_manager.py restore btc-collision-backup_20240101_120000.tar.gz
 ```
 
 ### 自动备份配置
 
 ```bash
 # 安装定时备份任务
-python scripts/schedule_backup.py install
+python scripts/dev/schedule_backup.py install
 
 # 查看当前定时任务
-python scripts/schedule_backup.py show
+python scripts/dev/schedule_backup.py show
 
 # 移除定时备份任务
-python scripts/schedule_backup.py remove
+python scripts/dev/schedule_backup.py remove
 ```
 
 ### 故障处理

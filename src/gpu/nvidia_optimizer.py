@@ -672,9 +672,7 @@ class NvidiaGPUOptimizer:
         )
         result["arch_name"] = self._arch_info.get("arch", "Unknown") if self._arch_info else "Unknown"
 
-        self._logger.info("=" * 60)
-        self._logger.info("✅ NVIDIA GPU 特殊优化应用完成")
-        self._logger.info("=" * 60)
+        self._logger.info("NVIDIA GPU 特殊优化应用完成")
 
         return result
 

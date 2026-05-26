@@ -18,33 +18,33 @@ from src.utils.exceptions import (
 )
 
 
-class TestExceptionBasics(unittest.TestCase):
+class TestExceptionBasics:
     """异常类基础存在性验证 — 对齐 src/utils/exceptions.py 真实 API"""
 
     def test_collision_engine_error_is_base(self):
         err = CollisionEngineError("test")
-        self.assertIsInstance(err, Exception)
-        self.assertEqual(err.message, "test")
-        self.assertEqual(err.error_code, 1000)
+        assert isinstance(err, Exception)
+        assert err.message == "test"
+        assert err.error_code == 1000
 
     def test_collision_error_alias(self):
         """CollisionError 是 CollisionEngineError 的别名"""
         from src.utils.exceptions import CollisionError
 
         err = CollisionError("test")
-        self.assertIsInstance(err, CollisionEngineError)
+        assert isinstance(err, CollisionEngineError)
 
     def test_key_generation_error_has_custom_init(self):
         """KeyGenerationError 有 error_code 和 context"""
         err = KeyGenerationError("key fail", error_code=2, context={"reason": "entropy"})
-        self.assertEqual(err.message, "key fail")
-        self.assertEqual(err.error_code, 2)
-        self.assertEqual(err.context, {"reason": "entropy"})
+        assert err.message == "key fail"
+        assert err.error_code == 2
+        assert err.context == {"reason": "entropy"}
 
     def test_key_generation_error_defaults(self):
         err = KeyGenerationError("test")
-        self.assertEqual(err.error_code, 1001)
-        self.assertEqual(err.context, {})
+        assert err.error_code == 1001
+        assert err.context == {}
 
     def test_all_subclasses_exist(self):
         """验证所有异常子类可实例化"""
@@ -59,11 +59,11 @@ class TestExceptionBasics(unittest.TestCase):
             ValidationError,
         ]:
             err = cls("test")
-            self.assertIsInstance(err, CollisionEngineError)
-            self.assertEqual(err.message, "test")
+            assert isinstance(err, CollisionEngineError)
+            assert err.message == "test"
 
 
-class TestExceptionHandler(unittest.TestCase):
+class TestExceptionHandler:
     """ExceptionHandler 统一异常处理器测试"""
 
     def test_handle_engine_error_runtime(self):
@@ -101,7 +101,7 @@ class TestExceptionHandler(unittest.TestCase):
         try:
             raise KeyboardInterrupt
         except KeyboardInterrupt:
-            with self.assertRaises(KeyboardInterrupt):
+            with pytest.raises(KeyboardInterrupt):
                 ExceptionHandler.handle_engine_error("CPU", KeyboardInterrupt())
 
     def test_handle_engine_error_no_stats(self):
@@ -109,27 +109,27 @@ class TestExceptionHandler(unittest.TestCase):
 
     def test_handle_gpu_error_runtime(self):
         result = ExceptionHandler.handle_gpu_error("随机碰撞", RuntimeError("test"))
-        self.assertTrue(result)
+        assert result
 
     def test_handle_gpu_error_value_error(self):
         result = ExceptionHandler.handle_gpu_error("随机碰撞", ValueError("bad"))
-        self.assertTrue(result)
+        assert result
 
     def test_handle_gpu_error_memory_error(self):
         result = ExceptionHandler.handle_gpu_error("随机碰撞", MemoryError("oom"))
-        self.assertTrue(result)
+        assert result
 
     def test_handle_gpu_error_import_error(self):
         result = ExceptionHandler.handle_gpu_error("随机碰撞", ImportError("no pyopencl"))
-        self.assertTrue(result)
+        assert result
 
     def test_handle_gpu_error_os_error(self):
         result = ExceptionHandler.handle_gpu_error("随机碰撞", OSError("io"))
-        self.assertTrue(result)
+        assert result
 
     def test_handle_gpu_error_unknown(self):
         result = ExceptionHandler.handle_gpu_error("随机碰撞", TypeError("unknown"))
-        self.assertTrue(result)
+        assert result
 
 
 if __name__ == "__main__":

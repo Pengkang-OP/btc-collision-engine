@@ -1,6 +1,6 @@
 """ObjectPool / GlobalPoolManager 单元测试 - 覆盖 P3-7/P1-6 增强功能"""
 
-import unittest
+import pytest
 from unittest.mock import patch
 
 from src.core.memory_pool import (
@@ -21,34 +21,34 @@ class _DummyObj:
         self.data = None
 
 
-class TestObjectPoolInit(unittest.TestCase):
+class TestObjectPoolInit:
     """ObjectPool 初始化测试"""
 
     def test_init_basic(self):
         """基本初始化"""
         pool = ObjectPool(lambda: _DummyObj(), initial_size=5, max_size=20)
-        self.assertEqual(len(pool._pool), 5)
-        self.assertEqual(pool._max_size, 20)
-        self.assertEqual(pool._created_count, 5)
+        assert len(pool._pool)  ==  5
+        assert pool._max_size  ==  20
+        assert pool._created_count  ==  5
 
     def test_init_negative_initial_size(self):
         """initial_size < 0 抛出 ValueError"""
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             ObjectPool(lambda: _DummyObj(), initial_size=-1)
 
     def test_init_max_less_than_initial(self):
         """max_size < initial_size 抛出 ValueError"""
         with self.assertRaises(ValueError) as ctx:
             ObjectPool(lambda: _DummyObj(), initial_size=10, max_size=5)
-        self.assertIn("max_size", str(ctx.exception))
+        assert str(ctx.exception)  in  "max_size"
 
     def test_init_zero_initial_size(self):
         """initial_size=0 有效"""
         pool = ObjectPool(lambda: _DummyObj(), initial_size=0, max_size=10)
-        self.assertEqual(len(pool._pool), 0)
+        assert len(pool._pool)  ==  0
 
 
-class TestObjectPoolAcquireRelease(unittest.TestCase):
+class TestObjectPoolAcquireRelease:
     """acquire/release 测试"""
 
     def setUp(self):
@@ -57,23 +57,23 @@ class TestObjectPoolAcquireRelease(unittest.TestCase):
     def test_acquire_from_pool(self):
         """从池中获取对象"""
         obj = self.pool.acquire()
-        self.assertIsNotNone(obj)
-        self.assertIsInstance(obj, _DummyObj)
+        assert obj is not None
+        assert isinstance(obj, _DummyObj)
 
     def test_acquire_exhausts_pool(self):
         """池耗尽后创建新对象"""
         self.pool.acquire()
         self.pool.acquire()
-        self.assertEqual(len(self.pool._pool), 0)
+        assert len(self.pool._pool)  ==  0
         obj3 = self.pool.acquire()  # 第3个,池已空
-        self.assertIsNotNone(obj3)
-        self.assertEqual(self.pool._miss_count, 1)
+        assert obj3 is not None
+        assert self.pool._miss_count  ==  1
 
     def test_release_to_pool(self):
         """归还对象到池"""
         obj = self.pool.acquire()
         self.pool.release(obj)
-        self.assertEqual(self.pool._release_count, 1)
+        assert self.pool._release_count  ==  1
 
     def test_release_pool_full(self):
         """池满时丢弃对象"""
@@ -89,23 +89,23 @@ class TestObjectPoolAcquireRelease(unittest.TestCase):
         obj = _DummyObj()
         pool.release(obj)
         # release_count 按 append 成功次数算
-        self.assertEqual(pool._release_count, 3)
+        assert pool._release_count  ==  3
 
     def test_acquire_increments_count_in_lock(self):
         """Acquire 在锁内递增计数"""
         pool = ObjectPool(lambda: _DummyObj(), initial_size=1, max_size=5)
         pool.acquire()
-        self.assertEqual(pool._acquire_count, 1)
+        assert pool._acquire_count  ==  1
 
 
-class TestObjectPoolHitRatio(unittest.TestCase):
+class TestObjectPoolHitRatio:
     """hit_ratio 测试"""
 
     def test_hit_ratio_no_acquire(self):
         """无获取时返回 1.0"""
         pool = ObjectPool(lambda: _DummyObj(), initial_size=0, max_size=5)
         r = pool.hit_ratio()
-        self.assertEqual(r, 1.0)
+        assert r  ==  1.0
 
     def test_hit_ratio_all_hits(self):
         """全部命中"""
@@ -113,17 +113,17 @@ class TestObjectPoolHitRatio(unittest.TestCase):
         for _ in range(3):
             obj = pool.acquire()
             pool.release(obj)
-        self.assertEqual(pool.hit_ratio(), 1.0)
+        assert pool.hit_ratio()  ==  1.0
 
     def test_hit_ratio_with_misses(self):
         """有未命中"""
         pool = ObjectPool(lambda: _DummyObj(), initial_size=1, max_size=5)
         pool.acquire()  # hit
         pool.acquire()  # miss
-        self.assertLess(pool.hit_ratio(), 1.0)
+        assert pool.hit_ratio()  <  1.0
 
 
-class TestObjectPoolShrink(unittest.TestCase):
+class TestObjectPoolShrink:
     """shrink 测试"""
 
     def setUp(self):
@@ -132,39 +132,39 @@ class TestObjectPoolShrink(unittest.TestCase):
     def test_shrink_noop_when_under_target(self):
         """池小于目标时不缩容"""
         released = self.pool.shrink(20)
-        self.assertEqual(released, 0)
+        assert released  ==  0
 
     def test_shrink_to_target(self):
         """缩容到目标大小"""
         released = self.pool.shrink(5)
-        self.assertEqual(released, 5)
-        self.assertEqual(len(self.pool._pool), 5)
+        assert released  ==  5
+        assert len(self.pool._pool)  ==  5
 
     def test_shrink_default_target(self):
         """使用默认 initial_size 作为目标"""
         self.pool.shrink(target_size=3)
         released = self.pool.shrink()  # target = initial_size = 10
-        self.assertEqual(released, 0)  # pool 现在只有3个, 小于10
+        assert released  ==  0  # pool 现在只有3个, 小于10
 
     def test_shrink_to_zero(self):
         """缩容到最小值（注意: 0 被 Python 视为 falsy, 实际用 initial_size）"""
         # shrink(0): 0 or initial_size → initial_size, 所以不会释放
         released_via_zero = self.pool.shrink(0)
-        self.assertEqual(released_via_zero, 0)  # 0 is falsy → uses default
+        assert released_via_zero  ==  0  # 0 is falsy → uses default
         # 缩容到 2（指定非零值）
         released = self.pool.shrink(2)
-        self.assertEqual(released, 8)
-        self.assertEqual(len(self.pool._pool), 2)
+        assert released  ==  8
+        assert len(self.pool._pool)  ==  2
 
 
-class TestObjectPoolAutoTune(unittest.TestCase):
+class TestObjectPoolAutoTune:
     """auto_tune 测试"""
 
     def test_auto_tune_noop_low_acquire(self):
         """获取次数不足时不调整"""
         pool = ObjectPool(lambda: _DummyObj(), initial_size=5, max_size=10)
         adjusted = pool.auto_tune()
-        self.assertFalse(adjusted)
+        assert not adjusted
 
     def test_auto_tune_expand_on_high_miss(self):
         """高未命中率时扩展池"""
@@ -174,8 +174,8 @@ class TestObjectPoolAutoTune(unittest.TestCase):
         pool._miss_count = 100
         old_max = pool._max_size
         adjusted = pool.auto_tune(max_memory_mb=1024)
-        self.assertTrue(adjusted)
-        self.assertGreater(pool._max_size, old_max)
+        assert adjusted
+        assert pool._max_size  >  old_max
 
     def test_auto_tune_expand_hit_memory_limit(self):
         """扩展时受内存限制"""
@@ -190,8 +190,8 @@ class TestObjectPoolAutoTune(unittest.TestCase):
         # max_by_memory = 1MB / 10MB = 0 (int), so new_max = 0, not > 10 → no expand
         # Use a larger budget so the expansion happens
         adjusted = pool.auto_tune(max_memory_mb=1024)  # 1024MB
-        self.assertTrue(adjusted)
-        self.assertGreater(pool._max_size, 10)
+        assert adjusted
+        assert pool._max_size  >  10
 
     def test_auto_tune_shrink_idle(self):
         """空闲对象过多时缩容（通过直接调用 shrink 间接验证）
@@ -207,11 +207,11 @@ class TestObjectPoolAutoTune(unittest.TestCase):
             objs.append(pool.acquire())
         for o in objs:
             pool.release(o)
-        self.assertGreater(len(pool._pool), 5 * 3)  # 超过阈值
+        assert len(pool._pool)  >  5 * 3  # 超过阈值
         # 直接缩容（绕过 deadlock）
         released = pool.shrink(5)
-        self.assertGreater(released, 0)
-        self.assertEqual(len(pool._pool), 5)
+        assert released  >  0
+        assert len(pool._pool)  ==  5
 
     def test_auto_tune_shrink_path_via_mock(self):
         """auto_tune 缩容路径（覆盖 lines 334-349，内部 del _pool[target:]）"""
@@ -222,13 +222,13 @@ class TestObjectPoolAutoTune(unittest.TestCase):
             objs.append(pool.acquire())
         for o in objs:
             pool.release(o)
-        self.assertGreater(len(pool._pool), 1 * 3)  # 超过 3x 阈值
+        assert len(pool._pool)  >  1 * 3  # 超过 3x 阈值
         pre_size = len(pool._pool)
         adjusted = pool.auto_tune()
-        self.assertTrue(adjusted)
+        assert adjusted
         # auto_tune 内部使用 del _pool[target:] 缩容到 initial_size
-        self.assertEqual(len(pool._pool), pool._initial_size)
-        self.assertLess(len(pool._pool), pre_size)
+        assert len(pool._pool)  ==  pool._initial_size
+        assert len(pool._pool)  <  pre_size
 
     def test_auto_tune_expand_blocked_by_memory(self):
         """扩展被内存限制阻止（new_max <= self._max_size 分支）"""
@@ -243,44 +243,44 @@ class TestObjectPoolAutoTune(unittest.TestCase):
         # max_by_memory = int((1*1024*1024) / (1GB)) = 0
         # new_max = min(20, 0) = 0, 0 <= 10 → no expansion
         adjusted = pool.auto_tune(max_memory_mb=1)
-        self.assertFalse(adjusted)
-        self.assertEqual(pool._max_size, 10)  # unchanged
+        assert not adjusted
+        assert pool._max_size  ==  10  # unchanged
 
 
-class TestObjectPoolStats(unittest.TestCase):
+class TestObjectPoolStats:
     """get_stats 测试"""
 
     def test_get_stats_basic(self):
         """基本统计"""
         pool = ObjectPool(lambda: _DummyObj(), initial_size=5, max_size=20)
         stats = pool.get_stats()
-        self.assertIn("current_size", stats)
-        self.assertIn("hit_rate", stats)
-        self.assertIn("estimated_memory_mb", stats)
-        self.assertEqual(stats["current_size"], 5)
+        assert stats  in  "current_size"
+        assert stats  in  "hit_rate"
+        assert stats  in  "estimated_memory_mb"
+        assert stats["current_size"]  ==  5
 
     def test_estimate_memory(self):
         """内存估算"""
         pool = ObjectPool(lambda: _DummyObj(), initial_size=10, max_size=50, object_size_estimate=256)
         mem = pool.estimate_memory()
-        self.assertEqual(mem, 10 * 256)
+        assert mem  ==  10 * 256
 
     def test_clear(self):
         """清空池"""
         pool = ObjectPool(lambda: _DummyObj(), initial_size=5, max_size=20)
         pool.clear()
-        self.assertEqual(len(pool._pool), 0)
+        assert len(pool._pool)  ==  0
 
 
-class TestByteArrayPool(unittest.TestCase):
+class TestByteArrayPool:
     """ByteArrayPool 测试"""
 
     def test_init_and_acquire(self):
         """初始化并获取"""
         pool = ByteArrayPool(buffer_size=32, initial_size=3, max_size=10)
         buf = pool.acquire()
-        self.assertIsInstance(buf, bytearray)
-        self.assertEqual(len(buf), 32)
+        assert isinstance(buf, bytearray)
+        assert len(buf)  ==  32
 
     def test_release_zeros_buffer(self):
         """归还时清零"""
@@ -289,16 +289,16 @@ class TestByteArrayPool(unittest.TestCase):
         for i in range(len(buf)):
             buf[i] = 255
         pool.release(buf)
-        self.assertTrue(all(b == 0 for b in buf))
+        assert all(b == 0 for b in buf)
 
     def test_get_stats(self):
         """获取统计"""
         pool = ByteArrayPool(buffer_size=64, initial_size=5, max_size=20)
         stats = pool.get_stats()
-        self.assertIn("current_size", stats)
+        assert stats  in  "current_size"
 
 
-class TestGlobalPoolManagerLazyInit(unittest.TestCase):
+class TestGlobalPoolManagerLazyInit:
     """GlobalPoolManager 延迟初始化路径测试"""
 
     def setUp(self):
@@ -311,64 +311,64 @@ class TestGlobalPoolManagerLazyInit(unittest.TestCase):
     def test_double_initialize_skips_second(self):
         """重复初始化被跳过"""
         mgr = GlobalPoolManager()
-        self.assertFalse(mgr._initialized)
+        assert not mgr._initialized
         mgr.initialize()
-        self.assertTrue(mgr._initialized)
+        assert mgr._initialized
         # 第二次调用应直接返回
         mgr.initialize()
-        self.assertTrue(mgr._initialized)
+        assert mgr._initialized
 
     def test_get_ecpoint_pool_lazy_init(self):
         """get_ecpoint_pool 自动初始化"""
         mgr = GlobalPoolManager()
-        self.assertFalse(mgr._initialized)
+        assert not mgr._initialized
         pool = mgr.get_ecpoint_pool()
-        self.assertIsNotNone(pool)
-        self.assertTrue(mgr._initialized)
+        assert pool is not None
+        assert mgr._initialized
 
     def test_get_bytearray_pool_lazy_init(self):
         """get_bytearray_pool 自动初始化"""
         mgr = GlobalPoolManager()
         pool = mgr.get_bytearray_pool(32)
-        self.assertIsNotNone(pool)
-        self.assertTrue(mgr._initialized)
+        assert pool is not None
+        assert mgr._initialized
 
     def test_get_bytearray_pool_dynamic_size(self):
         """非 32/64 的 size 创建临时池"""
         mgr = GlobalPoolManager()
         mgr.initialize()
         pool = mgr.get_bytearray_pool(128)
-        self.assertIsNotNone(pool)
+        assert pool is not None
         stats = pool.get_stats()
-        self.assertEqual(stats["max_size"], 1000)
+        assert stats["max_size"]  ==  1000
 
     def test_get_all_stats_lazy_init(self):
         """get_all_stats 自动初始化"""
         mgr = GlobalPoolManager()
         stats = mgr.get_all_stats()
-        self.assertIn("ecpoint", stats)
-        self.assertIn("total_estimated_memory_mb", stats)
+        assert stats  in  "ecpoint"
+        assert stats  in  "total_estimated_memory_mb"
 
     def test_get_total_memory_estimate_lazy_init(self):
         """get_total_memory_estimate 自动初始化"""
         mgr = GlobalPoolManager()
         mem = mgr.get_total_memory_estimate()
-        self.assertGreater(mem, 0)
+        assert mem  >  0
 
     def test_auto_tune_all_lazy_init(self):
         """auto_tune_all 自动初始化"""
         mgr = GlobalPoolManager()
         adjusted = mgr.auto_tune_all(max_memory_mb=1024)
-        self.assertIsInstance(adjusted, bool)
+        assert isinstance(adjusted, bool)
 
     def test_shrink_all_lazy_init(self):
         """shrink_all 自动初始化"""
         mgr = GlobalPoolManager()
         released = mgr.shrink_all()
-        self.assertGreaterEqual(released, 0)
+        assert released  >=  0
 
 
-class TestGlobalPoolManagerAutoTuneAll(unittest.TestCase):
+class TestGlobalPoolManagerAutoTuneAll:
     """auto_tune_all 测试"""
 
     def setUp(self):
@@ -382,7 +382,7 @@ class TestGlobalPoolManagerAutoTuneAll(unittest.TestCase):
         mgr = GlobalPoolManager()
         mgr.initialize()
         adjusted = mgr.auto_tune_all(max_memory_mb=1024)
-        self.assertIsInstance(adjusted, bool)
+        assert isinstance(adjusted, bool)
 
     @patch("src.core.memory_pool.ObjectPool.auto_tune", return_value=True)
     def test_auto_tune_all_returns_true_when_adjusted(self, mock_tune):
@@ -390,7 +390,7 @@ class TestGlobalPoolManagerAutoTuneAll(unittest.TestCase):
         mgr = GlobalPoolManager()
         mgr.initialize()
         adjusted = mgr.auto_tune_all(max_memory_mb=1024)
-        self.assertTrue(adjusted)
+        assert adjusted
 
     def test_auto_tune_all_psutil_not_available(self):
         """Psutil 不可用时的回退"""
@@ -399,7 +399,7 @@ class TestGlobalPoolManagerAutoTuneAll(unittest.TestCase):
         with patch("builtins.__import__", side_effect=ImportError("no psutil")):
             adjusted = mgr.auto_tune_all()  # max_memory_mb=None → tries psutil
         # Falls back to 128MB
-        self.assertIsInstance(adjusted, bool)
+        assert isinstance(adjusted, bool)
 
     @patch("psutil.virtual_memory")
     def test_auto_tune_all_psutil_available(self, mock_vm):
@@ -408,10 +408,10 @@ class TestGlobalPoolManagerAutoTuneAll(unittest.TestCase):
         mgr = GlobalPoolManager()
         mgr.initialize()
         adjusted = mgr.auto_tune_all()  # max_memory_mb=None
-        self.assertIsInstance(adjusted, bool)
+        assert isinstance(adjusted, bool)
 
 
-class TestGlobalPoolManagerShrinkAll(unittest.TestCase):
+class TestGlobalPoolManagerShrinkAll:
     """shrink_all 测试"""
 
     def setUp(self):
@@ -430,7 +430,7 @@ class TestGlobalPoolManagerShrinkAll(unittest.TestCase):
             pt = pool.acquire(x=1, y=2)
             pool.release(pt)
         released = mgr.shrink_all()
-        self.assertGreaterEqual(released, 0)
+        assert released  >=  0
 
     @patch("src.core.memory_pool.ObjectPool.shrink")
     def test_shrink_all_logs_when_released(self, mock_shrink):
@@ -439,10 +439,10 @@ class TestGlobalPoolManagerShrinkAll(unittest.TestCase):
         mgr = GlobalPoolManager()
         mgr.initialize()
         total = mgr.shrink_all()
-        self.assertGreater(total, 0)
+        assert total  >  0
 
 
-class TestGlobalPoolManagerAutoCleanup(unittest.TestCase):
+class TestGlobalPoolManagerAutoCleanup:
     """P1-6 自动清理测试"""
 
     def setUp(self):
@@ -457,10 +457,10 @@ class TestGlobalPoolManagerAutoCleanup(unittest.TestCase):
         """启动自动清理线程"""
         mgr = GlobalPoolManager()
         mgr.initialize()
-        self.assertIsNone(mgr._cleanup_state.thread)
+        assert mgr._cleanup_state.thread is None
         mgr.start_auto_cleanup(interval_seconds=0.5)
-        self.assertIsNotNone(mgr._cleanup_state.thread)
-        self.assertTrue(mgr._cleanup_state.thread.is_alive())
+        assert mgr._cleanup_state.thread is not None
+        assert mgr._cleanup_state.thread.is_alive()
 
     def test_start_auto_cleanup_idempotent(self):
         """重复启动不创建新线程"""
@@ -468,17 +468,17 @@ class TestGlobalPoolManagerAutoCleanup(unittest.TestCase):
         mgr.start_auto_cleanup(interval_seconds=0.5)
         first_thread = mgr._cleanup_state.thread
         mgr.start_auto_cleanup(interval_seconds=0.5)
-        self.assertIs(mgr._cleanup_state.thread, first_thread)
+        assert mgr._cleanup_state.thread  is  first_thread
 
     def test_stop_auto_cleanup(self):
         """停止自动清理线程"""
         mgr = GlobalPoolManager()
         mgr.start_auto_cleanup(interval_seconds=0.5)
-        self.assertIsNotNone(mgr._cleanup_state.thread)
-        self.assertTrue(mgr._cleanup_state.thread.is_alive())
+        assert mgr._cleanup_state.thread is not None
+        assert mgr._cleanup_state.thread.is_alive()
         mgr.stop_auto_cleanup(timeout=2.0)
         # stop 成功后将 _cleanup_state.thread 设为 None
-        self.assertIsNone(mgr._cleanup_state.thread)
+        assert mgr._cleanup_state.thread is None
 
     def test_stop_auto_cleanup_not_running(self):
         """未运行时停止不报错"""
@@ -534,7 +534,7 @@ class TestGlobalPoolManagerAutoCleanup(unittest.TestCase):
         # Should not crash
 
 
-class TestGlobalPoolManagerIntegration(unittest.TestCase):
+class TestGlobalPoolManagerIntegration:
     """集成测试"""
 
     def setUp(self):
@@ -549,16 +549,16 @@ class TestGlobalPoolManagerIntegration(unittest.TestCase):
         mgr.initialize()
 
         ec_pool = mgr.get_ecpoint_pool()
-        self.assertIsNotNone(ec_pool)
+        assert ec_pool is not None
 
         ba32 = mgr.get_bytearray_pool(32)
-        self.assertIsNotNone(ba32)
+        assert ba32 is not None
 
         ba64 = mgr.get_bytearray_pool(64)
-        self.assertIsNotNone(ba64)
+        assert ba64 is not None
 
         stats = mgr.get_all_stats()
-        self.assertIn("ecpoint", stats)
+        assert stats  in  "ecpoint"
 
         mgr.start_auto_cleanup(interval_seconds=0.5)
         mgr.stop_auto_cleanup(timeout=2.0)
@@ -567,8 +567,5 @@ class TestGlobalPoolManagerIntegration(unittest.TestCase):
         """全局单例"""
         m1 = get_pool_manager()
         m2 = get_pool_manager()
-        self.assertIs(m1, m2)
+        assert m1  is  m2
 
-
-if __name__ == "__main__":
-    unittest.main()

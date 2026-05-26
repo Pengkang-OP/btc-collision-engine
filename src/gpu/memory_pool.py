@@ -47,6 +47,9 @@ from ..utils.pool_helpers import (
 # 注意: init_logging() 应由应用入口统一调用，避免重复初始化
 logger = get_configured_logger("GPUMemoryPool")
 
+# 显存探测测试块大小（10MB），用于 _adapt_pool_capacity 中验证显存是否充足
+LOG_DEFAULT_MAX_BYTES = 10 * 1024 * 1024
+
 
 class GPUMemoryPool:
     """GPU内存池 - 复用OpenCL缓冲区
@@ -109,7 +112,7 @@ class GPUMemoryPool:
     ) -> None:
         """初始化GPU内存池
 
-        参数:
+        Args:
             context: OpenCL上下文
             max_buffers: 最大缓冲区数量
             max_memory_mb: 最大内存使用量(MB)
@@ -162,12 +165,12 @@ class GPUMemoryPool:
     def allocate(self, size: int, flags: Any | None = None, buffer_type: str = "generic") -> Any:
         """分配GPU内存(优先复用)
 
-        参数:
+        Args:
             size: 缓冲区大小(字节)
             flags: OpenCL内存标志(可选)
             buffer_type: 缓冲区类型 (generic, input, output, temp)
 
-        返回:
+        Returns:
             OpenCL缓冲区对象
         """
         import pyopencl as cl
@@ -238,7 +241,7 @@ class GPUMemoryPool:
     def release(self, buf: Any, size: int | None = None, buffer_type: str = "generic") -> None:
         """归还GPU缓冲区到池中
 
-        参数:
+        Args:
             buf: OpenCL缓冲区对象
             size: 缓冲区大小(字节),如果为None则尝试从池中查找
             buffer_type: 缓冲区类型 (generic, input, output, temp)
@@ -325,7 +328,7 @@ class GPUMemoryPool:
 
         在初始化阶段预分配常用缓冲区，避免运行时频繁分配。
 
-        参数:
+        Args:
             sizes: 需要预分配的缓冲区大小列表
             count_per_size: 每个大小的预分配数量，默认2
             flags: OpenCL内存标志，默认READ_WRITE（通用）
@@ -511,14 +514,14 @@ class GPUMemoryPool:
                 if top_sizes:
                     logger.debug("最常用的缓冲区大小: %s", top_sizes)
 
-    def _record_allocation_pattern(self, size: int):
+    def _record_allocation_pattern(self, size: int) -> None:
         """记录分配模式"""
         if size in self._allocation_patterns:
             self._allocation_patterns[size] += 1
         else:
             self._allocation_patterns[size] = 1
 
-    def _record_memory_usage(self):
+    def _record_memory_usage(self) -> None:
         """记录内存使用情况"""
         self._memory_usage_history.append(
             {
@@ -552,7 +555,7 @@ class GPUMemoryPool:
             import pyopencl as cl
 
             # 尝试分配10MB测试块来探测可用显存（避免100MB过大开销）
-            test_size = 10 * 1024 * 1024
+            test_size = LOG_DEFAULT_MAX_BYTES
             test_buf = cl.Buffer(context, cl.mem_flags.WRITE_ONLY, test_size)
             test_buf.release()
             del test_buf
@@ -605,7 +608,7 @@ class GPUMemoryPool:
     def get_stats(self) -> dict:
         """获取内存池统计信息
 
-        返回:
+        Returns:
             包含统计数据的字典
         """
         with self._lock:
@@ -756,7 +759,7 @@ class GPUBufferAllocator:
     def __init__(self, context: Any, max_pool_size: int = 200) -> None:
         """初始化GPU缓冲区分配器
 
-        参数:
+        Args:
             context: OpenCL上下文
             max_pool_size: 最大池大小
         """
@@ -847,11 +850,11 @@ class GlobalGPUMemoryManager:
     def get_pool(self, context: Any, max_buffers: int = 100) -> GPUMemoryPool:
         """获取或创建GPU内存池
 
-        参数:
+        Args:
             context: OpenCL上下文
             max_buffers: 最大缓冲区数量
 
-        返回:
+        Returns:
             GPUMemoryPool实例
         """
         context_id = id(context)
@@ -907,7 +910,7 @@ class GlobalGPUMemoryManager:
 
         v4.2.4: 使用共享 start_cleanup_thread() 统一管理
 
-        参数:
+        Args:
             interval_seconds: 清理间隔(秒)，默认 300s (5分钟)
             lru_idle_timeout: LRU空闲超时(秒)，默认 600s (10分钟)
         """
@@ -928,7 +931,7 @@ class GlobalGPUMemoryManager:
 
         v4.2.4: 使用共享 stop_cleanup_thread() 统一管理
 
-        参数:
+        Args:
             timeout: 等待线程结束的超时时间(秒)，默认5秒
         """
         stop_cleanup_thread(

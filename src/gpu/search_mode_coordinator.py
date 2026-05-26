@@ -11,8 +11,8 @@ from ..gpu.search_modes import BruteForceSearchMode, RandomSearchMode, RangeScan
 from ..utils import get_configured_logger
 
 if TYPE_CHECKING:
-    # 避免循环导入：仅在类型检查时引用引擎
-    from ..collision.gpu.engine import GPUCollisionEngine
+    # ROADMAP #13: 使用协议接口替代直接引用，消除反向依赖
+    from ._engine_protocol import GPUEngineProtocol as GPUCollisionEngine
 
 _logger = get_configured_logger("SearchModeCoordinator")
 
@@ -59,7 +59,7 @@ class SearchModeCoordinator:
                     if isinstance(val, int):
                         seed_prefetch_size = val
         except Exception:
-            pass  # 使用模块级默认值
+            self.logger.debug("Failed to read config seed_prefetch_size, using default")
 
         # v5.1.2: 将自适应控制器从 AsyncGPUExecutor 传递给 RandomSearchMode
         adaptive_controller = None
@@ -71,7 +71,7 @@ class SearchModeCoordinator:
                     None,
                 )
         except Exception:
-            pass
+            self.logger.debug("Failed to get adaptive controller from async executor")
 
         self._modes[self.MODE_RANDOM] = RandomSearchMode(
             self.engine,
@@ -162,7 +162,7 @@ class SearchModeCoordinator:
         # 启动新模式
         self.start(new_mode, resume=False, **kwargs)
 
-    def _save_current_state(self):
+    def _save_current_state(self) -> None:
         """保存当前模式的状态"""
         if self.engine.checkpoint_mgr:
             try:

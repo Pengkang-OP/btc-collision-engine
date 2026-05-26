@@ -55,6 +55,7 @@ class GPUFacade:
         checkpoint_enabled=False,
         dedup_enabled=False,
         config=None,
+        **kwargs,
     ):
         """初始化GPU外观类
 
@@ -77,7 +78,10 @@ class GPUFacade:
 
         logger.debug("GPUFacade已创建")
 
-    def start(self, mode="random", resume=False, max_keys=None, **kwargs):
+    def start(
+        self, mode: str = "random", resume: bool = False,
+        max_keys: int | None = None, **kwargs: Any,
+    ) -> None:
         """启动GPU碰撞（兼容 KeyCollisionEngine.start API）
 
         Args:
@@ -94,8 +98,12 @@ class GPUFacade:
                 if not isinstance(gpu_section, dict):
                     gpu_section = {}
                 device_index = gpu_section.get("device_index", 0) or self._config.get("gpu_device", 0)
-            # v5.2.1: 优先 CLI 参数，其次 config 中的 gpu.batch_size，最后默认值
-            batch_size = kwargs.get("batch_size") or gpu_section.get("batch_size") or 1000000
+            # v5.2.2: 修复 — batch_size 为 0 时不应使用回退值
+            batch_size = kwargs.get("batch_size")
+            if batch_size is None:
+                batch_size = gpu_section.get("batch_size", 1000000)
+            if not batch_size:
+                batch_size = 1000000
             self.initialize(device_index=device_index, batch_size=int(batch_size))
 
         if not self._targets:
@@ -103,7 +111,9 @@ class GPUFacade:
             return
 
         self._mode = mode
-        self.start_collision(self._targets, mode=mode, batch_size=kwargs.get("batch_size", 10000))
+        # v5.2.2: 修复 — 统一 batch_size 传递，None 时使用初始化时的值
+        batch_size = kwargs.get("batch_size")
+        self.start_collision(self._targets, mode=mode, batch_size=batch_size)
 
     def is_available(self) -> bool:
         """检查GPU是否可用
@@ -119,9 +129,9 @@ class GPUFacade:
             available = len(devices) > 0
 
             if available:
-                logger.info(f"GPU可用，检测到 {len(devices)} 个设备")
+                logger.debug("GPU可用，检测到 %d 个设备", len(devices))
             else:
-                logger.info("GPU不可用")
+                logger.debug("GPU不可用")
 
             return available
 
@@ -198,7 +208,11 @@ class GPUFacade:
             )
 
             self._is_initialized = True
-            logger.info(f"GPU已初始化: 设备={device_index}, 批次={batch_size:,}")
+            logger.debug(
+                "GPU已初始化: 设备=%d, 批次=%s",
+                device_index,
+                f"{batch_size:,}",
+            )
             return True
 
         except Exception as e:
@@ -210,14 +224,14 @@ class GPUFacade:
         self,
         targets: list[str],
         mode: str = "random",
-        batch_size: int = 10000,
+        batch_size: int | None = None,
     ) -> bool:
         """启动GPU碰撞
 
         Args:
             targets: 目标地址列表
             mode: 碰撞模式
-            batch_size: 批次大小
+            batch_size: 批次大小（None 时使用 initialize 时设置的批次大小）
 
         Returns:
             bool: 启动成功返回True
@@ -231,10 +245,12 @@ class GPUFacade:
             # 设置目标
             self._collision_engine.targets = set(targets)
 
+            # v5.2.2: 修复 — 统一 batch_size 传递，None 时使用初始化时的值
+            if batch_size is None:
+                batch_size = self._collision_engine.batch_size
             # 启动碰撞
             self._collision_engine.start(mode=mode, batch_size=batch_size)
-
-            logger.info(f"GPU碰撞已启动: 模式={mode}, 目标={len(targets)}")
+            logger.debug("GPU碰撞已启动: 模式=%s, 目标=%d", mode, len(targets))
             return True
 
         except Exception as e:
@@ -253,7 +269,7 @@ class GPUFacade:
 
         try:
             self._collision_engine.stop()
-            logger.info("GPU碰撞已停止")
+            logger.debug("GPU碰撞已停止")
             return True
 
         except Exception as e:
@@ -320,7 +336,7 @@ class GPUFacade:
                 self._gpu_device.cleanup()
 
             self._is_initialized = False
-            logger.info("GPU资源已清理")
+            logger.debug("GPU资源已清理")
 
         except Exception as e:
             logger.error("清理GPU资源失败: %s", e)
@@ -363,7 +379,13 @@ class GPUFacade:
         return False
 
     def __del__(self):
-        """析构函数"""
+        """析构函数
+
+        风险说明（评估为低风险，暂不修改）：
+        - cleanup() 调用 queue.finish() 等 PyOpenCL 操作，解释器关闭时可能静默失败
+        - 但已有 contextlib.suppress(Exception) 保护，不会传播异常
+        - 推荐使用上下文管理器（with 语句）确保资源正确释放
+        """
         with contextlib.suppress(Exception):
             self.cleanup()
             # A类修复: 析构函数中资源清理失败静默处理

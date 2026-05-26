@@ -50,12 +50,7 @@ from .events import (
 )
 from .types import CompleteCallback, MatchCallback, ProgressCallback
 
-# 获取模块日志记录器
-# v4.2.1修复: Python的logging.Logger本身是线程安全的，无需ThreadSafeLogger包装
-logger = get_configured_logger("KeyCollisionEngine")
-sampled_logger = get_sampled_logger("KeyCollisionEngine.sampled", sample_rate=1000)
-
-from ._engine_constants import (  # noqa: E402
+from ._engine_constants import (
     BATCH_SIZE,
     BATCH_TUNE_1_2_CORE,
     BATCH_TUNE_4_CORE,
@@ -74,6 +69,11 @@ from ._engine_constants import (  # noqa: E402
     PROGRESS_INTERVAL_COUNT_DEFAULT,
     PROGRESS_INTERVAL_SEC,
 )
+
+# 获取模块日志记录器
+# v4.2.1修复: Python的logging.Logger本身是线程安全的，无需ThreadSafeLogger包装
+logger = get_configured_logger("KeyCollisionEngine")
+sampled_logger = get_sampled_logger("KeyCollisionEngine.sampled", sample_rate=1000)
 
 
 class KeyCollisionEngine(BaseCollisionEngine):
@@ -435,7 +435,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
         同时检查压缩和非压缩格式地址，与主热路径 _worker_process_key 保持一致。
 
-        返回:
+        Returns:
             (private_key, address) 如果匹配，否则 None
             注意：返回的private_key是副本，调用者负责清零
         """
@@ -479,7 +479,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         将当前碰撞进度保存到 JSON 格式的断点文件中，支持断点续传功能。
         仅在启用了断点管理且满足自动保存间隔条件时执行实际保存操作。
 
-        参数:
+        Args:
             count: 当前已检查的私钥数量
 
         注意:
@@ -524,7 +524,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
         在满足间隔条件时记录性能、系统和引擎数据到数据日志系统。
 
-        参数:
+        Args:
             count: 当前已检查的私钥数量
             speed: 当前检测速度（次/秒）
         """
@@ -583,7 +583,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         当进程内存使用超过阈値时，自动降低 batch_size 和 max_workers
         以降低内存压力，防止程序 OOM 崩溃。
 
-        参数:
+        Args:
             memory_mb: 当前进程占用内存（MB）
             current_time: 当前时间戳
         """
@@ -682,7 +682,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         - 仅在目标数 >= COMPRESSION_AUTO_THRESHOLD 时自动切为仅压缩格式（性能优先）
         - 用户可通过 check_uncompressed 参数显式覆盖此行为
 
-        返回:
+        Returns:
             bool: 是否需要检查非压缩格式
         """
         target_count = len(self.targets)
@@ -735,7 +735,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
             logger.info(f"加密后端初始化完成: {backend.name}, 恒定时间={backend.is_constant_time()}")
 
         except (RuntimeError, OSError, ValueError) as e:
-            logger.error("加密后端初始化失败: %s，使用默认后端", e, exc_info=True)
+            logger.error("加密后端初始化失败: %s", e, exc_info=True)
+            raise
 
     def _log_throttled_error(
         self,
@@ -1098,10 +1099,10 @@ class KeyCollisionEngine(BaseCollisionEngine):
         P1-1重构: 提取 _log_throttled_error / _process_key_match，
         方法从 248 行缩减至 ~160 行。
 
-        参数:
+        Args:
             worker_id: 工作线程标识符，用于日志区分，默认0
 
-        返回:
+        Returns:
             本线程处理的私钥总数
         """
         local_count = 0
@@ -2030,7 +2031,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             max_keys: 最大处理私钥数量（None=无限），用于测试环境自然终止
             kwargs: range模式需要 start, end; brute_force需要 start
 
-        异常:
+        Raises:
             ValueError: 当参数无效时
             Exception: 当启动失败时
         """
@@ -2181,7 +2182,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
     def stop(self, timeout: float | None = None) -> None:
         """停止对撞
 
-        参数:
+        Args:
             timeout: 等待工作线程结束的超时时间（秒）
                     None时使用默认值（根据目标数动态计算，最少10秒）
         """
@@ -2218,7 +2219,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
     def is_running(self) -> bool:
         """检查碰撞引擎是否正在运行
 
-        返回:
+        Returns:
             True 表示引擎正在运行（已启动且工作线程存活），
             False 表示引擎已停止或未启动
         """
@@ -2249,6 +2250,11 @@ class KeyCollisionEngine(BaseCollisionEngine):
         # - 记录警告级别日志，不抛出异常（析构函数不能抛出异常）
         # - 异常通常是资源清理问题，不影响主要功能
         # - 更好的做法是使用上下文管理器确保资源正确清理
+        #
+        # 风险评估（低风险，暂不修改）：
+        # - self.stop() 内部可能获取锁，在解释器关闭时存在潜在死锁风险
+        # - 但已有 try/except 包裹，异常被 logger.debug 记录后静默处理
+        # - 守护线程在进程退出时会自动清理，不依赖 __del__ 的完整执行
         try:
             if hasattr(self, "_running") and self._running and hasattr(self, "stop"):
                 self.stop()
@@ -2258,7 +2264,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
     def get_stats(self) -> CollisionStats:
         """获取当前碰撞统计信息
 
-        返回:
+        Returns:
             CollisionStats 对象，包含总检查数、匹配数、运行时间等统计信息
 
         注意:

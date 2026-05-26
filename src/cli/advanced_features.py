@@ -1,10 +1,10 @@
 """Advanced CLI features for power users."""
 
-import logging
+from ..utils import get_configured_logger
 from pathlib import Path
 from typing import Any
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger(__name__)
 
 
 def apply_template(template_name: str) -> bool:
@@ -70,7 +70,7 @@ def recommend_parameters(args: Any) -> dict[str, Any]:
         devices = GPUDeviceDetector.detect_devices()
         has_gpu = len(devices) > 0
     except Exception:
-        pass
+        logger.debug("GPU detection failed, falling back to CPU")
 
     # Recommend based on resources
     if has_gpu:

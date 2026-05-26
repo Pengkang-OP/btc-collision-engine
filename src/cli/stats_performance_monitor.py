@@ -1,9 +1,9 @@
 """Statistics and performance monitor CLI integration."""
 
-import logging
+from ..utils import get_configured_logger
 import time
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger(__name__)
 
 
 class StatsPerformanceMonitor:

@@ -10,13 +10,13 @@
 """
 
 import hashlib
-import logging
+from ...utils import get_configured_logger
 import time
 from typing import Any, cast
 
 from .protocols import GPUContext, GPUDevice, GPUKernel, IKernelExecutor, MatchResult
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger(__name__)
 
 
 class GPUKernelAdapter(IKernelExecutor):

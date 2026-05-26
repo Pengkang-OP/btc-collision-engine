@@ -4,10 +4,10 @@
 根据设备硬件规格和基准测试结果，自动推荐最优的内核参数配置。
 """
 
-import logging
+from ..utils import get_configured_logger
 from typing import Any
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger(__name__)
 
 
 class GPUAutoTuner:

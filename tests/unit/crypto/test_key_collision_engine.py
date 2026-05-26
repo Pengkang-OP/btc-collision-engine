@@ -26,20 +26,20 @@ from src.collision.key_collision_engine import KeyCollisionEngine
 from tests.conftest_engine import get_known_target as _get_known_target
 
 
-class TestKeyCollisionEngineLifecycle(unittest.TestCase):
+class TestKeyCollisionEngineLifecycle:
     """引擎生命周期测试"""
 
     def test_initial_state_not_running(self):
         """初始状态为未运行"""
         engine = KeyCollisionEngine(targets={"1TestAddr"})
-        self.assertFalse(engine.is_running())
+        assert not engine.is_running()
 
     def test_start_sets_running(self):
         """start() 后引擎处于运行状态"""
         engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1)
         engine.start(mode="random")
         time.sleep(0.2)
-        self.assertTrue(engine.is_running())
+        assert engine.is_running()
         engine.stop()
 
     def test_stop_ends_running(self):
@@ -49,7 +49,7 @@ class TestKeyCollisionEngineLifecycle(unittest.TestCase):
         time.sleep(0.2)
         engine.stop()
         time.sleep(0.3)
-        self.assertFalse(engine.is_running())
+        assert not engine.is_running()
 
     def test_double_start_ignored(self):
         """重复 start() 不崩溃"""
@@ -68,10 +68,10 @@ class TestKeyCollisionEngineLifecycle(unittest.TestCase):
         """get_stats() 返回 CollisionStats 对象"""
         engine = KeyCollisionEngine(targets={"1TestAddr"})
         stats = engine.get_stats()
-        self.assertIsInstance(stats, CollisionStats)
+        assert isinstance(stats, CollisionStats)
 
 
-class TestKeyCollisionEngineCallbacks(unittest.TestCase):
+class TestKeyCollisionEngineCallbacks:
     """回调函数测试"""
 
     def test_progress_callback_called(self):
@@ -90,7 +90,7 @@ class TestKeyCollisionEngineCallbacks(unittest.TestCase):
         time.sleep(2.5)  # 等待至少一次进度回调
         engine.stop()
 
-        self.assertGreater(len(progress_events), 0, "进度回调应至少被调用一次")
+        assert len(progress_events)  >  0, "进度回调应至少被调用一次"
 
     def test_complete_callback_called(self):
         """完成回调在停止后被调用"""
@@ -109,7 +109,7 @@ class TestKeyCollisionEngineCallbacks(unittest.TestCase):
         engine.stop()
         # 等待完成回调（stop()内部join最长10s，需要等worker完全退出）
         complete_called.wait(timeout=15)
-        self.assertTrue(complete_called.is_set(), "完成回调应在stop后触发")
+        assert complete_called.is_set(), "完成回调应在stop后触发"
 
     def test_match_callback_called_for_known_key(self):
         """使用已知私钥-地址对，range 扫描找到匹配后触发回调"""
@@ -131,14 +131,14 @@ class TestKeyCollisionEngineCallbacks(unittest.TestCase):
         match_event.wait(timeout=10)
         engine.stop()
 
-        self.assertTrue(match_event.is_set(), "应在范围[1,5]内找到匹配")
-        self.assertGreater(len(match_results), 0)
+        assert match_event.is_set(), "应在范围[1,5]内找到匹配"
+        assert len(match_results)  >  0
         _, found_addr, wif = match_results[0]
-        self.assertEqual(found_addr, known_addr)
-        self.assertTrue(wif.startswith(("K", "L", "5")))
+        assert found_addr  ==  known_addr
+        assert wif.startswith(("K", "L", "5"))
 
 
-class TestKeyCollisionEngineRangeScan(unittest.TestCase):
+class TestKeyCollisionEngineRangeScan:
     """范围扫描模式测试"""
 
     def test_range_scan_basic(self):
@@ -168,13 +168,13 @@ class TestKeyCollisionEngineRangeScan(unittest.TestCase):
         # 等待范围扫描完成（使用 on_complete 回调）
         if not complete_event.wait(timeout=30):
             engine.stop()
-            self.fail("范围扫描未在30秒内完成")
+            pytest.fail("范围扫描未在30秒内完成")
         stats = engine.get_stats()
         # 范围内应检查接近3000个
-        self.assertGreater(stats.total_checked, 2500, f"total_checked={stats.total_checked}")
+        assert stats.total_checked  >  2500, f"total_checked={stats.total_checked}"
 
 
-class TestKeyCollisionEngineBruteForce(unittest.TestCase):
+class TestKeyCollisionEngineBruteForce:
     """暴力穷举模式测试"""
 
     def test_brute_force_start_stop(self):
@@ -201,10 +201,10 @@ class TestKeyCollisionEngineBruteForce(unittest.TestCase):
         engine.start(mode="brute_force", start=1)
         match_event.wait(timeout=10)
         engine.stop()
-        self.assertTrue(match_event.is_set())
+        assert match_event.is_set()
 
 
-class TestKeyCollisionEngineDedup(unittest.TestCase):
+class TestKeyCollisionEngineDedup:
     """去重过滤器集成测试"""
 
     @pytest.mark.flaky(reruns=2, reruns_delay=1)  # 允许重试2次（性能测试不稳定）
@@ -226,10 +226,10 @@ class TestKeyCollisionEngineDedup(unittest.TestCase):
         if stats.total_checked == 0:
             time.sleep(1.0)
             stats = engine.get_stats()
-        self.assertGreater(stats.total_checked, 0)
+        assert stats.total_checked  >  0
 
 
-class TestKeyCollisionEngineConstructorBranches(unittest.TestCase):
+class TestKeyCollisionEngineConstructorBranches:
     """构造函数分支覆盖：非优化路径、显式参数"""
 
     def test_constructor_standard_generator(self):
@@ -240,7 +240,7 @@ class TestKeyCollisionEngineConstructorBranches(unittest.TestCase):
             max_workers=1,
             data_logging_enabled=False,
         )
-        self.assertFalse(engine.is_running())
+        assert not engine.is_running()
         # 标准版生成器不应设置优化参数
         engine.stop()
 
@@ -252,7 +252,7 @@ class TestKeyCollisionEngineConstructorBranches(unittest.TestCase):
             max_workers=1,
             data_logging_enabled=False,
         )
-        self.assertTrue(engine.check_uncompressed)
+        assert engine.check_uncompressed
         engine.stop()
 
     def test_constructor_explicit_check_uncompressed_false(self):
@@ -263,7 +263,7 @@ class TestKeyCollisionEngineConstructorBranches(unittest.TestCase):
             max_workers=1,
             data_logging_enabled=False,
         )
-        self.assertFalse(engine.check_uncompressed)
+        assert not engine.check_uncompressed
         engine.stop()
 
     def test_constructor_data_logging_disabled(self):
@@ -273,8 +273,8 @@ class TestKeyCollisionEngineConstructorBranches(unittest.TestCase):
             data_logging_enabled=False,
             max_workers=1,
         )
-        self.assertFalse(engine.data_logging_enabled)
-        self.assertIsNone(engine.data_logger)
+        assert not engine.data_logging_enabled
+        assert engine.data_logger is None
         engine.stop()
 
     def test_constructor_enhanced_monitoring_disabled(self):
@@ -284,8 +284,8 @@ class TestKeyCollisionEngineConstructorBranches(unittest.TestCase):
             use_enhanced_monitoring=False,
             max_workers=1,
         )
-        self.assertIsNone(engine.enhanced_monitoring)
-        self.assertIsNotNone(engine.data_logger)
+        assert engine.enhanced_monitoring is None
+        assert engine.data_logger is not None
         engine.stop()
 
     def test_constructor_explicit_crypto_backend(self):
@@ -296,7 +296,7 @@ class TestKeyCollisionEngineConstructorBranches(unittest.TestCase):
             max_workers=1,
             data_logging_enabled=False,
         )
-        self.assertFalse(engine.is_running())
+        assert not engine.is_running()
         engine.stop()
 
     def test_constructor_verbose_logging_enabled(self):
@@ -307,7 +307,7 @@ class TestKeyCollisionEngineConstructorBranches(unittest.TestCase):
             max_workers=1,
             data_logging_enabled=False,
         )
-        self.assertTrue(engine.verbose_logging)
+        assert engine.verbose_logging
         engine.stop()
 
     def test_constructor_performance_with_custom_window_size(self):
@@ -321,11 +321,11 @@ class TestKeyCollisionEngineConstructorBranches(unittest.TestCase):
             max_workers=1,
             data_logging_enabled=False,
         )
-        self.assertFalse(engine.is_running())
+        assert not engine.is_running()
         engine.stop()
 
 
-class TestKeyCollisionEngineSecureGeneration(unittest.TestCase):
+class TestKeyCollisionEngineSecureGeneration:
     """安全密钥生成 _generate_and_check_secure + 匹配处理 _process_key_match"""
 
     def test_generate_and_check_secure_no_match(self):
@@ -336,7 +336,7 @@ class TestKeyCollisionEngineSecureGeneration(unittest.TestCase):
             data_logging_enabled=False,
         )
         result = engine._generate_and_check_secure()
-        self.assertIsNone(result, "无匹配应返回 None")
+        assert result, "无匹配应返回 None" is None
         engine.stop()
 
     def test_generate_and_check_secure_with_match(self):
@@ -351,7 +351,7 @@ class TestKeyCollisionEngineSecureGeneration(unittest.TestCase):
         # 直接调用内部方法 — 随机生成极大概率无匹配，
         # 这里验证方法可被调用且不抛异常
         result = engine._generate_and_check_secure()
-        self.assertIsNone(result)
+        assert result is None
         engine.stop()
 
     def test_process_key_match_valid(self):
@@ -372,8 +372,8 @@ class TestKeyCollisionEngineSecureGeneration(unittest.TestCase):
             local_matches=local_matches,
             worker_id=0,
         )
-        self.assertTrue(should_continue)
-        self.assertEqual(len(local_matches), 1)
+        assert should_continue
+        assert len(local_matches)  ==  1
         engine.stop()
 
     def test_process_key_match_no_callback_stops(self):
@@ -394,8 +394,8 @@ class TestKeyCollisionEngineSecureGeneration(unittest.TestCase):
             local_matches=local_matches,
             worker_id=0,
         )
-        self.assertFalse(should_continue, "无回调时应返回 False 停止引擎")
-        self.assertTrue(engine._stop_event.is_set())
+        assert not should_continue, "无回调时应返回 False 停止引擎"
+        assert engine._stop_event.is_set()
         engine.stop()
 
     def test_process_key_match_batch_flush(self):
@@ -417,13 +417,13 @@ class TestKeyCollisionEngineSecureGeneration(unittest.TestCase):
             local_matches=local_matches,
             worker_id=0,
         )
-        self.assertTrue(should_continue)
+        assert should_continue
         # 达到阈值10后应触发批量提交并清空列表
-        self.assertEqual(len(local_matches), 0)
+        assert len(local_matches)  ==  0
         engine.stop()
 
 
-class TestKeyCollisionEngineSafeCallback(unittest.TestCase):
+class TestKeyCollisionEngineSafeCallback:
     """安全回调 _safe_invoke_match_callback 异常/超时路径"""
 
     def test_match_callback_exception_isolation(self):
@@ -446,7 +446,7 @@ class TestKeyCollisionEngineSafeCallback(unittest.TestCase):
         time.sleep(0.5)
         # 回调异常不应导致引擎崩溃
         stats = engine.get_stats()
-        self.assertGreater(stats.total_checked, 0, "引擎应继续运行")
+        assert stats.total_checked  >  0, "引擎应继续运行"
         engine.stop()
 
     def test_match_callback_slow_isolation(self):
@@ -473,11 +473,11 @@ class TestKeyCollisionEngineSafeCallback(unittest.TestCase):
         time.sleep(1.5)  # 等待超时处理
         # 回调应被超时拦截，引擎不崩溃
         stats = engine.get_stats()
-        self.assertGreater(stats.total_checked, 0)
+        assert stats.total_checked  >  0
         engine.stop()
 
 
-class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
+class TestKeyCollisionEngineInternalHelpers:
     """内部辅助方法直接测试：内存降级、batch调优、断点、限频日志"""
 
     # ── _check_memory_and_downgrade ──
@@ -488,8 +488,8 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
         old_batch = engine._batch_size
         old_workers = engine.max_workers
         engine._check_memory_and_downgrade(3500.0, time.time())
-        self.assertLess(engine._batch_size, old_batch, "临界状态应降低batch_size")
-        self.assertLess(engine.max_workers, old_workers, "临界状态应降低max_workers")
+        assert engine._batch_size  <  old_batch, "临界状态应降低batch_size"
+        assert engine.max_workers  <  old_workers, "临界状态应降低max_workers"
         engine.stop()
 
     def test_memory_high_downgrade_single_worker(self):
@@ -498,7 +498,7 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
         old_batch = engine._batch_size
         engine._check_memory_and_downgrade(2500.0, time.time())
         if engine._batch_size < old_batch:
-            self.assertLess(engine._batch_size, old_batch)
+            assert engine._batch_size  <  old_batch
         # 单worker不触发max_workers降级
         engine.stop()
 
@@ -508,7 +508,7 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
         engine._batch_size = 2000
         engine._check_memory_and_downgrade(2500.0, time.time())
         # 降至 75% = 1500
-        self.assertEqual(engine._batch_size, 1500)
+        assert engine._batch_size  ==  1500
         engine.stop()
 
     def test_memory_downgrade_cooldown(self):
@@ -519,7 +519,7 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
         batch_after_first = engine._batch_size
         # 立即再次调用（冷却期内）
         engine._check_memory_and_downgrade(3500.0, now + 1.0)
-        self.assertEqual(engine._batch_size, batch_after_first, "冷却期内不应再次降级")
+        assert engine._batch_size  ==  batch_after_first, "冷却期内不应再次降级"
         engine.stop()
 
     # ── _tune_batch_size ──
@@ -530,7 +530,7 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
         engine._cpu_count = 2
         engine._auto_tune_batch_size = True
         engine._tune_batch_size()
-        self.assertEqual(engine._batch_size, 500)
+        assert engine._batch_size  ==  500
         engine.stop()
 
     def test_tune_batch_size_quad_core(self):
@@ -539,7 +539,7 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
         engine._cpu_count = 4
         engine._auto_tune_batch_size = True
         engine._tune_batch_size()
-        self.assertEqual(engine._batch_size, 1000)
+        assert engine._batch_size  ==  1000
         engine.stop()
 
     def test_tune_batch_size_disabled(self):
@@ -548,7 +548,7 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
         engine._auto_tune_batch_size = False
         old_batch = engine._batch_size
         engine._tune_batch_size()
-        self.assertEqual(engine._batch_size, old_batch)
+        assert engine._batch_size  ==  old_batch
         engine.stop()
 
     # ── _save_checkpoint ──
@@ -591,7 +591,7 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
             use_enhanced_monitoring=True,
             max_workers=1,
         )
-        self.assertIsNotNone(engine.data_logger)
+        assert engine.data_logger is not None
         engine._log_throttled_error("test_error", "测试错误消息", ValueError("test"), worker_id=0)
         engine.stop()
 
@@ -621,7 +621,7 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
         """目标地址>=10000时仅检查压缩格式（阈值从50000降至10000以减少漏匹配风险）"""
         many_targets = self._generate_test_addresses(15000)
         engine = KeyCollisionEngine(targets=many_targets, max_workers=1, data_logging_enabled=False)
-        self.assertFalse(engine.check_uncompressed)
+        assert not engine.check_uncompressed
         engine.stop()
 
     # ── _init_crypto_backend ──
@@ -637,7 +637,7 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
             max_workers=1,
             data_logging_enabled=False,
         )
-        self.assertFalse(engine.is_running())
+        assert not engine.is_running()
         engine.stop()
 
     # ── _safe_invoke_match_callback ──
@@ -651,52 +651,52 @@ class TestKeyCollisionEngineInternalHelpers(unittest.TestCase):
             data_logging_enabled=False,
         )
         result = engine._safe_invoke_match_callback((1).to_bytes(32, "big"), "1TestAddr", "WIF123")
-        self.assertTrue(result)
+        assert result
         engine.stop()
 
 
-class TestKeyCollisionEngineStartValidation(unittest.TestCase):
+class TestKeyCollisionEngineStartValidation:
     """start() 参数验证 + 断点恢复路径"""
 
     def test_start_invalid_mode_raises(self):
         """未知模式抛出 ValueError"""
         engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             engine.start(mode="invalid_mode")
         engine.stop()
 
     def test_start_range_missing_params(self):
         """range模式缺少参数抛出 ValueError"""
         engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             engine.start(mode="range")
         engine.stop()
 
     def test_start_range_non_int_params(self):
         """range模式非整数参数抛出 ValueError"""
         engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             engine.start(mode="range", start="abc", end=100)
         engine.stop()
 
     def test_start_range_invalid_range(self):
         """Start < 1 或 end < start 抛出 ValueError"""
         engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             engine.start(mode="range", start=100, end=50)
         engine.stop()
 
     def test_start_brute_force_non_int_start(self):
         """brute_force模式非整数start抛出 ValueError"""
         engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             engine.start(mode="brute_force", start="abc")
         engine.stop()
 
     def test_start_brute_force_negative_start(self):
         """brute_force模式start<1抛出 ValueError"""
         engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             engine.start(mode="brute_force", start=-5)
         engine.stop()
 
@@ -710,7 +710,7 @@ class TestKeyCollisionEngineStartValidation(unittest.TestCase):
         )
         engine.start(mode="random", resume=True)
         time.sleep(0.3)
-        self.assertTrue(engine.is_running())
+        assert engine.is_running()
         engine.stop()
 
     def test_brute_force_with_max_keys(self):
@@ -725,11 +725,11 @@ class TestKeyCollisionEngineStartValidation(unittest.TestCase):
         engine.stop()
         stats = engine.get_stats()
         # max_keys限制生效，引擎正常运行
-        self.assertGreater(stats.total_checked, 0)
+        assert stats.total_checked  >  0
         engine.stop()
 
 
-class TestKeyCollisionEngineContextManager(unittest.TestCase):
+class TestKeyCollisionEngineContextManager:
     """上下文管理器 + 析构函数"""
 
     def test_context_manager_enter_exit(self):
@@ -739,13 +739,13 @@ class TestKeyCollisionEngineContextManager(unittest.TestCase):
             max_workers=1,
             data_logging_enabled=False,
         ) as engine:
-            self.assertFalse(engine.is_running())
+            assert not engine.is_running()
             engine.start(mode="random")
             time.sleep(0.2)
-            self.assertTrue(engine.is_running())
+            assert engine.is_running()
         # __exit__ 应调用 stop()
         time.sleep(0.3)
-        self.assertFalse(engine.is_running())
+        assert not engine.is_running()
 
     def test_del_with_running_engine(self):
         """__del__ 在引擎运行时安全停止"""
@@ -754,7 +754,7 @@ class TestKeyCollisionEngineContextManager(unittest.TestCase):
         time.sleep(0.2)
         # 模拟析构
         engine.__del__()
-        self.assertFalse(engine.is_running())
+        assert not engine.is_running()
 
     def test_del_with_stopped_engine(self):
         """__del__ 在引擎已停止时不报错"""
@@ -762,7 +762,7 @@ class TestKeyCollisionEngineContextManager(unittest.TestCase):
         engine.__del__()
 
 
-class TestKeyCollisionEngineRangeScanWorker(unittest.TestCase):
+class TestKeyCollisionEngineRangeScanWorker:
     """_range_scan_worker 内部路径：匹配、压缩/非压缩、错误处理"""
 
     def test_range_scan_worker_known_key_match(self):
@@ -776,8 +776,8 @@ class TestKeyCollisionEngineRangeScanWorker(unittest.TestCase):
         )
         # k=1 在 [1, 5] 范围内
         count = engine._range_scan_worker(1, 5, 0)
-        self.assertEqual(count, 5, "应扫描5个私钥")
-        self.assertEqual(len(engine.stats.matches), 1)
+        assert count  ==  5, "应扫描5个私钥"
+        assert len(engine.stats.matches)  ==  1
         engine.stop()
 
     def test_range_scan_worker_compressed_only(self):
@@ -791,8 +791,8 @@ class TestKeyCollisionEngineRangeScanWorker(unittest.TestCase):
             data_logging_enabled=False,
         )
         count = engine._range_scan_worker(1, 5, 0)
-        self.assertEqual(count, 5)
-        self.assertEqual(len(engine.stats.matches), 1)
+        assert count  ==  5
+        assert len(engine.stats.matches)  ==  1
         engine.stop()
 
     def test_range_scan_worker_with_uncompressed_check(self):
@@ -806,8 +806,8 @@ class TestKeyCollisionEngineRangeScanWorker(unittest.TestCase):
             data_logging_enabled=False,
         )
         count = engine._range_scan_worker(1, 5, 0)
-        self.assertEqual(count, 5)
-        self.assertEqual(len(engine.stats.matches), 1)
+        assert count  ==  5
+        assert len(engine.stats.matches)  ==  1
         engine.stop()
 
     def test_range_scan_worker_no_callback_stops(self):
@@ -820,8 +820,8 @@ class TestKeyCollisionEngineRangeScanWorker(unittest.TestCase):
             data_logging_enabled=False,
         )
         count = engine._range_scan_worker(1, 5, 0)
-        self.assertLess(count, 5, "匹配后应提前停止")
-        self.assertTrue(engine._stop_event.is_set())
+        assert count  <  5, "匹配后应提前停止"
+        assert engine._stop_event.is_set()
         engine.stop()
 
     def test_range_scan_worker_no_match(self):
@@ -832,8 +832,8 @@ class TestKeyCollisionEngineRangeScanWorker(unittest.TestCase):
             data_logging_enabled=False,
         )
         count = engine._range_scan_worker(1, 10, 0)
-        self.assertEqual(count, 10)
-        self.assertEqual(len(engine.stats.matches), 0)
+        assert count  ==  10
+        assert len(engine.stats.matches)  ==  0
         engine.stop()
 
     def test_range_scan_worker_out_of_range_key(self):
@@ -845,11 +845,11 @@ class TestKeyCollisionEngineRangeScanWorker(unittest.TestCase):
         )
         # k=0 < 1 会被跳过，仅统计有效私钥
         count = engine._range_scan_worker(0, 5, 0)
-        self.assertEqual(count, 5, "k=0应跳过，仅5个有效")
+        assert count  ==  5, "k=0应跳过，仅5个有效"
         engine.stop()
 
 
-class TestKeyCollisionEngineBruteForceWorker(unittest.TestCase):
+class TestKeyCollisionEngineBruteForceWorker:
     """_brute_force_worker 内部路径：max_keys、匹配、错误处理"""
 
     def test_brute_force_worker_max_keys_limit(self):
@@ -861,7 +861,7 @@ class TestKeyCollisionEngineBruteForceWorker(unittest.TestCase):
         )
         engine._current_position = 1
         count = engine._brute_force_worker(0, batch_size=2, max_keys=5)
-        self.assertGreaterEqual(count, 5, "应至少处理 max_keys 个私钥")
+        assert count  >=  5, "应至少处理 max_keys 个私钥"
         engine.stop()
 
     def test_brute_force_worker_known_key_match(self):
@@ -876,8 +876,8 @@ class TestKeyCollisionEngineBruteForceWorker(unittest.TestCase):
         engine._current_position = 1
         engine._stop_event.clear()
         count = engine._brute_force_worker(0, batch_size=3, max_keys=10)
-        self.assertGreaterEqual(count, 1)
-        self.assertEqual(len(engine.stats.matches), 1)
+        assert count  >=  1
+        assert len(engine.stats.matches)  ==  1
         engine.stop()
 
     def test_brute_force_worker_no_callback_stops(self):
@@ -892,8 +892,8 @@ class TestKeyCollisionEngineBruteForceWorker(unittest.TestCase):
         engine._current_position = 1
         engine._stop_event.clear()
         count = engine._brute_force_worker(0, batch_size=3, max_keys=10)
-        self.assertGreaterEqual(count, 1)
-        self.assertTrue(engine._stop_event.is_set())
+        assert count  >=  1
+        assert engine._stop_event.is_set()
         engine.stop()
 
     def test_brute_force_worker_out_of_range_key(self):
@@ -907,11 +907,11 @@ class TestKeyCollisionEngineBruteForceWorker(unittest.TestCase):
         engine._stop_event.clear()
         count = engine._brute_force_worker(0, batch_size=2, max_keys=5)
         # k=0 被跳过不崩溃，有效私钥正常处理
-        self.assertGreater(count, 0, "k=0应被跳过，不应崩溃")
+        assert count  >  0, "k=0应被跳过，不应崩溃"
         engine.stop()
 
 
-class TestKeyCollisionEngineRangeScanOrchestration(unittest.TestCase):
+class TestKeyCollisionEngineRangeScanOrchestration:
     """range_scan + brute_force 编排层：进度回调、数据日志"""
 
     def test_range_scan_with_progress_callback(self):
@@ -930,7 +930,7 @@ class TestKeyCollisionEngineRangeScanOrchestration(unittest.TestCase):
         engine.start(mode="range", start=1, end=20)
         time.sleep(0.5)
         engine.stop()
-        self.assertGreater(len(progress_called), 0, "进度回调应至少被调用一次")
+        assert len(progress_called)  >  0, "进度回调应至少被调用一次"
 
     def test_brute_force_with_progress_callback(self):
         """暴力穷举：进度回调被调用"""
@@ -950,7 +950,7 @@ class TestKeyCollisionEngineRangeScanOrchestration(unittest.TestCase):
         engine.start(mode="brute_force", start=1, max_keys=10)
         time.sleep(1.0)
         engine.stop()
-        self.assertGreater(len(progress_called), 0)
+        assert len(progress_called)  >  0
 
     def test_range_scan_with_complete_callback(self):
         """范围扫描：完成回调被调用"""
@@ -970,7 +970,7 @@ class TestKeyCollisionEngineRangeScanOrchestration(unittest.TestCase):
         engine.start(mode="range", start=1, end=10)
         complete_called.wait(timeout=10)
         engine.stop()
-        self.assertGreater(len(final_stats), 0)
+        assert len(final_stats)  >  0
 
     def test_brute_force_with_complete_callback(self):
         """暴力穷举：完成回调被调用"""
@@ -990,10 +990,10 @@ class TestKeyCollisionEngineRangeScanOrchestration(unittest.TestCase):
         engine.start(mode="brute_force", start=1, max_keys=10)
         complete_called.wait(timeout=10)
         engine.stop()
-        self.assertGreater(len(final_stats), 0)
+        assert len(final_stats)  >  0
 
 
-class TestKeyCollisionEngineResumeAndStop(unittest.TestCase):
+class TestKeyCollisionEngineResumeAndStop:
     """start() resume 路径 + stop() 边界条件"""
 
     def test_start_empty_targets_warning(self):
@@ -1005,7 +1005,7 @@ class TestKeyCollisionEngineResumeAndStop(unittest.TestCase):
         )
         engine.start(mode="random")
         time.sleep(0.2)
-        self.assertTrue(engine.is_running())
+        assert engine.is_running()
         engine.stop()
 
     def test_stop_with_thread_timeout(self):
@@ -1019,7 +1019,7 @@ class TestKeyCollisionEngineResumeAndStop(unittest.TestCase):
         time.sleep(0.2)
         # 使用极短超时（0.001秒），线程必然未结束
         engine.stop(timeout=0.001)
-        self.assertFalse(engine.is_running())
+        assert not engine.is_running()
 
     def test_del_with_exception_during_stop(self):
         """__del__ 中 stop 抛出异常时静默处理"""
@@ -1034,7 +1034,7 @@ class TestKeyCollisionEngineResumeAndStop(unittest.TestCase):
         try:
             engine.__del__()
         except Exception:
-            self.fail("__del__ 不应向上抛出异常")
+            pytest.fail("__del__ 不应向上抛出异常")
         # 清理
         engine._stop_event = threading.Event()
         engine._running = False
@@ -1049,7 +1049,7 @@ class TestKeyCollisionEngineResumeAndStop(unittest.TestCase):
         engine._live_range_count = 100
         engine.stats.total_checked = 50
         stats = engine.get_stats()
-        self.assertGreaterEqual(stats.total_checked, 100)
+        assert stats.total_checked  >=  100
         engine.stop()
 
     def test_stop_save_checkpoint_error(self):
@@ -1065,10 +1065,10 @@ class TestKeyCollisionEngineResumeAndStop(unittest.TestCase):
         # 设置无效的 checkpoint_mgr 触发保存错误
         engine.checkpoint_mgr = None
         engine.stop()
-        self.assertFalse(engine.is_running())
+        assert not engine.is_running()
 
 
-class TestKeyCollisionEngineP3MockExceptions(unittest.TestCase):
+class TestKeyCollisionEngineP3MockExceptions:
     """P3: Mock 异常路径 - 构造器/Crypto/WIF/回调"""
 
     def test_constructor_data_logger_init_exception(self):
@@ -1083,9 +1083,9 @@ class TestKeyCollisionEngineP3MockExceptions(unittest.TestCase):
                 max_workers=1,
             )
             # 应降级：禁用日志，不崩溃
-            self.assertFalse(engine.data_logging_enabled)
-            self.assertIsNone(engine.data_logger)
-            self.assertIsNone(engine.enhanced_monitoring)
+            assert not engine.data_logging_enabled
+            assert engine.data_logger is None
+            assert engine.enhanced_monitoring is None
             engine.stop()
 
     def test_safe_invoke_callback_outer_exception(self):
@@ -1104,7 +1104,7 @@ class TestKeyCollisionEngineP3MockExceptions(unittest.TestCase):
         # 模拟 threading.Thread 构造函数抛出异常
         with patch("threading.Thread", side_effect=RuntimeError("线程创建失败")):
             result = engine._safe_invoke_match_callback((1).to_bytes(32, "big"), known_addr, "WIF123")
-            self.assertFalse(result, "线程创建失败应返回 False")
+            assert not result, "线程创建失败应返回 False"
         engine.stop()
 
     def test_process_key_match_wif_error(self):
@@ -1124,11 +1124,11 @@ class TestKeyCollisionEngineP3MockExceptions(unittest.TestCase):
             local_matches=local_matches,
             worker_id=0,
         )
-        self.assertTrue(should_continue, "WIF编码错误应继续运行")
+        assert should_continue, "WIF编码错误应继续运行"
         engine.stop()
 
 
-class TestKeyCollisionEngineP3TuneBatch(unittest.TestCase):
+class TestKeyCollisionEngineP3TuneBatch:
     """P3: _tune_batch_size 8核/16核路径"""
 
     def test_tune_batch_size_octa_core(self):
@@ -1137,7 +1137,7 @@ class TestKeyCollisionEngineP3TuneBatch(unittest.TestCase):
         engine._cpu_count = 8
         engine._auto_tune_batch_size = True
         engine._tune_batch_size()
-        self.assertEqual(engine._batch_size, 2000)
+        assert engine._batch_size  ==  2000
         engine.stop()
 
     def test_tune_batch_size_hexadeca_core(self):
@@ -1147,11 +1147,11 @@ class TestKeyCollisionEngineP3TuneBatch(unittest.TestCase):
         engine._auto_tune_batch_size = True
         engine._batch_size = 500
         engine._tune_batch_size()
-        self.assertEqual(engine._batch_size, 4000)
+        assert engine._batch_size  ==  4000
         engine.stop()
 
 
-class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
+class TestKeyCollisionEngineP3Checkpoint:
     """P3: Checkpoint 持久化：resume_from / start_from / start resume"""
 
     def setUp(self):
@@ -1187,7 +1187,7 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
         engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         engine.checkpoint_mgr = mgr
         result = engine.resume_from_checkpoint()
-        self.assertIsNone(result)
+        assert result is None
         engine.stop()
 
     def test_resume_from_checkpoint_range(self):
@@ -1199,9 +1199,9 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
         engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         engine.checkpoint_mgr = mgr
         result = engine.resume_from_checkpoint()
-        self.assertIsNotNone(result)
-        self.assertEqual(result["mode"], "range")
-        self.assertEqual(engine.stats.total_checked, 500)
+        assert result is not None
+        assert result["mode"]  ==  "range"
+        assert engine.stats.total_checked  ==  500
         engine.stop()
 
     def test_resume_from_checkpoint_brute_force(self):
@@ -1218,8 +1218,8 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
         engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         engine.checkpoint_mgr = mgr
         result = engine.resume_from_checkpoint()
-        self.assertIsNotNone(result)
-        self.assertEqual(result["mode"], "brute_force")
+        assert result is not None
+        assert result["mode"]  ==  "brute_force"
         engine.stop()
 
     def test_start_from_checkpoint_range(self):
@@ -1228,7 +1228,7 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
         engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         engine.start_from_checkpoint(data)
         time.sleep(0.3)
-        self.assertTrue(engine.is_running())
+        assert engine.is_running()
         engine.stop()
 
     def test_start_from_checkpoint_brute_force(self):
@@ -1237,7 +1237,7 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
         engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         engine.start_from_checkpoint(data)
         time.sleep(0.3)
-        self.assertTrue(engine.is_running())
+        assert engine.is_running()
         engine.stop()
 
     def test_start_from_checkpoint_random(self):
@@ -1246,7 +1246,7 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
         engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         engine.start_from_checkpoint(data)
         time.sleep(0.2)
-        self.assertTrue(engine.is_running())
+        assert engine.is_running()
         engine.stop()
 
     def test_start_resume_from_range_checkpoint(self):
@@ -1264,7 +1264,7 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
         engine.checkpoint_mgr = mgr
         engine.start(mode="range", resume=True, start=1, end=1000)
         time.sleep(0.3)
-        self.assertTrue(engine.is_running())
+        assert engine.is_running()
         engine.stop()
 
     def test_start_resume_from_brute_force_checkpoint(self):
@@ -1282,7 +1282,7 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
         engine.checkpoint_mgr = mgr
         engine.start(mode="brute_force", resume=True, start=1, max_keys=5)
         time.sleep(0.5)
-        self.assertTrue(engine.is_running())
+        assert engine.is_running()
         engine.stop()
 
     def test_start_resume_from_random_checkpoint(self):
@@ -1300,7 +1300,7 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
         engine.checkpoint_mgr = mgr
         engine.start(mode="random", resume=True)
         time.sleep(0.2)
-        self.assertTrue(engine.is_running())
+        assert engine.is_running()
         engine.stop()
 
     def test_start_resume_checkpoint_load_failure(self):
@@ -1321,7 +1321,7 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
         engine.checkpoint_mgr = mgr
         engine.start(mode="random", resume=True)
         time.sleep(0.2)
-        self.assertTrue(engine.is_running(), "断点加载失败应回退到正常启动")
+        assert engine.is_running(), "断点加载失败应回退到正常启动"
         engine.stop()
 
 

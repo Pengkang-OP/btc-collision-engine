@@ -12,7 +12,7 @@
 创建日期: 2026-04-30
 """
 
-import logging
+from ...utils import get_configured_logger
 import threading
 from typing import Any, cast
 
@@ -21,7 +21,7 @@ from .device_manager_adapter import DeviceManagerAdapter
 from .kernel_adapter import GPUKernelAdapter
 from .protocols import GPUContext, GPUDevice, GPUKernel
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger(__name__)
 
 
 class GPUEngineFacade:

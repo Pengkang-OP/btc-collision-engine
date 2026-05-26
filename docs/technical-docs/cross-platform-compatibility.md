@@ -67,7 +67,7 @@ BTC 碰撞引擎支持 **Windows、Linux、macOS** 三大平台，通过 `Platfo
 ### 3.1 Windows 安装
 
 ```cmd
-scripts\install.bat
+scripts/install/install.bat
 ```
 
 安装脚本特性：
@@ -80,7 +80,7 @@ scripts\install.bat
 ### 3.2 Linux / macOS 安装
 
 ```bash
-bash scripts/install.sh
+bash scripts/install/install.sh
 ```
 
 安装脚本特性：

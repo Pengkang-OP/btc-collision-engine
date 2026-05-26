@@ -1,7 +1,10 @@
 """Wizard message queue for inter-component communication."""
 
+from ..utils import get_configured_logger
 import queue
 from typing import Any
+
+logger = get_configured_logger(__name__)
 
 
 class WizardMessageQueue:
@@ -32,6 +35,7 @@ class WizardMessageQueue:
         try:
             return self._queue.get(timeout=timeout)
         except queue.Empty:
+            logger.debug("Message queue receive timed out after %.1fs", timeout)
             return None
 
 

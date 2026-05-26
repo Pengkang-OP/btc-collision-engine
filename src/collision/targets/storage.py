@@ -41,10 +41,10 @@ ADDRESS_PATTERNS = types.MappingProxyType(
 def validate_bitcoin_address(address: str) -> bool:
     """验证比特币地址格式
 
-    参数:
+    Args:
         address: 比特币地址字符串
 
-    返回:
+    Returns:
         bool: 地址格式是否有效
     """
     if not address or not isinstance(address, str):
@@ -67,7 +67,7 @@ class AddressStorage:
 
     支持多种存储格式保存目标地址集合和元数据。
 
-    示例:
+    Example:
         >>> storage = AddressStorage(storage_type='json', path='targets_data')
         >>> storage.save_targets({'1A1z...', '1B2x...'}, metadata={'name': 'test'})
         >>> targets, metadata = storage.load_targets()
@@ -76,7 +76,7 @@ class AddressStorage:
     def __init__(self, storage_type: str = "json", path: str = "targets_data") -> None:
         """初始化地址存储管理器
 
-        参数:
+        Args:
             storage_type: 存储类型,可选 'json', 'sqlite', 'csv'
             path: 存储路径(文件路径或目录路径)
         """
@@ -395,7 +395,7 @@ class AddressStorage:
     def get_storage_info(self) -> dict[str, Any]:
         """获取存储信息
 
-        返回:
+        Returns:
             包含存储信息的字典
         """
         info = {

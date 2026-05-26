@@ -1,10 +1,11 @@
 """Fast JSON serialization utilities with caching."""
 
 import json as _json
+import typing
 from functools import lru_cache
 
 
-def fast_dump(obj, fp, **kwargs) -> None:
+def fast_dump(obj: typing.Any, fp: typing.BinaryIO, **kwargs: typing.Any) -> None:
     """Fast JSON serialization to file.
 
     Args:
@@ -16,7 +17,7 @@ def fast_dump(obj, fp, **kwargs) -> None:
     _json.dump(obj, fp, **kwargs)
 
 
-def fast_load(fp):
+def fast_load(fp: typing.BinaryIO) -> typing.Any:
     """Fast JSON deserialization from file.
 
     Args:
@@ -29,7 +30,7 @@ def fast_load(fp):
     return _json.load(fp)
 
 
-def fast_loads(s: str):
+def fast_loads(s: str) -> typing.Any:
     """Fast JSON deserialization from string.
 
     Args:
@@ -42,7 +43,7 @@ def fast_loads(s: str):
     return _json.loads(s)
 
 
-def fast_dumps(obj, **kwargs) -> str:
+def fast_dumps(obj: typing.Any, **kwargs: typing.Any) -> str:
     """Fast JSON serialization with caching for repeated calls.
 
     Args:
@@ -55,16 +56,3 @@ def fast_dumps(obj, **kwargs) -> str:
     """
     return _json.dumps(obj, **kwargs)
 
-
-@lru_cache(maxsize=128)
-def _cached_dumps(obj_str: str) -> str:
-    """Cached JSON serialization for known objects.
-
-    Args:
-        obj_str: String representation of object
-
-    Returns:
-        Cached JSON string
-
-    """
-    return obj_str

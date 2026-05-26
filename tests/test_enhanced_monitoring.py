@@ -110,7 +110,7 @@ class TestEnhancedMonitoringSystemInit:
 
     def test_init_logs_message(self, caplog):
         """测试初始化时记录日志"""
-        with caplog.at_level(logging.INFO):
+        with caplog.at_level(logging.DEBUG):
             monitor = EnhancedMonitoringSystem(engine=None)  # noqa: F841
 
             assert any("增强版监控系统初始化完成" in record.message for record in caplog.records)

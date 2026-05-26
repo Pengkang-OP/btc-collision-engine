@@ -5,12 +5,12 @@ automatically backing up the original file.
 """
 
 import json
-import logging
+from ..utils import get_configured_logger
 import shutil
 from datetime import datetime
 from pathlib import Path
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger(__name__)
 
 
 def migrate_config_file(config_path: str | None = None) -> bool:

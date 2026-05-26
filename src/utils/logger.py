@@ -246,13 +246,13 @@ def setup_logger(
     level: str = "INFO",
     log_file: str | None = None,
     format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    max_bytes: int = 10 * 1024 * 1024,  # 10MB
+    max_bytes: int = 10 * 1024 * 1024,  # 10MB (与 logging_config.LOG_DEFAULT_MAX_BYTES 同步)
     backup_count: int = 5,
     use_color: bool = True,
 ) -> logging.Logger:
     """设置日志记录器（增强版）
 
-    参数:
+    Args:
         name: 日志记录器名称
         level: 日志级别
         log_file: 日志文件路径，None表示只输出到控制台
@@ -261,7 +261,7 @@ def setup_logger(
         backup_count: 保留的备份文件数量
         use_color: 是否使用彩色输出
 
-    返回:
+    Returns:
         配置好的日志记录器
     """
     # 创建日志记录器
@@ -323,12 +323,12 @@ def get_sampled_logger(name: str, sample_rate: int = 100, max_per_second: float 
     注意: 使用此函数前应先调用 init_logging() 配置全局日志系统，
     以避免重复配置 handlers 导致日志重复输出。
 
-    参数:
+    Args:
         name: 日志记录器名称
         sample_rate: 采样率（每N条记录1条，计数采样）
         max_per_second: 每秒最多记录N条（时间限频），0表示不限制
 
-    返回:
+    Returns:
         采样日志记录器
     """
     # 直接使用 logging.getLogger，依赖全局 init_logging 配置的 handlers
@@ -410,7 +410,7 @@ class AsyncLogger:
         """
         self._handler = handler
 
-    def _write_loop(self):
+    def _write_loop(self) -> None:
         """后台写入循环"""
         while not self._stop_event.is_set():
             try:

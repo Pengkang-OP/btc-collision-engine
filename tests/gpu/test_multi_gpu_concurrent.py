@@ -13,7 +13,7 @@ import pytest
 pytestmark = pytest.mark.gpu
 
 
-class TestConcurrentAccess(unittest.TestCase):
+class TestConcurrentAccess:
     """测试并发访问场景"""
 
     def test_concurrent_state_access(self):
@@ -41,7 +41,7 @@ class TestConcurrentAccess(unittest.TestCase):
             t.join()
 
         # 验证无错误
-        self.assertEqual(len(errors), 0, f"并发访问出错: {errors}")
+        assert len(errors) == 0, f"并发访问出错: {errors}"
 
     def test_concurrent_workers_dict_access(self):
         """测试并发workers字典访问"""
@@ -81,7 +81,7 @@ class TestConcurrentAccess(unittest.TestCase):
             t.join()
 
         # 验证无错误
-        self.assertEqual(len(errors), 0, f"并发访问出错: {errors}")
+        assert len(errors) == 0, f"并发访问出错: {errors}"
 
     def test_concurrent_start_stop(self):
         """测试并发启动停止"""
@@ -116,10 +116,10 @@ class TestConcurrentAccess(unittest.TestCase):
             t.join()
 
         # 验证最多只有1次成功启动
-        self.assertLessEqual(results["starts"], 1, "并发启动应该只有1次成功")
+        assert results["starts"] <= 1, "并发启动应该只有1次成功"
 
 
-class TestThreadSafety(unittest.TestCase):
+class TestThreadSafety:
     """测试线程安全机制"""
 
     def test_worker_stats_thread_safety(self):
@@ -160,11 +160,11 @@ class TestThreadSafety(unittest.TestCase):
             t.join()
 
         # 验证无错误
-        self.assertEqual(len(errors), 0, f"线程安全测试失败: {errors}")
+        assert len(errors) == 0, f"线程安全测试失败: {errors}"
 
         # 验证统计数据正确
         final_stats = worker.get_stats()
-        self.assertEqual(final_stats["keys_checked"], 500)  # 5线程 × 100次
+        assert final_stats["keys_checked"] == 500  # 5线程 × 100次
 
     def test_worker_event_control(self):
         """测试工作器事件控制"""
@@ -173,19 +173,19 @@ class TestThreadSafety(unittest.TestCase):
         worker = SingleGPUWorker(device_idx=0, key_range=(0, 1000), targets=set(), config={})
 
         # 测试停止事件
-        self.assertFalse(worker._stop_event.is_set())
+        assert not worker._stop_event.is_set()
         worker.stop_search()
-        self.assertTrue(worker._stop_event.is_set())
+        assert worker._stop_event.is_set()
 
         # 测试暂停事件
-        self.assertTrue(worker._pause_event.is_set())  # 初始为运行
+        assert worker._pause_event.is_set()  # 初始为运行
         worker.pause_search()
-        self.assertFalse(worker._pause_event.is_set())
+        assert not worker._pause_event.is_set()
         worker.resume_search()
-        self.assertTrue(worker._pause_event.is_set())
+        assert worker._pause_event.is_set()
 
 
-class TestResourceCleanup(unittest.TestCase):
+class TestResourceCleanup:
     """测试资源清理机制"""
 
     def test_cleanup_idempotent(self):
@@ -201,12 +201,12 @@ class TestResourceCleanup(unittest.TestCase):
             try:
                 engine.cleanup()
             except Exception as e:
-                self.fail(f"cleanup()不是幂等的: {e}")
+                pytest.fail(f"cleanup()不是幂等的: {e}")
 
         # 验证最终状态
-        self.assertFalse(engine._running)
-        self.assertFalse(engine._initialized)
-        self.assertEqual(len(engine.workers), 0)
+        assert not engine._running
+        assert not engine._initialized
+        assert len(engine.workers) == 0
 
     def test_context_manager_cleanup(self):
         """测试上下文管理器自动清理"""
@@ -217,8 +217,8 @@ class TestResourceCleanup(unittest.TestCase):
             # 不设置_running=True,避免stop()
 
         # 退出with块后应该已清理
-        self.assertFalse(engine._running)
-        self.assertFalse(engine._initialized)
+        assert not engine._running
+        assert not engine._initialized
 
     def test_del_cleanup(self):
         """测试析构函数清理"""
@@ -232,10 +232,10 @@ class TestResourceCleanup(unittest.TestCase):
         engine.__del__()
 
         # 验证已清理
-        self.assertFalse(engine._running)
+        assert not engine._running
 
 
-class TestDeadlockPrevention(unittest.TestCase):
+class TestDeadlockPrevention:
     """测试死锁预防"""
 
     def test_no_deadlock_on_rapid_start_stop(self):
@@ -251,7 +251,7 @@ class TestDeadlockPrevention(unittest.TestCase):
             engine.stop()
 
         # 如果能执行到这里,说明没有死锁
-        self.assertTrue(True)
+        assert True
 
     @pytest.mark.skip(
         reason=(
@@ -291,8 +291,5 @@ class TestDeadlockPrevention(unittest.TestCase):
             if t.is_alive():
                 deadlock_detected[0] = True
 
-        self.assertFalse(deadlock_detected[0], "检测到死锁!")
+        assert not deadlock_detected[0], "检测到死锁!"
 
-
-if __name__ == "__main__":
-    unittest.main()

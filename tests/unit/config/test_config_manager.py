@@ -5,12 +5,12 @@ import os
 import pathlib
 import shutil
 import tempfile
-import unittest
+import pytest
 
 from src.config.config_manager import ConfigManager
 
 
-class TestConfigManagerBasic(unittest.TestCase):
+class TestConfigManagerBasic:
     """基础配置测试"""
 
     def setUp(self):
@@ -26,19 +26,19 @@ class TestConfigManagerBasic(unittest.TestCase):
     def test_default_config_initialization(self):
         """默认配置初始化"""
         mgr = ConfigManager()
-        self.assertIsNotNone(mgr.config)
-        self.assertIn("collision", mgr.config)
-        self.assertIn("logging", mgr.config)
+        assert mgr.config is not None
+        assert mgr.config  in  "collision"
+        assert mgr.config  in  "logging"
         # GUI已移除，不再测试
-        self.assertIn("gpu", mgr.config)
+        assert mgr.config  in  "gpu"
 
     def test_default_config_values(self):
         """默认配置值正确"""
         mgr = ConfigManager()
-        self.assertEqual(mgr.get("logging.level"), "INFO")
+        assert mgr.get("logging.level")  ==  "INFO"
         # GUI已移除，测试其他默认值
-        self.assertEqual(mgr.get("collision.progress_interval"), 1000)
-        self.assertTrue(mgr.get("gpu.use_gpu"))
+        assert mgr.get("collision.progress_interval")  ==  1000
+        assert mgr.get("gpu.use_gpu")
 
     def test_load_config_from_file(self):
         """从文件加载配置"""
@@ -48,12 +48,9 @@ class TestConfigManagerBasic(unittest.TestCase):
             json.dump(test_config, f)
 
         mgr = ConfigManager(config_file=self.config_file)
-        self.assertEqual(mgr.get("logging.level"), "DEBUG")
+        assert mgr.get("logging.level")  ==  "DEBUG"
         # 默认值应该保留
-        self.assertEqual(
-            mgr.get("logging.format"),
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        )
+        assert mgr.get("logging.format")  ==  "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
     def test_save_config_to_file(self):
         """保存配置到文件"""
@@ -61,13 +58,13 @@ class TestConfigManagerBasic(unittest.TestCase):
         mgr.set("logging.level", "WARNING")
 
         result = mgr.save_config()
-        self.assertTrue(result)
-        self.assertTrue(pathlib.Path(self.config_file).exists())
+        assert result
+        assert pathlib.Path(self.config_file).exists()
 
         # 验证文件内容
         with pathlib.Path(self.config_file).open(encoding="utf-8") as f:
             saved_config = json.load(f)
-        self.assertEqual(saved_config["logging"]["level"], "WARNING")
+        assert saved_config["logging"]["level"]  ==  "WARNING"
 
     def test_load_nonexistent_file(self):
         """加载不存在的配置文件"""
@@ -75,17 +72,17 @@ class TestConfigManagerBasic(unittest.TestCase):
         mgr = self.cm_class(config_file="nonexistent.json")
         # 应该使用默认配置，不报错
         # 注意：由于全局状态可能被其他测试修改，只验证能正常加载
-        self.assertIsNotNone(mgr.config)
-        self.assertIn("logging", mgr.config)
+        assert mgr.config is not None
+        assert mgr.config  in  "logging"
 
     def test_save_without_config_file(self):
         """没有配置文件路径时保存失败"""
         mgr = ConfigManager()
         result = mgr.save_config()
-        self.assertFalse(result)
+        assert not result
 
 
-class TestConfigManagerGetSet(unittest.TestCase):
+class TestConfigManagerGetSet:
     """配置读写测试"""
 
     def setUp(self):
@@ -98,43 +95,43 @@ class TestConfigManagerGetSet(unittest.TestCase):
         """获取嵌套配置值"""
         mgr = ConfigManager()
         value = mgr.get("collision.max_workers")
-        self.assertIsNone(value)
+        assert value is None
 
     def test_get_with_default(self):
         """获取配置时使用默认值"""
         mgr = ConfigManager()
         value = mgr.get("nonexistent.key", "default_value")
-        self.assertEqual(value, "default_value")
+        assert value  ==  "default_value"
 
     def test_get_invalid_path(self):
         """获取无效路径返回None"""
         mgr = ConfigManager()
         value = mgr.get("invalid.path.here")
-        self.assertIsNone(value)
+        assert value is None
 
     def test_set_new_value(self):
         """设置新配置值"""
         mgr = ConfigManager()
         result = mgr.set("logging.file", "/var/log/test.log")
-        self.assertTrue(result)
-        self.assertEqual(mgr.get("logging.file"), "/var/log/test.log")
+        assert result
+        assert mgr.get("logging.file")  ==  "/var/log/test.log"
 
     def test_set_nested_path(self):
         """设置嵌套路径自动创建字典"""
         mgr = ConfigManager()
         mgr.set("custom.section.key", "value")
-        self.assertEqual(mgr.get("custom.section.key"), "value")
+        assert mgr.get("custom.section.key")  ==  "value"
 
     def test_set_override_existing(self):
         """覆盖已有配置值"""
         mgr = ConfigManager()
         original = mgr.get("logging.level")
         mgr.set("logging.level", "ERROR")
-        self.assertEqual(mgr.get("logging.level"), "ERROR")
-        self.assertNotEqual(original, "ERROR")
+        assert mgr.get("logging.level")  ==  "ERROR"
+        assert original  !=  "ERROR"
 
 
-class TestConfigManagerMerge(unittest.TestCase):
+class TestConfigManagerMerge:
     """配置合并测试"""
 
     def setUp(self):
@@ -155,10 +152,10 @@ class TestConfigManagerMerge(unittest.TestCase):
 
         mgr = self.cm_class(config_file=self.config_file)
         # 新值被合并
-        self.assertEqual(mgr.get("logging.level"), "DEBUG")
-        self.assertEqual(mgr.get("logging.format"), "%(message)s")
+        assert mgr.get("logging.level")  ==  "DEBUG"
+        assert mgr.get("logging.format")  ==  "%(message)s"
         # 验证logging.file存在（值可能被其他测试修改）
-        self.assertIsNotNone(mgr.get("logging.file"))
+        assert mgr.get("logging.file") is not None
 
     def test_merge_complete_override(self):
         """完全覆盖配置"""
@@ -170,8 +167,8 @@ class TestConfigManagerMerge(unittest.TestCase):
             json.dump(test_config, f)
 
         mgr = ConfigManager(config_file=self.config_file)
-        self.assertEqual(mgr.get("collision.max_workers"), 16)
-        self.assertEqual(mgr.get("logging.level"), "CRITICAL")
+        assert mgr.get("collision.max_workers")  ==  16
+        assert mgr.get("logging.level")  ==  "CRITICAL"
 
     def test_merge_preserves_structure(self):
         """合并保持配置结构"""
@@ -185,18 +182,18 @@ class TestConfigManagerMerge(unittest.TestCase):
 
         mgr = ConfigManager(config_file=self.config_file)
         # 自定义值被合并
-        self.assertEqual(mgr.get("collision.max_workers"), 8)
-        self.assertEqual(mgr.get("collision.progress_interval"), 2000)
-        self.assertEqual(mgr.get("logging.level"), "DEBUG")
+        assert mgr.get("collision.max_workers")  ==  8
+        assert mgr.get("collision.progress_interval")  ==  2000
+        assert mgr.get("logging.level")  ==  "DEBUG"
         # 默认结构和其他值保留（GUI已移除）
-        self.assertIn("collision", mgr.config)
-        self.assertIn("logging", mgr.config)
-        self.assertIn("gpu", mgr.config)
+        assert mgr.config  in  "collision"
+        assert mgr.config  in  "logging"
+        assert mgr.config  in  "gpu"
         # 未指定的字段保持默认值
-        self.assertEqual(mgr.get("collision.checkpoint_interval"), 30)
+        assert mgr.get("collision.checkpoint_interval")  ==  30
 
 
-class TestConfigManagerValidation(unittest.TestCase):
+class TestConfigManagerValidation:
     """配置验证测试"""
 
     def setUp(self):
@@ -208,49 +205,49 @@ class TestConfigManagerValidation(unittest.TestCase):
         """验证默认配置应该通过"""
         mgr = ConfigManager()
         errors = mgr.validate()
-        self.assertEqual(len(errors), 0)
+        assert len(errors)  ==  0
 
     def test_validate_invalid_max_workers(self):
         """验证无效的max_workers"""
         mgr = ConfigManager()
         mgr.set("collision.max_workers", -1)
         errors = mgr.validate()
-        self.assertIn("collision.max_workers", errors)
+        assert errors  in  "collision.max_workers"
 
     def test_validate_invalid_max_workers_type(self):
         """验证max_workers类型错误"""
         mgr = ConfigManager()
         mgr.set("collision.max_workers", "invalid")
         errors = mgr.validate()
-        self.assertIn("collision.max_workers", errors)
+        assert errors  in  "collision.max_workers"
 
     def test_validate_invalid_progress_interval(self):
         """验证无效的progress_interval"""
         mgr = ConfigManager()
         mgr.set("collision.progress_interval", 0)
         errors = mgr.validate()
-        self.assertIn("collision.progress_interval", errors)
+        assert errors  in  "collision.progress_interval"
 
     def test_validate_invalid_checkpoint_interval(self):
         """验证无效的checkpoint_interval"""
         mgr = ConfigManager()
         mgr.set("collision.checkpoint_interval", -5)
         errors = mgr.validate()
-        self.assertIn("collision.checkpoint_interval", errors)
+        assert errors  in  "collision.checkpoint_interval"
 
     def test_validate_invalid_dedup_max_size(self):
         """验证无效的dedup_max_size"""
         mgr = ConfigManager()
         mgr.set("collision.dedup_max_size", 0)
         errors = mgr.validate()
-        self.assertIn("collision.dedup_max_size", errors)
+        assert errors  in  "collision.dedup_max_size"
 
     def test_validate_invalid_log_level(self):
         """验证无效的日志级别"""
         mgr = ConfigManager()
         mgr.set("logging.level", "INVALID")
         errors = mgr.validate()
-        self.assertIn("logging.level", errors)
+        assert errors  in  "logging.level"
 
     def test_validate_valid_log_levels(self):
         """验证有效的日志级别"""
@@ -259,7 +256,7 @@ class TestConfigManagerValidation(unittest.TestCase):
             mgr = ConfigManager()
             mgr.set("logging.level", level)
             errors = mgr.validate()
-            self.assertNotIn("logging.level", errors, f"{level} 应该有效")
+            assert errors  not in  "logging.level", f"{level} 应该有效"
 
     def test_validate_invalid_window_width(self):
         """验证无效窗口宽度 - GUI已移除，测试跳过"""
@@ -280,12 +277,12 @@ class TestConfigManagerValidation(unittest.TestCase):
         mgr.set("logging.level", "INVALID")
         errors = mgr.validate()
         # 应该捕获多个错误（不包含GUI）
-        self.assertGreater(len(errors), 0)
-        self.assertIn("collision.max_workers", errors)
-        self.assertIn("logging.level", errors)
+        assert len(errors)  >  0
+        assert errors  in  "collision.max_workers"
+        assert errors  in  "logging.level"
 
 
-class TestConfigManagerEdgeCases(unittest.TestCase):
+class TestConfigManagerEdgeCases:
     """边界情况测试"""
 
     def setUp(self):
@@ -305,8 +302,8 @@ class TestConfigManagerEdgeCases(unittest.TestCase):
         mgr = self.cm_class(config_file=self.config_file)
         # 应该使用默认配置（或部分配置）
         # 验证配置对象存在
-        self.assertIsNotNone(mgr.config)
-        self.assertIn("logging", mgr.config)
+        assert mgr.config is not None
+        assert mgr.config  in  "logging"
 
     def test_load_empty_file(self):
         """加载空文件"""
@@ -314,7 +311,7 @@ class TestConfigManagerEdgeCases(unittest.TestCase):
 
         mgr = ConfigManager(config_file=self.config_file)
         # 应该使用默认配置
-        self.assertIn("collision", mgr.config)
+        assert mgr.config  in  "collision"
 
     def test_save_and_reload(self):
         """保存后重新加载"""
@@ -324,8 +321,8 @@ class TestConfigManagerEdgeCases(unittest.TestCase):
         mgr1.save_config()
 
         mgr2 = ConfigManager(config_file=self.config_file)
-        self.assertEqual(mgr2.get("logging.level"), "DEBUG")
-        self.assertEqual(mgr2.get("collision.max_workers"), 8)
+        assert mgr2.get("logging.level")  ==  "DEBUG"
+        assert mgr2.get("collision.max_workers")  ==  8
 
     def test_unicode_in_config(self):
         """配置中包含Unicode字符"""
@@ -335,13 +332,13 @@ class TestConfigManagerEdgeCases(unittest.TestCase):
             json.dump(test_config, f)
 
         mgr2 = ConfigManager(config_file=config_file)
-        self.assertEqual(mgr2.get("logging.file"), "日志/collision.log")
+        assert mgr2.get("logging.file")  ==  "日志/collision.log"
 
     def test_large_config_values(self):
         """配置大数值"""
         mgr = ConfigManager()
         mgr.set("collision.dedup_max_size", 100_000_000)
-        self.assertEqual(mgr.get("collision.dedup_max_size"), 100_000_000)
+        assert mgr.get("collision.dedup_max_size")  ==  100_000_000
 
     def test_none_values_in_config(self):
         """配置中包含None值"""
@@ -349,7 +346,7 @@ class TestConfigManagerEdgeCases(unittest.TestCase):
         mgr = self.cm_class()
         # 验证可以正常获取和设置None值
         mgr.set("custom.none_value", None)
-        self.assertIsNone(mgr.get("custom.none_value"))
+        assert mgr.get("custom.none_value") is None
 
 
 if __name__ == "__main__":

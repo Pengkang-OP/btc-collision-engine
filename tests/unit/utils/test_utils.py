@@ -10,6 +10,7 @@ from typing import Any
 from unittest.mock import Mock, patch
 
 
+import pytest
 class TestUtils:
     """通用测试工具类"""
 
@@ -286,7 +287,7 @@ class MockFactory:
         return mock
 
 
-class TestCaseWithMocks(unittest.TestCase):
+class TestCaseWithMocks:
     """增强的测试用例基类，提供常用Mock功能"""
 
     def setUp(self):

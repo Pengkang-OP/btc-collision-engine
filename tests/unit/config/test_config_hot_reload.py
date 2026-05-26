@@ -11,7 +11,7 @@ import pathlib
 import tempfile
 import threading
 import time
-import unittest
+import pytest
 
 from src.config.config_manager import ConfigManager
 from src.config.config_watcher import ConfigWatcher
@@ -21,7 +21,7 @@ from src.config.config_watcher import ConfigWatcher
 # ═══════════════════════════════════════════════════════════════════
 
 
-class TestConfigWatcherBackend(unittest.TestCase):
+class TestConfigWatcherBackend:
     """ConfigWatcher 后端选择测试"""
 
     def test_01_backend_type(self):
@@ -32,17 +32,17 @@ class TestConfigWatcherBackend(unittest.TestCase):
             with pathlib.Path(path).open("w") as f:
                 json.dump({"test": True}, f)
             w = ConfigWatcher(path, lambda: None)
-            self.assertIn(w.backend, ("watchdog", "polling"))
+            assert ("watchdog", "polling")  in  w.backend
         finally:
             pathlib.Path(path).unlink()
 
     def test_02_requires_absolute_path(self):
         """拒绝相对路径"""
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             ConfigWatcher("relative/path.json", lambda: None)
 
 
-class TestConfigWatcherLifecycle(unittest.TestCase):
+class TestConfigWatcherLifecycle:
     """ConfigWatcher 生命周期测试"""
 
     def setUp(self):
@@ -59,16 +59,16 @@ class TestConfigWatcherLifecycle(unittest.TestCase):
         """正常启停"""
         called = []
         w = ConfigWatcher(self.config_path, lambda: called.append(1))
-        self.assertTrue(w.start())
-        self.assertTrue(w.is_running)
+        assert w.start()
+        assert w.is_running
         w.stop()
-        self.assertFalse(w.is_running)
+        assert not w.is_running
 
     def test_02_double_start_prevented(self):
         """重复 start 返回 False"""
         w = ConfigWatcher(self.config_path, lambda: None)
-        self.assertTrue(w.start())
-        self.assertFalse(w.start())  # 第二次应失败
+        assert w.start()
+        assert not w.start()  # 第二次应失败
         w.stop()
 
     def test_03_stop_idempotent(self):
@@ -82,12 +82,12 @@ class TestConfigWatcherLifecycle(unittest.TestCase):
         """析构自动停止"""
         w = ConfigWatcher(self.config_path, lambda: None)
         w.start()
-        self.assertTrue(w.is_running)
+        assert w.is_running
         del w  # 析构应自动停止
         # 无法直接断言，但至少不抛异常
 
 
-class TestConfigWatcherPolling(unittest.TestCase):
+class TestConfigWatcherPolling:
     """ConfigWatcher 轮询模式测试"""
 
     def setUp(self):
@@ -119,7 +119,7 @@ class TestConfigWatcherPolling(unittest.TestCase):
             # 等待轮询检测
             time.sleep(1.0)
 
-            self.assertGreater(len(reloaded), 0, "轮询未检测到文件变更")
+            assert len(reloaded)  >  0, "轮询未检测到文件变更"
         finally:
             w.stop()
 
@@ -135,7 +135,7 @@ class TestConfigWatcherPolling(unittest.TestCase):
         w.start()
         try:
             time.sleep(1.0)
-            self.assertEqual(len(reloaded), 0, "无变更时不应触发重载")
+            assert len(reloaded)  ==  0, "无变更时不应触发重载"
         finally:
             w.stop()
 
@@ -161,12 +161,12 @@ class TestConfigWatcherPolling(unittest.TestCase):
             time.sleep(1.0)
 
             # 由于防抖，应该只触发一次
-            self.assertLessEqual(len(reload_count), 1, f"防抖失效: {len(reload_count)}次触发")
+            assert len(reload_count)  <=  1, f"防抖失效: {len(reload_count)}次触发"
         finally:
             w.stop()
 
 
-class TestConfigWatcherErrors(unittest.TestCase):
+class TestConfigWatcherErrors:
     """ConfigWatcher 错误处理测试"""
 
     def test_01_callback_exception_does_not_crash(self):
@@ -188,7 +188,7 @@ class TestConfigWatcherErrors(unittest.TestCase):
                     json.dump({"new": True}, f)
                 time.sleep(1.0)
                 # watcher 不应崩溃
-                self.assertTrue(w.is_running)
+                assert w.is_running
             finally:
                 w.stop()
         finally:
@@ -204,7 +204,7 @@ class TestConfigWatcherErrors(unittest.TestCase):
         try:
             time.sleep(0.5)
             # 不应崩溃
-            self.assertTrue(w.is_running)
+            assert w.is_running
         finally:
             w.stop()
 
@@ -214,7 +214,7 @@ class TestConfigWatcherErrors(unittest.TestCase):
 # ═══════════════════════════════════════════════════════════════════
 
 
-class TestConfigManagerReload(unittest.TestCase):
+class TestConfigManagerReload:
     """ConfigManager.reload_config() 测试"""
 
     def setUp(self):
@@ -231,15 +231,15 @@ class TestConfigManagerReload(unittest.TestCase):
 
     def test_01_reload_valid_config(self):
         """重载合法配置成功"""
-        self.assertEqual(self.cm.get("logging.level"), "DEBUG")
+        assert self.cm.get("logging.level")  ==  "DEBUG"
 
         # 修改文件
         with pathlib.Path(self.config_path).open("w") as f:
             json.dump({"logging": {"level": "WARNING"}}, f)
 
         result = self.cm.reload_config()
-        self.assertTrue(result)
-        self.assertEqual(self.cm.get("logging.level"), "WARNING")
+        assert result
+        assert self.cm.get("logging.level")  ==  "WARNING"
 
     def test_02_reload_invalid_config_preserved(self):
         """无效配置不覆盖原配置"""
@@ -250,14 +250,14 @@ class TestConfigManagerReload(unittest.TestCase):
             json.dump({"logging": {"level": "INVALID_LEVEL"}}, f)
 
         result = self.cm.reload_config()
-        self.assertFalse(result)
+        assert not result
         # 原配置应保持不变
-        self.assertEqual(self.cm.get("logging.level"), original_level)
+        assert self.cm.get("logging.level")  ==  original_level
 
     def test_03_reload_no_config_file(self):
         """无配置文件时返回 False"""
         cm = ConfigManager()  # 无 config_file
-        self.assertFalse(cm.reload_config())
+        assert not cm.reload_config()
 
     def test_04_reload_corrupted_json(self):
         """损坏的 JSON 不覆盖原配置"""
@@ -266,11 +266,11 @@ class TestConfigManagerReload(unittest.TestCase):
         pathlib.Path(self.config_path).write_text("{ this is not valid json }")
 
         result = self.cm.reload_config()
-        self.assertFalse(result)
-        self.assertEqual(self.cm.get("logging.level"), original_level)
+        assert not result
+        assert self.cm.get("logging.level")  ==  original_level
 
 
-class TestConfigManagerCallbacks(unittest.TestCase):
+class TestConfigManagerCallbacks:
     """ConfigManager.on_config_changed() 回调测试"""
 
     def setUp(self):
@@ -294,7 +294,7 @@ class TestConfigManagerCallbacks(unittest.TestCase):
             json.dump({"logging": {"level": "WARNING"}}, f)
 
         self.cm.reload_config()
-        self.assertEqual(len(called), 1)
+        assert len(called)  ==  1
 
     def test_02_callback_not_fired_on_failure(self):
         """重载失败时不触发回调"""
@@ -305,7 +305,7 @@ class TestConfigManagerCallbacks(unittest.TestCase):
             json.dump({"logging": {"level": "INVALID"}}, f)
 
         self.cm.reload_config()
-        self.assertEqual(len(called), 0)
+        assert len(called)  ==  0
 
     def test_03_multiple_callbacks(self):
         """多个回调都被触发"""
@@ -317,7 +317,7 @@ class TestConfigManagerCallbacks(unittest.TestCase):
             json.dump({"logging": {"level": "ERROR"}}, f)
 
         self.cm.reload_config()
-        self.assertEqual(results, ["A", "B"])
+        assert results  ==  ["A", "B"]
 
     def test_04_callback_exception_isolation(self):
         """单个回调异常不影响其他回调"""
@@ -336,11 +336,11 @@ class TestConfigManagerCallbacks(unittest.TestCase):
             json.dump({"logging": {"level": "CRITICAL"}}, f)
 
         result = self.cm.reload_config()
-        self.assertTrue(result)  # 重载本身应成功
-        self.assertEqual(results, ["ok"])  # 好的回调仍被调用
+        assert result  # 重载本身应成功
+        assert results  ==  ["ok"]  # 好的回调仍被调用
 
 
-class TestConfigManagerWatching(unittest.TestCase):
+class TestConfigManagerWatching:
     """ConfigManager start_watching / stop_watching 测试"""
 
     def setUp(self):
@@ -358,17 +358,17 @@ class TestConfigManagerWatching(unittest.TestCase):
     def test_01_start_stop_watching(self):
         """启动和停止监听"""
         result = self.cm.start_watching()
-        self.assertTrue(result)
-        self.assertIsNotNone(self.cm._watcher)
-        self.assertTrue(self.cm._watcher.is_running)
+        assert result
+        assert self.cm._watcher is not None
+        assert self.cm._watcher.is_running
 
         self.cm.stop_watching()
-        self.assertIsNone(self.cm._watcher)
+        assert self.cm._watcher is None
 
     def test_02_no_config_file(self):
         """无配置文件时返回 False"""
         cm = ConfigManager()  # 无 config_file
-        self.assertFalse(cm.start_watching())
+        assert not cm.start_watching()
 
     def test_03_double_start_replaces(self):
         """重复 start 替换旧的 watcher"""
@@ -378,13 +378,13 @@ class TestConfigManagerWatching(unittest.TestCase):
         self.cm.start_watching()
         new_watcher = self.cm._watcher
 
-        self.assertIsNot(old_watcher, new_watcher)
-        self.assertFalse(old_watcher.is_running)
-        self.assertTrue(new_watcher.is_running)
+        assert old_watcher  is not  new_watcher
+        assert not old_watcher.is_running
+        assert new_watcher.is_running
 
     def test_04_watcher_detects_and_reloads(self):
         """监听器检测到文件变更并自动重载 (端到端)"""
-        self.assertEqual(self.cm.get("logging.level"), "INFO")
+        assert self.cm.get("logging.level")  ==  "INFO"
 
         self.cm.start_watching(poll_interval=0.3, debounce_seconds=0.0)
 
@@ -396,7 +396,7 @@ class TestConfigManagerWatching(unittest.TestCase):
             # 等待轮询检测 + 重载
             time.sleep(1.5)
 
-            self.assertEqual(self.cm.get("logging.level"), "ERROR")
+            assert self.cm.get("logging.level")  ==  "ERROR"
         finally:
             self.cm.stop_watching()
 
@@ -414,12 +414,12 @@ class TestConfigManagerWatching(unittest.TestCase):
             time.sleep(1.5)
 
             # 配置应保持不变
-            self.assertEqual(self.cm.get("logging.level"), original_level)
+            assert self.cm.get("logging.level")  ==  original_level
         finally:
             self.cm.stop_watching()
 
 
-class TestConfigManagerThreadSafety(unittest.TestCase):
+class TestConfigManagerThreadSafety:
     """热重载线程安全测试"""
 
     def setUp(self):
@@ -464,7 +464,7 @@ class TestConfigManagerThreadSafety(unittest.TestCase):
         for t in threads:
             t.join(timeout=15)
 
-        self.assertEqual(len(errors), 0, f"并发错误: {errors}")
+        assert len(errors)  ==  0, f"并发错误: {errors}"
 
     def test_02_concurrent_watch_and_read(self):
         """并发监听和读取不崩溃"""
@@ -498,7 +498,7 @@ class TestConfigManagerThreadSafety(unittest.TestCase):
             t.join(timeout=30)
 
         self.cm.stop_watching()
-        self.assertEqual(len(errors), 0, f"并发错误: {errors}")
+        assert len(errors)  ==  0, f"并发错误: {errors}"
 
     def test_03_concurrent_start_stop_race(self):
         """S10: 并发 start_watching/stop_watching 不崩溃"""
@@ -530,7 +530,7 @@ class TestConfigManagerThreadSafety(unittest.TestCase):
             t.join(timeout=20)
 
         self.cm.stop_watching()
-        self.assertEqual(len(errors), 0, f"并发 start/stop 竞态错误: {errors}")
+        assert len(errors)  ==  0, f"并发 start/stop 竞态错误: {errors}"
 
     def test_04_concurrent_reload_and_set_no_write_loss(self):
         """S10: 并发 reload_config + set 验证无写入丢失"""
@@ -572,10 +572,10 @@ class TestConfigManagerThreadSafety(unittest.TestCase):
         for t in threads:
             t.join(timeout=20)
 
-        self.assertEqual(len(errors), 0, f"并发 reload+set 错误: {errors}")
+        assert len(errors)  ==  0, f"并发 reload+set 错误: {errors}"
 
 
-class TestNotificationChannelConcurrency(unittest.TestCase):
+class TestNotificationChannelConcurrency:
     """S10: 通知渠道并发安全测试"""
 
     def setUp(self):
@@ -631,4 +631,4 @@ class TestNotificationChannelConcurrency(unittest.TestCase):
         for t in threads:
             t.join(timeout=15)
 
-        self.assertEqual(len(errors), 0, f"并发 add+trigger 错误: {errors}")
+        assert len(errors)  ==  0, f"并发 add+trigger 错误: {errors}"

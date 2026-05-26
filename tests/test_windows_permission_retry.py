@@ -5,13 +5,13 @@ import json
 import os
 import pathlib
 import tempfile
-import unittest
+import pytest
 from unittest.mock import patch
 
 from src.monitoring.data_logger import DataLogger
 
 
-class TestWindowsPermissionRetry(unittest.TestCase):
+class TestWindowsPermissionRetry:
     """测试 Windows 权限错误重试机制"""
 
     def setUp(self):
@@ -56,14 +56,14 @@ class TestWindowsPermissionRetry(unittest.TestCase):
 
         # 验证文件已创建
         history_file = os.path.join(self.test_dir, "history_data.json")
-        self.assertTrue(pathlib.Path(history_file).exists())
+        assert pathlib.Path(history_file).exists()
 
         # 验证数据已保存（P0 版本化格式）
         with pathlib.Path(history_file).open(encoding="utf-8") as f:
             raw = json.load(f)
         history = raw["data"] if isinstance(raw, dict) and "data" in raw else raw
-        self.assertEqual(len(history), 1)
-        self.assertEqual(history[0]["speed"], 100.0)
+        assert len(history)  ==  1
+        assert history[0]["speed"]  ==  100.0
 
     def test_save_current_data_with_permission_error(self):
         """测试保存当前数据时遇到权限错误的重试机制"""
@@ -94,13 +94,13 @@ class TestWindowsPermissionRetry(unittest.TestCase):
 
         # 验证文件已创建
         current_file = os.path.join(self.test_dir, "current_data.json")
-        self.assertTrue(pathlib.Path(current_file).exists())
+        assert pathlib.Path(current_file).exists()
 
         # 验证数据已保存
         with pathlib.Path(current_file).open(encoding="utf-8") as f:
             data = json.load(f)
-        self.assertIn("performance", data)
-        self.assertEqual(data["performance"]["speed"], 200.0)
+        assert data  in  "performance"
+        assert data["performance"]["speed"]  ==  200.0
 
     def test_retry_exhausted_returns_data_to_buffer(self):
         """测试重试耗尽后数据返回缓冲区"""
@@ -128,15 +128,12 @@ class TestWindowsPermissionRetry(unittest.TestCase):
         self.data_logger.save_history_data()
 
         history_file = os.path.join(self.test_dir, "history_data.json")
-        self.assertTrue(pathlib.Path(history_file).exists())
+        assert pathlib.Path(history_file).exists()
 
         # 验证数据已保存（P0 版本化格式）
         with pathlib.Path(history_file).open(encoding="utf-8") as f:
             raw = json.load(f)
         history = raw["data"] if isinstance(raw, dict) and "data" in raw else raw
-        self.assertEqual(len(history), 1)
-        self.assertEqual(history[0]["speed"], 300.0)
+        assert len(history)  ==  1
+        assert history[0]["speed"]  ==  300.0
 
-
-if __name__ == "__main__":
-    unittest.main()

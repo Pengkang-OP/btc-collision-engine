@@ -53,7 +53,7 @@ class TargetResolver:
     注意: 当前引擎仅生成P2PKH地址进行碰撞检测,
     P2SH/Bech32(P2WSH)/Taproot等非P2PKH目标必然无法匹配。
 
-    示例:
+    Example:
         >>> resolver = TargetResolver(enable_cache=True)
         >>> address = resolver.resolve('1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa')
         >>> addresses = resolver.resolve_multiple(['1A1z...', '5KJvs...'])
@@ -75,7 +75,7 @@ class TargetResolver:
     ) -> None:
         """初始化目标地址解析器
 
-        参数:
+        Args:
             enable_cache: 是否启用缓存,默认True
             cache_max_size: 缓存最大容量,默认10000条目
             max_file_size_bytes: 最大文件大小(字节),默认100MB
@@ -93,7 +93,7 @@ class TargetResolver:
         self._batch_size = batch_size
 
         # 不支持类型统计 (P2SH/P2WSH/Taproot等密码学上无法匹配的类型)
-        self._unsupported_types: set[str] = set()
+        self._unsupported_types: list[str] = []
 
         logger.info(
             f"TargetResolver 初始化: 缓存={'启用' if enable_cache else '禁用'}, "
@@ -106,10 +106,10 @@ class TargetResolver:
     def detect_format(input_str: str) -> str:
         """自动检测输入格式
 
-        参数:
+        Args:
             input_str: 输入字符串
 
-        返回:
+        Returns:
             格式类型: 'address', 'p2sh_address', 'bech32_address', 'taproot_address', 'wif',
                      'pubkey_compressed', 'pubkey_uncompressed', 'hash160', 'unknown'
         """
@@ -230,7 +230,7 @@ class TargetResolver:
                     f"密码学上不可能匹配。请使用P2PKH地址(1开头)或私钥/公钥。",
                 )
                 # 记录到不支持类型统计
-                self._unsupported_types.add("p2sh_address")
+                self._unsupported_types.append("p2sh_address")
                 return None
             logger.warning(f"P2SH地址版本不匹配: version=0x{version:02x}")
             return None
@@ -273,7 +273,7 @@ class TargetResolver:
                     f"P2WSH的witness program=sha256(redeemScript)与引擎生成的hash160(pubkey)不相关，"
                     f"密码学上不可能匹配。请使用P2WPKH地址(20字节witness)或P2PKH地址(1开头)。",
                 )
-                self._unsupported_types.add("p2wsh_address")
+                self._unsupported_types.append("p2wsh_address")
                 return None
             logger.warning("Bech32 witness长度无效: %s字节", prog_len)
             return None
@@ -304,7 +304,7 @@ class TargetResolver:
                 f"Taproot的witness program=x-only公钥(32字节)与引擎生成的hash160(pubkey)不相关，"
                 f"密码学上不可能匹配。请使用P2PKH地址(1开头)或私钥/公钥。",
             )
-            self._unsupported_types.add("taproot_address")
+            self._unsupported_types.append("taproot_address")
             return None
         except ValueError as e:
             logger.error(f"Taproot地址转换异常: {input_str} - {type(e).__name__}: {e}")
@@ -401,10 +401,10 @@ class TargetResolver:
     def resolve_batch(self, inputs: list[str]) -> dict[str, str | None]:
         """批量解析多个输入字符串
 
-        参数:
+        Args:
             inputs: 输入字符串列表
 
-        返回:
+        Returns:
             字典 {输入: P2PKH地址}
         """
         logger.info(f"开始批量解析: 总数={len(inputs)}")
@@ -475,10 +475,10 @@ class TargetResolver:
     def load_from_file(self, filepath: str) -> set[str]:
         """从文件加载目标地址集合
 
-        参数:
+        Args:
             filepath: 文件路径
 
-        返回:
+        Returns:
             有效地址字符串集合(小写标准化)
         """
         addresses: set[str] = set()
@@ -586,10 +586,10 @@ class TargetResolver:
             unknown 类别包含 testnet 地址(2/tb1 前缀)等非主网
             标准格式,这些地址不会被引擎匹配。
 
-        参数:
+        Args:
             targets: 已解析的目标地址集合(Base58 地址保留原始大小写,Bech32 小写)
 
-        返回:
+        Returns:
             格式→数量映射,如 {'p2pkh': 100, 'p2sh': 5, 'bech32': 3}
         """
         counts: dict[str, int] = {
@@ -617,7 +617,7 @@ class TargetResolver:
     def get_cache_stats(self) -> dict | None:
         """获取缓存统计信息
 
-        返回:
+        Returns:
             缓存统计信息字典,未启用缓存返回空字典
         """
         if self.cache:
@@ -629,7 +629,7 @@ class TargetResolver:
     def get_unsupported_types(self) -> dict[str, int]:
         """获取密码学上不支持匹配的输入类型统计
 
-        返回:
+        Returns:
             字典 {类型名: 计数}，例如 {'p2sh_address': 3, 'taproot_address': 1}
 
         可用于向用户报告哪些输入格式因密码学路径不同而无法用于碰撞匹配。

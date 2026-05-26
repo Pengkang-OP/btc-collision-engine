@@ -38,7 +38,7 @@ python -c "import pyopencl as cl; platforms = cl.get_platforms(); print(f'检测
 ### 2. 运行GPU测试 (60秒)
 ```bash
 set PYTHONPATH=%CD%
-python scripts/test_gpu_collision_actual.py
+python scripts/testing/test_gpu_collision_actual.py
 ```
 
 ### 3. 启用GPU模式运行引擎
@@ -130,6 +130,12 @@ python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa --template qui
         "work_group_size": 256,
         "use_fast_math": true,
         "use_uint32_workaround": false,
+        "driver_check": {
+            "enabled": true,
+            "require_minimum_version": true,
+            "warn_on_unstable": true,
+            "auto_fallback_conservative": true
+        },
         "key_generation_strategy": "PRNG_SEED"
     },
     "optimization": {
@@ -274,14 +280,20 @@ python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa --template lon
         "enable_vendor_optimizations": true,
         "queue_depth": 32,
         "async_execution": true,
-        "seed_prefetch_size": 64,
+        "seed_prefetch_size": 256,
         "timeout_protection": true,
         "base_timeout_seconds": 30,
         "gpu_memory_pool": true,
         "max_memory_mb": 10240,
         "work_group_size": 256,
         "use_fast_math": true,
-        "use_uint32_workaround": true
+        "use_uint32_workaround": true,
+        "driver_check": {
+            "enabled": true,
+            "require_minimum_version": true,
+            "warn_on_unstable": true,
+            "auto_fallback_conservative": true
+        }
     },
     "optimization": {
         "uint32_workaround": true,
@@ -299,9 +311,11 @@ python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa --template lon
 | `batch_size` | 262144-2097152 | 批次大小,越大吞吐量越高 |
 | `memory_usage_ratio` | 0.7 | 使用70%显存,留有余量 |
 | `queue_depth` | 32 | 异步队列深度,平衡延迟和吞吐 |
+| `seed_prefetch_size` | 256 | 种子预生成缓存深度,消除CPU-GPU同步瓶颈 |
 | `use_uint32_workaround` | true | **Intel必须启用**,避免Arc GPU hang |
 | `async_execution` | true | 双缓冲优化,提高GPU利用率 |
 | `timeout_protection` | true | 超时保护,防止GPU卡死 |
+| `driver_check.enabled` | true | 启用驱动检查,自动检测不稳定驱动 |
 
 ---
 
@@ -420,7 +434,7 @@ python -c "import pyopencl as cl; [print(p.name) for p in cl.get_platforms()]"
 
 ```bash
 # 创建内核缓存
-python scripts/test_gpu_collision_actual.py --warmup
+python scripts/testing/test_gpu_collision_actual.py --warmup
 ```
 
 ---
@@ -459,7 +473,7 @@ python scripts/test_gpu_collision_actual.py --warmup
 
 2. **性能基准测试**:
    ```bash
-   python scripts/test_gpu_collision_actual.py
+   python scripts/testing/test_gpu_collision_actual.py
    ```
 
 3. **配置优化**: 根据上述指南调整config.json

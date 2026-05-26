@@ -29,7 +29,8 @@ from ...utils.exception_handler import ExceptionHandler
 from .base_search import BaseSearchMode
 
 if TYPE_CHECKING:
-    from ...collision.gpu.engine import GPUCollisionEngine
+    # ROADMAP #13: 使用协议接口替代直接引用，消除反向依赖
+    from ...gpu._engine_protocol import GPUEngineProtocol as GPUCollisionEngine
 
 logger = get_configured_logger("RandomSearchMode")
 
@@ -107,7 +108,7 @@ class RandomSearchMode(BaseSearchMode):
         # self._start_seed_prefetch_thread()  # 移到 _ensure_seed_thread_running()
 
         ctrl_info = ", 自适应控制=启用" if adaptive_controller else ""
-        logger.info("随机搜索模式已初始化 (种子缓存深度=%s%s)", seed_prefetch_size, ctrl_info)
+        logger.debug("随机搜索模式已初始化 (种子深度=%s%s)", seed_prefetch_size, ctrl_info)
 
     def _start_seed_prefetch_thread(self) -> None:
         """启动后台种子预生成 daemon 线程（幂等：已启动则跳过）"""
@@ -120,7 +121,7 @@ class RandomSearchMode(BaseSearchMode):
             daemon=True,
         )
         self._seed_thread.start()
-        logger.info(f"种子预生成线程已启动 (缓存深度={self._seed_prefetch_size})")
+        logger.debug("种子预生成线程已启动 (缓存深度=%d)", self._seed_prefetch_size)
 
     def _ensure_seed_thread_running(self) -> None:
         """确保种子预生成线程在运行（在 execute() 入口调用）"""
@@ -140,7 +141,7 @@ class RandomSearchMode(BaseSearchMode):
         if prefill_count <= 0:
             return
 
-        logger.info("预填充种子队列: %s 个种子", prefill_count)
+        logger.debug("预填充种子队列: %d 个种子", prefill_count)
         prefilled = 0
 
         try:
@@ -283,10 +284,10 @@ class RandomSearchMode(BaseSearchMode):
 
         # 检查异步执行器是否可用
         if hasattr(engine, "_async_executor") and engine._async_executor is not None:
-            logger.info("使用GPU异步执行模式（双缓冲优化）")
+            logger.debug("使用GPU异步执行模式（双缓冲优化）")
             self._execute_async()
         else:
-            logger.info("使用GPU同步执行模式")
+            logger.debug("使用GPU同步执行模式")
             self._execute_sync()
 
     # ------------------------------------------------------------------
@@ -355,6 +356,7 @@ class RandomSearchMode(BaseSearchMode):
                 # 更新统计数据
                 batch_count += current_batch_size
                 engine.stats.update(batch_count)
+                engine._current_position = batch_count
 
                 # 记录性能指标
                 engine._update_performance_metrics(current_batch_size, execution_time_ms)
@@ -626,7 +628,7 @@ class RandomSearchMode(BaseSearchMode):
             self._execute_sync()
             return
 
-        logger.info("启动GPU异步执行模式（v5.1 流水线并行 + 后台收集器）")
+        logger.debug("启动GPU异步执行模式 (v5.1 流水线并行 + 后台收集器)")
         current_batch_size = engine.batch_size or 1000000
         buffer_data, current_batch_size, current_buffer, batch_optimizer = self._setup_async_buffers(
             engine,
@@ -678,6 +680,7 @@ class RandomSearchMode(BaseSearchMode):
                 # v5.1: stats 更新降频，减少属性访问开销
                 if batch_num % 5 == 0:
                     engine.stats.update(batch_count)
+                engine._current_position = batch_count
 
         except KeyboardInterrupt:
             logger.info("用户中断，停止异步执行")

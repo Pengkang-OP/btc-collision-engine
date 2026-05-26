@@ -1,4 +1,5 @@
 {
+  "version": "5.2.1",
   "_comment": "Intel Arc A770 16GB 专用配置（v5.2.1 同步模式 — A770 OpenCL 硬件限制）",
   "_comment_usage": "复制此文件为 config.json 以使用 Intel Arc 优化配置",
   "_comment_perf": "A770 同步模式基准 ~3M keys/s；GPU PRNG 模式种子仅 32 字节",
@@ -26,11 +27,18 @@
     "timeout_protection": true,
     "base_timeout_seconds": 30,
     "max_error_retries": 100,
-    "queue_depth": 0,
+    "queue_depth": 1,
     "seed_prefetch_size": 1024,
-    "_comment_queue_depth": "v5.2.1: 同步模式下队列深度不适用，此值仅做占位",
-    "_comment_seed_prefetch": "v5.2.1: 种子预生成缓存=256，消除CPU-GPU同步瓶颈",
-    "_comment_max_error_retries": "GPU连续错误最大重试次数(超过后强制停止引擎)"
+    "_comment_queue_depth": "v5.2.1: 同步模式下队列深度不适用，设为1通过schema验证",
+    "_comment_seed_prefetch": "v5.2.1: 种子预生成缓存=1024，消除CPU-GPU同步瓶颈；schema 上限已放宽至 4096 以支持此场景",
+    "_comment_max_error_retries": "GPU连续错误最大重试次数(超过后强制停止引擎)",
+    "driver_check": {
+      "enabled": true,
+      "require_minimum_version": true,
+      "warn_on_unstable": true,
+      "auto_fallback_conservative": true
+    },
+    "key_generation_strategy": "PRNG_SEED"
   },
   "monitoring": {
     "enabled": true,

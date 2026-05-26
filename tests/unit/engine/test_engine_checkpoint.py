@@ -10,12 +10,12 @@ import pathlib
 import shutil
 import tempfile
 import time
-import unittest
+import pytest
 
 from src.collision.key_collision_engine import KeyCollisionEngine
 
 
-class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
+class TestKeyCollisionEngineP3Checkpoint:
     """P3: Checkpoint 持久化：resume_from / start_from / start resume"""
 
     def setUp(self):
@@ -49,7 +49,7 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
         engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         engine.checkpoint_mgr = mgr
         result = engine.resume_from_checkpoint()
-        self.assertIsNone(result)
+        assert result is None
         engine.stop()
 
     def test_resume_from_checkpoint_range(self):
@@ -61,9 +61,9 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
         engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         engine.checkpoint_mgr = mgr
         result = engine.resume_from_checkpoint()
-        self.assertIsNotNone(result)
-        self.assertEqual(result["mode"], "range")
-        self.assertEqual(engine.stats.total_checked, 500)
+        assert result is not None
+        assert result["mode"]  ==  "range"
+        assert engine.stats.total_checked  ==  500
         engine.stop()
 
     def test_resume_from_checkpoint_brute_force(self):
@@ -80,8 +80,8 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
         engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         engine.checkpoint_mgr = mgr
         result = engine.resume_from_checkpoint()
-        self.assertIsNotNone(result)
-        self.assertEqual(result["mode"], "brute_force")
+        assert result is not None
+        assert result["mode"]  ==  "brute_force"
         engine.stop()
 
     def test_start_from_checkpoint_range(self):
@@ -90,7 +90,7 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
         engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         engine.start_from_checkpoint(data)
         time.sleep(0.3)
-        self.assertTrue(engine.is_running())
+        assert engine.is_running()
         engine.stop()
 
     def test_start_from_checkpoint_brute_force(self):
@@ -99,7 +99,7 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
         engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         engine.start_from_checkpoint(data)
         time.sleep(0.3)
-        self.assertTrue(engine.is_running())
+        assert engine.is_running()
         engine.stop()
 
     def test_start_from_checkpoint_random(self):
@@ -108,7 +108,7 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
         engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         engine.start_from_checkpoint(data)
         time.sleep(0.2)
-        self.assertTrue(engine.is_running())
+        assert engine.is_running()
         engine.stop()
 
     def test_start_resume_from_range_checkpoint(self):
@@ -126,7 +126,7 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
         engine.checkpoint_mgr = mgr
         engine.start(mode="range", resume=True, start=1, end=1000)
         time.sleep(0.3)
-        self.assertTrue(engine.is_running())
+        assert engine.is_running()
         engine.stop()
 
     def test_start_resume_from_brute_force_checkpoint(self):
@@ -144,7 +144,7 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
         engine.checkpoint_mgr = mgr
         engine.start(mode="brute_force", resume=True, start=1, max_keys=5)
         time.sleep(0.5)
-        self.assertTrue(engine.is_running())
+        assert engine.is_running()
         engine.stop()
 
     def test_start_resume_from_random_checkpoint(self):
@@ -162,7 +162,7 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
         engine.checkpoint_mgr = mgr
         engine.start(mode="random", resume=True)
         time.sleep(0.2)
-        self.assertTrue(engine.is_running())
+        assert engine.is_running()
         engine.stop()
 
     def test_start_resume_checkpoint_load_failure(self):
@@ -183,5 +183,5 @@ class TestKeyCollisionEngineP3Checkpoint(unittest.TestCase):
         engine.checkpoint_mgr = mgr
         engine.start(mode="random", resume=True)
         time.sleep(0.2)
-        self.assertTrue(engine.is_running(), "断点加载失败应回退到正常启动")
+        assert engine.is_running(), "断点加载失败应回退到正常启动"
         engine.stop()

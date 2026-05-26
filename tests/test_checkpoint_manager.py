@@ -5,13 +5,13 @@ import os
 import pathlib
 import tempfile
 import time
-import unittest
+import pytest
 from unittest.mock import patch
 
 from src.collision.checkpoint_manager import CheckpointManager
 
 
-class TestCheckpointManagerBasic(unittest.TestCase):
+class TestCheckpointManagerBasic:
     """基础保存/加载/删除测试"""
 
     def setUp(self):
@@ -36,35 +36,35 @@ class TestCheckpointManagerBasic(unittest.TestCase):
             force=True,
         )
         data = self.mgr.load()
-        self.assertIsNotNone(data)
-        self.assertEqual(data["mode"], "random")
-        self.assertEqual(data["current_position"], 12345)
-        self.assertEqual(data["total_checked"], 50000)
+        assert data is not None
+        assert data["mode"]  ==  "random"
+        assert data["current_position"]  ==  12345
+        assert data["total_checked"]  ==  50000
 
     def test_exists_after_save(self):
         """保存后 exists() 返回 True"""
-        self.assertFalse(self.mgr.exists)
+        assert not self.mgr.exists
         self.mgr.save(
             mode="random", targets=set(), current_position=0, total_checked=0, matches=[], force=True
         )
-        self.assertTrue(self.mgr.exists)
+        assert self.mgr.exists
 
     def test_delete(self):
         """删除后 exists() 返回 False"""
         self.mgr.save(
             mode="random", targets=set(), current_position=0, total_checked=0, matches=[], force=True
         )
-        self.assertTrue(self.mgr.exists)
+        assert self.mgr.exists
         self.mgr.delete()
-        self.assertFalse(self.mgr.exists)
+        assert not self.mgr.exists
 
     def test_load_nonexistent_returns_none(self):
         """不存在时 load() 返回 None"""
         mgr = CheckpointManager(filepath="nonexistent_12345.json")
-        self.assertIsNone(mgr.load())
+        assert mgr.load() is None
 
 
-class TestCheckpointSensitiveInfoCleaning(unittest.TestCase):
+class TestCheckpointSensitiveInfoCleaning:
     """敏感信息清理测试"""
 
     def setUp(self):
@@ -102,10 +102,10 @@ class TestCheckpointSensitiveInfoCleaning(unittest.TestCase):
         # 直接读取 JSON 文件内容
         raw = pathlib.Path(self.tmp_path).read_text(encoding="utf-8")
 
-        self.assertNotIn("deadbeef", raw)
-        self.assertNotIn("KwDiBf89", raw)
-        self.assertNotIn("private_key_hex", raw)
-        self.assertNotIn("private_key_wif", raw)
+        assert raw  not in  "deadbeef"
+        assert raw  not in  "KwDiBf89"
+        assert raw  not in  "private_key_hex"
+        assert raw  not in  "private_key_wif"
 
     def test_address_preserved_in_match(self):
         """断点保存保留地址信息"""
@@ -119,7 +119,7 @@ class TestCheckpointSensitiveInfoCleaning(unittest.TestCase):
             force=True,
         )
         data = self.mgr.load()
-        self.assertEqual(data["matches"][0]["address"], "1TestPreserved")
+        assert data["matches"][0]["address"]  ==  "1TestPreserved"
 
     def test_security_note_in_file(self):
         """断点文件包含安全说明"""
@@ -127,10 +127,10 @@ class TestCheckpointSensitiveInfoCleaning(unittest.TestCase):
             mode="random", targets=set(), current_position=0, total_checked=0, matches=[], force=True
         )
         raw = pathlib.Path(self.tmp_path).read_text(encoding="utf-8")
-        self.assertIn("security_note", raw)
+        assert raw  in  "security_note"
 
 
-class TestCheckpointAtomicWrite(unittest.TestCase):
+class TestCheckpointAtomicWrite:
     """原子写入测试"""
 
     def test_file_valid_after_save(self):
@@ -151,7 +151,7 @@ class TestCheckpointAtomicWrite(unittest.TestCase):
             )
             with pathlib.Path(tmp.name).open(encoding="utf-8") as f:
                 data = json.load(f)
-            self.assertIn("mode", data)
+            assert data  in  "mode"
         finally:
             if pathlib.Path(tmp.name).exists():
                 pathlib.Path(tmp.name).unlink()
@@ -171,14 +171,14 @@ class TestCheckpointAtomicWrite(unittest.TestCase):
                 force=True,
             )
             data = mgr.load()
-            self.assertIsInstance(data["targets"], list)
-            self.assertIn("addr1", data["targets"])
+            assert isinstance(data["targets"], list)
+            assert data["targets"]  in  "addr1"
         finally:
             if pathlib.Path(tmp.name).exists():
                 pathlib.Path(tmp.name).unlink()
 
 
-class TestCheckpointAutoSave(unittest.TestCase):
+class TestCheckpointAutoSave:
     """自动保存间隔测试"""
 
     def test_should_auto_save_initially(self):
@@ -188,7 +188,7 @@ class TestCheckpointAutoSave(unittest.TestCase):
         try:
             mgr = CheckpointManager(filepath=tmp.name, auto_save_interval=0)
             # 间隔为0，应立即触发
-            self.assertTrue(mgr.should_auto_save)
+            assert mgr.should_auto_save
         finally:
             if pathlib.Path(tmp.name).exists():
                 pathlib.Path(tmp.name).unlink()
@@ -203,26 +203,26 @@ class TestCheckpointAutoSave(unittest.TestCase):
                 mode="random", targets=set(), current_position=0, total_checked=0, matches=[], force=True
             )
             # 紧接着保存，间隔未到
-            self.assertFalse(mgr.should_auto_save)
+            assert not mgr.should_auto_save
         finally:
             if pathlib.Path(tmp.name).exists():
                 pathlib.Path(tmp.name).unlink()
 
 
-class TestCheckpointDefaultPath(unittest.TestCase):
+class TestCheckpointDefaultPath:
     """默认路径测试"""
 
     def test_default_filepath_uses_data_logs(self):
         """无filepath参数时使用默认路径"""
         mgr = CheckpointManager()
         # 默认路径为 checkpoint.json（不在 data_logs 目录下）
-        self.assertIn("checkpoint.json", str(mgr.filepath))
+        assert str(mgr.filepath)  in  "checkpoint.json"
         # 清理
         if mgr.filepath.exists():
             mgr.delete()
 
 
-class TestCheckpointSaveVariants(unittest.TestCase):
+class TestCheckpointSaveVariants:
     """save() 多种场景测试"""
 
     def setUp(self):
@@ -245,17 +245,17 @@ class TestCheckpointSaveVariants(unittest.TestCase):
             matches=[],
             force=True,
         )
-        self.assertTrue(self.mgr.exists)
+        assert self.mgr.exists
 
     def test_save_with_auto_save_disabled(self):
         """间隔未到时 save 仅缓冲不写入"""
         self.mgr._last_save = time.time()  # 刚保存过
         self.mgr.save(mode="random", targets=set(), current_position=0, total_checked=0, matches=[])
         # 间隔9999秒未到，不应写入文件
-        self.assertFalse(pathlib.Path(self.tmp_path).exists())
+        assert not pathlib.Path(self.tmp_path).exists()
         # 但 buffer 应该有数据
-        self.assertIsNotNone(self.mgr._buffer)
-        self.assertTrue(self.mgr._dirty)
+        assert self.mgr._buffer is not None
+        assert self.mgr._dirty
 
     def test_flush_buffer_not_dirty(self):
         """_flush_buffer 在 _dirty=False 时直接返回"""
@@ -281,10 +281,10 @@ class TestCheckpointSaveVariants(unittest.TestCase):
             force=True,
         )
         data = self.mgr.load()
-        self.assertEqual(data["matches"][0].get("private_key_hash"), "abc123")
+        assert data["matches"][0].get("private_key_hash")  ==  "abc123"
 
 
-class TestCheckpointFlushErrors(unittest.TestCase):
+class TestCheckpointFlushErrors:
     """_flush_buffer 异常处理测试"""
 
     def setUp(self):
@@ -325,16 +325,16 @@ class TestCheckpointFlushErrors(unittest.TestCase):
         """_cleanup_temp_file 删除存在的临时文件"""
         temp_file = self.tmp_path + ".tmp"
         pathlib.Path(temp_file).write_text("test")
-        self.assertTrue(pathlib.Path(temp_file).exists())
+        assert pathlib.Path(temp_file).exists()
         self.mgr._cleanup_temp_file(temp_file)
-        self.assertFalse(pathlib.Path(temp_file).exists())
+        assert not pathlib.Path(temp_file).exists()
 
     def test_cleanup_temp_file_not_exists(self):
         """_cleanup_temp_file 不存在的文件无异常"""
         self.mgr._cleanup_temp_file("/nonexistent/path.tmp")
 
 
-class TestCheckpointLoadEdgeCases(unittest.TestCase):
+class TestCheckpointLoadEdgeCases:
     """load() 边界情况测试"""
 
     def setUp(self):
@@ -356,25 +356,25 @@ class TestCheckpointLoadEdgeCases(unittest.TestCase):
         with pathlib.Path(self.tmp_path).open("w") as f:
             json.dump({"version": 99, "mode": "random"}, f)
         result = self.mgr.load()
-        self.assertIsNone(result)
+        assert result is None
 
     def test_load_corrupt_json(self):
         """损坏的 JSON 返回 None"""
         pathlib.Path(self.tmp_path).write_text("not a json file {{{")
         result = self.mgr.load()
-        self.assertIsNone(result)
+        assert result is None
 
     def test_load_temp_file_recovery(self):
         """.tmp 文件恢复为主文件"""
         temp_file = self.tmp_path + ".tmp"
         with pathlib.Path(temp_file).open("w") as f:
             json.dump({"version": 1, "mode": "recovered"}, f)
-        self.assertTrue(pathlib.Path(temp_file).exists())
-        self.assertFalse(pathlib.Path(self.tmp_path).exists())
+        assert pathlib.Path(temp_file).exists()
+        assert not pathlib.Path(self.tmp_path).exists()
 
         result = self.mgr.load()
         # version=1 != CHECKPOINT_VERSION=2, 所以返回 None
-        self.assertIsNone(result)
+        assert result is None
 
     def test_load_temp_recovery_with_main_exists(self):
         """.tmp 恢复时主文件已存在则不覆盖"""
@@ -386,10 +386,10 @@ class TestCheckpointLoadEdgeCases(unittest.TestCase):
 
         result = self.mgr.load()
         # version=1 != CHECKPOINT_VERSION=2, 所以返回 None
-        self.assertIsNone(result)
+        assert result is None
 
 
-class TestCheckpointDelete(unittest.TestCase):
+class TestCheckpointDelete:
     """delete() 测试"""
 
     def setUp(self):
@@ -415,11 +415,11 @@ class TestCheckpointDelete(unittest.TestCase):
         )
         temp_file = self.tmp_path + ".tmp"
         pathlib.Path(temp_file).write_text("temp")
-        self.assertTrue(pathlib.Path(temp_file).exists())
+        assert pathlib.Path(temp_file).exists()
 
         self.mgr.delete()
         # delete 只清理主文件，不清理 .tmp 文件
-        self.assertFalse(pathlib.Path(self.tmp_path).exists())
+        assert not pathlib.Path(self.tmp_path).exists()
         # 手动清理 .tmp
         if pathlib.Path(temp_file).exists():
             pathlib.Path(temp_file).unlink()
@@ -435,18 +435,18 @@ class TestCheckpointDelete(unittest.TestCase):
             force=True,
         )
         self.mgr.delete()
-        self.assertIsNone(self.mgr._buffer)
-        self.assertFalse(self.mgr._dirty)
+        assert self.mgr._buffer is None
+        assert not self.mgr._dirty
 
 
-class TestCheckpointPywin32Check(unittest.TestCase):
+class TestCheckpointPywin32Check:
     """_check_win32_security 测试"""
 
     def test_check_win32_security_cached(self):
         """结果被缓存"""
         result1 = CheckpointManager._check_win32_security()
         result2 = CheckpointManager._check_win32_security()
-        self.assertEqual(result1, result2)
+        assert result1  ==  result2
 
     def test_check_win32_security_import_error(self):
         """pywin32 不可用时返回 False"""
@@ -457,7 +457,7 @@ class TestCheckpointPywin32Check(unittest.TestCase):
                 result = CheckpointManager._check_win32_security()
         finally:
             CheckpointManager._has_win32_security = old_value
-        self.assertFalse(result)
+        assert not result
 
     def test_check_win32_security_import_success(self):
         """pywin32 可用时返回 True"""
@@ -466,21 +466,21 @@ class TestCheckpointPywin32Check(unittest.TestCase):
         try:
             result = CheckpointManager._check_win32_security()
             # 如果 pywin32 已安装则为 True，否则为 False
-            self.assertIsInstance(result, bool)
+            assert isinstance(result, bool)
         finally:
             CheckpointManager._has_win32_security = old_value
 
 
-class TestCheckpointExists(unittest.TestCase):
+class TestCheckpointExists:
     """exists() 测试"""
 
     def test_exists_no_file(self):
         """文件不存在时返回 False"""
         mgr = CheckpointManager(filepath="/nonexistent/checkpoint.json")
-        self.assertFalse(mgr.exists)
+        assert not mgr.exists
 
 
-class TestCheckpointFlushDirCreation(unittest.TestCase):
+class TestCheckpointFlushDirCreation:
     """_flush_buffer 目录创建测试"""
 
     def test_flush_creates_parent_dir(self):
@@ -495,14 +495,14 @@ class TestCheckpointFlushDirCreation(unittest.TestCase):
             mgr._dirty = True
             mgr._buffer = {"version": 1, "test": True}
             mgr._flush_buffer()
-            self.assertTrue(pathlib.Path(ckpt_path).exists())
+            assert pathlib.Path(ckpt_path).exists()
         finally:
             mgr.delete()
             if pathlib.Path(subdir).exists():
                 shutil.rmtree(subdir, ignore_errors=True)
 
 
-class TestCheckpointCleanupErrors(unittest.TestCase):
+class TestCheckpointCleanupErrors:
     """_cleanup_temp_file 异常处理测试"""
 
     @patch("pathlib.Path.unlink", side_effect=OSError("cannot delete"))
@@ -513,7 +513,7 @@ class TestCheckpointCleanupErrors(unittest.TestCase):
         mgr._cleanup_temp_file("/tmp/test.json.tmp")
 
 
-class TestCheckpointLoadTempRecoveryErrors(unittest.TestCase):
+class TestCheckpointLoadTempRecoveryErrors:
     """load() 临时文件恢复失败测试"""
 
     def setUp(self):
@@ -535,7 +535,7 @@ class TestCheckpointLoadTempRecoveryErrors(unittest.TestCase):
             json.dump({"version": 1, "mode": "test"}, f)
         # replace 会失败，但不应崩溃
         result = self.mgr.load()
-        self.assertIsNone(result)
+        assert result is None
 
     @patch("pathlib.Path.replace", side_effect=Exception("unexpected"))
     def test_temp_recovery_rename_unexpected_error(self, mock_rename):
@@ -544,10 +544,10 @@ class TestCheckpointLoadTempRecoveryErrors(unittest.TestCase):
         with pathlib.Path(temp_file).open("w") as f:
             json.dump({"version": 1, "mode": "test"}, f)
         result = self.mgr.load()
-        self.assertIsNone(result)
+        assert result is None
 
 
-class TestCheckpointDeleteErrors(unittest.TestCase):
+class TestCheckpointDeleteErrors:
     """delete() 异常处理测试"""
 
     def test_delete_exception_caught(self):

@@ -2,7 +2,7 @@
 
 import io
 import os
-import unittest
+import pytest
 from unittest.mock import MagicMock, patch
 
 from src.cli.output import CLIOutput, _get_utf8_console
@@ -10,27 +10,27 @@ from src.cli.output import CLIOutput, _get_utf8_console
 # ── _get_utf8_console ──────────────────────────────────────────
 
 
-class TestGetUtf8Console(unittest.TestCase):
+class TestGetUtf8Console:
     """_get_utf8_console() 端到端测试。"""
 
     @patch("platform.system", return_value="Linux")
     def test_non_windows_returns_default_console(self, mock_system):
         """非 Windows → 默认 Console (stderr kwarg)。"""
         c = _get_utf8_console(stderr=True)
-        self.assertIsNotNone(c)
+        assert c is not None
 
     @patch("platform.system", return_value="Linux")
     def test_non_windows_no_color(self, mock_system):
         """非 Windows + no_color=True → 默认 Console 带 no_color。"""
         c = _get_utf8_console(no_color=True)
-        self.assertIsNotNone(c)
+        assert c is not None
 
     @patch("platform.system", return_value="Windows")
     def test_windows_reconfigure_success(self, mock_system):
         """Windows + reconfigure 成功 → force_terminal Console。"""
         with patch("sys.stdout.reconfigure") as mock_rec:
             c = _get_utf8_console(stderr=False, no_color=True)
-            self.assertIsNotNone(c)
+            assert c is not None
             mock_rec.assert_called_once()
 
     @patch("platform.system", return_value="Windows")
@@ -38,7 +38,7 @@ class TestGetUtf8Console(unittest.TestCase):
         """Windows + stderr=True → 重配 stderr。"""
         with patch("sys.stderr.reconfigure") as mock_rec:
             c = _get_utf8_console(stderr=True)
-            self.assertIsNotNone(c)
+            assert c is not None
             mock_rec.assert_called_once()
 
     @patch("platform.system", return_value="Windows")
@@ -46,7 +46,7 @@ class TestGetUtf8Console(unittest.TestCase):
         """Windows 但无 reconfigure (Python<3.7) → 默认 Console。"""
         with patch("sys.stdout", spec=[]):  # 无 reconfigure 属性
             c = _get_utf8_console(stderr=False)
-            self.assertIsNotNone(c)
+            assert c is not None
 
     @patch("platform.system", return_value="Windows")
     def test_windows_reconfigure_oserror_fallback(self, mock_system):
@@ -55,7 +55,7 @@ class TestGetUtf8Console(unittest.TestCase):
         mock_stdout.reconfigure = MagicMock(side_effect=OSError("mock"))
         with patch("sys.stdout", mock_stdout):
             c = _get_utf8_console(stderr=False)
-            self.assertIsNotNone(c)
+            assert c is not None
 
     @patch("platform.system", return_value="Windows")
     def test_windows_reconfigure_attribute_error_fallback(self, mock_system):
@@ -64,7 +64,7 @@ class TestGetUtf8Console(unittest.TestCase):
         mock_stdout.reconfigure = MagicMock(side_effect=AttributeError("mock"))
         with patch("sys.stdout", mock_stdout):
             c = _get_utf8_console(stderr=False)
-            self.assertIsNotNone(c)
+            assert c is not None
 
     @patch("platform.system", return_value="Windows")
     def test_windows_reconfigure_io_unsupported_operation_fallback(self, mock_system):
@@ -73,13 +73,13 @@ class TestGetUtf8Console(unittest.TestCase):
         mock_stdout.reconfigure = MagicMock(side_effect=io.UnsupportedOperation("mock"))
         with patch("sys.stdout", mock_stdout):
             c = _get_utf8_console(stderr=False)
-            self.assertIsNotNone(c)
+            assert c is not None
 
 
 # ── CLIOutput 单例管理 ─────────────────────────────────────────
 
 
-class TestCLIOutputSingleton(unittest.TestCase):
+class TestCLIOutputSingleton:
     """get_instance / init / reset_instance 测试。"""
 
     def tearDown(self):
@@ -88,34 +88,34 @@ class TestCLIOutputSingleton(unittest.TestCase):
     def test_get_instance_creates_lazily(self):
         """首次 get_instance → 创建默认实例。"""
         out = CLIOutput.get_instance()
-        self.assertIsInstance(out, CLIOutput)
+        assert isinstance(out, CLIOutput)
 
     def test_get_instance_returns_same(self):
         """二次 get_instance → 同一实例。"""
         a = CLIOutput.get_instance()
         b = CLIOutput.get_instance()
-        self.assertIs(a, b)
+        assert a  is  b
 
     def test_init_resets_instance(self):
         """init() → 替换为新实例。"""
         old = CLIOutput.get_instance()
         new = CLIOutput.init(quiet=True, compact=True)
-        self.assertIsNot(old, new)
-        self.assertTrue(new.quiet)
-        self.assertTrue(new.compact)
+        assert old  is not  new
+        assert new.quiet
+        assert new.compact
 
     def test_reset_instance_clears(self):
         """reset_instance → get_instance 创建全新实例。"""
         old = CLIOutput.get_instance()
         CLIOutput.reset_instance()
         new = CLIOutput.get_instance()
-        self.assertIsNot(old, new)
+        assert old  is not  new
 
 
 # ── CLIOutput 初始化 ───────────────────────────────────────────
 
 
-class TestCLIOutputInit(unittest.TestCase):
+class TestCLIOutputInit:
     """__init__ 参数测试。"""
 
     def setUp(self):
@@ -130,44 +130,44 @@ class TestCLIOutputInit(unittest.TestCase):
         """默认参数 → quiet=False, compact=False, no_color 从环境变量。"""
         with patch.dict(os.environ, {}, clear=True):
             out = CLIOutput()
-            self.assertFalse(out.quiet)
-            self.assertFalse(out.compact)
-            self.assertIsNotNone(out.console)
-            self.assertIsNotNone(out.err_console)
+            assert not out.quiet
+            assert not out.compact
+            assert out.console is not None
+            assert out.err_console is not None
 
     @patch("platform.system", return_value="Linux")
     def test_no_color_flag(self, mock_system):
         """no_color=True → 禁用颜色，传递给 Console。"""
         with patch.dict(os.environ, {}, clear=True):
             out = CLIOutput(no_color=True)
-            self.assertTrue(out.console.no_color)
-            self.assertTrue(out.err_console.no_color)
+            assert out.console.no_color
+            assert out.err_console.no_color
 
     @patch("platform.system", return_value="Linux")
     def test_no_color_env_var(self, mock_system):
         """NO_COLOR 环境变量 → 强制禁用颜色 (即使 no_color=False)。"""
         with patch.dict(os.environ, {"NO_COLOR": "1"}):
             out = CLIOutput(no_color=False)
-            self.assertTrue(out.console.no_color)
-            self.assertTrue(out.err_console.no_color)
+            assert out.console.no_color
+            assert out.err_console.no_color
 
     @patch("platform.system", return_value="Linux")
     def test_quiet_mode(self, mock_system):
         """quiet=True → 实例记录 but 不影响 console 创建。"""
         out = CLIOutput(quiet=True)
-        self.assertTrue(out.quiet)
+        assert out.quiet
 
     @patch("platform.system", return_value="Linux")
     def test_compact_mode(self, mock_system):
         """compact=True。"""
         out = CLIOutput(compact=True)
-        self.assertTrue(out.compact)
+        assert out.compact
 
 
 # ── CLIOutput 消息输出 ─────────────────────────────────────────
 
 
-class TestCLIOutputMessages(unittest.TestCase):
+class TestCLIOutputMessages:
     """info / success / hint / warning / error / print 测试。"""
 
     def setUp(self):
@@ -194,8 +194,8 @@ class TestCLIOutputMessages(unittest.TestCase):
         self.out.info("hello")
         self.out.console.print.assert_called_once()
         call_arg = self.out.console.print.call_args[0][0]
-        self.assertIn("[INFO]", call_arg)
-        self.assertIn("hello", call_arg)
+        assert call_arg  in  "[INFO]"
+        assert call_arg  in  "hello"
 
     # ── success ──
 
@@ -204,8 +204,8 @@ class TestCLIOutputMessages(unittest.TestCase):
         self.out.success("done")
         self.out.console.print.assert_called_once()
         call_arg = self.out.console.print.call_args[0][0]
-        self.assertIn("[OK]", call_arg)
-        self.assertIn("done", call_arg)
+        assert call_arg  in  "[OK]"
+        assert call_arg  in  "done"
 
     def test_success_even_in_quiet(self):
         """Success + quiet → 仍输出。"""
@@ -220,7 +220,7 @@ class TestCLIOutputMessages(unittest.TestCase):
         self.out.hint("tip")
         self.out.console.print.assert_called_once()
         call_arg = self.out.console.print.call_args[0][0]
-        self.assertIn("[HINT]", call_arg)
+        assert call_arg  in  "[HINT]"
 
     def test_hint_even_in_quiet(self):
         """Hint + quiet → 仍输出。"""
@@ -235,15 +235,15 @@ class TestCLIOutputMessages(unittest.TestCase):
         self.out.warning("caution")
         self.out.err_console.print.assert_called_once()
         call_arg = self.out.err_console.print.call_args[0][0]
-        self.assertIn("[WARN]", call_arg)
-        self.assertIn("caution", call_arg)
+        assert call_arg  in  "[WARN]"
+        assert call_arg  in  "caution"
 
     def test_warning_with_details(self):
         """Warning 有 details → 追加详细行。"""
         self.out.warning("caution", details="extra info")
-        self.assertEqual(self.out.err_console.print.call_count, 2)
+        assert self.out.err_console.print.call_count  ==  2
         second_call_arg = self.out.err_console.print.call_args_list[1][0][0]
-        self.assertIn("extra info", second_call_arg)
+        assert second_call_arg  in  "extra info"
 
     # ── error ──
 
@@ -252,15 +252,15 @@ class TestCLIOutputMessages(unittest.TestCase):
         self.out.error("fail")
         self.out.err_console.print.assert_called_once()
         call_arg = self.out.err_console.print.call_args[0][0]
-        self.assertIn("[ERROR]", call_arg)
-        self.assertIn("fail", call_arg)
+        assert call_arg  in  "[ERROR]"
+        assert call_arg  in  "fail"
 
     def test_error_with_details(self):
         """Error 有 details → 追加详细行。"""
         self.out.error("fail", details="stack trace")
-        self.assertEqual(self.out.err_console.print.call_count, 2)
+        assert self.out.err_console.print.call_count  ==  2
         second_call_arg = self.out.err_console.print.call_args_list[1][0][0]
-        self.assertIn("stack trace", second_call_arg)
+        assert second_call_arg  in  "stack trace"
 
     # ── print ──
 
@@ -299,7 +299,7 @@ class TestCLIOutputMessages(unittest.TestCase):
 # ── CLIOutput 结构化输出 ───────────────────────────────────────
 
 
-class TestCLIOutputStructured(unittest.TestCase):
+class TestCLIOutputStructured:
     """rule / header / startup_panel / final_summary / stats_panel 测试。"""
 
     def setUp(self):
@@ -346,7 +346,7 @@ class TestCLIOutputStructured(unittest.TestCase):
         self.out.compact = False
         self.out.header("Title")
         # print() 调用次数 ≥ 2 (空行 + 空行)
-        self.assertEqual(self.out.console.print.call_count, 2)
+        assert self.out.console.print.call_count  ==  2
         self.out.console.rule.assert_called_once()
 
     def test_header_compact_mode(self):
@@ -409,7 +409,7 @@ class TestCLIOutputStructured(unittest.TestCase):
 # ── CLIOutput 运行时状态 ───────────────────────────────────────
 
 
-class TestCLIOutputRuntime(unittest.TestCase):
+class TestCLIOutputRuntime:
     """status_line / performance_status 测试。"""
 
     def setUp(self):
@@ -440,7 +440,7 @@ class TestCLIOutputRuntime(unittest.TestCase):
             self.out.status_line("running...")
             mock_write.assert_called_once()
             mock_flush.assert_called_once()
-            self.assertIn("running...", mock_write.call_args[0][0])
+            assert mock_write.call_args[0][0]  in  "running..."
 
     # ── performance_status ──
 
@@ -465,13 +465,13 @@ class TestCLIOutputRuntime(unittest.TestCase):
             )
             mock_sl.assert_called_once()
             status_text = mock_sl.call_args[0][0]
-            self.assertIn("速度:", status_text)
-            self.assertIn("5.0K/s", status_text)
-            self.assertIn("总尝试:", status_text)
-            self.assertIn("GPU:", status_text)
-            self.assertIn("85%", status_text)
-            self.assertIn("内存:", status_text)
-            self.assertIn("2048MB", status_text)
+            assert status_text  in  "速度:"
+            assert status_text  in  "5.0K/s"
+            assert status_text  in  "总尝试:"
+            assert status_text  in  "GPU:"
+            assert status_text  in  "85%"
+            assert status_text  in  "内存:"
+            assert status_text  in  "2048MB"
 
     def test_performance_status_partial_fields(self):
         """performance_status 部分字段 → 只输出存在的。"""
@@ -480,8 +480,8 @@ class TestCLIOutputRuntime(unittest.TestCase):
             self.out.performance_status({"speed": 2000})
             mock_sl.assert_called_once()
             status_text = mock_sl.call_args[0][0]
-            self.assertIn("2.0K/s", status_text)
-            self.assertNotIn("GPU", status_text)
+            assert status_text  in  "2.0K/s"
+            assert status_text  not in  "GPU"
 
     def test_performance_status_empty_stats(self):
         """performance_status 空字典 → 不调用 status_line。"""

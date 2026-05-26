@@ -4,11 +4,11 @@
 汇总 GPU 运行性能指标，生成结构化性能报告。
 """
 
-import logging
+from ..utils import get_configured_logger
 import time
 from typing import Any
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger(__name__)
 
 
 class PerformanceReportGenerator:

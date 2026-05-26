@@ -3,7 +3,7 @@
 
 双重验证策略:
     1. DEFAULT_CONFIG 自洽性: 始终验证代码中的 DEFAULT_CONFIG 是否与
-       CONFIG_SCHEMA 一致（这是最关键的内部一致性检查）。
+       config.schema.json 一致（这是最关键的内部一致性检查）。
     2. 用户配置文件: 验证 config.json / config.example.json（如果存在）。
 
 用法:
@@ -34,6 +34,23 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 # ── 路径设置 ──────────────────────────────────────────────────────────
+_SCHEMA_PATH = Path(__file__).resolve().parent.parent / "config.schema.json"
+
+
+def _load_schema() -> dict:
+    """从 config.schema.json 加载 Schema（ROADMAP #5: 单一真相源）。
+
+    返回:
+        完整的 JSON Schema 字典
+
+    异常:
+        FileNotFoundError: schema 文件不存在
+        json.JSONDecodeError: JSON 语法错误
+    """
+    with open(_SCHEMA_PATH, encoding="utf-8") as f:
+        return json.load(f)
+
+
 # ── 辅助函数 ──────────────────────────────────────────────────────────
 
 
@@ -76,7 +93,7 @@ def _get_config_manager():
 
 
 def _get_config_manager_instance():
-    """延迟导入 ConfigManager 并获取实例，用于获取 Schema 和 DEFAULT_CONFIG。"""
+    """延迟导入 ConfigManager 并获取实例，用于获取 DEFAULT_CONFIG。"""
     ConfigManager = _get_config_manager()
     return ConfigManager
 
@@ -121,19 +138,19 @@ def _format_error_report(errors: dict[str, str], label: str) -> str:
 def _validate_with_schema(config: dict, schema: dict) -> dict[str, str]:
     """使用 jsonschema 库直接验证配置。
 
-    这是 ConfigManager._validate_with_schema 的独立副本，避免引入
-    项目的完整依赖链。优先使用 Draft7Validator 收集所有错误。
+    从 config.schema.json（Draft 2020-12）加载 schema。
+    优先使用 Draft202012Validator 收集所有错误。
 
     返回:
         错误信息字典，空字典表示验证通过
     """
     try:
-        from jsonschema import Draft7Validator
+        from jsonschema import Draft202012Validator
     except ImportError:
         return {"root": "jsonschema 库不可用，无法执行 Schema 验证"}
 
     errors: dict[str, str] = {}
-    validator = Draft7Validator(schema)
+    validator = Draft202012Validator(schema)
     for error in sorted(validator.iter_errors(config), key=lambda e: list(e.absolute_path)):
         path = ".".join(str(p) for p in error.absolute_path) if error.absolute_path else "root"
         if path not in errors:
@@ -144,20 +161,22 @@ def _validate_with_schema(config: dict, schema: dict) -> dict[str, str]:
 
 
 def validate_default_config() -> dict[str, str]:
-    """验证 DEFAULT_CONFIG 与 CONFIG_SCHEMA 的自洽性。
+    """验证 DEFAULT_CONFIG 与 config.schema.json 的自洽性。
 
     这是最关键的内部一致性检查 —— 确保代码中定义的默认配置
     与 Schema 声明完全一致。如果这里失败，说明代码存在 bug。
+
+    ROADMAP #5: Schema 从 config.schema.json 文件加载（单一真相源）。
 
     返回:
         验证错误字典，空字典表示通过
     """
     try:
+        schema = _load_schema()
         CM = _get_config_manager_instance()
-        schema = CM.CONFIG_SCHEMA
         default_config = CM.DEFAULT_CONFIG
     except Exception as e:
-        return {"root": f"无法获取 ConfigManager: {e}"}
+        return {"root": f"无法加载 Schema 或 ConfigManager: {e}"}
 
     return _validate_with_schema(default_config, schema)
 
@@ -165,8 +184,8 @@ def validate_default_config() -> dict[str, str]:
 def validate_config_file(filepath: str) -> dict[str, str]:
     """验证单个配置文件。
 
-    优先通过项目 ConfigManager.validate() 验证，包含手动降级逻辑；
-    如果项目导入失败，则降级为纯 jsonschema 验证。
+    从 config.schema.json 加载 Schema 进行验证（ROADMAP #5: 单一真相源）。
+    如果 Schema 文件缺失，降级为直接使用 jsonschema 验证。
 
     参数:
         filepath: 配置文件路径
@@ -185,20 +204,13 @@ def validate_config_file(filepath: str) -> dict[str, str]:
     except Exception as e:
         return {"root": f"加载失败: {e}"}
 
-    # 2. 尝试使用项目 ConfigManager（完整的 Schema + 手动降级）
+    # 2. 从 config.schema.json 加载 Schema
     try:
-        CM = _get_config_manager_instance()
-        schema = CM.CONFIG_SCHEMA
-    except Exception:
-        schema = None
+        schema = _load_schema()
+    except Exception as e:
+        return {"root": f"无法加载 config.schema.json: {e}"}
 
-    if schema is not None:
-        # 使用 jsonschema 进行验证（与项目行为完全一致）
-        errors = _validate_with_schema(config, schema)
-        return errors
-
-    # 3. 降级：连 Schema 都取不到时
-    return {"root": "无法获取 CONFIG_SCHEMA，请确认项目 src/ 目录可导入"}
+    return _validate_with_schema(config, schema)
 
 
 # ── 入口 ──────────────────────────────────────────────────────────────
@@ -216,7 +228,7 @@ def main(argv: list[str] | None = None) -> int:
         argv: 命令行参数列表，None 表示使用 sys.argv
     """
     parser = argparse.ArgumentParser(
-        description="验证项目配置文件与 ConfigManager.CONFIG_SCHEMA 的一致性",
+        description="验证项目配置文件与 config.schema.json 的一致性 (ROADMAP #5)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例:
@@ -242,7 +254,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--defaults-only",
         action="store_true",
-        help="仅验证 DEFAULT_CONFIG 与 CONFIG_SCHEMA 的自洽性，不检查外部文件",
+        help="仅验证 DEFAULT_CONFIG 与 config.schema.json 的自洽性，不检查外部文件",
     )
     parser.add_argument(
         "--no-defaults",
@@ -252,7 +264,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--schema-only",
         action="store_true",
-        help="仅输出 CONFIG_SCHEMA 摘要并退出（不执行验证）",
+        help="仅输出 config.schema.json 摘要并退出（不执行验证）",
     )
 
     args = parser.parse_args(argv)
@@ -260,13 +272,12 @@ def main(argv: list[str] | None = None) -> int:
     # ── Schema 摘要模式 ──
     if args.schema_only:
         try:
-            ConfigManager = _get_config_manager()
-            schema = ConfigManager.CONFIG_SCHEMA
+            schema = _load_schema()
         except Exception as e:
-            print(f"ERROR: 无法加载 CONFIG_SCHEMA: {e}", file=sys.stderr)
+            print(f"ERROR: 无法加载 config.schema.json: {e}", file=sys.stderr)
             return 2
 
-        print("=== CONFIG_SCHEMA 摘要 ===")
+        print("=== config.schema.json 摘要 ===")
         print(f"  类型: {schema.get('type', 'N/A')}")
         top_props = schema.get("properties", {})
         print(f"  顶层区块数: {len(top_props)}")

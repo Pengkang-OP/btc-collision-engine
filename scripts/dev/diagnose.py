@@ -2,9 +2,9 @@
 """BTC 碰撞引擎 - 自助诊断工具
 
 用法:
-    python scripts/diagnose.py          # 完整诊断
-    python scripts/diagnose.py --quick  # 快速检查（跳过 GPU 测试）
-    python scripts/diagnose.py --json   # 输出 JSON 格式报告
+    python scripts/dev/diagnose.py          # 完整诊断
+    python scripts/dev/diagnose.py --quick  # 快速检查（跳过 GPU 测试）
+    python scripts/dev/diagnose.py --json   # 输出 JSON 格式报告
 
 检查项目:
     1. Python 版本

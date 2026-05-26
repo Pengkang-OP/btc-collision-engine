@@ -8,8 +8,6 @@ import logging
 import os
 import pathlib
 import tempfile
-import unittest
-
 from src.utils.log_collection_rules import init_log_collection_rules
 from src.utils.log_dependency_manager import check_dependencies, init_log_dependencies
 from src.utils.log_performance_optimizer import get_performance_optimizer
@@ -18,7 +16,7 @@ from src.utils.logger import get_logger, get_sampled_logger, setup_logger
 from src.utils.logging_config import get_configured_logger, init_logging
 
 
-class TestLogCompatibility(unittest.TestCase):
+class TestLogCompatibility:
     """日志系统兼容性测试"""
 
     def setUp(self):
@@ -82,36 +80,36 @@ class TestLogCompatibility(unittest.TestCase):
     def test_platform_compatibility(self):
         """测试平台兼容性"""
         platform_info = get_platform_info()
-        self.assertIsInstance(platform_info, dict)
-        self.assertIn("name", platform_info)
-        self.assertIn("version", platform_info)
-        self.assertIn("architecture", platform_info)
+        assert isinstance(platform_info, dict)
+        assert "name" in platform_info
+        assert "version" in platform_info
+        assert "architecture" in platform_info
 
         # 测试平台适配器
         adapter = get_platform_adapter()
-        self.assertIsNotNone(adapter)
+        assert adapter is not None
 
         # 测试平台特定的日志目录
         log_dir = adapter.get_log_directory()
-        self.assertIsInstance(log_dir, str)
-        self.assertTrue(pathlib.Path(log_dir).is_absolute())
+        assert isinstance(log_dir, str)
+        assert pathlib.Path(log_dir.is_absolute())
 
         # 测试目录创建
-        self.assertTrue(adapter.ensure_directory(self.temp_dir))
+        assert adapter.ensure_directory(self.temp_dir)
 
     def test_logger_initialization(self):
         """测试日志记录器初始化"""
         # 测试基本日志记录器
         logger = get_logger("test.logger")
-        self.assertIsInstance(logger, logging.Logger)
+        assert isinstance(logger, logging.Logger)
 
         # 测试配置好的日志记录器
         configured_logger = get_configured_logger("test.configured")
-        self.assertIsInstance(configured_logger, logging.Logger)
+        assert isinstance(configured_logger, logging.Logger)
 
         # 测试采样日志记录器
         sampled_logger = get_sampled_logger("test.sampled", sample_rate=10)
-        self.assertIsNotNone(sampled_logger)
+        assert sampled_logger is not None
 
     def test_log_levels(self):
         """测试日志级别"""
@@ -130,7 +128,7 @@ class TestLogCompatibility(unittest.TestCase):
             handler.close()
 
         # 验证日志文件存在
-        self.assertTrue(pathlib.Path(self.log_file).exists())
+        assert pathlib.Path(self.log_file.exists())
 
     def test_log_collection_rules(self):
         """测试日志收集规则"""
@@ -138,11 +136,11 @@ class TestLogCompatibility(unittest.TestCase):
         from src.utils.log_collection_rules import LogCollectionRule, LogCollectionRuleManager
 
         rule_manager = LogCollectionRuleManager(self.rule_config)
-        self.assertIsNotNone(rule_manager)
+        assert rule_manager is not None
 
         # 测试规则匹配
         rules = rule_manager.get_matching_rules("core.module", "INFO", "Test message")
-        self.assertIsInstance(rules, list)
+        assert isinstance(rules, list)
 
         # 测试添加规则
         new_rule = LogCollectionRule(name="Test Rule", module_pattern="test.*", level="DEBUG")
@@ -151,30 +149,30 @@ class TestLogCompatibility(unittest.TestCase):
         # 测试保存和加载规则
         rule_manager.save_rules()
         # 确保规则文件存在
-        self.assertTrue(pathlib.Path(self.rule_config).exists())
+        assert pathlib.Path(self.rule_config.exists())
 
     def test_log_dependencies(self):
         """测试日志依赖"""
         dependencies = check_dependencies()
-        self.assertIsInstance(dependencies, dict)
+        assert isinstance(dependencies, dict)
 
         # 验证核心依赖存在
-        self.assertTrue(dependencies.get("logging", True))
-        self.assertTrue(dependencies.get("json", True))
+        assert dependencies.get("logging", True)
+        assert dependencies.get("json", True)
 
     def test_log_performance_optimizer(self):
         """测试日志性能优化器"""
         optimizer = get_performance_optimizer()
-        self.assertIsNotNone(optimizer)
+        assert optimizer is not None
 
         # 测试优化日志记录器
         logger = get_logger("test.optimizer")
         optimized_logger = optimizer.optimize_logger(logger)
-        self.assertIsInstance(optimized_logger, logging.Logger)
+        assert isinstance(optimized_logger, logging.Logger)
 
         # 测试统计信息
         stats = optimizer.get_stats()
-        self.assertIsInstance(stats, dict)
+        assert isinstance(stats, dict)
 
     def test_log_file_operations(self):
         """测试日志文件操作"""
@@ -188,10 +186,10 @@ class TestLogCompatibility(unittest.TestCase):
             handler.close()
 
         # 验证日志文件内容
-        self.assertTrue(pathlib.Path(self.log_file).exists())
+        assert pathlib.Path(self.log_file.exists())
         with pathlib.Path(self.log_file).open(encoding="utf-8") as f:
             content = f.read()
-            self.assertIn(test_message, content)
+            assert test_message in content
 
     def test_async_logging(self):
         """测试异步日志"""
@@ -210,7 +208,7 @@ class TestLogCompatibility(unittest.TestCase):
         async_handler.close()
 
         # 验证异步日志文件存在
-        self.assertTrue(pathlib.Path(self.log_file + ".async").exists())
+        assert pathlib.Path(self.log_file + ".async".exists())
 
     def test_sampled_logging(self):
         """测试采样日志"""
@@ -228,16 +226,16 @@ class TestLogCompatibility(unittest.TestCase):
             handler.close()
 
         # 验证日志文件存在
-        self.assertTrue(pathlib.Path(self.log_file).exists())
+        assert pathlib.Path(self.log_file.exists())
 
     def test_platform_specific_handlers(self):
         """测试平台特定的处理器"""
         from src.utils.log_platform_adapter import get_platform_specific_handlers
 
         handlers = get_platform_specific_handlers()
-        self.assertIsInstance(handlers, dict)
-        self.assertIn("file_handler", handlers)
-        self.assertIn("console_handler", handlers)
+        assert isinstance(handlers, dict)
+        assert "file_handler" in handlers
+        assert "console_handler" in handlers
 
     def test_error_handling(self):
         """测试错误处理"""
@@ -255,7 +253,7 @@ class TestLogCompatibility(unittest.TestCase):
             handler.close()
 
         # 验证日志文件存在
-        self.assertTrue(pathlib.Path(self.log_file).exists())
+        assert pathlib.Path(self.log_file.exists())
 
     def test_log_formatting(self):
         """测试日志格式化"""
@@ -275,11 +273,8 @@ class TestLogCompatibility(unittest.TestCase):
             handler.close()
 
         # 验证日志文件内容
-        self.assertTrue(pathlib.Path(self.log_file + ".format").exists())
+        assert pathlib.Path(self.log_file + ".format".exists())
         with pathlib.Path(self.log_file + ".format").open(encoding="utf-8") as f:
             content = f.read()
-            self.assertIn("INFO: " + test_message, content)
+            assert "INFO: " + test_message in content
 
-
-if __name__ == "__main__":
-    unittest.main()

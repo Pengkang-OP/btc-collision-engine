@@ -2,7 +2,7 @@
 
 import os
 import tempfile
-import unittest
+import pytest
 
 # 添加项目根目录到路径
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -11,7 +11,7 @@ import pathlib
 from src.collision.checkpoint_manager import CheckpointManager
 
 
-class TestACLEnvironmentVariable(unittest.TestCase):
+class TestACLEnvironmentVariable:
     """测试环境变量控制ACL设置"""
 
     def setUp(self):
@@ -65,11 +65,11 @@ class TestACLEnvironmentVariable(unittest.TestCase):
         )
 
         # 验证文件创建成功
-        self.assertTrue(pathlib.Path(self.test_file).exists())
+        assert pathlib.Path(self.test_file).exists()
 
         # 验证可以正常删除(没有被icacls锁定)
         pathlib.Path(self.test_file).unlink(missing_ok=True)
-        self.assertFalse(pathlib.Path(self.test_file).exists())
+        assert not pathlib.Path(self.test_file).exists()
 
     def test_skip_acl_false(self):
         """测试BTC_ENGINE_SKIP_ACL=false时使用ACL设置"""
@@ -90,7 +90,7 @@ class TestACLEnvironmentVariable(unittest.TestCase):
         )
 
         # 验证文件创建成功
-        self.assertTrue(pathlib.Path(self.test_file).exists())
+        assert pathlib.Path(self.test_file).exists()
 
         # 注意: 文件可能被icacls锁定,删除可能需要重置权限
         # 这在tearDown中处理
@@ -114,7 +114,7 @@ class TestACLEnvironmentVariable(unittest.TestCase):
         )
 
         # 验证文件创建成功
-        self.assertTrue(pathlib.Path(self.test_file).exists())
+        assert pathlib.Path(self.test_file).exists()
 
     def test_skip_acl_case_insensitive(self):
         """测试环境变量值大小写不敏感"""
@@ -137,7 +137,7 @@ class TestACLEnvironmentVariable(unittest.TestCase):
                     matches=[],
                     force=True,
                 )
-                self.assertTrue(pathlib.Path(test_file).exists())
+                assert pathlib.Path(test_file).exists()
             finally:
                 # 清理
                 if pathlib.Path(test_file).exists():
@@ -178,11 +178,11 @@ class TestACLEnvironmentVariable(unittest.TestCase):
         engine.stop()
 
         # 验证断点文件创建成功
-        self.assertTrue(pathlib.Path(self.test_file).exists())
+        assert pathlib.Path(self.test_file).exists()
 
         # 验证可以正常删除
         pathlib.Path(self.test_file).unlink()
-        self.assertFalse(pathlib.Path(self.test_file).exists())
+        assert not pathlib.Path(self.test_file).exists()
 
 
 if __name__ == "__main__":

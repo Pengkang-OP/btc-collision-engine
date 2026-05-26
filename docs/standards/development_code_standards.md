@@ -309,64 +309,38 @@ from .secure_key_manager import SecureKeyManager
 
 ## 7. 异常处理规范
 
-### 7.1 禁止裸 except
+> **v5.2.3**: 本节已精简为概要，完整规范见 `docs/standards/exception_handling_standards.md`
 
-```python
-# ❌ 禁止
-try:
-    result = gpu_kernel.run_batch(batch)
-except:
-    pass
+### 7.1 核心原则
 
-# ❌ 禁止（except Exception 不记录日志）
-try:
-    result = gpu_kernel.run_batch(batch)
-except Exception:
-    pass
-
-# ✅ 正确：捕获具体异常并记录日志
-try:
-    result = gpu_kernel.run_batch(batch)
-except RuntimeError as e:
-    logger.error("GPU批次执行失败: %s", e, exc_info=True)
-    raise
-except MemoryError as e:
-    logger.critical("GPU显存不足: %s", e)
-    self._handle_oom()
+```
+捕获具体 → 记录完整 → 尽职传递 → 不静默失败
 ```
 
-### 7.2 异常日志记录
+### 7.2 五级异常处理模型速查
+
+| 等级 | 名称 | 处理方式 | 日志级别 | 典型场景 |
+|------|------|----------|----------|----------|
+| **L1** | 致命错误 | `logger.error()` + `raise` | ERROR | 加密初始化、GPU 内核执行 |
+| **L2** | 降级回退 | `logger.warning()` + return 默认值 | WARNING | GPU 不可用回退 CPU |
+| **L3** | 隔离保护 | `logger.exception()` + 不 raise | EXCEPTION | 回调、日志、监控 |
+| **L4** | 确定性清理 | `suppress()` / `contextlib.suppress` | 无 | 文件删除、缓存清理 |
+| **L5** | 边界包装 | `raise HighLevelError from e` | 调用方自决 | 适配器层、跨模块调用 |
+
+### 7.3 禁止模式
 
 ```python
-import logging
-logger = logging.getLogger(__name__)
+# ❌ 绝对禁止
+except:  ...                              # 裸 except
+except Exception:  pass                    # 静默吞异常
+except Exception:  logger.error("...")     # 无 raise（L1 路径）
 
-# 记录异常堆栈（exc_info=True）
-logger.error("操作失败: %s", str(e), exc_info=True)
-
-# 记录结构化上下文
-logger.warning(
-    "批次大小超出上限: requested=%d, max=%d，已自动截断",
-    requested_size,
-    MAX_BATCH_SIZE
-)
-```
-
-### 7.3 自定义异常
-
-项目异常类统一定义在 `src/collision/types.py` 或各子模块的 `exceptions.py` 中：
-
-```python
-class GPUInitializationError(RuntimeError):
-    """GPU 初始化失败时抛出"""
-
-class BatchSizeError(ValueError):
-    """批次大小配置无效时抛出"""
+# ❌ 条件禁止
+logger.error(f"操作失败: {e}")            # 使用 f-string，应改用 %s
+logger.warning("内核执行失败: %s", e)      # L1 路径用 warning 级别
 ```
 
 ### 7.4 资源清理
-
-使用 `try/finally` 或上下文管理器确保资源释放：
 
 ```python
 # ✅ 推荐使用上下文管理器
@@ -378,11 +352,12 @@ gpu_device = None
 try:
     gpu_device = GPUDevice(config)
     gpu_device.initialize()
-    # ... 业务逻辑
 finally:
     if gpu_device is not None:
         gpu_device.cleanup()
 ```
+
+> **完整规范**（含所有等级示例、命名规范、模块对照表）：→ `docs/standards/exception_handling_standards.md`
 
 ---
 

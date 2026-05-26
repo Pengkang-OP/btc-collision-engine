@@ -23,8 +23,8 @@ from typing import TYPE_CHECKING, Any, Optional
 from ..utils import get_configured_logger
 
 if TYPE_CHECKING:
-    # 避免循环导入：仅在类型检查时引用引擎
-    from ..collision.gpu.engine import GPUCollisionEngine
+    # ROADMAP #13: 使用协议接口替代直接引用，消除反向依赖
+    from ._engine_protocol import GPUEngineProtocol as GPUCollisionEngine
 
 logger = get_configured_logger("GPUEngineMonitor")
 

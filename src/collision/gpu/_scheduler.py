@@ -17,7 +17,7 @@
 更新日期: 2026-05-23
 """
 
-import logging
+from ...utils import get_configured_logger
 import secrets
 import time
 from typing import TYPE_CHECKING
@@ -34,7 +34,7 @@ if TYPE_CHECKING:
 
 from ..events import EngineProgressEvent
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger(__name__)
 
 # 常量
 GPU_MAX_BATCH_SIZE = 0xFFFFFFFF
@@ -94,7 +94,7 @@ class GPUBatchScheduler:
                 )
             actual_speed = test_batch_size / execution_time
             engine._dynamic_speed_benchmark = actual_speed * 0.8
-            logger.info(f"动态性能基准计算完成: {engine._dynamic_speed_benchmark:.0f} keys/s")
+            logger.debug("动态性能基准计算完成: %s keys/s", engine._dynamic_speed_benchmark)
         except Exception as e:
             logger.warning("动态性能基准计算失败，使用默认值: %s", e)
 
@@ -356,8 +356,8 @@ class GPUBatchScheduler:
             elapsed_seconds=stats_snapshot["elapsed_seconds"],
             throughput=stats_snapshot["throughput"],
             matches_found=stats_snapshot["total_matches"],
+            source="gpu_collision_engine",
         )
-        progress_event.source = "gpu_collision_engine"
         engine.event_bus.publish(progress_event)
 
         # 向后兼容: 调用传统回调（CALL-1: 超时保护）

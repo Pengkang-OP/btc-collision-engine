@@ -4,11 +4,11 @@ Automatically cleans expired temporary files, logs, and monitoring
 data to prevent disk space exhaustion.
 """
 
-import logging
+from .logging_config import get_configured_logger
 import time
 from pathlib import Path
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger(__name__)
 
 # 项目根目录 (src/utils/../../ = 项目根)
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent

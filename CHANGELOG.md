@@ -7,8 +7,54 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **ROADMAP #29 Web API 版本前缀 + 速率限制**:
+  - `src/web/dashboard.py` 添加 `API_PREFIX = "/api/v1"` 常量
+  - 添加滑动窗口 `rate_limit` 装饰器（120 次/分钟，基于客户端 IP + 端点）
+  - 5 个 API 路由迁移至 `f"{API_PREFIX}/..."` 并添加 `@rate_limit`
+  - 添加 `/api/<path:subpath>` 旧路径自动 301 重定向至 `/api/v1/*`
+  - 启动横幅动态显示 `/api/v1/` 端点
+  - ROADMAP 已标记为 ✅ 完成（30/30 项，100%）
+- **ROADMAP #23 start_menu.py 拆分为包（785行 → ~150行/模块）**:
+  - 创建 `src/start_menu/` 包（`_shared.py`, `_i18n.py`, `_utils.py`, `_ui.py`, `_main.py`）
+  - 根级 `start_menu.py` 缩减为 9 行薄引导（仅 sys.path + 调用包 main()）
+  - 保留 `start.bat` / `key_collision.py` / `pyproject.toml` 兼容性（入口路径不变）
+  - 更新 `pyproject.toml` per-file-ignores 映射到新模块路径
+- **ROADMAP #17 统一导入顺序（消除 E402 抑制标记）**:
+  - 重构 `src/cli/main.py`：7 个模块级导入转为函数级惰性导入，仅保留 `CLIOutput` / `get_configured_logger` / `init_logging` 在模块级（架构必需）
+  - 修复 11 个文件中 `# noqa: E402` 标记（`src/gpu/engine.py`、`src/gpu/multi_gpu_engine.py`、`src/gpu/worker.py`、`src/collision/key_collision_engine.py`、`src/automation/main.py`、`conftest.py`、`tests/integration/test_end_to_end.py`、`tests/gpu/test_gpu_dynamic_benchmark.py`、`scripts/dev/run_key_tests.py`）
+  - 5 个文件因架构约束保留 `# noqa: E402`（`key_collision_cli.py` sys.path + 4 个测试 mock 文件）
+  - 模块级 E402 从 43 个实例降至 6 个（减少 86%）
+- **ROADMAP #13 修复循环导入耦合**:
+  - 创建 `src/gpu/_engine_protocol.py`（`GPUEngineProtocol`），替代 `TYPE_CHECKING` 反向依赖
+  - 5 个文件（`worker.py`, `engine_monitor.py`, `search_mode_coordinator.py`, `base_search.py`, `random_search.py`）从 `..collision.gpu.engine` 改为引用协议
+  - 保留 3 处函数级惰性导入（`worker.py`/`config.py`/`facade.py` 构造用途）
+  - 确认无运行时循环导入错误（所有双向依赖已安全守卫）
+- **ROADMAP #11 统一入口点**:
+  - 确认 `key_collision_cli.py` 为唯一根级 CLI 入口（23 行代理 → `src.cli.main:main()`）
+  - 移除对不存在的根级 `main.py` 的引用（`docs/standards/config_change_process.md`）
+  - `README.md` 入口描述从"推荐使用"更新为"统一命令行入口"
+  - `key_collision_cli.py` docstring 移除 ROADMAP #11 待办注释，声明为统一入口
+  - `pyproject.toml` 已有 `[project.scripts] btc-collision = "src.cli.main:main"`
+  - ROADMAP 已标记为 ✅ 完成（29/30 项，97%）
+
+- **`src/gpu/async_executor.py` → `src/gpu/async_executor/` 包拆分**:
+  - 单文件 1707 行拆分为 6 模块包（`__init__.py`, `_executor.py`, `_gpu_info.py`, `_collector.py`, `_sync.py`, `_error_utils.py`）
+  - 引入 Mixin 模式（`_GPUInfoMixin`, `_ResultCollectorMixin`, `_SyncFallbackMixin`）降低类复杂度
+  - 提取 `with_sync_fallback` 装饰器至 `_error_utils.py`，消除重复的 `_run_batch_sync_fallback` 实现
+  - 所有模块向后兼容导出，外部导入路径不变
+
 ### Fixed
 
+- **`src/gpu/async_executor/_sync.py`**: 新增 `_log_cleanup()` 静态方法，在 cleanup 路径中抑制 `OSError`/`RuntimeError`/`AttributeError`，解决 Python 解释器关闭时日志轮转"句柄无效"崩溃
+- **`src/gpu/async_executor/_executor.py`**: 新增 `__del__` 方法安全调用 `cleanup()`，并包裹 `suppress(Exception)` 防止析构时异常冒泡
+- **`src/gpu/memory_pool.py`**: 添加缺失的 `LOG_DEFAULT_MAX_BYTES = 10 * 1024 * 1024` 模块级常量（原 F821 未定义变量）
+- **`src/gpu/device_manager.py`**: 修复 P2SH 分支中 `addr_len` 未赋值即使用的 F821 作用域 Bug
+- **`src/gpu/async_executor/`** 包内所有模块：修复相对导入路径错误（`.utils` → `...utils`），修正 `SyntaxError: 无效字符'。'`（孤立 Note 块），移除 5 处未使用导入（F401）
+- **`src/gpu/device_manager.py`**: 修复 6 处 `E501` 超长行（跳过地址追加和日志调用换行）
+- **`src/gpu/async_executor/`**: 修复 9 处 `E501` 超长行（多参调用和复杂条件换行）
+- **`tests/test_async_executor.py`（53 测试，0 失败）**: 全程保持零回归
 - **`tests/test_wizard.py`（95 测试，0 失败）**: 完整修复所有 API 不匹配问题
   - 所有 Selector 测试类重写为匹配简化后的存根 API（`GPUSelector`, `ModeSelector`, `TargetSelector`, `OptionSelector`）
   - `WizardEvent` 类型从 enum 改为 `.value` 字符串以匹配 `str` 类型声明
@@ -30,15 +76,36 @@
 
 - 新增 `CI_PROBLEM_ANALYSIS.md` 文档，系统分析 CI 问题（问题分类、影响分析、数据污染分析、环境差异分析、依赖版本分析）
 
+### Removed
+
+- **`gpu_test_output.txt`**: 删除项目根目录的陈旧测试输出文件（56.85 KB）
+
 ### Changed
 
-- 更新 `CI_PROBLEM_ANALYSIS.md` 以反映修复状态
-- **CI 配置**: `.github/workflows/ci.yml` 移除所有 `--ignore` 标记（`test_wizard.py`, `test_commands.py`, `test_concurrency_stress.py`, `test_memory_locking.py` 全部通过）
+- **异常处理标准化（ROADMAP #12）**:
+  - 新增 `docs/standards/exception_handling_standards.md` — 正式的五级异常处理规范（L1致命/L2降级/L3隔离/L4清理/L5包装）
+  - 更新 `docs/standards/development_code_standards.md` 第 7 节 — 精简为概要，引用新规范
+
+### Fixed
+
+- **`src/collision/key_collision_engine.py` — P0 加密后端初始化失败**: 添加 `raise` 传播，消除静默吞异常导致后续私钥生成在错误状态下运行的隐患
+- **`src/gpu/kernel_impl.py` — P0 内核执行失败**: `return []` 改为 `raise RuntimeError(...) from e`，消除假阴性（搜索失败误报"无匹配"）
+- **`src/gpu/worker.py` — P0 工作器异常传播**: `_execute_search()` 中 `RuntimeError`/`ValueError`/`Exception` 记录后 `raise`；`finally` 块中不再覆盖 `status="error"` 为 `"stopped"`
+- **`src/gpu/kernel_impl.py` — P1 ALG-3 增强验证失败**: `logger.warning` 升级为 `logger.error + exc_info=True + raise`，阻止 GPU 内核在未通过正确性验证的情况下运行
+- **`src/gpu/kernel_impl.py` — P1 4 处缺失 `exc_info=True`**: 清空 match_buf、超时监控线程、内核执行、内存泄漏检查
+- **`src/gpu/async_executor/_executor.py` — P1 预取失败日志升级**: `logger.warning` → `logger.error`
 
 ### Docs
 
-- 新增 `docs/testing.md` 测试指南
+- 新增 `docs/standards/exception_handling_standards.md` — 正式异常处理规范（五级模型、禁止模式、日志格式、变量命名、模块对照表、审查清单）
+- 更新 `docs/standards/development_code_standards.md` 第 7 节 — 精简为概要，引用新规范
+- 更新 `src/gpu/__init__.py` 模块文档字符串，标注 v5.2.3 包拆分
+- 更新 `src/gpu/executor_types.py` 文档字符串，明确公用模块定位
+- 更新 `src/utils/exception_handler.py` 文档中过时的文件引用
+- 更新所有 `async_executor/` 子模块的文档字符串（模块描述、v5.2.3 tag、`_log_cleanup` 说明）
 - 更新 `CI_PROBLEM_ANALYSIS.md` 以反映修复状态
+- 新增 `docs/testing.md` 测试指南
+- **CI 配置**: `.github/workflows/ci.yml` 移除所有 `--ignore` 标记（`test_wizard.py`, `test_commands.py`, `test_concurrency_stress.py`, `test_memory_locking.py` 全部通过）
 
 ## [0.1.0] - 2026-05-26
 

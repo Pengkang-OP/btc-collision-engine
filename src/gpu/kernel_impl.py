@@ -346,7 +346,7 @@ class GPUKernel(GPUKernelProtocol):
         """
         return self._program
 
-    def _compile(self):
+    def _compile(self) -> None:
         """编译 OpenCL 内核（带性能监控、缓存和重试机制）
 
         P2-6修复: 添加内核编译缓存机制，避免每次启动都重新编译
@@ -556,8 +556,8 @@ class GPUKernel(GPUKernelProtocol):
         except ImportError:
             logger.warning("ALG-3增强验证跳过: 无法导入地址生成器")
         except Exception as e:
-            logger.warning("ALG-3增强验证失败: %s", e)
-            # 不阻止初始化，仅警告
+            logger.error("ALG-3增强验证失败: %s，GPU内核可能产生错误结果", e, exc_info=True)
+            raise RuntimeError(f"GPU内核增强验证失败: {e}") from e
 
     # P2-06修复: 内核缓存版本号。当内核算法或编译策略变更时递增此版本号，
     # 确保旧缓存自动失效并重新编译。
@@ -600,7 +600,7 @@ class GPUKernel(GPUKernelProtocol):
     def _load_kernel_cache(self) -> bool:
         """P2-6修复: 从缓存加载内核二进制
 
-        返回:
+        Returns:
             bool: 是否成功加载缓存
         """
         import pyopencl as cl
@@ -641,7 +641,7 @@ class GPUKernel(GPUKernelProtocol):
                     pathlib.Path(cache_file).unlink()
             return False
 
-    def _save_kernel_cache(self):
+    def _save_kernel_cache(self) -> None:
         """P2-6修复 + DEF-2审查: 原子写入内核二进制到缓存
 
         使用 tmp + os.replace 原子写入，防止并发写入导致缓存损坏。
@@ -928,7 +928,7 @@ class GPUKernel(GPUKernelProtocol):
         try:
             cl.enqueue_fill_buffer(self.device.queue, self._match_buf, np.int32(0), 0, num_keys * 4)
         except Exception as e:
-            logger.error("清空 match_buf 失败: %s", e)
+            logger.error("清空 match_buf 失败: %s", e, exc_info=True)
             raise
 
     def _execute_kernel(self, num_keys: int, local_work_size: int) -> tuple:
@@ -1041,7 +1041,7 @@ class GPUKernel(GPUKernelProtocol):
                     logger.error("GPU执行超时(%s秒)", timeout_seconds)
                     execution_completed[0] = False
             except Exception as e:
-                logger.error("超时监控线程异常: %s", e)
+                logger.error("超时监控线程异常: %s", e, exc_info=True)
                 execution_completed[0] = False
 
         # v5.2.1: 5ms polling interval — eliminates ~100ms dead time per batch on fast GPUs
@@ -1157,8 +1157,8 @@ class GPUKernel(GPUKernelProtocol):
         try:
             read_event = self._execute_kernel(num_keys, local_work_size)
         except Exception as e:
-            logger.error("内核执行失败: %s", e)
-            return []
+            logger.error("内核执行失败: %s", e, exc_info=True)
+            raise RuntimeError(f"GPU内核执行失败: {e}") from e
 
         # 6. 等待完成
         if not self._wait_for_completion(read_event):
@@ -1201,7 +1201,7 @@ class GPUKernel(GPUKernelProtocol):
                 if leak_report["has_leak"]:
                     logger.error(f"发现{len(leak_report['release_failed'])}个缓冲区释放失败")
         except Exception as e:
-            logger.error("内存泄漏检查失败: %s", e)
+            logger.error("内存泄漏检查失败: %s", e, exc_info=True)
 
     def _release_gpu_buffers(self, released_buffers: set[str]) -> None:
         """显式释放所有 OpenCL Buffer。"""
@@ -1265,7 +1265,7 @@ class GPUKernel(GPUKernelProtocol):
         self._batch_kernel = None
         self._batch_kernel_local = None
 
-    def _setup_async_logging(self, log_file: str, max_bytes: int, backup_count: int):
+    def _setup_async_logging(self, log_file: str, max_bytes: int, backup_count: int) -> None:
         """设置异步日志处理器（v4.2.1新增）
 
         Args:

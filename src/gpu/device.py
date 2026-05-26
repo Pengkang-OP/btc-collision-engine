@@ -732,20 +732,16 @@ class GPUDevice:
             )
             logger.info("使用传统单队列模式(同步执行)")
 
-        logger.info(
-            f"GPU设备初始化成功: {self.device_info['name']} "
-            f"({self.device_info['vendor']})\n"
-            f"  - 显存: {self.device_info['global_mem_size'] / (1024**3):.1f} GB\n"
-            f"  - 计算单元: {self.device_info['max_compute_units']}\n"
-            f"  - 最大工作组大小: {self.device_info.get('max_work_group_size', 'N/A')}\n"
-            f"  - 本地内存: {self.device_info.get('local_mem_size', 0) / 1024:.0f} KB\n"
-            f"  - 平台: {self.device_info['platform']}\n"
-            f"  - OpenCL: {self._opencl_version:.1f} ({self._opencl_version_str})\n"
-            f"  - SVM: {'可用' if self._supports_svm else '不可用'}\n"
-            f"  - 异步执行: {'已启用' if self.enable_async_execution else '未启用'}",
+        logger.debug(
+            "GPU设备初始化成功: %s (%s) 显存=%.1fGB 计算单元=%d OpenCL=%s",
+            self.device_info['name'],
+            self.device_info['vendor'],
+            self.device_info['global_mem_size'] / (1024**3),
+            self.device_info['max_compute_units'],
+            f"{self._opencl_version:.1f}",
         )
 
-    def _validate_device_capabilities(self, device_info: dict):
+    def _validate_device_capabilities(self, device_info: dict) -> None:
         """验证设备能力是否满足最低要求
 
         Args:
@@ -776,7 +772,7 @@ class GPUDevice:
 
         logger.debug(f"设备能力: 计算单元={compute_units}, 显存={global_mem / (1024**3):.2f} GB")
 
-    def _load_vendor_profile(self, device_name: str):
+    def _load_vendor_profile(self, device_name: str) -> None:
         """加载厂商型号配置
 
         Args:
@@ -797,7 +793,7 @@ class GPUDevice:
         else:
             logger.warning("未找到 %s 的配置,使用默认参数", device_name)
 
-    def _detect_and_validate_driver(self):
+    def _detect_and_validate_driver(self) -> None:
         """检测驱动版本并验证健康状态"""
         # 1. 检测驱动版本
         self.driver_version = DriverManager.detect_driver_version(cast("str", self.vendor))

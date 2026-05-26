@@ -36,7 +36,7 @@ class ExceptionHandler:
     ) -> None:
         """统一处理引擎错误
 
-        参数:
+        Args:
             engine_type: 引擎类型 ("CPU" 或 "GPU")
             error: 捕获的异常
             stats: 统计对象(可选),用于记录错误
@@ -100,12 +100,12 @@ class ExceptionHandler:
 
         P3-6增强: 新增 MemoryError 分类，避免被归类为"未知错误"
 
-        参数:
+        Args:
             mode: 计算模式("随机碰撞"/"范围扫描"/"暴力穷举")
             error: 捕获的异常
             stats: 统计对象(可选)
 
-        返回:
+        Returns:
             bool: 是否应该继续执行(总是返回True)
         """
         if isinstance(error, (RuntimeError, ValueError)):
@@ -166,14 +166,14 @@ class ExceptionHandler:
     def handle_gpu_async_error(error: Exception, context: str = "") -> bool:
         """P3-6新增: 统一处理GPU异步执行错误
 
-        用于 async_executor.py 中的异步执行回退逻辑，
+        用于 async_executor 包中的异步执行回退逻辑，
         区分 OpenCL 运行时错误与其他可恢复错误。
 
-        参数:
+        Args:
             error: 捕获的异常
             context: 错误上下文("种子写入"/"内核执行"/"结果回读"/"缓冲清理")
 
-        返回:
+        Returns:
             bool: True=应回退到同步模式, False=应向上传播
         """
         error_type = type(error).__name__
@@ -212,11 +212,11 @@ class ExceptionHandler:
         根据错误消息关键字判断是否为资源耗尽型错误，
         为自动降批/重试策略提供决策依据。
 
-        参数:
+        Args:
             error: 捕获的异常
             resource_type: 资源类型("buffer"/"kernel"/"queue"/"event")
 
-        返回:
+        Returns:
             bool: True=资源耗尽(应降批/释放), False=其他错误
         """
         error_msg = str(error).lower()
@@ -249,7 +249,7 @@ class ExceptionHandler:
         GPU资源清理（buffer释放、队列完成）时的错误处理。
         清理失败通常为非致命错误，使用 WARNING 级别。
 
-        参数:
+        Args:
             error: 捕获的异常
             resource_name: 资源名称("seed_buffer"/"precomp_buffer"/"compute_queue")
         """
@@ -264,7 +264,7 @@ class ExceptionHandler:
     def handle_config_error(error: Exception, config_type: str = "") -> None:
         """统一处理配置错误
 
-        参数:
+        Args:
             error: 捕获的异常
             config_type: 配置类型("ConfigManager"/"CryptoConfig"/"GPUConfig")
         """
@@ -281,7 +281,7 @@ class ExceptionHandler:
     def handle_file_error(error: Exception, operation: str, filepath: str = "") -> None:
         """统一处理文件操作错误
 
-        参数:
+        Args:
             error: 捕获的异常
             operation: 操作类型("读取"/"写入"/"删除")
             filepath: 文件路径

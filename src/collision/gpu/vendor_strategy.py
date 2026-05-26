@@ -14,12 +14,12 @@
 更新日期: 2026-04-30
 """
 
-import logging
+from ...utils import get_configured_logger
 from typing import Any, cast
 
 from .protocols import GPUExecutionContext, VendorOptimizationStrategy
 
-logger = logging.getLogger(__name__)
+logger = get_configured_logger(__name__)
 
 
 class IntelOptimizationStrategy:

@@ -7,7 +7,7 @@ import pytest
 pytestmark = pytest.mark.gpu
 
 
-class TestGPUDeviceSelector(unittest.TestCase):
+class TestGPUDeviceSelector:
     """测试GPU设备选择器"""
 
     def setUp(self):
@@ -31,7 +31,7 @@ class TestGPUDeviceSelector(unittest.TestCase):
         # 预期: (6*10 + 24*0.05) * 1.0 = 61.2
         # 实际值因评分算法微调可能有偏差，放宽精度到 places=0
         expected = (6.0 * 10.0 + 24 * 0.05) * 1.0
-        self.assertAlmostEqual(score, expected, delta=5.0)
+        assert score == pytest.approx(expected, abs=5.0)
 
     def test_score_device_intel(self):
         """测试Intel设备评分"""
@@ -48,7 +48,7 @@ class TestGPUDeviceSelector(unittest.TestCase):
         # 预期: (16*10 + 512*0.05) * 0.9 = 167.04
         # 实际值因评分算法微调可能有偏差，放宽精度到 delta=10.0
         expected = (16.0 * 10.0 + 512 * 0.05) * 0.9
-        self.assertAlmostEqual(score, expected, delta=10.0)
+        assert score == pytest.approx(expected, abs=10.0)
 
     def test_select_best_device(self):
         """测试选择最佳设备"""
@@ -73,11 +73,11 @@ class TestGPUDeviceSelector(unittest.TestCase):
 
         best = self.selector.select_best_device(devices)
 
-        self.assertEqual(best["global_index"], 1)
-        self.assertEqual(best["score"], 167.04)
+        assert best["global_index"]  ==  1
+        assert best["score"]  ==  167.04
 
 
-class TestGPULoadBalancer(unittest.TestCase):
+class TestGPULoadBalancer:
     """测试GPU负载均衡器"""
 
     def setUp(self):
@@ -108,10 +108,10 @@ class TestGPULoadBalancer(unittest.TestCase):
 
         # 权重总和应为1
         total = sum(weights.values())
-        self.assertAlmostEqual(total, 1.0, places=2)
+        assert total == pytest.approx(1.0, abs=10**-2)
 
         # GPU 1(16GB)权重应大于GPU 0(6GB)
-        self.assertGreater(weights[1], weights[0])
+        assert weights[1]  >  weights[0]
 
     def test_equal_weights(self):
         """测试平均分配权重"""
@@ -121,8 +121,8 @@ class TestGPULoadBalancer(unittest.TestCase):
         weights = balancer.calculate_weights()
 
         # 所有权重应相等
-        self.assertAlmostEqual(weights[0], 0.5, places=2)
-        self.assertAlmostEqual(weights[1], 0.5, places=2)
+        assert weights[0] == pytest.approx(0.5, abs=10**-2)
+        assert weights[1] == pytest.approx(0.5, abs=10**-2)
 
     def test_assign_key_range(self):
         """测试私钥范围分配"""
@@ -132,10 +132,10 @@ class TestGPULoadBalancer(unittest.TestCase):
         start, end = balancer.assign_key_range(1000000, device_idx=0)
 
         # 50%权重应分配500K keys
-        self.assertEqual(end - start, 500000)
+        assert end - start  ==  500000
 
 
-class TestGPUAutoConfigurator(unittest.TestCase):
+class TestGPUAutoConfigurator:
     """测试GPU自动调优器"""
 
     def setUp(self):
@@ -150,10 +150,10 @@ class TestGPUAutoConfigurator(unittest.TestCase):
 
         config = self.configurator.get_nvidia_config(device)
 
-        self.assertEqual(config["use_uint32_workaround"], False)
+        assert config["use_uint32_workaround"]  ==  False
         # 加密运算需要精度，快速数学必须禁用
-        self.assertEqual(config["use_fast_math"], False)
-        self.assertIn(config["batch_size"], [32768, 65536, 131072])
+        assert config["use_fast_math"]  ==  False
+        assert [32768, 65536, 131072]  in  config["batch_size"]
 
     def test_intel_config(self):
         """测试Intel配置（v4.2.3: Arc A770 16GB优化为2097152 (2M)）"""
@@ -161,10 +161,10 @@ class TestGPUAutoConfigurator(unittest.TestCase):
 
         config = self.configurator.get_intel_config(device)
 
-        self.assertEqual(config["use_uint32_workaround"], True)
-        self.assertEqual(config["use_fast_math"], False)
+        assert config["use_uint32_workaround"]  ==  True
+        assert config["use_fast_math"]  ==  False
         # v4.2.3优化: Arc A770(16GB)使用2097152批次; 低显存设备使用更小批次
-        self.assertIn(config["batch_size"], [65536, 131072, 262144, 1048576, 2097152])
+        assert [65536, 131072, 262144, 1048576, 2097152]  in  config["batch_size"]
 
     def test_configure_for_device_intel_full_vendor_name(self):
         """测试完整厂商名称路由 - Intel(R) Corporation 应走 INTEL_ARC_CONFIG"""
@@ -174,14 +174,10 @@ class TestGPUAutoConfigurator(unittest.TestCase):
             "global_mem_size": 15 * 1024**3,
         }
         config = self.configurator.configure_for_device(device)
-        self.assertTrue(config["enable_async"], "Intel Arc 应启用异步执行")
-        self.assertTrue(config["use_uint32_workaround"], "Intel Arc 应启用uint32 workaround")
-        self.assertFalse(config["use_fast_math"], "Intel Arc 应禁用快速数学")
-        self.assertEqual(
-            config["batch_size"],
-            2097152,
-            "Intel Arc A770(≥15GB) 应使用2097152批次(v4.2.3优化: 2M)",
-        )
+        assert config["enable_async"], "Intel Arc 应启用异步执行"
+        assert config["use_uint32_workaround"], "Intel Arc 应启用uint32 workaround"
+        assert not config["use_fast_math"], "Intel Arc 应禁用快速数学"
+        assert config["batch_size"]  ==  2097152, "Intel Arc A770(≥15GB) 应使用2097152批次(v4.2.3优化: 2M)"
 
     def test_configure_for_device_amd_full_vendor_name(self):
         """测试完整厂商名称路由 - Advanced Micro Devices, Inc. 应走 AMD_CONFIG"""
@@ -191,8 +187,8 @@ class TestGPUAutoConfigurator(unittest.TestCase):
             "global_mem_size": 16 * 1024**3,
         }
         config = self.configurator.configure_for_device(device)
-        self.assertTrue(config["enable_async"], "AMD GPU 应启用异步执行")
-        self.assertFalse(config["use_uint32_workaround"], "AMD GPU 不需要uint32 workaround")
+        assert config["enable_async"], "AMD GPU 应启用异步执行"
+        assert not config["use_uint32_workaround"], "AMD GPU 不需要uint32 workaround"
 
     def test_configure_for_device_unknown_vendor(self):
         """测试未知厂商应回退到保守配置"""
@@ -202,16 +198,13 @@ class TestGPUAutoConfigurator(unittest.TestCase):
             "global_mem_size": 4 * 1024**3,
         }
         config = self.configurator.configure_for_device(device)
-        self.assertFalse(config["enable_async"], "未知厂商应禁用异步执行")
-        self.assertFalse(config["use_uint32_workaround"], "未知厂商应禁用uint32 workaround")
+        assert not config["enable_async"], "未知厂商应禁用异步执行"
+        assert not config["use_uint32_workaround"], "未知厂商应禁用uint32 workaround"
 
 
-class TestGPUConfigValidator(unittest.TestCase):
+class TestGPUConfigValidator:
     """v5.2.1: GPUConfigValidator 模块已移除 - 测试跳过"""
 
     def test_dummy(self):
         pass  # placeholder to satisfy unittest collection
 
-
-if __name__ == "__main__":
-    unittest.main()

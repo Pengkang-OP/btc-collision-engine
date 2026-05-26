@@ -336,7 +336,7 @@ class DataStorage:
     def compress_old_data(self, days_threshold: int = 7, sample_rate: float = 0.1) -> None:
         """P2-3修复: 压缩超过threshold天的历史数据
 
-        参数:
+        Args:
             days_threshold: 超过多少天的数据需要压缩（默认7天）
             sample_rate: 采样率，0.1表示保留10%的数据（默认0.1）
 
@@ -421,11 +421,11 @@ class DataStorage:
     def _sample_data(self, data: list, sample_rate: float) -> list:
         """P2-3修复: 数据采样
 
-        参数:
+        Args:
             data: 原始数据列表
             sample_rate: 采样率（0.0-1.0）
 
-        返回:
+        Returns:
             采样后的数据列表
         """
         if not data or sample_rate >= 1.0:
