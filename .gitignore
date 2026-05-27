@@ -40,6 +40,7 @@ logs/
 data_logs/
 monitoring_data/
 checkpoint.json
+*checkpoint.json
 config.json
 .coverage*
 htmlcov/
