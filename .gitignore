@@ -319,6 +319,8 @@ tools/UTF8_*.md
 # --- 根目录调试文件 ---
 /ci_debug*.txt
 /coverage_check.txt
+/web_test_errors.txt
+/nt
 
 # --- docs 中已跟踪的大文档（建议 git rm --cached 后生效） ---
 docs/PROJECT_COMPREHENSIVE_ANALYSIS_V3.md

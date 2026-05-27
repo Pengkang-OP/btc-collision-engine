@@ -51,7 +51,7 @@ class TestSecp256k1VerifyParameters:
         info = Secp256k1.get_security_info()
         assert info["name"] == "secp256k1"
         assert info["bit_length"] == 256
-        assert info in "parameters_verified"
+        assert "parameters_verified" in info
 
 
 # ===========================================================================
@@ -95,15 +95,15 @@ class TestECPointEdge:
     def test_repr_infinity(self):
         """无穷远点 repr → line 157"""
         p = ECPoint(None, None)
-        assert repr(p) in "Infinity"
+        assert "Infinity" in repr(p)
 
     def test_repr_normal(self):
         """普通点 repr → line 158"""
         p = ECPoint(0xAB, 0xCD)
         r = repr(p)
-        assert r in "ECPoint"
-        assert r in "x="
-        assert r in "y="
+        assert "ECPoint" in r
+        assert "x=" in r
+        assert "y=" in r
 
 
 # ===========================================================================
@@ -114,26 +114,26 @@ class TestECPointEdge:
 class TestModInverseEdge:
     """EllipticCurve.mod_inverse 异常分支"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.ec = EllipticCurve()
 
     def test_a_not_int(self):
         """A 非 int → TypeError → line 220"""
-        with self.assertRaises(TypeError) as ctx:
+        with pytest.raises(TypeError) as ctx:
             self.ec.mod_inverse("3", 11)
-        assert str(ctx.exception) in "a必须是整数"
+        assert "a必须是整数" in str(ctx.value)
 
     def test_m_not_int(self):
         """M 非 int → TypeError → line 222"""
-        with self.assertRaises(TypeError) as ctx:
+        with pytest.raises(TypeError) as ctx:
             self.ec.mod_inverse(3, "11")
-        assert str(ctx.exception) in "m必须是整数"
+        assert "m必须是整数" in str(ctx.value)
 
     def test_m_not_positive(self):
         """M <= 0 → ValueError → line 224"""
-        with self.assertRaises(ValueError) as ctx:
+        with pytest.raises(ValueError) as ctx:
             self.ec.mod_inverse(3, 0)
-        assert str(ctx.exception) in "m必须是正整数"
+        assert "m必须是正整数" in str(ctx.value)
 
         with pytest.raises(ValueError):
             self.ec.mod_inverse(3, -5)
@@ -146,29 +146,29 @@ class TestModInverseEdge:
 
     def test_no_inverse_raises(self):
         """逆元不存在 → ValueError → line 238"""
-        with self.assertRaises(ValueError) as ctx:
+        with pytest.raises(ValueError) as ctx:
             self.ec.mod_inverse(2, 4)
-        assert str(ctx.exception) in "模逆元不存在"
+        assert "模逆元不存在" in str(ctx.value)
 
 
 class TestPointAddEdge:
     """EllipticCurve.point_add 异常/边界"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.ec = EllipticCurve()
         self.G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
 
     def test_p1_not_ecpoint(self):
         """p1 非 ECPoint → TypeError → line 267"""
-        with self.assertRaises(TypeError) as ctx:
+        with pytest.raises(TypeError) as ctx:
             self.ec.point_add("not_a_point", self.G)
-        assert str(ctx.exception) in "p1必须是ECPoint"
+        assert "p1必须是ECPoint" in str(ctx.value)
 
     def test_p2_not_ecpoint(self):
         """p2 非 ECPoint → TypeError → line 269"""
-        with self.assertRaises(TypeError) as ctx:
+        with pytest.raises(TypeError) as ctx:
             self.ec.point_add(self.G, 42)
-        assert str(ctx.exception) in "p2必须是ECPoint"
+        assert "p2必须是ECPoint" in str(ctx.value)
 
     def test_p2_is_infinity(self):
         """p2 是无穷远点 → 返回 p1 → line 275"""
@@ -188,7 +188,7 @@ class TestPointAddEdge:
 class TestIsOnCurveEdge:
     """is_on_curve 边界"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.ec = EllipticCurve()
 
     def test_infinity_is_on_curve(self):
@@ -206,67 +206,67 @@ class TestIsOnCurveEdge:
 class TestValidateScalarMultiply:
     """_validate_scalar_multiply 异常分支"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.ec = EllipticCurve()
         self.G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
 
     def test_k_not_int(self):
         """K 非 int → TypeError → line 350"""
-        with self.assertRaises(TypeError) as ctx:
+        with pytest.raises(TypeError) as ctx:
             self.ec._validate_scalar_multiply("123", self.G)
-        assert str(ctx.exception) in "标量k必须是整数"
+        assert "标量k必须是整数" in str(ctx.value)
 
     def test_point_not_ecpoint(self):
         """Point 非 ECPoint → TypeError → line 352"""
-        with self.assertRaises(TypeError) as ctx:
+        with pytest.raises(TypeError) as ctx:
             self.ec._validate_scalar_multiply(5, "not_a_point")
-        assert str(ctx.exception) in "point必须是ECPoint"
+        assert "point必须是ECPoint" in str(ctx.value)
 
 
 class TestScalarMultiplyEdge:
     """scalar_multiply 已锁定 — 验证 RuntimeError 行为 (v4.2.2 BLOCK #9)"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.ec = EllipticCurve()
         self.G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
         # 确保环境变量未设置，以测试锁定行为
         self._saved_env = os.environ.pop("BTC_ALLOW_NON_CONST_TIME", None)
 
-    def tearDown(self):
+    def teardown_method(self, method):
         if self._saved_env is not None:
             os.environ["BTC_ALLOW_NON_CONST_TIME"] = self._saved_env
 
     def test_k_zero(self):
         """k==0 → RuntimeError (已锁定)"""
-        with self.assertRaises(RuntimeError) as ctx:
+        with pytest.raises(RuntimeError) as ctx:
             self.ec.scalar_multiply(0, self.G)
-        assert str(ctx.exception) in "已被永久禁用"
+        assert "已被永久禁用" in str(ctx.value)
 
     def test_point_infinity(self):
         """Point 无穷远点 → RuntimeError (已锁定)"""
         inf = ECPoint(None, None)
-        with self.assertRaises(RuntimeError) as ctx:
+        with pytest.raises(RuntimeError) as ctx:
             self.ec.scalar_multiply(5, inf)
-        assert str(ctx.exception) in "已被永久禁用"
+        assert "已被永久禁用" in str(ctx.value)
 
     def test_k_mod_N_zero(self):
         """K % N == 0 → RuntimeError (已锁定)"""
         k = Secp256k1.N * 2
-        with self.assertRaises(RuntimeError) as ctx:
+        with pytest.raises(RuntimeError) as ctx:
             self.ec.scalar_multiply(k, self.G)
-        assert str(ctx.exception) in "已被永久禁用"
+        assert "已被永久禁用" in str(ctx.value)
 
     def test_normal_scalar_multiply(self):
         """正常标量乘法 → RuntimeError (已锁定)"""
-        with self.assertRaises(RuntimeError) as ctx:
+        with pytest.raises(RuntimeError) as ctx:
             self.ec.scalar_multiply(5, self.G)
-        assert str(ctx.exception) in "已被永久禁用"
+        assert "已被永久禁用" in str(ctx.value)
 
 
 class TestConstTimeSelectEdge:
     """_const_time_select 边界"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.ec = EllipticCurve()
         self.G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
 
@@ -296,7 +296,7 @@ class TestConstTimeSelectEdge:
 class TestScalarMultiplyConstTimeEdge:
     """scalar_multiply_const_time 边界"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.ec = EllipticCurve()
         self.G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
 
@@ -333,7 +333,7 @@ class TestScalarMultiplyConstTimeEdge:
 class TestGeneratePublicKeyEdge:
     """generate_public_key 回退路径"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.ec = EllipticCurve()
         # 私钥 1
         self.pk = (1).to_bytes(32, "big")
@@ -342,14 +342,14 @@ class TestGeneratePublicKeyEdge:
         """Int 型私钥输入 → line 569"""
         result = self.ec.generate_public_key(1, compressed=True)
         assert len(result) == 33
-        assert [2, 3] in result[0]
+        assert result[0] in [2, 3]
 
     def test_generate_public_key_infinity_raises(self):
         """公钥无穷远点 → ValueError → line 579"""
         # N * G = 无穷远点
-        with self.assertRaises(ValueError) as ctx:
+        with pytest.raises(ValueError) as ctx:
             self.ec.generate_public_key(Secp256k1.N.to_bytes(32, "big"))
-        assert str(ctx.exception) in "无穷远点"
+        assert "无穷远点" in str(ctx.value)
 
     def test_generate_public_key_const_time_alias(self):
         """generate_public_key_const_time 别名 → line 607"""

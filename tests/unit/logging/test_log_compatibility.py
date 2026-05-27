@@ -20,7 +20,7 @@ from src.utils.logging_config import get_configured_logger, init_logging
 class TestLogCompatibility:
     """日志系统兼容性测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         """设置测试环境"""
         # 创建临时目录用于测试日志文件
         self.temp_dir = tempfile.mkdtemp()
@@ -45,7 +45,7 @@ class TestLogCompatibility:
         # 确保日志目录存在
         pathlib.Path(os.path.dirname(self.log_file)).mkdir(exist_ok=True, parents=True)
 
-    def tearDown(self):
+    def teardown_method(self, method):
         """清理测试环境"""
         # 关闭所有日志处理器
         import logging
@@ -93,7 +93,7 @@ class TestLogCompatibility:
         # 测试平台特定的日志目录
         log_dir = adapter.get_log_directory()
         assert isinstance(log_dir, str)
-        assert pathlib.Path(log_dir.is_absolute())
+        assert pathlib.Path(log_dir).is_absolute()
 
         # 测试目录创建
         assert adapter.ensure_directory(self.temp_dir)
@@ -129,7 +129,7 @@ class TestLogCompatibility:
             handler.close()
 
         # 验证日志文件存在
-        assert pathlib.Path(self.log_file.exists())
+        assert pathlib.Path(self.log_file).exists()
 
     def test_log_collection_rules(self):
         """测试日志收集规则"""
@@ -150,7 +150,7 @@ class TestLogCompatibility:
         # 测试保存和加载规则
         rule_manager.save_rules()
         # 确保规则文件存在
-        assert pathlib.Path(self.rule_config.exists())
+        assert pathlib.Path(self.rule_config).exists()
 
     def test_log_dependencies(self):
         """测试日志依赖"""
@@ -187,7 +187,7 @@ class TestLogCompatibility:
             handler.close()
 
         # 验证日志文件内容
-        assert pathlib.Path(self.log_file.exists())
+        assert pathlib.Path(self.log_file).exists()
         with pathlib.Path(self.log_file).open(encoding="utf-8") as f:
             content = f.read()
             assert test_message in content
@@ -209,7 +209,7 @@ class TestLogCompatibility:
         async_handler.close()
 
         # 验证异步日志文件存在
-        assert pathlib.Path(self.log_file + ".async".exists())
+        assert pathlib.Path(self.log_file + ".async").exists()
 
     def test_sampled_logging(self):
         """测试采样日志"""
@@ -227,7 +227,7 @@ class TestLogCompatibility:
             handler.close()
 
         # 验证日志文件存在
-        assert pathlib.Path(self.log_file.exists())
+        assert pathlib.Path(self.log_file).exists()
 
     def test_platform_specific_handlers(self):
         """测试平台特定的处理器"""
@@ -254,7 +254,7 @@ class TestLogCompatibility:
             handler.close()
 
         # 验证日志文件存在
-        assert pathlib.Path(self.log_file.exists())
+        assert pathlib.Path(self.log_file).exists()
 
     def test_log_formatting(self):
         """测试日志格式化"""
@@ -274,7 +274,7 @@ class TestLogCompatibility:
             handler.close()
 
         # 验证日志文件内容
-        assert pathlib.Path(self.log_file + ".format".exists())
+        assert pathlib.Path(self.log_file + ".format").exists()
         with pathlib.Path(self.log_file + ".format").open(encoding="utf-8") as f:
             content = f.read()
             assert "INFO: " + test_message in content

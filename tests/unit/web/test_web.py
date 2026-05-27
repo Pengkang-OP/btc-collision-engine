@@ -612,10 +612,11 @@ class TestCreateAppFlaskAvailable:
         dash.create_app()
         handlers = flask_mock["route_handlers"]
         assert "/" in handlers
-        assert "/api/status" in handlers
-        assert "/api/history" in handlers
-        assert "/api/errors" in handlers
-        assert "/api/report" in handlers
+        assert "/api/v1/status" in handlers
+        assert "/api/v1/history" in handlers
+        assert "/api/v1/errors" in handlers
+        assert "/api/v1/report" in handlers
+        assert "/api/v1/security-audit" in handlers
         assert "/health" in handlers
 
     # ── Route handler body tests ──
@@ -657,7 +658,7 @@ class TestCreateAppFlaskAvailable:
         assert result is not None
 
     def test_api_status_route(self, flask_mock, tmp_path):
-        """Test /api/status route returns current stats."""
+        """Test /api/v1/status route returns current stats."""
         dash = self._setup_app()
         dash.set_api_key(None)
         (tmp_path / "current_data.json").write_text(
@@ -665,12 +666,12 @@ class TestCreateAppFlaskAvailable:
             encoding="utf-8",
         )
         dash.create_app(data_dir=tmp_path)
-        handler = flask_mock["route_handlers"]["/api/status"]
+        handler = flask_mock["route_handlers"]["/api/v1/status"]
         result = handler()
         assert result["speed"] == 500
 
     def test_api_history_route_default_limit(self, flask_mock, tmp_path):
-        """Test /api/history default limit=50 when no query param."""
+        """Test /api/v1/history default limit=50 when no query param."""
         dash = self._setup_app()
         dash.set_api_key(None)
         data = [{"id": i} for i in range(100)]
@@ -678,12 +679,12 @@ class TestCreateAppFlaskAvailable:
         dash.create_app(data_dir=tmp_path)
 
         flask_mock["request"].args.get.return_value = 50
-        handler = flask_mock["route_handlers"]["/api/history"]
+        handler = flask_mock["route_handlers"]["/api/v1/history"]
         result = handler()
         assert len(result) == 50
 
     def test_api_history_route_limit_capped_at_200(self, flask_mock, tmp_path):
-        """Test /api/history limit capped at 200."""
+        """Test /api/v1/history limit capped at 200."""
         dash = self._setup_app()
         dash.set_api_key(None)
         data = [{"id": i} for i in range(300)]
@@ -691,12 +692,12 @@ class TestCreateAppFlaskAvailable:
         dash.create_app(data_dir=tmp_path)
 
         flask_mock["request"].args.get.return_value = 500
-        handler = flask_mock["route_handlers"]["/api/history"]
+        handler = flask_mock["route_handlers"]["/api/v1/history"]
         result = handler()
         assert len(result) == 200
 
     def test_api_history_limit_zero_returns_all(self, flask_mock, tmp_path):
-        """Test /api/history limit=0 returns all data (data[-0:] == data[:])."""
+        """Test /api/v1/history limit=0 returns all data (data[-0:] == data[:])."""
         dash = self._setup_app()
         dash.set_api_key(None)
         data = [{"id": i} for i in range(80)]
@@ -705,12 +706,12 @@ class TestCreateAppFlaskAvailable:
 
         # Simulate Flask type=int: ?limit=0 → 0
         flask_mock["request"].args.get.return_value = 0
-        handler = flask_mock["route_handlers"]["/api/history"]
+        handler = flask_mock["route_handlers"]["/api/v1/history"]
         result = handler()
         assert len(result) == 80
 
     def test_api_history_limit_non_integer_uses_default(self, flask_mock, tmp_path):
-        """Test /api/history with non-integer limit → Flask type=int returns default 50."""
+        """Test /api/v1/history with non-integer limit → Flask type=int returns default 50."""
         dash = self._setup_app()
         dash.set_api_key(None)
         data = [{"id": i} for i in range(60)]
@@ -719,12 +720,12 @@ class TestCreateAppFlaskAvailable:
 
         # Simulate Flask type=int: ?limit=abc → default 50
         flask_mock["request"].args.get.return_value = 50
-        handler = flask_mock["route_handlers"]["/api/history"]
+        handler = flask_mock["route_handlers"]["/api/v1/history"]
         result = handler()
         assert len(result) == 50
 
     def test_api_errors_route_default_limit(self, flask_mock, tmp_path):
-        """Test /api/errors default limit=50 when no query param."""
+        """Test /api/v1/errors default limit=50 when no query param."""
         dash = self._setup_app()
         dash.set_api_key(None)
         data = [{"msg": f"err{i}"} for i in range(60)]
@@ -732,12 +733,12 @@ class TestCreateAppFlaskAvailable:
         dash.create_app(data_dir=tmp_path)
 
         flask_mock["request"].args.get.return_value = 50
-        handler = flask_mock["route_handlers"]["/api/errors"]
+        handler = flask_mock["route_handlers"]["/api/v1/errors"]
         result = handler()
         assert len(result) == 50
 
     def test_api_report_empty_history(self, flask_mock, tmp_path):
-        """Test /api/report with empty history yields zero speeds."""
+        """Test /api/v1/report with empty history yields zero speeds."""
         dash = self._setup_app()
         dash.set_api_key(None)
         (tmp_path / "current_data.json").write_text(
@@ -747,7 +748,7 @@ class TestCreateAppFlaskAvailable:
         (tmp_path / "history_data.json").write_text("[]", encoding="utf-8")
 
         dash.create_app(data_dir=tmp_path)
-        handler = flask_mock["route_handlers"]["/api/report"]
+        handler = flask_mock["route_handlers"]["/api/v1/report"]
         result = handler()
         assert result["summary"]["avg_speed"] == 0
         assert result["summary"]["max_speed"] == 0
@@ -756,7 +757,7 @@ class TestCreateAppFlaskAvailable:
         assert "generated_at" in result
 
     def test_api_report_history_not_a_list(self, flask_mock, tmp_path):
-        """Test /api/report handles non-list history gracefully."""
+        """Test /api/v1/report handles non-list history gracefully."""
         dash = self._setup_app()
         dash.set_api_key(None)
         (tmp_path / "current_data.json").write_text(
@@ -766,7 +767,7 @@ class TestCreateAppFlaskAvailable:
         (tmp_path / "history_data.json").write_text('{"not": "list"}', encoding="utf-8")
 
         dash.create_app(data_dir=tmp_path)
-        handler = flask_mock["route_handlers"]["/api/report"]
+        handler = flask_mock["route_handlers"]["/api/v1/report"]
         result = handler()
         assert result["summary"]["avg_speed"] == 0
         assert result["summary"]["max_speed"] == 0
@@ -775,7 +776,7 @@ class TestCreateAppFlaskAvailable:
         assert "generated_at" in result
 
     def test_api_errors_route(self, flask_mock, tmp_path):
-        """Test /api/errors route returns error data."""
+        """Test /api/v1/errors route returns error data."""
         dash = self._setup_app()
         dash.set_api_key(None)
         data = [{"msg": f"err{i}"} for i in range(30)]
@@ -783,12 +784,12 @@ class TestCreateAppFlaskAvailable:
         dash.create_app(data_dir=tmp_path)
 
         flask_mock["request"].args.get.return_value = 5
-        handler = flask_mock["route_handlers"]["/api/errors"]
+        handler = flask_mock["route_handlers"]["/api/v1/errors"]
         result = handler()
         assert len(result) == 5
 
     def test_api_report_route(self, flask_mock, tmp_path):
-        """Test /api/report route returns report summary."""
+        """Test /api/v1/report route returns report summary."""
         dash = self._setup_app()
         dash.set_api_key(None)
         (tmp_path / "current_data.json").write_text(
@@ -813,7 +814,7 @@ class TestCreateAppFlaskAvailable:
         (tmp_path / "history_data.json").write_text(json.dumps(history_data), encoding="utf-8")
 
         dash.create_app(data_dir=tmp_path)
-        handler = flask_mock["route_handlers"]["/api/report"]
+        handler = flask_mock["route_handlers"]["/api/v1/report"]
         result = handler()
         assert "summary" in result
         assert result["summary"]["total_checked"] == 10000
@@ -857,7 +858,7 @@ class TestCreateAppFlaskAvailable:
         flask_mock["Flask"].assert_called_once()
         # Routes: /, /api/status, /api/history, /api/errors, /api/report,
         #         /api/security-audit, /health
-        assert len(flask_mock["route_handlers"]) == 7
+        assert len(flask_mock["route_handlers"]) == 8
 
 
 class TestRunDashboard:

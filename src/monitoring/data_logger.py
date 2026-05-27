@@ -201,12 +201,12 @@ class DataLogger:
                     "schema_version": self.HISTORY_SCHEMA_VERSION,
                     "data": [],
                 }
-                with pathlib.Path(self.history_data_file).open("wb") as f:
+                with pathlib.Path(self.history_data_file).open("w", encoding="utf-8") as f:
                     fast_dump(init_data, f)
 
             # 初始化错误日志文件
             if not pathlib.Path(self.error_log_file).exists():
-                with pathlib.Path(self.error_log_file).open("wb") as f:
+                with pathlib.Path(self.error_log_file).open("w", encoding="utf-8") as f:
                     fast_dump([], f)
                 if os.name != "nt":
                     pathlib.Path(self.error_log_file).chmod(0o600)

@@ -12,7 +12,7 @@ from src.core.secp256k1 import ECPoint, EllipticCurve, Secp256k1
 class TestModInverse:
     """模逆元运算测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.ec = EllipticCurve()
 
     def test_mod_inverse_basic(self):
@@ -60,7 +60,7 @@ class TestModInverse:
 class TestPointAdd:
     """椭圆曲线点加法测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.ec = EllipticCurve()
         self.G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
 
@@ -120,20 +120,20 @@ class TestPointAdd:
 class TestScalarMultiply:
     """scalar_multiply 已锁定 — 验证 RuntimeError 行为 (v4.2.2 BLOCK #9)"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.ec = EllipticCurve()
         self.G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
         self._saved_env = os.environ.pop("BTC_ALLOW_NON_CONST_TIME", None)
 
-    def tearDown(self):
+    def teardown_method(self, method):
         if self._saved_env is not None:
             os.environ["BTC_ALLOW_NON_CONST_TIME"] = self._saved_env
 
     def _assert_locked(self, k, point):
         """辅助: 断言 scalar_multiply 触发 RuntimeError"""
-        with self.assertRaises(RuntimeError) as ctx:
+        with pytest.raises(RuntimeError) as ctx:
             self.ec.scalar_multiply(k, point)
-        assert str(ctx.exception) in "已被永久禁用"
+        assert "已被永久禁用" in str(ctx.value)
 
     def test_scalar_multiply_zero(self):
         """0 * G → RuntimeError (已锁定)"""
@@ -176,7 +176,7 @@ class TestScalarMultiply:
 class TestScalarMultiplyConstTime:
     """恒定时间标量乘法测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.ec = EllipticCurve()
         self.G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
 
@@ -184,10 +184,9 @@ class TestScalarMultiplyConstTime:
         """恒定时间算法自身一致性验证（scalar_multiply 已锁定不可对比）"""
         test_scalars = [1, 2, 42, 1000, 10**18]
         for k in test_scalars:
-            with self.subTest(k=k):
-                result_std = self.ec.scalar_multiply_const_time(k, self.G)
-                result_ct = self.ec.scalar_multiply_const_time(k, self.G)
-                assert result_std == result_ct
+            result_std = self.ec.scalar_multiply_const_time(k, self.G)
+            result_ct = self.ec.scalar_multiply_const_time(k, self.G)
+            assert result_std == result_ct
 
     def test_const_time_zero(self):
         """恒定时间：0 * G = 无穷远点"""
@@ -234,7 +233,7 @@ class TestScalarMultiplyConstTime:
 class TestGeneratePublicKey:
     """公钥生成测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.ec = EllipticCurve()
 
     def test_generate_public_key_compressed(self):
@@ -242,7 +241,7 @@ class TestGeneratePublicKey:
         pk = (42).to_bytes(32, "big")
         pub_key = self.ec.generate_public_key(pk, compressed=True)
         assert len(pub_key) == 33
-        assert [2, 3] in pub_key[0]
+        assert pub_key[0] in [2, 3]
 
     def test_generate_public_key_uncompressed(self):
         """生成非压缩公钥（65字节）"""
@@ -336,14 +335,14 @@ class TestECPoint:
         """无穷远点的字符串表示"""
         p = ECPoint(None, None)
         repr_str = repr(p)
-        assert repr_str in "Infinity"
+        assert "Infinity" in repr_str
 
     def test_repr_normal(self):
         """普通点的字符串表示"""
         p = ECPoint(100, 200)
         repr_str = repr(p)
-        assert repr_str in "ECPoint"
-        assert repr_str in "64"  # 十六进制长度
+        assert "ECPoint" in repr_str
+        assert "64" in repr_str  # 十六进制长度
 
 
 if __name__ == "__main__":
