@@ -15,7 +15,7 @@ from src.gpu.performance_optimizer import (
 class TestGPUPerformanceOptimizer:
     """测试GPU性能优化器"""
 
-    def setUp(self):
+    def setup_method(self, method):
         """设置测试环境"""
         self.optimizer = GPUPerformanceOptimizer()
 

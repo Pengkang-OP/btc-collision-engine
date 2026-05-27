@@ -152,7 +152,7 @@ class TestGPUAutoConfigurator:
         assert not config["use_uint32_workaround"]
         # 加密运算需要精度，快速数学必须禁用
         assert not config["use_fast_math"]
-        assert [32768, 65536, 131072] in config["batch_size"]
+        assert config["batch_size"] in [32768, 65536, 131072]
 
     def test_intel_config(self):
         """测试Intel配置（v4.2.3: Arc A770 16GB优化为2097152 (2M)）"""
@@ -163,7 +163,7 @@ class TestGPUAutoConfigurator:
         assert config["use_uint32_workaround"]
         assert not config["use_fast_math"]
         # v4.2.3优化: Arc A770(16GB)使用2097152批次; 低显存设备使用更小批次
-        assert [65536, 131072, 262144, 1048576, 2097152] in config["batch_size"]
+        assert config["batch_size"] in [65536, 131072, 262144, 1048576, 2097152]
 
     def test_configure_for_device_intel_full_vendor_name(self):
         """测试完整厂商名称路由 - Intel(R) Corporation 应走 INTEL_ARC_CONFIG"""

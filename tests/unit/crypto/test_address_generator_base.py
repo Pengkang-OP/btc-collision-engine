@@ -53,7 +53,7 @@ class TestBaseAddressGeneratorInheritance:
 class TestP2PKHAddressGeneratorLSP:
     """LSP 兼容性验证 (审查 W1 修复后)"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.gen = P2PKHAddressGenerator()
         self.private_key = b"\x01" * 32  # 有效私钥 (在 [1,N) 范围内)
 
@@ -103,7 +103,7 @@ class TestP2PKHAddressGeneratorLSP:
 class TestBaseViaSuperDelegation:
     """子类通过 super() 委托基类方法的正确性"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.p2pkh = P2PKHAddressGenerator()
         self.opt = OptimizedP2PKHAddressGenerator()
         self.private_key = b"\x01" * 32

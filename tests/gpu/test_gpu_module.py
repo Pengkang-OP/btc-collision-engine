@@ -18,7 +18,7 @@ pytestmark = pytest.mark.gpu
 class TestGPUProfileLoader:
     """测试GPU型号数据库加载器"""
 
-    def setUp(self):
+    def setup_method(self, method):
         """测试前准备"""
         from src.gpu.profiles.loader import GPUProfileLoader
 

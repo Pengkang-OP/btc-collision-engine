@@ -132,7 +132,7 @@ class TestIntelGPUOptimizerInit:
 class TestVerifyUint32Workaround:
     """测试 _verify_uint32_workaround() 方法"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.device = _make_intel_device()
         self.optimizer = IntelGPUOptimizer(device=self.device, config={})
 
@@ -169,7 +169,7 @@ class TestVerifyUint32Workaround:
 class TestApplyOptimizationsSuccess:
     """测试 apply_optimizations() 成功路径"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.device = _make_intel_device()
         self.optimizer = IntelGPUOptimizer(device=self.device, config={})
 
@@ -284,7 +284,7 @@ class TestApplyOptimizationsFailure:
 class TestInitMonitoringAndTuning:
     """测试 init_monitoring_and_tuning() 方法"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.device = _make_intel_device()
         self.optimizer = IntelGPUOptimizer(device=self.device, config={})
 
@@ -514,7 +514,7 @@ class TestGetOptimizationFlags:
 class TestComponentProperties:
     """测试组件属性访问器（property）"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.device = _make_intel_device()
         self.optimizer = IntelGPUOptimizer(device=self.device, config={})
 

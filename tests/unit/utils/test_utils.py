@@ -289,12 +289,12 @@ class MockFactory:
 class TestCaseWithMocks:
     """增强的测试用例基类，提供常用Mock功能"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.mock_factory = MockFactory()
         self.utils = TestUtils()
         self.patches = []
 
-    def tearDown(self):
+    def teardown_method(self, method):
         """清理所有patch"""
         for p in reversed(self.patches):
             p.stop()

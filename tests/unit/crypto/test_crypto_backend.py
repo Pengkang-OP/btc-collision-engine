@@ -2,6 +2,7 @@
 
 from unittest.mock import MagicMock, PropertyMock, patch
 
+import pytest
 import unittest
 
 from src.core.crypto_backend import (
@@ -31,7 +32,7 @@ class TestPurePythonBackendDirect:
         backend = PurePythonBackend()
         pub = backend.generate_public_key(self.pk, compressed=True)
         assert len(pub) == 33
-        assert [2, 3] in pub[0]
+        assert pub[0] in (2, 3)
 
     def test_generate_public_key_uncompressed(self):
         """P0-2: 非恒定时间非压缩公钥生成"""
@@ -45,7 +46,7 @@ class TestPurePythonBackendDirect:
         backend = PurePythonBackend(use_const_time=True)
         pub = backend.generate_public_key(self.pk, compressed=True)
         assert len(pub) == 33
-        assert [2, 3] in pub[0]
+        assert pub[0] in (2, 3)
 
     def test_generate_public_key_const_time_uncompressed(self):
         """P0-4: 恒定时间非压缩公钥生成"""
@@ -96,8 +97,8 @@ class TestPurePythonBackendDirect:
     def test_name_const_time(self):
         """P0-10: 恒定时间模式名称"""
         backend = PurePythonBackend(use_const_time=True)
-        assert backend.name in "Constant Time"
-        assert backend.name in "Pure Python"
+        assert "Constant Time" in backend.name
+        assert "Pure Python" in backend.name
 
     def test_always_available(self):
         """P0-11: PurePython 始终可用"""
@@ -139,7 +140,7 @@ class TestBackendSetAndSwitch:
         result = crypto_manager.set_backend(BackendType.PURE_PYTHON, use_const_time=True)
         assert result
         backend = crypto_manager.current_backend
-        assert backend.name in "Constant Time"
+        assert "Constant Time" in backend.name
         assert backend.is_constant_time()
 
     def test_is_constant_time_via_manager(self):
@@ -175,7 +176,7 @@ class TestBackendSetAndSwitch:
     def test_reset_to_best_backend(self):
         """P0-18: reset_to_best_backend 恢复最佳后端"""
         crypto_manager.set_backend(BackendType.PURE_PYTHON)
-        assert crypto_manager.current_backend.name in "Pure Python"
+        assert "Pure Python" in crypto_manager.current_backend.name
         crypto_manager.reset_to_best_backend()
         assert crypto_manager.current_backend.is_available
 
@@ -212,13 +213,13 @@ class TestConvenienceFunctions:
         """P0-21: generate_public_key 便捷函数"""
         pub = generate_public_key(self.pk, compressed=True)
         assert len(pub) == 33
-        assert [2, 3] in pub[0]
+        assert pub[0] in (2, 3)
 
     def test_set_crypto_backend_convenience(self):
         """P0-22: set_crypto_backend 便捷函数"""
         result = set_crypto_backend(BackendType.PURE_PYTHON, use_const_time=True)
         assert result
-        assert crypto_manager.current_backend.name in "Constant Time"
+        assert "Constant Time" in crypto_manager.current_backend.name
 
     def test_get_available_backends_convenience(self):
         """P0-23: get_available_backends 便捷函数"""
@@ -253,7 +254,7 @@ class TestCryptoBackendManagerEdgeCases:
     def test_backend_in_managers_dict(self):
         """P0-26: 所有4个后端类型都在管理器字典中"""
         for bt in BackendType:
-            assert crypto_manager._backends in bt
+            assert bt in crypto_manager._backends
             backend = crypto_manager._backends[bt]
             assert backend is not None
             assert isinstance(backend.name, str)
@@ -273,7 +274,7 @@ class TestOpenSSLBackendDirect:
 
     def test_name(self):
         """P1-2: OpenSSL 后端名称"""
-        assert self.backend.name in "OpenSSL"
+        assert "OpenSSL" in self.backend.name
 
     def test_is_constant_time(self):
         """P1-3: OpenSSL is_constant_time 返回 False"""
@@ -283,7 +284,7 @@ class TestOpenSSLBackendDirect:
         """P1-4: OpenSSL 压缩公钥生成"""
         pub = self.backend.generate_public_key(self.pk, compressed=True)
         assert len(pub) == 33
-        assert [2, 3] in pub[0]
+        assert pub[0] in (2, 3)
 
     def test_generate_public_key_uncompressed(self):
         """P1-5: OpenSSL 非压缩公钥生成"""
@@ -314,7 +315,7 @@ class TestCoincurveBackendDirect:
 
     def test_name(self):
         """P1-8: Coincurve 后端名称"""
-        assert self.backend.name.lower() in "coincurve"
+        assert "coincurve" in self.backend.name.lower()
 
     def test_is_constant_time(self):
         """P1-9: Coincurve is_constant_time 返回 True"""
@@ -324,7 +325,7 @@ class TestCoincurveBackendDirect:
         """P1-10: Coincurve 压缩公钥生成"""
         pub = self.backend.generate_public_key(self.pk, compressed=True)
         assert len(pub) == 33
-        assert [2, 3] in pub[0]
+        assert pub[0] in (2, 3)
 
     def test_generate_public_key_uncompressed(self):
         """P1-11: Coincurve 非压缩公钥生成"""
@@ -361,7 +362,7 @@ class TestECDSABackendDirect:
 
     def test_name(self):
         """P1-15: ECDSA 后端名称"""
-        assert self.backend.name.lower() in "ecdsa"
+        assert "ecdsa" in self.backend.name.lower()
 
     def test_is_constant_time(self):
         """P1-16: ECDSA is_constant_time 返回 False"""
@@ -371,7 +372,7 @@ class TestECDSABackendDirect:
         """P1-17: ECDSA 压缩公钥生成"""
         pub = self.backend.generate_public_key(self.pk, compressed=True)
         assert len(pub) == 33
-        assert [2, 3] in pub[0]
+        assert pub[0] in (2, 3)
 
     def test_generate_public_key_uncompressed(self):
         """P1-18: ECDSA 非压缩公钥生成"""
@@ -602,7 +603,7 @@ class TestCryptoBackendManager:
 
         assert isinstance(pub_key, bytes)
         assert len(pub_key) == 33  # 压缩公钥33字节
-        assert [2, 3] in pub_key[0]  # 前缀为0x02或0x03
+        assert pub_key[0] in (2, 3)  # 前缀为0x02或0x03
 
     def test_public_key_generation_uncompressed(self):
         """公钥生成 - 非压缩格式"""

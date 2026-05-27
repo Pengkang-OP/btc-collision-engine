@@ -190,13 +190,13 @@ class TestLiveRangeCountFix:
             assert stripped.startswith("#"), f"非注释行仍包含旧代码! 行内容: {line.strip()[:80]}"
 
         # 确认 remainder 提交代码存在（CODE-2 重构后仍在 worker 中）
-        assert worker_source in "remainder = local_count % 32", "缺少worker退出时的剩余计数提交代码"
+        assert "remainder = local_count % 32" in worker_source, "缺少worker退出时的剩余计数提交代码"
 
         # CODE-2 重构后：random_search 的 live 计数合并在 _random_search_finalize 中
         finalize_source = inspect.getsource(KeyCollisionEngine._random_search_finalize)
         assert "final_count = max(total_count, self._live_range_count)" in finalize_source, \
             "缺少 _random_search_finalize 中的 live 计数合并代码"
-        assert finalize_source in "self._live_range_count = 0", "缺少 _random_search_finalize 中的 live 计数重置代码"  # noqa: E501
+        assert "self._live_range_count = 0" in finalize_source, "缺少 _random_search_finalize 中的 live 计数重置代码"  # noqa: E501
 
         print("\n[P1-5-E ✓] 代码中无重复提交，余数提交和计数合并代码均存在")
 

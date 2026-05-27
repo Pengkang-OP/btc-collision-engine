@@ -19,7 +19,7 @@ from src.gpu.buffer_tracker import GPUBufferTracker
 class TestGPUBufferTracker:
     """测试GPU缓冲区追踪器"""
 
-    def setUp(self):
+    def setup_method(self, method):
         """测试前准备"""
         self.tracker = GPUBufferTracker()
         self.mock_buffer = MagicMock()  # Mock OpenCL Buffer对象

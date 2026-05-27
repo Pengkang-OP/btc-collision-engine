@@ -22,7 +22,7 @@ from src.gpu.gpu_recovery_manager import (  # noqa: E402
 class TestGPUFailureClassification:
     """GPU失败分类测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.manager = GPURecoveryManager()
 
     def test_classify_out_of_memory(self):
@@ -85,7 +85,7 @@ class TestGPUFailureClassification:
 class TestRecoveryStrategy:
     """恢复策略选择测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.manager = GPURecoveryManager(max_retry_count=3)
 
     def test_first_failure_retry_immediate(self):
@@ -188,7 +188,7 @@ class TestRecoveryStrategy:
 class TestRecoveryExecution:
     """恢复执行测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.manager = GPURecoveryManager(
             retry_delay_seconds=0.1,
             batch_size_reduction_factor=0.5,  # 快速测试

@@ -29,16 +29,16 @@ class TestDriverVersionParser:
     def test_compare_versions(self):
         """测试版本比较"""
         # 大于
-        assert DriverVersionParser.compare_versions("520.00" == "510.00", 1)
+        assert DriverVersionParser.compare_versions("520.00", "510.00") == 1
         # 等于
-        assert DriverVersionParser.compare_versions("520.67" == "520.67", 0)
+        assert DriverVersionParser.compare_versions("520.67", "520.67") == 0
         # 小于
-        assert DriverVersionParser.compare_versions("510.00" == "520.00", -1)
+        assert DriverVersionParser.compare_versions("510.00", "520.00") == -1
 
     def test_compare_different_lengths(self):
         """测试不同长度版本号比较"""
-        assert DriverVersionParser.compare_versions("520.67.03" == "520.67", 1)
-        assert DriverVersionParser.compare_versions("31.0.101" == "31.0.101.4500", -1)
+        assert DriverVersionParser.compare_versions("520.67.03", "520.67") == 1
+        assert DriverVersionParser.compare_versions("31.0.101", "31.0.101.4500") == -1
 
     def test_is_version_compatible(self):
         """测试版本兼容性检查"""
@@ -200,7 +200,7 @@ class TestDriverVersionEdgeCases:
 
     def test_compare_with_build_number(self):
         """测试带编译号的版本比较"""
-        assert DriverVersionParser.compare_versions("31.0.101.4500" == "31.0.101.4600", -1)
+        assert DriverVersionParser.compare_versions("31.0.101.4500", "31.0.101.4600") == -1
 
     def test_health_check_intel_arc(self):
         """测试Intel Arc特殊建议"""

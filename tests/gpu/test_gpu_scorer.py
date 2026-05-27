@@ -47,7 +47,7 @@ def _make_device(
 class TestGPUDeviceScorerScore:
     """score() 方法测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.scorer = GPUDeviceScorer()
 
     def test_01_score_nvidia_basic(self):
@@ -105,7 +105,7 @@ class TestGPUDeviceScorerScore:
 class TestGPUDeviceScorerScoreRelative:
     """score_relative() 负载均衡权重测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.scorer = GPUDeviceScorer()
 
     def test_01_relative_uses_60_1_ratio(self):
@@ -142,7 +142,7 @@ class TestGPUDeviceScorerScoreRelative:
 class TestGPUDeviceScorerWeights:
     """calculate_performance_weights() 测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.scorer = GPUDeviceScorer()
 
     def test_01_normalized_weights_sum_to_one(self):
@@ -195,7 +195,7 @@ class TestGPUDeviceScorerWeights:
 class TestGPUDeviceScorerRankSelect:
     """rank_devices() / select_best() 测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.scorer = GPUDeviceScorer()
 
     def test_01_rank_devices_descending(self):
@@ -231,7 +231,7 @@ class TestGPUDeviceScorerRankSelect:
 class TestGPUDeviceScorerTier:
     """get_tier() / get_tier_description() 测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.scorer = GPUDeviceScorer()
 
     def test_01_tier_boundaries(self):
@@ -258,7 +258,7 @@ class TestGPUDeviceScorerTier:
 class TestGPUDeviceScorerCompare:
     """compare_devices() 测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.scorer = GPUDeviceScorer()
 
     def test_01_a_better_than_b(self):
@@ -285,7 +285,7 @@ class TestGPUDeviceScorerCompare:
 class TestGPUDeviceScorerFormatReport:
     """format_score_report() 测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.scorer = GPUDeviceScorer()
 
     def test_01_report_contains_key_info(self):
@@ -303,7 +303,7 @@ class TestGPUDeviceScorerFormatReport:
 class TestGPUDeviceScorerIdentifyModel:
     """identify_model() 型号识别测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.scorer = GPUDeviceScorer()
 
     # ── NVIDIA ──
@@ -404,7 +404,7 @@ class TestGPUDeviceScorerIdentifyModel:
 class TestGPUDeviceScorerSingleton:
     """单例管理测试"""
 
-    def tearDown(self):
+    def teardown_method(self, method):
         reset_gpu_scorer()
 
     def test_01_get_scorer_returns_same_instance(self):

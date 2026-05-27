@@ -36,12 +36,12 @@ PK = b"\x01" * 32  # 测试用私钥
 class TestPurePythonConstantTime:
     """PurePythonBackend use_const_time=True"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.backend = PurePythonBackend(use_const_time=True)
 
     def test_name_with_const_time(self):
         """const_time 后端名 → line 112"""
-        assert self.backend.name in "Constant Time"
+        assert "Constant Time" in self.backend.name
 
     def test_is_available(self):
         """始终可用"""
@@ -93,7 +93,7 @@ class TestPurePythonConstantTime:
 class TestOpenSSLBackend:
     """OpenSSLBackend 全路径（PyO3 仅初始化一次，通过 mock 测试）"""
 
-    def setUp(self):
+    def setup_method(self, method):
         # cryptography 的 PyO3 绑定在 crypto_manager 初始化时已加载，
         # 无法在测试中再次 import。使用 crypto_manager 中的已有实例，
         # 并通过 mock 测试不可用分支。
@@ -122,7 +122,7 @@ class TestOpenSSLBackend:
         """压缩公钥 → lines 170-192"""
         result = self.backend.generate_public_key(PK, compressed=True)
         assert len(result) == 33
-        assert [2, 3] in result[0]
+        assert result[0] in (2, 3)
 
     @pytest.mark.skipif(
         not crypto_manager._backends[BackendType.OPENSSL].is_available,
@@ -182,7 +182,7 @@ class TestCoincurveBackend:
         not CoincurveBackend().is_available,
         reason="Coincurve backend not available in test environment",
     )
-    def setUp(self):
+    def setup_method(self, method):
         self.backend = CoincurveBackend()
 
     @pytest.mark.skipif(
@@ -191,7 +191,7 @@ class TestCoincurveBackend:
     )
     def test_name(self):
         """名称"""
-        assert self.backend.name in "coincurve"
+        assert "coincurve" in self.backend.name
 
     @pytest.mark.skipif(
         not CoincurveBackend().is_available,
@@ -292,7 +292,7 @@ class TestECDSABackend:
         not ECDSABackend().is_available,
         reason="ECDSA backend not available in test environment",
     )
-    def setUp(self):
+    def setup_method(self, method):
         self.backend = ECDSABackend()
 
     @pytest.mark.skipif(
@@ -372,12 +372,12 @@ class TestECDSABackend:
 class TestCryptoBackendManagerEdge:
     """CryptoBackendManager 边界路径"""
 
-    def setUp(self):
+    def setup_method(self, method):
         # 保存当前状态
         self._saved = crypto_manager._current_backend
         crypto_manager.reset_to_best_backend()
 
-    def tearDown(self):
+    def teardown_method(self, method):
         crypto_manager._current_backend = self._saved
 
     def test_current_backend_not_none(self):
@@ -403,7 +403,7 @@ class TestCryptoBackendManagerEdge:
         original = crypto_manager.current_backend
         result = crypto_manager.set_backend(BackendType.COINCURVE)
         assert result
-        assert crypto_manager.current_backend.name in "coincurve"
+        assert "coincurve" in crypto_manager.current_backend.name
         # restore
         crypto_manager._current_backend = original
 
@@ -482,11 +482,11 @@ class TestCryptoBackendManagerEdge:
 class TestConvenienceFunctions:
     """模块级便捷函数"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self._saved = crypto_manager._current_backend
         crypto_manager.reset_to_best_backend()
 
-    def tearDown(self):
+    def teardown_method(self, method):
         crypto_manager._current_backend = self._saved
 
     def test_get_crypto_backend(self):

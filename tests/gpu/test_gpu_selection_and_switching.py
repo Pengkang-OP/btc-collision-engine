@@ -122,7 +122,7 @@ def make_mock_platform(name: str = "Mock Platform") -> Mock:
 class TestGPUDeviceDetection:
     """测试1: GPU设备检测功能"""
 
-    def setUp(self):
+    def setup_method(self, method):
         """测试前准备"""
         # 清除缓存确保每次测试独立
         GPUDeviceDetector.clear_availability_cache()
@@ -365,7 +365,7 @@ class TestGPUVendorIdentification:
 class TestGPUDeviceScoring:
     """测试3: GPU评分和选择算法"""
 
-    def setUp(self):
+    def setup_method(self, method):
         """测试前准备"""
         reset_gpu_selector()
         self.selector = GPUDeviceSelector()
@@ -546,7 +546,7 @@ class TestGPUDeviceScoring:
 class TestGPUSwitching:
     """测试4: GPU切换功能"""
 
-    def setUp(self):
+    def setup_method(self, method):
         """测试前准备"""
         reset_gpu_selector()
 
@@ -644,7 +644,7 @@ class TestGPUSwitching:
 class TestGPUConfigurationAdaptation:
     """测试5: 配置适配功能"""
 
-    def setUp(self):
+    def setup_method(self, method):
         """测试前准备"""
         reset_gpu_selector()
         self.selector = GPUDeviceSelector()
@@ -812,7 +812,7 @@ class TestGPURunningStability:
 class TestMultiGPUIntegration:
     """测试7: 多GPU集成测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         """测试前准备"""
         reset_gpu_selector()
 

@@ -71,7 +71,7 @@ class SecureKeyGenerator:
 
         # Statistics
         self._total_generated = 0
-        self._start_time = datetime.utcnow()
+        self._start_time = datetime.now(timezone.utc)
         self.stats: dict[str, Any] = {
             "low_entropy_count": 0,
             "entropy_checks": 0,

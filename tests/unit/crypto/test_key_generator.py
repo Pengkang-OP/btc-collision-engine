@@ -65,9 +65,9 @@ class TestSecureKeyGeneratorInit:
     def test_init_stats_initialized(self):
         """P0-6: stats 字典初始化"""
         gen = SecureKeyGenerator()
-        assert gen.stats in "low_entropy_count"
-        assert gen.stats in "entropy_checks"
-        assert gen.stats in "warnings_issued"
+        assert "low_entropy_count" in gen.stats
+        assert "entropy_checks" in gen.stats
+        assert "warnings_issued" in gen.stats
         assert gen.stats["low_entropy_count"] == 0
 
 

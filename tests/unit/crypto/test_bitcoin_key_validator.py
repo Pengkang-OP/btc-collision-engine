@@ -126,10 +126,10 @@ class TestAddressType:
 
     def test_enum_members(self):
         members = {m.name: m for m in AddressType}
-        assert members in "P2PKH"
-        assert members in "P2SH"
-        assert members in "BECH32"
-        assert members in "UNKNOWN"
+        assert "P2PKH" in members
+        assert "P2SH" in members
+        assert "BECH32" in members
+        assert "UNKNOWN" in members
 
 
 class TestKeyValidationResult:
@@ -146,7 +146,7 @@ class TestKeyValidationResult:
         r = KeyValidationResult()
         ret = r.add_error("test error")
         assert not r.success
-        assert r.errors in "test error"
+        assert "test error" in r.errors
         assert ret is r
 
     def test_add_multiple_errors(self):
@@ -158,7 +158,7 @@ class TestKeyValidationResult:
     def test_add_warning(self):
         r = KeyValidationResult()
         r.add_warning("test warning")
-        assert r.warnings in "test warning"
+        assert "test warning" in r.warnings
 
     def test_add_detail(self):
         r = KeyValidationResult()
@@ -172,8 +172,8 @@ class TestKeyValidationResult:
         r.add_detail("k", "v")
         d = r.to_dict()
         assert not d["success"]
-        assert d["errors"] in "err"
-        assert d["warnings"] in "warn"
+        assert "err" in d["errors"]
+        assert "warn" in d["warnings"]
         assert d["details"]["k"] == "v"
 
     def test_to_dict_success(self):
@@ -201,7 +201,7 @@ class TestBitcoinKeyValidatorBasic:
     def test_validate_private_key_valid(self):
         result = self.validator.validate_private_key(self.pk)
         assert result.success
-        assert result.details in "private_key_length"
+        assert "private_key_length" in result.details
         assert result.details["private_key_length"] == 32
 
     def test_validate_private_key_invalid_length(self):
@@ -213,7 +213,7 @@ class TestBitcoinKeyValidatorBasic:
         pk = (0).to_bytes(32, "big")
         result = self.validator.validate_private_key(pk)
         assert not result.success
-        assert str(result.errors) in "0"
+        assert "0" in str(result.errors)
 
     def test_validate_private_key_out_of_range(self):
         pk = (Secp256k1.N).to_bytes(32, "big")
@@ -224,13 +224,13 @@ class TestBitcoinKeyValidatorBasic:
         v = BitcoinKeyValidator(secure_mode=True)
         result = v.validate_private_key(self.pk)
         assert result.success
-        assert result.details in "private_key_hash"
-        assert result.details not in "private_key_hex"
+        assert "private_key_hash" in result.details
+        assert "private_key_hex" not in result.details
 
     def test_validate_private_key_non_secure_mode(self):
         v = BitcoinKeyValidator(secure_mode=False)
         result = v.validate_private_key(self.pk)
-        assert result.details in "private_key_hex"
+        assert "private_key_hex" in result.details
 
 
 class TestBitcoinKeyValidatorPubKey:
@@ -244,7 +244,7 @@ class TestBitcoinKeyValidatorPubKey:
         result, pub_key = self.validator.generate_public_key(self.pk, compressed=True)
         assert result.success
         assert len(pub_key) == 33
-        assert [2, 3] in pub_key[0]
+        assert pub_key[0] in (2, 3)
 
     def test_generate_public_key_uncompressed(self):
         result, pub_key = self.validator.generate_public_key(self.pk, compressed=False)
@@ -265,7 +265,7 @@ class TestBitcoinKeyValidatorPubKey:
         _, pub_key = self.validator.generate_public_key(self.pk, compressed=True)
         result = self.validator.validate_public_key(pub_key)
         assert result.success
-        assert result.details in "public_key_format"
+        assert "public_key_format" in result.details
         assert result.details["public_key_format"] == "compressed"
 
     def test_validate_public_key_uncompressed(self):
@@ -357,7 +357,7 @@ class TestBitcoinKeyValidatorAddress:
 
     def test_validate_address_bech32_invalid_char(self):
         result = self.validator.validate_address("bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t1")
-        assert str(result.errors) in "Bech32"
+        assert "Bech32" in str(result.errors)
 
     def test_validate_address_bech32_testnet(self):
         address = "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx"
@@ -394,7 +394,7 @@ class TestBitcoinKeyValidatorWIF:
         result, wif = v.private_key_to_wif(self.pk, compressed=True)
         assert result.success
         wif_detail = result.details.get("wif", "")
-        assert wif_detail in "..."
+        assert "..." in wif_detail
 
     def test_wif_to_private_key_compressed(self):
         _, wif = self.validator.private_key_to_wif(self.pk, compressed=True)
@@ -420,8 +420,8 @@ class TestBitcoinKeyValidatorWIF:
         _, wif = v.private_key_to_wif(self.pk, compressed=True)
         result, pk_out, compressed = v.wif_to_private_key(wif)
         assert result.success
-        assert result.details in "private_key_hash"
-        assert result.details not in "private_key_hex"
+        assert "private_key_hash" in result.details
+        assert "private_key_hex" not in result.details
 
 
 class TestBitcoinKeyValidatorMatch:
@@ -481,9 +481,9 @@ class TestBitcoinKeyValidatorFullChain:
         _, address = v.generate_address(pub_key_c, AddressType.P2PKH)
         report = v.full_validation_chain(self.pk, {address})
         assert report["overall_success"]
-        assert report in "summary"
+        assert "summary" in report
         assert report["summary"]["secure_mode"]
-        assert report["summary"] not in "private_key_hex"
+        assert "private_key_hex" not in report["summary"]
 
     def test_full_validation_chain_non_secure_mode(self):
         v = BitcoinKeyValidator(secure_mode=False)
@@ -491,7 +491,7 @@ class TestBitcoinKeyValidatorFullChain:
         _, address = v.generate_address(pub_key_c, AddressType.P2PKH)
         report = v.full_validation_chain(self.pk, {address})
         assert report["overall_success"]
-        assert report.get("summary", {}) in "private_key_hash"
+        assert "private_key_hash" in report.get("summary", {})
         assert not report["summary"]["secure_mode"]
 
     def test_full_validation_chain_match_found(self):
@@ -513,7 +513,7 @@ class TestBitcoinKeyValidatorFullChain:
         v = BitcoinKeyValidator(secure_mode=False)
         report = v.full_validation_chain(b"\x00" * 32, set())
         assert not report["overall_success"]
-        assert report in "steps"
+        assert "steps" in report
 
     def test_full_validation_chain_steps_count(self):
         v = BitcoinKeyValidator(secure_mode=False)
@@ -521,13 +521,13 @@ class TestBitcoinKeyValidatorFullChain:
         _, address = v.generate_address(pub_key_c, AddressType.P2PKH)
         report = v.full_validation_chain(self.pk, {address})
         steps = report["steps"]
-        assert steps in "private_key_validation"
-        assert steps in "public_key_compressed"
-        assert steps in "public_key_uncompressed"
-        assert steps in "address_generation"
-        assert steps in "wif_compressed"
-        assert steps in "wif_uncompressed"
-        assert steps in "address_match"
+        assert "private_key_validation" in steps
+        assert "public_key_compressed" in steps
+        assert "public_key_uncompressed" in steps
+        assert "address_generation" in steps
+        assert "wif_compressed" in steps
+        assert "wif_uncompressed" in steps
+        assert "address_match" in steps
 
 
 class TestValidateBitcoinKeyChain:

@@ -1158,7 +1158,7 @@ class TestKeyCollisionEngineP3Checkpoint:
         self._ckpt_dir = tempfile.mkdtemp(prefix="test_ckpt_")
         self._ckpt_path = os.path.join(self._ckpt_dir, "checkpoint.json")
 
-    def tearDown(self):
+    def teardown_method(self, method):
         import shutil
 
         shutil.rmtree(self._ckpt_dir, ignore_errors=True)
