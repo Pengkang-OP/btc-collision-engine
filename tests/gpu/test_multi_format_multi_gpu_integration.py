@@ -1,4 +1,4 @@
-"""多格式多GPU引擎集成测试
+"""多格式多GPU引擎集成测试.
 
 测试内容:
 1. 多格式目标管理
@@ -23,7 +23,7 @@ from src.gpu.multi_format_multi_gpu_engine import create_multi_format_multi_gpu_
 
 @pytest.fixture
 def engine():
-    """创建多格式多GPU引擎实例作为测试 fixture"""
+    """创建多格式多GPU引擎实例作为测试 fixture."""
     eng = create_multi_format_multi_gpu_engine()
     yield eng
     with contextlib.suppress(Exception):
@@ -32,7 +32,7 @@ def engine():
 
 @pytest.mark.gpu
 def test_format_manager():
-    """测试1: 多格式目标管理器"""
+    """测试1: 多格式目标管理器."""
     print("\n" + "=" * 80)
     print("测试1: 多格式目标管理器")
     print("=" * 80)
@@ -69,7 +69,7 @@ def test_format_manager():
 
 @pytest.mark.gpu
 def test_engine_creation():
-    """测试2: 引擎创建"""
+    """测试2: 引擎创建."""
     print("\n" + "=" * 80)
     print("测试2: 引擎创建")
     print("=" * 80)
@@ -93,7 +93,7 @@ def test_engine_creation():
 
 @pytest.mark.gpu
 def test_multi_format_matching(engine):
-    """测试3: 多格式地址匹配"""
+    """测试3: 多格式地址匹配."""
     print("\n" + "=" * 80)
     print("测试3: 多格式地址匹配")
     print("=" * 80)
@@ -153,7 +153,7 @@ def test_multi_format_matching(engine):
 
 @pytest.mark.gpu
 def test_post_processing(engine):
-    """测试4: 后处理检查其他格式"""
+    """测试4: 后处理检查其他格式."""
     print("\n" + "=" * 80)
     print("测试4: 后处理检查其他格式")
     print("=" * 80)
@@ -216,7 +216,7 @@ def test_post_processing(engine):
 
 @pytest.mark.gpu
 def test_format_stats(engine):
-    """测试5: 格式统计"""
+    """测试5: 格式统计."""
     print("\n" + "=" * 80)
     print("测试5: 格式统计")
     print("=" * 80)
@@ -258,7 +258,7 @@ def test_format_stats(engine):
 
 @pytest.mark.gpu
 def test_integration_scenario():
-    """测试6: 集成场景测试"""
+    """测试6: 集成场景测试."""
     print("\n" + "=" * 80)
     print("测试6: 集成场景测试")
     print("=" * 80)
@@ -313,7 +313,7 @@ def test_integration_scenario():
 
 
 def main():
-    """主测试流程"""
+    """主测试流程."""
     print("\n" + "=" * 80)
     print("多格式多GPU引擎集成测试")
     print("=" * 80)

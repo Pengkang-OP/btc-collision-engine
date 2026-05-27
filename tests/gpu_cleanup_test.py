@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GPU资源清理测试脚本
+"""GPU资源清理测试脚本.
 
 专门测试GPU碰撞引擎的资源清理功能，确保stop()方法正确释放所有资源。
 """
@@ -15,10 +15,10 @@ pytestmark = [
 
 @pytest.mark.usefixtures("mock_gpu_chain")
 class TestGPUCleanup:
-    """GPU资源清理测试"""
+    """GPU资源清理测试."""
 
     def test_gpu_cleanup(self, mock_gpu_chain):
-        """测试GPU资源清理"""
+        """测试GPU资源清理."""
         from src.collision.gpu.engine import GPUCollisionEngine
 
         targets = {
@@ -37,7 +37,7 @@ class TestGPUCleanup:
         assert not engine.is_running()
 
     def test_multiple_start_stop(self, mock_gpu_chain):
-        """测试多次启动和停止"""
+        """测试多次启动和停止."""
         from src.collision.gpu.engine import GPUCollisionEngine
 
         targets = {

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""增强的代码块修复工具 - 第2轮
+"""增强的代码块修复工具 - 第2轮.
 
 专门处理第一轮修复遗漏的代码块问题
 包括:
@@ -23,12 +23,12 @@ setup_windows_utf8()
 
 
 def detect_language_v2(code_content: str, context_before: str, context_after: str) -> str:
-    """增强版语言类型检测"""
+    """增强版语言类型检测."""
     code_content = code_content.strip()
 
     # 1. Mermaid图表
     if re.search(
-        r"^(graph|sequenceDiagram|classDiagram|stateDiagram|gantt|pie)", code_content, re.MULTILINE
+        r"^(graph|sequenceDiagram|classDiagram|stateDiagram|gantt|pie)", code_content, re.MULTILINE,
     ):
         return "mermaid"
 
@@ -127,7 +127,7 @@ def detect_language_v2(code_content: str, context_before: str, context_after: st
 
 
 def find_unlabeled_code_blocks(content: str) -> list[tuple[int, str]]:
-    """查找所有未标注语言类型的代码块
+    """查找所有未标注语言类型的代码块.
 
     Returns:
         List of (line_number, opening_line)
@@ -156,7 +156,7 @@ def find_unlabeled_code_blocks(content: str) -> list[tuple[int, str]]:
 
 
 def fix_code_blocks_v2(content: str) -> tuple[str, int]:
-    """修复未标注的代码块
+    """修复未标注的代码块.
 
     Returns:
         (新内容, 修复数量)
@@ -203,7 +203,7 @@ def fix_code_blocks_v2(content: str) -> tuple[str, int]:
 
 
 def main():
-    """主函数"""
+    """主函数."""
     import argparse
 
     parser = argparse.ArgumentParser(description="增强版代码块修复工具 - 第2轮")

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Intel Arc GPU 2M批次大小性能测试
+"""Intel Arc GPU 2M批次大小性能测试.
 
 测试目标：
 1. 验证2M批次大小的稳定性
@@ -23,7 +23,7 @@ from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
 
 
 def run_2m_batch_size(duration=60):
-    """测试2M批次大小（内部基准函数，不作为 pytest 测试收集）"""
+    """测试2M批次大小（内部基准函数，不作为 pytest 测试收集）."""
     print("\n" + "=" * 80)
     print("🚀 Intel Arc GPU 2M批次大小性能测试")
     print("=" * 80)
@@ -55,7 +55,7 @@ def run_2m_batch_size(duration=60):
     speed_history = []
 
     def on_progress(stats: CollisionStats):
-        """进度回调"""
+        """进度回调."""
         nonlocal batch_count
 
         stats_data["total_checked"] = stats.total_checked
@@ -80,7 +80,7 @@ def run_2m_batch_size(duration=60):
         )
 
     def on_match(private_key: bytes, address: str, wif: str):
-        """匹配回调"""
+        """匹配回调."""
         print(f"\n🎯 发现匹配: {address}")
         print(f"   私钥: {private_key.hex()}")
         print(f"   WIF: {wif}\n")
@@ -202,7 +202,7 @@ def run_2m_batch_size(duration=60):
 
 
 def main():
-    """主函数"""
+    """主函数."""
     print("\n" + "=" * 80)
     print("Intel Arc GPU 批次大小优化测试")
     print("=" * 80)

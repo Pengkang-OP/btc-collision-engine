@@ -1,4 +1,4 @@
-"""分析并修复文档标题层级跳跃"""
+"""分析并修复文档标题层级跳跃."""
 
 import re
 from pathlib import Path
@@ -36,7 +36,7 @@ def analyze_jumps(doc_name):
 
 
 def fix_doc_heading_jumps(content):
-    """提升子标题一级以消除跳跃"""
+    """提升子标题一级以消除跳跃."""
     lines = content.split("\n")
     result = []
     prev_level = 0

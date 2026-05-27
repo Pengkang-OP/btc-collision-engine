@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GPU加速模式性能验证测试
+"""GPU加速模式性能验证测试.
 
 对比CPU和GPU模式的性能差异，验证GPU加速效果。
 测试内容：
@@ -34,7 +34,7 @@ logger = logging.getLogger("GPUPerformanceTest")
 
 
 class GPUPerformanceBenchmark:
-    """GPU性能对比测试类"""
+    """GPU性能对比测试类."""
 
     def __init__(self):
         self.cpu_stats = None
@@ -43,7 +43,7 @@ class GPUPerformanceBenchmark:
         self.gpu_time = 0
 
     def test_cpu_mode(self, targets: set, duration: int = 10) -> dict[str, Any]:
-        """测试CPU模式性能
+        """测试CPU模式性能.
 
         Args:
             targets: 目标地址集合
@@ -119,7 +119,7 @@ class GPUPerformanceBenchmark:
             return stats_data
 
     def test_gpu_mode(self, targets: set, duration: int = 10) -> dict[str, Any]:
-        """测试GPU模式性能
+        """测试GPU模式性能.
 
         Args:
             targets: 目标地址集合
@@ -222,7 +222,7 @@ class GPUPerformanceBenchmark:
             return stats_data
 
     def print_comparison_report(self):
-        """打印性能对比报告"""
+        """打印性能对比报告."""
         logger.info("\n" + "=" * 70)
         logger.info("📈 GPU加速性能对比报告")
         logger.info("=" * 70)
@@ -264,7 +264,7 @@ class GPUPerformanceBenchmark:
 
 
 def create_test_targets() -> set:
-    """创建测试目标地址"""
+    """创建测试目标地址."""
     # 使用多个测试地址
     test_addresses = {
         "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH",  # 私钥=1
@@ -279,7 +279,7 @@ def create_test_targets() -> set:
 
 
 def main():
-    """主函数"""
+    """主函数."""
     logger.info("=" * 70)
     logger.info("🚀 GPU加速模式性能验证测试")
     logger.info("=" * 70)

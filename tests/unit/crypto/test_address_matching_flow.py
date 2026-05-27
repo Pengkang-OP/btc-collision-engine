@@ -1,4 +1,4 @@
-"""目标地址比对流程完整单元测试
+"""目标地址比对流程完整单元测试.
 
 测试目标地址比对的完整流程：
 1. TargetResolver - 多格式地址解析和统一转换
@@ -20,56 +20,56 @@ from src.core.bitcoin_key_validator import BitcoinKeyValidator
 
 
 class TestTargetResolverFormatDetection:
-    """TargetResolver 格式检测测试"""
+    """TargetResolver 格式检测测试."""
 
     def test_detect_p2pkh_address(self):
-        """测试P2PKH地址格式检测（1开头）"""
+        """测试P2PKH地址格式检测（1开头）."""
         # 标准P2PKH地址
         address = "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
         fmt = TargetResolver.detect_format(address)
         assert fmt == "address"
 
     def test_detect_p2sh_address(self):
-        """测试P2SH地址格式检测（3开头）"""
+        """测试P2SH地址格式检测（3开头）."""
         # P2SH地址
         address = "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy"
         fmt = TargetResolver.detect_format(address)
         assert fmt == "p2sh_address"
 
     def test_detect_bech32_address(self):
-        """测试Bech32地址格式检测（bc1开头）"""
+        """测试Bech32地址格式检测（bc1开头）."""
         # SegWit v0地址
         address = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
         fmt = TargetResolver.detect_format(address)
         assert fmt == "bech32_address"
 
     def test_detect_taproot_address(self):
-        """测试Taproot地址格式检测（bc1p开头）"""
+        """测试Taproot地址格式检测（bc1p开头）."""
         # Taproot地址
         address = "bc1p5d7rjq7g6rdk2yhzks9smlaqtedr4dekq08ge8ztwac72sfr9rusxg3297"
         fmt = TargetResolver.detect_format(address)
         assert fmt == "taproot_address"
 
     def test_detect_wif_uncompressed(self):
-        """测试非压缩WIF格式检测（5开头，51字符）"""
+        """测试非压缩WIF格式检测（5开头，51字符）."""
         wif = "5KJvsngHeMpm884wtkJNzQGaCErckhHJBGFsvd3VyK5qMZXj3hS"
         fmt = TargetResolver.detect_format(wif)
         assert fmt == "wif"
 
     def test_detect_wif_compressed_k(self):
-        """测试压缩WIF格式检测（K开头，52字符）"""
+        """测试压缩WIF格式检测（K开头，52字符）."""
         wif = "KwdMAjGmerYanjeui5SHS7JkmpZvVipYvB2LJGU1ZxJwYvP98617"
         fmt = TargetResolver.detect_format(wif)
         assert fmt == "wif"
 
     def test_detect_wif_compressed_l(self):
-        """测试压缩WIF格式检测（L开头，52字符）"""
+        """测试压缩WIF格式检测（L开头，52字符）."""
         wif = "L1aW4aubDFB7yfras2S1mN3bqg9nwySY8nkoLmJebSLD5BWv3ENZ"
         fmt = TargetResolver.detect_format(wif)
         assert fmt == "wif"
 
     def test_detect_compressed_public_key(self):
-        """测试压缩公钥格式检测（66字符，02/03开头）"""
+        """测试压缩公钥格式检测（66字符，02/03开头）."""
         pubkey = "0279BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798"
         fmt = TargetResolver.detect_format(pubkey)
         assert fmt == "pubkey_compressed"
@@ -79,29 +79,29 @@ class TestTargetResolverFormatDetection:
         assert fmt == "pubkey_compressed"
 
     def test_detect_uncompressed_public_key(self):
-        """测试非压缩公钥格式检测（130字符，04开头）"""
+        """测试非压缩公钥格式检测（130字符，04开头）."""
         pubkey = "04" + "79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798" * 2
         fmt = TargetResolver.detect_format(pubkey)
         assert fmt == "pubkey_uncompressed"
 
     def test_detect_hash160(self):
-        """测试Hash160格式检测（40字符hex）"""
+        """测试Hash160格式检测（40字符hex）."""
         hash160 = "62e907b15cbf27d5425399ebf6f0fb50ebb88f18"
         fmt = TargetResolver.detect_format(hash160)
         assert fmt == "hash160"
 
     def test_detect_unknown_format(self):
-        """测试未知格式检测"""
+        """测试未知格式检测."""
         assert TargetResolver.detect_format("") == "unknown"
         assert TargetResolver.detect_format("invalid!!!") == "unknown"
         assert TargetResolver.detect_format("12345") == "unknown"
 
 
 class TestTargetResolverAddressConversion:
-    """TargetResolver 地址转换测试"""
+    """TargetResolver 地址转换测试."""
 
     def test_resolve_p2pkh_valid(self):
-        """测试有效P2PKH地址解析"""
+        """测试有效P2PKH地址解析."""
         resolver = TargetResolver(enable_cache=False)
         address = "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
 
@@ -111,7 +111,7 @@ class TestTargetResolverAddressConversion:
         assert result == address
 
     def test_resolve_p2pkh_invalid_checksum(self):
-        """测试校验和错误的P2PKH地址"""
+        """测试校验和错误的P2PKH地址."""
         resolver = TargetResolver(enable_cache=False)
         # 修改最后一个字符使校验和错误
         invalid_address = "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNb"
@@ -122,7 +122,7 @@ class TestTargetResolverAddressConversion:
         assert result is None
 
     def test_resolve_with_cache_hit(self):
-        """测试缓存命中"""
+        """测试缓存命中."""
         resolver = TargetResolver(enable_cache=True, cache_max_size=100)
         address = "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
 
@@ -139,7 +139,7 @@ class TestTargetResolverAddressConversion:
         assert stats["hits"] >= 1
 
     def test_resolve_batch(self):
-        """测试批量解析"""
+        """测试批量解析."""
         resolver = TargetResolver(enable_cache=True)
 
         inputs = [
@@ -157,7 +157,7 @@ class TestTargetResolverAddressConversion:
         assert results["invalid_format"] is None
 
     def test_resolve_multiple_alias(self):
-        """测试resolve_multiple别名方法"""
+        """测试resolve_multiple别名方法."""
         resolver = TargetResolver(enable_cache=False)
 
         inputs = [
@@ -173,10 +173,10 @@ class TestTargetResolverAddressConversion:
 
 
 class TestAddressMatcherStrategies:
-    """AddressMatcher 三种匹配策略测试"""
+    """AddressMatcher 三种匹配策略测试."""
 
     def test_hash_set_strategy(self):
-        """测试Hash Set策略（默认）"""
+        """测试Hash Set策略（默认）."""
         targets = {
             "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
             "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2",
@@ -196,7 +196,7 @@ class TestAddressMatcherStrategies:
 
     @pytest.mark.skip(reason="BloomFilter仅在TYPE_CHECKING下导入(source bug), 运行时回退到hash_set")
     def test_bloom_filter_strategy(self):
-        """测试Bloom Filter策略"""
+        """测试Bloom Filter策略."""
         targets = {f"1Test{i:030d}" for i in range(100)}
 
         try:
@@ -221,7 +221,7 @@ class TestAddressMatcherStrategies:
             pytest.skip("pybloom-live未安装")
 
     def test_trie_strategy(self):
-        """测试Trie前缀树策略"""
+        """测试Trie前缀树策略."""
         targets = {
             "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
             "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2",
@@ -237,7 +237,7 @@ class TestAddressMatcherStrategies:
         assert matcher.is_match("1CinvalidXXXXXXXXXXXXXXXXXXX") is False
 
     def test_add_target(self):
-        """测试动态添加目标地址"""
+        """测试动态添加目标地址."""
         matcher = AddressMatcher(strategy="hash_set")
 
         # 初始为空
@@ -249,7 +249,7 @@ class TestAddressMatcherStrategies:
         assert matcher.is_match("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa") is True
 
     def test_add_targets_batch(self):
-        """测试批量添加目标地址"""
+        """测试批量添加目标地址."""
         matcher = AddressMatcher(strategy="hash_set")
 
         targets = {
@@ -265,7 +265,7 @@ class TestAddressMatcherStrategies:
             assert matcher.is_match(target) is True
 
     def test_remove_target(self):
-        """测试移除目标地址"""
+        """测试移除目标地址."""
         targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
         matcher = AddressMatcher(strategy="hash_set", targets=targets)
 
@@ -279,7 +279,7 @@ class TestAddressMatcherStrategies:
         assert result is False
 
     def test_clear_all_targets(self):
-        """测试清空所有目标"""
+        """测试清空所有目标."""
         targets = {
             "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
             "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2",
@@ -293,7 +293,7 @@ class TestAddressMatcherStrategies:
         assert len(matcher) == 0
 
     def test_contains_operator(self):
-        """测试in操作符支持"""
+        """测试in操作符支持."""
         targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
         matcher = AddressMatcher(strategy="hash_set", targets=targets)
 
@@ -301,12 +301,12 @@ class TestAddressMatcherStrategies:
         assert "1NonExistentXXXXXXXXXXXXXXX" not in matcher
 
     def test_invalid_strategy(self):
-        """测试无效策略"""
+        """测试无效策略."""
         with pytest.raises(ValueError, match="未知策略"):
             AddressMatcher(strategy="invalid_strategy")
 
     def test_input_type_validation(self):
-        """测试输入类型验证"""
+        """测试输入类型验证."""
         matcher = AddressMatcher(strategy="hash_set")
 
         # 非字符串输入应该被转换或拒绝
@@ -315,10 +315,10 @@ class TestAddressMatcherStrategies:
 
 
 class TestBitcoinKeyValidatorSecurity:
-    """BitcoinKeyValidator 安全比较测试"""
+    """BitcoinKeyValidator 安全比较测试."""
 
     def test_verify_address_match_success(self):
-        """测试地址匹配成功"""
+        """测试地址匹配成功."""
         validator = BitcoinKeyValidator(secure_mode=True)
 
         target_addresses = {
@@ -333,7 +333,7 @@ class TestBitcoinKeyValidatorSecurity:
         assert result.details["matched_target"] == "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
 
     def test_verify_address_match_failure(self):
-        """测试地址匹配失败"""
+        """测试地址匹配失败."""
         validator = BitcoinKeyValidator(secure_mode=True)
 
         target_addresses = {
@@ -345,7 +345,7 @@ class TestBitcoinKeyValidatorSecurity:
         assert result.details["match"] is False
 
     def test_hmac_compare_digest_usage(self):
-        """测试使用hmac.compare_digest防止时序攻击"""
+        """测试使用hmac.compare_digest防止时序攻击."""
         # 验证代码中确实使用了hmac.compare_digest
         import inspect
 
@@ -355,7 +355,7 @@ class TestBitcoinKeyValidatorSecurity:
         assert "hmac.compare_digest" in source
 
     def test_validate_address_p2pkh(self):
-        """测试P2PKH地址验证"""
+        """测试P2PKH地址验证."""
         validator = BitcoinKeyValidator()
 
         result = validator.validate_address("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
@@ -365,7 +365,7 @@ class TestBitcoinKeyValidatorSecurity:
         assert result.details["checksum_valid"] is True
 
     def test_validate_address_p2sh(self):
-        """测试P2SH地址验证"""
+        """测试P2SH地址验证."""
         validator = BitcoinKeyValidator()
 
         result = validator.validate_address("3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy")
@@ -375,10 +375,10 @@ class TestBitcoinKeyValidatorSecurity:
 
 
 class TestEndToEndMatchingFlow:
-    """端到端比对流程集成测试"""
+    """端到端比对流程集成测试."""
 
     def test_full_matching_workflow(self):
-        """测试完整的地址比对工作流程"""
+        """测试完整的地址比对工作流程."""
         # 1. 创建解析器
         resolver = TargetResolver(enable_cache=True)
 
@@ -404,7 +404,7 @@ class TestEndToEndMatchingFlow:
         assert matcher.is_match("1NonExistentXXXXXXXXXXXXXXX") is False
 
     def test_batch_resolution_and_matching(self):
-        """测试批量解析和匹配"""
+        """测试批量解析和匹配."""
         resolver = TargetResolver(enable_cache=True)
 
         # 批量解析
@@ -428,7 +428,7 @@ class TestEndToEndMatchingFlow:
             assert matcher.is_match(addr) is True
 
     def test_cache_optimization_in_workflow(self):
-        """测试工作流中的缓存优化"""
+        """测试工作流中的缓存优化."""
         resolver = TargetResolver(enable_cache=True, cache_max_size=100)
 
         address = "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
@@ -445,7 +445,7 @@ class TestEndToEndMatchingFlow:
         assert stats2["hits"] > stats1["hits"]
 
     def test_load_targets_from_file(self):
-        """测试从文件加载目标地址"""
+        """测试从文件加载目标地址."""
         resolver = TargetResolver(enable_cache=True)
 
         # 创建临时文件
@@ -471,7 +471,7 @@ class TestEndToEndMatchingFlow:
             pathlib.Path(temp_file).unlink()
 
     def test_security_path_traversal_protection(self):
-        """测试路径遍历攻击防护"""
+        """测试路径遍历攻击防护."""
         resolver = TargetResolver(enable_cache=False)
 
         # 尝试访问不允许的路径
@@ -482,10 +482,10 @@ class TestEndToEndMatchingFlow:
 
 
 class TestPerformanceOptimization:
-    """性能优化测试"""
+    """性能优化测试."""
 
     def test_o1_lookup_performance(self):
-        """测试O(1)查找性能"""
+        """测试O(1)查找性能."""
         import time
 
         # 使用Base58字符集生成有效格式的地址
@@ -523,7 +523,7 @@ class TestPerformanceOptimization:
         assert avg_time < 0.0001  # 平均每次小于0.1毫秒
 
     def test_batch_vs_single_performance(self):
-        """测试批量处理与单个处理的性能对比"""
+        """测试批量处理与单个处理的性能对比."""
         import time
 
         # 使用Base58字符集生成有效格式的地址
@@ -553,17 +553,17 @@ class TestPerformanceOptimization:
 
 
 class TestEdgeCases:
-    """边界情况测试"""
+    """边界情况测试."""
 
     def test_empty_target_set(self):
-        """测试空目标集合"""
+        """测试空目标集合."""
         matcher = AddressMatcher(strategy="hash_set", targets=set())
 
         assert len(matcher) == 0
         assert matcher.is_match("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa") is False
 
     def test_duplicate_addresses(self):
-        """测试重复地址处理"""
+        """测试重复地址处理."""
         targets = {
             "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
             "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",  # noqa: B033  # 有意重复以测试去重
@@ -576,7 +576,7 @@ class TestEdgeCases:
         assert len(matcher) == 2
 
     def test_large_target_set(self):
-        """测试大规模目标集合"""
+        """测试大规模目标集合."""
         # 创建1000个不同的目标地址（使用真实格式的地址）
         # 注意：这些地址仅用于测试数据结构，不是有效的比特币地址
         import hashlib
@@ -605,7 +605,7 @@ class TestEdgeCases:
         assert matcher.is_match("1NonExistentXXXXXXXXXXXXXXXXXX") is False
 
     def test_concurrent_access(self):
-        """测试并发访问"""
+        """测试并发访问."""
         import threading
 
         targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}

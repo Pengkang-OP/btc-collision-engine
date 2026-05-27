@@ -1,4 +1,4 @@
-"""GPU 核心测试（无 GPU 依赖）- 与 test_gpu_engine_mock.py 分开
+"""GPU 核心测试（无 GPU 依赖）- 与 test_gpu_engine_mock.py 分开.
 
 这些测试不依赖 mock_gpu_chain，不需要 GPU 环境，
 在 CI 中不会被 -m "not gpu" 过滤掉。
@@ -16,10 +16,10 @@ import pytest
 
 @pytest.mark.unit
 class TestGPUAvailability:
-    """GPU 可用性检测（不依赖 GPU 环境）"""
+    """GPU 可用性检测（不依赖 GPU 环境）."""
 
     def test_gpu_engine_conditional_import(self):
-        """测试：GPU 引擎条件导入"""
+        """测试：GPU 引擎条件导入."""
         try:
             from src.collision.gpu.engine import GPUCollisionEngine
 
@@ -28,7 +28,7 @@ class TestGPUAvailability:
             pass  # 无 GPU 依赖时允许导入失败
 
     def test_gpu_engine_has_core_methods(self):
-        """测试：GPU 引擎核心方法签名"""
+        """测试：GPU 引擎核心方法签名."""
         from src.collision.gpu.engine import GPUCollisionEngine
 
         method_names = {m for m in dir(GPUCollisionEngine) if not m.startswith("_")}
@@ -44,10 +44,10 @@ class TestGPUAvailability:
 
 @pytest.mark.unit
 class TestGPUMasking:
-    """GPU 事件脱敏测试（不涉及 GPU 硬件）"""
+    """GPU 事件脱敏测试（不涉及 GPU 硬件）."""
 
     def test_match_event_masks_wif(self):
-        """测试：匹配事件 WIF 脱敏"""
+        """测试：匹配事件 WIF 脱敏."""
         from src.collision.events import EngineMatchEvent
 
         event = EngineMatchEvent(
@@ -60,7 +60,7 @@ class TestGPUMasking:
         assert "..." in str(event.wif)
 
     def test_event_metadata_excludes_secrets(self):
-        """测试：事件元数据不包含密钥"""
+        """测试：事件元数据不包含密钥."""
         from src.collision.events import EngineMatchEvent
 
         event = EngineMatchEvent(
@@ -80,10 +80,10 @@ class TestGPUMasking:
 
 @pytest.mark.unit
 class TestGPUConstants:
-    """GPU 常量和配置测试"""
+    """GPU 常量和配置测试."""
 
     def test_constants_exist(self):
-        """测试：GPU 常量定义齐全"""
+        """测试：GPU 常量定义齐全."""
         from src.collision.gpu import engine as gpu_engine
 
         expected = {
@@ -97,7 +97,7 @@ class TestGPUConstants:
             assert hasattr(gpu_engine, const), f"缺失常量: {const}"
 
     def test_batch_size_constants_are_positive(self):
-        """测试：批次大小常量为正数"""
+        """测试：批次大小常量为正数."""
         from src.collision.gpu.engine import (
             GPU_MAX_BATCH_SIZE,
             INITIAL_BATCH_SIZE,

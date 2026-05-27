@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""比特币密钥生成和地址匹配完整验证测试
+"""比特币密钥生成和地址匹配完整验证测试.
 
 测试覆盖：
 1. 私钥生成公钥（secp256k1规范）
@@ -20,13 +20,13 @@ from src.core.secp256k1 import Secp256k1
 
 
 class TestPrivateKeyValidation:
-    """测试私钥验证"""
+    """测试私钥验证."""
 
     def setup_method(self):
         self.validator = BitcoinKeyValidator()
 
     def test_valid_private_key(self):
-        """测试有效私钥"""
+        """测试有效私钥."""
         # 私钥=1（最小有效值）
         private_key = b"\x00" * 31 + b"\x01"
         result = self.validator.validate_private_key(private_key)
@@ -37,7 +37,7 @@ class TestPrivateKeyValidation:
         assert result.details["private_key_range_valid"] is True
 
     def test_valid_private_key_max(self):
-        """测试最大有效私钥（N-1）"""
+        """测试最大有效私钥（N-1）."""
         max_key = Secp256k1.N - 1
         private_key = max_key.to_bytes(32, "big")
         result = self.validator.validate_private_key(private_key)
@@ -46,7 +46,7 @@ class TestPrivateKeyValidation:
         assert result.details["private_key_range_valid"] is True
 
     def test_invalid_private_key_zero(self):
-        """测试无效私钥：0"""
+        """测试无效私钥：0."""
         private_key = b"\x00" * 32
         result = self.validator.validate_private_key(private_key)
 
@@ -54,7 +54,7 @@ class TestPrivateKeyValidation:
         assert any("Private key value is 0" in error for error in result.errors)
 
     def test_invalid_private_key_out_of_range(self):
-        """测试无效私钥：>= N"""
+        """测试无效私钥：>= N."""
         private_key = Secp256k1.N.to_bytes(32, "big")
         result = self.validator.validate_private_key(private_key)
 
@@ -62,7 +62,7 @@ class TestPrivateKeyValidation:
         assert any("out of range" in error for error in result.errors)
 
     def test_invalid_private_key_length(self):
-        """测试无效私钥：长度错误"""
+        """测试无效私钥：长度错误."""
         private_key = b"\x01" * 31  # 31字节
         result = self.validator.validate_private_key(private_key)
 
@@ -70,7 +70,7 @@ class TestPrivateKeyValidation:
         assert any("length error" in error for error in result.errors)
 
     def test_random_private_key(self):
-        """测试随机私钥"""
+        """测试随机私钥."""
         import secrets
 
         private_key = secrets.token_bytes(32)
@@ -87,13 +87,13 @@ class TestPrivateKeyValidation:
 
 
 class TestPublicKeyGeneration:
-    """测试公钥生成"""
+    """测试公钥生成."""
 
     def setup_method(self):
         self.validator = BitcoinKeyValidator()
 
     def test_generate_compressed_public_key(self):
-        """测试生成压缩公钥"""
+        """测试生成压缩公钥."""
         private_key = b"\x00" * 31 + b"\x01"  # 私钥=1
         result, public_key = self.validator.generate_public_key(private_key, compressed=True)
 
@@ -104,7 +104,7 @@ class TestPublicKeyGeneration:
         assert result.details["public_key_on_curve"] is True
 
     def test_generate_uncompressed_public_key(self):
-        """测试生成非压缩公钥"""
+        """测试生成非压缩公钥."""
         private_key = b"\x00" * 31 + b"\x01"
         result, public_key = self.validator.generate_public_key(private_key, compressed=False)
 
@@ -115,7 +115,7 @@ class TestPublicKeyGeneration:
         assert result.details["public_key_on_curve"] is True
 
     def test_public_key_on_curve(self):
-        """测试公钥在secp256k1曲线上"""
+        """测试公钥在secp256k1曲线上."""
         import secrets
 
         private_key = secrets.token_bytes(32)
@@ -128,7 +128,7 @@ class TestPublicKeyGeneration:
         assert result.details["public_key_on_curve"] is True
 
     def test_invalid_private_key_for_public_key(self):
-        """测试使用无效私钥生成公钥"""
+        """测试使用无效私钥生成公钥."""
         private_key = b"\x00" * 32  # 0，无效
         result, public_key = self.validator.generate_public_key(private_key, compressed=True)
 
@@ -137,13 +137,13 @@ class TestPublicKeyGeneration:
 
 
 class TestPublicKeyValidation:
-    """测试公钥验证"""
+    """测试公钥验证."""
 
     def setup_method(self):
         self.validator = BitcoinKeyValidator()
 
     def test_valid_compressed_public_key(self):
-        """测试有效压缩公钥"""
+        """测试有效压缩公钥."""
         private_key = b"\x00" * 31 + b"\x01"
         _, public_key = self.validator.generate_public_key(private_key, compressed=True)
 
@@ -154,7 +154,7 @@ class TestPublicKeyValidation:
         assert result.details["public_key_on_curve"] is True
 
     def test_valid_uncompressed_public_key(self):
-        """测试有效非压缩公钥"""
+        """测试有效非压缩公钥."""
         private_key = b"\x00" * 31 + b"\x01"
         _, public_key = self.validator.generate_public_key(private_key, compressed=False)
 
@@ -165,7 +165,7 @@ class TestPublicKeyValidation:
         assert result.details["public_key_on_curve"] is True
 
     def test_invalid_compressed_public_key_prefix(self):
-        """测试无效压缩公钥前缀"""
+        """测试无效压缩公钥前缀."""
         public_key = b"\x01" + b"\x00" * 32  # 错误前缀
         result = self.validator.validate_public_key(public_key)
 
@@ -173,7 +173,7 @@ class TestPublicKeyValidation:
         assert any("prefix error" in error for error in result.errors)
 
     def test_invalid_uncompressed_public_key_prefix(self):
-        """测试无效非压缩公钥前缀"""
+        """测试无效非压缩公钥前缀."""
         public_key = b"\x05" + b"\x00" * 64  # 错误前缀
         result = self.validator.validate_public_key(public_key)
 
@@ -181,7 +181,7 @@ class TestPublicKeyValidation:
         assert any("prefix error" in error for error in result.errors)
 
     def test_invalid_public_key_length(self):
-        """测试无效公钥长度"""
+        """测试无效公钥长度."""
         public_key = b"\x00" * 50  # 错误长度
         result = self.validator.validate_public_key(public_key)
 
@@ -190,13 +190,13 @@ class TestPublicKeyValidation:
 
 
 class TestAddressGeneration:
-    """测试地址生成"""
+    """测试地址生成."""
 
     def setup_method(self):
         self.validator = BitcoinKeyValidator()
 
     def test_generate_p2pkh_address(self):
-        """测试生成P2PKH地址"""
+        """测试生成P2PKH地址."""
         private_key = b"\x00" * 31 + b"\x01"
         _, public_key = self.validator.generate_public_key(private_key, compressed=True)
 
@@ -209,7 +209,7 @@ class TestAddressGeneration:
         assert result.details["address_checksum_valid"] is True
 
     def test_p2pkh_address_format(self):
-        """测试P2PKH地址格式"""
+        """测试P2PKH地址格式."""
         # 已知私钥=1的地址
         private_key = b"\x00" * 31 + b"\x01"
         _, public_key = self.validator.generate_public_key(private_key, compressed=True)
@@ -220,7 +220,7 @@ class TestAddressGeneration:
         assert address == expected_address
 
     def test_generate_address_from_invalid_public_key(self):
-        """测试从无效公钥生成地址"""
+        """测试从无效公钥生成地址."""
         public_key = b"\x00" * 33  # 无效公钥
         result, address = self.validator.generate_address(public_key, AddressType.P2PKH)
 
@@ -229,13 +229,13 @@ class TestAddressGeneration:
 
 
 class TestAddressValidation:
-    """测试地址验证"""
+    """测试地址验证."""
 
     def setup_method(self):
         self.validator = BitcoinKeyValidator()
 
     def test_valid_p2pkh_address(self):
-        """测试有效P2PKH地址"""
+        """测试有效P2PKH地址."""
         address = "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"
         result = self.validator.validate_address(address)
 
@@ -244,7 +244,7 @@ class TestAddressValidation:
         assert result.details["checksum_valid"] is True
 
     def test_valid_p2sh_address(self):
-        """测试有效P2SH地址"""
+        """测试有效P2SH地址."""
         address = "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy"
         result = self.validator.validate_address(address)
 
@@ -252,14 +252,14 @@ class TestAddressValidation:
         assert result.details["address_type"] == "P2SH"
 
     def test_invalid_address_format(self):
-        """测试无效地址格式"""
+        """测试无效地址格式."""
         address = "invalid_address!"
         result = self.validator.validate_address(address)
 
         assert result.success is False
 
     def test_invalid_address_checksum(self):
-        """测试无效地址校验和"""
+        """测试无效地址校验和."""
         # 篡改有效地址
         address = "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMi"  # 最后一个字符改变
         result = self.validator.validate_address(address)
@@ -268,13 +268,13 @@ class TestAddressValidation:
 
 
 class TestWIFEncoding:
-    """测试WIF编码"""
+    """测试WIF编码."""
 
     def setup_method(self):
         self.validator = BitcoinKeyValidator()
 
     def test_compressed_wif_encoding(self):
-        """测试压缩WIF编码"""
+        """测试压缩WIF编码."""
         private_key = b"\x00" * 31 + b"\x01"
         result, wif = self.validator.private_key_to_wif(private_key, compressed=True)
 
@@ -284,7 +284,7 @@ class TestWIFEncoding:
         assert result.details["wif_checksum_valid"] is True
 
     def test_uncompressed_wif_encoding(self):
-        """测试非压缩WIF编码"""
+        """测试非压缩WIF编码."""
         private_key = b"\x00" * 31 + b"\x01"
         result, wif = self.validator.private_key_to_wif(private_key, compressed=False)
 
@@ -294,7 +294,7 @@ class TestWIFEncoding:
         assert result.details["wif_checksum_valid"] is True
 
     def test_known_wif_encoding(self):
-        """测试已知WIF编码"""
+        """测试已知WIF编码."""
         private_key = b"\x00" * 31 + b"\x01"
         result, wif = self.validator.private_key_to_wif(private_key, compressed=True)
 
@@ -303,7 +303,7 @@ class TestWIFEncoding:
         assert wif == expected_wif
 
     def test_wif_decode(self):
-        """测试WIF解码"""
+        """测试WIF解码."""
         wif = "KwDiBf89QgGbjEhKnhXJuH7LrciVrZi3qYjgd9M7rFU73sVHnoWn"
         result, private_key, compressed = self.validator.wif_to_private_key(wif)
 
@@ -312,7 +312,7 @@ class TestWIFEncoding:
         assert compressed is True
 
     def test_invalid_wif(self):
-        """测试无效WIF"""
+        """测试无效WIF."""
         wif = "invalid_wif_format"
         result, private_key, compressed = self.validator.wif_to_private_key(wif)
 
@@ -320,13 +320,13 @@ class TestWIFEncoding:
 
 
 class TestAddressMatching:
-    """测试地址匹配"""
+    """测试地址匹配."""
 
     def setup_method(self):
         self.validator = BitcoinKeyValidator()
 
     def test_address_match(self):
-        """测试地址匹配"""
+        """测试地址匹配."""
         address = "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"
         target_addresses = {
             "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH",
@@ -340,7 +340,7 @@ class TestAddressMatching:
         assert result.details["matched_target"] == address
 
     def test_address_no_match(self):
-        """测试地址不匹配"""
+        """测试地址不匹配."""
         address = "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"
         target_addresses = {
             "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
@@ -352,7 +352,7 @@ class TestAddressMatching:
         assert result.details["match"] is False
 
     def test_address_match_safe_comparison(self):
-        """测试地址匹配使用安全比较"""
+        """测试地址匹配使用安全比较."""
         address = "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"
         target_addresses = {address}
 
@@ -363,13 +363,13 @@ class TestAddressMatching:
 
 
 class TestFullValidationChain:
-    """测试完整验证链"""
+    """测试完整验证链."""
 
     def setup_method(self):
         self.validator = BitcoinKeyValidator()
 
     def test_full_chain_private_key_1(self):
-        """测试私钥=1的完整验证链 (非安全模式，验证完整密钥数据)"""
+        """测试私钥=1的完整验证链 (非安全模式，验证完整密钥数据)."""
         validator = BitcoinKeyValidator(secure_mode=False)
         private_key = b"\x00" * 31 + b"\x01"
         target_addresses = {"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"}
@@ -389,7 +389,7 @@ class TestFullValidationChain:
             assert step_result["success"] is True, f"步骤 {step_name} 失败"
 
     def test_full_chain_random_key(self):
-        """测试随机私钥的完整验证链 (非安全模式，验证完整密钥数据)"""
+        """测试随机私钥的完整验证链 (非安全模式，验证完整密钥数据)."""
         import secrets
 
         validator = BitcoinKeyValidator(secure_mode=False)
@@ -409,7 +409,7 @@ class TestFullValidationChain:
         assert len(report["summary"]["wif_compressed"]) == 52
 
     def test_full_chain_with_invalid_key(self):
-        """测试无效私钥的完整验证链"""
+        """测试无效私钥的完整验证链."""
         private_key = b"\x00" * 32  # 0，无效
         target_addresses = set()
 
@@ -419,7 +419,7 @@ class TestFullValidationChain:
         assert len(report["errors"]) > 0
 
     def test_convenience_function(self):
-        """测试便捷函数"""
+        """测试便捷函数."""
         private_key = b"\x00" * 31 + b"\x01"
         target_addresses = {"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"}
 
@@ -430,13 +430,13 @@ class TestFullValidationChain:
 
 
 class TestBitcoinCoreCompliance:
-    """测试Bitcoin Core规范符合性"""
+    """测试Bitcoin Core规范符合性."""
 
     def setup_method(self):
         self.validator = BitcoinKeyValidator()
 
     def test_secp256k1_curve_equation(self):
-        """测试secp256k1曲线方程：y² = x³ + 7 (mod p)"""
+        """测试secp256k1曲线方程：y² = x³ + 7 (mod p)."""
         # 使用基点G验证
         x = Secp256k1.Gx
         y = Secp256k1.Gy
@@ -448,7 +448,7 @@ class TestBitcoinCoreCompliance:
         assert left_side == right_side
 
     def test_private_key_range(self):
-        """测试私钥范围：1 <= k < N"""
+        """测试私钥范围：1 <= k < N."""
         # 最小有效私钥
         min_key = 1
         result = self.validator.validate_private_key(min_key.to_bytes(32, "big"))
@@ -465,7 +465,7 @@ class TestBitcoinCoreCompliance:
         assert result.success is False
 
     def test_public_key_compression_format(self):
-        """测试公钥压缩格式规范"""
+        """测试公钥压缩格式规范."""
         private_key = b"\x00" * 31 + b"\x01"
         _, public_key = self.validator.generate_public_key(private_key, compressed=True)
 
@@ -485,7 +485,7 @@ class TestBitcoinCoreCompliance:
             assert public_key[0] == 0x03
 
     def test_base58check_encoding(self):
-        """测试Base58Check编码规范"""
+        """测试Base58Check编码规范."""
         from src.core.base58 import Base58
 
         # 测试编码和解码
@@ -499,7 +499,7 @@ class TestBitcoinCoreCompliance:
         assert decoded == test_data
 
     def test_wif_format_compliance(self):
-        """测试WIF格式符合性"""
+        """测试WIF格式符合性."""
         private_key = b"\x00" * 31 + b"\x01"
 
         # 压缩WIF

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""简化的测试运行器 - 绕过Python 3.14 pytest兼容性问题"""
+"""简化的测试运行器 - 绕过Python 3.14 pytest兼容性问题."""
 
 import os
 import sys
@@ -8,7 +8,7 @@ import traceback
 
 
 def run_test_file(test_file):
-    """运行单个测试文件"""
+    """运行单个测试文件."""
     print(f"\n{'=' * 80}")
     print(f"运行测试: {test_file}")
     print(f"{'=' * 80}")
@@ -56,7 +56,7 @@ def run_test_file(test_file):
 
 
 def main():
-    """运行关键测试"""
+    """运行关键测试."""
     print("=" * 80)
     print("GPU修复后无回归验证测试")
     print("=" * 80)

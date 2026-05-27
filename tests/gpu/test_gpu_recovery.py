@@ -1,4 +1,4 @@
-"""GPU异常恢复管理器测试
+"""GPU异常恢复管理器测试.
 
 验证P1-2修复：GPU异常恢复机制完整实现
 """
@@ -20,13 +20,13 @@ from src.gpu.gpu_recovery_manager import (  # noqa: E402
 
 
 class TestGPUFailureClassification:
-    """GPU失败分类测试"""
+    """GPU失败分类测试."""
 
     def setup_method(self, method):
         self.manager = GPURecoveryManager()
 
     def test_classify_out_of_memory(self):
-        """测试内存不足分类"""
+        """测试内存不足分类."""
         errors = [
             Exception("Out of memory"),
             Exception("CL_MEM_OBJECT_ALLOCATION_FAILURE"),
@@ -39,7 +39,7 @@ class TestGPUFailureClassification:
             assert failure_type == GPUFailureType.OUT_OF_MEMORY
 
     def test_classify_compute_error(self):
-        """测试计算错误分类"""
+        """测试计算错误分类."""
         errors = [
             Exception("Compute error"),
             Exception("CL_INVALID_VALUE"),
@@ -52,7 +52,7 @@ class TestGPUFailureClassification:
             assert failure_type == GPUFailureType.COMPUTE_ERROR
 
     def test_classify_device_lost(self):
-        """测试设备丢失分类"""
+        """测试设备丢失分类."""
         errors = [
             Exception("Device lost"),
             Exception("CL_INVALID_DEVICE"),
@@ -65,7 +65,7 @@ class TestGPUFailureClassification:
             assert failure_type == GPUFailureType.DEVICE_LOST
 
     def test_classify_timeout(self):
-        """测试超时分类"""
+        """测试超时分类."""
         errors = [
             TimeoutError("Operation timed out"),
             Exception("GPU timeout exceeded"),
@@ -76,20 +76,20 @@ class TestGPUFailureClassification:
             assert failure_type == GPUFailureType.TIMEOUT
 
     def test_classify_unknown(self):
-        """测试未知错误分类"""
+        """测试未知错误分类."""
         error = Exception("Some random error")
         failure_type = self.manager._classify_failure(error)
         assert failure_type == GPUFailureType.UNKNOWN
 
 
 class TestRecoveryStrategy:
-    """恢复策略选择测试"""
+    """恢复策略选择测试."""
 
     def setup_method(self, method):
         self.manager = GPURecoveryManager(max_retry_count=3)
 
     def test_first_failure_retry_immediate(self):
-        """测试第一次失败：立即重试"""
+        """测试第一次失败：立即重试."""
         strategy = self.manager._select_recovery_strategy(
             gpu_id=0,
             failure_type=GPUFailureType.OUT_OF_MEMORY,
@@ -97,7 +97,7 @@ class TestRecoveryStrategy:
         assert strategy == RecoveryStrategy.RETRY_IMMEDIATE
 
     def test_second_failure_retry_immediate(self):
-        """测试第二次失败：仍然立即重试"""
+        """测试第二次失败：仍然立即重试."""
         # 先记录一次失败
         self.manager._record_failure(
             0,
@@ -112,7 +112,7 @@ class TestRecoveryStrategy:
         assert strategy == RecoveryStrategy.RETRY_IMMEDIATE
 
     def test_third_failure_retry_with_delay(self):
-        """测试第三次失败：延迟重试"""
+        """测试第三次失败：延迟重试."""
         # 记录两次失败
         for _ in range(2):
             self.manager._record_failure(
@@ -132,7 +132,7 @@ class TestRecoveryStrategy:
         assert strategy == RecoveryStrategy.RETRY_WITH_DELAY
 
     def test_fourth_failure_reduce_batch_size(self):
-        """测试第四次失败：减小批次"""
+        """测试第四次失败：减小批次."""
         # 记录三次失败
         for _ in range(3):
             self.manager._record_failure(
@@ -151,7 +151,7 @@ class TestRecoveryStrategy:
         assert strategy == RecoveryStrategy.REDUCE_BATCH_SIZE
 
     def test_fifth_failure_reinitialize(self):
-        """测试第五次失败：重新初始化"""
+        """测试第五次失败：重新初始化."""
         # 记录四次失败
         for _ in range(4):
             self.manager._record_failure(
@@ -186,7 +186,7 @@ class TestRecoveryStrategy:
 
 
 class TestRecoveryExecution:
-    """恢复执行测试"""
+    """恢复执行测试."""
 
     def setup_method(self, method):
         self.manager = GPURecoveryManager(
@@ -195,7 +195,7 @@ class TestRecoveryExecution:
         )
 
     def test_retry_immediate_execution(self):
-        """测试立即重试执行"""
+        """测试立即重试执行."""
         success = self.manager._execute_recovery(
             gpu_id=0,
             failure_type=GPUFailureType.OUT_OF_MEMORY,
@@ -204,7 +204,7 @@ class TestRecoveryExecution:
         assert success
 
     def test_retry_with_delay_execution(self):
-        """测试延迟重试执行"""
+        """测试延迟重试执行."""
         start_time = time.time()
         success = self.manager._execute_recovery(
             gpu_id=0,
@@ -217,11 +217,11 @@ class TestRecoveryExecution:
         assert elapsed >= 0.1  # 至少延迟0.1秒
 
     def test_reduce_batch_size_execution(self):
-        """测试减小批次执行"""
+        """测试减小批次执行."""
         callback_called = []
 
         def mock_callback(action, params=None):
-            """模拟回调函数，params可选"""
+            """模拟回调函数，params可选."""
             callback_called.append((action, params))
 
         self.manager.register_recovery_callback(0, mock_callback)
@@ -245,7 +245,7 @@ class TestRecoveryExecution:
         assert callback_called[1][1] is None
 
     def test_disable_gpu_execution(self):
-        """测试禁用GPU执行"""
+        """测试禁用GPU执行."""
         success = self.manager._execute_recovery(
             gpu_id=0,
             failure_type=GPUFailureType.OUT_OF_MEMORY,
@@ -255,10 +255,10 @@ class TestRecoveryExecution:
 
 
 class TestGPURecoveryIntegration:
-    """GPU恢复集成测试"""
+    """GPU恢复集成测试."""
 
     def test_handle_gpu_failure_success(self):
-        """测试GPU失败处理成功"""
+        """测试GPU失败处理成功."""
         manager = GPURecoveryManager()
 
         redistribute_called = []
@@ -275,7 +275,7 @@ class TestGPURecoveryIntegration:
         assert manager._total_failures == 1
 
     def test_handle_gpu_failure_marks_failed_after_max_retries(self):
-        """测试GPU失败标记（超过最大重试后）"""
+        """测试GPU失败标记（超过最大重试后）."""
         manager = GPURecoveryManager(max_retry_count=3)
 
         # 多次失败导致GPU被禁用
@@ -293,7 +293,7 @@ class TestGPURecoveryIntegration:
         assert 0 in failed_gpus
 
     def test_recovery_stats(self):
-        """测试恢复统计"""
+        """测试恢复统计."""
         manager = GPURecoveryManager()
 
         # 模拟一些失败和恢复
@@ -309,7 +309,7 @@ class TestGPURecoveryIntegration:
         assert "success_rate" in stats
 
     def test_reset_failure_history(self):
-        """测试重置失败历史"""
+        """测试重置失败历史."""
         manager = GPURecoveryManager(max_retry_count=1)
 
         # 手动记录失败历史（不触发恢复）
@@ -330,7 +330,7 @@ class TestGPURecoveryIntegration:
         assert not manager.is_gpu_failed(0)
 
     def test_concurrent_failure_handling(self):
-        """测试并发失败处理"""
+        """测试并发失败处理."""
         manager = GPURecoveryManager()
         errors = []
 
@@ -361,13 +361,13 @@ class TestGPURecoveryIntegration:
 
 @pytest.mark.skip(reason="Multi-GPU recovery API changed")
 class TestMultiGPURecovery:
-    """多GPU恢复测试"""
+    """多GPU恢复测试."""
 
     @patch("src.gpu.multi_gpu_engine.GPURecoveryManager")
     @patch("src.gpu.multi_gpu_engine.DataMonitor")
     @patch("src.gpu.multi_gpu_engine.get_gpu_selector")
     def test_redistribute_workload(self, mock_selector, mock_monitor, mock_recovery):
-        """测试工作负载重新分配"""
+        """测试工作负载重新分配."""
         from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
 
         # Mock GPU选择器

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""多GPU环境选择工具
+"""多GPU环境选择工具.
 
 功能:
 - 检测所有可用GPU设备
@@ -16,7 +16,7 @@ from pathlib import Path
 
 
 def detect_all_gpus():
-    """检测所有GPU设备"""
+    """检测所有GPU设备."""
     try:
         import pyopencl as cl
 
@@ -88,7 +88,7 @@ def detect_all_gpus():
 
 
 def calculate_priority_score(device_info):
-    """计算GPU优先级分数
+    """计算GPU优先级分数.
 
     评分标准:
     - 显存大小: 10分/GB (最重要)
@@ -127,7 +127,7 @@ def calculate_priority_score(device_info):
 
 
 def recommend_gpu(devices):
-    """推荐最佳GPU"""
+    """推荐最佳GPU."""
     if not devices:
         return None, "未检测到GPU设备"
 
@@ -146,7 +146,7 @@ def recommend_gpu(devices):
 
 
 def generate_config(device, devices, output_file="config.multi_gpu.json"):
-    """生成多GPU配置文件"""
+    """生成多GPU配置文件."""
     config = {
         "gpu": {
             "enabled": True,
@@ -178,7 +178,7 @@ def generate_config(device, devices, output_file="config.multi_gpu.json"):
 
 
 def print_summary(devices, recommended, recommendation_text):
-    """打印总结"""
+    """打印总结."""
     print("\n" + "=" * 80)
     print("📊 GPU检测总结")
     print("=" * 80)
@@ -206,16 +206,16 @@ def print_summary(devices, recommended, recommendation_text):
         print("\n💡 使用方式:")
         print("  方式1: 修改config.json")
         print(f'    "gpu_device_index": {recommended["global_index"]}')
-        print("")
+        print()
         print("  方式2: 生成新配置文件")
         print("    python tools/multi_gpu_selector.py --generate-config")
-        print("")
+        print()
         print("  方式3: 命令行参数")
         print(f"    python key_collision_cli.py --gpu-device {recommended['global_index']}")
 
 
 def main():
-    """主函数"""
+    """主函数."""
     import argparse
 
     parser = argparse.ArgumentParser(description="多GPU环境选择工具")

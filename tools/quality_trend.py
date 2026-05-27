@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""文档质量趋势分析工具
+"""文档质量趋势分析工具.
 
 跟踪和分析文档质量的历史变化趋势
 
@@ -22,7 +22,7 @@ from tools.check_document_quality import DocumentQualityChecker  # noqa: E402
 
 
 class QualityTrendAnalyzer:
-    """质量趋势分析器"""
+    """质量趋势分析器."""
 
     def __init__(self, history_file: str = "quality_history.json"):
         self.history_file = Path(history_file)
@@ -30,23 +30,22 @@ class QualityTrendAnalyzer:
         self.history: list[dict] = self.load_history()
 
     def _cleanup_temp(self):
-        """清理残留的临时文件"""
+        """清理残留的临时文件."""
         temp_file = self.history_file.with_suffix(".tmp")
         if temp_file.exists():
             with contextlib.suppress(OSError):
                 temp_file.unlink()
 
     def load_history(self) -> list[dict]:
-        """加载历史记录"""
+        """加载历史记录."""
         if self.history_file.exists():
             try:
                 with open(self.history_file, encoding="utf-8") as f:
                     data = json.load(f)
                     if isinstance(data, list):
                         return data
-                    else:
-                        print("⚠️  历史记录格式错误，重置为空列表")
-                        return []
+                    print("⚠️  历史记录格式错误，重置为空列表")
+                    return []
             except json.JSONDecodeError as e:
                 print(f"⚠️  历史记录JSON解析失败: {e}")
                 print("💡 重置为空列表")
@@ -57,7 +56,7 @@ class QualityTrendAnalyzer:
         return []
 
     def save_history(self):
-        """保存历史记录"""
+        """保存历史记录."""
         try:
             # 使用临时文件避免写入中断导致数据损坏
             temp_file = self.history_file.with_suffix(".tmp")
@@ -69,7 +68,7 @@ class QualityTrendAnalyzer:
             print(f"⚠️  无法保存历史记录: {e}")
 
     def add_record(self, avg_score: float, doc_count: int, details: dict):
-        """添加新记录
+        """添加新记录.
 
         Args:
             avg_score: 平均评分
@@ -87,7 +86,7 @@ class QualityTrendAnalyzer:
         self.save_history()
 
     def get_trend(self, last_n: int = 10) -> dict:
-        """获取趋势分析
+        """获取趋势分析.
 
         Args:
             last_n: 最近N次记录
@@ -135,7 +134,7 @@ class QualityTrendAnalyzer:
         }
 
     def print_trend_report(self):
-        """打印趋势报告"""
+        """打印趋势报告."""
         trend = self.get_trend()
 
         print(f"\n{'=' * 60}")
@@ -173,7 +172,7 @@ class QualityTrendAnalyzer:
         print(f"\n{'=' * 60}")
 
     def export_csv(self, output_file: str = "quality_trend.csv"):
-        """导出为CSV格式"""
+        """导出为CSV格式."""
         if not self.history:
             print("❌ 没有历史数据")
             return
@@ -181,8 +180,7 @@ class QualityTrendAnalyzer:
         try:
             with open(output_file, "w", encoding="utf-8") as f:
                 f.write("timestamp,avg_score,doc_count\n")
-                for record in self.history:
-                    f.write(f"{record['timestamp']},{record['avg_score']},{record['doc_count']}\n")
+                f.writelines(f"{record['timestamp']},{record['avg_score']},{record['doc_count']}\n" for record in self.history)  # noqa: E501
 
             print(f"✅ 数据已导出到: {output_file}")
         except (OSError, PermissionError) as e:
@@ -190,7 +188,7 @@ class QualityTrendAnalyzer:
 
 
 def main():
-    """主函数"""
+    """主函数."""
     import argparse
 
     parser = argparse.ArgumentParser(description="文档质量趋势分析工具")

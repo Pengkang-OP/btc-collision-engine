@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""目标地址解析器 (resolver) 单元测试
+"""目标地址解析器 (resolver) 单元测试.
 
 覆盖：
 - bech32_decode 解码函数
@@ -19,7 +19,7 @@ import pytest
 
 @pytest.mark.unit
 class TestBech32Decode:
-    """Bech32 解码测试"""
+    """Bech32 解码测试."""
 
     def test_valid_bech32_mainnet(self):
         from src.utils.bech32_codec import bech32_decode
@@ -30,7 +30,7 @@ class TestBech32Decode:
         assert enc is not None
 
     def test_valid_bech32_testnet(self):
-        """测试网Bech32地址（使用 BIP-173 测试向量）"""
+        """测试网Bech32地址（使用 BIP-173 测试向量）."""
         from src.utils.bech32_codec import bech32_decode
 
         # BIP-173 有效测试向量
@@ -63,7 +63,7 @@ class TestBech32Decode:
         assert hrp is None
 
     def test_taproot_format_detection(self):
-        """仅验证前缀检测 (不验证 Taproot 校验和)"""
+        """仅验证前缀检测 (不验证 Taproot 校验和)."""
         # 使用格式检测验证，不依赖具体地址校验
         from src.collision.targets.resolver import TargetResolver
 
@@ -79,20 +79,20 @@ class TestBech32Decode:
 
 @pytest.mark.unit
 class TestDecodeSegwitAddress:
-    """SegWit 地址解码测试"""
+    """SegWit 地址解码测试."""
 
     def test_valid_bech32_p2wpkh(self):
         from src.utils.bech32_codec import decode_segwit_address
 
         hrp, version, program = decode_segwit_address(
-            "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq", expected_hrp="bc"
+            "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq", expected_hrp="bc",
         )
         assert version == 0
         assert program is not None
         assert len(program) == 20
 
     def test_valid_taproot_p2tr(self):
-        """Taproot 检测格式验证（不做完整解码，因为需要正确的校验和地址）"""
+        """Taproot 检测格式验证（不做完整解码，因为需要正确的校验和地址）."""
         from src.collision.targets.resolver import TargetResolver
 
         # 使用 detect_format 验证 taproot 检测
@@ -103,7 +103,7 @@ class TestDecodeSegwitAddress:
         from src.utils.bech32_codec import decode_segwit_address
 
         hrp, version, program = decode_segwit_address(
-            "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq", expected_hrp="tb"
+            "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq", expected_hrp="tb",
         )
         assert version is None
         assert program is None
@@ -122,7 +122,7 @@ class TestDecodeSegwitAddress:
 
 @pytest.mark.unit
 class TestDetectFormat:
-    """格式检测测试"""
+    """格式检测测试."""
 
     def test_p2pkh(self):
         from src.collision.targets.resolver import TargetResolver
@@ -173,7 +173,7 @@ class TestDetectFormat:
 
 @pytest.mark.unit
 class TestTargetResolverBasic:
-    """TargetResolver 基本方法测试"""
+    """TargetResolver 基本方法测试."""
 
     def test_init_defaults(self):
         from src.collision.targets.resolver import TargetResolver
@@ -240,7 +240,7 @@ class TestTargetResolverBasic:
 
 @pytest.mark.unit
 class TestResolveBatch:
-    """批量解析测试"""
+    """批量解析测试."""
 
     def test_resolve_batch(self):
         from src.collision.targets.resolver import TargetResolver
@@ -264,7 +264,7 @@ class TestResolveBatch:
 
 @pytest.mark.unit
 class TestAnalyzeTargetFormats:
-    """目标格式分布分析测试"""
+    """目标格式分布分析测试."""
 
     def test_pure_p2pkh(self):
         from src.collision.targets.resolver import TargetResolver

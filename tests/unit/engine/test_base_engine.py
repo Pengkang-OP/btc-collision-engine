@@ -1,4 +1,4 @@
-"""BaseCollisionEngine 核心引擎测试 - 高优先级
+"""BaseCollisionEngine 核心引擎测试 - 高优先级.
 
 覆盖范围：
 - 抽象基类接口校验
@@ -25,7 +25,7 @@ from src.collision.collision_stats import CollisionStats
 
 
 class MockEngine(BaseCollisionEngine):
-    """简化引擎实现，用于测试基类逻辑"""
+    """简化引擎实现，用于测试基类逻辑."""
 
     # Callback-related class attributes (mirrors KeyCollisionEngine)
     _match_callback_timeout: float = 5.0
@@ -94,15 +94,15 @@ class MockEngine(BaseCollisionEngine):
 
 @pytest.mark.unit
 class TestBaseEngineInterface:
-    """BaseEngine 接口校验"""
+    """BaseEngine 接口校验."""
 
     def test_abstract_class_cannot_instantiate(self):
-        """测试：抽象类不能直接实例化"""
+        """测试：抽象类不能直接实例化."""
         with pytest.raises(TypeError):
             BaseCollisionEngine(set())
 
     def test_mock_engine_implements_all_abstract(self):
-        """测试：Mock 引擎实现了所有抽象方法"""
+        """测试：Mock 引擎实现了所有抽象方法."""
         engine = MockEngine({"1Address"})
         assert hasattr(engine, "start")
         assert hasattr(engine, "stop")
@@ -110,14 +110,14 @@ class TestBaseEngineInterface:
         assert hasattr(engine, "get_stats")
 
     def test_engine_protected_attributes_exist(self):
-        """测试：引擎保护属性存在"""
+        """测试：引擎保护属性存在."""
         engine = MockEngine()
         assert hasattr(engine, "on_match")
         assert hasattr(engine, "on_progress")
         assert hasattr(engine, "on_complete")
 
     def test_engine_class_constants(self):
-        """测试：引擎实例属性存在且类型正确"""
+        """测试：引擎实例属性存在且类型正确."""
         engine = MockEngine({"1Address"})
         assert hasattr(engine, "_match_callback_timeout")
         assert isinstance(engine._match_callback_timeout, float)
@@ -125,7 +125,7 @@ class TestBaseEngineInterface:
         assert isinstance(engine._match_callback_audit_enabled, bool)
 
     def test_supported_modes(self):
-        """测试：支持的模式列表"""
+        """测试：支持的模式列表."""
         modes = MockEngine().get_supported_modes()
         assert isinstance(modes, list)
         assert "random" in modes
@@ -141,23 +141,23 @@ class TestBaseEngineInterface:
 @pytest.mark.unit
 @pytest.mark.state_machine
 class TestBaseEngineStateTransitions:
-    """BaseEngine 状态转换测试"""
+    """BaseEngine 状态转换测试."""
 
     def test_initial_state_idle(self):
-        """测试：初始状态为 IDLE"""
+        """测试：初始状态为 IDLE."""
         engine = MockEngine()
         assert not engine.is_running()
         assert engine._stop_event.is_set()
 
     def test_idle_to_running(self):
-        """测试：IDLE → RUNNING"""
+        """测试：IDLE → RUNNING."""
         engine = MockEngine()
         engine.start("random")
         assert engine.is_running()
         assert not engine._stop_event.is_set()
 
     def test_running_to_idle(self):
-        """测试：RUNNING → IDLE"""
+        """测试：RUNNING → IDLE."""
         engine = MockEngine()
         engine.start("random")
         engine.stop()
@@ -165,7 +165,7 @@ class TestBaseEngineStateTransitions:
         assert engine._stop_event.is_set()
 
     def test_multiple_start_stop_cycles(self):
-        """测试：多次启停循环"""
+        """测试：多次启停循环."""
         engine = MockEngine()
         for _cycle in range(5):
             assert not engine.is_running()
@@ -175,7 +175,7 @@ class TestBaseEngineStateTransitions:
             assert not engine.is_running()
 
     def test_get_stats_while_idle(self):
-        """测试：空闲状态获取统计信息"""
+        """测试：空闲状态获取统计信息."""
         engine = MockEngine()
         stats = engine.get_stats()
         assert isinstance(stats, CollisionStats)
@@ -189,23 +189,23 @@ class TestBaseEngineStateTransitions:
 
 @pytest.mark.unit
 class TestBaseEngineIllegalTransitions:
-    """BaseEngine 非法操作拦截测试"""
+    """BaseEngine 非法操作拦截测试."""
 
     def test_double_start_raises(self):
-        """测试：重复启动抛出 RuntimeError"""
+        """测试：重复启动抛出 RuntimeError."""
         engine = MockEngine()
         engine.start("random")
         with pytest.raises(RuntimeError, match="already running"):
             engine.start("random")
 
     def test_stop_without_start_raises(self):
-        """测试：未启动时停止抛出 RuntimeError"""
+        """测试：未启动时停止抛出 RuntimeError."""
         engine = MockEngine()
         with pytest.raises(RuntimeError, match="not running"):
             engine.stop()
 
     def test_stop_after_stop_raises(self):
-        """测试：停止后再次停止抛出 RuntimeError"""
+        """测试：停止后再次停止抛出 RuntimeError."""
         engine = MockEngine()
         engine.start("random")
         engine.stop()
@@ -220,10 +220,10 @@ class TestBaseEngineIllegalTransitions:
 
 @pytest.mark.unit
 class TestBaseEngineProgressCompleteCallbacks:
-    """BaseEngine 进度/完成回调测试"""
+    """BaseEngine 进度/完成回调测试."""
 
     def test_on_progress_callback(self):
-        """测试：on_progress 回调可被调用"""
+        """测试：on_progress 回调可被调用."""
         engine = MockEngine()
         progress_data = []
 
@@ -238,7 +238,7 @@ class TestBaseEngineProgressCompleteCallbacks:
         assert progress_data[0] == (1000, 10000, 500.0)
 
     def test_on_complete_callback(self):
-        """测试：on_complete 回调可被调用"""
+        """测试：on_complete 回调可被调用."""
         engine = MockEngine()
         complete_data = []
 
@@ -252,7 +252,7 @@ class TestBaseEngineProgressCompleteCallbacks:
         assert complete_data[0]["total_checked"] == 1000
 
     def test_progress_callback_from_engine(self):
-        """测试：引擎运行期间进度回调"""
+        """测试：引擎运行期间进度回调."""
         engine = MockEngine()
         progress_log = []
 
@@ -272,7 +272,7 @@ class TestBaseEngineProgressCompleteCallbacks:
         engine.stop()
 
     def test_progress_and_complete_chain(self):
-        """测试：进度→完成的完整回调链"""
+        """测试：进度→完成的完整回调链."""
         engine = MockEngine()
         call_chain = []
 
@@ -290,7 +290,7 @@ class TestBaseEngineProgressCompleteCallbacks:
         engine.stop()
 
     def test_callback_exception_does_not_crash(self):
-        """测试：回调内异常不导致引擎崩溃"""
+        """测试：回调内异常不导致引擎崩溃."""
         engine = MockEngine()
 
         def failing_progress(checked, total, speed):
@@ -317,7 +317,7 @@ class TestBaseEngineProgressCompleteCallbacks:
 
 @pytest.mark.unit
 class TestBaseEngineSafeCallback:
-    """BaseEngine 安全回调测试
+    """BaseEngine 安全回调测试.
 
     NOTE: _safe_invoke_match_callback, on_match, _match_callback_timeout,
     and _match_callback_audit_enabled are KeyCollisionEngine features.
@@ -326,7 +326,7 @@ class TestBaseEngineSafeCallback:
     """
 
     def test_callback_none_returns_true(self):
-        """测试：on_match 为 None 时返回 True（不阻塞）"""
+        """测试：on_match 为 None 时返回 True（不阻塞）."""
         engine = MockEngine()
         result = engine._safe_invoke_match_callback(
             b"\x01" * 32,
@@ -336,7 +336,7 @@ class TestBaseEngineSafeCallback:
         assert result is True
 
     def test_callback_successful(self):
-        """测试：回调成功返回 True"""
+        """测试：回调成功返回 True."""
         engine = MockEngine()
         results = []
 
@@ -354,7 +354,7 @@ class TestBaseEngineSafeCallback:
         assert len(results) == 1
 
     def test_callback_failure_returns_false(self):
-        """测试：回调失败返回 False"""
+        """测试：回调失败返回 False."""
         engine = MockEngine()
 
         def failing_callback(pk, addr, wif):
@@ -369,12 +369,12 @@ class TestBaseEngineSafeCallback:
         assert result is False
 
     def test_callback_timeout_class_attr(self):
-        """测试：回调超时类属性存在"""
+        """测试：回调超时类属性存在."""
         assert MockEngine._match_callback_timeout == 5.0
         assert MockEngine._match_callback_audit_enabled is True
 
     def test_callback_audit_disabled(self):
-        """测试：禁用了审计日志的回调"""
+        """测试：禁用了审计日志的回调."""
         MockEngine()
 
         class NoAuditEngine(MockEngine):
@@ -397,10 +397,10 @@ class TestBaseEngineSafeCallback:
 @pytest.mark.unit
 @pytest.mark.thread_safety
 class TestBaseEngineThreadSafety:
-    """BaseEngine 线程安全测试"""
+    """BaseEngine 线程安全测试."""
 
     def test_concurrent_start_stop(self):
-        """测试：并发启停不崩溃"""
+        """测试：并发启停不崩溃."""
         engine = MockEngine()
         errors = []
 
@@ -430,10 +430,10 @@ class TestBaseEngineThreadSafety:
 
 @pytest.mark.integration
 class TestBaseEngineIntegration:
-    """BaseEngine 集成场景测试"""
+    """BaseEngine 集成场景测试."""
 
     def test_full_lifecycle(self):
-        """测试：完整生命周期"""
+        """测试：完整生命周期."""
         engine = MockEngine()
 
         # IDLE → RUNNING
@@ -447,7 +447,7 @@ class TestBaseEngineIntegration:
         assert not engine.is_running()
 
     def test_stats_after_run(self):
-        """测试：运行后统计信息"""
+        """测试：运行后统计信息."""
         engine = MockEngine()
         stats = engine.get_stats()
         assert isinstance(stats.format_elapsed(), str)

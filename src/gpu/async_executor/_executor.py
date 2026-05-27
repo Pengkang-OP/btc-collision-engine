@@ -1,10 +1,11 @@
-"""GPU 异步执行器 - 核心类
+"""GPU 异步执行器 - 核心类.
 
 使用双缓冲和双队列实现异步执行，提升 GPU 利用率到 90%+。
 继承链: AsyncGPUExecutor ← _GPUInfoMixin ← _ResultCollectorMixin ← _SyncFallbackMixin
 
 v5.2.3: 从 async_executor.py 提取为独立模块（代码质量优化 #M5）。
 v5.2.3: 新增 __del__ → cleanup() 安全析构，抑制日志句柄异常。
+v5.2.4: __slots__ 补充 _prefetch_events（配合 _CollectorHost 协议完整性）。
 """
 
 import threading
@@ -14,7 +15,8 @@ from typing import Any
 
 import numpy as np
 
-from ...utils import get_configured_logger
+from src.utils import get_configured_logger
+
 from ..adaptive_pipeline import AdaptivePipelineController
 from ..executor_types import DEFAULT_QUEUE_DEPTH, _PendingBatch, _SyncFallbackError
 from ..seed_utils import _seed_bytes_to_u32_be_array
@@ -26,7 +28,7 @@ logger = get_configured_logger("AsyncGPUExecutor")
 
 
 class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin):
-    """异步GPU执行器
+    """异步GPU执行器.
 
     使用双缓冲和双队列实现异步执行，提升GPU利用率到90%+。
     注意：此处的"异步"指基于 threading 的双缓冲 GPU 异步执行，
@@ -90,6 +92,7 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
         "_collector_running",
         "_collector_thread",
         "_collector_cycles",
+        "_prefetch_events",  # v5.2.4: 新增（配合 _CollectorHost 协议完整性）
         # === 异步恢复 ===
         "_consecutive_sync_fallbacks",
         "_async_mode_disabled",
@@ -184,7 +187,7 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
 
     @property
     def pending_batches(self) -> list:
-        """验收测试兼容：pending_batches -> _prefetch_events"""
+        """验收测试兼容：pending_batches -> _prefetch_events."""
         return self._prefetch_events
 
     @pending_batches.setter
@@ -200,15 +203,15 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
         self.sync_fallbacks = value
 
     def start(self) -> None:
-        """验收测试兼容：启动执行器。"""
+        """验收测试兼容：启动执行器。."""
         self.is_async_ready = True
 
     def stop(self) -> None:
-        """验收测试兼容：停止执行器。"""
+        """验收测试兼容：停止执行器。."""
         self.is_async_ready = False
 
     def execute_batch(self, seed: bytes, batch_size: int) -> list:
-        """验收测试兼容：执行单批私钥碰撞检测。"""
+        """验收测试兼容：执行单批私钥碰撞检测。."""
         if not self.is_async_ready:
             return []
         try:
@@ -226,7 +229,7 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
     # ------------------------------------------------------------------
 
     def initialize_buffers(self, context: Any, num_keys: int) -> None:
-        """初始化缓冲区池（PRNG模式：seed缓冲区替代keys缓冲区）。"""
+        """初始化缓冲区池（PRNG模式：seed缓冲区替代keys缓冲区）。."""
         import pyopencl as cl
 
         if num_keys > self.max_batch_size:
@@ -260,7 +263,7 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
                 {
                     "matches": cl.Buffer(context, cl.mem_flags.READ_WRITE, size=num_keys * 4),
                     "match_flags": np.zeros(num_keys, dtype=np.int32),
-                }
+                },
             )
 
         self.buffer_a = self._buffer_pool[0]
@@ -280,7 +283,7 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
     # ------------------------------------------------------------------
 
     def prefetch_next_batch(self, seed: bytes, num_keys: int) -> None:
-        """预存下一批种子（PRNG模式：仅缓存32字节种子）。
+        """预存下一批种子（PRNG模式：仅缓存32字节种子）。.
 
         Note:
             v5.2.3: 此方法保留为外部兼容 API（async_pipeline_adapter 调用），
@@ -310,7 +313,7 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
         targets_buf: Any,
         num_targets: int,
     ) -> "tuple[list[tuple[bytes, list[dict]]], float]":
-        """异步执行批次（PRNG模式：seed替代private_keys）。"""
+        """异步执行批次（PRNG模式：seed替代private_keys）。."""
         start_time = time.time()
 
         self._check_async_recovery()
@@ -391,7 +394,7 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
                 num_keys=num_keys,
                 seed=seed,
             )
-            pending_batch.batch_num = batch_num  # type: ignore[attr-defined]
+            pending_batch.batch_num = batch_num
             with self._prefetch_lock:
                 self._prefetch_events.append(pending_batch)
 
@@ -743,7 +746,7 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
                 {
                     "matches": cl.Buffer(ctx, cl.mem_flags.READ_WRITE, size=actual_bs * 4),
                     "match_flags": np.zeros(actual_bs, dtype=np.int32),
-                }
+                },
             )
             seed_pool.append(cl.Buffer(ctx, cl.mem_flags.READ_ONLY, size=32))
 
@@ -761,7 +764,9 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
 
     def _on_adaptive_batch_size_change(self, new_size: int) -> None:
         logger.debug(
-            "[自适应] 调整 batch_size: %s -> %s", f"{self.initial_batch_size:,}", f"{new_size:,}"
+            "[自适应] 调整 batch_size: %s -> %s",
+            f"{self.initial_batch_size:,}",
+            f"{new_size:,}",
         )
         self.initial_batch_size = new_size
         self._actual_batch_size = new_size
@@ -789,6 +794,6 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
         }
 
     def __del__(self) -> None:
-        """析构时安全清理，抑制所有日志异常。"""
+        """析构时安全清理，抑制所有日志异常。."""
         with suppress(Exception):
             self.cleanup()

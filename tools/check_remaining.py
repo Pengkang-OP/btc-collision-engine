@@ -9,7 +9,7 @@ files = [
 ]
 
 for fp in files:
-    with open(fp, "r", encoding="utf-8") as f:
+    with open(fp, encoding="utf-8") as f:
         content = f.read()
     lines = content.split("\n")
     for i, line in enumerate(lines):

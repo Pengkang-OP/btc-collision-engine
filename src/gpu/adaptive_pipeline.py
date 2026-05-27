@@ -1,4 +1,4 @@
-"""自适应流水线控制器 (Adaptive Pipeline Controller)
+"""自适应流水线控制器 (Adaptive Pipeline Controller).
 
 基于实时 GPU 性能反馈，动态调整三个核心参数：
 1. queue_depth   — GPU 命令队列深度（缓冲数量）
@@ -16,8 +16,9 @@
 
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 from ..utils import get_configured_logger
 
@@ -26,7 +27,7 @@ logger = get_configured_logger("AdaptivePipeline")
 
 @dataclass
 class PipelineMetrics:
-    """单次批次管道的监控指标"""
+    """单次批次管道的监控指标."""
 
     batch_num: int
     batch_size: int
@@ -38,7 +39,7 @@ class PipelineMetrics:
 
 
 class AdaptivePipelineController:
-    """自适应流水线控制器
+    """自适应流水线控制器.
 
     实时监控 GPU 管道状态，通过反馈控制动态调整 queue_depth、batch_size
     和 seed 生成参数，目标是将 GPU 利用率曲线拉平。
@@ -51,19 +52,19 @@ class AdaptivePipelineController:
     """
 
     __slots__ = (
-        "_queue_depth",
-        "_batch_size",
-        "_seed_prefetch_size",
-        "_on_adjust_queue_depth",
-        "_on_adjust_batch_size",
-        "_on_adjust_seed_batch_size",
-        "_metrics_window",
-        "_window_size",
-        "_metrics_lock",
-        "_cooldown_remaining",
         "_adjustment_count",
+        "_batch_size",
+        "_cooldown_remaining",
+        "_metrics_lock",
+        "_metrics_window",
+        "_on_adjust_batch_size",
+        "_on_adjust_queue_depth",
+        "_on_adjust_seed_batch_size",
+        "_queue_depth",
         "_seed_batch_size",
+        "_seed_prefetch_size",
         "_start_time",
+        "_window_size",
     )
 
     # ── 控制参数 ────────────────────────────────────────────────────
@@ -102,12 +103,13 @@ class AdaptivePipelineController:
         on_adjust_seed_batch_size: Callable[[int], None] | None = None,
     ) -> None:
         """Args:
+
         initial_queue_depth: 初始队列深度
         initial_batch_size: 初始批次大小
         initial_seed_prefetch_size: 初始种子队列容量
         on_adjust_queue_depth: 队列深度调整回调(新值)
         on_adjust_batch_size: 批次大小调整回调(新值)
-        on_adjust_seed_batch_size: 种子生成批量调整回调(新值)
+        on_adjust_seed_batch_size: 种子生成批量调整回调(新值).
 
         """
         self._queue_depth = initial_queue_depth
@@ -151,7 +153,7 @@ class AdaptivePipelineController:
         queue_occupancy: float,
         seed_queue_occupancy: float = 0.0,
     ) -> None:
-        """记录批次提交事件（主循环调用）"""
+        """记录批次提交事件（主循环调用）."""
         with self._metrics_lock:
             # 查找或创建该 batch_num 的指标记录
             for m in self._metrics_window:
@@ -177,7 +179,7 @@ class AdaptivePipelineController:
         batch_num: int,
         exec_time_ms: float,
     ) -> None:
-        """记录批次收集事件（结果收集器调用）"""
+        """记录批次收集事件（结果收集器调用）."""
         with self._metrics_lock:
             for m in self._metrics_window:
                 if m.batch_num == batch_num:
@@ -193,7 +195,7 @@ class AdaptivePipelineController:
             self._trim_window()
 
     def record_seed_queue_state(self, occupancy: float) -> None:
-        """记录种子队列状态（RandomSearchMode 调用）
+        """记录种子队列状态（RandomSearchMode 调用）.
 
         独立记录到最新的一条 metrics 中，或新建一条占位记录。
         """
@@ -219,7 +221,7 @@ class AdaptivePipelineController:
     # ------------------------------------------------------------------
 
     def evaluate_and_adjust(self) -> dict[str, Any]:  # noqa: C901
-        """评估当前管道状态并输出调整指令
+        """评估当前管道状态并输出调整指令.
 
         Returns:
             调整动作字典，如 {"queue_depth": 10, "batch_size": 1310720, "seed_batch": 72}

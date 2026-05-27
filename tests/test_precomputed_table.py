@@ -1,4 +1,4 @@
-"""预计算点表优化模块单元测试"""
+"""预计算点表优化模块单元测试."""
 
 import time
 
@@ -14,17 +14,17 @@ from src.core.secp256k1 import ECPoint, Secp256k1
 
 
 class TestPrecomputedPointTable:
-    """预计算点表测试类"""
+    """预计算点表测试类."""
 
     def test_initialization_default(self):
-        """测试默认初始化(window_size=8)"""
+        """测试默认初始化(window_size=8)."""
         table = PrecomputedPointTable(window_size=8)
         assert table.window_size == 8
         assert table.num_points == 256  # 2^8
         assert len(table.table) == 256
 
     def test_initialization_custom_window(self):
-        """测试自定义窗口大小"""
+        """测试自定义窗口大小."""
         for w in [4, 5, 6, 7, 8]:
             table = PrecomputedPointTable(window_size=w)
             assert table.window_size == w
@@ -32,7 +32,7 @@ class TestPrecomputedPointTable:
             assert len(table.table) == (1 << w)
 
     def test_invalid_window_size(self):
-        """测试无效窗口大小"""
+        """测试无效窗口大小."""
         with pytest.raises(ValueError):
             PrecomputedPointTable(window_size=3)
 
@@ -40,7 +40,7 @@ class TestPrecomputedPointTable:
             PrecomputedPointTable(window_size=9)
 
     def test_table_content_validity(self):
-        """测试预计算表内容正确性"""
+        """测试预计算表内容正确性."""
         table = PrecomputedPointTable(window_size=4)
         ec = table.ec
 
@@ -60,7 +60,7 @@ class TestPrecomputedPointTable:
         assert table.table[2].y == three_g.y
 
     def test_scalar_multiply_correctness(self):
-        """测试标量乘法正确性"""
+        """测试标量乘法正确性."""
         table = PrecomputedPointTable(window_size=6)
         ec = table.ec
 
@@ -80,7 +80,7 @@ class TestPrecomputedPointTable:
             assert result_table.y == result_standard.y
 
     def test_scalar_multiply_edge_cases(self):
-        """测试标量乘法边界情况"""
+        """测试标量乘法边界情况."""
         table = PrecomputedPointTable(window_size=4)
 
         # k=0 应该返回无穷远点
@@ -98,7 +98,7 @@ class TestPrecomputedPointTable:
         assert result1.y == result2.y
 
     def test_performance_improvement(self):
-        """测试性能提升(预计算表 vs 标准方法)"""
+        """测试性能提升(预计算表 vs 标准方法)."""
         table = PrecomputedPointTable(window_size=8)
         ec = table.ec
         G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
@@ -128,7 +128,7 @@ class TestPrecomputedPointTable:
         assert speedup > 1.2
 
     def test_memory_usage(self):
-        """测试内存占用"""
+        """测试内存占用."""
         for w in [4, 6, 8]:
             table = PrecomputedPointTable(window_size=w)
             memory_bytes = table.get_memory_usage()
@@ -141,7 +141,7 @@ class TestPrecomputedPointTable:
                 assert memory_kb <= 50
 
     def test_speedup_estimate(self):
-        """测试加速比估算"""
+        """测试加速比估算."""
         for w in [4, 6, 8]:
             table = PrecomputedPointTable(window_size=w)
             speedup = table.get_speedup_estimate()
@@ -155,7 +155,7 @@ class TestPrecomputedPointTable:
                 assert speedup > prev_speedup
 
     def test_init_with_custom_ec_has_G(self):
-        """使用自定义 ec (有 curve.G) 初始化 (cover lines 88-90)"""
+        """使用自定义 ec (有 curve.G) 初始化 (cover lines 88-90)."""
         from src.core.secp256k1 import EllipticCurve
 
         ec = EllipticCurve()
@@ -174,7 +174,7 @@ class TestPrecomputedPointTable:
                 ec.curve.G = saved_G
 
     def test_init_with_custom_ec_no_G(self):
-        """使用自定义 ec (无 curve.G) 初始化 (cover lines 91-94)"""
+        """使用自定义 ec (无 curve.G) 初始化 (cover lines 91-94)."""
         from src.core.secp256k1 import EllipticCurve
 
         ec = EllipticCurve()
@@ -191,7 +191,7 @@ class TestPrecomputedPointTable:
                 ec.curve.G = saved_G
 
     def test_scalar_multiply_with_custom_ec(self):
-        """标量乘法传入自定义 ec (cover scalar_multiply_with_table ec 非 None 分支)"""
+        """标量乘法传入自定义 ec (cover scalar_multiply_with_table ec 非 None 分支)."""
         table = PrecomputedPointTable(window_size=6)
         # 使用独立的 EllipticCurve 实例
         from src.core.secp256k1 import EllipticCurve
@@ -206,16 +206,16 @@ class TestPrecomputedPointTable:
 
 
 class TestPrecomputedTableManager:
-    """预计算表管理器测试类"""
+    """预计算表管理器测试类."""
 
     def test_singleton_pattern(self):
-        """测试单例模式"""
+        """测试单例模式."""
         manager1 = PrecomputedTableManager()
         manager2 = PrecomputedTableManager()
         assert manager1 is manager2
 
     def test_get_table_caching(self):
-        """测试表缓存"""
+        """测试表缓存."""
         manager = PrecomputedTableManager()
         manager.clear_cache()
 
@@ -228,7 +228,7 @@ class TestPrecomputedTableManager:
         assert table1 is table2
 
     def test_different_window_sizes(self):
-        """测试不同窗口大小"""
+        """测试不同窗口大小."""
         manager = PrecomputedTableManager()
         manager.clear_cache()
 
@@ -243,7 +243,7 @@ class TestPrecomputedTableManager:
         assert table8.window_size == 8
 
     def test_clear_cache(self):
-        """测试清空缓存"""
+        """测试清空缓存."""
         manager = PrecomputedTableManager()
         manager.clear_cache()
 
@@ -261,10 +261,10 @@ class TestPrecomputedTableManager:
 
 
 class TestGlobalFunctions:
-    """全局函数测试类"""
+    """全局函数测试类."""
 
     def test_get_precomputed_table(self):
-        """测试全局获取函数"""
+        """测试全局获取函数."""
         precomputed_table_manager.clear_cache()
 
         table = get_precomputed_table(window_size=6)
@@ -272,7 +272,7 @@ class TestGlobalFunctions:
         assert table.window_size == 6
 
     def test_global_manager_singleton(self):
-        """测试全局管理器单例"""
+        """测试全局管理器单例."""
         from src.core.precomputed_table import precomputed_table_manager
 
         table1 = precomputed_table_manager.get_table(window_size=4)

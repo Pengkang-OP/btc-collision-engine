@@ -1,4 +1,4 @@
-"""统一GPU设备评分器
+"""统一GPU设备评分器.
 
 提供统一的GPU设备评分算法，消除 selector.py、load_balancer.py、device.py
 三处评分公式的不一致性。
@@ -23,7 +23,7 @@ logger = get_configured_logger("GPUDeviceScorer")
 
 
 class GPUDeviceScorer:
-    """统一GPU设备评分器
+    """统一GPU设备评分器.
 
     用途:
     1. 设备选择 (selector.py) - 选择最佳GPU
@@ -99,11 +99,11 @@ class GPUDeviceScorer:
     ]
 
     def __init__(self) -> None:
-        """初始化GPU评分器"""
+        """初始化GPU评分器."""
         self._model_cache: dict[str, str] = {}
 
     def score(self, device: dict[str, Any]) -> float:
-        """计算GPU设备统一评分
+        """计算GPU设备统一评分.
 
         评分公式:
             raw_score = memory_gb * 10 + cu * 0.05
@@ -169,7 +169,7 @@ class GPUDeviceScorer:
         return final_score
 
     def score_relative(self, device: dict[str, Any]) -> float:
-        """计算相对性能权重 (用于负载均衡)
+        """计算相对性能权重 (用于负载均衡).
 
         使用更平衡的 memory:compute ≈ 60:1 权重比，与旧版 _calculate_performance_weights
         行为保持一致，使任务分配在显存和计算单元之间更均衡。
@@ -213,7 +213,7 @@ class GPUDeviceScorer:
         return float(raw_score * vendor_factor)
 
     def get_tier(self, score: float) -> str:
-        """获取评分等级
+        """获取评分等级.
 
         Args:
             score: 设备评分
@@ -228,7 +228,7 @@ class GPUDeviceScorer:
         return "D"
 
     def get_tier_description(self, score: float) -> str:
-        """获取评分等级描述
+        """获取评分等级描述.
 
         Args:
             score: 设备评分
@@ -243,7 +243,7 @@ class GPUDeviceScorer:
         return "D (低端)"
 
     def rank_devices(self, devices: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """按评分降序排列设备
+        """按评分降序排列设备.
 
         Args:
             devices: 设备信息列表
@@ -260,7 +260,7 @@ class GPUDeviceScorer:
         return sorted(devices, key=lambda d: d.get("score", 0), reverse=True)
 
     def select_best(self, devices: list[dict[str, Any]]) -> dict[str, Any] | None:
-        """选择评分最高的设备
+        """选择评分最高的设备.
 
         Args:
             devices: 设备信息列表
@@ -276,7 +276,7 @@ class GPUDeviceScorer:
         return ranked[0]
 
     def calculate_performance_weights(self, devices: list[dict[str, Any]]) -> dict[int, float]:
-        """计算归一化的性能权重 (用于负载均衡)
+        """计算归一化的性能权重 (用于负载均衡).
 
         Args:
             devices: 设备信息列表
@@ -300,7 +300,7 @@ class GPUDeviceScorer:
         return dict.fromkeys(raw_weights, 1.0 / n)
 
     def compare_devices(self, device_a: dict[str, Any], device_b: dict[str, Any]) -> str:
-        """比较两个设备的性能
+        """比较两个设备的性能.
 
         Args:
             device_a: 设备A信息
@@ -325,7 +325,7 @@ class GPUDeviceScorer:
         return f"{name_a} 与 {name_b} 性能相当"
 
     def format_score_report(self, device: dict[str, Any]) -> str:
-        """格式化单个设备的评分报告
+        """格式化单个设备的评分报告.
 
         Args:
             device: 设备信息字典
@@ -361,7 +361,7 @@ class GPUDeviceScorer:
     # === 内部方法 ===
 
     def _get_generation_bonus(self, vendor: str, device_name: str, model: str = "") -> float:
-        """根据GPU型号获取世代附加分
+        """根据GPU型号获取世代附加分.
 
         Args:
             vendor: 厂商标识
@@ -391,7 +391,7 @@ class GPUDeviceScorer:
         return 0.0
 
     def identify_model(self, device_name: str, vendor: str) -> str | None:
-        """识别GPU型号 (公开接口)
+        """识别GPU型号 (公开接口).
 
         Args:
             device_name: 设备名称
@@ -405,7 +405,7 @@ class GPUDeviceScorer:
 
     @staticmethod
     def _identify_nvidia_model(name_lower: str) -> str:
-        """从设备名称识别 NVIDIA GPU 型号"""
+        """从设备名称识别 NVIDIA GPU 型号."""
         if "rtx 50" in name_lower:
             return "rtx50"
         if "rtx 40" in name_lower:
@@ -428,7 +428,7 @@ class GPUDeviceScorer:
 
     @staticmethod
     def _identify_amd_model(name_lower: str) -> str:
-        """从设备名称识别 AMD GPU 型号"""
+        """从设备名称识别 AMD GPU 型号."""
         if "rx 90" in name_lower:
             return "rx9000"
         if "rx 7" in name_lower:
@@ -459,7 +459,7 @@ class GPUDeviceScorer:
 
     @staticmethod
     def _identify_intel_model(name_lower: str) -> str:
-        """从设备名称识别 Intel GPU 型号"""
+        """从设备名称识别 Intel GPU 型号."""
         if "arc b" in name_lower or "battlemage" in name_lower:
             return "arc_bmg"
         if "arc" in name_lower:
@@ -469,7 +469,7 @@ class GPUDeviceScorer:
         return "intel_other"
 
     def _identify_model(self, device_name: str, vendor: str) -> str | None:
-        """从设备名称自动识别GPU型号
+        """从设备名称自动识别GPU型号.
 
         Args:
             device_name: 设备名称
@@ -505,7 +505,7 @@ _scorer_instance: GPUDeviceScorer | None = None
 
 
 def get_gpu_scorer() -> GPUDeviceScorer:
-    """获取GPUDeviceScorer单例
+    """获取GPUDeviceScorer单例.
 
     Returns:
         GPUDeviceScorer实例
@@ -518,6 +518,6 @@ def get_gpu_scorer() -> GPUDeviceScorer:
 
 
 def reset_gpu_scorer() -> None:
-    """重置GPUDeviceScorer单例 (用于测试)"""
+    """重置GPUDeviceScorer单例 (用于测试)."""
     global _scorer_instance
     _scorer_instance = None

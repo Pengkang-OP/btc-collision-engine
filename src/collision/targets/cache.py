@@ -1,4 +1,4 @@
-"""地址缓存管理器
+"""地址缓存管理器.
 
 提供多层缓存策略优化地址解析性能:
 - LRU缓存: 最近使用的地址解析结果
@@ -11,7 +11,7 @@ import threading
 from typing import TYPE_CHECKING, Any
 
 # 导入日志配置
-from ...utils import get_configured_logger
+from src.utils import get_configured_logger
 
 if TYPE_CHECKING:
     from cachetools import LRUCache, TTLCache  # noqa: F401
@@ -29,7 +29,7 @@ logger = get_configured_logger("AddressCache")
 
 
 class AddressCache:
-    """地址解析缓存管理器
+    """地址解析缓存管理器.
 
     提供多层缓存策略以优化地址解析性能。
     适用于频繁解析相同地址或WIF私钥的场景。
@@ -53,7 +53,7 @@ class AddressCache:
         ttl_seconds: int = 3600,
         enable_stats: bool = True,
     ) -> None:
-        """初始化地址缓存
+        """初始化地址缓存.
 
         Args:
             lru_size: LRU缓存最大容量，默认10000条目
@@ -82,7 +82,7 @@ class AddressCache:
         logger.info("AddressCache 初始化: LRU大小=%s, TTL=%s秒", lru_size, ttl_seconds)
 
     def get(self, key: str, use_ttl: bool = False) -> str | None:
-        """获取缓存的地址解析结果
+        """获取缓存的地址解析结果.
 
         Args:
             key: 缓存键(原始输入字符串)
@@ -118,7 +118,7 @@ class AddressCache:
                 return None
 
     def put(self, key: str, value: str, use_ttl: bool = False) -> None:
-        """存入缓存
+        """存入缓存.
 
         Args:
             key: 缓存键(原始输入字符串)
@@ -156,7 +156,7 @@ class AddressCache:
                 logger.error("缓存存入异常: %s, 错误=%s", key, e)
 
     def clear(self) -> None:
-        """清空所有缓存"""
+        """清空所有缓存."""
         with self._lock:
             try:
                 self.lru_cache.clear()
@@ -170,7 +170,7 @@ class AddressCache:
                 logger.error("缓存清空异常: %s", e)
 
     def get_stats(self) -> dict[str, Any]:
-        """获取缓存统计信息
+        """获取缓存统计信息.
 
         Returns:
             包含缓存统计信息的字典
@@ -201,7 +201,7 @@ class AddressCache:
                 raise
 
     def _default_stats(self) -> dict[str, Any]:
-        """返回默认统计信息"""
+        """返回默认统计信息."""
         return {
             "lru_size": 0,
             "lru_max_size": self.lru_size,
@@ -214,13 +214,13 @@ class AddressCache:
         }
 
     def reset_stats(self) -> None:
-        """重置统计信息"""
+        """重置统计信息."""
         with self._lock:
             self.hits = 0
             self.misses = 0
 
     def __contains__(self, key: str) -> bool:
-        """检查键是否在缓存中"""
+        """检查键是否在缓存中."""
         if not isinstance(key, str):
             try:
                 key = str(key)
@@ -237,7 +237,7 @@ class AddressCache:
                 return False
 
     def __len__(self) -> int:
-        """返回缓存中的条目数"""
+        """返回缓存中的条目数."""
         with self._lock:
             try:
                 return len(self.lru_cache) + len(self.ttl_cache)
@@ -246,10 +246,11 @@ class AddressCache:
                 return 0
 
     def __bool__(self) -> bool:
-        """缓存对象始终为True(即使为空)"""
+        """缓存对象始终为True(即使为空)."""
         return True
 
     def __repr__(self) -> str:
+        """返回缓存对象的字符串表示。."""
         try:
             stats = self.get_stats()
             return (

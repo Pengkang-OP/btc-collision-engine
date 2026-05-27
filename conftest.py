@@ -1,4 +1,4 @@
-"""根目录 conftest.py - 防御性兼容性补丁
+"""根目录 conftest.py - 防御性兼容性补丁.
 
 修复 pytest 在 io.TextIOWrapper 未设置 closefd=False 时的 capture 崩溃问题。
 
@@ -12,7 +12,7 @@ v4.5.1: 已修复所有已知的 TextIOWrapper 根因（添加 closefd=False）�
 
 
 def pytest_configure(config):
-    """在 pytest 配置阶段应用 capture/logging 兼容性补丁。
+    """在 pytest 配置阶段应用 capture/logging 兼容性补丁。.
 
     问题根因: platform_utils/测试代码 中用 io.TextIOWrapper 包装 sys.stdout
     未使用 closefd=False，导致底层 fd 被意外关闭。pytest capture 的 tmpfile
@@ -24,7 +24,7 @@ def pytest_configure(config):
 
 
 def _apply_python314_capture_patch():
-    """为 pytest capture 模块应用兼容补丁。
+    """为 pytest capture 模块应用兼容补丁。.
 
     v4.5.1: 已修复所有已知的 TextIOWrapper 根因（添加 closefd=False）。
     保留为防御性保护，待确认长期无触发后可移除。
@@ -78,7 +78,7 @@ def _apply_python314_capture_patch():
         _orig_fdcapturebase_resume = capture_mod.FDCaptureBase.resume
 
         def _safe_fdcapturebase_resume(self) -> None:
-            """Python 3.14 兼容的 resume: 若 tmpfile 已关闭则重新创建。"""
+            """Python 3.14 兼容的 resume: 若 tmpfile 已关闭则重新创建。."""
             if self.tmpfile.closed:
                 # 重新创建一个新的 EncodedFile 以替换已关闭的 tmpfile
                 self.tmpfile = capture_mod.EncodedFile(
@@ -104,7 +104,7 @@ def _apply_python314_capture_patch():
 
 
 def _apply_python314_logging_patch():
-    """修补 logging.StreamHandler 以安全处理 Python 3.14 中已关闭的流。
+    """修补 logging.StreamHandler 以安全处理 Python 3.14 中已关闭的流。.
 
     Python 3.14 中，pytest live logging (log_cli=true) 使用的 stream 可能在
     测试之间被关闭，导致后续测试的 logging 输出触发 ValueError。
@@ -116,7 +116,7 @@ def _apply_python314_logging_patch():
         _orig_emit = logging.StreamHandler.emit
 
         def _safe_emit(self, record):
-            """Python 3.14 兼容的 emit: 若 stream 已关闭则静默跳过。"""
+            """Python 3.14 兼容的 emit: 若 stream 已关闭则静默跳过。."""
             try:
                 stream = self.stream
                 if stream is not None and hasattr(stream, "closed") and stream.closed:
@@ -137,7 +137,7 @@ def _apply_python314_logging_patch():
 
 
 def _apply_pyopencl_editable_install_fix():
-    """预导入 pyopencl 关键子模块，解决 editable install 下名称空间解析失败。
+    """预导入 pyopencl 关键子模块，解决 editable install 下名称空间解析失败。.
 
     问题根因: editable install 的 MetaPathFinder 会干扰 pyopencl 内部
     'from pyopencl.XXX import YYY' 语句的模块解析，导致
@@ -146,12 +146,12 @@ def _apply_pyopencl_editable_install_fix():
     解决方案: 预导入 pyopencl build() 路径依赖的所有子模块/subpackage。
     """
     try:
-        import pyopencl._cl  # noqa: F401
-        import pyopencl.cache  # noqa: F401
-        import pyopencl.characterize  # noqa: F401
-        import pyopencl.cl  # noqa: F401
-        import pyopencl.compyte  # noqa: F401
-        import pyopencl.tools  # noqa: F401
+        import pyopencl._cl
+        import pyopencl.cache
+        import pyopencl.characterize
+        import pyopencl.cl
+        import pyopencl.compyte
+        import pyopencl.tools
         import pyopencl.version  # noqa: F401
     except ImportError:
         pass
@@ -165,7 +165,7 @@ import time as _poll_time  # noqa: E402
 
 
 def poll_until(condition, timeout=2.0, interval=0.01):
-    """轮询直到条件成立或超时。比 time.sleep() 更稳定，适应慢 CI 环境。
+    """轮询直到条件成立或超时。比 time.sleep() 更稳定，适应慢 CI 环境。.
 
     Args:
         condition: 返回 bool 的可调用对象

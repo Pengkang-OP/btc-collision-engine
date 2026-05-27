@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""快速演示: 使用多格式多GPU引擎
+"""快速演示: 使用多格式多GPU引擎.
 """
 
 import os
 import secrets
 import sys
 
-from src.core.multi_format_generator import MultiFormatAddressGenerator  # noqa: E402
-from src.gpu.multi_format_multi_gpu_engine import create_engine  # noqa: E402
+from src.core.multi_format_generator import MultiFormatAddressGenerator
+from src.gpu.multi_format_multi_gpu_engine import create_engine
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

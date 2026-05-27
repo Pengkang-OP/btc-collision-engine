@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""测试依赖注入修复 - 验证空指针问题已解决"""
+"""测试依赖注入修复 - 验证空指针问题已解决."""
 
 import os
 import pathlib
@@ -21,10 +21,10 @@ from src.monitoring.monitoring_system import (
 
 
 class TestDependencyInjectionFix:
-    """测试依赖注入修复"""
+    """测试依赖注入修复."""
 
     def test_anomaly_detector_without_storage(self):
-        """测试AnomalyDetector在没有storage时正常工作"""
+        """测试AnomalyDetector在没有storage时正常工作."""
         # 不应抛出异常
         detector = AnomalyDetector()
 
@@ -43,7 +43,7 @@ class TestDependencyInjectionFix:
         assert any(a["metric"] == "speed" for a in anomalies)
 
     def test_anomaly_detector_with_storage(self):
-        """测试AnomalyDetector在有storage时检测异常"""
+        """测试AnomalyDetector在有storage时检测异常."""
         # 创建mock storage
         mock_storage = Mock(spec=DataStorage)
         mock_storage.save_error = Mock()
@@ -65,7 +65,7 @@ class TestDependencyInjectionFix:
         # AnomalyDetector.detect_anomalies() 不再直接调用 save_error 以避免双重写入。
 
     def test_alert_system_without_storage(self):
-        """测试AlertSystem在没有storage时正常工作"""
+        """测试AlertSystem在没有storage时正常工作."""
         # 不应抛出异常
         alert_system = AlertSystem()
 
@@ -83,7 +83,7 @@ class TestDependencyInjectionFix:
         assert alert_system.alert_history[0]["message"] == anomaly["message"]
 
     def test_alert_system_with_storage(self):
-        """测试AlertSystem在有storage时保存告警记录"""
+        """测试AlertSystem在有storage时保存告警记录."""
         # 创建mock storage
         mock_storage = Mock(spec=DataStorage)
         mock_storage.save_error = Mock()
@@ -102,7 +102,7 @@ class TestDependencyInjectionFix:
         assert call_args["level"] == "warning"
 
     def test_report_generator_without_dependencies(self):
-        """测试ReportGenerator在没有依赖时返回错误而不是崩溃"""
+        """测试ReportGenerator在没有依赖时返回错误而不是崩溃."""
         # 不应抛出异常
         generator = ReportGenerator()
 
@@ -118,7 +118,7 @@ class TestDependencyInjectionFix:
         assert "storage未初始化" in result["error"]
 
     def test_report_generator_without_detector(self):
-        """测试ReportGenerator在没有detector时使用降级方案"""
+        """测试ReportGenerator在没有detector时使用降级方案."""
         # 创建临时目录作为storage
         with tempfile.TemporaryDirectory() as temp_dir:
             storage = DataStorage(storage_dir=temp_dir)
@@ -165,7 +165,7 @@ class TestDependencyInjectionFix:
                 assert "speed" in result["trends"]
 
     def test_report_generator_with_all_dependencies(self):
-        """测试ReportGenerator在所有依赖齐全时正常工作"""
+        """测试ReportGenerator在所有依赖齐全时正常工作."""
         # 创建临时目录
         with tempfile.TemporaryDirectory() as temp_dir:
             storage = DataStorage(storage_dir=temp_dir)
@@ -211,7 +211,7 @@ class TestDependencyInjectionFix:
                 assert "recommendations" in result
 
     def test_monitoring_system_integration(self):
-        """测试MonitoringSystem正确集成所有依赖"""
+        """测试MonitoringSystem正确集成所有依赖."""
         # MonitoringSystem应正确传递所有依赖
         monitoring = MonitoringSystem(engine=None, collection_interval=5)
 
@@ -227,10 +227,10 @@ class TestDependencyInjectionFix:
 
 
 class TestOptionalTypeHints:
-    """测试Optional类型提示"""
+    """测试Optional类型提示."""
 
     def test_anomaly_detector_type_hint(self):
-        """测试AnomalyDetector的类型提示"""
+        """测试AnomalyDetector的类型提示."""
         import inspect
 
         sig = inspect.signature(AnomalyDetector.__init__)
@@ -241,7 +241,7 @@ class TestOptionalTypeHints:
         assert storage_param.default is None
 
     def test_alert_system_type_hint(self):
-        """测试AlertSystem的类型提示"""
+        """测试AlertSystem的类型提示."""
         import inspect
 
         sig = inspect.signature(AlertSystem.__init__)
@@ -251,7 +251,7 @@ class TestOptionalTypeHints:
         assert storage_param.default is None
 
     def test_report_generator_type_hints(self):
-        """测试ReportGenerator的类型提示"""
+        """测试ReportGenerator的类型提示."""
         import inspect
 
         sig = inspect.signature(ReportGenerator.__init__)

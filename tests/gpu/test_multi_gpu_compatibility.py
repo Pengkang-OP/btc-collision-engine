@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""多 GPU兼容性测试
+"""多 GPU兼容性测试.
 
 验证不同厂商、不同型号 GPU 的兼容性，包括：
 - 同厂商同型号负载均衡（平均分配，权重误差 < 5%）
@@ -22,7 +22,7 @@ from src.gpu.load_balancer import GPULoadBalancer
 
 
 def _make_device(global_index, name, vendor, mem_gb, compute_units):
-    """构建 GPULoadBalancer 所需的设备信息字典"""
+    """构建 GPULoadBalancer 所需的设备信息字典."""
     return {
         "global_index": global_index,
         "name": name,
@@ -44,10 +44,10 @@ def _weights_sum_to_one(weights: dict, tol: float = 1e-6) -> bool:
 @pytest.mark.unit
 @pytest.mark.gpu
 class TestSameVendorSameModel:
-    """同厂商同型号：验证负载均衡平均分配（权重误差 < 5%）"""
+    """同厂商同型号：验证负载均衡平均分配（权重误差 < 5%）."""
 
     def test_dual_nvidia_equal_load(self):
-        """两块 RTX 3080（8GB/68CU），equal 策略：权重各 0.5，误差 < 5%"""
+        """两块 RTX 3080（8GB/68CU），equal 策略：权重各 0.5，误差 < 5%."""
         devices = [
             _make_device(0, "NVIDIA GeForce RTX 3080", "nvidia", 8.0, 68),
             _make_device(1, "NVIDIA GeForce RTX 3080", "nvidia", 8.0, 68),
@@ -60,7 +60,7 @@ class TestSameVendorSameModel:
         assert abs(weights[1] - 0.5) < 0.05, f"GPU 1 权重 {weights[1]:.3f} 误差超 5%"
 
     def test_dual_nvidia_performance_load(self):
-        """两块 RTX 3080（相同规格），performance 策略：权重应近似相等"""
+        """两块 RTX 3080（相同规格），performance 策略：权重应近似相等."""
         devices = [
             _make_device(0, "NVIDIA GeForce RTX 3080", "nvidia", 8.0, 68),
             _make_device(1, "NVIDIA GeForce RTX 3080", "nvidia", 8.0, 68),
@@ -75,7 +75,7 @@ class TestSameVendorSameModel:
         )
 
     def test_dual_amd_equal_load(self):
-        """两块 RX 6800 XT（16GB/72CU），equal 策略：权重各 0.5"""
+        """两块 RX 6800 XT（16GB/72CU），equal 策略：权重各 0.5."""
         devices = [
             _make_device(0, "AMD Radeon RX 6800 XT", "amd", 16.0, 72),
             _make_device(1, "AMD Radeon RX 6800 XT", "amd", 16.0, 72),
@@ -88,7 +88,7 @@ class TestSameVendorSameModel:
         assert abs(weights[1] - 0.5) < 0.05
 
     def test_triple_nvidia_equal_load(self):
-        """三块相同 GPU，equal 策略：每块权重约 1/3，误差 < 5%"""
+        """三块相同 GPU，equal 策略：每块权重约 1/3，误差 < 5%."""
         devices = [_make_device(i, "NVIDIA GeForce RTX 3080", "nvidia", 8.0, 68) for i in range(3)]
         balancer = GPULoadBalancer(devices, strategy="equal")
         weights = balancer.calculate_weights()
@@ -98,7 +98,7 @@ class TestSameVendorSameModel:
             assert abs(w - 1 / 3) < 0.05, f"GPU {idx} 权重 {w:.3f} 误差超 5%"
 
     def test_equal_load_key_range_assignment(self):
-        """Equal 策略：两块相同 GPU 各分配约 50% 私钥范围"""
+        """Equal 策略：两块相同 GPU 各分配约 50% 私钥范围."""
         devices = [
             _make_device(0, "NVIDIA GeForce RTX 3080", "nvidia", 8.0, 68),
             _make_device(1, "NVIDIA GeForce RTX 3080", "nvidia", 8.0, 68),
@@ -120,10 +120,10 @@ class TestSameVendorSameModel:
 @pytest.mark.unit
 @pytest.mark.gpu
 class TestSameVendorDifferentModel:
-    """同厂商不同型号：按性能加权分配"""
+    """同厂商不同型号：按性能加权分配."""
 
     def test_nvidia_mixed_models_performance_weight(self):
-        """RTX 3080（8GB/68CU） + RTX 4090（24GB/128CU），性能策略下 4090 权重更大"""
+        """RTX 3080（8GB/68CU） + RTX 4090（24GB/128CU），性能策略下 4090 权重更大."""
         devices = [
             _make_device(0, "NVIDIA GeForce RTX 3080", "nvidia", 8.0, 68),
             _make_device(1, "NVIDIA GeForce RTX 4090", "nvidia", 24.0, 128),
@@ -139,7 +139,7 @@ class TestSameVendorDifferentModel:
         assert weights[1] > 0.6, f"RTX 4090 权重 {weights[1]:.3f} 应超过 0.6"
 
     def test_nvidia_mixed_models_key_range_distribution(self):
-        """RTX 3080 + RTX 4090：4090 获得超过 60% 的私钥搜索任务"""
+        """RTX 3080 + RTX 4090：4090 获得超过 60% 的私钥搜索任务."""
         devices = [
             _make_device(0, "NVIDIA GeForce RTX 3080", "nvidia", 8.0, 68),
             _make_device(1, "NVIDIA GeForce RTX 4090", "nvidia", 24.0, 128),
@@ -161,7 +161,7 @@ class TestSameVendorDifferentModel:
         )
 
     def test_amd_mixed_models_performance_weight(self):
-        """RX 6800 XT（16GB/72CU） + RX 7900 XTX（24GB/96CU），7900 XTX 权重更大"""
+        """RX 6800 XT（16GB/72CU） + RX 7900 XTX（24GB/96CU），7900 XTX 权重更大."""
         devices = [
             _make_device(0, "AMD Radeon RX 6800 XT", "amd", 16.0, 72),
             _make_device(1, "AMD Radeon RX 7900 XTX", "amd", 24.0, 96),
@@ -175,7 +175,7 @@ class TestSameVendorDifferentModel:
         )
 
     def test_performance_weight_reflects_memory_diff(self):
-        """性能权重主要由显存大小决定：显存翻倍，权重应明显更大"""
+        """性能权重主要由显存大小决定：显存翻倍，权重应明显更大."""
         devices = [
             _make_device(0, "GPU A", "nvidia", 8.0, 64),
             _make_device(1, "GPU B", "nvidia", 16.0, 64),
@@ -196,10 +196,10 @@ class TestSameVendorDifferentModel:
 @pytest.mark.unit
 @pytest.mark.gpu
 class TestCrossVendor:
-    """不同厂商 GPU 兼容性测试"""
+    """不同厂商 GPU 兼容性测试."""
 
     def test_nvidia_intel_cross_vendor_equal_load(self):
-        """NVIDIA RTX 3080 + Intel Arc A770，equal 策略下各 50%"""
+        """NVIDIA RTX 3080 + Intel Arc A770，equal 策略下各 50%."""
         devices = [
             _make_device(0, "NVIDIA GeForce RTX 3080", "nvidia", 8.0, 68),
             _make_device(1, "Intel Arc A770", "intel", 16.0, 512),
@@ -212,7 +212,7 @@ class TestCrossVendor:
         assert abs(weights[1] - 0.5) < 0.05
 
     def test_nvidia_amd_cross_vendor_performance_load(self):
-        """NVIDIA RTX 3080 + AMD RX 6800 XT，性能策略：AMD 显存更大权重应更大"""
+        """NVIDIA RTX 3080 + AMD RX 6800 XT，性能策略：AMD 显存更大权重应更大."""
         devices = [
             _make_device(0, "NVIDIA GeForce RTX 3080", "nvidia", 8.0, 68),
             _make_device(1, "AMD Radeon RX 6800 XT", "amd", 16.0, 72),
@@ -227,7 +227,7 @@ class TestCrossVendor:
         )
 
     def test_all_vendors_three_way(self):
-        """NVIDIA + AMD + Intel 三厂商共存，权重之和为 1.0"""
+        """NVIDIA + AMD + Intel 三厂商共存，权重之和为 1.0."""
         devices = [
             _make_device(0, "NVIDIA GeForce RTX 3080", "nvidia", 8.0, 68),
             _make_device(1, "AMD Radeon RX 6800 XT", "amd", 16.0, 72),
@@ -243,7 +243,7 @@ class TestCrossVendor:
             assert w > 0, f"GPU {idx} 权重 {w} 应为正数"
 
     def test_intel_workaround_does_not_affect_nvidia_weight(self):
-        """Intel 的 uint32 workaround 不影响 NVIDIA 设备的权重计算"""
+        """Intel 的 uint32 workaround 不影响 NVIDIA 设备的权重计算."""
         devices_nvidia_only = [
             _make_device(0, "NVIDIA GeForce RTX 3080", "nvidia", 8.0, 68),
         ]
@@ -263,7 +263,7 @@ class TestCrossVendor:
         assert 0 < weight_mixed < 1.0, "混合场景下 NVIDIA 权重应在 (0, 1)"
 
     def test_vendor_factors_order_nvidia_gt_amd_gt_intel(self):
-        """厂商因子：NVIDIA > AMD > Intel（相同显存和 CU）"""
+        """厂商因子：NVIDIA > AMD > Intel（相同显存和 CU）."""
         devices = [
             _make_device(0, "NVIDIA GPU", "nvidia", 10.0, 100),
             _make_device(1, "AMD GPU", "amd", 10.0, 100),
@@ -277,7 +277,7 @@ class TestCrossVendor:
         assert weights[1] > weights[2], "AMD 权重应大于 Intel"
 
     def test_cross_vendor_total_keys_covered(self):
-        """跨厂商分配：所有 GPU 分配的私钥总和等于请求总量"""
+        """跨厂商分配：所有 GPU 分配的私钥总和等于请求总量."""
         devices = [
             _make_device(0, "NVIDIA GeForce RTX 3080", "nvidia", 8.0, 68),
             _make_device(1, "AMD Radeon RX 6800 XT", "amd", 16.0, 72),
@@ -303,10 +303,10 @@ class TestCrossVendor:
 @pytest.mark.unit
 @pytest.mark.gpu
 class TestGPUFailureRecovery:
-    """GPU 故障恢复测试"""
+    """GPU 故障恢复测试."""
 
     def setup_method(self):
-        """每个测试前创建新的恢复管理器"""
+        """每个测试前创建新的恢复管理器."""
         self.recovery_manager = GPURecoveryManager(
             max_retry_count=3,
             retry_delay_seconds=0.01,  # 测试中缩短延迟
@@ -315,7 +315,7 @@ class TestGPUFailureRecovery:
         )
 
     def test_single_gpu_failure_recorded(self):
-        """模拟单个 GPU 失败，失败信息被正确记录"""
+        """模拟单个 GPU 失败，失败信息被正确记录."""
         redistribute_mock = Mock()
         error = RuntimeError("device lost")
 
@@ -329,25 +329,25 @@ class TestGPUFailureRecovery:
         assert stats["total_failures"] == 1
 
     def test_oom_failure_classified_correctly(self):
-        """OOM 错误被分类为 OUT_OF_MEMORY 类型"""
+        """OOM 错误被分类为 OUT_OF_MEMORY 类型."""
         error = MemoryError("out of memory: cannot allocate buffer")
         failure_type = self.recovery_manager._classify_failure(error)
         assert failure_type == GPUFailureType.OUT_OF_MEMORY
 
     def test_timeout_failure_classified_correctly(self):
-        """超时错误被分类为 TIMEOUT 类型"""
+        """超时错误被分类为 TIMEOUT 类型."""
         error = TimeoutError("kernel execution timeout")
         failure_type = self.recovery_manager._classify_failure(error)
         assert failure_type == GPUFailureType.TIMEOUT
 
     def test_device_lost_failure_classified_correctly(self):
-        """设备丢失错误被分类为 DEVICE_LOST 类型"""
+        """设备丢失错误被分类为 DEVICE_LOST 类型."""
         error = RuntimeError("device removed: cl_invalid_device")
         failure_type = self.recovery_manager._classify_failure(error)
         assert failure_type == GPUFailureType.DEVICE_LOST
 
     def test_single_gpu_failure_redistribution_called(self):
-        """GPU 失败恢复失败后，redistribute_callback 被调用"""
+        """GPU 失败恢复失败后，redistribute_callback 被调用."""
         redistribute_mock = Mock()
 
         # 注册不健康的恢复回调（让恢复一直失败）
@@ -365,12 +365,12 @@ class TestGPUFailureRecovery:
         assert redistribute_mock.call_count >= 1
 
     def test_batch_size_reduction_on_oom(self):
-        """OOM 错误后，batch_size_reduction_factor 被记录在恢复配置中"""
+        """OOM 错误后，batch_size_reduction_factor 被记录在恢复配置中."""
         assert self.recovery_manager.batch_size_reduction_factor == 0.5
         # 默认因子为 0.5（批次大小降为原来的 50%）
 
     def test_engine_continues_after_failure_auto_redistribute(self):
-        """GPU 失败后，auto_redistribute=True 时重分配回调会被触发"""
+        """GPU 失败后，auto_redistribute=True 时重分配回调会被触发."""
         redistribute_mock = Mock()
         alert_mock = Mock()
 
@@ -388,7 +388,7 @@ class TestGPUFailureRecovery:
         assert redistribute_mock.call_count >= 1, "应触发至少一次负载重分配"
 
     def test_gpu_marked_failed_after_max_retries(self):
-        """超过最大重试次数后，GPU 被标记为失败"""
+        """超过最大重试次数后，GPU 被标记为失败."""
         # 注册总返回失败的恢复回调
         self.recovery_manager.register_recovery_callback(gpu_id=1, callback=lambda action, *args: False)
 
@@ -402,7 +402,7 @@ class TestGPUFailureRecovery:
         assert self.recovery_manager.is_gpu_failed(1), "GPU 1 应被标记为失败"
 
     def test_recovery_stats_tracking(self):
-        """恢复统计信息正确追踪总失败次数"""
+        """恢复统计信息正确追踪总失败次数."""
         for i in range(3):
             self.recovery_manager.handle_gpu_failure(
                 gpu_id=i,
@@ -413,7 +413,7 @@ class TestGPUFailureRecovery:
         assert stats["total_failures"] == 3
 
     def test_reset_failure_history_clears_failed_state(self):
-        """重置失败历史后，GPU 不再被标记为失败"""
+        """重置失败历史后，GPU 不再被标记为失败."""
         self.recovery_manager.register_recovery_callback(gpu_id=0, callback=lambda action, *args: False)
         for _ in range(5):
             self.recovery_manager.handle_gpu_failure(gpu_id=0, error=RuntimeError("error"))
@@ -430,7 +430,7 @@ class TestGPUFailureRecovery:
 @pytest.mark.unit
 @pytest.mark.gpu
 class TestDynamicRebalancing:
-    """动态负载重平衡测试"""
+    """动态负载重平衡测试."""
 
     def _make_two_nvidia_devices(self):
         return [
@@ -439,7 +439,7 @@ class TestDynamicRebalancing:
         ]
 
     def test_rebalance_interval_triggers_correctly(self):
-        """should_rebalance() 在间隔时间内应返回 False"""
+        """should_rebalance() 在间隔时间内应返回 False."""
         devices = self._make_two_nvidia_devices()
         balancer = GPULoadBalancer(devices, strategy="equal", rebalance_interval=3600)
 
@@ -447,7 +447,7 @@ class TestDynamicRebalancing:
         assert balancer.should_rebalance() is False
 
     def test_performance_degradation_rebalance(self):
-        """模拟 GPU 0 性能下降 50%，redistribute_load() 后 GPU 0 权重下降"""
+        """模拟 GPU 0 性能下降 50%，redistribute_load() 后 GPU 0 权重下降."""
         devices = self._make_two_nvidia_devices()
         balancer = GPULoadBalancer(devices, strategy="equal", rebalance_interval=0)
 
@@ -468,7 +468,7 @@ class TestDynamicRebalancing:
         )
 
     def test_record_performance_updates_stats(self):
-        """record_performance 后 get_device_load 返回更新后的吞吐量"""
+        """record_performance 后 get_device_load 返回更新后的吞吐量."""
         devices = self._make_two_nvidia_devices()
         balancer = GPULoadBalancer(devices, strategy="equal")
 
@@ -480,7 +480,7 @@ class TestDynamicRebalancing:
         assert load_info["error_rate"] == pytest.approx(0.1)
 
     def test_gpu_recovery_rejoin_weights_normalized(self):
-        """模拟 GPU 恢复后，权重重新归一化（总和为 1.0）"""
+        """模拟 GPU 恢复后，权重重新归一化（总和为 1.0）."""
         devices = self._make_two_nvidia_devices()
         balancer = GPULoadBalancer(devices, strategy="equal", rebalance_interval=0)
 
@@ -498,7 +498,7 @@ class TestDynamicRebalancing:
         )
 
     def test_all_loads_returns_all_devices(self):
-        """get_all_loads() 返回所有设备的负载信息"""
+        """get_all_loads() 返回所有设备的负载信息."""
         devices = self._make_two_nvidia_devices()
         balancer = GPULoadBalancer(devices, strategy="equal")
         # 先分配范围，使 key_ranges 被填充
@@ -510,7 +510,7 @@ class TestDynamicRebalancing:
             assert idx in all_loads, f"GPU {idx} 应在 get_all_loads() 中"
 
     def test_set_strategy_changes_weights(self):
-        """set_strategy() 切换策略后权重重新计算"""
+        """set_strategy() 切换策略后权重重新计算."""
         devices = [
             _make_device(0, "NVIDIA GeForce RTX 3080", "nvidia", 8.0, 68),
             _make_device(1, "NVIDIA GeForce RTX 4090", "nvidia", 24.0, 128),
@@ -534,10 +534,10 @@ class TestDynamicRebalancing:
 @pytest.mark.unit
 @pytest.mark.gpu
 class TestKernelCompilationCache:
-    """场景 3.1: 内核编译缓存 (GPUContext._kernel_cache)"""
+    """场景 3.1: 内核编译缓存 (GPUContext._kernel_cache)."""
 
     def test_vendor_key_nvidia(self):
-        """_get_vendor_key 返回包含 nvidia 的键"""
+        """_get_vendor_key 返回包含 nvidia 的键."""
         from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
 
         engine = MultiGPUCollisionEngine.__new__(MultiGPUCollisionEngine)
@@ -551,7 +551,7 @@ class TestKernelCompilationCache:
         assert "nvidia" in key.lower(), f"键 {key} 应包含 'nvidia'"
 
     def test_vendor_key_amd(self):
-        """_get_vendor_key 返回包含 amd 相关内容的键"""
+        """_get_vendor_key 返回包含 amd 相关内容的键."""
         from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
 
         engine = MultiGPUCollisionEngine.__new__(MultiGPUCollisionEngine)
@@ -565,7 +565,7 @@ class TestKernelCompilationCache:
         assert "advanced" in key.lower() or "amd" in key.lower(), f"键 {key} 应包含 AMD 相关内容"
 
     def test_vendor_key_intel(self):
-        """_get_vendor_key 返回包含 intel 的键"""
+        """_get_vendor_key 返回包含 intel 的键."""
         from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
 
         engine = MultiGPUCollisionEngine.__new__(MultiGPUCollisionEngine)
@@ -579,7 +579,7 @@ class TestKernelCompilationCache:
         assert "intel" in key.lower(), f"键 {key} 应包含 'intel'"
 
     def test_same_vendor_compile_config_cached(self):
-        """同厂商第二次请求不重复注册编译配置"""
+        """同厂商第二次请求不重复注册编译配置."""
         from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
 
         engine = MultiGPUCollisionEngine.__new__(MultiGPUCollisionEngine)
@@ -606,7 +606,7 @@ class TestKernelCompilationCache:
         assert config1["build_options"] == build_opts
 
     def test_different_vendor_separate_configs(self):
-        """不同厂商各自独立编译配置"""
+        """不同厂商各自独立编译配置."""
         from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
 
         engine = MultiGPUCollisionEngine.__new__(MultiGPUCollisionEngine)
@@ -635,7 +635,7 @@ class TestKernelCompilationCache:
         )
 
     def test_context_kernel_cache_initially_empty(self):
-        """GPUContext._kernel_cache 初始化为空"""
+        """GPUContext._kernel_cache 初始化为空."""
         from src.gpu.context import GPUContext
 
         ctx = GPUContext.__new__(GPUContext)
@@ -646,7 +646,7 @@ class TestKernelCompilationCache:
         assert len(ctx._kernel_cache) == 0, "GPUContext._kernel_cache 初始应为空"
 
     def test_context_cache_key_format(self):
-        """GPUContext._kernel_cache 的键包含源码哈希和编译选项"""
+        """GPUContext._kernel_cache 的键包含源码哈希和编译选项."""
         import hashlib
 
         kernel_src = "__kernel void test(){}"
@@ -667,10 +667,10 @@ class TestKernelCompilationCache:
 @pytest.mark.unit
 @pytest.mark.gpu
 class TestProportionalMemoryPools:
-    """场景 3.2: Per-GPU 内存池按显存比例分配"""
+    """场景 3.2: Per-GPU 内存池按显存比例分配."""
 
     def test_single_device_gets_full_pool(self):
-        """单卡获得全部分配额度"""
+        """单卡获得全部分配额度."""
         from src.gpu.memory_pool import GPUMemoryPool
 
         devices = [{"name": "GPU A", "global_mem_size": 8 * 1024**3}]  # 8GB
@@ -681,7 +681,7 @@ class TestProportionalMemoryPools:
         assert stats["max_memory_mb"] == 512
 
     def test_equal_vram_equal_split(self):
-        """两块显存相同的 GPU，各分得 50%"""
+        """两块显存相同的 GPU，各分得 50%."""
         from src.gpu.memory_pool import GPUMemoryPool
 
         devices = [
@@ -698,7 +698,7 @@ class TestProportionalMemoryPools:
         assert abs(mb1 - 256) <= 1, f"GPU 1 内存池 {mb1}MB，期望 ~256MB"
 
     def test_proportional_allocation_different_vram(self):
-        """显存 8GB + 24GB：内存池按 1:3 比例分配"""
+        """显存 8GB + 24GB：内存池按 1:3 比例分配."""
         from src.gpu.memory_pool import GPUMemoryPool
 
         devices = [
@@ -715,7 +715,7 @@ class TestProportionalMemoryPools:
         assert mb1 / mb0 >= 2.0, f"内存池比 {mb1 / mb0:.2f}，期望 >= 2.0"
 
     def test_zero_vram_equal_fallback(self):
-        """无法获取显存信息时，均分内存池"""
+        """无法获取显存信息时，均分内存池."""
         from src.gpu.memory_pool import GPUMemoryPool
 
         devices = [
@@ -731,7 +731,7 @@ class TestProportionalMemoryPools:
         assert mb1 >= 64, f"GPU 1 内存池 {mb1}MB 不应低于 64MB"
 
     def test_minimum_pool_64mb(self):
-        """小显存 GPU 也至少分得 64MB 内存池"""
+        """小显存 GPU 也至少分得 64MB 内存池."""
         from src.gpu.memory_pool import GPUMemoryPool
 
         devices = [
@@ -744,14 +744,14 @@ class TestProportionalMemoryPools:
         assert mb_small >= 64, f"1GB 显存 GPU 内存池 {mb_small}MB 不应低于 64MB"
 
     def test_empty_devices_returns_empty(self):
-        """空设备列表返回空映射"""
+        """空设备列表返回空映射."""
         from src.gpu.memory_pool import GPUMemoryPool
 
         pools = GPUMemoryPool.create_proportional_pools([])
         assert pools == {}
 
     def test_multi_engine_stores_pool_config(self):
-        """多 GPU 引擎初始化后 _device_memory_pool_config 有内容"""
+        """多 GPU 引擎初始化后 _device_memory_pool_config 有内容."""
         from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
 
         devices = [
@@ -802,10 +802,10 @@ class TestProportionalMemoryPools:
 @pytest.mark.unit
 @pytest.mark.gpu
 class TestVendorBuildOptions:
-    """场景 3.3: 厂商特定编译选项（VENDOR_BUILD_OPTIONS）"""
+    """场景 3.3: 厂商特定编译选项（VENDOR_BUILD_OPTIONS）."""
 
     def test_vendor_build_options_exists(self):
-        """VENDOR_BUILD_OPTIONS 常量存在且包含三大厂商"""
+        """VENDOR_BUILD_OPTIONS 常量存在且包含三大厂商."""
         from src.gpu.context import VENDOR_BUILD_OPTIONS
 
         assert "nvidia" in VENDOR_BUILD_OPTIONS
@@ -813,7 +813,7 @@ class TestVendorBuildOptions:
         assert "intel" in VENDOR_BUILD_OPTIONS
 
     def test_nvidia_no_fast_relaxed_math(self):
-        """NVIDIA 编译选项不包含 -cl-fast-relaxed-math（精度安全约束）"""
+        """NVIDIA 编译选项不包含 -cl-fast-relaxed-math（精度安全约束）."""
         from src.gpu.context import VENDOR_BUILD_OPTIONS
 
         nvidia_opts = VENDOR_BUILD_OPTIONS["nvidia"]["options"]
@@ -822,7 +822,7 @@ class TestVendorBuildOptions:
         )
 
     def test_amd_no_fast_relaxed_math(self):
-        """AMD 编译选项不包含 -cl-fast-relaxed-math（精度风险）"""
+        """AMD 编译选项不包含 -cl-fast-relaxed-math（精度风险）."""
         from src.gpu.context import VENDOR_BUILD_OPTIONS
 
         amd_opts = VENDOR_BUILD_OPTIONS["amd"]["options"]
@@ -831,7 +831,7 @@ class TestVendorBuildOptions:
         )
 
     def test_intel_no_fast_relaxed_math(self):
-        """Intel 编译选项不包含 -cl-fast-relaxed-math（已知精度问题）"""
+        """Intel 编译选项不包含 -cl-fast-relaxed-math（已知精度问题）."""
         from src.gpu.context import VENDOR_BUILD_OPTIONS
 
         intel_opts = VENDOR_BUILD_OPTIONS["intel"]["options"]
@@ -840,7 +840,7 @@ class TestVendorBuildOptions:
         )
 
     def test_amd_uses_cl2(self):
-        """AMD 使用 CL2.0 标准"""
+        """AMD 使用 CL2.0 标准."""
         from src.gpu.context import VENDOR_BUILD_OPTIONS
 
         amd_opts = VENDOR_BUILD_OPTIONS["amd"]["options"]
@@ -849,7 +849,7 @@ class TestVendorBuildOptions:
         )
 
     def test_intel_uses_cl2(self):
-        """Intel 使用 CL2.0 标准"""
+        """Intel 使用 CL2.0 标准."""
         from src.gpu.context import VENDOR_BUILD_OPTIONS
 
         intel_opts = VENDOR_BUILD_OPTIONS["intel"]["options"]
@@ -858,13 +858,13 @@ class TestVendorBuildOptions:
         )
 
     def test_intel_has_workarounds_flag(self):
-        """Intel 配置标记 intel_workarounds=True"""
+        """Intel 配置标记 intel_workarounds=True."""
         from src.gpu.context import VENDOR_BUILD_OPTIONS
 
         assert VENDOR_BUILD_OPTIONS["intel"].get("intel_workarounds") is True
 
     def test_all_vendors_have_description(self):
-        """所有厂商配置都有 description 字段"""
+        """所有厂商配置都有 description 字段."""
         from src.gpu.context import VENDOR_BUILD_OPTIONS
 
         for vendor, cfg in VENDOR_BUILD_OPTIONS.items():
@@ -872,7 +872,7 @@ class TestVendorBuildOptions:
             assert isinstance(cfg["description"], str) and cfg["description"]
 
     def _get_build_options_for_vendor(self, vendor_name: str) -> str:
-        """构造模拟 GPUContext 并调用 _get_build_options"""
+        """构造模拟 GPUContext 并调用 _get_build_options."""
         from src.gpu.context import GPUContext
 
         ctx = GPUContext.__new__(GPUContext)
@@ -883,22 +883,22 @@ class TestVendorBuildOptions:
         return ctx._get_build_options()
 
     def test_get_build_options_nvidia_no_fast_math(self):
-        """_get_build_options 对 NVIDIA 不包含 fast-relaxed-math（精度安全约束）"""
+        """_get_build_options 对 NVIDIA 不包含 fast-relaxed-math（精度安全约束）."""
         opts = self._get_build_options_for_vendor("nvidia")
         assert "-cl-fast-relaxed-math" not in opts
 
     def test_get_build_options_amd_no_fast_math(self):
-        """_get_build_options 对 AMD 不包含 fast-relaxed-math"""
+        """_get_build_options 对 AMD 不包含 fast-relaxed-math."""
         opts = self._get_build_options_for_vendor("amd")
         assert "-cl-fast-relaxed-math" not in opts
 
     def test_get_build_options_intel_no_fast_math(self):
-        """_get_build_options 对 Intel 不包含 fast-relaxed-math"""
+        """_get_build_options 对 Intel 不包含 fast-relaxed-math."""
         opts = self._get_build_options_for_vendor("intel")
         assert "-cl-fast-relaxed-math" not in opts
 
     def test_get_build_options_unknown_vendor_safe(self):
-        """未知厂商使用安全编译选项（不启用快速数学）"""
+        """未知厂商使用安全编译选项（不启用快速数学）."""
         opts = self._get_build_options_for_vendor("unknown_vendor")
         assert "-cl-fast-relaxed-math" not in opts
 
@@ -911,10 +911,10 @@ class TestVendorBuildOptions:
 @pytest.mark.unit
 @pytest.mark.gpu
 class TestSingleGPUMode:
-    """场景 1: GPU 单卡模式基本功能验证"""
+    """场景 1: GPU 单卡模式基本功能验证."""
 
     def test_single_gpu_device_selection(self):
-        """单卡自动选择最优设备"""
+        """单卡自动选择最优设备."""
         devices = [
             _make_device(0, "NVIDIA GeForce RTX 4090", "nvidia", 24.0, 128),
         ]
@@ -925,7 +925,7 @@ class TestSingleGPUMode:
         assert abs(weights[0] - 1.0) < 1e-6, f"单卡权重 {weights[0]} 应为 1.0"
 
     def test_single_gpu_full_key_range(self):
-        """单卡获得全部密鑰范围"""
+        """单卡获得全部密鑰范围."""
         devices = [
             _make_device(0, "NVIDIA GeForce RTX 4090", "nvidia", 24.0, 128),
         ]
@@ -937,7 +937,7 @@ class TestSingleGPUMode:
         assert end - start == 1_000_000
 
     def test_single_gpu_proportional_pool_is_full(self):
-        """单卡内存池分配全部 total_pool_mb"""
+        """单卡内存池分配全部 total_pool_mb."""
         from src.gpu.memory_pool import GPUMemoryPool
 
         devices = [{"name": "RTX 4090", "global_mem_size": 24 * 1024**3}]

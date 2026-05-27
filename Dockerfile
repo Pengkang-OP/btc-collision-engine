@@ -83,18 +83,19 @@ ENV PATH="/opt/venv/bin:$PATH"
 RUN mkdir -p ${APP_HOME} ${DATA_DIR} ${LOG_DIR} ${MONITOR_DIR}
 WORKDIR ${APP_HOME}
 
-# 复制应用代码
+# 创建非root用户（必须在 COPY --chown 之前，否则构建失败）
+RUN groupadd -r btc-engine \
+    && useradd -r -g btc-engine -d ${APP_HOME} -s /sbin/nologin btc-engine
+
+# 复制应用代码（使用已创建的用户）
 COPY --chown=btc-engine:btc-engine . .
 
 # 创建数据目录（如果不存在）
 RUN mkdir -p data_logs monitoring_data logs
 
-# 设置目录权限
+# 设置目录权限和所有者
 RUN chmod 750 ${DATA_DIR} ${LOG_DIR} ${MONITOR_DIR} \
-    && chmod 750 data_logs monitoring_data logs
-
-# 创建非root用户并切换
-RUN groupadd -r btc-engine && useradd -r -g btc-engine -d ${APP_HOME} -s /sbin/nologin btc-engine \
+    && chmod 750 data_logs monitoring_data logs \
     && chown -R btc-engine:btc-engine ${APP_HOME}
 
 # 切换到非 root 用户运行（安全加固）

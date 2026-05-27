@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CLI命令模块 (commands) 单元测试
+"""CLI命令模块 (commands) 单元测试.
 
 覆盖：
 - QUICK_RUN_DEFAULTS / PREVIEW_CONFIG 常量
@@ -37,7 +37,7 @@ def temp_dir():
 
 @pytest.mark.unit
 class TestConstants:
-    """常量定义测试"""
+    """常量定义测试."""
 
     def test_quick_run_defaults(self):
         from src.cli.commands import QUICK_RUN_DEFAULTS
@@ -63,7 +63,7 @@ class TestConstants:
 
 @pytest.mark.unit
 class TestFormatDeviceLabel:
-    """设备标签格式化测试"""
+    """设备标签格式化测试."""
 
     def test_format_with_memory_gb(self):
         from src.cli.commands import _format_device_label
@@ -103,10 +103,10 @@ class TestFormatDeviceLabel:
 
 @pytest.mark.unit
 class TestCmdValidateAddresses:
-    """地址验证命令测试"""
+    """地址验证命令测试."""
 
     def test_file_not_found_exits(self, temp_dir):
-        """文件不存在时应退出（sys.exit 被 mock 后函数会继续执行到多次 exit）"""
+        """文件不存在时应退出（sys.exit 被 mock 后函数会继续执行到多次 exit）."""
         from src.cli.commands import _cmd_validate_addresses
 
         with (
@@ -118,7 +118,7 @@ class TestCmdValidateAddresses:
             mock_exit.assert_any_call(1)
 
     def test_empty_file(self, temp_dir):
-        """空文件应正常退出"""
+        """空文件应正常退出."""
         from src.cli.commands import _cmd_validate_addresses
 
         target_file = os.path.join(temp_dir, "empty.txt")
@@ -132,7 +132,7 @@ class TestCmdValidateAddresses:
             mock_exit.assert_called_once_with(0)
 
     def test_validates_addresses(self, temp_dir):
-        """有地址时应正常处理"""
+        """有地址时应正常处理."""
         from src.cli.commands import _cmd_validate_addresses
 
         target_file = os.path.join(temp_dir, "addresses.txt")
@@ -151,7 +151,7 @@ class TestCmdValidateAddresses:
                 assert call_args[0][0] == 0
 
     def test_path_validation_fails(self):
-        """路径验证失败应调用 sys.exit(1) 提前退出，不读文件"""
+        """路径验证失败应调用 sys.exit(1) 提前退出，不读文件."""
         from src.cli.commands import _cmd_validate_addresses
 
         with (
@@ -171,10 +171,10 @@ class TestCmdValidateAddresses:
 
 @pytest.mark.unit
 class TestCmdConfigCheck:
-    """配置检查命令测试"""
+    """配置检查命令测试."""
 
     def test_config_not_exists(self):
-        """配置文件不存在时"""
+        """配置文件不存在时."""
         from src.cli.commands import _cmd_config_check
 
         with (
@@ -185,7 +185,7 @@ class TestCmdConfigCheck:
             _cmd_config_check()  # 不应崩溃
 
     def test_config_valid(self, temp_dir):
-        """有效配置文件"""
+        """有效配置文件."""
         import src.cli.commands as commands_module
         from src.cli.commands import _cmd_config_check
 
@@ -209,7 +209,7 @@ class TestCmdConfigCheck:
             _cmd_config_check()  # 不应崩溃
 
     def test_config_invalid_json(self, temp_dir):
-        """无效 JSON 配置"""
+        """无效 JSON 配置."""
         import src.cli.commands as commands_module
         from src.cli.commands import _cmd_config_check
 
@@ -231,7 +231,7 @@ class TestCmdConfigCheck:
 
 @pytest.mark.unit
 class TestSaveAddressToTargetsFile:
-    """地址保存测试"""
+    """地址保存测试."""
 
     def test_creates_new_file(self, temp_dir):
         import src.cli.commands as commands_module
@@ -279,10 +279,10 @@ class TestSaveAddressToTargetsFile:
 
 @pytest.mark.unit
 class TestHandleInfoCommands:
-    """信息命令分发测试"""
+    """信息命令分发测试."""
 
     def test_examples_command(self):
-        """Examples 命令：sys.exit 被 mock 后函数不会真正退出，返回值可能为 False"""
+        """Examples 命令：sys.exit 被 mock 后函数不会真正退出，返回值可能为 False."""
         from src.cli.commands import _handle_info_commands
 
         args = Mock()
@@ -313,10 +313,10 @@ class TestHandleInfoCommands:
 
 @pytest.mark.unit
 class TestHandleSystemCommands:
-    """系统命令分发测试"""
+    """系统命令分发测试."""
 
     def test_validate_addresses_command(self):
-        """validate-addresses 命令：sys.exit 被 mock 后函数继续执行，验证命令被调用即可"""
+        """validate-addresses 命令：sys.exit 被 mock 后函数继续执行，验证命令被调用即可."""
         from src.cli.commands import _handle_system_commands
 
         args = Mock()
@@ -334,7 +334,7 @@ class TestHandleSystemCommands:
         mock_exit.assert_called_once_with(0)
 
     def test_migrate_config_command(self):
-        """migrate-config 命令：sys.exit 被 mock 后函数继续执行，验证 migrate_config_file 被调用即可"""
+        """migrate-config 命令：sys.exit 被 mock 后函数继续执行，验证 migrate_config_file 被调用即可."""
         from src.cli.commands import _handle_system_commands
 
         args = Mock()
@@ -371,10 +371,10 @@ class TestHandleSystemCommands:
 
 @pytest.mark.unit
 class TestDispatchUtilityCommands:
-    """工具命令调度测试"""
+    """工具命令调度测试."""
 
     def test_dispatches_to_info(self):
-        """调度到信息命令：sys.exit 被 mock 后函数继续执行，验证 _cmd_examples 被调用即可"""
+        """调度到信息命令：sys.exit 被 mock 后函数继续执行，验证 _cmd_examples 被调用即可."""
         from src.cli.commands import _dispatch_utility_commands
 
         args = Mock()

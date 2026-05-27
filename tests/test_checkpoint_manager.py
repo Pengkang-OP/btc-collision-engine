@@ -1,18 +1,19 @@
-"""CheckpointManager 单元测试 - 保存/加载/删除、敏感信息清理、原子写入"""
+"""CheckpointManager 单元测试 - 保存/加载/删除、敏感信息清理、原子写入."""
 
 import json
 import os
 import pathlib
 import tempfile
 import time
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 from src.collision.checkpoint_manager import CheckpointManager
 
 
 class TestCheckpointManagerBasic:
-    """基础保存/加载/删除测试"""
+    """基础保存/加载/删除测试."""
 
     def setup_method(self):
         # 使用临时文件，但不预先创建
@@ -26,7 +27,7 @@ class TestCheckpointManagerBasic:
             pathlib.Path(self.tmp_path).unlink()
 
     def test_save_and_load(self):
-        """保存后能正确加载"""
+        """保存后能正确加载."""
         self.mgr.save(
             mode="random",
             targets={"1A1z", "1B2y"},
@@ -42,30 +43,30 @@ class TestCheckpointManagerBasic:
         assert data["total_checked"] == 50000
 
     def test_exists_after_save(self):
-        """保存后 exists() 返回 True"""
+        """保存后 exists() 返回 True."""
         assert not self.mgr.exists
         self.mgr.save(
-            mode="random", targets=set(), current_position=0, total_checked=0, matches=[], force=True
+            mode="random", targets=set(), current_position=0, total_checked=0, matches=[], force=True,
         )
         assert self.mgr.exists
 
     def test_delete(self):
-        """删除后 exists() 返回 False"""
+        """删除后 exists() 返回 False."""
         self.mgr.save(
-            mode="random", targets=set(), current_position=0, total_checked=0, matches=[], force=True
+            mode="random", targets=set(), current_position=0, total_checked=0, matches=[], force=True,
         )
         assert self.mgr.exists
         self.mgr.delete()
         assert not self.mgr.exists
 
     def test_load_nonexistent_returns_none(self):
-        """不存在时 load() 返回 None"""
+        """不存在时 load() 返回 None."""
         mgr = CheckpointManager(filepath="nonexistent_12345.json")
         assert mgr.load() is None
 
 
 class TestCheckpointSensitiveInfoCleaning:
-    """敏感信息清理测试"""
+    """敏感信息清理测试."""
 
     def setup_method(self):
         import uuid
@@ -81,7 +82,7 @@ class TestCheckpointSensitiveInfoCleaning:
             pathlib.Path(self.tmp_path).unlink()
 
     def test_private_key_not_saved(self):
-        """私钥明文不保存到断点文件"""
+        """私钥明文不保存到断点文件."""
         matches_with_key = [
             {
                 "address": "1TestAddress",
@@ -108,7 +109,7 @@ class TestCheckpointSensitiveInfoCleaning:
         assert "private_key_wif" not in raw
 
     def test_address_preserved_in_match(self):
-        """断点保存保留地址信息"""
+        """断点保存保留地址信息."""
         matches = [{"address": "1TestPreserved", "timestamp": time.time()}]
         self.mgr.save(
             mode="random",
@@ -122,19 +123,19 @@ class TestCheckpointSensitiveInfoCleaning:
         assert data["matches"][0]["address"] == "1TestPreserved"
 
     def test_security_note_in_file(self):
-        """断点文件包含安全说明"""
+        """断点文件包含安全说明."""
         self.mgr.save(
-            mode="random", targets=set(), current_position=0, total_checked=0, matches=[], force=True
+            mode="random", targets=set(), current_position=0, total_checked=0, matches=[], force=True,
         )
         raw = pathlib.Path(self.tmp_path).read_text(encoding="utf-8")
         assert "security_note" in raw
 
 
 class TestCheckpointAtomicWrite:
-    """原子写入测试"""
+    """原子写入测试."""
 
     def test_file_valid_after_save(self):
-        """保存后文件是有效 JSON"""
+        """保存后文件是有效 JSON."""
         tmp = tempfile.NamedTemporaryFile(suffix=".json", delete=False)
         tmp.close()
         try:
@@ -157,7 +158,7 @@ class TestCheckpointAtomicWrite:
                 pathlib.Path(tmp.name).unlink()
 
     def test_targets_saved_as_list(self):
-        """目标地址保存为列表（可 JSON 序列化）"""
+        """目标地址保存为列表（可 JSON 序列化）."""
         tmp = tempfile.NamedTemporaryFile(suffix=".json", delete=False)
         tmp.close()
         try:
@@ -179,10 +180,10 @@ class TestCheckpointAtomicWrite:
 
 
 class TestCheckpointAutoSave:
-    """自动保存间隔测试"""
+    """自动保存间隔测试."""
 
     def test_should_auto_save_initially(self):
-        """首次调用 should_auto_save 应返回 True（超过间隔）"""
+        """首次调用 should_auto_save 应返回 True（超过间隔）."""
         tmp = tempfile.NamedTemporaryFile(suffix=".json", delete=False)
         tmp.close()
         try:
@@ -194,13 +195,13 @@ class TestCheckpointAutoSave:
                 pathlib.Path(tmp.name).unlink()
 
     def test_should_not_auto_save_too_soon(self):
-        """刚保存后 should_auto_save 应返回 False"""
+        """刚保存后 should_auto_save 应返回 False."""
         tmp = tempfile.NamedTemporaryFile(suffix=".json", delete=False)
         tmp.close()
         try:
             mgr = CheckpointManager(filepath=tmp.name, auto_save_interval=9999)
             mgr.save(
-                mode="random", targets=set(), current_position=0, total_checked=0, matches=[], force=True
+                mode="random", targets=set(), current_position=0, total_checked=0, matches=[], force=True,  # noqa: E501
             )
             # 紧接着保存，间隔未到
             assert not mgr.should_auto_save
@@ -210,10 +211,10 @@ class TestCheckpointAutoSave:
 
 
 class TestCheckpointDefaultPath:
-    """默认路径测试"""
+    """默认路径测试."""
 
     def test_default_filepath_uses_data_logs(self):
-        """无filepath参数时使用默认路径"""
+        """无filepath参数时使用默认路径."""
         mgr = CheckpointManager()
         # 默认路径为 checkpoint.json（不在 data_logs 目录下）
         assert "checkpoint.json" in str(mgr.filepath)
@@ -223,7 +224,7 @@ class TestCheckpointDefaultPath:
 
 
 class TestCheckpointSaveVariants:
-    """save() 多种场景测试"""
+    """save() 多种场景测试."""
 
     def setup_method(self):
         import uuid
@@ -236,7 +237,7 @@ class TestCheckpointSaveVariants:
             pathlib.Path(self.tmp_path).unlink()
 
     def test_save_force_writes_immediately(self):
-        """force=True 强制写入"""
+        """force=True 强制写入."""
         self.mgr.save(
             mode="random",
             targets=set(),
@@ -248,7 +249,7 @@ class TestCheckpointSaveVariants:
         assert self.mgr.exists
 
     def test_save_with_auto_save_disabled(self):
-        """间隔未到时 save 仅缓冲不写入"""
+        """间隔未到时 save 仅缓冲不写入."""
         self.mgr._last_save = time.time()  # 刚保存过
         self.mgr.save(mode="random", targets=set(), current_position=0, total_checked=0, matches=[])
         # 间隔9999秒未到，不应写入文件
@@ -258,19 +259,19 @@ class TestCheckpointSaveVariants:
         assert self.mgr._dirty
 
     def test_flush_buffer_not_dirty(self):
-        """_flush_buffer 在 _dirty=False 时直接返回"""
+        """_flush_buffer 在 _dirty=False 时直接返回."""
         self.mgr._dirty = False
         self.mgr._buffer = {"test": 1}
         self.mgr._flush_buffer()
 
     def test_flush_buffer_none(self):
-        """_flush_buffer 在 _buffer=None 时直接返回"""
+        """_flush_buffer 在 _buffer=None 时直接返回."""
         self.mgr._dirty = True
         self.mgr._buffer = None
         self.mgr._flush_buffer()
 
     def test_save_match_with_private_key_hash(self):
-        """Match 含 private_key_hash 时被保存"""
+        """Match 含 private_key_hash 时被保存."""
         matches = [{"address": "1Addr", "timestamp": 1.0, "private_key_hash": "abc123"}]
         self.mgr.save(
             mode="random",
@@ -285,7 +286,7 @@ class TestCheckpointSaveVariants:
 
 
 class TestCheckpointFlushErrors:
-    """_flush_buffer 异常处理测试"""
+    """_flush_buffer 异常处理测试."""
 
     def setup_method(self):
         import uuid
@@ -299,7 +300,7 @@ class TestCheckpointFlushErrors:
 
     @patch("builtins.open")
     def test_flush_permission_error(self, mock_file):
-        """PermissionError 被捕获"""
+        """PermissionError 被捕获."""
         mock_file.side_effect = PermissionError("permission denied")
         self.mgr._dirty = True
         self.mgr._buffer = {"key": "val"}
@@ -307,7 +308,7 @@ class TestCheckpointFlushErrors:
 
     @patch("builtins.open")
     def test_flush_os_error(self, mock_file):
-        """OSError 被捕获"""
+        """OSError 被捕获."""
         mock_file.side_effect = OSError("disk full")
         self.mgr._dirty = True
         self.mgr._buffer = {"key": "val"}
@@ -315,14 +316,14 @@ class TestCheckpointFlushErrors:
 
     @patch("builtins.open")
     def test_flush_generic_exception(self, mock_file):
-        """通用异常被捕获"""
+        """通用异常被捕获."""
         mock_file.side_effect = RuntimeError("unexpected")
         self.mgr._dirty = True
         self.mgr._buffer = {"key": "val"}
         self.mgr._flush_buffer()
 
     def test_cleanup_temp_file_exists(self):
-        """_cleanup_temp_file 删除存在的临时文件"""
+        """_cleanup_temp_file 删除存在的临时文件."""
         temp_file = self.tmp_path + ".tmp"
         pathlib.Path(temp_file).write_text("test")
         assert pathlib.Path(temp_file).exists()
@@ -330,12 +331,12 @@ class TestCheckpointFlushErrors:
         assert not pathlib.Path(temp_file).exists()
 
     def test_cleanup_temp_file_not_exists(self):
-        """_cleanup_temp_file 不存在的文件无异常"""
+        """_cleanup_temp_file 不存在的文件无异常."""
         self.mgr._cleanup_temp_file("/nonexistent/path.tmp")
 
 
 class TestCheckpointLoadEdgeCases:
-    """load() 边界情况测试"""
+    """load() 边界情况测试."""
 
     def setup_method(self):
         import uuid
@@ -352,20 +353,20 @@ class TestCheckpointLoadEdgeCases:
                 pathlib.Path(p).unlink()
 
     def test_load_version_mismatch(self):
-        """版本不兼容时返回 None"""
+        """版本不兼容时返回 None."""
         with pathlib.Path(self.tmp_path).open("w") as f:
             json.dump({"version": 99, "mode": "random"}, f)
         result = self.mgr.load()
         assert result is None
 
     def test_load_corrupt_json(self):
-        """损坏的 JSON 返回 None"""
+        """损坏的 JSON 返回 None."""
         pathlib.Path(self.tmp_path).write_text("not a json file {{{")
         result = self.mgr.load()
         assert result is None
 
     def test_load_temp_file_recovery(self):
-        """.tmp 文件恢复为主文件"""
+        """.tmp 文件恢复为主文件."""
         temp_file = self.tmp_path + ".tmp"
         with pathlib.Path(temp_file).open("w") as f:
             json.dump({"version": 1, "mode": "recovered"}, f)
@@ -377,7 +378,7 @@ class TestCheckpointLoadEdgeCases:
         assert result is None
 
     def test_load_temp_recovery_with_main_exists(self):
-        """.tmp 恢复时主文件已存在则不覆盖"""
+        """.tmp 恢复时主文件已存在则不覆盖."""
         with pathlib.Path(self.tmp_path).open("w") as f:
             json.dump({"version": 1, "mode": "main"}, f)
         temp_file = self.tmp_path + ".tmp"
@@ -390,7 +391,7 @@ class TestCheckpointLoadEdgeCases:
 
 
 class TestCheckpointDelete:
-    """delete() 测试"""
+    """delete() 测试."""
 
     def setup_method(self):
         import uuid
@@ -404,7 +405,7 @@ class TestCheckpointDelete:
                 pathlib.Path(p).unlink()
 
     def test_delete_with_temp_file(self):
-        """Delete 清理主文件，.tmp 文件需手动清理"""
+        """Delete 清理主文件，.tmp 文件需手动清理."""
         self.mgr.save(
             mode="random",
             targets=set(),
@@ -425,7 +426,7 @@ class TestCheckpointDelete:
             pathlib.Path(temp_file).unlink()
 
     def test_delete_clears_buffer(self):
-        """Delete 清空 buffer 和 dirty"""
+        """Delete 清空 buffer 和 dirty."""
         self.mgr.save(
             mode="random",
             targets=set(),
@@ -440,16 +441,16 @@ class TestCheckpointDelete:
 
 
 class TestCheckpointPywin32Check:
-    """_check_win32_security 测试"""
+    """_check_win32_security 测试."""
 
     def test_check_win32_security_cached(self):
-        """结果被缓存"""
+        """结果被缓存."""
         result1 = CheckpointManager._check_win32_security()
         result2 = CheckpointManager._check_win32_security()
         assert result1 == result2
 
     def test_check_win32_security_import_error(self):
-        """pywin32 不可用时返回 False"""
+        """pywin32 不可用时返回 False."""
         old_value = CheckpointManager._has_win32_security
         CheckpointManager._has_win32_security = None
         try:
@@ -460,7 +461,7 @@ class TestCheckpointPywin32Check:
         assert not result
 
     def test_check_win32_security_import_success(self):
-        """pywin32 可用时返回 True"""
+        """pywin32 可用时返回 True."""
         old_value = CheckpointManager._has_win32_security
         CheckpointManager._has_win32_security = None
         try:
@@ -472,19 +473,19 @@ class TestCheckpointPywin32Check:
 
 
 class TestCheckpointExists:
-    """exists() 测试"""
+    """exists() 测试."""
 
     def test_exists_no_file(self):
-        """文件不存在时返回 False"""
+        """文件不存在时返回 False."""
         mgr = CheckpointManager(filepath="/nonexistent/checkpoint.json")
         assert not mgr.exists
 
 
 class TestCheckpointFlushDirCreation:
-    """_flush_buffer 目录创建测试"""
+    """_flush_buffer 目录创建测试."""
 
     def test_flush_creates_parent_dir(self):
-        """父目录不存在时自动创建"""
+        """父目录不存在时自动创建."""
         import shutil
         import uuid
 
@@ -503,18 +504,18 @@ class TestCheckpointFlushDirCreation:
 
 
 class TestCheckpointCleanupErrors:
-    """_cleanup_temp_file 异常处理测试"""
+    """_cleanup_temp_file 异常处理测试."""
 
     @patch("pathlib.Path.unlink", side_effect=OSError("cannot delete"))
     @patch("pathlib.Path.exists", return_value=True)
     def test_cleanup_os_error_silenced(self, mock_exists, mock_unlink):
-        """删除失败时不抛出异常"""
+        """删除失败时不抛出异常."""
         mgr = CheckpointManager(filepath="/tmp/test.json")
         mgr._cleanup_temp_file("/tmp/test.json.tmp")
 
 
 class TestCheckpointLoadTempRecoveryErrors:
-    """load() 临时文件恢复失败测试"""
+    """load() 临时文件恢复失败测试."""
 
     def setup_method(self):
         import uuid
@@ -529,7 +530,7 @@ class TestCheckpointLoadTempRecoveryErrors:
 
     @patch("os.replace", side_effect=OSError("rename failed"))
     def test_temp_recovery_rename_os_error(self, mock_rename):
-        """Replace 失败时记录日志并清理"""
+        """Replace 失败时记录日志并清理."""
         temp_file = self.tmp_path + ".tmp"
         with pathlib.Path(temp_file).open("w") as f:
             json.dump({"version": 1, "mode": "test"}, f)
@@ -539,7 +540,7 @@ class TestCheckpointLoadTempRecoveryErrors:
 
     @patch("pathlib.Path.replace", side_effect=Exception("unexpected"))
     def test_temp_recovery_rename_unexpected_error(self, mock_rename):
-        """Replace 未知异常被记录"""
+        """Replace 未知异常被记录."""
         temp_file = self.tmp_path + ".tmp"
         with pathlib.Path(temp_file).open("w") as f:
             json.dump({"version": 1, "mode": "test"}, f)
@@ -548,10 +549,10 @@ class TestCheckpointLoadTempRecoveryErrors:
 
 
 class TestCheckpointDeleteErrors:
-    """delete() 异常处理测试"""
+    """delete() 异常处理测试."""
 
     def test_delete_exception_caught(self):
-        """Delete 异常被捕获"""
+        """Delete 异常被捕获."""
         mgr = CheckpointManager(filepath="/tmp/test.json")
         # Patch the instance's filepath Path methods
         with (

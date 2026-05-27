@@ -1,5 +1,5 @@
 """GPU 内核性能基准测试（真实硬件）
-测试: 内核编译时间 + 批次执行时间 + 吞吐量
+测试: 内核编译时间 + 批次执行时间 + 吞吐量.
 """
 
 import sys
@@ -9,7 +9,7 @@ from src.collision.gpu.engine import GPUCollisionEngine
 
 
 def test_kernel_compilation():
-    """测试 GPU 内核编译时间"""
+    """测试 GPU 内核编译时间."""
     print("=" * 60)
     print("1. GPU 内核编译时间")
     print("=" * 60)
@@ -42,7 +42,7 @@ def test_batch_throughput(
     batch_sizes: list[int],
     duration: int = 3,
 ) -> list[tuple[int, int, float, float]]:
-    """测试不同批次大小的吞吐量"""
+    """测试不同批次大小的吞吐量."""
     print("\n" + "=" * 60)
     print("2. 批次大小 vs 吞吐量")
     print("=" * 60)
@@ -87,7 +87,7 @@ def test_batch_throughput(
 
 
 def test_single_vendor_nvidia():
-    """测试指定 NVIDIA 单卡性能"""
+    """测试指定 NVIDIA 单卡性能."""
     print("\n" + "=" * 60)
     print("3. NVIDIA 单卡测试")
     print("=" * 60)

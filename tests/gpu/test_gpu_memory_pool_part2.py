@@ -1,4 +1,4 @@
-"""GPU 内存池 (src/gpu/memory_pool.py) 全覆盖测试 — Part 2
+"""GPU 内存池 (src/gpu/memory_pool.py) 全覆盖测试 — Part 2.
 
 覆盖: GPUBufferAllocator, GlobalGPUMemoryManager (+ P1-6 自动清理), get_gpu_memory_pool
 """
@@ -17,7 +17,7 @@ _mock_context_mod = MagicMock()
 _mock_context_mod.GPUContext = MagicMock()
 sys.modules["src.gpu.context"] = _mock_context_mod
 
-from src.gpu.memory_pool import (  # noqa: E402  # 架构必要：sys.modules mock 注入后立即导入
+from src.gpu.memory_pool import (  # 架构必要：sys.modules mock 注入后立即导入  # noqa: E402
     GlobalGPUMemoryManager,
     GPUBufferAllocator,
     GPUMemoryPool,
@@ -34,7 +34,7 @@ def _make_mock_buf(size=256, buf_id=42):
 
 
 def _make_mock_cl():
-    """创建模拟的 pyopencl 模块"""
+    """创建模拟的 pyopencl 模块."""
     cl = MagicMock(name="pyopencl")
     cl.mem_flags.READ_WRITE = 1
     cl.mem_flags.WRITE_ONLY = 2
@@ -53,7 +53,7 @@ def _make_mock_cl():
 
 
 class TestGPUBufferAllocator:
-    """GPUBufferAllocator 测试"""
+    """GPUBufferAllocator 测试."""
 
     def test_init_creates_three_subpools(self):
         ctx = object()
@@ -133,7 +133,7 @@ class TestGPUBufferAllocator:
 
 
 class TestGlobalGPUMemoryManager:
-    """GlobalGPUMemoryManager 基础测试"""
+    """GlobalGPUMemoryManager 基础测试."""
 
     def setup_method(self):
         # 重置单例
@@ -192,10 +192,10 @@ class TestGlobalGPUMemoryManager:
     reason=(
         "_CleanupThreadState/internal API changed (Phase 6): "
         "_cleanup_thread, _cleanup_stop_event renamed"
-    )
+    ),
 )
 class TestGlobalGPUMemoryManagerAutoCleanup:
-    """P1-6 自动清理线程测试"""
+    """P1-6 自动清理线程测试."""
 
     def setup_method(self):
         GlobalGPUMemoryManager._instance = None
@@ -251,7 +251,7 @@ class TestGlobalGPUMemoryManagerAutoCleanup:
             mgr._cleanup_state._cleanup_thread.join(timeout=2.0)
 
     def test_auto_cleanup_loop_normal(self):
-        """自动清理循环正常运行"""
+        """自动清理循环正常运行."""
         mgr = GlobalGPUMemoryManager()
         ctx = object()
         pool = mgr.get_pool(ctx)
@@ -272,7 +272,7 @@ class TestGlobalGPUMemoryManagerAutoCleanup:
         # 不应崩溃
 
     def test_auto_cleanup_loop_exception_handling(self):
-        """自动清理循环异常不崩溃"""
+        """自动清理循环异常不崩溃."""
         mgr = GlobalGPUMemoryManager()
         ctx = object()
         mgr.get_pool(ctx)
@@ -297,7 +297,7 @@ class TestGlobalGPUMemoryManagerAutoCleanup:
         # 不应崩溃
 
     def test_auto_cleanup_loop_memory_error_stops(self):
-        """MemoryError 时停止循环"""
+        """MemoryError 时停止循环."""
         mgr = GlobalGPUMemoryManager()
         mgr.get_pool(object())
 
@@ -314,7 +314,7 @@ class TestGlobalGPUMemoryManagerAutoCleanup:
         # 不应崩溃
 
     def test_auto_cleanup_loop_happy_path(self):
-        """自动清理正常执行路径"""
+        """自动清理正常执行路径."""
         mgr = GlobalGPUMemoryManager()
         ctx = object()
         pool = mgr.get_pool(ctx)
@@ -348,21 +348,21 @@ class TestGlobalGPUMemoryManagerAutoCleanup:
         # 不应崩溃
 
     def test_auto_cleanup_uses_default_intervals(self):
-        """使用默认间隔启动"""
+        """使用默认间隔启动."""
         mgr = GlobalGPUMemoryManager()
         mgr.start_auto_cleanup()  # 使用默认值
         assert mgr._cleanup_state._cleanup_thread is not None
         mgr.stop_auto_cleanup(timeout=2.0)
 
     def test_start_stop_full_cycle(self):
-        """完整的启动-停止生命周期"""
+        """完整的启动-停止生命周期."""
         mgr = GlobalGPUMemoryManager()
         mgr.start_auto_cleanup(interval_seconds=3600)
         mgr.stop_auto_cleanup(timeout=2.0)
         assert mgr._cleanup_state._cleanup_thread is None
 
     def test_stop_timeout_logs_warning(self):
-        """stop_auto_cleanup 超时触发 warning (line 924)"""
+        """stop_auto_cleanup 超时触发 warning (line 924)."""
         mgr = GlobalGPUMemoryManager()
         mgr.start_auto_cleanup(interval_seconds=3600)
         # mock is_alive 始终返回 True，模拟线程未能及时停止
@@ -380,7 +380,7 @@ class TestGlobalGPUMemoryManagerAutoCleanup:
 
 
 class TestGetGPUMemoryPool:
-    """get_gpu_memory_pool 测试"""
+    """get_gpu_memory_pool 测试."""
 
     def test_returns_pool_from_singleton(self):
         ctx = object()
@@ -403,10 +403,10 @@ class TestGetGPUMemoryPool:
 
 
 class TestConcurrentSafety:
-    """并发线程安全测试 — 多线程同时 allocate/release"""
+    """并发线程安全测试 — 多线程同时 allocate/release."""
 
     def test_concurrent_allocate_release_no_race(self):
-        """4线程并发 allocate+release 50次，验证无异常且池状态一致"""
+        """4线程并发 allocate+release 50次，验证无异常且池状态一致."""
         pool = GPUMemoryPool(object(), max_buffers=100)
         mock_cl = _make_mock_cl()
         errors = []
@@ -435,7 +435,7 @@ class TestConcurrentSafety:
         assert len(pool._lru_cache) == total_pooled
 
     def test_concurrent_get_pool_singleton_safety(self):
-        """多线程并发获取 GlobalGPUMemoryManager 单例"""
+        """多线程并发获取 GlobalGPUMemoryManager 单例."""
         GlobalGPUMemoryManager._instance = None
         results = []
 
@@ -459,10 +459,10 @@ class TestConcurrentSafety:
 
 
 class TestClearSupplement:
-    """补充 clear 中未预期异常分支"""
+    """补充 clear 中未预期异常分支."""
 
     def test_clear_type_pool_unexpected_exception(self):
-        """Clear 中类型池释放时的未预期异常"""
+        """Clear 中类型池释放时的未预期异常."""
         pool = GPUMemoryPool(object())
         buf = _make_mock_buf(256, 99)
         buf.release.side_effect = Exception("unexpected")

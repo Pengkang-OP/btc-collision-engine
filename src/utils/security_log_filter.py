@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-"""日志安全过滤器
+"""日志安全过滤器.
 
 防止敏感信息（如私钥）泄露到日志文件中。
 自动检测和屏蔽比特币私钥模式。
@@ -28,7 +27,7 @@ from .sensitive_patterns import (
 
 
 class SecurityLogFilter(logging.Filter):
-    """安全日志过滤器
+    """安全日志过滤器.
 
     自动检测并屏蔽日志消息中的敏感信息：
     - 比特币私钥（64位十六进制）
@@ -60,12 +59,13 @@ class SecurityLogFilter(logging.Filter):
         mask_wif: bool = True,
         mask_addresses: bool = True,
     ) -> None:
-        """Args:
-        name: 过滤器名称
-        mask_private_keys: 是否屏蔽私钥十六进制
-        mask_wif: 是否屏蔽WIF格式
-        mask_addresses: 是否屏蔽比特币地址
+        """初始化安全日志过滤器。.
 
+        Args:
+            name: 过滤器名称
+            mask_private_keys: 是否屏蔽私钥十六进制
+            mask_wif: 是否屏蔽WIF格式
+            mask_addresses: 是否屏蔽比特币地址
         """
         super().__init__(name)
         self.mask_private_keys = mask_private_keys
@@ -73,7 +73,7 @@ class SecurityLogFilter(logging.Filter):
         self.mask_addresses = mask_addresses
 
     def filter(self, record: logging.LogRecord) -> bool:
-        """过滤日志记录，屏蔽敏感信息
+        """过滤日志记录，屏蔽敏感信息.
 
         Args:
             record: 日志记录对象
@@ -104,7 +104,7 @@ class SecurityLogFilter(logging.Filter):
         return True
 
     def _sanitize_message(self, message: str) -> str:
-        """清理消息中的敏感信息
+        """清理消息中的敏感信息.
 
         Args:
             message: 原始消息
@@ -146,7 +146,7 @@ class SecurityLogFilter(logging.Filter):
         return message
 
     def _sanitize_value(self, value: str) -> str:
-        """清理字符串值中的敏感信息
+        """清理字符串值中的敏感信息.
 
         Args:
             value: 原始字符串值
@@ -158,7 +158,7 @@ class SecurityLogFilter(logging.Filter):
         return self._sanitize_message(value)
 
     def _mask_key(self, key_hex: str) -> str:
-        """掩码处理私钥
+        """掩码处理私钥.
 
         保留前8位和后8位，中间用***替代
 
@@ -179,7 +179,7 @@ class SecurityLogFilter(logging.Filter):
 
 
 def setup_security_logging() -> None:
-    """为所有日志记录器添加安全过滤器
+    """为所有日志记录器添加安全过滤器.
 
     应在应用程序启动时调用，确保所有日志都经过安全过滤。
     """
@@ -246,7 +246,7 @@ def setup_security_logging() -> None:
 
 
 def sanitize_private_key_for_log(private_key: bytes) -> str:
-    """为日志记录安全处理私钥
+    """为日志记录安全处理私钥.
 
     返回私钥的SHA256哈希前16位，用于调试而不泄露实际私钥。
 
@@ -266,7 +266,7 @@ def sanitize_private_key_for_log(private_key: bytes) -> str:
 
 # 便捷函数
 def log_safe_error(logger: logging.Logger, message: str, **kwargs) -> None:
-    """记录安全的错误日志（自动过滤敏感信息）
+    """记录安全的错误日志（自动过滤敏感信息）.
 
     Args:
         logger: 日志记录器
@@ -279,7 +279,7 @@ def log_safe_error(logger: logging.Logger, message: str, **kwargs) -> None:
 
 
 def log_safe_debug(logger: logging.Logger, message: str, **kwargs) -> None:
-    """记录安全的调试日志（自动过滤敏感信息）
+    """记录安全的调试日志（自动过滤敏感信息）.
 
     Args:
         logger: 日志记录器
@@ -296,7 +296,7 @@ def log_safe_exception(
     exc: BaseException | None = None,
     **kwargs,
 ) -> None:
-    """安全记录异常（不泄露敏感堆栈信息）
+    """安全记录异常（不泄露敏感堆栈信息）.
 
     Args:
         logger: 日志记录器

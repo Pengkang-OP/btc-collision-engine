@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GPU引擎P0-1重构辅助方法单元测试
+"""GPU引擎P0-1重构辅助方法单元测试.
 
 测试GPU引擎重构后新增的辅助方法：
 1. _start_async_key_generation
@@ -30,7 +30,7 @@ pytestmark = pytest.mark.gpu
 
 
 def _create_phase6_mock_core():
-    """创建 Phase 6 CollisionCore Mock（跳过真实 GPU 初始化）"""
+    """创建 Phase 6 CollisionCore Mock（跳过真实 GPU 初始化）."""
     mock_device_manager = MagicMock()
     mock_device = MagicMock()
     mock_device.name = "Mock GPU"
@@ -55,7 +55,7 @@ def _create_phase6_mock_core():
 
 
 _PHASE6_PATCHERS = [
-    patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True),
+    patch("src.gpu._availability.PYOPENCL_AVAILABLE", True),
     patch("src.collision.gpu.engine.SearchModeCoordinator"),
     patch("src.collision.gpu.engine.GPUEngineMonitor"),
     patch("src.collision.gpu.engine.VendorOptimizationFactory.create", return_value=MagicMock()),
@@ -64,7 +64,7 @@ _PHASE6_PATCHERS = [
 
 
 def create_mock_gpu_engine(test_targets, batch_size=65536):
-    """创建mock GPU引擎的统一辅助函数 (Phase 6 兼容)"""
+    """创建mock GPU引擎的统一辅助函数 (Phase 6 兼容)."""
     mock_dm, mock_core = _create_phase6_mock_core()
 
     all_patchers = [
@@ -84,21 +84,21 @@ def create_mock_gpu_engine(test_targets, batch_size=65536):
 
 
 class TestAsyncKeyGeneration:
-    """测试异步私钥生成相关方法"""
+    """测试异步私钥生成相关方法."""
 
     def setup_method(self):
-        """设置测试环境"""
+        """设置测试环境."""
         self.test_targets = {"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"}
 
     def _create_mock_engine(self):
-        """创建mock引擎 (Phase 6 兼容)"""
+        """创建mock引擎 (Phase 6 兼容)."""
         engine = create_mock_gpu_engine(self.test_targets)
 
         # v4.2.1 PRNG改造后，_start_async_key_generation 和
         # _wait_for_async_key_generation 已从 RandomSearchMode 删除。
         # 为保持测试延续性，在 _random_search_mode 上增加兼容方法。
         def _start_async_key_generation(batch_size):
-            """PRNG延续层：启动异步私鑰生成"""
+            """PRNG延续层：启动异步私鑰生成."""
             result_list = [None]
 
             def _gen():
@@ -111,7 +111,7 @@ class TestAsyncKeyGeneration:
             return t, result_list
 
         def _wait_for_async_key_generation(gen_thread, gen_result, batch_num):
-            """PRNG延续层：等待异步私鑰生成完成"""
+            """PRNG延续层：等待异步私鑰生成完成."""
             import os
 
             gen_thread.join(timeout=2.0)
@@ -124,7 +124,7 @@ class TestAsyncKeyGeneration:
         return engine
 
     def test_start_async_key_generation(self):
-        """测试启动异步私钥生成"""
+        """测试启动异步私钥生成."""
         engine = self._create_mock_engine()
 
         # 启动异步生成
@@ -143,7 +143,7 @@ class TestAsyncKeyGeneration:
         assert len(result[0]) == 3200  # 100 * 32 bytes
 
     def test_wait_for_async_key_generation_success(self):
-        """测试等待异步生成成功"""
+        """测试等待异步生成成功."""
         engine = self._create_mock_engine()
 
         # 启动异步生成
@@ -157,7 +157,7 @@ class TestAsyncKeyGeneration:
         assert len(keys) == 1600  # 50 * 32 bytes
 
     def test_wait_for_async_key_generation_timeout(self):
-        """测试异步生成超时处理"""
+        """测试异步生成超时处理."""
         engine = self._create_mock_engine()
 
         # 创建一个永远不会完成的线程
@@ -176,7 +176,7 @@ class TestAsyncKeyGeneration:
         assert len(keys) == engine.batch_size * 32
 
     def test_wait_for_async_key_generation_none_result(self):
-        """测试异步生成结果为None的处理"""
+        """测试异步生成结果为None的处理."""
         engine = self._create_mock_engine()
 
         # 创建一个已完成但结果为None的线程
@@ -196,18 +196,18 @@ class TestAsyncKeyGeneration:
 
 
 class TestExecuteGPUBatch:
-    """测试 _execute_gpu_batch 方法"""
+    """测试 _execute_gpu_batch 方法."""
 
     def setup_method(self):
-        """设置测试环境"""
+        """设置测试环境."""
         self.test_targets = {"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"}
 
     def _create_mock_engine(self):
-        """创建mock引擎 (Phase 6 兼容)"""
+        """创建mock引擎 (Phase 6 兼容)."""
         return create_mock_gpu_engine(self.test_targets)
 
     def test_execute_gpu_batch_no_matches(self):
-        """测试执行GPU batch无匹配"""
+        """测试执行GPU batch无匹配."""
         engine = self._create_mock_engine()
 
         # 准备32字节种子（PRNG模式）
@@ -223,7 +223,7 @@ class TestExecuteGPUBatch:
         assert len(matches) == 0  # mock返回空列表
 
     def test_execute_gpu_batch_with_matches(self):
-        """测试执行GPU batch有匹配"""
+        """测试执行GPU batch有匹配."""
         engine = self._create_mock_engine()
 
         # 设置mock返回匹配结果
@@ -241,10 +241,10 @@ class TestExecuteGPUBatch:
 
     @pytest.mark.skip(
         reason="Phase 6: _execute_gpu_batch 委托到 _scheduler.execute_batch()，"
-        "日志行为在 _scheduler 模块中。此测试需要重构为测试 _scheduler 级别的日志频率控制"
+        "日志行为在 _scheduler 模块中。此测试需要重构为测试 _scheduler 级别的日志频率控制",
     )
     def test_execute_gpu_batch_logging_frequency(self):
-        """测试日志记录频率控制 (Phase 6: 路径更新)"""
+        """测试日志记录频率控制 (Phase 6: 路径更新)."""
         engine = self._create_mock_engine()
 
         seed = os.urandom(32)
@@ -260,19 +260,19 @@ class TestExecuteGPUBatch:
 
 
 class TestProcessGPUMatches:
-    """测试 _process_gpu_matches 方法"""
+    """测试 _process_gpu_matches 方法."""
 
     def setup_method(self):
-        """设置测试环境"""
+        """设置测试环境."""
         self.test_targets = {"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"}
         self.target_list = ["1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"]
 
     def _create_mock_engine(self):
-        """创建mock引擎 (Phase 6 兼容)"""
+        """创建mock引擎 (Phase 6 兼容)."""
         return create_mock_gpu_engine(self.test_targets)
 
     def test_process_matches_success(self):
-        """测试成功处理匹配"""
+        """测试成功处理匹配."""
         engine = self._create_mock_engine()
         # Phase 6: _result_processor 通过 _device_manager.target_list 获取目标地址
         engine._device_manager.target_list = self.target_list
@@ -296,7 +296,7 @@ class TestProcessGPUMatches:
         assert match_callback.called
 
     def test_process_matches_deduplication(self):
-        """测试去重过滤"""
+        """测试去重过滤."""
         engine = self._create_mock_engine()
         engine._target_list = self.target_list  # Phase 6: 手动注入目标列表
 
@@ -328,18 +328,18 @@ class TestProcessGPUMatches:
 
 
 class TestPerformanceMetrics:
-    """测试 _update_performance_metrics 方法"""
+    """测试 _update_performance_metrics 方法."""
 
     def setup_method(self):
-        """设置测试环境"""
+        """设置测试环境."""
         self.test_targets = {"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"}
 
     def _create_mock_engine(self):
-        """创建mock引擎 (Phase 6 兼容)"""
+        """创建mock引擎 (Phase 6 兼容)."""
         return create_mock_gpu_engine(self.test_targets)
 
     def test_update_performance_metrics(self):
-        """测试更新性能指标"""
+        """测试更新性能指标."""
         engine = self._create_mock_engine()
 
         # 创建mock性能监控器
@@ -358,7 +358,7 @@ class TestPerformanceMetrics:
         assert call_args[1]["execution_time_ms"] == 50.5
 
     def test_update_performance_metrics_no_monitor(self):
-        """测试没有性能监控器时不报错"""
+        """测试没有性能监控器时不报错."""
         engine = self._create_mock_engine()
         engine.gpu_performance_monitor = None
 
@@ -367,18 +367,18 @@ class TestPerformanceMetrics:
 
 
 class TestProgressReporting:
-    """测试 _check_and_report_progress 方法"""
+    """测试 _check_and_report_progress 方法."""
 
     def setup_method(self):
-        """设置测试环境"""
+        """设置测试环境."""
         self.test_targets = {"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"}
 
     def _create_mock_engine(self):
-        """创建mock引擎 (Phase 6 兼容)"""
+        """创建mock引擎 (Phase 6 兼容)."""
         return create_mock_gpu_engine(self.test_targets)
 
     def test_progress_report_trigger(self):
-        """测试进度报告触发"""
+        """测试进度报告触发."""
         engine = self._create_mock_engine()
 
         # 设置进度回调
@@ -395,7 +395,7 @@ class TestProgressReporting:
         assert progress_callback.called
 
     def test_progress_report_throttle(self):
-        """测试进度报告节流"""
+        """测试进度报告节流."""
         engine = self._create_mock_engine()
 
         progress_callback = Mock()
@@ -412,29 +412,29 @@ class TestProgressReporting:
 
 
 class TestConstants:
-    """测试常量定义"""
+    """测试常量定义."""
 
     def test_initial_batch_size(self):
-        """测试初始批次大小常量"""
+        """测试初始批次大小常量."""
         assert INITIAL_BATCH_SIZE == 1_000_000
         assert isinstance(INITIAL_BATCH_SIZE, int)
 
     def test_async_key_gen_timeout(self):
-        """测试异步私钥生成超时常量"""
+        """测试异步私钥生成超时常量."""
         assert ASYNC_KEY_GEN_TIMEOUT == 30.0
         assert isinstance(ASYNC_KEY_GEN_TIMEOUT, float)
 
     def test_batch_log_frequency(self):
-        """测试日志记录频率常量"""
+        """测试日志记录频率常量."""
         assert BATCH_LOG_FREQUENCY == 100
         assert isinstance(BATCH_LOG_FREQUENCY, int)
 
     def test_initial_batches_log(self):
-        """测试初始批次日志数量常量"""
+        """测试初始批次日志数量常量."""
         assert INITIAL_BATCHES_LOG == 3
         assert isinstance(INITIAL_BATCHES_LOG, int)
 
     def test_exception_recovery_delay(self):
-        """测试异常恢复延迟常量"""
+        """测试异常恢复延迟常量."""
         assert EXCEPTION_RECOVERY_DELAY == 0.1
         assert isinstance(EXCEPTION_RECOVERY_DELAY, float)

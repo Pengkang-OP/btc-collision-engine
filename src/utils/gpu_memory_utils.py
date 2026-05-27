@@ -1,4 +1,4 @@
-"""GPU内存优化相关的共享工具函数
+"""GPU内存优化相关的共享工具函数.
 
 提取GPU显存计算的公共逻辑，消除代码重复，遵循DRY原则。
 
@@ -24,7 +24,7 @@ logger = get_configured_logger(__name__)
 
 @dataclass
 class BatchSizeConfig:
-    """batch_size计算配置
+    """batch_size计算配置.
 
     用于封装calculate_optimal_batch_size的配置参数，简化函数签名。
 
@@ -44,7 +44,7 @@ class BatchSizeConfig:
     per_key_memory: int = 36
 
     def validate(self) -> None:
-        """验证配置有效性
+        """验证配置有效性.
 
         Raises:
             ValueError: 当配置参数无效时
@@ -68,7 +68,7 @@ class BatchSizeConfig:
             raise ValueError(f"per_key_memory必须为正数: {self.per_key_memory}")
 
     def __post_init__(self) -> None:
-        """初始化后自动验证配置
+        """初始化后自动验证配置.
 
         在dataclass初始化完成后自动调用validate()，确保配置始终有效。
         """
@@ -76,10 +76,10 @@ class BatchSizeConfig:
 
 
 class GPUDeviceProtocol(Protocol):
-    """GPU设备协议，定义calculate_optimal_batch_size所需的接口"""
+    """GPU设备协议，定义calculate_optimal_batch_size所需的接口."""
 
     class DeviceObject(Protocol):
-        """设备对象协议"""
+        """设备对象协议."""
 
         global_mem_size: int
 
@@ -98,7 +98,7 @@ def calculate_optimal_batch_size(
     config: BatchSizeConfig | None = None,
     verbose: bool = True,
 ) -> int:
-    """根据GPU显存大小计算最优batch_size
+    """根据GPU显存大小计算最优batch_size.
 
     Args:
         device: GPUDevice实例，包含device和device_info属性

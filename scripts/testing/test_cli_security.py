@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""CLI安全检查功能测试"""
+"""CLI安全检查功能测试."""
 
 import contextlib
 import sys
 
 
 def test_security_check_integration():
-    """测试安全检查集成到CLI"""
+    """测试安全检查集成到CLI."""
     print("=" * 70)
     print("CLI安全检查集成测试")
     print("=" * 70)

@@ -1,4 +1,4 @@
-"""地址持久化存储
+"""地址持久化存储.
 
 提供多种存储后端保存和加载目标地址:
 - JSON文件存储(默认)
@@ -22,8 +22,8 @@ from datetime import datetime
 from typing import Any
 
 # 导入日志配置
-from ...utils import get_configured_logger
-from ...utils.encoding_utils import EncodingUtils
+from src.utils import get_configured_logger
+from src.utils.encoding_utils import EncodingUtils
 
 # 日志系统由CLI/main.py入口统一初始化
 logger = get_configured_logger("AddressStorage")
@@ -34,12 +34,12 @@ ADDRESS_PATTERNS = types.MappingProxyType(
         "P2PKH": re.compile(r"^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$"),  # 1或3开头
         "P2SH": re.compile(r"^3[a-km-zA-HJ-NP-Z1-9]{25,34}$"),  # 3开头
         "BECH32": re.compile(r"^(bc1|tb1|bc1p)[a-zA-HJ-NP-Z0-9]{25,62}$"),  # bc1开头
-    }
+    },
 )
 
 
 def validate_bitcoin_address(address: str) -> bool:
-    """验证比特币地址格式
+    """验证比特币地址格式.
 
     Args:
         address: 比特币地址字符串
@@ -64,7 +64,7 @@ def validate_bitcoin_address(address: str) -> bool:
 
 
 class AddressStorage:
-    """地址持久化存储管理器
+    """地址持久化存储管理器.
 
     支持多种存储格式保存目标地址集合和元数据。
 
@@ -76,7 +76,7 @@ class AddressStorage:
     """
 
     def __init__(self, storage_type: str = "json", path: str = "targets_data") -> None:
-        """初始化地址存储管理器
+        """初始化地址存储管理器.
 
         Args:
             storage_type: 存储类型,可选 'json', 'sqlite', 'csv'
@@ -89,13 +89,14 @@ class AddressStorage:
         # 确保目录存在
         if storage_type in ("json", "csv") or storage_type == "sqlite":
             pathlib.Path(os.path.dirname(path) if os.path.dirname(path) else ".").mkdir(
-                exist_ok=True, parents=True
+                exist_ok=True,
+                parents=True,
             )
 
         logger.info("AddressStorage 初始化: 类型=%s, 路径=%s", storage_type, path)
 
     def save_targets(self, targets: set[str], metadata: dict | None = None) -> bool:
-        """保存目标地址集合到持久化存储
+        """保存目标地址集合到持久化存储.
 
         根据 storage_type 选择对应的存储后端执行保存操作。
 
@@ -121,7 +122,7 @@ class AddressStorage:
             return False
 
     def load_targets(self) -> tuple[set[str], dict | None]:
-        """从持久化存储加载目标地址集合和元数据
+        """从持久化存储加载目标地址集合和元数据.
 
         根据 storage_type 选择对应的存储后端执行加载操作。
 
@@ -143,7 +144,7 @@ class AddressStorage:
             return set(), None
 
     def _save_json(self, targets: set[str], metadata: dict | None = None) -> bool:
-        """保存为JSON格式"""
+        """保存为JSON格式."""
         data = {
             "version": "1.0",
             "created_at": datetime.now().isoformat(),
@@ -163,7 +164,7 @@ class AddressStorage:
             return False
 
     def _load_json(self) -> tuple[set[str], dict | None]:
-        """从JSON加载"""
+        """从JSON加载."""
         if not pathlib.Path(self.path).exists():
             logger.warning(f"文件不存在: {self.path}")
             return set(), None
@@ -183,7 +184,7 @@ class AddressStorage:
             return set(), None
 
     def _save_sqlite(self, targets: set[str], metadata: dict | None = None) -> bool:
-        """保存到SQLite数据库（带输入验证）"""
+        """保存到SQLite数据库（带输入验证）."""
         # 输入验证
         validated_targets = set()
         invalid_count = 0
@@ -264,7 +265,7 @@ class AddressStorage:
             conn.close()
 
     def _load_sqlite(self) -> tuple[set[str], dict | None]:
-        """从SQLite加载"""
+        """从SQLite加载."""
         if not pathlib.Path(self.path).exists():
             logger.warning(f"数据库不存在: {self.path}")
             return set(), None
@@ -298,7 +299,7 @@ class AddressStorage:
             conn.close()
 
     def _save_csv(self, targets: set[str], metadata: dict | None = None) -> bool:
-        """保存为CSV格式"""
+        """保存为CSV格式."""
         try:
             # 使用统一的编码工具
             import io
@@ -329,7 +330,7 @@ class AddressStorage:
             return False
 
     def _load_csv(self) -> tuple[set[str], dict | None]:
-        """从CSV加载"""
+        """从CSV加载."""
         if not pathlib.Path(self.path).exists():
             logger.warning(f"文件不存在: {self.path}")
             return set(), None
@@ -365,7 +366,7 @@ class AddressStorage:
             return set(), None
 
     def export_csv(self, targets: set[str], output_path: str) -> bool:
-        """导出目标地址为CSV文件（临时导出，不改变存储类型）
+        """导出目标地址为CSV文件（临时导出，不改变存储类型）.
 
         Args:
             targets: 目标地址集合
@@ -396,7 +397,7 @@ class AddressStorage:
             return False
 
     def get_storage_info(self) -> dict[str, Any]:
-        """获取存储信息
+        """获取存储信息.
 
         Returns:
             包含存储信息的字典
@@ -417,7 +418,7 @@ class AddressStorage:
 
     @staticmethod
     def _ensure_storage_dir(storage_dir: str | None) -> str:
-        """验证并创建存储目录，返回规范化后的绝对路径。
+        """验证并创建存储目录，返回规范化后的绝对路径。.
 
         Raises:
             ValueError: 目录不在允许范围内。
@@ -444,7 +445,7 @@ class AddressStorage:
 
     @staticmethod
     def _generate_storage_path(storage_dir: str, storage_type: str) -> str:
-        """生成带时间戳+唯一ID的存储文件路径。
+        """生成带时间戳+唯一ID的存储文件路径。.
 
         Raises:
             ValueError: 不支持的存储类型。
@@ -463,7 +464,7 @@ class AddressStorage:
         )
 
     def _read_source_addresses(self, real_source_path: str) -> list[str]:
-        """根据文件扩展名读取源文件中的地址，并限制最大数量。"""
+        """根据文件扩展名读取源文件中的地址，并限制最大数量。."""
         file_ext = os.path.splitext(real_source_path)[1].lower()
         if file_ext == ".json":
             source_addresses = self._read_json_source(real_source_path)
@@ -483,7 +484,7 @@ class AddressStorage:
         source_addresses: list[str],
         progress_callback: Callable | None,
     ) -> tuple[set, list]:
-        """分批验证源地址，返回 (valid_addresses, invalid_addresses)。"""
+        """分批验证源地址，返回 (valid_addresses, invalid_addresses)。."""
         from .validator import AddressBatchValidator
 
         valid_addresses: set = set()
@@ -513,7 +514,7 @@ class AddressStorage:
         storage_type: str = "json",
         progress_callback: Callable | None = None,
     ) -> dict[str, Any]:
-        """从外部源导入地址并自动保存到持久化存储。"""
+        """从外部源导入地址并自动保存到持久化存储。."""
         result: dict[str, Any] = {
             "success": False,
             "imported_count": 0,
@@ -596,7 +597,7 @@ class AddressStorage:
             return result
 
     def _read_json_source(self, file_path: str) -> list[str]:
-        """从JSON文件读取地址"""
+        """从JSON文件读取地址."""
         try:
             content = EncodingUtils.read_file(file_path, encoding="utf-8", try_multiple=True)
             data = json.loads(content)
@@ -622,7 +623,7 @@ class AddressStorage:
             return []
 
     def _read_csv_source(self, file_path: str) -> list[str]:
-        """从CSV文件读取地址"""
+        """从CSV文件读取地址."""
         try:
             content = EncodingUtils.read_file(file_path, encoding="utf-8", try_multiple=True)
             import io
@@ -665,7 +666,7 @@ class AddressStorage:
             return []
 
     def _read_text_source(self, file_path: str) -> list[str]:
-        """从文本文件读取地址(每行一个地址)"""
+        """从文本文件读取地址(每行一个地址)."""
         try:
             lines = EncodingUtils.read_file_lines(file_path, try_multiple=True)
             addresses = []

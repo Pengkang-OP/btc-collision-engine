@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""测试监控和日志系统功能
+"""测试监控和日志系统功能.
 
 此脚本用于测试监控系统和日志系统的功能，确保它们与修改后的资源释放逻辑兼容。
 """
@@ -15,7 +15,7 @@ logger = get_configured_logger("MonitoringLoggingTest")
 
 
 def test_logging_system():
-    """测试日志系统功能"""
+    """测试日志系统功能."""
     logger.info("开始测试日志系统功能")
 
     # 测试不同级别的日志
@@ -35,7 +35,7 @@ def test_logging_system():
 
 
 def test_monitoring_system():
-    """测试监控系统功能"""
+    """测试监控系统功能."""
     logger.info("开始测试监控系统功能")
 
     # 创建监控系统实例
@@ -64,7 +64,7 @@ def test_monitoring_system():
 
 
 def main():
-    """主函数"""
+    """主函数."""
     try:
         # 测试日志系统
         test_logging_system()

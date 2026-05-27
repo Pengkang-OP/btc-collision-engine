@@ -29,7 +29,7 @@ logger = get_configured_logger("AddressGenerator")
 
 
 class PerformanceWarning(UserWarning):
-    """Performance warning: current configuration may not be optimal"""
+    """Performance warning: current configuration may not be optimal."""
 
 
 def secure_clear_bytearray(buffer: bytearray) -> None:
@@ -104,7 +104,7 @@ class BaseAddressGenerator(ABC):
     """
 
     def __init__(self) -> None:
-        """Initialize base class — create elliptic curve calculator"""
+        """Initialize base class — create elliptic curve calculator."""
         self.ec = EllipticCurve()
 
     @abstractmethod
@@ -306,7 +306,7 @@ class P2PKHAddressGenerator(BaseAddressGenerator):
         self,
         max_retries: int = 100,
     ) -> bytes:
-        """Generate random private key (delegates to base)"""
+        """Generate random private key (delegates to base)."""
         return super().generate_private_key(max_retries)
 
     def private_key_to_public_key(
@@ -346,7 +346,7 @@ class P2PKHAddressGenerator(BaseAddressGenerator):
         self,
         public_key: bytes,
     ) -> str:
-        """Generate Bitcoin address from public key (delegates to base)"""
+        """Generate Bitcoin address from public key (delegates to base)."""
         return super().public_key_to_address(public_key)
 
     def generate_address(

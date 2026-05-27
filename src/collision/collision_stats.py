@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Collision detection statistics tracking."""
 
 from __future__ import annotations
@@ -416,10 +415,9 @@ class CollisionStats:
         seconds = elapsed % 60
         if hours > 0:
             return f"{hours}h {minutes}m {seconds:.1f}s"
-        elif minutes > 0:
+        if minutes > 0:
             return f"{minutes}m {seconds:.1f}s"
-        else:
-            return f"{seconds:.1f}s"
+        return f"{seconds:.1f}s"
 
     def format_speed(self) -> str:
         """Format average speed as human-readable string.
@@ -431,7 +429,6 @@ class CollisionStats:
         speed = self.avg_speed
         if speed >= 1_000_000:
             return f"{speed / 1_000_000:.2f}M keys/s"
-        elif speed >= 1_000:
+        if speed >= 1_000:
             return f"{speed:,.0f} keys/s"
-        else:
-            return f"{speed:.1f} keys/s"
+        return f"{speed:.1f} keys/s"

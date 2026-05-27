@@ -1,4 +1,4 @@
-"""按模块分批运行 pytest --cov 并汇总覆盖率，从低到高排序。"""
+"""按模块分批运行 pytest --cov 并汇总覆盖率，从低到高排序。."""
 
 import subprocess
 import sys
@@ -99,7 +99,7 @@ MODULES = {
 
 
 def parse_coverage_table(output: str) -> dict:
-    """解析 coverage 表，返回 {filepath: (stmts, miss, cover%)}"""
+    """解析 coverage 表，返回 {filepath: (stmts, miss, cover%)}."""
     result = {}
     in_table = False
     for line in output.split("\n"):
@@ -127,7 +127,7 @@ def parse_coverage_table(output: str) -> dict:
 
 
 def module_coverage(module_files: list[str], mod_name: str = "") -> dict:
-    """运行指定模块测试并返回覆盖率。"""
+    """运行指定模块测试并返回覆盖率。."""
     test_paths = []
     for pattern in module_files:
         matches = list(TESTS.glob(pattern))
@@ -202,13 +202,13 @@ def main():
             "miss": mod_total_miss,
             "cover": mod_cover,
             "files_tested": len(
-                [f for f in cov_data if f"src/{mod_name}/" in f or f"src\\{mod_name}\\" in f]
+                [f for f in cov_data if f"src/{mod_name}/" in f or f"src\\{mod_name}\\" in f],
             ),
         }
 
         print(
             f"  → {mod_name}: {mod_cover:.1f}% "
-            f"({mod_total_stmts - mod_total_miss}/{mod_total_stmts} stmts)"
+            f"({mod_total_stmts - mod_total_miss}/{mod_total_stmts} stmts)",
         )
 
     print(f"\n\n{'=' * 60}")

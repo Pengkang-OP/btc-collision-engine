@@ -1,4 +1,4 @@
-"""格式感知的目标地址管理器
+"""格式感知的目标地址管理器.
 
 根据目标地址格式智能选择地址生成策略:
 - 检测目标地址格式
@@ -16,14 +16,14 @@ Example:
 import pathlib
 import threading
 
-from ...core.multi_format_generator import AddressFormat, MultiFormatAddressGenerator
-from ...utils import get_configured_logger
+from src.core.multi_format_generator import AddressFormat, MultiFormatAddressGenerator
+from src.utils import get_configured_logger
 
 logger = get_configured_logger("FormatAwareTargetManager")
 
 
 class FormatAwareTargetManager:
-    """格式感知的目标地址管理器
+    """格式感知的目标地址管理器.
 
     自动检测目标地址格式，支持多格式目标混合匹配。
     为碰撞引擎提供智能的格式感知地址生成和匹配接口。
@@ -42,7 +42,7 @@ class FormatAwareTargetManager:
     """
 
     def __init__(self) -> None:
-        """初始化格式感知目标管理器"""
+        """初始化格式感知目标管理器."""
         self._all_targets: set[str] = set()
         self._targets_by_format: dict[AddressFormat, set[str]] = {
             AddressFormat.P2PKH: set(),
@@ -56,7 +56,7 @@ class FormatAwareTargetManager:
         logger.info("FormatAwareTargetManager初始化完成")
 
     def add_target(self, address: str) -> bool:
-        """添加单个目标地址，自动检测格式
+        """添加单个目标地址，自动检测格式.
 
         Args:
             address: 比特币地址
@@ -91,7 +91,7 @@ class FormatAwareTargetManager:
                 return False
 
     def add_targets(self, addresses: list[str]) -> int:
-        """批量添加目标地址
+        """批量添加目标地址.
 
         Args:
             addresses: 地址列表
@@ -109,7 +109,7 @@ class FormatAwareTargetManager:
         return count
 
     def load_from_file(self, filepath: str) -> int:
-        """从文件加载目标地址
+        """从文件加载目标地址.
 
         Args:
             filepath: 文件路径
@@ -132,7 +132,7 @@ class FormatAwareTargetManager:
                 return 0
 
     def get_targets_by_format(self) -> dict[AddressFormat, set[str]]:
-        """获取按格式分组的目标地址
+        """获取按格式分组的目标地址.
 
         Returns:
             格式到地址集合的映射
@@ -142,7 +142,7 @@ class FormatAwareTargetManager:
             return {fmt: targets.copy() for fmt, targets in self._targets_by_format.items()}
 
     def get_all_targets(self) -> set[str]:
-        """获取所有目标地址
+        """获取所有目标地址.
 
         Returns:
             所有目标地址集合
@@ -152,7 +152,7 @@ class FormatAwareTargetManager:
             return self._all_targets.copy()
 
     def get_format_stats(self) -> dict[str, int]:
-        """获取格式统计信息
+        """获取格式统计信息.
 
         Returns:
             各格式目标数量统计
@@ -162,7 +162,7 @@ class FormatAwareTargetManager:
             return {fmt.value: len(targets) for fmt, targets in self._targets_by_format.items()}
 
     def has_targets(self, format_type: AddressFormat | None = None) -> bool:
-        """检查是否存在目标地址
+        """检查是否存在目标地址.
 
         Args:
             format_type: 指定格式，为None则检查所有格式
@@ -177,7 +177,7 @@ class FormatAwareTargetManager:
             return len(self._targets_by_format.get(format_type, set())) > 0
 
     def get_target_count(self, format_type: AddressFormat | None = None) -> int:
-        """获取目标地址数量
+        """获取目标地址数量.
 
         Args:
             format_type: 指定格式，为None则返回总数
@@ -193,7 +193,8 @@ class FormatAwareTargetManager:
 
     def check_match(self, private_key: bytes) -> tuple[bool, str | None, str | None]:
         """检查私钥是否匹配任何目标
-        【说明】返回第一个匹配，如需所有匹配请用 check_match_all
+
+        【说明】返回第一个匹配，如需所有匹配请用 check_match_all.
 
         Args:
             private_key: 32字节私钥
@@ -206,7 +207,8 @@ class FormatAwareTargetManager:
 
     def check_match_all(self, private_key: bytes) -> tuple[bool, list[tuple[str, str]]]:
         """检查私钥是否匹配所有目标格式的地址
-        【完整检查】遍历所有目标格式，返回所有匹配的地址
+
+        【完整检查】遍历所有目标格式，返回所有匹配的地址.
 
         Args:
             private_key: 32字节私钥
@@ -220,7 +222,7 @@ class FormatAwareTargetManager:
             return self._generator.match_all_formats(private_key, self._targets_by_format)
 
     def clear(self) -> None:
-        """清空所有目标"""
+        """清空所有目标."""
         with self._lock:
             self._all_targets.clear()
             for fmt in self._targets_by_format:
@@ -228,7 +230,7 @@ class FormatAwareTargetManager:
             logger.info("所有目标已清空")
 
     def get_supported_formats(self) -> list[str]:
-        """获取支持的目标格式列表
+        """获取支持的目标格式列表.
 
         Returns:
             包含目标的格式列表
@@ -238,7 +240,7 @@ class FormatAwareTargetManager:
             return [fmt.value for fmt, targets in self._targets_by_format.items() if len(targets) > 0]
 
     def get_max_batch_size(self) -> int:
-        """获取最大批量大小（基于格式数量）
+        """获取最大批量大小（基于格式数量）.
 
         Returns:
             批量大小
@@ -250,11 +252,11 @@ class FormatAwareTargetManager:
         return supported_count
 
     def __len__(self) -> int:
-        """返回目标地址总数"""
+        """返回目标地址总数."""
         return self.get_target_count()
 
     def __contains__(self, address: str) -> bool:
-        """支持 in 操作符（统一小写比较）"""
+        """支持 in 操作符（统一小写比较）."""
         return address.strip().lower() in self._all_targets
 
     def __repr__(self) -> str:

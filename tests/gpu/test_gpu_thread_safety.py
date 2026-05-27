@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GPU碰撞引擎线程安全专项测试
+"""GPU碰撞引擎线程安全专项测试.
 
 覆盖:
 - 并发访问测试
@@ -27,10 +27,10 @@ pytestmark = pytest.mark.gpu
 
 @pytest.mark.skip(reason="Checkpoint API mismatch")
 class TestConcurrentAccess:
-    """并发访问测试"""
+    """并发访问测试."""
 
     def test_concurrent_stats_update(self):
-        """测试并发更新统计数据"""
+        """测试并发更新统计数据."""
         stats = CollisionStats()
         stats.start_time = time.time()
 
@@ -58,7 +58,7 @@ class TestConcurrentAccess:
         assert stats.total_checked == updates_per_thread
 
     def test_concurrent_dedup_check(self):
-        """测试并发去重检查"""
+        """测试并发去重检查."""
         dedup = DeduplicationFilter(max_size=10000, enabled=True)
 
         num_threads = 20
@@ -98,7 +98,7 @@ class TestConcurrentAccess:
         assert stats["duplicates_found"] == 0
 
     def test_concurrent_checkpoint_save(self):
-        """测试并发保存断点"""
+        """测试并发保存断点."""
         import tempfile
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -141,10 +141,10 @@ class TestConcurrentAccess:
 
 @pytest.mark.skip(reason="Async key gen API delegated to _scheduler")
 class TestAsyncKeyGeneration:
-    """异步私钥生成测试"""
+    """异步私钥生成测试."""
 
     def test_async_key_generation_thread_safety(self, mock_gpu_chain):
-        """测试异步私钥生成线程安全
+        """测试异步私钥生成线程安全.
 
         使用mock_gpu_chain fixture,自动处理7层Mock
         """
@@ -169,7 +169,7 @@ class TestAsyncKeyGeneration:
         assert engine.stats.total_checked > 0
 
     def test_async_key_generation_timeout(self):
-        """测试异步私钥生成超时处理"""
+        """测试异步私钥生成超时处理."""
         import threading
 
         # 模拟超时场景
@@ -194,10 +194,10 @@ class TestAsyncKeyGeneration:
 
 
 class TestGPUTimeout:
-    """GPU超时监控测试"""
+    """GPU超时监控测试."""
 
     def test_gpu_timeout_event_cleanup(self):
-        """测试GPU超时事件清理"""
+        """测试GPU超时事件清理."""
         import threading
 
         # 模拟超时监控
@@ -226,10 +226,10 @@ class TestGPUTimeout:
 
 
 class TestEngineStop:
-    """停止引擎测试"""
+    """停止引擎测试."""
 
     def test_stop_engine_graceful(self, mock_gpu_chain):
-        """测试优雅停止引擎
+        """测试优雅停止引擎.
 
         使用mock_gpu_chain fixture简化Mock配置
         """
@@ -259,7 +259,7 @@ class TestEngineStop:
         # MockAssertions.assert_cleanup_called(mock_device, mock_context, mock_kernel)
 
     def test_stop_and_restart_engine(self, mock_gpu_chain):
-        """测试停止后重启引擎
+        """测试停止后重启引擎.
 
         使用mock_gpu_chain fixture简化Mock配置
         """

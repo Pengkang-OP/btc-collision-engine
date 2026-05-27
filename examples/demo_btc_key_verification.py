@@ -1,4 +1,4 @@
-"""比特币密钥派生及地址生成验证示例
+"""比特币密钥派生及地址生成验证示例.
 ===================================
 
 本文件展示如何使用 BTCKeyAddressVerifier 工具进行比特币密钥派生
@@ -18,7 +18,7 @@ from tools.btc_key_address_verifier import AddressFormat, BTCKeyAddressVerifier 
 
 
 def example_basic_verification():
-    """基本验证示例"""
+    """基本验证示例."""
     print("=" * 70)
     print("示例1: 基本验证 - 使用已知私钥")
     print("=" * 70)
@@ -52,7 +52,7 @@ def example_basic_verification():
 
 
 def example_address_mismatch():
-    """地址不匹配示例"""
+    """地址不匹配示例."""
     print("\n" + "=" * 70)
     print("示例2: 地址不匹配检测")
     print("=" * 70)
@@ -77,7 +77,7 @@ def example_address_mismatch():
 
 
 def example_random_key_verification():
-    """随机私钥验证示例"""
+    """随机私钥验证示例."""
     print("\n" + "=" * 70)
     print("示例3: 随机私钥验证")
     print("=" * 70)
@@ -93,7 +93,7 @@ def example_random_key_verification():
 
 
 def example_batch_verification():
-    """批量验证示例"""
+    """批量验证示例."""
     print("\n" + "=" * 70)
     print("示例4: 批量验证多个地址")
     print("=" * 70)
@@ -128,7 +128,7 @@ def example_batch_verification():
 
 
 def example_json_output():
-    """JSON输出示例"""
+    """JSON输出示例."""
     print("\n" + "=" * 70)
     print("示例5: JSON格式输出")
     print("=" * 70)
@@ -144,7 +144,7 @@ def example_json_output():
     print(f"私钥 (哈希): {report_dict['private_key']['hex'][:16]}...")
     print(f"压缩公钥: {report_dict['public_key']['compressed'][:40]}...")
     print(
-        f"公钥坐标: ({report_dict['public_key']['x'][:16]}..., {report_dict['public_key']['y'][:16]}...)"
+        f"公钥坐标: ({report_dict['public_key']['x'][:16]}..., {report_dict['public_key']['y'][:16]}...)",
     )
     print(f"在曲线上: {report_dict['public_key']['on_curve']}")
 
@@ -157,7 +157,7 @@ def example_json_output():
 
 
 def example_taproot_verification():
-    """Taproot地址验证示例"""
+    """Taproot地址验证示例."""
     print("\n" + "=" * 70)
     print("示例6: Taproot (Bech32m) 地址验证")
     print("=" * 70)
@@ -171,7 +171,7 @@ def example_taproot_verification():
     print(f"\nTaproot地址: {taproot_result.generated_address}")
     print(f"地址格式有效: {taproot_result.is_valid_format}")
     print(
-        f"起始字符验证: {'bc1p' if taproot_result.generated_address.startswith('bc1p') else 'INVALID'}"
+        f"起始字符验证: {'bc1p' if taproot_result.generated_address.startswith('bc1p') else 'INVALID'}",
     )
 
     # 显示转换步骤
@@ -181,17 +181,17 @@ def example_taproot_verification():
         print(
             f"    输入: {step.input_data[:60]}..."
             if len(step.input_data) > 60
-            else f"    输入: {step.input_data}"
+            else f"    输入: {step.input_data}",
         )
         print(
             f"    输出: {step.output_data[:60]}..."
             if len(step.output_data) > 60
-            else f"    输出: {step.output_data}"
+            else f"    输出: {step.output_data}",
         )
 
 
 def main():
-    """运行所有示例"""
+    """运行所有示例."""
     print("\n" + "#" * 70)
     print("# 比特币密钥派生及地址生成验证 - 示例")
     print("#" * 70)

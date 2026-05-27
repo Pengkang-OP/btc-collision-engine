@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""批量更新工具文件使用共享UTF8模块
+"""批量更新工具文件使用共享UTF8模块.
 
 自动将所有工具文件中的重复UTF-8设置代码替换为共享模块调用
 """
@@ -33,7 +33,7 @@ setup_windows_utf8()"""
 
 
 def update_file(file_path: str) -> bool:
-    """更新单个文件"""
+    """更新单个文件."""
     path = Path(file_path)
     if not path.exists():
         print(f"⚠️  文件不存在: {file_path}")
@@ -60,7 +60,7 @@ def update_file(file_path: str) -> bool:
 
 
 def main():
-    """主函数"""
+    """主函数."""
     print("🔧 开始批量更新工具文件...\n")
 
     success_count = 0

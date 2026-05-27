@@ -1,4 +1,4 @@
-"""optimization_cli.py 单元测试。
+"""optimization_cli.py 单元测试。.
 
 覆盖范围：
 - OptimizationCLI.add_arguments: 参数注册
@@ -18,10 +18,10 @@ from src.cli.optimization_cli import OptimizationCLI
 
 
 class TestOptimizationCLIAddArguments:
-    """参数注册测试。"""
+    """参数注册测试。."""
 
     def test_add_arguments_registers_auto_tune(self):
-        """--auto-tune 参数被正确注册。"""
+        """--auto-tune 参数被正确注册。."""
         parser = argparse.ArgumentParser()
         OptimizationCLI.add_arguments(parser)
 
@@ -29,7 +29,7 @@ class TestOptimizationCLIAddArguments:
         assert args.auto_tune is True
 
     def test_add_arguments_registers_batch_size(self):
-        """--batch-size 参数被正确注册并包含默认值。"""
+        """--batch-size 参数被正确注册并包含默认值。."""
         parser = argparse.ArgumentParser()
         OptimizationCLI.add_arguments(parser)
 
@@ -37,7 +37,7 @@ class TestOptimizationCLIAddArguments:
         assert args.batch_size == 100000
 
     def test_add_arguments_batch_size_custom(self):
-        """--batch-size 自定义值被正确解析。"""
+        """--batch-size 自定义值被正确解析。."""
         parser = argparse.ArgumentParser()
         OptimizationCLI.add_arguments(parser)
 
@@ -45,7 +45,7 @@ class TestOptimizationCLIAddArguments:
         assert args.batch_size == 50000
 
     def test_both_arguments_simultaneously(self):
-        """两个参数同时指定。"""
+        """两个参数同时指定。."""
         parser = argparse.ArgumentParser()
         OptimizationCLI.add_arguments(parser)
 
@@ -60,10 +60,10 @@ class TestOptimizationCLIAddArguments:
 
 
 class TestOptimizationCLIAutoTune:
-    """自动调优测试。"""
+    """自动调优测试。."""
 
     def test_auto_tune_returns_recommendations(self):
-        """auto_tune 返回调优建议字典。"""
+        """auto_tune 返回调优建议字典。."""
         args = MagicMock()
         args.workers = None  # 未指定
         args.batch_size = 100000
@@ -75,7 +75,7 @@ class TestOptimizationCLIAutoTune:
         assert result["batch_size"] >= 100000
 
     def test_auto_tune_respects_explicit_workers(self):
-        """如果已指定 workers，不在建议中覆盖。"""
+        """如果已指定 workers，不在建议中覆盖。."""
         args = MagicMock()
         args.workers = 8  # 用户显式指定
         args.batch_size = 100000
@@ -86,7 +86,7 @@ class TestOptimizationCLIAutoTune:
         assert "batch_size" in result
 
     def test_auto_tune_sets_workers_when_not_specified(self):
-        """未指定 workers 时自动推荐。"""
+        """未指定 workers 时自动推荐。."""
         args = MagicMock()
         args.workers = None
         args.batch_size = 50000
@@ -98,7 +98,7 @@ class TestOptimizationCLIAutoTune:
 
     @patch("os.cpu_count", return_value=16)
     def test_auto_tune_scales_with_cpu_cores(self, mock_cpu):
-        """batch_size 随 CPU 核心数缩放。"""
+        """batch_size 随 CPU 核心数缩放。."""
         args = MagicMock()
         args.workers = 4  # 已指定，不覆盖
         args.batch_size = 100000
@@ -110,7 +110,7 @@ class TestOptimizationCLIAutoTune:
 
     @patch("os.cpu_count", return_value=2)
     def test_auto_tune_minimum_cpu_cores(self, mock_cpu):
-        """低核心数时至少 1x 缩放。"""
+        """低核心数时至少 1x 缩放。."""
         args = MagicMock()
         args.workers = 4
         args.batch_size = 50000
@@ -122,7 +122,7 @@ class TestOptimizationCLIAutoTune:
 
     @patch("os.cpu_count", return_value=None)
     def test_auto_tune_cpu_count_none(self, mock_cpu):
-        """cpu_count 返回 None 时使用默认值 4。"""
+        """cpu_count 返回 None 时使用默认值 4。."""
         args = MagicMock()
         args.workers = None
         args.batch_size = 100000

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """GPU设备选择和切换功能全面测试
-验证多GPU环境下不同厂商GPU的检测、评分、选择和切换功能
+验证多GPU环境下不同厂商GPU的检测、评分、选择和切换功能.
 """
 
 import sys
@@ -27,7 +27,7 @@ if sys.platform == "win32":
 
 # Mock pyopencl常量
 def create_mock_cl():
-    """创建Mock的pyopencl模块"""
+    """创建Mock的pyopencl模块."""
     mock_cl = Mock()
 
     # 设备类型常量
@@ -72,7 +72,7 @@ def make_mock_gpu_device(
     compute_units: int,
     device_type_val: int = _CL_DEVICE_TYPE_GPU,
 ) -> Mock:
-    """创建正确配置的 Mock GPU 设备。
+    """创建正确配置的 Mock GPU 设备。.
 
     src/gpu/device.py 的 detect_devices() 通过 device.get_info(cl.device_info.XXX)
     读取设备属性，因此必须为 Mock 配置 get_info() 方法。
@@ -105,7 +105,7 @@ def make_mock_gpu_device(
 
 
 def make_mock_platform(name: str = "Mock Platform") -> Mock:
-    """创建正确配置的 Mock Platform，支持 get_info() 调用。"""
+    """创建正确配置的 Mock Platform，支持 get_info() 调用。."""
     platform = MagicMock()
     platform.name = name
 
@@ -120,16 +120,16 @@ def make_mock_platform(name: str = "Mock Platform") -> Mock:
 
 
 class TestGPUDeviceDetection:
-    """测试1: GPU设备检测功能"""
+    """测试1: GPU设备检测功能."""
 
     def setup_method(self, method):
-        """测试前准备"""
+        """测试前准备."""
         # 清除缓存确保每次测试独立
         GPUDeviceDetector.clear_availability_cache()
         reset_gpu_selector()
 
     def test_01_detect_single_gpu(self):
-        """测试1.1: 检测单个GPU设备"""
+        """测试1.1: 检测单个GPU设备."""
         print("\n📋 测试1.1: 检测单个GPU设备")
 
         # Mock单个GPU设备
@@ -153,7 +153,7 @@ class TestGPUDeviceDetection:
             print(f"  ✅ 成功检测到: {devices[0]['name']}")
 
     def test_02_detect_multi_gpu(self):
-        """测试1.2: 检测多个GPU设备(不同厂商)"""
+        """测试1.2: 检测多个GPU设备(不同厂商)."""
         print("\n📋 测试1.2: 检测多个GPU设备")
 
         nvidia_gpu = make_mock_gpu_device(
@@ -200,7 +200,7 @@ class TestGPUDeviceDetection:
                 print(f"     [{i}] {dev['name']} ({dev['vendor']})")
 
     def test_03_filter_cpu_devices(self):
-        """测试1.3: 过滤CPU设备"""
+        """测试1.3: 过滤CPU设备."""
         print("\n📋 测试1.3: 过滤CPU设备")
 
         cpu_device = make_mock_gpu_device(
@@ -230,7 +230,7 @@ class TestGPUDeviceDetection:
             print(f"  ✅ CPU设备已过滤,仅保留GPU: {devices[0]['name']}")
 
     def test_04_filter_integrated_gpu(self):
-        """测试1.4: 过滤Intel核显"""
+        """测试1.4: 过滤Intel核显."""
         print("\n📋 测试1.4: 过滤Intel核显")
 
         integrated_gpu = make_mock_gpu_device(
@@ -259,7 +259,7 @@ class TestGPUDeviceDetection:
             print(f"  ✅ 核显已过滤,仅保留独显: {devices[0]['name']}")
 
     def test_05_availability_cache(self):
-        """测试1.5: GPU可用性检测缓存机制"""
+        """测试1.5: GPU可用性检测缓存机制."""
         print("\n📋 测试1.5: GPU可用性缓存机制")
 
         mock_device = make_mock_gpu_device(
@@ -305,10 +305,10 @@ class TestGPUDeviceDetection:
 
 
 class TestGPUVendorIdentification:
-    """测试2: GPU厂商识别功能"""
+    """测试2: GPU厂商识别功能."""
 
     def test_01_identify_nvidia(self):
-        """测试2.1: 识别NVIDIA GPU"""
+        """测试2.1: 识别NVIDIA GPU."""
         print("\n📋 测试2.1: 识别NVIDIA GPU")
 
         test_cases = [
@@ -324,7 +324,7 @@ class TestGPUVendorIdentification:
             print(f"  ✅ {name} -> {result}")
 
     def test_02_identify_amd(self):
-        """测试2.2: 识别AMD GPU"""
+        """测试2.2: 识别AMD GPU."""
         print("\n📋 测试2.2: 识别AMD GPU")
 
         test_cases = [
@@ -339,7 +339,7 @@ class TestGPUVendorIdentification:
             print(f"  ✅ {name} -> {result}")
 
     def test_03_identify_intel(self):
-        """测试2.3: 识别Intel GPU"""
+        """测试2.3: 识别Intel GPU."""
         print("\n📋 测试2.3: 识别Intel GPU")
 
         test_cases = [
@@ -354,7 +354,7 @@ class TestGPUVendorIdentification:
             print(f"  ✅ {name} -> {result}")
 
     def test_04_identify_unknown(self):
-        """测试2.4: 识别未知厂商"""
+        """测试2.4: 识别未知厂商."""
         print("\n📋 测试2.4: 识别未知厂商GPU")
 
         result = identify_vendor("Unknown GPU", "Unknown Vendor")
@@ -363,15 +363,15 @@ class TestGPUVendorIdentification:
 
 
 class TestGPUDeviceScoring:
-    """测试3: GPU评分和选择算法"""
+    """测试3: GPU评分和选择算法."""
 
     def setup_method(self, method):
-        """测试前准备"""
+        """测试前准备."""
         reset_gpu_selector()
         self.selector = GPUDeviceSelector()
 
     def test_01_score_nvidia_gpu(self):
-        """测试3.1: NVIDIA GPU评分"""
+        """测试3.1: NVIDIA GPU评分."""
         print("\n📋 测试3.1: NVIDIA GPU评分")
 
         device = {
@@ -387,11 +387,11 @@ class TestGPUDeviceScoring:
         # P3-11 统一评分: (10*10 + 68*0.05 + gen_bonus_rtx30=10.0) * 1.0 = 113.4
         expected_score = (10.0 * 10.0 + 68 * 0.05 + 10.0) * 1.0
 
-        assert score == pytest.approx(expected_score, places=1)
+        assert score == pytest.approx(expected_score, abs=0.05)
         print(f"  ✅ {device['name']} 评分: {score:.1f} (预期: {expected_score:.1f})")
 
     def test_02_score_amd_gpu(self):
-        """测试3.2: AMD GPU评分"""
+        """测试3.2: AMD GPU评分."""
         print("\n📋 测试3.2: AMD GPU评分")
 
         device = {
@@ -407,11 +407,11 @@ class TestGPUDeviceScoring:
         # P3-11 统一评分: (16*10 + 72*0.05 + gen_bonus_rx6000=8.0) * 0.95 = 163.02
         expected_score = (16.0 * 10.0 + 72 * 0.05 + 8.0) * 0.95
 
-        assert score == pytest.approx(expected_score, places=1)
+        assert score == pytest.approx(expected_score, abs=0.05)
         print(f"  ✅ {device['name']} 评分: {score:.1f} (预期: {expected_score:.1f})")
 
     def test_03_score_intel_gpu(self):
-        """测试3.3: Intel GPU评分"""
+        """测试3.3: Intel GPU评分."""
         print("\n📋 测试3.3: Intel GPU评分")
 
         device = {
@@ -427,11 +427,11 @@ class TestGPUDeviceScoring:
         # P3-11 统一评分: (16*10 + 512*0.05 + gen_bonus_arc=5.0) * 0.9 = 171.54
         expected_score = (16.0 * 10.0 + 512 * 0.05 + 5.0) * 0.9
 
-        assert score == pytest.approx(expected_score, places=1)
+        assert score == pytest.approx(expected_score, abs=0.05)
         print(f"  ✅ {device['name']} 评分: {score:.1f} (预期: {expected_score:.1f})")
 
     def test_04_select_best_device(self):
-        """测试3.4: 自动选择最佳GPU"""
+        """测试3.4: 自动选择最佳GPU."""
         print("\n📋 测试3.4: 自动选择最佳GPU")
 
         devices = [
@@ -475,7 +475,7 @@ class TestGPUDeviceScoring:
             print(f"       - {dev['name']}: {dev['score']:.1f}")
 
     def test_05_select_by_index(self):
-        """测试3.5: 根据索引选择GPU"""
+        """测试3.5: 根据索引选择GPU."""
         print("\n📋 测试3.5: 根据索引选择GPU")
 
         devices = [
@@ -514,7 +514,7 @@ class TestGPUDeviceScoring:
             print("  ✅ 索引选择功能正常")
 
     def test_06_recommend_batch_size(self):
-        """测试3.6: 推荐批次大小"""
+        """测试3.6: 推荐批次大小."""
         print("\n📋 测试3.6: 推荐批次大小")
 
         test_cases = [
@@ -536,7 +536,7 @@ class TestGPUDeviceScoring:
 
             # Intel和AMD有调整,允许小误差
             if vendor == "amd":
-                assert recommended == pytest.approx(expected, delta=100)
+                assert recommended == pytest.approx(expected, abs=100)
             else:
                 assert recommended == expected
 
@@ -544,14 +544,14 @@ class TestGPUDeviceScoring:
 
 
 class TestGPUSwitching:
-    """测试4: GPU切换功能"""
+    """测试4: GPU切换功能."""
 
     def setup_method(self, method):
-        """测试前准备"""
+        """测试前准备."""
         reset_gpu_selector()
 
     def test_01_switch_between_devices(self):
-        """测试4.1: 在不同GPU间切换"""
+        """测试4.1: 在不同GPU间切换."""
         print("\n📋 测试4.1: GPU切换功能")
 
         gpu0 = make_mock_gpu_device("NVIDIA RTX 3080", "NVIDIA", 10737418240, 68)
@@ -586,7 +586,7 @@ class TestGPUSwitching:
                     gpu_device.cleanup()
 
     def test_02_auto_select_fallback(self):
-        """测试4.2: 自动选择最佳GPU"""
+        """测试4.2: 自动选择最佳GPU."""
         print("\n📋 测试4.2: 自动选择GPU(-1索引)")
 
         # 创建3个GPU，AMD显存最大应该被选中
@@ -615,7 +615,7 @@ class TestGPUSwitching:
                     gpu_device.cleanup()
 
     def test_03_invalid_device_index(self):
-        """测试4.3: 无效设备索引处理"""
+        """测试4.3: 无效设备索引处理."""
         print("\n📋 测试4.3: 无效设备索引处理")
 
         mock_device = make_mock_gpu_device(
@@ -636,21 +636,21 @@ class TestGPUSwitching:
                 gpu_device.initialize(device_index=5)
 
             # 验证错误信息包含可用设备列表
-            error_msg = str(context.exception)
+            error_msg = str(context.value)
             assert "超出范围" in error_msg
             print(f"  ✅ 正确处理无效索引: {error_msg[:50]}...")
 
 
 class TestGPUConfigurationAdaptation:
-    """测试5: 配置适配功能"""
+    """测试5: 配置适配功能."""
 
     def setup_method(self, method):
-        """测试前准备"""
+        """测试前准备."""
         reset_gpu_selector()
         self.selector = GPUDeviceSelector()
 
     def test_01_batch_size_adaptation(self):
-        """测试5.1: 批次大小根据GPU适配"""
+        """测试5.1: 批次大小根据GPU适配."""
         print("\n📋 测试5.1: 批次大小适配")
 
         test_configs = [
@@ -677,7 +677,7 @@ class TestGPUConfigurationAdaptation:
             print(f"  ✅ {name}: {batch_size:,} (范围: {min_batch:,}-{max_batch:,})")
 
     def test_02_work_group_size_adaptation(self):
-        """测试5.2: 工作组大小适配"""
+        """测试5.2: 工作组大小适配."""
         print("\n📋 测试5.2: 工作组大小适配")
 
         test_cases = [
@@ -699,7 +699,7 @@ class TestGPUConfigurationAdaptation:
             print(f"  ✅ {name}: 工作组大小 {work_group}")
 
     def test_03_memory_pool_configuration(self):
-        """测试5.3: 内存池配置适配"""
+        """测试5.3: 内存池配置适配."""
         print("\n📋 测试5.3: 内存池配置")
 
         # 不同显存的GPU应有不同的内存池配置
@@ -722,10 +722,10 @@ class TestGPUConfigurationAdaptation:
 
 
 class TestGPURunningStability:
-    """测试6: GPU运行稳定性"""
+    """测试6: GPU运行稳定性."""
 
     def test_01_multiple_init_cleanup(self):
-        """测试6.1: 多次初始化/清理稳定性"""
+        """测试6.1: 多次初始化/清理稳定性."""
         print("\n📋 测试6.1: 多次初始化/清理循环")
 
         mock_device = make_mock_gpu_device(
@@ -760,7 +760,7 @@ class TestGPURunningStability:
                         print(f"  ✅ 循环 {i + 1}/5: 初始化/清理成功")
 
     def test_02_resource_cleanup_completeness(self):
-        """测试6.2: 资源清理完整性"""
+        """测试6.2: 资源清理完整性."""
         print("\n📋 测试6.2: 资源清理完整性")
 
         mock_device = make_mock_gpu_device(
@@ -810,14 +810,14 @@ class TestGPURunningStability:
 
 
 class TestMultiGPUIntegration:
-    """测试7: 多GPU集成测试"""
+    """测试7: 多GPU集成测试."""
 
     def setup_method(self, method):
-        """测试前准备"""
+        """测试前准备."""
         reset_gpu_selector()
 
     def test_01_selector_singleton(self):
-        """测试7.1: 选择器单例模式"""
+        """测试7.1: 选择器单例模式."""
         print("\n📋 测试7.1: 选择器单例模式")
 
         selector1 = get_gpu_selector()
@@ -828,7 +828,7 @@ class TestMultiGPUIntegration:
         print(f"  ✅ 单例模式正常: selector1 is selector2 = {selector1 is selector2}")
 
     def test_02_detect_and_score_all_devices(self):
-        """测试7.2: 检测并评分所有设备"""
+        """测试7.2: 检测并评分所有设备."""
         print("\n📋 测试7.2: 检测并评分所有设备")
 
         gpus = [
@@ -856,7 +856,7 @@ class TestMultiGPUIntegration:
                 print(f"       [{dev['global_index']}] {dev['name']}: {dev['score']:.1f}分")
 
     def test_03_format_device_info(self):
-        """测试7.3: 格式化设备信息"""
+        """测试7.3: 格式化设备信息."""
         print("\n📋 测试7.3: 格式化设备信息")
 
         device = {
@@ -889,7 +889,7 @@ class TestMultiGPUIntegration:
         print(f"\n  ✅ 详细格式:\n{detailed}")
 
     def test_04_select_devices_by_indices(self):
-        """测试7.4: 根据索引列表选择设备"""
+        """测试7.4: 根据索引列表选择设备."""
         print("\n📋 测试7.4: 批量选择设备")
 
         devices = [
@@ -932,7 +932,7 @@ class TestMultiGPUIntegration:
 
 
 def run_tests():
-    """运行所有测试"""
+    """运行所有测试."""
     print("=" * 80)
     print("  GPU设备选择和切换功能全面测试")
     print("=" * 80)

@@ -1,4 +1,4 @@
-"""GPU内核实现
+"""GPU内核实现.
 
 包含:
 - compile_kernel_with_retry: 共享的内核编译重试函数 (DEF-2修复)，支持4种降级编译策略
@@ -20,12 +20,11 @@ from typing import Any, cast
 
 import numpy as np
 
-try:
-    import pyopencl as cl
+from ._availability import PYOPENCL_AVAILABLE
 
-    PYOPENCL_AVAILABLE = True
-except ImportError:
-    PYOPENCL_AVAILABLE = False
+if PYOPENCL_AVAILABLE:
+    import pyopencl as cl
+else:
     cl = None  # type: ignore[assignment]
 
 from ..core.address_generator import P2PKHAddressGenerator
@@ -97,7 +96,7 @@ def compile_kernel_with_retry(
     retry_delay_base: float = GPU_KERNEL_COMPILE_RETRY_DELAY_BASE,
     log=None,
 ):
-    """共享的GPU内核编译重试函数 (DEF-2修复)
+    """共享的GPU内核编译重试函数 (DEF-2修复).
 
     kernel_impl._compile() 和 context._get_or_compile_kernel() 共享此函数，
     消除代码重复并提供统一的重试+降级编译策略。
@@ -172,7 +171,7 @@ def compile_kernel_with_retry(
 
 
 def get_gpu_optimizer() -> Any | None:
-    """获取GPU优化器"""
+    """获取GPU优化器."""
     try:
         from .performance_optimizer import get_gpu_optimizer as _get_gpu_optimizer
 
@@ -182,7 +181,7 @@ def get_gpu_optimizer() -> Any | None:
 
 
 class GPUKernel(GPUKernelProtocol):
-    """OpenCL GPU 计算内核包装 - 优化版本
+    """OpenCL GPU 计算内核包装 - 优化版本.
 
     实现GPUKernelProtocol接口（P1-2修复）。
     使用持久化 Buffer 和异步执行来保持 GPU 持续高负载，
@@ -235,7 +234,7 @@ class GPUKernel(GPUKernelProtocol):
         max_batch_size: int | None = None,
         program: Any | None = None,
     ) -> None:
-        """初始化GPUKernel
+        """初始化GPUKernel.
 
         Args:
             device: GPUDevice实例
@@ -318,7 +317,7 @@ class GPUKernel(GPUKernelProtocol):
 
     @property
     def device(self) -> Any:  # GPUDevice
-        """GPU设备对象
+        """GPU设备对象.
 
         Returns:
             GPUDevice实例，包含OpenCL上下文、队列等设备信息
@@ -328,7 +327,7 @@ class GPUKernel(GPUKernelProtocol):
 
     @property
     def max_batch_size(self) -> int:
-        """最大批次大小
+        """最大批次大小.
 
         Returns:
             GPU内核能够处理的最大私钥数量
@@ -338,7 +337,7 @@ class GPUKernel(GPUKernelProtocol):
 
     @property
     def program(self) -> Any | None:  # Optional[cl.Program]
-        """已编译的OpenCL程序
+        """已编译的OpenCL程序.
 
         Returns:
             pyopencl.Program实例，或None（如果尚未编译）
@@ -347,7 +346,7 @@ class GPUKernel(GPUKernelProtocol):
         return self._program
 
     def _compile(self) -> None:
-        """编译 OpenCL 内核（带性能监控、缓存和重试机制）
+        """编译 OpenCL 内核（带性能监控、缓存和重试机制）.
 
         P2-6修复: 添加内核编译缓存机制，避免每次启动都重新编译
         DEF-2修复: 编译失败时自动重试（最多4次，渐进策略+指数退避）
@@ -437,7 +436,7 @@ class GPUKernel(GPUKernelProtocol):
             raise
 
     def _verify(self):
-        """ALG-3修复: 验证 GPU 计算正确性（增强版）
+        """ALG-3修复: 验证 GPU 计算正确性（增强版）.
 
         验证内容:
         1. 基础验证: 虚拟目标不应匹配
@@ -564,7 +563,7 @@ class GPUKernel(GPUKernelProtocol):
     KERNEL_CACHE_VERSION = 1
 
     def _generate_cache_key(self) -> str:
-        """P2-6修复: 生成缓存键
+        """P2-6修复: 生成缓存键.
 
         基于设备信息、内核源码和缓存版本生成唯一的缓存键。
         P2-06增强: 纳入缓存版本号，保证版本升级后自动失效。
@@ -586,7 +585,7 @@ class GPUKernel(GPUKernelProtocol):
         return cache_key
 
     def _get_cache_file(self) -> str:
-        """P2-6修复: 获取缓存文件路径"""
+        """P2-6修复: 获取缓存文件路径."""
         import os
 
         cache_dir = os.path.join(os.path.dirname(__file__), "..", "..", "cache")
@@ -598,7 +597,7 @@ class GPUKernel(GPUKernelProtocol):
         return cache_file
 
     def _load_kernel_cache(self) -> bool:
-        """P2-6修复: 从缓存加载内核二进制
+        """P2-6修复: 从缓存加载内核二进制.
 
         Returns:
             bool: 是否成功加载缓存
@@ -643,7 +642,7 @@ class GPUKernel(GPUKernelProtocol):
             return False
 
     def _save_kernel_cache(self) -> None:
-        """P2-6修复 + DEF-2审查: 原子写入内核二进制到缓存
+        """P2-6修复 + DEF-2审查: 原子写入内核二进制到缓存.
 
         使用 tmp + os.replace 原子写入，防止并发写入导致缓存损坏。
         P2-06增强: 保存后自动清理旧版本缓存文件。
@@ -680,7 +679,7 @@ class GPUKernel(GPUKernelProtocol):
                 pathlib.Path(tmp_file).unlink()
 
     def _cleanup_old_cache_versions(self):
-        """P2-06增强: 清理同一设备但不同版本的旧缓存文件
+        """P2-06增强: 清理同一设备但不同版本的旧缓存文件.
 
         扫描缓存目录，删除与当前设备匹配但版本号不同的旧缓存。
         防止多次升级后磁盘空间累积。
@@ -717,7 +716,7 @@ class GPUKernel(GPUKernelProtocol):
             pass  # 清理失败不影响主流程
 
     def _calculate_optimal_batch_size(self) -> int:
-        """根据GPU显存大小计算最优batch_size
+        """根据GPU显存大小计算最优batch_size.
 
         使用共享工具函数，考虑目标地址缓冲区占用。
         """
@@ -733,7 +732,7 @@ class GPUKernel(GPUKernelProtocol):
         return calculate_optimal_batch_size(device=self.device, target_buffer_size=target_buffer_size)
 
     def _allocate_buffers(self):
-        """预分配 GPU 内存缓冲区（PRNG模式）
+        """预分配 GPU 内存缓冲区（PRNG模式）.
 
         P2-2修复: 添加缓冲区追踪
         v4.2.1修复: 使用GPU内存池分配缓冲区（如果已启用）
@@ -832,7 +831,7 @@ class GPUKernel(GPUKernelProtocol):
             )
 
     def set_targets(self, target_hash160s: bytes, num_targets: int, check_uncompressed: int = 0) -> None:
-        """设置目标地址 Hash160 - 只需设置一次
+        """设置目标地址 Hash160 - 只需设置一次.
 
         Args:
             target_hash160s: 目标Hash160字节串
@@ -886,14 +885,14 @@ class GPUKernel(GPUKernelProtocol):
     # ========================================================================
 
     def _validate_batch_params(self, num_keys: int, seed: bytes) -> None:
-        """验证批次参数"""
+        """验证批次参数."""
         if num_keys <= 0 or num_keys > self.max_batch_size:
             raise ValueError(f"num_keys 必须在 1..{self.max_batch_size} 之间，当前为 {num_keys}")
         if len(seed) != 32:
             raise ValueError(f"seed 长度必须为 32 字节（PRNG模式），当前为 {len(seed)} 字节")
 
     def _check_memory_limit(self, num_keys: int) -> None:
-        """检查GPU显存限制"""
+        """检查GPU显存限制."""
         target_buffer_size = len(self._target_hash160s) if self._target_hash160s else 0
         required_memory = 32 + (num_keys * 4) + target_buffer_size
         required_memory_with_overhead = int(required_memory * 1.2)
@@ -907,7 +906,7 @@ class GPUKernel(GPUKernelProtocol):
             )
 
     def _write_seed_buffer(self, seed: bytes) -> None:
-        """写入种子缓冲区"""
+        """写入种子缓冲区."""
         if self._seed_buf is None:
             logger.error("_seed_buf 已释放，无法执行批处理")
             raise RuntimeError("_seed_buf 已释放")
@@ -920,7 +919,7 @@ class GPUKernel(GPUKernelProtocol):
             raise
 
     def _clear_match_buffer(self, num_keys: int) -> None:
-        """清空匹配结果缓冲区"""
+        """清空匹配结果缓冲区."""
         import numpy as np
 
         if self._match_buf is None:
@@ -933,7 +932,7 @@ class GPUKernel(GPUKernelProtocol):
             raise
 
     def _execute_kernel(self, num_keys: int, local_work_size: int) -> tuple:
-        """执行GPU内核（OPT-3 优化）
+        """执行GPU内核（OPT-3 优化）.
 
         内核执行策略:
         1. 计算 global_work_size: 向上取整到 local_work_size 的整数倍
@@ -1030,7 +1029,7 @@ class GPUKernel(GPUKernelProtocol):
         )
 
     def _wait_for_completion(self, read_event, timeout_seconds: float = 30) -> bool:
-        """等待GPU执行完成"""
+        """等待GPU执行完成."""
         import time
 
         timeout_event = threading.Event()
@@ -1067,7 +1066,7 @@ class GPUKernel(GPUKernelProtocol):
         return execution_completed[0]
 
     def _release_buffers_on_error(self) -> None:
-        """错误时释放缓冲区"""
+        """错误时释放缓冲区."""
         for buf_attr in ("_seed_buf", "_match_buf", "_targets_buf", "_precomp_buf"):
             buf = getattr(self, buf_attr, None)
             if buf is None:
@@ -1083,7 +1082,7 @@ class GPUKernel(GPUKernelProtocol):
             setattr(self, buf_attr, None)
 
     def _collect_matches(self, match_view, num_keys: int) -> list:
-        """收集匹配结果"""
+        """收集匹配结果."""
         matches = []
         for i in range(num_keys):
             if match_view[i] > 0:
@@ -1091,7 +1090,7 @@ class GPUKernel(GPUKernelProtocol):
         return matches
 
     def _record_performance(self, num_keys: int, batch_start_time: float, match_count: int) -> None:
-        """记录性能指标"""
+        """记录性能指标."""
         import time
 
         with suppress(Exception):
@@ -1128,7 +1127,7 @@ class GPUKernel(GPUKernelProtocol):
         num_targets: int = 0,
         stop_event: Any | None = None,
     ) -> list[dict]:
-        """PRNG模式批量执行私钥碰撞检测"""
+        """PRNG模式批量执行私钥碰撞检测."""
         import time
 
         batch_start_time = time.time()
@@ -1175,7 +1174,7 @@ class GPUKernel(GPUKernelProtocol):
         return matches
 
     def _check_memory_leaks_on_shutdown(self, released_buffers: set[str]) -> None:
-        """引擎关闭时强制检查并释放所有缓冲区。"""
+        """引擎关闭时强制检查并释放所有缓冲区。."""
         if not hasattr(self, "_buffer_tracker") or not self._buffer_tracker:
             return
         try:
@@ -1205,7 +1204,7 @@ class GPUKernel(GPUKernelProtocol):
             logger.error("内存泄漏检查失败: %s", e, exc_info=True)
 
     def _release_gpu_buffers(self, released_buffers: set[str]) -> None:
-        """显式释放所有 OpenCL Buffer。"""
+        """显式释放所有 OpenCL Buffer。."""
         buffers_to_release = [
             ("_seed_buf", self._seed_buf),
             ("_match_buf", self._match_buf),
@@ -1231,7 +1230,7 @@ class GPUKernel(GPUKernelProtocol):
         self._precomp_buf = None
 
     def _close_async_logging(self) -> None:
-        """关闭异步日志处理器。"""
+        """关闭异步日志处理器。."""
         if hasattr(self, "_async_log_handler") and self._async_log_handler:
             try:
                 self._async_log_handler.close()
@@ -1240,7 +1239,7 @@ class GPUKernel(GPUKernelProtocol):
                 logger.debug("关闭异步日志失败: %s", e)
 
     def cleanup(self) -> None:
-        """清理GPU资源
+        """清理GPU资源.
 
         P1修复: 显式释放OpenCL Buffer,防止显存泄漏
         改进: 删除未使用的pyopencl导入(Buffer对象自带release方法)
@@ -1267,7 +1266,7 @@ class GPUKernel(GPUKernelProtocol):
         self._batch_kernel_local = None
 
     def _setup_async_logging(self, log_file: str, max_bytes: int, backup_count: int) -> None:
-        """设置异步日志处理器（v4.2.1新增）
+        """设置异步日志处理器（v4.2.1新增）.
 
         Args:
             log_file: 日志文件路径

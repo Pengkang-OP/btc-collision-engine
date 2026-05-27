@@ -1,0 +1,71 @@
+sequenceDiagram
+    actor Dev as Engineer
+    participant Repo as Repository
+    participant Ruff as ruff
+    participant Mypy as mypy
+    participant Pip as pip
+    participant Test as pytest
+
+    rect rgb(255, 245, 230)
+        Note over Dev,Test: === Phase A: T01 基础设施清理 ===
+        Dev->>Repo: 删除 test_*.txt (24), .history/ (349 files, 5.8MB)
+        Dev->>Repo: 删除 _ruff_*.json (5), _*.py (10), _*.txt (4)
+        Dev->>Repo: 删除 out.log, .flake8
+        Dev->>Repo: pyproject.toml: 删除 [tool.flake8]/[tool.black]/[tool.basedpyright]
+        Dev->>Repo: .env.example: 与 os.getenv() 交叉比对
+        Dev->>Repo: requirements-dev.txt: 删 black/flake8 → 加 ruff>=0.9.0
+        Dev->>Repo: .gitignore: 加 _ruff_*.json 规则
+    end
+
+    rect rgb(240, 255, 240)
+        Note over Dev,Test: === Phase B: T02 死分支消除 + 依赖降级 ===
+        Dev->>Repo: engine.py: 删除 GPU_CONFIG_MANAGER_AVAILABLE
+        Dev->>Repo: engine.py: 删除 ASYNC_LOG_AVAILABLE，内联 True
+        Dev->>Pip: pip install "cachetools<7.0" "numpy<2.0" "pyopencl<2026.0"
+        Pip-->>Dev: 降级成功
+        Dev->>Pip: pip freeze > requirements.lock
+    end
+
+    rect rgb(230, 240, 255)
+        Note over Dev,Test: === Phase C: T03 PYOPENCL_AVAILABLE 单源化 ===
+        Dev->>Repo: 新建 src/gpu/_availability.py
+        Note over Repo: 唯一 try/except ImportError pyopencl
+        Dev->>Repo: device.py: 删本地定义 → from ._availability import
+        Dev->>Repo: kernel_impl.py: 删本地定义 → from ._availability import
+        Dev->>Repo: engine.py: 删本地定义 → from ...gpu._availability import
+        Dev->>Repo: 15测试文件: patch 路径统一为 src.gpu._availability.PYOPENCL_AVAILABLE
+        Test->>Test: pytest 验证全绿
+    end
+
+    rect rgb(255, 240, 255)
+        Note over Dev,Test: === Phase D: T04 P1 代码质量统一 ===
+        Ruff->>Ruff: ruff --fix: I001(导入排序), Q000(引号), UP(现代化)
+        Dev->>Repo: 运行 ruff format 统一格式
+        Mypy->>Mypy: 逐 override block 修复类型错误
+        Note over Mypy: Block1: wizard_engine/cli.output/kernel_protocol
+        Note over Mypy: Block2: dashboard/worker/platform_check/timeout...
+        Note over Mypy: Block3: buffer_tracker __slots__
+        Note over Mypy: Block4: auto_test/performance_benchmark
+        Note over Mypy: Block5: kernel_impl/device/engine... (24 files)
+        Note over Mypy: Block6: fast_json/_shared/alert_system... (10 files)
+        Note over Mypy: Block7: _result_processor/metrics/key_generator... (7 files)
+        Dev->>Repo: 删除 pyproject.toml 中 7 个 ignore_errors block
+        Dev->>Repo: requirements-*.txt 版本同步 pyproject.toml (P1-17)
+        Dev->>Repo: 绝对导入转换 (P1-18)
+        Dev->>Repo: shebang 清理 25文件 (P1-19)
+        Dev->>Repo: f-string 转换 50处 (P1-21)
+        Dev->>Repo: 常量 4→1 整合: 新建 src/constants.py (P1-22)
+        Dev->>Repo: 4旧常量文件 → re-export
+        Test->>Test: ruff check + mypy + pytest 全绿
+    end
+
+    rect rgb(245, 245, 255)
+        Note over Dev,Test: === Phase E: T05 P2 最终收尾 ===
+        Dev->>Repo: pyproject.toml: 逐步启用 mypy strict 子标志
+        Dev->>Repo: src/: 修复 N8xx 命名违规
+        Dev->>Repo: .pre-commit-config.yaml: black/flake8 → ruff + mypy hook
+        Dev->>Repo: .gitignore: 精简 335→≤50 行
+        Dev->>Repo: ROADMAP.md: 更新标准化完成状态
+        Dev->>Repo: pytest.ini: 删除 DeprecationWarning 抑制
+        Test->>Test: CI 全绿验证
+    end

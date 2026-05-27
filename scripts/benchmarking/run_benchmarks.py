@@ -1,4 +1,4 @@
-"""性能基准测试自动化工具
+"""性能基准测试自动化工具.
 
 自动运行多项性能测试，汇总对比结果，生成基准报告。
 
@@ -25,7 +25,7 @@ _root = Path(__file__).resolve().parent.parent
 
 
 def bench_key_generation(duration: float = 10.0) -> dict[str, Any]:
-    """基准测试: 私钥生成速度"""
+    """基准测试: 私钥生成速度."""
     from src.core.key_generator import SecureKeyGenerator
 
     gen = SecureKeyGenerator()
@@ -50,7 +50,7 @@ def bench_key_generation(duration: float = 10.0) -> dict[str, Any]:
 
 
 def bench_cpu_engine(duration: float = 15.0) -> dict[str, Any]:
-    """基准测试: CPU 碰撞引擎吞吐量"""
+    """基准测试: CPU 碰撞引擎吞吐量."""
     from src.collision.key_collision_engine import KeyCollisionEngine
 
     results = {"keys_checked": 0, "speed": 0.0, "error": None}
@@ -83,7 +83,7 @@ def bench_cpu_engine(duration: float = 15.0) -> dict[str, Any]:
 
 
 def bench_gpu_engine(duration: float = 15.0) -> dict[str, Any] | None:
-    """基准测试: GPU 碰撞引擎吞吐量（需要 PyOpenCL）"""
+    """基准测试: GPU 碰撞引擎吞吐量（需要 PyOpenCL）."""
     try:
         from src.collision.gpu.engine import GPUCollisionEngine
     except ImportError:
@@ -130,7 +130,7 @@ def _fmt_speed(speed: float) -> str:
 
 
 def run_all(duration: float = 10.0, quick: bool = False) -> dict[str, Any]:
-    """运行所有基准测试并汇总结果"""
+    """运行所有基准测试并汇总结果."""
     report: dict[str, Any] = {
         "timestamp": datetime.now().isoformat(),
         "platform": _get_platform_info(),
@@ -177,7 +177,7 @@ def _get_platform_info() -> dict[str, str]:
 
 
 def print_report(report: dict[str, Any]):
-    """打印人类可读的基准测试报告"""
+    """打印人类可读的基准测试报告."""
     ts = report.get("timestamp", "N/A")
     plat = report.get("platform", {})
     benches = report.get("benchmarks", [])

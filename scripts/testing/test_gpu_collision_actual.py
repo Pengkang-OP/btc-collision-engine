@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """GPU碰撞引擎实际性能测试
-测试真实GPU碰撞性能和稳定性
+测试真实GPU碰撞性能和稳定性.
 """
 
 import os
@@ -12,7 +12,7 @@ from src.collision.gpu.engine import GPUCollisionEngine
 
 
 def main():  # noqa: C901
-    """主函数"""
+    """主函数."""
     print("=" * 80)
     print("  GPU碰撞引擎实际性能测试")  # 移除emoji避免Windows GBK编码问题
     print("=" * 80)
@@ -33,7 +33,7 @@ def main():  # noqa: C901
     total_checked = 0
 
     def on_progress(stats: CollisionStats):
-        """进度回调"""
+        """进度回调."""
         nonlocal max_speed, min_speed, total_checked
 
         current_speed = stats.speed
@@ -50,7 +50,7 @@ def main():  # noqa: C901
                 "speed": current_speed,
                 "total": stats.total_checked,
                 "matches": len(stats.matches),
-            }
+            },
         )
 
         # 格式化输出
@@ -74,7 +74,7 @@ def main():  # noqa: C901
         )
 
     def on_match(private_key: bytes, address: str, wif: str):
-        """匹配回调"""
+        """匹配回调."""
         print("\n\n  🎯 发现匹配!")
         print(f"     地址: {address}")
         print(f"     私钥: {private_key.hex()}")
@@ -247,7 +247,7 @@ def main():  # noqa: C901
         print(f"     GPU模式:      {'✅ 正常工作' if total_checked > 0 else '❌ 未运行'}")
         print(f"     性能达标:     {'✅ 是' if speedup >= 100 else '⚠️  低于预期'}")
         print(
-            f"     稳定性:       {'✅ 良好' if min_speed != float('inf') and speed_cv < 30 else '⚠️  需优化'}"
+            f"     稳定性:       {'✅ 良好' if min_speed != float('inf') and speed_cv < 30 else '⚠️  需优化'}",
         )
         print(f"     生产就绪:     {'✅ 是' if speedup >= 1000 and total_checked > 100000 else '❌ 否'}")
         print(f"  {'=' * 76}")

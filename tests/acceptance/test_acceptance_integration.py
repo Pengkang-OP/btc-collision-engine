@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""集成验收测试 - 端到端多模式验证
+"""集成验收测试 - 端到端多模式验证.
 
 本模块测试完整的集成场景，确保：
 1. 功能层：功能正确性、功能调用、功能判断
@@ -41,7 +41,7 @@ from tests.acceptance.conftest import (
     ids=["random", "range_scan", "brute_force"],
 )
 class TestMultiModeIntegration:
-    """多模式集成测试
+    """多模式集成测试.
 
     使用参数化测试覆盖三种搜索模式的集成：
     1. 随机碰撞（random）
@@ -50,7 +50,7 @@ class TestMultiModeIntegration:
     """
 
     def test_multi_mode_engine_initialization(self, mock_event_bus, search_mode):
-        """多模式集成测试：引擎初始化"""
+        """多模式集成测试：引擎初始化."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         targets = {AcceptanceTestConstants.VALID_P2PKH_ADDRESS}
@@ -68,7 +68,7 @@ class TestMultiModeIntegration:
         assert engine._current_mode == search_mode, f"搜索模式 {search_mode} 应被正确设置"
 
     def test_multi_mode_engine_start_stop(self, mock_event_bus, search_mode):
-        """多模式集成测试：引擎启动和停止"""
+        """多模式集成测试：引擎启动和停止."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         targets = {AcceptanceTestConstants.VALID_P2PKH_ADDRESS}
@@ -99,7 +99,7 @@ class TestMultiModeIntegration:
         assert engine.is_running() is False, f"搜索模式 {search_mode} 下停止后 is_running() 应返回 False"
 
     def test_multi_mode_callback_invocation(self, mock_event_bus, search_mode):
-        """多模式集成测试：回调函数调用"""
+        """多模式集成测试：回调函数调用."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         targets = {AcceptanceTestConstants.VALID_P2PKH_ADDRESS}
@@ -133,7 +133,7 @@ class TestMultiModeIntegration:
 @pytest.mark.acceptance
 @pytest.mark.integration
 class TestMultiComponentIntegration:
-    """多组件集成测试
+    """多组件集成测试.
 
     测试多个组件的集成：
     1. KeyCollisionEngine + CheckpointManager
@@ -143,7 +143,7 @@ class TestMultiComponentIntegration:
     """
 
     def test_engine_checkpoint_integration(self, mock_event_bus, temp_dir):
-        """多组件集成测试：引擎 + 检查点"""
+        """多组件集成测试：引擎 + 检查点."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         targets = {AcceptanceTestConstants.VALID_P2PKH_ADDRESS}
@@ -157,7 +157,7 @@ class TestMultiComponentIntegration:
         assert engine.checkpoint_mgr is not None, "引擎 + 检查点集成测试失败：checkpoint_mgr 不应为 None"
 
     def test_engine_dedup_integration(self, mock_event_bus):
-        """多组件集成测试：引擎 + 去重过滤器"""
+        """多组件集成测试：引擎 + 去重过滤器."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         targets = {AcceptanceTestConstants.VALID_P2PKH_ADDRESS}
@@ -174,7 +174,7 @@ class TestMultiComponentIntegration:
         )
 
     def test_engine_event_bus_integration(self, mock_event_bus):
-        """多组件集成测试：引擎 + 事件总线"""
+        """多组件集成测试：引擎 + 事件总线."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         targets = {AcceptanceTestConstants.VALID_P2PKH_ADDRESS}
@@ -188,7 +188,7 @@ class TestMultiComponentIntegration:
         assert engine.event_bus is mock_event_bus, "引擎 + 事件总线集成测试失败：event_bus 应被正确设置"
 
     def test_crypto_backend_engine_integration(self, mock_event_bus):
-        """多组件集成测试：加密后端 + 引擎"""
+        """多组件集成测试：加密后端 + 引擎."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         targets = {AcceptanceTestConstants.VALID_P2PKH_ADDRESS}
@@ -209,7 +209,7 @@ class TestMultiComponentIntegration:
 @pytest.mark.integration
 @pytest.mark.data_layer
 class TestDataFlowIntegration:
-    """数据流集成测试
+    """数据流集成测试.
 
     测试完整的数据流：
     1. 私钥生成 → 地址生成 → 碰撞检测
@@ -221,7 +221,7 @@ class TestDataFlowIntegration:
         self,
         mock_event_bus,
     ):
-        """数据流集成测试：私钥生成 → 地址生成 → 碰撞检测"""
+        """数据流集成测试：私钥生成 → 地址生成 → 碰撞检测."""
         from src.core.key_generator import SecureKeyGenerator
         from src.core.optimized_address_generator import OptimizedP2PKHAddressGenerator
 
@@ -261,7 +261,7 @@ class TestDataFlowIntegration:
         mock_event_bus,
         temp_dir,
     ):
-        """数据流集成测试：检查点保存 → 加载 → 恢复"""
+        """数据流集成测试：检查点保存 → 加载 → 恢复."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         targets = {AcceptanceTestConstants.VALID_P2PKH_ADDRESS}
@@ -279,7 +279,7 @@ class TestDataFlowIntegration:
         self,
         mock_event_bus,
     ):
-        """数据流集成测试：事件发布 → 订阅 → 处理"""
+        """数据流集成测试：事件发布 → 订阅 → 处理."""
         from src.collision.event_bus import EventBus
         from src.collision.events import EngineStartEvent
 
@@ -313,7 +313,7 @@ class TestDataFlowIntegration:
 @pytest.mark.acceptance
 @pytest.mark.integration
 class TestErrorHandlingIntegration:
-    """错误处理集成测试
+    """错误处理集成测试.
 
     测试错误处理和恢复：
     1. 引擎错误检测和恢复
@@ -323,7 +323,7 @@ class TestErrorHandlingIntegration:
     """
 
     def test_engine_error_handling(self, mock_event_bus):
-        """错误处理集成测试：引擎错误检测"""
+        """错误处理集成测试：引擎错误检测."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         targets = {AcceptanceTestConstants.VALID_P2PKH_ADDRESS}
@@ -337,7 +337,7 @@ class TestErrorHandlingIntegration:
         assert engine._engine_stop_reason == "error", "错误处理集成测试失败：错误状态检测失败"
 
     def test_checkpoint_error_handling(self, mock_event_bus, temp_dir):
-        """错误处理集成测试：检查点错误处理"""
+        """错误处理集成测试：检查点错误处理."""
         from src.collision.checkpoint_manager import CheckpointManager
 
         checkpoint_path = temp_dir / "test_checkpoint.json"
@@ -351,7 +351,7 @@ class TestErrorHandlingIntegration:
         assert loaded_data is None, "错误处理集成测试失败：损坏的检查点文件应返回 None"
 
     def test_crypto_backend_error_handling(self, mock_event_bus):
-        """错误处理集成测试：加密后端错误处理"""
+        """错误处理集成测试：加密后端错误处理."""
         from src.core.crypto_backend import CryptoBackendManager
 
         manager = CryptoBackendManager()
@@ -368,7 +368,7 @@ class TestErrorHandlingIntegration:
 @pytest.mark.integration
 @pytest.mark.performance
 class TestPerformanceIntegration:
-    """性能集成测试
+    """性能集成测试.
 
     测试性能指标：
     1. 引擎启动和停止时间
@@ -378,7 +378,7 @@ class TestPerformanceIntegration:
     """
 
     def test_engine_start_stop_performance(self, mock_event_bus):
-        """性能集成测试：引擎启动和停止时间"""
+        """性能集成测试：引擎启动和停止时间."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         targets = {AcceptanceTestConstants.VALID_P2PKH_ADDRESS}
@@ -414,7 +414,7 @@ class TestPerformanceIntegration:
         )
 
     def test_key_generation_performance(self, mock_event_bus):
-        """性能集成测试：私钥生成速度"""
+        """性能集成测试：私钥生成速度."""
         from src.core.key_generator import SecureKeyGenerator
 
         generator = SecureKeyGenerator(config={"batch_size": 100})
@@ -439,10 +439,10 @@ class TestPerformanceIntegration:
 @pytest.mark.integration
 @pytest.mark.edge_cases
 class TestIntegrationEdgeCases:
-    """集成测试边界条件测试"""
+    """集成测试边界条件测试."""
 
     def test_edge_case_empty_targets(self, mock_event_bus):
-        """边界条件测试：空目标地址集合"""
+        """边界条件测试：空目标地址集合."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         engine = KeyCollisionEngine(
@@ -452,7 +452,7 @@ class TestIntegrationEdgeCases:
         assert len(engine.targets) == 0, "边界条件集成测试失败：空目标集合时 targets 长度应为 0"
 
     def test_edge_case_single_target(self, mock_event_bus):
-        """边界条件测试：单个目标地址"""
+        """边界条件测试：单个目标地址."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         targets = {AcceptanceTestConstants.VALID_P2PKH_ADDRESS}

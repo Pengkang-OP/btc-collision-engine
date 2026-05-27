@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""批量添加版本信息到文档
+"""批量添加版本信息到文档.
 
 为缺少版本信息的文档添加标准版本标识
 
@@ -19,16 +19,16 @@ setup_windows_utf8()
 
 
 def check_has_version(content: str) -> bool:
-    """检查文档是否已有版本信息"""
+    """检查文档是否已有版本信息."""
     # 检查前20行是否有版本信息
     first_20_lines = "\n".join(content.split("\n")[:20])
     return bool(re.search(r"[*]*[*]版本[*]*[*]:\s*v?\d+\.\d+", first_20_lines))
 
 
 def add_version_info(
-    content: str, version: str, target_audience: str = "用户/开发者"
+    content: str, version: str, target_audience: str = "用户/开发者",
 ) -> tuple[str, bool]:
-    """添加版本信息到文档
+    """添加版本信息到文档.
 
     Returns:
         (新内容, 是否已添加)
@@ -59,7 +59,7 @@ def add_version_info(
 
 
 def determine_target_audience(file_name: str) -> str:
-    """根据文件名确定目标读者"""
+    """根据文件名确定目标读者."""
     audience_map = {
         "README": "所有用户",
         "getting-started": "新用户",
@@ -92,7 +92,7 @@ def determine_target_audience(file_name: str) -> str:
 
 
 def main():
-    """主函数"""
+    """主函数."""
     import argparse
 
     parser = argparse.ArgumentParser(description="批量添加版本信息到文档")

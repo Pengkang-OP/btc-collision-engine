@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GPU性能验证测试 - v2.2.1优化效果确认
+"""GPU性能验证测试 - v2.2.1优化效果确认.
 
 测试目标:
 1. 验证crypto_backend迁移效果 (283倍提升)
@@ -17,7 +17,7 @@ pytestmark = pytest.mark.gpu
 
 
 def test_crypto_backend_performance():
-    """测试crypto_backend性能"""
+    """测试crypto_backend性能."""
     print("=" * 80)
     print("  测试1: crypto_backend性能验证")
     print("=" * 80)
@@ -64,7 +64,7 @@ def test_crypto_backend_performance():
 
 
 def test_gpu_initialization():
-    """测试GPU初始化（使用Mock）"""
+    """测试GPU初始化（使用Mock）."""
     print("\n" + "=" * 80)
     print("  测试2: GPU引擎初始化验证")
     print("=" * 80)
@@ -76,7 +76,7 @@ def test_gpu_initialization():
 
         print("\n[1/3] 创建Mock GPU环境...")
         with (
-            patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True),
+            patch("src.gpu._availability.PYOPENCL_AVAILABLE", True),
             patch("pyopencl.Buffer"),
             patch("src.collision.gpu.engine.GPUDeviceManager") as mock_device_mgr,
             patch("src.collision.gpu.engine.CollisionCore"),
@@ -128,7 +128,7 @@ def test_gpu_initialization():
 
 
 def test_memory_leak_fix():
-    """测试内存泄漏修复"""
+    """测试内存泄漏修复."""
     print("\n" + "=" * 80)
     print("  测试3: GPU缓冲区泄漏修复验证")
     print("=" * 80)
@@ -140,7 +140,7 @@ def test_memory_leak_fix():
 
         print("\n[1/2] 创建GPU引擎...")
         with (
-            patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True),
+            patch("src.gpu._availability.PYOPENCL_AVAILABLE", True),
             patch("pyopencl.Buffer") as mock_buffer,
             patch("src.collision.gpu.engine.GPUDeviceManager") as mock_device_mgr,
             patch("src.collision.gpu.engine.CollisionCore"),
@@ -197,7 +197,7 @@ def test_memory_leak_fix():
 
 
 def generate_summary_report(results):
-    """生成总结报告"""
+    """生成总结报告."""
     print("\n" + "=" * 80)
     print("  GPU性能验证测试报告 - v2.2.1")
     print("=" * 80)

@@ -18,7 +18,7 @@ logger = get_configured_logger(__name__)
 
 @dataclass
 class Dependency:
-    """依赖项"""
+    """依赖项."""
 
     name: str  # 依赖名称
     module: str  # 模块路径
@@ -29,7 +29,7 @@ class Dependency:
 
 @dataclass
 class LogComponent:
-    """日志组件"""
+    """日志组件."""
 
     name: str  # 组件名称
     module: str  # 模块路径
@@ -39,33 +39,33 @@ class LogComponent:
 
 
 class LogDependencyManager:
-    """日志依赖管理器"""
+    """日志依赖管理器."""
 
     def __init__(self) -> None:
-        """初始化依赖管理器"""
+        """初始化依赖管理器."""
         self.components: dict[str, LogComponent] = {}
         self.dependencies: dict[str, Dependency] = {}
         self.initialization_order: list[str] = []
         self.initialized_components: set[str] = set()
 
     def register_component(self, component: LogComponent) -> None:
-        """注册日志组件"""
+        """注册日志组件."""
         self.components[component.name] = component
 
     def register_dependency(self, dependency: Dependency) -> None:
-        """注册依赖项"""
+        """注册依赖项."""
         self.dependencies[dependency.name] = dependency
 
     def get_component(self, name: str) -> LogComponent | None:
-        """获取组件"""
+        """获取组件."""
         return self.components.get(name)
 
     def get_dependency(self, name: str) -> Dependency | None:
-        """获取依赖项"""
+        """获取依赖项."""
         return self.dependencies.get(name)
 
     def resolve_dependencies(self) -> list[str]:
-        """解析依赖关系，生成初始化顺序"""
+        """解析依赖关系，生成初始化顺序."""
         # 拓扑排序
         visited: set[str] = set()
         temp: set[str] = set()
@@ -101,7 +101,7 @@ class LogDependencyManager:
         return order
 
     def initialize_component(self, component_name: str) -> bool:
-        """初始化组件"""
+        """初始化组件."""
         if component_name in self.initialized_components:
             return True
 
@@ -133,7 +133,7 @@ class LogDependencyManager:
             return False
 
     def _initialize_external_dependency(self, dependency: Dependency) -> bool:
-        """初始化外部依赖"""
+        """初始化外部依赖."""
         try:
             # 尝试导入模块
             module = importlib.import_module(dependency.module)
@@ -158,7 +158,7 @@ class LogDependencyManager:
             return False
 
     def initialize_all(self) -> bool:
-        """初始化所有组件"""
+        """初始化所有组件."""
         try:
             # 解析依赖关系
             order = self.resolve_dependencies()
@@ -177,21 +177,21 @@ class LogDependencyManager:
             return False
 
     def get_initialization_order(self) -> list[str]:
-        """获取初始化顺序"""
+        """获取初始化顺序."""
         if not self.initialization_order:
             self.resolve_dependencies()
         return self.initialization_order
 
     def is_initialized(self, component_name: str) -> bool:
-        """检查组件是否已初始化"""
+        """检查组件是否已初始化."""
         return component_name in self.initialized_components
 
     def get_initialized_components(self) -> set[str]:
-        """获取已初始化的组件"""
+        """获取已初始化的组件."""
         return self.initialized_components.copy()
 
     def get_dependency_graph(self) -> dict[str, list[str]]:
-        """获取依赖图"""
+        """获取依赖图."""
         graph: dict[str, list[str]] = {}
 
         for component_name, component in self.components.items():
@@ -208,7 +208,7 @@ _dependency_manager: LogDependencyManager | None = None
 
 
 def get_dependency_manager() -> LogDependencyManager:
-    """获取依赖管理器实例
+    """获取依赖管理器实例.
 
     Returns:
         依赖管理器实例
@@ -221,7 +221,7 @@ def get_dependency_manager() -> LogDependencyManager:
 
 
 def init_log_dependencies() -> None:
-    """初始化日志依赖"""
+    """初始化日志依赖."""
     manager = get_dependency_manager()
 
     # 注册依赖项
@@ -298,7 +298,7 @@ def init_log_dependencies() -> None:
 
 
 def get_dependency_graph() -> dict[str, list[str]]:
-    """获取依赖图
+    """获取依赖图.
 
     Returns:
         依赖图
@@ -309,7 +309,7 @@ def get_dependency_graph() -> dict[str, list[str]]:
 
 
 def check_dependencies() -> dict[str, bool]:
-    """检查依赖状态
+    """检查依赖状态.
 
     Returns:
         依赖状态字典

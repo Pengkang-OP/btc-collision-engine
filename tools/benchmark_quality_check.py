@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""文档质量检查性能基准测试
+"""文档质量检查性能基准测试.
 
 测试不同规模文档目录的检查性能
 帮助了解工具的性能特征和瓶颈
@@ -22,7 +22,7 @@ from tools.check_document_quality import DocumentQualityChecker  # noqa: E402
 
 
 def benchmark_check(docs_dir: str, iterations: int = 10) -> dict:
-    """性能基准测试
+    """性能基准测试.
 
     Args:
         docs_dir: 文档目录路径
@@ -92,7 +92,7 @@ def benchmark_check(docs_dir: str, iterations: int = 10) -> dict:
 
 
 def print_report(stats: dict):
-    """打印性能报告"""
+    """打印性能报告."""
     print(f"\n{'=' * 60}")
     print("📊 性能基准测试报告")
     print(f"{'=' * 60}")
@@ -121,7 +121,7 @@ def print_report(stats: dict):
 
 
 def main():
-    """主函数"""
+    """主函数."""
     import argparse
 
     parser = argparse.ArgumentParser(description="文档质量检查性能基准测试")

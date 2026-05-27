@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-内存泄漏检测脚本
+"""内存泄漏检测脚本.
 
 此脚本用于检测系统中的内存泄漏问题，包括GPU资源泄漏、内存池泄漏等。
 """
@@ -20,8 +19,7 @@ logger = get_configured_logger("MemoryLeakDetection")
 
 
 def get_memory_usage():
-    """
-    获取当前内存使用情况
+    """获取当前内存使用情况.
 
     Returns:
         内存使用情况字典
@@ -36,16 +34,16 @@ def get_memory_usage():
 
 
 def _log_memory_usage(label, memory):
-    """统一日志输出内存使用情况"""
+    """统一日志输出内存使用情况."""
     logger.info(
         f"{label}内存使用: RSS={memory['rss']:.2f}MB, "
         f"VMS={memory['vms']:.2f}MB, "
-        f"使用率={memory['percent']:.2f}%"
+        f"使用率={memory['percent']:.2f}%",
     )
 
 
 def _log_memory_change(current_mem, initial_mem, loop_idx=None):
-    """输出内存变化"""
+    """输出内存变化."""
     rss_diff = current_mem["rss"] - initial_mem["rss"]
     vms_diff = current_mem["vms"] - initial_mem["vms"]
     prefix = f"循环 {loop_idx + 1} " if loop_idx is not None else "总"
@@ -54,8 +52,7 @@ def _log_memory_change(current_mem, initial_mem, loop_idx=None):
 
 
 def test_gpu_collision_engine_memory_leak():
-    """
-    测试GPU碰撞引擎的内存泄漏
+    """测试GPU碰撞引擎的内存泄漏.
     """
     logger.info("开始测试GPU碰撞引擎的内存泄漏...")
 
@@ -112,14 +109,12 @@ def test_gpu_collision_engine_memory_leak():
     if total_rss_diff > 100:
         logger.error("检测到内存泄漏: RSS增加超过100MB")
         return False
-    else:
-        logger.info("未检测到明显的内存泄漏")
-        return True
+    logger.info("未检测到明显的内存泄漏")
+    return True
 
 
 def test_multi_gpu_engine_memory_leak():
-    """
-    测试多GPU引擎的内存泄漏
+    """测试多GPU引擎的内存泄漏.
     """
     logger.info("开始测试多GPU引擎的内存泄漏...")
 
@@ -187,13 +182,12 @@ def test_multi_gpu_engine_memory_leak():
     if total_rss_diff > 150:
         logger.error("检测到内存泄漏: RSS增加超过150MB")
         return False
-    else:
-        logger.info("未检测到明显的内存泄漏")
-        return True
+    logger.info("未检测到明显的内存泄漏")
+    return True
 
 
 def main():
-    """主函数"""
+    """主函数."""
     try:
         logger.info("开始内存泄漏检测...")
 

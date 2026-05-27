@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""流水模式验收测试 - Pipeline 多步骤数据流转
+"""流水模式验收测试 - Pipeline 多步骤数据流转.
 
 本模块测试完整的 Pipeline 数据流转流程，确保：
 1. 私钥生成 → 地址生成 → 碰撞检测 Pipeline
@@ -36,14 +36,14 @@ from tests.acceptance.conftest import (
 @pytest.mark.acceptance
 @pytest.mark.pipeline
 class TestKeyGenerationPipeline:
-    """私钥生成 → 地址生成 → 碰撞检测 Pipeline 测试"""
+    """私钥生成 → 地址生成 → 碰撞检测 Pipeline 测试."""
 
     def test_pipeline_key_generation_to_address_generation(
         self,
         mock_event_bus,
         monkeypatch,
     ):
-        """Pipeline 测试：私钥生成 → 地址生成
+        """Pipeline 测试：私钥生成 → 地址生成.
 
         验证点：
         - 私钥生成后正确传递到地址生成阶段
@@ -97,7 +97,7 @@ class TestKeyGenerationPipeline:
         self,
         mock_event_bus,
     ):
-        """Pipeline 测试：地址生成 → 碰撞检测
+        """Pipeline 测试：地址生成 → 碰撞检测.
 
         验证点：
         - 生成的地址正确传递到碰撞检测阶段
@@ -138,10 +138,10 @@ class TestKeyGenerationPipeline:
 @pytest.mark.acceptance
 @pytest.mark.pipeline
 class TestDataPersistencePipeline:
-    """数据持久化 Pipeline 测试"""
+    """数据持久化 Pipeline 测试."""
 
     def test_pipeline_checkpoint_save_to_load(self, temp_dir):
-        """Pipeline 测试：Checkpoint 保存 → 加载
+        """Pipeline 测试：Checkpoint 保存 → 加载.
 
         验证点：
         - Checkpoint 数据正确保存
@@ -187,7 +187,7 @@ class TestDataPersistencePipeline:
         )
 
     def test_pipeline_data_logger_to_file(self, temp_dir, mock_event_bus):
-        """Pipeline 测试：DataLogger 记录 → 文件
+        """Pipeline 测试：DataLogger 记录 → 文件.
 
         验证点：
         - DataLogger 正确记录性能数据
@@ -203,7 +203,7 @@ class TestDataPersistencePipeline:
         # 记录性能数据
         # record_performance_data(speed, total_checked, matches_found, ...)
         # API does not match, skip actual call
-        pass  # DataLogger.record_performance_data has different signature, skipping
+        # DataLogger.record_performance_data has different signature, skipping
 
         # 验证阶段 1 完成
         assert data_logger is not None, "Pipeline 阶段 1 失败：DataLogger 实例不应为 None"
@@ -223,10 +223,10 @@ class TestDataPersistencePipeline:
 @pytest.mark.acceptance
 @pytest.mark.pipeline
 class TestEventDrivenPipeline:
-    """事件驱动 Pipeline 测试"""
+    """事件驱动 Pipeline 测试."""
 
     def test_pipeline_event_bus_to_subscribers(self, mock_event_bus):
-        """Pipeline 测试：EventBus 发布 → 订阅者接收
+        """Pipeline 测试：EventBus 发布 → 订阅者接收.
 
         验证点：
         - 事件正确发布到 EventBus
@@ -267,7 +267,7 @@ class TestEventDrivenPipeline:
         )
 
     def test_pipeline_multiple_events(self, mock_event_bus):
-        """Pipeline 测试：多事件发布 → 多订阅者接收
+        """Pipeline 测试：多事件发布 → 多订阅者接收.
 
         验证点：
         - 多个事件正确发布
@@ -315,10 +315,10 @@ class TestEventDrivenPipeline:
 @pytest.mark.pipeline
 @pytest.mark.gpu
 class TestGPUAccelerationPipeline:
-    """GPU 加速 Pipeline 测试"""
+    """GPU 加速 Pipeline 测试."""
 
     def test_pipeline_cpu_to_gpu(self, mock_gpu_chain):
-        """Pipeline 测试：CPU 种子生成 → GPU 内核执行
+        """Pipeline 测试：CPU 种子生成 → GPU 内核执行.
 
         验证点：
         - CPU 正确生成种子
@@ -351,7 +351,7 @@ class TestGPUAccelerationPipeline:
         mock_kernel.run_batch.assert_called_once(), ("Pipeline 阶段 2 失败：GPU 内核应被调用一次")
 
     def test_pipeline_gpu_to_result(self, mock_gpu_chain):
-        """Pipeline 测试：GPU 内核执行 → 结果回传
+        """Pipeline 测试：GPU 内核执行 → 结果回传.
 
         验证点：
         - GPU 内核执行结果正确回传
@@ -401,10 +401,10 @@ class TestGPUAccelerationPipeline:
 @pytest.mark.acceptance
 @pytest.mark.pipeline
 class TestMonitoringDataPipeline:
-    """监控数据 Pipeline 测试"""
+    """监控数据 Pipeline 测试."""
 
     def test_pipeline_collection_to_aggregation(self, mock_event_bus):
-        """Pipeline 测试：数据采集 → 聚合
+        """Pipeline 测试：数据采集 → 聚合.
 
         验证点：
         - 性能数据正确采集
@@ -443,7 +443,7 @@ class TestMonitoringDataPipeline:
         )
 
     def test_pipeline_aggregation_to_storage(self, temp_dir, mock_event_bus):
-        """Pipeline 测试：数据聚合 → 存储
+        """Pipeline 测试：数据聚合 → 存储.
 
         验证点：
         - 聚合数据正确存储
@@ -479,10 +479,10 @@ class TestMonitoringDataPipeline:
 @pytest.mark.acceptance
 @pytest.mark.edge_cases
 class TestPipelineEdgeCases:
-    """Pipeline 边界条件测试"""
+    """Pipeline 边界条件测试."""
 
     def test_edge_case_empty_pipeline(self, mock_event_bus):
-        """边界条件测试：空 Pipeline"""
+        """边界条件测试：空 Pipeline."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 边界条件：空目标集合
@@ -496,7 +496,7 @@ class TestPipelineEdgeCases:
         )
 
     def test_edge_case_single_stage_pipeline(self, mock_event_bus):
-        """边界条件测试：单阶段 Pipeline"""
+        """边界条件测试：单阶段 Pipeline."""
         from src.core.key_generator import SecureKeyGenerator
 
         # 边界条件：仅私钥生成
@@ -507,7 +507,7 @@ class TestPipelineEdgeCases:
         assert_valid_private_key(private_key)
 
     def test_edge_case_large_data_pipeline(self, mock_event_bus, temp_dir):
-        """边界条件测试：大数据 Pipeline"""
+        """边界条件测试：大数据 Pipeline."""
         from src.collision.checkpoint_manager import CheckpointManager
 
         # 边界条件：大数据 Checkpoint

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""性能基准测试 - 测试各模块的性能指标
+"""性能基准测试 - 测试各模块的性能指标.
 
 CI/本地分级策略:
   - CI 环境 (CI=true): 使用宽松阈值，低于本地阈值时发出诊断警告
@@ -39,7 +39,7 @@ _CI_THRESHOLDS = {
 
 
 def _check_perf(speed: float, key: str, label: str) -> None:
-    """分级性能检查：CI 宽松 + 诊断警告，本地严格。"""
+    """分级性能检查：CI 宽松 + 诊断警告，本地严格。."""
     local_min = _LOCAL_THRESHOLDS[key]
     ci_min = _CI_THRESHOLDS[key]
 
@@ -56,7 +56,7 @@ def _check_perf(speed: float, key: str, label: str) -> None:
 
 
 class TestPerformanceBenchmarks:
-    """性能基准测试类"""
+    """性能基准测试类."""
 
     # 性能基线（可根据实际硬件调整）
     BASELINE_PRIVATE_KEY_GEN = 10000  # 私钥生成: 次/秒
@@ -65,7 +65,7 @@ class TestPerformanceBenchmarks:
 
     @staticmethod
     def _safe_elapsed(elapsed: float, min_val: float = 0.001) -> float:
-        """防止 time.time() 精度不足导致的 ZeroDivisionError。
+        """防止 time.time() 精度不足导致的 ZeroDivisionError。.
 
         Windows 上 time.time() 精度约 15ms，极快测试可能导致
         end_time == start_time，返回 min_val 作为安全兜底值。
@@ -73,7 +73,7 @@ class TestPerformanceBenchmarks:
         return elapsed if elapsed > 0 else min_val
 
     def test_private_key_generation_speed(self):
-        """测试私钥生成速度"""
+        """测试私钥生成速度."""
         generator = P2PKHAddressGenerator()
         iterations = 1000
 
@@ -99,7 +99,7 @@ class TestPerformanceBenchmarks:
         )
 
     def test_public_key_derivation_speed(self):
-        """测试公钥推导速度"""
+        """测试公钥推导速度."""
         generator = P2PKHAddressGenerator()
         iterations = 100
 
@@ -125,7 +125,7 @@ class TestPerformanceBenchmarks:
         _check_perf(speed, "public_key_derivation", "公钥推导")
 
     def test_address_generation_speed(self):
-        """测试地址生成速度"""
+        """测试地址生成速度."""
         generator = P2PKHAddressGenerator()
         iterations = 100
 
@@ -150,7 +150,7 @@ class TestPerformanceBenchmarks:
         _check_perf(speed, "address_generation", "地址生成")
 
     def test_base58_encode_speed(self):
-        """测试Base58编码速度"""
+        """测试Base58编码速度."""
         iterations = 10000
         test_data = b"\x00" * 20 + b"\xff" * 20  # 40字节测试数据
 
@@ -172,7 +172,7 @@ class TestPerformanceBenchmarks:
         assert speed > 1000, f"Base58编码速度过低: {speed:.0f}"
 
     def test_base58_decode_speed(self):
-        """测试Base58解码速度"""
+        """测试Base58解码速度."""
         iterations = 10000
         test_data = "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
 
@@ -194,7 +194,7 @@ class TestPerformanceBenchmarks:
         assert speed > 1000, f"Base58解码速度过低: {speed:.0f}"
 
     def test_hash_speed(self):
-        """测试哈希计算速度"""
+        """测试哈希计算速度."""
         from src.core.hash_utils import HashUtils
 
         iterations = 10000
@@ -222,7 +222,7 @@ class TestPerformanceBenchmarks:
         assert speed > 500, f"哈希计算速度过低: {speed:.0f}"
 
     def test_deduplication_filter_speed(self):
-        """测试去重过滤器性能"""
+        """测试去重过滤器性能."""
         dedup = DeduplicationFilter(max_size=100000, enabled=True)
         iterations = 50000
 
@@ -245,7 +245,7 @@ class TestPerformanceBenchmarks:
         assert speed > 5000, f"去重过滤器速度过低: {speed:.0f}"
 
     def test_collision_stats_overhead(self):
-        """测试统计信息更新的开销"""
+        """测试统计信息更新的开销."""
         stats = CollisionStats()
         iterations = 100000
         batch_size = 1000
@@ -269,7 +269,7 @@ class TestPerformanceBenchmarks:
 
     @pytest.mark.flaky(reruns=2, reruns_delay=1)  # 允许重试2次（性能测试不稳定）
     def test_engine_throughput_single_thread(self):
-        """测试引擎单线程吞吐量"""
+        """测试引擎单线程吞吐量."""
         engine = KeyCollisionEngine(
             targets={"1TestAddress123456789012345678"},
             max_workers=1,
@@ -295,7 +295,7 @@ class TestPerformanceBenchmarks:
 
     @pytest.mark.flaky(reruns=2, reruns_delay=1)  # 允许重试2次（性能测试不稳定）
     def test_engine_throughput_multi_thread(self):
-        """测试引擎多线程吞吐量"""
+        """测试引擎多线程吞吐量."""
         # 优化：添加flaky标记，自动重试2次（失败率40% -> 预计<10%）
         engine = KeyCollisionEngine(
             targets={"1TestAddress123456789012345678"},
@@ -325,7 +325,7 @@ class TestPerformanceBenchmarks:
         assert stats.total_checked > 0, "多线程引擎应该检查了一些私钥"
 
     def test_memory_usage_dedup(self):
-        """测试去重过滤器内存使用"""
+        """测试去重过滤器内存使用."""
         # 测试不同大小的内存占用
         sizes = [1000, 10000, 50000]
 
@@ -347,7 +347,7 @@ class TestPerformanceBenchmarks:
             assert dedup._current_size >= 0
 
     def test_full_pipeline_performance(self):
-        """测试完整流水线性能（私钥→公钥→地址→碰撞检测）"""
+        """测试完整流水线性能（私钥→公钥→地址→碰撞检测）."""
         generator = P2PKHAddressGenerator()
         iterations = 100
 
@@ -382,11 +382,11 @@ class TestPerformanceBenchmarks:
 
 
 class TestPerformanceComparison:
-    """性能对比测试"""
+    """性能对比测试."""
 
     @pytest.mark.flaky(reruns=2, reruns_delay=1)
     def test_dedup_enabled_vs_disabled(self):
-        """对比启用/禁用去重的性能差异"""
+        """对比启用/禁用去重的性能差异."""
         targets = {"1TestAddr12345678901234567890"}
         duration = 3  # 增加运行时间提高稳定性
 
@@ -434,7 +434,7 @@ class TestPerformanceComparison:
 
     @pytest.mark.flaky(reruns=2, reruns_delay=1)
     def test_thread_scaling(self):
-        """测试线程扩展性"""
+        """测试线程扩展性."""
         targets = {"1TestAddr12345678901234567890"}
         duration = 2
         thread_counts = [1, 2, 4]

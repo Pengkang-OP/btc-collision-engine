@@ -1,4 +1,4 @@
-"""GPU设备管理器适配器
+"""GPU设备管理器适配器.
 
 将现有 GPUDevice / GPUDeviceDetector / GPUContext 适配为
 IGPUDeviceManager 协议接口，使外观层能够通过统一协议管理设备。
@@ -9,14 +9,15 @@ IGPUDeviceManager 协议接口，使外观层能够通过统一协议管理设�
 
 from typing import Any
 
-from ...utils import get_configured_logger
+from src.utils import get_configured_logger
+
 from .protocols import GPUContext, GPUDevice
 
 logger = get_configured_logger(__name__)
 
 
 class DeviceManagerAdapter:
-    """GPU设备管理器适配器
+    """GPU设备管理器适配器.
 
     适配现有 GPUDevice + GPUDeviceDetector + GPUContext
     到 IGPUDeviceManager 协议。
@@ -40,7 +41,7 @@ class DeviceManagerAdapter:
         config: dict[str, Any] | None = None,
         device_index: int = -1,
     ) -> None:
-        """初始化设备管理器适配器
+        """初始化设备管理器适配器.
 
         Args:
             config: 配置字典
@@ -57,7 +58,7 @@ class DeviceManagerAdapter:
         self._selected_context: GPUContext | None = None
 
     def list_devices(self) -> list[GPUDevice]:
-        """列出所有可用 GPU 设备
+        """列出所有可用 GPU 设备.
 
         通过 GPUDeviceDetector.detect_devices() 发现设备，
         并转换为统一的 GPUDevice 数据对象。
@@ -67,7 +68,7 @@ class DeviceManagerAdapter:
 
         """
         try:
-            from ...gpu.device import GPUDeviceDetector, identify_vendor
+            from src.gpu.device import GPUDeviceDetector, identify_vendor
 
             raw_devices = GPUDeviceDetector.detect_devices()
 
@@ -95,7 +96,7 @@ class DeviceManagerAdapter:
             return []
 
     def select_device(self, device_index: int = -1) -> GPUDevice:
-        """选择 GPU 设备
+        """选择 GPU 设备.
 
         Args:
             device_index: 设备索引，-1 表示自动选择最佳设备
@@ -110,8 +111,8 @@ class DeviceManagerAdapter:
         idx = device_index if device_index >= 0 else self._default_device_index
 
         try:
-            from ...gpu.device import GPUDevice as GPUDeviceImpl
-            from ...gpu.device import GPUDeviceDetector, identify_vendor
+            from src.gpu.device import GPUDevice as GPUDeviceImpl
+            from src.gpu.device import GPUDeviceDetector, identify_vendor
 
             # 检查 GPU 可用性
             if not GPUDeviceDetector.is_gpu_available():
@@ -155,7 +156,7 @@ class DeviceManagerAdapter:
             raise RuntimeError(f"选择 GPU 设备失败: {e}") from e
 
     def create_context(self, device: GPUDevice) -> GPUContext:
-        """创建 GPU 上下文
+        """创建 GPU 上下文.
 
         Args:
             device: GPUDevice 实例
@@ -168,7 +169,7 @@ class DeviceManagerAdapter:
 
         """
         try:
-            from ...gpu.context import GPUContext as GPUContextImpl
+            from src.gpu.context import GPUContext as GPUContextImpl
 
             # 底层 GPUDevice 已经在 select_device 中初始化
             if self._gpu_device is None:
@@ -197,7 +198,7 @@ class DeviceManagerAdapter:
             raise RuntimeError(f"创建 GPU 上下文失败: {e}") from e
 
     def release_all(self) -> None:
-        """释放所有 GPU 资源
+        """释放所有 GPU 资源.
 
         按照上下文 → 设备的顺序释放。
         """
@@ -220,7 +221,7 @@ class DeviceManagerAdapter:
             logger.error("释放 GPU 资源失败: %s", e)
 
     def get_native_device(self) -> Any:
-        """获取底层 GPUDevice 实例
+        """获取底层 GPUDevice 实例.
 
         用于需要直接访问底层 API 的场景（如内存池、内核编译等）。
 
@@ -231,7 +232,7 @@ class DeviceManagerAdapter:
         return self._gpu_device
 
     def get_native_context(self) -> Any:
-        """获取底层 GPUContext 实例
+        """获取底层 GPUContext 实例.
 
         Returns:
             底层 GPUContext 实例，未初始化时返回 None
@@ -240,7 +241,7 @@ class DeviceManagerAdapter:
         return self._gpu_context
 
     def _read_async_config(self) -> bool:
-        """读取异步执行配置
+        """读取异步执行配置.
 
         Returns:
             是否启用异步执行

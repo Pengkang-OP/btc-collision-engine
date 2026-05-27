@@ -1,4 +1,4 @@
-"""GPU外观类（GPU Facade）
+"""GPU外观类（GPU Facade）.
 
 提供简化的GPU子系统接口，封装GPU驱动管理、设备初始化、
 内存管理和碰撞执行等复杂操作，降低碰撞引擎与GPU模块的耦合度。
@@ -18,7 +18,7 @@ logger = get_configured_logger("GPUFacade")
 
 
 class GPUFacade:
-    """GPU外观类
+    """GPU外观类.
 
     封装GPU子系统的复杂性，提供简洁的统一接口。
 
@@ -37,15 +37,15 @@ class GPUFacade:
     """
 
     __slots__ = (
+        "_checkpoint_enabled",
+        "_collision_engine",
+        "_config",
+        "_dedup_enabled",
         "_driver_manager",
         "_gpu_device",
-        "_collision_engine",
         "_is_initialized",
-        "_targets",
         "_mode",
-        "_config",
-        "_checkpoint_enabled",
-        "_dedup_enabled",
+        "_targets",
     )
 
     def __init__(
@@ -57,7 +57,7 @@ class GPUFacade:
         config=None,
         **kwargs,
     ):
-        """初始化GPU外观类
+        """初始化GPU外观类.
 
         Args:
             targets: 目标地址集合/列表（供CLI兼容）
@@ -86,7 +86,7 @@ class GPUFacade:
         max_keys: int | None = None,
         **kwargs: Any,
     ) -> None:
-        """启动GPU碰撞（兼容 KeyCollisionEngine.start API）
+        """启动GPU碰撞（兼容 KeyCollisionEngine.start API）.
 
         Args:
             mode: 碰撞模式 (random/sequential)
@@ -121,7 +121,7 @@ class GPUFacade:
         self.start_collision(self._targets, mode=mode, batch_size=batch_size)
 
     def is_available(self) -> bool:
-        """检查GPU是否可用
+        """检查GPU是否可用.
 
         Returns:
             bool: GPU可用返回True
@@ -145,7 +145,7 @@ class GPUFacade:
             return False
 
     def get_device_count(self) -> int:
-        """获取可用GPU数量
+        """获取可用GPU数量.
 
         Returns:
             int: GPU数量
@@ -159,7 +159,7 @@ class GPUFacade:
             return 0
 
     def list_devices(self) -> list[dict[str, Any]]:
-        """列出所有可用GPU设备
+        """列出所有可用GPU设备.
 
         Returns:
             设备信息列表
@@ -173,7 +173,7 @@ class GPUFacade:
             return []
 
     def initialize(self, device_index: int = 0, batch_size: int = 1000000) -> bool:
-        """初始化GPU设备
+        """初始化GPU设备.
 
         Args:
             device_index: GPU设备索引
@@ -231,7 +231,7 @@ class GPUFacade:
         mode: str = "random",
         batch_size: int | None = None,
     ) -> bool:
-        """启动GPU碰撞
+        """启动GPU碰撞.
 
         Args:
             targets: 目标地址列表
@@ -263,7 +263,7 @@ class GPUFacade:
             return False
 
     def stop(self) -> bool:
-        """停止GPU碰撞
+        """停止GPU碰撞.
 
         Returns:
             bool: 停止成功返回True
@@ -282,7 +282,7 @@ class GPUFacade:
             return False
 
     def get_stats(self) -> dict[str, Any]:
-        """获取碰撞统计信息
+        """获取碰撞统计信息.
 
         Returns:
             统计信息字典
@@ -298,7 +298,7 @@ class GPUFacade:
             return {"status": "error", "message": str(e)}
 
     def get_device_info(self) -> dict[str, Any]:
-        """获取GPU设备信息
+        """获取GPU设备信息.
 
         Returns:
             设备信息字典
@@ -314,7 +314,7 @@ class GPUFacade:
             return {"status": "error", "message": str(e)}
 
     def get_memory_info(self) -> dict[str, Any]:
-        """获取GPU内存信息
+        """获取GPU内存信息.
 
         Returns:
             内存信息字典
@@ -330,7 +330,7 @@ class GPUFacade:
             return {"status": "error", "message": str(e)}
 
     def cleanup(self) -> None:
-        """清理GPU资源"""
+        """清理GPU资源."""
         try:
             # 停止碰撞
             if self._collision_engine:
@@ -347,7 +347,7 @@ class GPUFacade:
             logger.error("清理GPU资源失败: %s", e)
 
     def is_running(self) -> bool:
-        """检查GPU碰撞是否正在运行
+        """检查GPU碰撞是否正在运行.
 
         Returns:
             bool: 正在运行返回True
@@ -359,7 +359,7 @@ class GPUFacade:
         return getattr(self._collision_engine, "_running", False)
 
     def get_performance(self) -> dict[str, Any]:
-        """获取性能信息
+        """获取性能信息.
 
         Returns:
             性能信息字典
@@ -375,16 +375,16 @@ class GPUFacade:
         }
 
     def __enter__(self):
-        """上下文管理器入口"""
+        """上下文管理器入口."""
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """上下文管理器出口"""
+        """上下文管理器出口."""
         self.cleanup()
         return False
 
     def __del__(self):
-        """析构函数
+        """析构函数.
 
         风险说明（评估为低风险，暂不修改）：
         - cleanup() 调用 queue.finish() 等 PyOpenCL 操作，解释器关闭时可能静默失败
@@ -398,7 +398,7 @@ class GPUFacade:
 
 
 def create_gpu_facade() -> GPUFacade:
-    """创建GPU外观实例的工厂函数
+    """创建GPU外观实例的工厂函数.
 
     Returns:
         GPUFacade实例

@@ -1,4 +1,4 @@
-"""性能监控模块基准测试
+"""性能监控模块基准测试.
 
 测试性能监控的开销和功能正确性
 """
@@ -17,10 +17,10 @@ from src.utils.performance_monitor import (
 
 
 class TestPerformanceMonitorOverhead:
-    """性能监控开销测试"""
+    """性能监控开销测试."""
 
     def test_monitor_overhead_per_call(self):
-        """测试单次性能监控调用的开销"""
+        """测试单次性能监控调用的开销."""
         logger = logging.getLogger("test")
         iterations = 10000
 
@@ -44,7 +44,7 @@ class TestPerformanceMonitorOverhead:
         assert overhead < 0.002, f"监控开销过大: {overhead * 1000:.4f}ms/次"
 
     def test_tracker_record_overhead(self):
-        """测试追踪器记录开销"""
+        """测试追踪器记录开销."""
         tracker = PerformanceTracker(max_records=10000)
         iterations = 10000
 
@@ -60,7 +60,7 @@ class TestPerformanceMonitorOverhead:
         assert avg_overhead < 0.00005, f"记录开销过大: {avg_overhead * 1000:.4f}ms/次"
 
     def test_nested_monitor_overhead(self):
-        """测试嵌套监控开销"""
+        """测试嵌套监控开销."""
         logger = logging.getLogger("test")
         iterations = 1000
 
@@ -84,10 +84,10 @@ class TestPerformanceMonitorOverhead:
 
 
 class TestPerformanceTrackerFunctionality:
-    """PerformanceTracker功能测试"""
+    """PerformanceTracker功能测试."""
 
     def test_record_and_statistics(self):
-        """测试记录和统计功能"""
+        """测试记录和统计功能."""
         tracker = PerformanceTracker(max_records=100)
 
         # 记录多个操作
@@ -103,7 +103,7 @@ class TestPerformanceTrackerFunctionality:
         assert stats["max_ms"] == 90.0
 
     def test_max_records_limit(self):
-        """测试最大记录数限制"""
+        """测试最大记录数限制."""
         tracker = PerformanceTracker(max_records=50)
 
         # 记录超过限制的条数
@@ -118,7 +118,7 @@ class TestPerformanceTrackerFunctionality:
         assert tracker._records[-1].operation == "op_99"
 
     def test_thread_safety(self):
-        """测试线程安全"""
+        """测试线程安全."""
         import threading
 
         tracker = PerformanceTracker(max_records=10000)
@@ -145,7 +145,7 @@ class TestPerformanceTrackerFunctionality:
         assert len(tracker._records) == total_records
 
     def test_clear(self):
-        """测试清空功能"""
+        """测试清空功能."""
         tracker = PerformanceTracker(max_records=100)
 
         # 添加一些记录
@@ -159,7 +159,7 @@ class TestPerformanceTrackerFunctionality:
         assert len(tracker._records) == 0
 
     def test_get_slow_operations(self):
-        """测试慢操作检测"""
+        """测试慢操作检测."""
         tracker = PerformanceTracker(max_records=100)
 
         # 记录不同耗时的操作
@@ -179,10 +179,10 @@ class TestPerformanceTrackerFunctionality:
 
 
 class TestEnhancedPerformanceMonitor:
-    """EnhancedPerformanceMonitor功能测试"""
+    """EnhancedPerformanceMonitor功能测试."""
 
     def test_basic_usage(self, caplog):
-        """测试基本使用"""
+        """测试基本使用."""
         logger = logging.getLogger("test_basic")
 
         with caplog.at_level(logging.INFO, logger="test_basic"):
@@ -194,7 +194,7 @@ class TestEnhancedPerformanceMonitor:
         assert "ms" in caplog.text
 
     def test_exception_handling(self, caplog):
-        """测试异常处理"""
+        """测试异常处理."""
         logger = logging.getLogger("test_exception")
 
         with pytest.raises(ValueError):
@@ -206,7 +206,7 @@ class TestEnhancedPerformanceMonitor:
         assert "Test error" in caplog.text
 
     def test_track_disabled(self):
-        """测试禁用追踪"""
+        """测试禁用追踪."""
         logger = logging.getLogger("test_no_track")
         tracker = get_performance_tracker()
         initial_count = len(tracker._records)
@@ -218,7 +218,7 @@ class TestEnhancedPerformanceMonitor:
         assert len(tracker._records) == initial_count
 
     def test_metadata(self):
-        """测试元数据"""
+        """测试元数据."""
         logger = logging.getLogger("test_metadata")
         tracker = get_performance_tracker()
         initial_count = len(tracker._records)
@@ -234,7 +234,7 @@ class TestEnhancedPerformanceMonitor:
         assert last_record.metadata["key2"] == 123
 
     def test_monitoring_disabled(self):
-        """测试禁用性能监控"""
+        """测试禁用性能监控."""
         # 注意：这个测试需要配置支持
         # 这里只是验证函数存在
         enabled = is_performance_monitoring_enabled()
@@ -242,10 +242,10 @@ class TestEnhancedPerformanceMonitor:
 
 
 class TestConfiguration:
-    """配置相关测试"""
+    """配置相关测试."""
 
     def test_config_loading(self):
-        """测试配置加载"""
+        """测试配置加载."""
         from src.utils.performance_monitor import _get_tracker_config
 
         config = _get_tracker_config()
@@ -263,7 +263,7 @@ class TestConfiguration:
         assert config["slow_threshold_ms"] == 30000
 
     def test_singleton_tracker(self):
-        """测试追踪器单例"""
+        """测试追踪器单例."""
         tracker1 = get_performance_tracker()
         tracker2 = get_performance_tracker()
 

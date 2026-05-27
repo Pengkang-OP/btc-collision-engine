@@ -29,7 +29,7 @@ except ImportError:
 
 
 class ConfigManager:
-    """配置管理器 - 统一管理应用配置"""
+    """配置管理器 - 统一管理应用配置."""
 
     # 审查修复#5: 将Schema提取为类常量，避免每次验证都重新创建
     # 优化: 将Draft202012Validator实例缓存为类变量，避免重复创建开销
@@ -38,7 +38,7 @@ class ConfigManager:
     # ROADMAP #5: CONFIG_SCHEMA 已迁移至 config.schema.json（单一真相源）
     # 内联字典已删除，由 _get_validator() 从文件加载
     _CONFIG_SCHEMA_PATH = str(
-        pathlib.Path(__file__).resolve().parent.parent.parent / "config.schema.json"
+        pathlib.Path(__file__).resolve().parent.parent.parent / "config.schema.json",
     )
 
     DEFAULT_CONFIG = {
@@ -162,7 +162,7 @@ class ConfigManager:
     }
 
     def __init__(self, config_file: str | None = None) -> None:
-        """初始化配置管理器
+        """初始化配置管理器.
 
         Args:
             config_file: 配置文件路径，None表示使用默认配置
@@ -184,7 +184,7 @@ class ConfigManager:
 
     @property
     def config(self) -> dict[str, Any]:
-        """延迟初始化配置属性"""
+        """延迟初始化配置属性."""
         if not self._config_initialized:
             self._config = copy.deepcopy(self.DEFAULT_CONFIG)
             self._config_initialized = True
@@ -192,7 +192,7 @@ class ConfigManager:
 
     @config.setter
     def config(self, value: dict[str, Any]) -> None:
-        """设置配置属性（线程安全）"""
+        """设置配置属性（线程安全）."""
         # SUGGESTION-8: 添加锁保护以保持与getter的线程安全一致性
         with self._lock:
             self._config = value
@@ -200,7 +200,9 @@ class ConfigManager:
 
     @staticmethod
     def _strip_comments(config: Any) -> Any:
-        """D-2修复: 递归移除所有以 '_comment' 开头的注释键，使 config.example.json
+        """递归移除所有注释键，使配置文件与 JSON Schema 兼容。.
+
+        D-2修复: 递归移除所有以 '_comment' 开头的注释键，使 config.example.json
         可直接作为合法配置使用（与 additionalProperties:False 的 JSON Schema 兼容）。
 
         Args:
@@ -219,7 +221,7 @@ class ConfigManager:
         return config
 
     def load_config(self) -> bool:
-        """从文件加载配置（线程安全）
+        """从文件加载配置（线程安全）.
 
         Returns:
             加载成功返回True，失败返回False
@@ -253,7 +255,7 @@ class ConfigManager:
     # ── 配置热重载 ──────────────────────────────────────────
 
     def reload_config(self) -> bool:
-        """安全重载配置 (P2-4): 验证新配置后才应用，失败则回滚到原配置
+        """安全重载配置 (P2-4): 验证新配置后才应用，失败则回滚到原配置.
 
         与 load_config() 不同，reload_config() 会:
         1. 先验证新配置文件是否合法
@@ -308,7 +310,7 @@ class ConfigManager:
             return False
 
     def on_config_changed(self, callback: Callable[[], None]) -> None:
-        """注册配置变更回调 (P2-4)
+        """注册配置变更回调 (P2-4).
 
         当配置文件通过 reload_config() 成功重载后，所有注册的回调都会被调用。
         回调在触发 reload 的线程中同步执行（后台线程）。
@@ -320,7 +322,7 @@ class ConfigManager:
         self._change_callbacks.append(callback)
 
     def _notify_change_callbacks(self) -> None:
-        """通知所有配置变更回调 (P2-4)
+        """通知所有配置变更回调 (P2-4).
 
         每个回调都有独立的异常保护，单个回调失败不影响其他回调。
         """
@@ -333,7 +335,7 @@ class ConfigManager:
                 logger.error("配置变更回调 %s 执行失败: %s", cb_name, e)
 
     def start_watching(self, debounce_seconds: float = 2.0, poll_interval: float = 2.0) -> bool:
-        """启动配置文件热重载监听 (P2-4)
+        """启动配置文件热重载监听 (P2-4).
 
         自动选择最佳后端:
         - watchdog (事件驱动, 响应快)
@@ -367,7 +369,7 @@ class ConfigManager:
             return self._watcher.start()
 
     def stop_watching(self) -> None:
-        """停止配置文件热重载监听 (P2-4)"""
+        """停止配置文件热重载监听 (P2-4)."""
         # C2修复: 加锁保护 _watcher 的读写
         with self._lock:
             if self._watcher is not None:
@@ -375,7 +377,7 @@ class ConfigManager:
                 self._watcher = None
 
     def __del__(self) -> None:
-        """析构时自动停止配置监听 (P2-4)
+        """析构时自动停止配置监听 (P2-4).
 
         注意：建议使用上下文管理器或显式调用cleanup()方法，
         以确保资源能够被正确释放。
@@ -389,7 +391,7 @@ class ConfigManager:
             sys.stderr.write(f"WARNING: ConfigManager清理失败: {type(e).__name__}: {e}\n")
 
     def save_config(self) -> bool:
-        """保存配置到文件（线程安全）
+        """保存配置到文件（线程安全）.
 
         Returns:
             保存成功返回True，失败返回False
@@ -428,7 +430,7 @@ class ConfigManager:
             return False
 
     def get(self, key: str, default: Any = None) -> Any:
-        """获取配置值（线程安全）
+        """获取配置值（线程安全）.
 
         Args:
             key: 配置键，支持点号分隔的路径，如 "collision.max_workers"
@@ -451,7 +453,7 @@ class ConfigManager:
         return value
 
     def set(self, key: str, value: Any) -> bool:
-        """设置配置值（线程安全）
+        """设置配置值（线程安全）.
 
         Args:
             key: 配置键，支持点号分隔的路径
@@ -475,7 +477,7 @@ class ConfigManager:
         return True
 
     def _merge_config(self, base: dict[str, Any], update: dict[str, Any]) -> None:
-        """递归合并配置（必须在锁内调用）
+        """递归合并配置（必须在锁内调用）.
 
         Args:
             base: 基础配置
@@ -489,7 +491,7 @@ class ConfigManager:
                 base[key] = value
 
     def _deep_copy_config(self, config: dict[str, Any]) -> dict[str, Any]:
-        """深拷贝配置字典（避免在写文件时持有锁）
+        """深拷贝配置字典（避免在写文件时持有锁）.
 
         Args:
             config: 要拷贝的配置字典
@@ -502,7 +504,7 @@ class ConfigManager:
         return copy.deepcopy(config)
 
     def validate(self, config: dict[str, Any] | None = None) -> dict[str, str]:
-        """DF-3修复: 统一配置验证逻辑
+        """DF-3修复: 统一配置验证逻辑.
 
         优先使用JSON Schema验证（如果可用），否则使用手动验证。
 
@@ -524,7 +526,7 @@ class ConfigManager:
         return self._validate_manual(config)
 
     def _validate_with_schema(self, config: dict[str, Any]) -> dict[str, str]:
-        """DF-3修复: 使用JSON Schema验证配置
+        """DF-3修复: 使用JSON Schema验证配置.
 
         Args:
             config: 用户配置字典
@@ -555,7 +557,7 @@ class ConfigManager:
 
     @classmethod
     def _get_validator(cls) -> Optional["Draft202012Validator"]:
-        """获取缓存的Schema验证器实例（懒加载，双重检查锁定）
+        """获取缓存的Schema验证器实例（懒加载，双重检查锁定）.
 
         从 config.schema.json 文件加载 Schema（ROADMAP #5: 单一真相源）。
         """
@@ -582,7 +584,7 @@ class ConfigManager:
 
     @staticmethod
     def _is_strict_bool(value: Any) -> bool:
-        """审查修复#4: 严格布尔值检查，防止int被误认为bool
+        """审查修复#4: 严格布尔值检查，防止int被误认为bool.
 
         在Python中，bool是int的子类，isinstance(True, int)返回True。
         此方法确保只接受真正的布尔值，不接受整数（但JSON解析的True/False是bool类型）。
@@ -599,7 +601,7 @@ class ConfigManager:
         return type(value) is bool
 
     def _validate_mode(self, value: str, errors: dict[str, str], prefix: str = "") -> str | None:
-        """验证模式配置
+        """验证模式配置.
 
         自 v4.3.1: 添加 prefix 参数支持嵌套路径错误键。
         """
@@ -621,7 +623,7 @@ class ConfigManager:
         return value
 
     def _validate_batch_size(self, value: int, errors: dict[str, str], prefix: str = "") -> int | None:
-        """验证批次大小
+        """验证批次大小.
 
         自 v4.3.1: 添加 prefix 参数支持嵌套路径错误键。
         """
@@ -656,7 +658,7 @@ class ConfigManager:
         nullable: bool = False,
         max_val: int | None = None,
     ) -> int | None:
-        """验证正整数配置
+        """验证正整数配置.
 
         Args:
             name: 字段名（用于错误消息）
@@ -695,14 +697,14 @@ class ConfigManager:
         errors: dict[str, str],
         min_val: float = 0.0,
     ) -> float | None:
-        """验证正浮点数配置"""
+        """验证正浮点数配置."""
         if not isinstance(value, (int, float)) or value < min_val:
             errors[name] = _t("config.validation.float_min", name=name, min_val=min_val, value=value)
             return None
         return float(value)
 
     def _validate_bool(self, name: str, value: Any, errors: dict[str, str]) -> bool:
-        """验证布尔值配置"""
+        """验证布尔值配置."""
         if not isinstance(value, bool):
             # 尝试自动转换
             if isinstance(value, str):
@@ -724,7 +726,7 @@ class ConfigManager:
         errors: dict[str, str],
         prefix: str = "",
     ) -> int | None:
-        """验证检查点间隔
+        """验证检查点间隔.
 
         自 v4.3.1: 添加 prefix 参数支持嵌套路径错误键。
         """
@@ -735,7 +737,7 @@ class ConfigManager:
         return value
 
     def _validate_log_level(self, value: str, errors: dict[str, str], prefix: str = "") -> str | None:
-        """验证日志级别
+        """验证日志级别.
 
         Args:
             value: 日志级别字符串
@@ -759,7 +761,7 @@ class ConfigManager:
     # ========================================================================
 
     def _validate_manual(self, config: dict[str, Any]) -> dict[str, str]:
-        """手动验证配置字段（JSON Schema 不可用时的降级方案）
+        """手动验证配置字段（JSON Schema 不可用时的降级方案）.
 
         v4.3.1: 清理 8 个死代码引用，所有校验路径对齐实际 CONFIG_SCHEMA 结构。
 
@@ -799,7 +801,7 @@ class ConfigManager:
         return errors
 
     def _validate_collision_section(self, collision: dict[str, Any], errors: dict[str, str]) -> None:
-        """验证 collision 配置节"""
+        """验证 collision 配置节."""
         if "max_workers" in collision:
             self._validate_positive_int(
                 "collision.max_workers",
@@ -843,7 +845,7 @@ class ConfigManager:
                 self._validate_bool(field_name, source[key], errors)
 
     def _validate_logging_section(self, logging_cfg: dict[str, Any], errors: dict[str, str]) -> None:
-        """验证 logging 配置节"""
+        """验证 logging 配置节."""
         if "level" in logging_cfg:
             self._validate_log_level(logging_cfg["level"], errors, prefix="logging.")
         for key in ("format", "file", "rotation_when"):
@@ -875,7 +877,7 @@ class ConfigManager:
                 errors["logging.rotation_when"] = _t("config.validation.rotation_needs_when")
 
     def _validate_engine_section(self, engine_cfg: dict[str, Any], errors: dict[str, str]) -> None:
-        """验证 engine 配置节"""
+        """验证 engine 配置节."""
         if "mode" in engine_cfg:
             self._validate_mode(engine_cfg["mode"], errors, prefix="engine.")
         if "batch_size" in engine_cfg:
@@ -895,7 +897,7 @@ class ConfigManager:
         gpu_cfg: dict[str, Any],
         errors: dict[str, str],
     ) -> None:
-        """验证 gpu 配置节"""
+        """验证 gpu 配置节."""
         if gpu_top is not None and not isinstance(gpu_top, dict):
             errors["gpu"] = _t(
                 "config.validation.field_must_be_dict",
@@ -932,7 +934,7 @@ class ConfigManager:
             )
 
     def _validate_crypto_section(self, crypto: dict[str, Any], errors: dict[str, str]) -> None:
-        """验证 crypto 配置节"""
+        """验证 crypto 配置节."""
         if "backend" in crypto:
             valid_backends = (
                 "auto",
@@ -958,7 +960,7 @@ class ConfigManager:
             )
 
     def _validate_perf_section(self, perf_cfg: dict[str, Any], errors: dict[str, str]) -> None:
-        """验证 performance_monitoring 配置节"""
+        """验证 performance_monitoring 配置节."""
         for key in ("enabled", "track_slow_operations"):
             if key in perf_cfg:
                 self._validate_bool(f"performance_monitoring.{key}", perf_cfg[key], errors)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""快速检查异步优化状态"""
+"""快速检查异步优化状态."""
 
 from datetime import datetime
 from pathlib import Path

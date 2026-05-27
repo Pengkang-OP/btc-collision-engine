@@ -1,4 +1,4 @@
-"""GPU 碰撞结果处理器
+"""GPU 碰撞结果处理器.
 
 从 GPUCollisionEngine 中提取匹配结果处理逻辑，
 负责将 GPU 计算出的匹配结果安全地分发给用户回调。
@@ -14,8 +14,9 @@
 
 from typing import TYPE_CHECKING
 
-from ...utils import get_configured_logger
-from ...utils.timeout import invoke_with_timeout
+from src.utils import get_configured_logger
+from src.utils.timeout import invoke_with_timeout
+
 from ..events import EngineMatchEvent
 
 # 回调类型
@@ -27,14 +28,14 @@ logger = get_configured_logger(__name__)
 
 
 class GPUResultProcessor:
-    """GPU 碰撞结果处理器
+    """GPU 碰撞结果处理器.
 
     封装匹配结果的验证、去重和回调分发逻辑。
     通过 engine 引用访问所有引擎状态，不复制状态。
     """
 
     def __init__(self, engine: "GPUCollisionEngine") -> None:
-        """初始化结果处理器
+        """初始化结果处理器.
 
         Args:
             engine: GPUCollisionEngine 实例引用
@@ -45,7 +46,7 @@ class GPUResultProcessor:
     # ========== 匹配回调安全调用 ==========
 
     def safe_invoke_match_callback(self, private_key: bytes, address: str, wif: str) -> bool:
-        """安全调用匹配回调函数，提供超时控制与异常隔离
+        """安全调用匹配回调函数，提供超时控制与异常隔离.
 
         使用统一的 invoke_with_timeout 工具实现跨平台超时保护。
 
@@ -77,7 +78,7 @@ class GPUResultProcessor:
     # ========== 匹配结果处理 ==========
 
     def process_matches(self, private_keys: bytes, matches: list[dict[str, int]]) -> None:
-        """处理 GPU 匹配结果（常规模式：完整私钥数组）
+        """处理 GPU 匹配结果（常规模式：完整私钥数组）.
 
         从 GPUCollisionEngine._process_gpu_matches 提取。
 
@@ -94,7 +95,7 @@ class GPUResultProcessor:
 
         """
         engine = self._engine
-        from ...core.wif import WIF
+        from src.core.wif import WIF
 
         for match in matches:
             key_idx = match["key_index"]
@@ -136,7 +137,7 @@ class GPUResultProcessor:
                 logger.warning("GPU匹配回调处理失败，跳过地址: [MASKED_ADDRESS]")
 
     def process_matches_prng(self, seed: bytes, matches: list[dict[str, int]]) -> None:
-        """处理 GPU 匹配结果（PRNG 模式：种子+索引推导私钥）
+        """处理 GPU 匹配结果（PRNG 模式：种子+索引推导私钥）.
 
         从 GPUCollisionEngine._process_gpu_matches_prng 提取。
 
@@ -151,8 +152,8 @@ class GPUResultProcessor:
 
         """
         engine = self._engine
-        from ...core.secp256k1 import Secp256k1
-        from ...core.wif import WIF
+        from src.core.secp256k1 import Secp256k1
+        from src.core.wif import WIF
 
         seed_int = int.from_bytes(seed, "big")
         for match in matches:

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Intel Arc GPU实际碰撞测试脚本
+"""Intel Arc GPU实际碰撞测试脚本.
 
 功能：
 1. 使用真实比特币地址进行碰撞测试
@@ -41,7 +41,7 @@ logger = logging.getLogger("IntelArcCollisionTest")
 
 
 def load_valid_addresses(filepath: str = "") -> set[str]:
-    """加载有效地址文件"""
+    """加载有效地址文件."""
     addresses = set()
     # 默认路径: 项目根目录下的 targets.txt 或 benchmarks/btc_addresses_sorted.txt
     if not filepath:
@@ -70,7 +70,7 @@ def load_valid_addresses(filepath: str = "") -> set[str]:
 
 
 class IntelArcTestMonitor:
-    """Intel Arc测试监控器"""
+    """Intel Arc测试监控器."""
 
     def __init__(self, total_memory_bytes: int):
         self.memory_monitor = IntelMemoryMonitor(
@@ -91,12 +91,12 @@ class IntelArcTestMonitor:
         self.execution_times = []
 
     def start(self):
-        """开始监控"""
+        """开始监控."""
         self.start_time = time.time()
         logger.info("Intel Arc测试监控器已启动")
 
     def record_batch(self, batch_size: int, execution_time_ms: float):
-        """记录批次数据"""
+        """记录批次数据."""
         self.batch_count += 1
         self.total_keys += batch_size
         self.execution_times.append(execution_time_ms)
@@ -114,7 +114,7 @@ class IntelArcTestMonitor:
         self.memory_monitor.track_deallocation(estimated_bytes, batch_count=self.batch_count)
 
     def get_statistics(self) -> dict:
-        """获取统计信息"""
+        """获取统计信息."""
         elapsed = time.time() - self.start_time if self.start_time else 0
         avg_throughput = (
             sum(self.throughput_history) / len(self.throughput_history) if self.throughput_history else 0
@@ -135,7 +135,7 @@ class IntelArcTestMonitor:
         }
 
     def generate_report(self) -> str:
-        """生成测试报告"""
+        """生成测试报告."""
         stats = self.get_statistics()
 
         report = []
@@ -174,14 +174,14 @@ class IntelArcTestMonitor:
         return "\n".join(report)
 
     def cleanup(self) -> None:
-        """清理监控资源"""
+        """清理监控资源."""
         self.memory_monitor.reset()
         self.timeout_manager.reset()
         logger.info("Intel Arc测试监控器资源已清理")
 
 
 def run_gpu_collision_test(targets: set[str], duration: int = 60, batch_size: int = 1048576) -> dict:
-    """运行GPU碰撞测试"""
+    """运行GPU碰撞测试."""
     print("\n" + "=" * 80)
     print("🚀 Intel Arc GPU 碰撞测试")
     print("=" * 80)
@@ -197,7 +197,7 @@ def run_gpu_collision_test(targets: set[str], duration: int = 60, batch_size: in
     monitor = IntelArcTestMonitor(total_memory_bytes=16 * 1024**3)
 
     def on_progress(stats: CollisionStats):
-        """进度回调"""
+        """进度回调."""
         stats_data["total_checked"] = stats.total_checked
         stats_data["speed"] = stats.speed
         stats_data["elapsed"] = stats.elapsed
@@ -215,7 +215,7 @@ def run_gpu_collision_test(targets: set[str], duration: int = 60, batch_size: in
         )
 
     def on_match(private_key: bytes, address: str, wif: str):
-        """匹配回调 - 签名需匹配 MatchCallback = Callable[[bytes, str, str], None]"""
+        """匹配回调 - 签名需匹配 MatchCallback = Callable[[bytes, str, str], None]."""
         print(f"\n🎯 发现匹配: {address}")
         print(f"   私钥: {private_key.hex()}")
         print(f"   WIF: {wif}\n")
@@ -338,7 +338,7 @@ def run_gpu_collision_test(targets: set[str], duration: int = 60, batch_size: in
 
 
 def run_cpu_baseline_test(targets: set[str], duration: int = 10) -> dict:
-    """运行CPU基线测试（用于对比）"""
+    """运行CPU基线测试（用于对比）."""
     print("\n" + "=" * 80)
     print("💻 CPU 基线测试（对比用）")
     print("=" * 80)
@@ -407,7 +407,7 @@ def run_cpu_baseline_test(targets: set[str], duration: int = 10) -> dict:
 
 
 def main():
-    """主函数"""
+    """主函数."""
     print("\n" + "=" * 80)
     print("Intel Arc GPU 实际碰撞测试套件")
     print("=" * 80)

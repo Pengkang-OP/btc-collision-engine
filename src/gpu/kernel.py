@@ -1,3 +1,5 @@
+"""OpenCL 内核管理模块，提供内核源码加载和编译功能。."""
+
 import os as _os
 import pathlib
 
@@ -123,17 +125,17 @@ KERNEL_VERSION_HISTORY: list[dict[str, str]] = [
 
 
 def get_kernel_version() -> str:
-    """获取当前内核版本号"""
+    """获取当前内核版本号."""
     return KERNEL_VERSION
 
 
 def get_kernel_version_tuple() -> tuple[int, int, int]:
-    """获取当前内核版本号元组 (major, minor, patch)"""
+    """获取当前内核版本号元组 (major, minor, patch)."""
     return KERNEL_VERSION_TUPLE
 
 
 def validate_kernel_version(min_version: str) -> bool:
-    """校验内核版本是否满足最低要求
+    """校验内核版本是否满足最低要求.
 
     用于编译时检查：确保当前内核版本 >= 调用方要求的最低版本。
 
@@ -163,7 +165,7 @@ def validate_kernel_version(min_version: str) -> bool:
 
 
 def get_version_changelog(version: str | None = None) -> list[dict[str, str]]:
-    """获取内核版本变更日志
+    """获取内核版本变更日志.
 
     Args:
         version: 指定版本号，为 None 时返回所有历史
@@ -181,7 +183,7 @@ def get_latest_compatible_version(
     current_version: str,
     available_versions: list[str],
 ) -> str | None:
-    """查找最新兼容版本（用于回滚场景）
+    """查找最新兼容版本（用于回滚场景）.
 
     给定当前版本和可用版本列表，返回可回退到的最高版本。
 
@@ -220,7 +222,7 @@ def get_latest_compatible_version(
 
 
 def _load_kernel_source() -> str:
-    """加载 OpenCL 内核源码
+    """加载 OpenCL 内核源码.
 
     优先从 src/gpu/kernels/batch_check.cl 加载，文件不存在时回退到嵌入源码。
     外部化 .cl 文件便于版本管理、语法高亮和独立测试。

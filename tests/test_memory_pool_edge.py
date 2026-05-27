@@ -1,4 +1,4 @@
-"""memory_pool 边缘覆盖测试 — 补全剩余 7 行缺失"""
+"""memory_pool 边缘覆盖测试 — 补全剩余 7 行缺失."""
 
 from unittest.mock import patch
 
@@ -9,7 +9,7 @@ from src.core.memory_pool import (
 
 
 class _DummyObj:
-    """测试用对象"""
+    """测试用对象."""
 
     def __init__(self):
         self.data = None
@@ -19,10 +19,10 @@ class _DummyObj:
 
 
 class TestObjectPoolAutoTuneIdleShrink:
-    """覆盖 auto_tune 中空闲缩容路径 (lines 334-349)"""
+    """覆盖 auto_tune 中空闲缩容路径 (lines 334-349)."""
 
     def test_auto_tune_shrink_idle_branch(self):
-        """空闲对象过多时 auto_tune 内部缩容（del _pool[target:]）"""
+        """空闲对象过多时 auto_tune 内部缩容（del _pool[target:]）."""
         pool = ObjectPool(lambda: _DummyObj(), initial_size=5, max_size=100)
         # 填充池到超过阈值 (POOL_SHRINK_THRESHOLD_RATIO=3, initial_size=5 → 阈值=15)
         objs = []
@@ -41,7 +41,7 @@ class TestObjectPoolAutoTuneIdleShrink:
 
 
 class TestGlobalPoolManagerAutoCleanupEdge:
-    """覆盖 _auto_cleanup_loop 中 tuned/released > 0 的日志分支 (lines 600-603)"""
+    """覆盖 _auto_cleanup_loop 中 tuned/released > 0 的日志分支 (lines 600-603)."""
 
     def setup_method(self, method):
         GlobalPoolManager._instance = None
@@ -50,7 +50,7 @@ class TestGlobalPoolManagerAutoCleanupEdge:
         GlobalPoolManager._instance = None
 
     def test_auto_cleanup_loop_debug_log_branch(self):
-        """当 tuned=True 或 released>0 时输出 debug 日志"""
+        """当 tuned=True 或 released>0 时输出 debug 日志."""
         mgr = GlobalPoolManager()
         mgr.initialize()
 
@@ -62,7 +62,7 @@ class TestGlobalPoolManagerAutoCleanupEdge:
         # 不应崩溃
 
     def test_auto_cleanup_loop_debug_log_tuned_only(self):
-        """仅 tuned=True（released=0）时也输出 debug 日志"""
+        """仅 tuned=True（released=0）时也输出 debug 日志."""
         mgr = GlobalPoolManager()
         mgr.initialize()
 
@@ -74,7 +74,7 @@ class TestGlobalPoolManagerAutoCleanupEdge:
 
 
 class TestGlobalPoolManagerStopCleanupTimeout:
-    """覆盖 stop_auto_cleanup 超时警告分支 (line 654)"""
+    """覆盖 stop_auto_cleanup 超时警告分支 (line 654)."""
 
     def setup_method(self, method):
         GlobalPoolManager._instance = None
@@ -83,7 +83,7 @@ class TestGlobalPoolManagerStopCleanupTimeout:
         GlobalPoolManager._instance = None
 
     def test_stop_auto_cleanup_timeout_warning_log(self):
-        """线程在超时后仍存活 → 输出 warning"""
+        """线程在超时后仍存活 → 输出 warning."""
         mgr = GlobalPoolManager()
         mgr.initialize()
         mgr.start_auto_cleanup(interval_seconds=3600)
@@ -104,7 +104,7 @@ class TestGlobalPoolManagerStopCleanupTimeout:
 
 
 class TestECPointPool:
-    """ECPointPool 覆盖 — 当前未测 acquire(x,y,curve) / release / get_stats"""
+    """ECPointPool 覆盖 — 当前未测 acquire(x,y,curve) / release / get_stats."""
 
     def setup_method(self, method):
         GlobalPoolManager._instance = None
@@ -113,7 +113,7 @@ class TestECPointPool:
         GlobalPoolManager._instance = None
 
     def test_ecpoint_pool_acquire_with_coords(self):
-        """获取 ECPoint 并设置坐标"""
+        """获取 ECPoint 并设置坐标."""
         mgr = GlobalPoolManager()
         mgr.initialize()
         pool = mgr.get_ecpoint_pool()
@@ -123,7 +123,7 @@ class TestECPointPool:
         assert pt.is_infinity is False
 
     def test_ecpoint_pool_acquire_infinity(self):
-        """获取无穷远点 (x=None, y=None)"""
+        """获取无穷远点 (x=None, y=None)."""
         mgr = GlobalPoolManager()
         mgr.initialize()
         pool = mgr.get_ecpoint_pool()
@@ -131,7 +131,7 @@ class TestECPointPool:
         assert pt.is_infinity
 
     def test_ecpoint_pool_release(self):
-        """归还 ECPoint（ECPoint 无 reset 方法，归还后坐标不变）"""
+        """归还 ECPoint（ECPoint 无 reset 方法，归还后坐标不变）."""
         mgr = GlobalPoolManager()
         mgr.initialize()
         pool = mgr.get_ecpoint_pool()
@@ -144,7 +144,7 @@ class TestECPointPool:
         assert pt.y == 2
 
     def test_ecpoint_pool_get_stats(self):
-        """ECPoint 池统计"""
+        """ECPoint 池统计."""
         mgr = GlobalPoolManager()
         mgr.initialize()
         pool = mgr.get_ecpoint_pool()

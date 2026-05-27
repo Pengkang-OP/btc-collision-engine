@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GPU碰撞引擎异常处理专项测试
+"""GPU碰撞引擎异常处理专项测试.
 
 覆盖:
 - GPU运行时异常
@@ -26,10 +26,10 @@ pytestmark = pytest.mark.gpu
 
 
 class TestGPURuntimeErrors:
-    """GPU运行时异常测试"""
+    """GPU运行时异常测试."""
 
     def test_gpu_out_of_memory_error(self):
-        """测试GPU内存不足错误处理"""
+        """测试GPU内存不足错误处理."""
         stats = CollisionStats()
 
         # 测试异常处理器
@@ -41,10 +41,10 @@ class TestGPURuntimeErrors:
         assert stats.resource_errors == 1
 
     @pytest.mark.skip(
-        reason="Mock GPU engine activates real hardware via GPUDeviceManager, needs deeper test infra"
+        reason="Mock GPU engine activates real hardware via GPUDeviceManager, needs deeper test infra",
     )
     def test_gpu_runtime_error_recovery(self):
-        """测试GPU运行时错误恢复"""
+        """测试GPU运行时错误恢复."""
         mock_device = Mock()
         mock_device.context = Mock()
         mock_device.queue = Mock()
@@ -81,7 +81,7 @@ class TestGPURuntimeErrors:
         mock_kernel.gpu_optimizer = Mock()
         mock_kernel.gpu_optimizer.analyze_and_adjust = Mock(return_value=(100, {}))
 
-        with patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True):
+        with patch("src.gpu._availability.PYOPENCL_AVAILABLE", True):
             with (
                 patch("src.gpu.device_manager.GPUDevice", return_value=mock_device),
                 patch("src.gpu.device_manager.GPUContext", return_value=mock_context),
@@ -124,7 +124,7 @@ class TestGPURuntimeErrors:
                 assert engine.stats.total_checked > 0
 
     def test_gpu_kernel_compile_failure(self):
-        """测试GPU内核编译失败"""
+        """测试GPU内核编译失败."""
         mock_device = Mock()
         mock_device.context = Mock()
         mock_device.queue = Mock()
@@ -140,7 +140,7 @@ class TestGPURuntimeErrors:
         mock_device.profile = None
 
         with (
-            patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True),
+            patch("src.gpu._availability.PYOPENCL_AVAILABLE", True),
             patch("src.gpu.device_manager.GPUDevice", return_value=mock_device),
             patch("src.gpu.device_manager.GPUDeviceDetector.is_gpu_available", return_value=True),
             patch("src.gpu.device_manager.GPUProfileLoader") as mock_profile_loader,
@@ -159,10 +159,10 @@ class TestGPURuntimeErrors:
 
 
 class TestMemoryErrors:
-    """内存溢出测试"""
+    """内存溢出测试."""
 
     def test_memory_error_handling(self):
-        """测试MemoryError处理"""
+        """测试MemoryError处理."""
         stats = CollisionStats()
 
         # 测试异常处理器
@@ -173,7 +173,7 @@ class TestMemoryErrors:
         assert stats.worker_errors == 0  # MemoryError不记录为worker_errors
 
     def test_large_batch_memory_pressure(self):
-        """测试大batch_size内存压力"""
+        """测试大batch_size内存压力."""
         from src.utils.gpu_memory_utils import calculate_optimal_batch_size
 
         # 模拟GPU设备
@@ -189,10 +189,10 @@ class TestMemoryErrors:
 
 
 class TestFileSystemErrors:
-    """文件系统异常测试"""
+    """文件系统异常测试."""
 
     def test_checkpoint_file_permission_error(self):
-        """测试断点文件权限错误"""
+        """测试断点文件权限错误."""
         # 在只读目录创建断点管理器
         with tempfile.TemporaryDirectory() as tmpdir:
             filepath = os.path.join(tmpdir, "test_checkpoint.json")
@@ -214,7 +214,7 @@ class TestFileSystemErrors:
             assert pathlib.Path(filepath).exists()
 
     def test_checkpoint_file_corrupted(self):
-        """测试损坏的断点文件"""
+        """测试损坏的断点文件."""
         with tempfile.TemporaryDirectory() as tmpdir:
             filepath = os.path.join(tmpdir, "corrupted_checkpoint.json")
             checkpoint_mgr = CheckpointManager(filepath=filepath)
@@ -228,10 +228,10 @@ class TestFileSystemErrors:
 
 
 class TestExceptionHandler:
-    """统一异常处理器测试"""
+    """统一异常处理器测试."""
 
     def test_exception_handler_engine_error(self):
-        """测试引擎错误处理"""
+        """测试引擎错误处理."""
         stats = CollisionStats()
 
         # 测试RuntimeError
@@ -242,7 +242,7 @@ class TestExceptionHandler:
         assert stats.worker_errors == 1
 
     def test_exception_handler_gpu_error_resource(self):
-        """测试GPU资源错误处理"""
+        """测试GPU资源错误处理."""
         stats = CollisionStats()
 
         # 测试资源不足错误
@@ -254,7 +254,7 @@ class TestExceptionHandler:
         assert stats.resource_errors == 1
 
     def test_exception_handler_config_error(self):
-        """测试配置错误处理"""
+        """测试配置错误处理."""
         # 测试FileNotFoundError
         error = FileNotFoundError("Config file not found")
 
@@ -262,7 +262,7 @@ class TestExceptionHandler:
         ExceptionHandler.handle_config_error(error, "ConfigManager")
 
     def test_exception_handler_file_error(self):
-        """测试文件错误处理"""
+        """测试文件错误处理."""
         # 测试IOError
         error = OSError("Disk read error")
 
@@ -270,7 +270,7 @@ class TestExceptionHandler:
         ExceptionHandler.handle_file_error(error, "读取", "/path/to/file")
 
     def test_exception_handler_keyboard_interrupt(self):
-        """测试KeyboardInterrupt处理"""
+        """测试KeyboardInterrupt处理."""
         stats = CollisionStats()
 
         # KeyboardInterrupt应该重新抛出
@@ -283,10 +283,10 @@ class TestExceptionHandler:
 
 
 class TestEdgeCases:
-    """边界条件测试"""
+    """边界条件测试."""
 
     def test_zero_targets(self):
-        """测试空目标地址集合
+        """测试空目标地址集合.
 
         注意: _init_gpu()方法会捕获所有异常并重新抛出为RuntimeError
         因此即使_prepare_targets()抛出ValueError,最终也会是RuntimeError
@@ -319,7 +319,7 @@ class TestEdgeCases:
         mock_kernel.max_batch_size = 65536
 
         with (
-            patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True),
+            patch("src.gpu._availability.PYOPENCL_AVAILABLE", True),
             patch(
                 "src.collision.gpu.engine.GPUDeviceDetector.is_gpu_available",
                 return_value=True,
@@ -348,7 +348,7 @@ class TestEdgeCases:
                 GPUCollisionEngine(targets)
 
     def test_single_target(self):
-        """测试单个目标地址"""
+        """测试单个目标地址."""
         mock_device = Mock()
         mock_device.context = Mock()
         mock_device.queue = Mock()
@@ -374,7 +374,7 @@ class TestEdgeCases:
         mock_kernel.cleanup = Mock()
         mock_kernel.max_batch_size = 65536
 
-        with patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True):
+        with patch("src.gpu._availability.PYOPENCL_AVAILABLE", True):
             with (
                 patch("src.gpu.device_manager.GPUDevice", return_value=mock_device),
                 patch("src.gpu.device_manager.GPUContext", return_value=mock_context),

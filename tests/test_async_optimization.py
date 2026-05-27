@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""测试GPU异步优化效果"""
+"""测试GPU异步优化效果."""
 
 import threading
 import time

@@ -1,4 +1,4 @@
-"""LogQuery 单元测试 - 匹配真实 API
+"""LogQuery 单元测试 - 匹配真实 API.
 
 API (均为静态方法):
 - filter_by_level(entries: list[dict], min_level: str) -> list[dict]
@@ -37,46 +37,46 @@ def sample_entries():
 
 class TestFilterByLevel:
     def test_filter_debug_shows_all(self, sample_entries):
-        """DEBUG 级别应包含所有日志"""
+        """DEBUG 级别应包含所有日志."""
         result = LogQuery.filter_by_level(sample_entries, "DEBUG")
         assert len(result) == 10
 
     def test_filter_info_excludes_debug(self, sample_entries):
-        """INFO 级别应排除 DEBUG"""
+        """INFO 级别应排除 DEBUG."""
         result = LogQuery.filter_by_level(sample_entries, "INFO")
         assert len(result) == 8
         assert all(e["level"] != "DEBUG" for e in result)
 
     def test_filter_warning(self, sample_entries):
-        """WARNING 级别应只包含 WARNING 和 ERROR"""
+        """WARNING 级别应只包含 WARNING 和 ERROR."""
         result = LogQuery.filter_by_level(sample_entries, "WARNING")
         assert len(result) == 4
         levels = {e["level"] for e in result}
         assert levels == {"WARNING", "ERROR"}
 
     def test_filter_error(self, sample_entries):
-        """ERROR 级别只包含 ERROR"""
+        """ERROR 级别只包含 ERROR."""
         result = LogQuery.filter_by_level(sample_entries, "ERROR")
         assert len(result) == 2
         assert all(e["level"] == "ERROR" for e in result)
 
     def test_filter_case_insensitive(self, sample_entries):
-        """级别名称大小写不敏感"""
+        """级别名称大小写不敏感."""
         result = LogQuery.filter_by_level(sample_entries, "error")
         assert len(result) == 2
 
     def test_filter_unknown_level_treated_as_zero(self, sample_entries):
-        """未知级别按 0 处理，返回所有条目"""
+        """未知级别按 0 处理，返回所有条目."""
         result = LogQuery.filter_by_level(sample_entries, "UNKNOWN")
         assert len(result) == 10
 
     def test_filter_empty_entries(self):
-        """空列表返回空列表"""
+        """空列表返回空列表."""
         result = LogQuery.filter_by_level([], "ERROR")
         assert result == []
 
     def test_filter_missing_level_field(self):
-        """缺少 level 字段的条目默认按 INFO 处理"""
+        """缺少 level 字段的条目默认按 INFO 处理."""
         entries = [
             {"message": "no level field"},
             {"level": "ERROR", "message": "has level"},
@@ -115,7 +115,7 @@ class TestSearchText:
         assert result == []
 
     def test_search_missing_message_field(self):
-        """缺少 message 字段的条目不被匹配"""
+        """缺少 message 字段的条目不被匹配."""
         entries = [
             {"level": "INFO"},
             {"level": "ERROR", "message": "匹配这个"},
@@ -124,7 +124,7 @@ class TestSearchText:
         assert len(result) == 1
 
     def test_search_regex_chars_escaped(self):
-        """正则特殊字符被转义为字面匹配"""
+        """正则特殊字符被转义为字面匹配."""
         entries = [
             {"message": "特殊字符 .* 测试"},
         ]
@@ -132,7 +132,7 @@ class TestSearchText:
         assert len(result) == 1
 
     def test_search_partial_match(self, sample_entries):
-        """部分匹配也能找到"""
+        """部分匹配也能找到."""
         result = LogQuery.search_text(sample_entries, "GPU")
         assert len(result) == 1
 
@@ -144,19 +144,19 @@ class TestSearchText:
 
 class TestLogQueryCombined:
     def test_filter_then_search(self, sample_entries):
-        """先过滤级别再搜索文本"""
+        """先过滤级别再搜索文本."""
         filtered = LogQuery.filter_by_level(sample_entries, "ERROR")
         result = LogQuery.search_text(filtered, "GPU")
         assert len(result) == 1
         assert "GPU 内核编译失败" in result[0]["message"]
 
     def test_filter_then_search_no_results(self, sample_entries):
-        """过滤后搜索无结果"""
+        """过滤后搜索无结果."""
         filtered = LogQuery.filter_by_level(sample_entries, "ERROR")
         result = LogQuery.search_text(filtered, "内存")
         assert result == []
 
     def test_static_method_no_instance_needed(self):
-        """静态方法不需要实例化"""
+        """静态方法不需要实例化."""
         result = LogQuery.filter_by_level([{"level": "ERROR", "message": "err"}], "ERROR")
         assert len(result) == 1

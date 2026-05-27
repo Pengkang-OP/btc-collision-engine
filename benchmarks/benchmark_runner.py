@@ -1,4 +1,4 @@
-"""BTC碰撞引擎统一基准测试运行器
+"""BTC碰撞引擎统一基准测试运行器.
 
 功能:
 - 自动发现并运行所有基准测试函数
@@ -49,7 +49,7 @@ _ROOT = Path(__file__).resolve().parent.parent
 
 @dataclass
 class BenchmarkResult:
-    """单个基准测试的结果"""
+    """单个基准测试的结果."""
 
     name: str
     ops_per_sec: float
@@ -60,7 +60,7 @@ class BenchmarkResult:
     error: str = ""
 
     def to_dict(self) -> dict[str, Any]:
-        """转为字典，用于 JSON 序列化"""
+        """转为字典，用于 JSON 序列化."""
         d: dict[str, Any] = {
             "ops_per_sec": round(self.ops_per_sec, 2),
             "mean_us": round(self.mean_us, 3),
@@ -79,7 +79,7 @@ class BenchmarkResult:
 
 
 def _run_timed(func: Callable[[], Any], warmup: int = 3, iterations: int = 1000) -> BenchmarkResult:
-    """运行函数并精确计时。
+    """运行函数并精确计时。.
 
     参数:
         func:       待测函数（无参数）
@@ -119,7 +119,7 @@ def _run_timed(func: Callable[[], Any], warmup: int = 3, iterations: int = 1000)
 
 
 def bench_secp256k1_key_generation() -> BenchmarkResult:
-    """椭圆曲线密钥生成吞吐量基准测试"""
+    """椭圆曲线密钥生成吞吐量基准测试."""
     generator = P2PKHAddressGenerator()
 
     def _gen():
@@ -131,7 +131,7 @@ def bench_secp256k1_key_generation() -> BenchmarkResult:
 
 
 def bench_address_generation() -> BenchmarkResult:
-    """地址生成吞吐量基准测试（含 Base58Check 编码）"""
+    """地址生成吞吐量基准测试（含 Base58Check 编码）."""
     generator = P2PKHAddressGenerator()
     # 使用固定私钥，排除随机数生成的开销
     test_key = (42).to_bytes(32, "big")
@@ -145,7 +145,7 @@ def bench_address_generation() -> BenchmarkResult:
 
 
 def bench_collision_check() -> BenchmarkResult:
-    """碰撞检测吞吐量基准测试（使用 set lookup）"""
+    """碰撞检测吞吐量基准测试（使用 set lookup）."""
     # 构造含 10000 个目标地址的集合
     target_set = {f"1Address{i:040d}" for i in range(10_000)}
     probe_addrs = [f"1Address{i:040d}" for i in range(0, 2000, 2)]
@@ -167,7 +167,7 @@ def bench_collision_check() -> BenchmarkResult:
 
 
 def bench_dedup_filter() -> BenchmarkResult:
-    """去重过滤器吞吐量基准测试"""
+    """去重过滤器吞吐量基准测试."""
     # 预先触发类导入与JIT编译，避免构造开销计入测量
     _ = DeduplicationFilter(max_size=50_000, enabled=True)
     keys = [i.to_bytes(32, "big") for i in range(500)]
@@ -189,7 +189,7 @@ def bench_dedup_filter() -> BenchmarkResult:
 
 
 def bench_hash160() -> BenchmarkResult:
-    """Hash160（SHA256 + RIPEMD160）吞吐量基准测试"""
+    """Hash160（SHA256 + RIPEMD160）吞吐量基准测试."""
     pubkey = bytes([0x02]) + bytes([0xAB] * 32)  # 33字节压缩公钥
 
     def _hash():
@@ -202,7 +202,7 @@ def bench_hash160() -> BenchmarkResult:
 
 
 def bench_base58check_encode() -> BenchmarkResult:
-    """Base58Check 编码吞吐量基准测试"""
+    """Base58Check 编码吞吐量基准测试."""
     # 版本 + 20字节 hash160 负载（实际基准中由 _encode 闭包实时构造）
 
     def _encode():
@@ -219,7 +219,7 @@ def bench_base58check_encode() -> BenchmarkResult:
 
 
 def _force_backend(backend_type: BackendType) -> bool:
-    """强制切换到指定后端，返回是否成功"""
+    """强制切换到指定后端，返回是否成功."""
     mgr = CryptoBackendManager()
     available = [bt for bt, _ in mgr.get_available_backends()]
     if backend_type in available:
@@ -229,7 +229,7 @@ def _force_backend(backend_type: BackendType) -> bool:
 
 
 def bench_pubkey_derivation_coincurve() -> BenchmarkResult:
-    """公钥派生 — coincurve 后端"""
+    """公钥派生 — coincurve 后端."""
     if not _force_backend(BackendType.COINCURVE):
         return BenchmarkResult(
             name="pubkey_derivation_coincurve",
@@ -252,7 +252,7 @@ def bench_pubkey_derivation_coincurve() -> BenchmarkResult:
 
 
 def bench_pubkey_derivation_purepython() -> BenchmarkResult:
-    """公钥派生 — Pure Python 后端"""
+    """公钥派生 — Pure Python 后端."""
     if not _force_backend(BackendType.PURE_PYTHON):
         return BenchmarkResult(
             name="pubkey_derivation_purepython",
@@ -275,7 +275,7 @@ def bench_pubkey_derivation_purepython() -> BenchmarkResult:
 
 
 def bench_pubkey_derivation_openssl() -> BenchmarkResult:
-    """公钥派生 — OpenSSL 后端"""
+    """公钥派生 — OpenSSL 后端."""
     if not _force_backend(BackendType.OPENSSL):
         return BenchmarkResult(
             name="pubkey_derivation_openssl",
@@ -298,7 +298,7 @@ def bench_pubkey_derivation_openssl() -> BenchmarkResult:
 
 
 def bench_scalar_multiply_coincurve() -> BenchmarkResult:
-    """标量乘法 — coincurve 后端"""
+    """标量乘法 — coincurve 后端."""
     if not _force_backend(BackendType.COINCURVE):
         return BenchmarkResult(
             name="scalar_multiply_coincurve",
@@ -313,7 +313,7 @@ def bench_scalar_multiply_coincurve() -> BenchmarkResult:
     k = 123456789
     # G 点坐标
     gx = 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798
-    gy = 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8  # noqa: E501
+    gy = 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8
 
     def _run():
         mgr.scalar_multiply(k, gx, gy)
@@ -324,7 +324,7 @@ def bench_scalar_multiply_coincurve() -> BenchmarkResult:
 
 
 def bench_scalar_multiply_purepython() -> BenchmarkResult:
-    """标量乘法 — Pure Python 后端"""
+    """标量乘法 — Pure Python 后端."""
     if not _force_backend(BackendType.PURE_PYTHON):
         return BenchmarkResult(
             name="scalar_multiply_purepython",
@@ -338,7 +338,7 @@ def bench_scalar_multiply_purepython() -> BenchmarkResult:
     mgr = CryptoBackendManager()
     k = 123456789
     gx = 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798
-    gy = 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8  # noqa: E501
+    gy = 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8
 
     def _run():
         mgr.scalar_multiply(k, gx, gy)
@@ -349,7 +349,7 @@ def bench_scalar_multiply_purepython() -> BenchmarkResult:
 
 
 def bench_taproot_address() -> BenchmarkResult:
-    """Taproot (P2TR) 地址生成吞吐量"""
+    """Taproot (P2TR) 地址生成吞吐量."""
     from src.core.multi_format_generator import MultiFormatAddressGenerator
 
     gen = MultiFormatAddressGenerator()
@@ -394,7 +394,7 @@ _REGRESSION_THRESHOLD = 0.95  # 95% 下降触发报警 (基线值=1.0; 仅捕获
 
 
 def _find_latest_result(results_dir: Path) -> Path | None:
-    """在 results_dir 中查找最新的基准结果文件"""
+    """在 results_dir 中查找最新的基准结果文件."""
     files = sorted(results_dir.glob("benchmark_*.json"), reverse=True)
     return files[0] if files else None
 
@@ -403,7 +403,7 @@ def _compare_results(
     current: dict[str, BenchmarkResult],
     baseline_path: Path,
 ) -> dict[str, Any]:
-    """将当前结果与基线文件对比。
+    """将当前结果与基线文件对比。.
 
     返回:
         包含 baseline_file / regressions / improvements 的字典
@@ -462,7 +462,7 @@ def _compare_results(
 
 
 class BenchmarkRunner:
-    """统一基准测试运行器"""
+    """统一基准测试运行器."""
 
     def __init__(
         self,
@@ -470,11 +470,10 @@ class BenchmarkRunner:
         compare: bool = False,  # noqa: FBT001
         baseline: str | None = None,
     ):
-        """
-        参数:
-            output_dir: 结果保存目录，默认为 benchmarks/results
-            compare:    是否与上次结果对比
-            baseline:   指定基线文件路径（用于 CI 流水线）
+        """参数:
+        output_dir: 结果保存目录，默认为 benchmarks/results
+        compare:    是否与上次结果对比
+        baseline:   指定基线文件路径（用于 CI 流水线）.
         """
         if output_dir:
             self.results_dir = Path(output_dir)
@@ -489,7 +488,7 @@ class BenchmarkRunner:
     # ── 运行单个测试 ──────────────────────────
 
     def _run_one(self, name: str, func: Callable[[], BenchmarkResult]) -> BenchmarkResult:
-        """安全地执行单个基准测试，捕获异常"""
+        """安全地执行单个基准测试，捕获异常."""
         print(f"  运行 [{name}] ...", end="", flush=True)
         try:
             result = func()
@@ -516,7 +515,7 @@ class BenchmarkRunner:
     # ── 运行所有测试 ──────────────────────────
 
     def run_all(self, suite: dict[str, Callable[[], Any]] | None = None) -> dict[str, BenchmarkResult]:
-        """运行所有基准测试。
+        """运行所有基准测试。.
 
         参数:
             suite: 测试集合，默认使用 BUILTIN_BENCHMARKS
@@ -545,7 +544,7 @@ class BenchmarkRunner:
     # ── 持久化结果 ────────────────────────────
 
     def save(self, results: dict[str, BenchmarkResult]) -> Path:
-        """将结果保存为 JSON 文件。
+        """将结果保存为 JSON 文件。.
 
         返回:
             保存的文件路径
@@ -589,7 +588,7 @@ class BenchmarkRunner:
 
     @staticmethod
     def print_comparison(comparison: dict[str, Any]) -> None:
-        """打印回归/改进报告到控制台"""
+        """打印回归/改进报告到控制台."""
         baseline = comparison.get("baseline_file")
         if not baseline:
             print("\n[对比] 未找到基线文件，跳过回归检测。")
@@ -602,7 +601,7 @@ class BenchmarkRunner:
 
         if regressions:
             print(
-                f"\n[!] 发现 {len(regressions)} 处性能回归 (下降 > {_REGRESSION_THRESHOLD * 100:.0f}%):"
+                f"\n[!] 发现 {len(regressions)} 处性能回归 (下降 > {_REGRESSION_THRESHOLD * 100:.0f}%):",
             )
             for r in regressions:
                 print(
@@ -627,7 +626,7 @@ class BenchmarkRunner:
     # ── 一键运行入口 ──────────────────────────
 
     def run(self) -> int:
-        """运行全套基准测试并保存结果，返回退出码"""
+        """运行全套基准测试并保存结果，返回退出码."""
         results = self.run_all()
         out_path = self.save(results)
 
@@ -658,7 +657,7 @@ class BenchmarkRunner:
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    """构造命令行参数解析器"""
+    """构造命令行参数解析器."""
     parser = argparse.ArgumentParser(
         prog="python -m benchmarks.benchmark_runner",
         description="BTC碰撞引擎性能基准测试运行器",
@@ -695,7 +694,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """CLI 主函数"""
+    """CLI 主函数."""
     parser = _build_parser()
     args = parser.parse_args(argv)
 
@@ -721,7 +720,7 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _run_subset(runner: BenchmarkRunner, suite: dict[str, Callable[[], Any]]) -> int:
-    """运行子集并保存"""
+    """运行子集并保存."""
     results = runner.run_all(suite)
     out_path = runner.save(results)
     if runner.compare or runner.baseline:

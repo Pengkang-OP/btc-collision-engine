@@ -7,7 +7,8 @@
 # 统一日志获取
 from typing import Any
 
-from ...utils import get_configured_logger
+from src.utils import get_configured_logger
+
 from .base_search import BaseSearchMode
 
 logger = get_configured_logger("RangeScanSearch")

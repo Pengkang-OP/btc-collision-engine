@@ -12,7 +12,7 @@ pytestmark = pytest.mark.gpu_hardware
 @pytest.mark.gpu_hardware
 @pytest.mark.skip(reason="Engine stop requires initialized stats")
 def test_memory_leak_detection():
-    """测试内存泄漏检测功能"""
+    """测试内存泄漏检测功能."""
     # 创建目标解析器和目标地址
     resolver = TargetResolver()
     resolved = resolver.resolve("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")  # 中本聪的地址
@@ -48,7 +48,7 @@ def test_memory_leak_detection():
 @pytest.mark.gpu_hardware
 @pytest.mark.skip(reason="Engine stop requires initialized stats")
 def test_buffer_release():
-    """测试缓冲区释放功能"""
+    """测试缓冲区释放功能."""
     # 创建目标解析器和目标地址
     resolver = TargetResolver()
     resolved = resolver.resolve("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")  # 中本聪的地址

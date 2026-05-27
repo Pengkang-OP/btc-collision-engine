@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """GPU碰撞引擎稳定性压力测试
-运行10分钟，验证长期稳定性
+运行10分钟，验证长期稳定性.
 """
 
 import os
@@ -14,7 +14,7 @@ from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
 
 
 def stability_test(duration_minutes=10):  # noqa: C901
-    """稳定性压力测试"""
+    """稳定性压力测试."""
     print("=" * 80)
     print("  GPU碰撞引擎 - 稳定性压力测试")
     print("=" * 80)
@@ -37,7 +37,7 @@ def stability_test(duration_minutes=10):  # noqa: C901
                 "total_checked": stats.total_checked,
                 "speed": stats.speed,
                 "matches": (len(stats.matches) if hasattr(stats.matches, "__len__") else stats.matches),
-            }
+            },
         )
 
     def on_match(match_info):
@@ -100,7 +100,7 @@ def stability_test(duration_minutes=10):  # noqa: C901
                     print(
                         f"  [{elapsed_min:5.1f}min] {total:>12,} keys | "
                         f"{speed:>10.2f} keys/s | "
-                        f"内存: {memory_mb:.1f} MB"
+                        f"内存: {memory_mb:.1f} MB",
                     )
 
                 last_check = time.time()

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""性能基准测试脚本
+"""性能基准测试脚本.
 
 用于测试多GPU优化后的性能效果，包括：
 - 双缓冲异步执行模式
@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 def generate_test_targets(count: int = 1000) -> set[str]:
-    """生成测试目标地址
+    """生成测试目标地址.
 
     Args:
         count: 目标地址数量
@@ -63,7 +63,7 @@ def generate_test_targets(count: int = 1000) -> set[str]:
 
 
 def test_single_gpu_performance():
-    """测试单GPU性能"""
+    """测试单GPU性能."""
     logger.info("开始单GPU性能测试...")
 
     # 生成测试目标
@@ -112,7 +112,7 @@ def test_single_gpu_performance():
 
 
 def test_multi_gpu_performance():
-    """测试多GPU性能"""
+    """测试多GPU性能."""
     logger.info("开始多GPU性能测试...")
 
     # 生成测试目标
@@ -175,7 +175,7 @@ def test_multi_gpu_performance():
 
 
 def test_batch_size_performance():
-    """测试不同批次大小的性能"""
+    """测试不同批次大小的性能."""
     logger.info("开始批次大小性能测试...")
 
     # 生成测试目标
@@ -242,7 +242,7 @@ def test_batch_size_performance():
 
 
 def test_memory_usage():
-    """测试内存使用情况"""
+    """测试内存使用情况."""
     logger.info("开始内存使用测试...")
 
     # 生成测试目标
@@ -287,7 +287,7 @@ def test_memory_usage():
 
 
 def test_load_balancing():
-    """测试负载均衡效果"""
+    """测试负载均衡效果."""
     logger.info("开始负载均衡测试...")
 
     # 生成测试目标
@@ -340,7 +340,7 @@ def test_load_balancing():
 
 
 def main():
-    """主测试函数"""
+    """主测试函数."""
     logger.info("开始性能基准测试...")
 
     # 运行各个测试

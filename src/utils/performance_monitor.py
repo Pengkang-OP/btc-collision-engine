@@ -21,7 +21,7 @@ logger = get_configured_logger(__name__)
 
 @dataclass
 class PerformanceMetrics:
-    """性能指标数据类"""
+    """性能指标数据类."""
 
     operation: str
     elapsed_ms: float
@@ -32,14 +32,15 @@ class PerformanceMetrics:
 
 
 class PerformanceTracker:
-    """性能追踪器
+    """性能追踪器.
 
     记录和追踪性能指标，支持统计分析
     """
 
     def __init__(self, max_records: int = 10000) -> None:
         """Args:
-        max_records: 最大记录数（超过后自动清理旧记录）
+
+        max_records: 最大记录数（超过后自动清理旧记录）.
 
         """
         self.max_records = max_records
@@ -54,7 +55,7 @@ class PerformanceTracker:
         error: str | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> None:
-        """记录性能指标
+        """记录性能指标.
 
         Args:
             operation: 操作名称
@@ -82,7 +83,7 @@ class PerformanceTracker:
                 del self._records[:excess]
 
     def get_statistics(self, operation: str | None = None) -> dict:
-        """获取性能统计
+        """获取性能统计.
 
         Args:
             operation: 操作名称（None=全部）
@@ -129,7 +130,7 @@ class PerformanceTracker:
         threshold_ms: float = 1000,
         limit: int = 10,
     ) -> list[PerformanceMetrics]:
-        """获取慢操作记录
+        """获取慢操作记录.
 
         Args:
             threshold_ms: 耗时阈值（毫秒）
@@ -145,7 +146,7 @@ class PerformanceTracker:
             return slow_ops[:limit]
 
     def clear(self) -> None:
-        """清空所有记录"""
+        """清空所有记录."""
         with self._lock:
             self._records.clear()
 
@@ -156,7 +157,7 @@ _tracker_lock = threading.Lock()
 
 
 def _get_tracker_config():
-    """从配置获取追踪器配置"""
+    """从配置获取追踪器配置."""
     try:
         from ..config.config_manager import ConfigManager
 
@@ -185,7 +186,7 @@ def _get_tracker_config():
 
 
 def get_performance_tracker() -> PerformanceTracker:
-    """获取全局性能追踪器（单例模式，支持配置）"""
+    """获取全局性能追踪器（单例模式，支持配置）."""
     global _global_tracker
 
     if _global_tracker is None:
@@ -204,13 +205,13 @@ def get_performance_tracker() -> PerformanceTracker:
 
 
 def is_performance_monitoring_enabled() -> bool:
-    """检查性能监控是否启用"""
+    """检查性能监控是否启用."""
     config = _get_tracker_config()
     return config["enabled"]
 
 
 class EnhancedPerformanceMonitor:
-    """增强型性能监控上下文管理器
+    """增强型性能监控上下文管理器.
 
     用法:
         with EnhancedPerformanceMonitor(logger, "GPU内核编译") as pm:
@@ -242,13 +243,14 @@ class EnhancedPerformanceMonitor:
         track: bool = True,
     ) -> None:
         """Args:
+
         logger: 日志记录器
         operation: 操作名称
         level: 日志级别
         log_result: 是否记录日志
         track: 是否记录到性能追踪器
             - True: 记录到全局追踪器，支持统计分析（默认）
-            - False: 仅记录日志，不存储到追踪器（适用于调试操作）
+            - False: 仅记录日志，不存储到追踪器（适用于调试操作）.
 
         """
         self.logger = logger
@@ -265,7 +267,7 @@ class EnhancedPerformanceMonitor:
         return self
 
     def __exit__(self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None) -> None:
-        """退出上下文时的处理
+        """退出上下文时的处理.
 
         注意: 此方法中的所有异常都被捕获，确保监控失败不会影响业务逻辑
         """
@@ -325,12 +327,12 @@ class EnhancedPerformanceMonitor:
             logger.debug("性能监控执行失败: %s", monitor_error)
 
     def add_metadata(self, key: str, value: Any) -> None:
-        """添加元数据"""
+        """添加元数据."""
         self.metadata[key] = value
 
     @property
     def elapsed_ms(self) -> float:
-        """获取已耗时的毫秒数"""
+        """获取已耗时的毫秒数."""
         if self.start_time is None:
             raise RuntimeError("PerformanceMonitor 未正确进入上下文: start_time 为 None")
         if self.end_time is None:
@@ -339,7 +341,7 @@ class EnhancedPerformanceMonitor:
 
 
 def log_performance_summary(logger: logging.Logger, tracker: PerformanceTracker | None = None) -> None:
-    """记录性能统计摘要
+    """记录性能统计摘要.
 
     Args:
         logger: 日志记录器
@@ -386,7 +388,7 @@ def create_performance_monitor(
     operation: str,
     level: str = "INFO",
 ) -> "EnhancedPerformanceMonitor":
-    """创建性能监控器（兼容旧API）
+    """创建性能监控器（兼容旧API）.
 
     Args:
         logger: 日志记录器

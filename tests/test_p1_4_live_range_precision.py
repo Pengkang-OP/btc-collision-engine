@@ -1,4 +1,4 @@
-"""P1-4 定向验证测试: range_scan 停止时 _live_range_count 精度丢失修复
+"""P1-4 定向验证测试: range_scan 停止时 _live_range_count 精度丢失修复.
 
 修复内容: range_scan 最终计数合并 _live_range_count + data_logging 同步
 修复文件: src/collision/key_collision_engine.py
@@ -18,14 +18,14 @@ from src.collision.key_collision_engine import KeyCollisionEngine
 
 
 class TestP1_4RangeScanPrecisionFix:
-    """P1-4 range_scan 停止精度修复验证"""
+    """P1-4 range_scan 停止精度修复验证."""
 
     def setup_method(self):
-        """每个测试创建独立引擎实例"""
+        """每个测试创建独立引擎实例."""
         self.engine = None
 
     def teardown_method(self):
-        """清理"""
+        """清理."""
         if self.engine and self.engine._thread and self.engine._thread.is_alive():
             self.engine.stop()
             time.sleep(0.3)
@@ -34,7 +34,7 @@ class TestP1_4RangeScanPrecisionFix:
     # 验证 A: range_scan final_count 使用 _live_range_count
     # ================================================================
     def test_a_range_scan_final_uses_live_count(self):
-        """验证 range_scan 最终通过 _range_scan_finalize 合并计数"""
+        """验证 range_scan 最终通过 _range_scan_finalize 合并计数."""
         source = inspect.getsource(KeyCollisionEngine.range_scan)
         finalize_source = inspect.getsource(KeyCollisionEngine._range_scan_finalize)
 
@@ -54,7 +54,7 @@ class TestP1_4RangeScanPrecisionFix:
     # 验证 B: range_scan 停止后 _live_range_count 重置
     # ================================================================
     def test_b_range_scan_stop_resets_live_count(self):
-        """验证 range_scan 停止后 _live_range_count 重置为0"""
+        """验证 range_scan 停止后 _live_range_count 重置为0."""
         complete_event = threading.Event()
         final_stats = []
 
@@ -83,7 +83,7 @@ class TestP1_4RangeScanPrecisionFix:
     # 验证 C: random_search pattern 一致性
     # ================================================================
     def test_c_random_search_still_correct(self):
-        """验证 random_search 通过 _random_search_finalize 正确处理 final_count"""
+        """验证 random_search 通过 _random_search_finalize 正确处理 final_count."""
         source = inspect.getsource(KeyCollisionEngine.random_search)
         finalize_source = inspect.getsource(KeyCollisionEngine._random_search_finalize)
 
@@ -101,7 +101,7 @@ class TestP1_4RangeScanPrecisionFix:
     # 验证 D: _range_scan_worker 有余数提交
     # ================================================================
     def test_d_range_scan_worker_has_remainder(self):
-        """验证 _range_scan_worker 有 500步余数提交"""
+        """验证 _range_scan_worker 有 500步余数提交."""
         source = inspect.getsource(KeyCollisionEngine._range_scan_worker)
 
         assert "local_count % 32" in source, "_range_scan_worker 应有余数提交（local_count % 32）"
@@ -112,7 +112,7 @@ class TestP1_4RangeScanPrecisionFix:
     # 验证 E: range_scan data_logging 使用 final_count
     # ================================================================
     def test_e_data_logging_uses_final_count(self):
-        """验证 range_scan 的数据日志通过 _range_scan_finalize 使用 final_count"""
+        """验证 range_scan 的数据日志通过 _range_scan_finalize 使用 final_count."""
         source = inspect.getsource(KeyCollisionEngine._range_scan_finalize)
 
         # _range_scan_finalize 使用 final_count 更新 stats

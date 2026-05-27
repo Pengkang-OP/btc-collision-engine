@@ -9,7 +9,7 @@ pytestmark = pytest.mark.gpu_hardware  # 需要真实GPU，CI中自动skip
 @pytest.mark.gpu
 @pytest.mark.skip(reason="Benchmark calculation delegated to _scheduler")
 def test_dynamic_benchmark_calculation():
-    """测试动态性能基准值计算功能"""
+    """测试动态性能基准值计算功能."""
     # 创建目标解析器和目标地址
     resolver = TargetResolver()
     resolved = resolver.resolve("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")  # 中本聪的地址
@@ -39,7 +39,7 @@ def test_dynamic_benchmark_calculation():
 @pytest.mark.gpu
 @pytest.mark.skip(reason="Benchmark threshold check needs updated API")
 def test_performance_warning_threshold():
-    """测试性能警告阈值计算"""
+    """测试性能警告阈值计算."""
     # 创建目标解析器和目标地址
     resolver = TargetResolver()
     resolved = resolver.resolve("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")  # 中本聪的地址

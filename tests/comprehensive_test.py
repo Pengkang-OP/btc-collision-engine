@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""深度全面测试脚本
+"""深度全面测试脚本.
 
 执行系统的深度全面测试，包括：
 1. 功能测试：验证基本功能
@@ -23,16 +23,16 @@ logger = logging.getLogger(__name__)
 
 
 class ComprehensiveTest:
-    """全面测试套件"""
+    """全面测试套件."""
 
     def __init__(self):
-        """初始化测试类"""
+        """初始化测试类."""
         self.test_results = []
         self.start_time = None
         self.end_time = None
 
     def generate_test_targets(self, count: int = 100) -> set[str]:
-        """生成测试目标地址
+        """生成测试目标地址.
 
         Args:
             count: 目标地址数量
@@ -58,7 +58,7 @@ class ComprehensiveTest:
         return targets
 
     def run_test(self, test_name: str, test_func):
-        """运行单个测试
+        """运行单个测试.
 
         Args:
             test_name: 测试名称
@@ -95,7 +95,7 @@ class ComprehensiveTest:
         return test_result
 
     def test_basic_functionality(self):
-        """测试基本功能"""
+        """测试基本功能."""
         targets = self.generate_test_targets(10)
 
         engine = MultiGPUCollisionEngine({"enable_async_execution": True})
@@ -131,7 +131,7 @@ class ComprehensiveTest:
         return stats
 
     def test_multi_gpu_functionality(self):
-        """测试多GPU功能"""
+        """测试多GPU功能."""
         targets = self.generate_test_targets(10)
 
         engine = MultiGPUCollisionEngine({"enable_async_execution": True, "auto_rebalance": True})
@@ -167,7 +167,7 @@ class ComprehensiveTest:
         return stats
 
     def test_performance_variations(self):
-        """测试不同配置下的性能变化"""
+        """测试不同配置下的性能变化."""
         targets = self.generate_test_targets(10)
 
         # 测试不同批次大小
@@ -212,7 +212,7 @@ class ComprehensiveTest:
         return results
 
     def test_stability(self):
-        """测试系统稳定性"""
+        """测试系统稳定性."""
         targets = self.generate_test_targets(10)
 
         engine = MultiGPUCollisionEngine(
@@ -248,7 +248,7 @@ class ComprehensiveTest:
         return stats
 
     def test_boundary_conditions(self):
-        """测试边界条件"""
+        """测试边界条件."""
         # 测试最小目标数量
         min_targets = set(["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"])
 
@@ -280,7 +280,7 @@ class ComprehensiveTest:
         return "边界条件测试通过"
 
     def test_error_handling(self):
-        """测试错误处理能力"""
+        """测试错误处理能力."""
         # 测试空目标集合
         empty_targets = set()
 
@@ -305,7 +305,7 @@ class ComprehensiveTest:
         return "错误处理测试通过"
 
     def test_memory_management(self):
-        """测试内存管理"""
+        """测试内存管理."""
         targets = self.generate_test_targets(10)
 
         engine = MultiGPUCollisionEngine(
@@ -341,7 +341,7 @@ class ComprehensiveTest:
         return stats
 
     def test_load_balancing(self):
-        """测试负载均衡"""
+        """测试负载均衡."""
         targets = self.generate_test_targets(10)
 
         engine = MultiGPUCollisionEngine(
@@ -379,7 +379,7 @@ class ComprehensiveTest:
         return {"performance_stats": stats, "workload_stats": workload_stats}
 
     def run_all_tests(self):
-        """运行所有测试"""
+        """运行所有测试."""
         self.start_time = time.time()
         logger.info("开始深度全面测试...")
 
@@ -405,7 +405,7 @@ class ComprehensiveTest:
         self.generate_report()
 
     def generate_report(self):
-        """生成测试报告"""
+        """生成测试报告."""
         total_time = self.end_time - self.start_time if self.end_time else 0
         total_tests = len(self.test_results)
         passed_tests = sum(1 for r in self.test_results if r["status"] == "pass")
@@ -453,7 +453,7 @@ class ComprehensiveTest:
 
 
 def main():
-    """主测试函数"""
+    """主测试函数."""
     test = ComprehensiveTest()
     test.run_all_tests()
 

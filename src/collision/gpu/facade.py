@@ -1,4 +1,4 @@
-"""GPU引擎外观层 - 统一GPU引擎入口
+"""GPU引擎外观层 - 统一GPU引擎入口.
 
 提供 GPUEngineFacade 类，封装设备管理、内核执行和异步管道。
 降低外部调用方与底层 GPU 模块的耦合。
@@ -15,7 +15,8 @@
 import threading
 from typing import Any, cast
 
-from ...utils import get_configured_logger
+from src.utils import get_configured_logger
+
 from .async_pipeline_adapter import AsyncPipelineAdapter
 from .device_manager_adapter import DeviceManagerAdapter
 from .kernel_adapter import GPUKernelAdapter
@@ -25,7 +26,7 @@ logger = get_configured_logger(__name__)
 
 
 class GPUEngineFacade:
-    """GPU引擎外观层
+    """GPU引擎外观层.
 
     统一封装 GPU 设备管理、内核执行和异步管道，
     为上层引擎提供简洁的接口。
@@ -38,7 +39,7 @@ class GPUEngineFacade:
     """
 
     def __init__(self, config: dict[str, Any] | None = None) -> None:
-        """初始化 GPU 引擎外观
+        """初始化 GPU 引擎外观.
 
         Args:
             config: GPU 配置字典
@@ -60,11 +61,11 @@ class GPUEngineFacade:
         self.async_executor = self._async_pipeline
 
     def __enter__(self) -> "GPUEngineFacade":
-        """上下文管理器入口"""
+        """上下文管理器入口."""
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        """上下文管理器退出，自动清理资源"""
+        """上下文管理器退出，自动清理资源."""
         self.cleanup()
 
     def initialize(
@@ -74,7 +75,7 @@ class GPUEngineFacade:
         targets: Any = None,
         check_uncompressed: int = 0,
     ) -> None:
-        """初始化 GPU 设备、上下文和内核
+        """初始化 GPU 设备、上下文和内核.
 
         Args:
             device_index: GPU 设备索引
@@ -116,7 +117,7 @@ class GPUEngineFacade:
         logger.info("GPUEngineFacade 初始化完成: device=%s", device)
 
     def get_device_info(self) -> dict[str, Any]:
-        """获取 GPU 设备信息
+        """获取 GPU 设备信息.
 
         Returns:
             设备信息字典
@@ -127,11 +128,11 @@ class GPUEngineFacade:
         return {"status": "not_initialized"}
 
     def is_initialized(self) -> bool:
-        """检查是否已初始化"""
+        """检查是否已初始化."""
         return self._initialized
 
     def list_devices(self) -> list[GPUDevice]:
-        """列出所有可用 GPU 设备
+        """列出所有可用 GPU 设备.
 
         Returns:
             GPU 设备列表
@@ -140,7 +141,7 @@ class GPUEngineFacade:
         return self._device_manager.list_devices()
 
     def cleanup(self) -> None:
-        """清理 GPU 资源（线程安全）"""
+        """清理 GPU 资源（线程安全）."""
         with self._lock:
             try:
                 if self._async_pipeline is not None:
@@ -161,6 +162,7 @@ class GPUEngineFacade:
             logger.info("GPUEngineFacade 资源清理完成")
 
     def __repr__(self) -> str:
+        """返回对象的字符串表示。."""
         status = "initialized" if self._initialized else "not_initialized"
         device_name = self.device.name if self.device else "None"
         return f"GPUEngineFacade(status={status}, device={device_name})"

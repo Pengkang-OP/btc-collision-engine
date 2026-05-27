@@ -1,4 +1,5 @@
-"""数据分析模块
+"""数据分析模块.
+
 =============
 自动处理输入数据并生成深度分析报告
 """
@@ -20,14 +21,14 @@ logger = get_configured_logger(__name__)
 
 
 class DataAnalysisModule:
-    """数据分析模块 - 自动处理输入数据并生成深度分析报告"""
+    """数据分析模块 - 自动处理输入数据并生成深度分析报告."""
 
     def __init__(self, project_root: Path | None = None):
         self.project_root = project_root or Path(__file__).parent.parent.parent.parent
         self.analysis_cache: dict = {}
 
     def analyze(self, target_path: str | None = None) -> AnalysisReport:
-        """执行完整的数据分析"""
+        """执行完整的数据分析."""
         report_id = self._generate_report_id()
 
         # 收集数据
@@ -56,11 +57,11 @@ class DataAnalysisModule:
         )
 
     def _generate_report_id(self) -> str:
-        """生成唯一报告ID"""
+        """生成唯一报告ID."""
         return f"analysis_{uuid.uuid4().hex[:12]}"
 
     def _collect_data_summary(self, target_path: str | None = None) -> dict[str, Any]:
-        """收集数据摘要
+        """收集数据摘要.
 
         自 v4.3.1: 合并 _analyze_project_structure 和 _analyze_code_metrics
         为单次 src/ 遍历，减少约 50% 的 os.walk + ast.parse 调用。
@@ -82,7 +83,7 @@ class DataAnalysisModule:
         return summary
 
     def _analyze_source_code(self) -> dict[str, Any]:
-        """合并分析项目结构和代码指标（单次遍历 src/ 目录）
+        """合并分析项目结构和代码指标（单次遍历 src/ 目录）.
 
         自 v4.3.1: 将 _analyze_project_structure 和 _analyze_code_metrics
         合并为一次 os.walk，对每个 .py 文件一次性提取所有指标。
@@ -160,7 +161,7 @@ class DataAnalysisModule:
         return {"structure": structure, "metrics": metrics_data}
 
     def _analyze_dependencies(self) -> dict[str, Any]:
-        """分析依赖关系"""
+        """分析依赖关系."""
         deps: dict[str, Any] = {
             "required": [],
             "optional": [],
@@ -178,7 +179,7 @@ class DataAnalysisModule:
         return deps
 
     def _analyze_test_coverage(self) -> dict[str, Any]:
-        """分析测试覆盖"""
+        """分析测试覆盖."""
         coverage = {
             "test_files": 0,
             "test_cases": 0,
@@ -210,7 +211,7 @@ class DataAnalysisModule:
         return coverage
 
     def _analyze_configuration(self) -> dict[str, Any]:
-        """分析配置文件"""
+        """分析配置文件."""
         config = {
             "config_exists": False,
             "config_valid": False,
@@ -233,7 +234,7 @@ class DataAnalysisModule:
         return config
 
     def _analyze_target(self, target_path: str) -> dict[str, Any]:
-        """分析目标数据"""
+        """分析目标数据."""
         analysis = {
             "path": target_path,
             "exists": False,
@@ -257,7 +258,7 @@ class DataAnalysisModule:
         return analysis
 
     def _compute_statistics(self, data_summary: dict[str, Any]) -> dict[str, Any]:
-        """计算统计信息"""
+        """计算统计信息."""
         stats = {
             "quality_score": 100,
             "complexity_score": 0,
@@ -302,7 +303,7 @@ class DataAnalysisModule:
         return stats
 
     def _identify_issues(self, data_summary: dict[str, Any], statistics: dict[str, Any]) -> list[Issue]:
-        """识别问题"""
+        """识别问题."""
         issues = []
 
         structure = data_summary.get("project_structure", {})
@@ -402,7 +403,7 @@ class DataAnalysisModule:
         return issues
 
     def _generate_recommendations(self, issues: list[Issue], statistics: dict[str, Any]) -> list[str]:
-        """生成建议"""
+        """生成建议."""
         recommendations = []
 
         # 基于问题生成建议
@@ -430,6 +431,6 @@ class DataAnalysisModule:
 
 # 便捷函数
 def analyze_project(project_root: Path | None = None) -> AnalysisReport:
-    """分析项目并生成报告"""
+    """分析项目并生成报告."""
     module = DataAnalysisModule(project_root)
     return module.analyze()

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""EventBus 单元测试
+"""EventBus 单元测试.
 
 覆盖当前简化版 EventBus API：
 - 订阅/取消订阅
@@ -31,7 +31,7 @@ from src.collision.events import (
 
 @pytest.fixture(autouse=True)
 def reset_global_bus():
-    """每个测试前后重置全局事件总线"""
+    """每个测试前后重置全局事件总线."""
     reset_event_bus()
     yield
     reset_event_bus()
@@ -39,7 +39,7 @@ def reset_global_bus():
 
 @pytest.fixture
 def bus():
-    """新的事件总线实例"""
+    """新的事件总线实例."""
     return EventBus()
 
 
@@ -50,7 +50,7 @@ def bus():
 
 @pytest.mark.unit
 class TestEventCreation:
-    """事件对象创建测试"""
+    """事件对象创建测试."""
 
     def test_engine_start_event(self):
         event = EngineStartEvent(mode="random", target_count=5, batch_size=65536)
@@ -76,7 +76,7 @@ class TestEventCreation:
         assert len(event.wif) < len("KxFAKE000000000000000000000000000000000000000000000")
 
     def test_engine_match_event_wif_masking(self):
-        """EngineMatchEvent.__post_init__ 自动掩码 WIF"""
+        """EngineMatchEvent.__post_init__ 自动掩码 WIF."""
         event = EngineMatchEvent(
             private_key=b"\x01" * 32,
             address="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
@@ -90,7 +90,7 @@ class TestEventCreation:
         assert event._raw_wif == "KxFAKE000000000000000000000000000000000000000000000"
 
     def test_engine_match_event_metadata(self):
-        """EngineMatchEvent.metadata 不泄露私钥和 WIF"""
+        """EngineMatchEvent.metadata 不泄露私钥和 WIF."""
         event = EngineMatchEvent(
             private_key=b"\x01" * 32,
             address="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
@@ -131,7 +131,7 @@ class TestEventCreation:
 
 @pytest.mark.unit
 class TestEventBusSubscribe:
-    """订阅与取消订阅测试"""
+    """订阅与取消订阅测试."""
 
     def test_subscribe(self, bus):
         handler = Mock(__name__="test_handler")
@@ -153,19 +153,19 @@ class TestEventBusSubscribe:
         assert len(bus._subscribers[EngineStartEvent]) == 0
 
     def test_unsubscribe_nonexistent_handler(self, bus):
-        """取消未订阅的 handler 不抛异常"""
+        """取消未订阅的 handler 不抛异常."""
         handler = Mock(__name__="ghost")
         bus.unsubscribe(EngineStartEvent, handler)  # 不应抛异常
 
     def test_unsubscribe_nonexistent_event_type(self, bus):
-        """取消未订阅的事件类型不抛异常"""
+        """取消未订阅的事件类型不抛异常."""
         handler = Mock(__name__="handler")
         bus.unsubscribe(EngineStartEvent, handler)  # 不应抛异常
 
 
 @pytest.mark.unit
 class TestEventBusPublish:
-    """发布事件测试"""
+    """发布事件测试."""
 
     def test_publish_dispatches_to_handler(self, bus):
         handler = Mock(__name__="test_handler")
@@ -190,12 +190,12 @@ class TestEventBusPublish:
         h3.assert_called_once_with(event)
 
     def test_publish_no_subscribers(self, bus):
-        """无订阅者时发布不抛异常"""
+        """无订阅者时发布不抛异常."""
         event = EngineProgressEvent(total_checked=1000)
         bus.publish(event)  # 不应抛异常
 
     def test_publish_different_event_types(self, bus):
-        """只有匹配的事件类型才触发 handler"""
+        """只有匹配的事件类型才触发 handler."""
         h_start = Mock(__name__="h_start")
         h_progress = Mock(__name__="h_progress")
         bus.subscribe(EngineStartEvent, h_start)
@@ -208,7 +208,7 @@ class TestEventBusPublish:
         h_progress.assert_not_called()
 
     def test_publish_handler_receives_correct_event(self, bus):
-        """Handler 接收到正确的事件实例"""
+        """Handler 接收到正确的事件实例."""
         received = []
 
         def handler(e):
@@ -226,10 +226,10 @@ class TestEventBusPublish:
 
 @pytest.mark.unit
 class TestEventBusErrorHandling:
-    """错误处理测试"""
+    """错误处理测试."""
 
     def test_handler_error_is_logged_not_propagated(self, bus):
-        """Handler 抛异常时不向外传播"""
+        """Handler 抛异常时不向外传播."""
         bad_handler = Mock(__name__="bad_handler", side_effect=RuntimeError("handler error"))
         good_handler = Mock(__name__="good_handler")
 
@@ -250,7 +250,7 @@ class TestEventBusErrorHandling:
 
 @pytest.mark.unit
 class TestEventBusLifecycle:
-    """生命周期测试"""
+    """生命周期测试."""
 
     def test_clear(self, bus):
         h1, h2 = Mock(__name__="h1"), Mock(__name__="h2")
@@ -262,7 +262,7 @@ class TestEventBusLifecycle:
         assert len(bus._subscribers) == 0
 
     def test_clear_then_resubscribe(self, bus):
-        """Clear 后可以重新订阅"""
+        """Clear 后可以重新订阅."""
         handler = Mock(__name__="handler")
         bus.subscribe(EngineStartEvent, handler)
         bus.clear()
@@ -283,7 +283,7 @@ class TestEventBusLifecycle:
 
 @pytest.mark.unit
 class TestEventBusGlobal:
-    """全局单例测试"""
+    """全局单例测试."""
 
     def test_get_event_bus_returns_singleton(self):
         bus1 = get_event_bus()
@@ -309,10 +309,10 @@ class TestEventBusGlobal:
 @pytest.mark.unit
 @pytest.mark.thread_safety
 class TestEventBusThreadSafety:
-    """线程安全测试"""
+    """线程安全测试."""
 
     def test_concurrent_publish(self, bus):
-        """多线程同时发布不应损坏数据"""
+        """多线程同时发布不应损坏数据."""
         results = []
 
         def handler(e):
@@ -338,7 +338,7 @@ class TestEventBusThreadSafety:
         assert len(results) == 200
 
     def test_concurrent_subscribe_unsubscribe(self, bus):
-        """并发订阅取消不应导致数据竞争"""
+        """并发订阅取消不应导致数据竞争."""
         errors = []
 
         def subscribe_loop():

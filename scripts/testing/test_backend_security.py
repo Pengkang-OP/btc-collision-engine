@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""加密后端安全检查测试"""
+"""加密后端安全检查测试."""
 
 import sys
 from pathlib import Path
@@ -13,7 +13,7 @@ from src.core.crypto_backend import (  # noqa: E402
 
 
 def test_backend_security():
-    """测试后端安全检查功能"""
+    """测试后端安全检查功能."""
     print("=" * 70)
     print("加密后端安全检查测试")
     print("=" * 70)

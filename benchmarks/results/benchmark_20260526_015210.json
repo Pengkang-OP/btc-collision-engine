@@ -1,0 +1,96 @@
+{
+  "timestamp": "2026-05-26T01:52:10",
+  "python_version": "3.12.10",
+  "platform": "Windows-11",
+  "benchmarks": {
+    "secp256k1_key_gen": {
+      "ops_per_sec": 540540.51,
+      "mean_us": 1.85,
+      "std_us": 0.199,
+      "iterations": 200,
+      "success": true
+    },
+    "address_generation": {
+      "ops_per_sec": 6225.77,
+      "mean_us": 160.623,
+      "std_us": 9.721,
+      "iterations": 500,
+      "success": true
+    },
+    "collision_check": {
+      "ops_per_sec": 35699623.23,
+      "mean_us": 0.028,
+      "std_us": 1.484,
+      "iterations": 200,
+      "success": true
+    },
+    "dedup_filter": {
+      "ops_per_sec": 2368702.8,
+      "mean_us": 0.422,
+      "std_us": 4.437,
+      "iterations": 100,
+      "success": true
+    },
+    "hash160": {
+      "ops_per_sec": 412447.68,
+      "mean_us": 2.425,
+      "std_us": 0.289,
+      "iterations": 2000,
+      "success": true
+    },
+    "base58check_encode": {
+      "ops_per_sec": 139883.62,
+      "mean_us": 7.149,
+      "std_us": 1.411,
+      "iterations": 1000,
+      "success": true
+    },
+    "pubkey_derivation_coincurve": {
+      "ops_per_sec": 13970.7,
+      "mean_us": 71.578,
+      "std_us": 2.723,
+      "iterations": 500,
+      "success": true
+    },
+    "pubkey_derivation_purepython": {
+      "ops_per_sec": 276.22,
+      "mean_us": 3620.332,
+      "std_us": 67.171,
+      "iterations": 200,
+      "success": true
+    },
+    "pubkey_derivation_openssl": {
+      "ops_per_sec": 2057.26,
+      "mean_us": 486.082,
+      "std_us": 24.05,
+      "iterations": 200,
+      "success": true
+    },
+    "scalar_multiply_coincurve": {
+      "ops_per_sec": 51337.34,
+      "mean_us": 19.479,
+      "std_us": 3.642,
+      "iterations": 200,
+      "success": true
+    },
+    "scalar_multiply_purepython": {
+      "ops_per_sec": 56.6,
+      "mean_us": 17668.607,
+      "std_us": 179.12,
+      "iterations": 100,
+      "success": true
+    },
+    "taproot_address": {
+      "ops_per_sec": 8127.97,
+      "mean_us": 123.032,
+      "std_us": 4.603,
+      "iterations": 200,
+      "success": true
+    }
+  },
+  "comparison": {
+    "baseline_file": null,
+    "regressions": [],
+    "improvements": []
+  }
+}

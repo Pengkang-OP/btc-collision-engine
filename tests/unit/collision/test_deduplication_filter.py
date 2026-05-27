@@ -1,4 +1,4 @@
-"""DeduplicationFilter 单元测试 - 基于集合的去重过滤器"""
+"""DeduplicationFilter 单元测试 - 基于集合的去重过滤器."""
 
 import threading
 import unittest
@@ -7,30 +7,30 @@ from src.collision.deduplication_filter import DeduplicationFilter
 
 
 class TestDeduplicationFilterBasic:
-    """基础功能测试"""
+    """基础功能测试."""
 
     def test_first_check_passes(self):
-        """首次检查返回 True（允许通过）"""
+        """首次检查返回 True（允许通过）."""
         f = DeduplicationFilter(max_size=100)
         pk = bytes(range(32))
         assert f.check_and_add(pk)
 
     def test_duplicate_blocked(self):
-        """重复私钥被拦截"""
+        """重复私钥被拦截."""
         f = DeduplicationFilter(max_size=100)
         pk = bytes(range(32))
         f.check_and_add(pk)
         assert not f.check_and_add(pk)
 
     def test_different_keys_pass(self):
-        """不同私钥都能通过"""
+        """不同私钥都能通过."""
         f = DeduplicationFilter(max_size=1000)
         for i in range(100):
             pk = i.to_bytes(32, "big")
             assert f.check_and_add(pk), f"私钥 {i} 应通过"
 
     def test_disabled_always_returns_true(self):
-        """禁用状态始终返回 True"""
+        """禁用状态始终返回 True."""
         f = DeduplicationFilter(max_size=100, enabled=False)
         pk = bytes(32)
         assert f.check_and_add(pk)
@@ -38,7 +38,7 @@ class TestDeduplicationFilterBasic:
         assert f.check_and_add(pk)
 
     def test_stats_tracking(self):
-        """统计计数正确"""
+        """统计计数正确."""
         f = DeduplicationFilter(max_size=100)
         pk1 = b"\x01" * 32
         pk2 = b"\x02" * 32
@@ -52,23 +52,23 @@ class TestDeduplicationFilterBasic:
 
 
 class TestDeduplicationFilterAddress:
-    """地址去重测试"""
+    """地址去重测试."""
 
     def test_address_duplicate_blocked(self):
-        """相同地址的私钥被拦截"""
+        """相同地址的私钥被拦截."""
         f = DeduplicationFilter(max_size=100)
         f.check_and_add(b"\x01" * 32, address="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
         assert not f.check_and_add(b"\x02" * 32, address="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
 
     def test_address_case_insensitive(self):
-        """地址比较大小写不敏感"""
+        """地址比较大小写不敏感."""
         f = DeduplicationFilter(max_size=100)
         f.check_and_add(b"\x01" * 32, address="1ABCdef")
         result = f.check_and_add(b"\x02" * 32, address="1abcDEF")
         assert not result
 
     def test_is_duplicate_method(self):
-        """is_duplicate 只检查不添加"""
+        """is_duplicate 只检查不添加."""
         f = DeduplicationFilter(max_size=100)
         pk = b"\x01" * 32
         addr = "1TestAddress"
@@ -79,16 +79,16 @@ class TestDeduplicationFilterAddress:
         assert not f.is_duplicate(b"\x02" * 32, "1OtherAddress")
 
     def test_is_duplicate_disabled(self):
-        """禁用时 is_duplicate 始终返回 False"""
+        """禁用时 is_duplicate 始终返回 False."""
         f = DeduplicationFilter(max_size=100, enabled=False)
         assert not f.is_duplicate(b"\x01" * 32, "1Test")
 
 
 class TestDeduplicationFilterMaxSize:
-    """容量限制测试"""
+    """容量限制测试."""
 
     def test_exceed_max_size_no_crash(self):
-        """超过 max_size 不崩溃（仅警告）"""
+        """超过 max_size 不崩溃（仅警告）."""
         max_size = 50
         f = DeduplicationFilter(max_size=max_size)
         for i in range(max_size * 2):
@@ -98,7 +98,7 @@ class TestDeduplicationFilterMaxSize:
         assert len(f._seen_keys) > max_size
 
     def test_check_and_add_still_works_after_exceed(self):
-        """超过 max_size 后仍可正常使用"""
+        """超过 max_size 后仍可正常使用."""
         f = DeduplicationFilter(max_size=50)
         for i in range(100):
             f.check_and_add(i.to_bytes(32, "big"))
@@ -108,10 +108,10 @@ class TestDeduplicationFilterMaxSize:
 
 
 class TestDeduplicationFilterConcurrency:
-    """多线程并发测试"""
+    """多线程并发测试."""
 
     def test_concurrent_checks_no_crash(self):
-        """多线程并发检查不崩溃"""
+        """多线程并发检查不崩溃."""
         f = DeduplicationFilter(max_size=10000)
         errors = []
 
@@ -132,7 +132,7 @@ class TestDeduplicationFilterConcurrency:
         assert errors == []
 
     def test_concurrent_count_accuracy(self):
-        """并发下 checks_total 准确"""
+        """并发下 checks_total 准确."""
         f = DeduplicationFilter(max_size=100000)
         n_threads = 10
         n_per_thread = 500
@@ -152,7 +152,7 @@ class TestDeduplicationFilterConcurrency:
         assert stats["checks_total"] == n_threads * n_per_thread
 
     def test_duplicate_detection_concurrent(self):
-        """并发下重复检测有效（同一批私钥多个线程并发检查）"""
+        """并发下重复检测有效（同一批私钥多个线程并发检查）."""
         f = DeduplicationFilter(max_size=10000)
         shared_keys = [i.to_bytes(32, "big") for i in range(100)]
         pass_counts = []
@@ -176,10 +176,10 @@ class TestDeduplicationFilterConcurrency:
 
 
 class TestDeduplicationFilterGetStats:
-    """get_stats() 测试"""
+    """get_stats() 测试."""
 
     def test_get_stats_structure(self):
-        """get_stats 返回正确的字典结构"""
+        """get_stats 返回正确的字典结构."""
         f = DeduplicationFilter(max_size=1000)
         for i in range(10):
             f.check_and_add(i.to_bytes(32, "big"))
@@ -193,7 +193,7 @@ class TestDeduplicationFilterGetStats:
         assert "enabled" in stats
 
     def test_get_stats_values(self):
-        """get_stats 返回正确的数值"""
+        """get_stats 返回正确的数值."""
         f = DeduplicationFilter(max_size=1000)
         pk = b"\xaa" * 32
         f.check_and_add(pk)
@@ -209,10 +209,10 @@ class TestDeduplicationFilterGetStats:
 
 
 class TestDeduplicationFilterReset:
-    """reset() / clear() 测试"""
+    """reset() / clear() 测试."""
 
     def test_reset_clears_all_tracking(self):
-        """Reset 清除所有跟踪数据"""
+        """Reset 清除所有跟踪数据."""
         f = DeduplicationFilter(max_size=1000)
         for i in range(10):
             f.check_and_add(i.to_bytes(32, "big"))
@@ -228,7 +228,7 @@ class TestDeduplicationFilterReset:
         assert len(f._seen_addresses) == 0
 
     def test_reset_then_reuse(self):
-        """Reset 后可正常使用"""
+        """Reset 后可正常使用."""
         f = DeduplicationFilter(max_size=1000)
         f.check_and_add(b"key1".ljust(32, b"\x00"))
         f.reset()
@@ -237,7 +237,7 @@ class TestDeduplicationFilterReset:
         assert f.get_stats()["checks_total"] == 1
 
     def test_reset_with_duplicates(self):
-        """Reset 清除重复计数"""
+        """Reset 清除重复计数."""
         f = DeduplicationFilter(max_size=1000)
         pk = b"dup".ljust(32, b"\x00")
         f.check_and_add(pk)
@@ -250,7 +250,7 @@ class TestDeduplicationFilterReset:
         assert f.check_and_add(pk)
 
     def test_clear_alias(self):
-        """clear() 是 reset() 的别名"""
+        """clear() 是 reset() 的别名."""
         f = DeduplicationFilter(max_size=100)
         f.check_and_add(b"\x01" * 32)
         f.clear()

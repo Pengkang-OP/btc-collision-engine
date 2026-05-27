@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""范围扫描搜索模式 (RangeScanSearchMode) 单元测试
+"""范围扫描搜索模式 (RangeScanSearchMode) 单元测试.
 
 覆盖：
 - execute 执行入口（start, end 范围）
@@ -23,7 +23,7 @@ from src.gpu.search_modes.range_scan_search import RangeScanSearchMode
 
 
 def _make_engine_stub(**kwargs):
-    """创建 GPUCollisionEngine stub"""
+    """创建 GPUCollisionEngine stub."""
     engine = MagicMock()
     engine._stop_event = MagicMock()
     engine._stop_event.is_set.side_effect = kwargs.get("stop_side_effect", [False, True])
@@ -58,10 +58,10 @@ def _make_engine_stub(**kwargs):
 @pytest.mark.unit
 @pytest.mark.gpu_kernel
 class TestRangeScanExecute:
-    """RangeScanSearchMode.execute 测试"""
+    """RangeScanSearchMode.execute 测试."""
 
     def test_execute_sets_current_position(self):
-        """测试 execute 设置 _current_position"""
+        """测试 execute 设置 _current_position."""
         engine = _make_engine_stub(stop_side_effect=[False, True])
 
         mode = RangeScanSearchMode(engine)
@@ -71,7 +71,7 @@ class TestRangeScanExecute:
         assert engine._current_position >= 10
 
     def test_execute_single_batch_small_range(self):
-        """测试小范围（单批次内完成）"""
+        """测试小范围（单批次内完成）."""
         engine = _make_engine_stub(
             batch_size=1000,
             stop_side_effect=[False, True],
@@ -84,7 +84,7 @@ class TestRangeScanExecute:
         assert engine._current_position >= 6
 
     def test_execute_start_equals_end(self):
-        """测试 start==end（仅一个私钥）"""
+        """测试 start==end（仅一个私钥）."""
         engine = _make_engine_stub(
             batch_size=1000,
             stop_side_effect=[False, True],
@@ -97,7 +97,7 @@ class TestRangeScanExecute:
         assert engine._current_position == 43  # 42 + 1
 
     def test_execute_delegates_to_batch_loop(self):
-        """测试 execute 委托给 _execute_batch_loop"""
+        """测试 execute 委托给 _execute_batch_loop."""
         engine = _make_engine_stub()
 
         mode = RangeScanSearchMode(engine)
@@ -107,7 +107,7 @@ class TestRangeScanExecute:
         mock_loop.assert_called_once()
 
     def test_execute_sets_running_false(self):
-        """测试 execute 完成后 _running=False"""
+        """测试 execute 完成后 _running=False."""
         engine = _make_engine_stub()
 
         mode = RangeScanSearchMode(engine)
@@ -116,7 +116,7 @@ class TestRangeScanExecute:
         assert engine._running is False
 
     def test_execute_updates_stats(self):
-        """测试 execute 更新统计"""
+        """测试 execute 更新统计."""
         engine = _make_engine_stub()
 
         mode = RangeScanSearchMode(engine)
@@ -125,7 +125,7 @@ class TestRangeScanExecute:
         engine.stats.update.assert_called()
 
     def test_execute_calls_on_complete(self):
-        """测试 execute 调用 on_complete"""
+        """测试 execute 调用 on_complete."""
         engine = _make_engine_stub(on_complete=MagicMock())
 
         mode = RangeScanSearchMode(engine)
@@ -134,7 +134,7 @@ class TestRangeScanExecute:
         engine.on_complete.assert_called_once()
 
     def test_execute_no_on_complete(self):
-        """测试无 on_complete 不崩溃"""
+        """测试无 on_complete 不崩溃."""
         engine = _make_engine_stub(on_complete=None)
 
         mode = RangeScanSearchMode(engine)
@@ -150,10 +150,10 @@ class TestRangeScanExecute:
 @pytest.mark.unit
 @pytest.mark.gpu_kernel
 class TestRangeScanPipeline:
-    """流水线预生成测试"""
+    """流水线预生成测试."""
 
     def test_first_batch_prefetches_next(self):
-        """测试第一个批次预生成下一批"""
+        """测试第一个批次预生成下一批."""
         engine = _make_engine_stub(
             batch_size=100,
             # 允许 2 个批次
@@ -171,7 +171,7 @@ class TestRangeScanPipeline:
             assert mock_gen.call_count >= 2
 
     def test_stop_condition_boundary_check(self):
-        """测试 stop_condition 边界检查"""
+        """测试 stop_condition 边界检查."""
         engine = _make_engine_stub(
             batch_size=5,
             # 允许 3 个批次（0-4, 5-9, 10-14）
@@ -185,7 +185,7 @@ class TestRangeScanPipeline:
         assert engine._current_position == 10
 
     def test_stop_condition_exact_boundary(self):
-        """测试 stop_condition 精确边界（end 正好是批次末尾）"""
+        """测试 stop_condition 精确边界（end 正好是批次末尾）."""
         engine = _make_engine_stub(
             batch_size=5,
             stop_side_effect=[False, True],
@@ -198,7 +198,7 @@ class TestRangeScanPipeline:
         assert engine._current_position == 5
 
     def test_stop_condition_after_last_batch(self):
-        """测试最后一个批次后停止"""
+        """测试最后一个批次后停止."""
         engine = _make_engine_stub(
             batch_size=100,
             stop_side_effect=[False, True],
@@ -224,10 +224,10 @@ class TestRangeScanPipeline:
 @pytest.mark.unit
 @pytest.mark.gpu_kernel
 class TestRangeScanMultiBatch:
-    """多批次跨范围测试"""
+    """多批次跨范围测试."""
 
     def test_cross_batch_boundary(self):
-        """测试跨批次边界"""
+        """测试跨批次边界."""
         engine = _make_engine_stub(
             batch_size=3,
             stop_side_effect=[False, False, False, True],
@@ -244,7 +244,7 @@ class TestRangeScanMultiBatch:
         assert engine._current_position >= 7
 
     def test_large_end_value(self):
-        """测试大 end 值"""
+        """测试大 end 值."""
         engine = _make_engine_stub(
             batch_size=5,
             stop_side_effect=[False, True],
@@ -264,10 +264,10 @@ class TestRangeScanMultiBatch:
 @pytest.mark.unit
 @pytest.mark.gpu_kernel
 class TestRangeScanBoundary:
-    """RangeScanSearchMode 边界值测试"""
+    """RangeScanSearchMode 边界值测试."""
 
     def test_start_equals_end_large(self):
-        """测试 start==end 大值"""
+        """测试 start==end 大值."""
         engine = _make_engine_stub(
             batch_size=100,
             stop_side_effect=[False, True],
@@ -279,7 +279,7 @@ class TestRangeScanBoundary:
         assert engine._current_position == 2**255 + 1
 
     def test_start_greater_than_end(self):
-        """测试 start > end 抛出异常（无效范围）"""
+        """测试 start > end 抛出异常（无效范围）."""
         engine = _make_engine_stub()
 
         mode = RangeScanSearchMode(engine)
@@ -288,7 +288,7 @@ class TestRangeScanBoundary:
             mode.execute(start=100, end=50)
 
     def test_end_at_uint256_max(self):
-        """测试 end=2**256-1（最大值）"""
+        """测试 end=2**256-1（最大值）."""
         engine = _make_engine_stub(
             batch_size=5,
             stop_side_effect=[False, True],
@@ -300,7 +300,7 @@ class TestRangeScanBoundary:
         assert engine._running is False
 
     def test_zero_range(self):
-        """测试 start=end=0"""
+        """测试 start=end=0."""
         engine = _make_engine_stub(
             batch_size=10,
             stop_side_effect=[False, True],

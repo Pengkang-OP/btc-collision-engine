@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""P0修复验证测试
+"""P0修复验证测试.
 
 验证代码审查中发现的P0关键问题的修复效果。
 """
@@ -15,10 +15,10 @@ import pathlib
 
 
 class TestCryptoBackendConstTime:
-    """验证 PurePythonBackend 不再调用不存在的方法"""
+    """验证 PurePythonBackend 不再调用不存在的方法."""
 
     def test_pure_python_backend_const_time_generates_public_key(self):
-        """use_const_time=True 时 generate_public_key 应正常工作"""
+        """use_const_time=True 时 generate_public_key 应正常工作."""
         from src.core.crypto_backend import PurePythonBackend
 
         backend = PurePythonBackend(use_const_time=True)
@@ -30,7 +30,7 @@ class TestCryptoBackendConstTime:
         assert result[0] in (0x02, 0x03)
 
     def test_pure_python_backend_normal_generates_public_key(self):
-        """use_const_time=False 时 generate_public_key 应正常工作"""
+        """use_const_time=False 时 generate_public_key 应正常工作."""
         from src.core.crypto_backend import PurePythonBackend
 
         backend = PurePythonBackend(use_const_time=False)
@@ -47,10 +47,10 @@ class TestCryptoBackendConstTime:
 
 
 class TestBitcoinKeyValidatorSecureMode:
-    """验证安全模式下私钥不会泄漏到验证报告"""
+    """验证安全模式下私钥不会泄漏到验证报告."""
 
     def test_secure_mode_masks_private_key_in_summary(self):
-        """默认 secure_mode=True 不应在摘要中包含私钥明文"""
+        """默认 secure_mode=True 不应在摘要中包含私钥明文."""
         from src.core.bitcoin_key_validator import BitcoinKeyValidator
 
         validator = BitcoinKeyValidator(secure_mode=True)
@@ -71,7 +71,7 @@ class TestBitcoinKeyValidatorSecureMode:
         assert all(c in "0123456789abcdef" for c in pk_hash.lower())
 
     def test_secure_mode_masks_wif_in_summary(self):
-        """安全模式下 WIF 应被脱敏"""
+        """安全模式下 WIF 应被脱敏."""
         from src.core.bitcoin_key_validator import BitcoinKeyValidator
 
         validator = BitcoinKeyValidator(secure_mode=True)
@@ -87,7 +87,7 @@ class TestBitcoinKeyValidatorSecureMode:
         assert "..." in wif_comp
 
     def test_non_secure_mode_shows_private_key(self):
-        """非安全模式可以展示私钥"""
+        """非安全模式可以展示私钥."""
         from src.core.bitcoin_key_validator import BitcoinKeyValidator
 
         validator = BitcoinKeyValidator(secure_mode=False)
@@ -108,10 +108,10 @@ class TestBitcoinKeyValidatorSecureMode:
 
 
 class TestBitcoinKeyValidatorImport:
-    """验证相对导入可正常使用"""
+    """验证相对导入可正常使用."""
 
     def test_relative_imports_work(self):
-        """验证 bitcoin_key_validator 可正常导入"""
+        """验证 bitcoin_key_validator 可正常导入."""
         from src.core.bitcoin_key_validator import BitcoinKeyValidator
 
         validator = BitcoinKeyValidator()
@@ -124,10 +124,10 @@ class TestBitcoinKeyValidatorImport:
 
 
 class TestSensitiveDataFilterRedact:
-    """验证敏感数据脱敏器正确脱敏而非丢弃事件"""
+    """验证敏感数据脱敏器正确脱敏而非丢弃事件."""
 
     def test_redact_replaces_private_key(self):
-        """64位hex私钥应被替换"""
+        """64位hex私钥应被替换."""
         from src.log_engine.log_processor import SensitiveDataFilter
 
         fake_pk = "a" * 64
@@ -136,7 +136,7 @@ class TestSensitiveDataFilterRedact:
         assert "***REDACTED***" in result
 
     def test_redact_replaces_wif_uncompressed(self):
-        """未压缩WIF私钥应被替换"""
+        """未压缩WIF私钥应被替换."""
         from src.log_engine.log_processor import SensitiveDataFilter
 
         fake_wif = "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ"
@@ -145,7 +145,7 @@ class TestSensitiveDataFilterRedact:
         assert "[WIF_UNCOMPRESSED_KEY]" in result
 
     def test_redact_replaces_wif_compressed(self):
-        """压缩WIF私钥应被替换"""
+        """压缩WIF私钥应被替换."""
         from src.log_engine.log_processor import SensitiveDataFilter
 
         fake_wif = "KwDiBf89QgGbjEhKnhXJuH7LrciVrZi3qYjgd9M7rFU73sVHnoWn"
@@ -154,7 +154,7 @@ class TestSensitiveDataFilterRedact:
         assert "[WIF_COMPRESSED_KEY]" in result
 
     def test_redact_replaces_bip32_key(self):
-        """BIP32扩展密钥应被替换"""
+        """BIP32扩展密钥应被替换."""
         from src.log_engine.log_processor import SensitiveDataFilter
 
         fake_xprv = (
@@ -167,7 +167,7 @@ class TestSensitiveDataFilterRedact:
         assert "[BIP32_EXTENDED_KEY]" in result
 
     def test_redact_replaces_addresses(self):
-        """比特币地址应被替换为类型标签"""
+        """比特币地址应被替换为类型标签."""
         from src.log_engine.log_processor import SensitiveDataFilter
 
         # P2PKH地址
@@ -179,7 +179,7 @@ class TestSensitiveDataFilterRedact:
         assert "[BECH32_ADDRESS]" in result
 
     def test_redact_preserves_non_sensitive_data(self):
-        """非敏感数据不应被修改"""
+        """非敏感数据不应被修改."""
         from src.log_engine.log_processor import SensitiveDataFilter
 
         text = "engine started, batch_size=1048576, speed=5000 keys/sec"
@@ -188,7 +188,7 @@ class TestSensitiveDataFilterRedact:
         assert "speed=5000" in result
 
     def test_redact_data_handles_dict(self):
-        """redact_data 应递归处理字典"""
+        """redact_data 应递归处理字典."""
         from src.log_engine.log_processor import SensitiveDataFilter
 
         data = {"message": "ok", "key": "a" * 64}
@@ -197,7 +197,7 @@ class TestSensitiveDataFilterRedact:
         assert "a" * 64 not in str(result["key"])
 
     def test_redact_data_handles_list(self):
-        """redact_data 应递归处理列表"""
+        """redact_data 应递归处理列表."""
         from src.log_engine.log_processor import SensitiveDataFilter
 
         data = ["normal", "a" * 64, "ok"]
@@ -221,10 +221,10 @@ class TestSensitiveDataFilterRedact:
 
 
 class TestCheckpointFieldName:
-    """验证 CollisionStats.matches 使用正确的字段名"""
+    """验证 CollisionStats.matches 使用正确的字段名."""
 
     def test_add_match_uses_private_key_hash(self):
-        """add_match 存储的是 private_key_hash 不是 private_key_hex"""
+        """add_match 存储的是 private_key_hash 不是 private_key_hex."""
         from src.collision.collision_stats import CollisionStats
 
         stats = CollisionStats()
@@ -245,10 +245,10 @@ class TestCheckpointFieldName:
 
 
 class TestI18NFix:
-    """验证 i18n 翻译文件中不再有乱码"""
+    """验证 i18n 翻译文件中不再有乱码."""
 
     def test_stop_failed_not_garbled(self):
-        """stop_failed 翻译不应包含乱码字符"""
+        """stop_failed 翻译不应包含乱码字符."""
         i18n_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "src", "i18n", "locales")
         zh_file = os.path.join(i18n_dir, "zh_CN.json")
 
@@ -285,10 +285,10 @@ class TestI18NFix:
 
 
 class TestDockerComposeSecurity:
-    """验证 docker-compose 不再包含弱密码"""
+    """验证 docker-compose 不再包含弱密码."""
 
     def test_grafana_no_hardcoded_weak_password(self):
-        """Grafana 密码不应包含硬编码弱密码"""
+        """Grafana 密码不应包含硬编码弱密码."""
         compose_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), "docker-compose.yml")
 
         if pathlib.Path(compose_file).exists():

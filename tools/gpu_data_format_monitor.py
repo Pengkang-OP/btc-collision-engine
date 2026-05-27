@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GPU 数据格式实时监控工具
+"""GPU 数据格式实时监控工具.
 
 监控 GPU 生成的数据是否符合比特币标准：
 - 私钥格式（32字节，范围 1 到 N-1）
@@ -21,10 +21,10 @@ from src.utils.ui_helpers import format_number_with_commas, format_speed
 
 
 class GPUDataFormatMonitor:
-    """GPU 数据格式监控器"""
+    """GPU 数据格式监控器."""
 
     def __init__(self, target_addresses: list[str] = None):
-        """初始化监控器
+        """初始化监控器.
 
         Args:
             target_addresses: 目标地址列表
@@ -55,7 +55,7 @@ class GPUDataFormatMonitor:
         self.bech32_pattern = re.compile(r"^bc1[a-z0-9]{25,39}$")
 
     def validate_private_key(self, private_key: bytes) -> tuple[bool, str]:
-        """验证私钥格式
+        """验证私钥格式.
 
         Args:
             private_key: 私钥字节
@@ -80,7 +80,7 @@ class GPUDataFormatMonitor:
         return True, ""
 
     def validate_public_key(self, public_key: bytes) -> tuple[bool, str]:
-        """验证公钥格式
+        """验证公钥格式.
 
         Args:
             public_key: 公钥字节
@@ -106,7 +106,7 @@ class GPUDataFormatMonitor:
         return False, f"公钥长度错误: {len(public_key)} 字节（应为 33 或 65 字节）"
 
     def validate_address(self, address: str) -> tuple[bool, str]:
-        """验证地址格式
+        """验证地址格式.
 
         Args:
             address: 地址字符串
@@ -134,7 +134,7 @@ class GPUDataFormatMonitor:
         return False, f"未知地址格式: {address[:20]}..."
 
     def monitor_key_generation(self, engine: KeyCollisionEngine, display_interval: float = 2.0):
-        """监控密钥生成过程
+        """监控密钥生成过程.
 
         Args:
             engine: 碰撞引擎实例
@@ -193,7 +193,7 @@ class GPUDataFormatMonitor:
             self._display_final_report()
 
     def _generate_and_validate_sample_data(self):
-        """生成并验证示例数据"""
+        """生成并验证示例数据."""
         import random
 
         # 获取椭圆曲线实例
@@ -236,7 +236,7 @@ class GPUDataFormatMonitor:
                             except Exception as e:
                                 self.invalid_addresses += 1
                                 if len(self.format_errors) < 20:
-                                    self.format_errors.append(f"地址生成失败: {str(e)}")
+                                    self.format_errors.append(f"地址生成失败: {e!s}")
                         else:
                             self.invalid_public_keys += 1
                             if len(self.format_errors) < 20:
@@ -245,7 +245,7 @@ class GPUDataFormatMonitor:
                     except Exception as e:
                         self.invalid_public_keys += 1
                         if len(self.format_errors) < 20:
-                            self.format_errors.append(f"公钥生成失败: {str(e)}")
+                            self.format_errors.append(f"公钥生成失败: {e!s}")
                 else:
                     self.invalid_private_keys += 1
                     if len(self.format_errors) < 20:
@@ -257,7 +257,7 @@ class GPUDataFormatMonitor:
                     self.format_errors.append(f"样本生成异常: {type(e).__name__}: {e}")
 
     def _display_monitoring_report(self, new_checked: int):
-        """显示监控报告"""
+        """显示监控报告."""
         elapsed = time.time() - self.start_time
         speed = (
             new_checked / (time.time() - self.last_stats_time)
@@ -324,7 +324,7 @@ class GPUDataFormatMonitor:
         print("-" * 80)
 
     def _display_final_report(self):
-        """显示最终报告"""
+        """显示最终报告."""
         elapsed = time.time() - self.start_time if self.start_time else 0
 
         print("\n" + "=" * 80)
@@ -364,7 +364,7 @@ class GPUDataFormatMonitor:
 
 
 def main():
-    """主函数"""
+    """主函数."""
     print("\n" + "=" * 80)
     print("🚀 GPU 数据格式实时监控工具")
     print("=" * 80)
@@ -402,7 +402,7 @@ def main():
         targets=resolved_targets,
         on_progress=lambda stats: None,
         on_match=lambda pk, addr, wif: print(
-            f"\n🎯 发现匹配!\n   地址: {addr}\n   私钥: {pk.hex()}\n   WIF: {wif}\n"
+            f"\n🎯 发现匹配!\n   地址: {addr}\n   私钥: {pk.hex()}\n   WIF: {wif}\n",
         ),
         on_complete=lambda stats: print("\n✅ 对撞完成"),
     )

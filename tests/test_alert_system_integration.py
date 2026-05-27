@@ -1,4 +1,4 @@
-"""测试告警系统集成到GPU性能监控"""
+"""测试告警系统集成到GPU性能监控."""
 
 import time
 
@@ -9,10 +9,10 @@ from src.monitoring.gpu_performance_monitor import GPUPerformanceMonitor
 
 
 class TestAlertSystemIntegration:
-    """测试告警系统集成"""
+    """测试告警系统集成."""
 
     def setup_method(self):
-        """测试前准备"""
+        """测试前准备."""
         # 重置全局告警系统
         import src.monitoring.alert_system as alert_module
 
@@ -27,7 +27,7 @@ class TestAlertSystemIntegration:
         )
 
     def test_performance_degradation_triggers_alert(self, tmp_path):
-        """测试性能退化触发告警"""
+        """测试性能退化触发告警."""
         log_file = tmp_path / "test_alerts.json"
 
         # 创建告警系统
@@ -71,7 +71,7 @@ class TestAlertSystemIntegration:
         assert performance_alerts[0].level == AlertLevel.WARNING
 
     def test_high_error_rate_triggers_alert(self, tmp_path):
-        """测试高错误率触发告警"""
+        """测试高错误率触发告警."""
         log_file = tmp_path / "test_alerts.json"
 
         # 创建告警系统
@@ -109,7 +109,7 @@ class TestAlertSystemIntegration:
         assert error_alerts[0].level == AlertLevel.CRITICAL
 
     def test_alert_integration_does_not_break_monitor(self):
-        """测试告警集成不影响监控器正常工作"""
+        """测试告警集成不影响监控器正常工作."""
         # 即使告警系统失败,监控器也应正常工作
 
         # 记录多个指标
@@ -128,7 +128,7 @@ class TestAlertSystemIntegration:
         assert self.monitor._peak_throughput > 0
 
     def test_alert_system_import_fallback(self):
-        """测试告警系统导入失败时的降级处理"""
+        """测试告警系统导入失败时的降级处理."""
         # 模拟告警系统不可用的情况
         import src.monitoring.alert_system as alert_module
 
@@ -165,7 +165,7 @@ class TestAlertSystemIntegration:
             alert_module.get_alert_system = original_get
 
     def test_cooldown_mechanism_in_integration(self, tmp_path):
-        """测试集成场景下的冷却机制"""
+        """测试集成场景下的冷却机制."""
         log_file = tmp_path / "test_alerts.json"
 
         # 创建告警系统

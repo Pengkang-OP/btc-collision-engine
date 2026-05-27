@@ -25,9 +25,9 @@ from ..seed_utils import _seed_bytes_to_u32_be_array
 from ._executor import AsyncGPUExecutor
 
 __all__ = [
-    "AsyncGPUExecutor",
-    "GPU_SPECIFIC_CONFIG",
     "DEFAULT_QUEUE_DEPTH",
+    "GPU_SPECIFIC_CONFIG",
+    "AsyncGPUExecutor",
     "_PendingBatch",
     "_SyncFallbackError",
     "_seed_bytes_to_u32_be_array",

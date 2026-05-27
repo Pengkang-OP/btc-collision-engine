@@ -1,4 +1,4 @@
-"""ALG-2: 范围扫描边界优化测试
+"""ALG-2: 范围扫描边界优化测试.
 
 测试覆盖:
 1. GPU _generate_sequential_keys 边界：零元素、单元素、大批次
@@ -16,10 +16,10 @@ from src.collision.key_collision_engine import KeyCollisionEngine
 
 
 class TestGenerateSequentialKeysBoundary:
-    """_generate_sequential_keys 边界测试"""
+    """_generate_sequential_keys 边界测试."""
 
     def test_count_zero(self):
-        """count=0 返回空字节串"""
+        """count=0 返回空字节串."""
         from src.gpu.search_modes.base_search import BaseSearchMode
 
         mock_engine = Mock()
@@ -31,7 +31,7 @@ class TestGenerateSequentialKeysBoundary:
         assert result == b""
 
     def test_count_one(self):
-        """count=1 生成单个私钥（32字节大端整数）"""
+        """count=1 生成单个私钥（32字节大端整数）."""
         from src.gpu.search_modes.base_search import BaseSearchMode
 
         mock_engine = Mock()
@@ -44,7 +44,7 @@ class TestGenerateSequentialKeysBoundary:
         assert int.from_bytes(result, "big") == 5
 
     def test_count_sequence_correctness(self):
-        """验证生成的私钥序列连续性"""
+        """验证生成的私钥序列连续性."""
         from src.gpu.search_modes.base_search import BaseSearchMode
 
         mock_engine = Mock()
@@ -62,7 +62,7 @@ class TestGenerateSequentialKeysBoundary:
             assert key == start + i, f"key[{i}] expected {start + i}, got {key}"
 
     def test_count_large_value(self):
-        """大批次生成不报错且长度正确"""
+        """大批次生成不报错且长度正确."""
         from src.gpu.search_modes.base_search import BaseSearchMode
 
         mock_engine = Mock()
@@ -75,7 +75,7 @@ class TestGenerateSequentialKeysBoundary:
         assert len(result) == count * 32
 
     def test_start_large_value(self):
-        """大起始值生成（接近2^256-1）"""
+        """大起始值生成（接近2^256-1）."""
         from src.gpu.search_modes.base_search import BaseSearchMode
 
         mock_engine = Mock()
@@ -92,10 +92,10 @@ class TestGenerateSequentialKeysBoundary:
 
 
 class TestRangescanWorkerBoundary:
-    """_range_scan_worker 边界测试（CPU路径）"""
+    """_range_scan_worker 边界测试（CPU路径）."""
 
     def test_single_element_range(self):
-        """单元素范围 [n, n] 只扫描一个私钥"""
+        """单元素范围 [n, n] 只扫描一个私钥."""
         engine = KeyCollisionEngine(
             targets={"1NoMatchAddrXYZ"},
             max_workers=1,
@@ -106,7 +106,7 @@ class TestRangescanWorkerBoundary:
         engine.stop()
 
     def test_range_with_invalid_start_zero(self):
-        """范围含 k=0 时跳过无效私钥"""
+        """范围含 k=0 时跳过无效私钥."""
         engine = KeyCollisionEngine(
             targets={"1NoMatchAddrXYZ"},
             max_workers=1,
@@ -117,7 +117,7 @@ class TestRangescanWorkerBoundary:
         engine.stop()
 
     def test_range_exactly_one_valid(self):
-        """范围 [0, 0] 全部无效返回0"""
+        """范围 [0, 0] 全部无效返回0."""
         engine = KeyCollisionEngine(
             targets={"1NoMatchAddrXYZ"},
             max_workers=1,
@@ -128,7 +128,7 @@ class TestRangescanWorkerBoundary:
         engine.stop()
 
     def test_large_single_element_range(self):
-        """大值单元素范围正常工作"""
+        """大值单元素范围正常工作."""
         engine = KeyCollisionEngine(
             targets={"1NoMatchAddrXYZ"},
             max_workers=1,
@@ -141,10 +141,10 @@ class TestRangescanWorkerBoundary:
 
 
 class TestRangescanMultiWorkerBoundary:
-    """range_scan 多worker分配边界测试（CPU路径）"""
+    """range_scan 多worker分配边界测试（CPU路径）."""
 
     def test_range_smaller_than_workers(self):
-        """总范围小于 worker 数时回退到单线程"""
+        """总范围小于 worker 数时回退到单线程."""
         engine = KeyCollisionEngine(
             targets={"1NoMatchAddrXYZ"},
             max_workers=4,
@@ -155,7 +155,7 @@ class TestRangescanMultiWorkerBoundary:
         assert stats.total_checked == 3, f"小范围应完整扫描3个私钥，实际{stats.total_checked}"
 
     def test_range_exactly_equals_workers(self):
-        """总范围恰好等于 worker 数"""
+        """总范围恰好等于 worker 数."""
         engine = KeyCollisionEngine(
             targets={"1NoMatchAddrXYZ"},
             max_workers=4,
@@ -166,7 +166,7 @@ class TestRangescanMultiWorkerBoundary:
         assert stats.total_checked == 4, f"应完整扫描4个私钥，实际{stats.total_checked}"
 
     def test_range_chunk_size_one(self):
-        """chunk_size=1 场景（范围仅比worker数多1）"""
+        """chunk_size=1 场景（范围仅比worker数多1）."""
         engine = KeyCollisionEngine(
             targets={"1NoMatchAddrXYZ"},
             max_workers=4,
@@ -177,7 +177,7 @@ class TestRangescanMultiWorkerBoundary:
         assert stats.total_checked == 5, f"应完整扫描5个私钥，实际{stats.total_checked}"
 
     def test_range_no_overlap_verification(self):
-        """多worker分配不重叠（范围[1,1000] max_workers=4）"""
+        """多worker分配不重叠（范围[1,1000] max_workers=4）."""
         engine = KeyCollisionEngine(
             targets={"1NoMatchAddrXYZ"},
             max_workers=4,
@@ -188,7 +188,7 @@ class TestRangescanMultiWorkerBoundary:
         assert stats.total_checked == 1000, f"无重叠应扫描1000个私钥，实际{stats.total_checked}"
 
     def test_range_uneven_split(self):
-        """范围不能被worker数整除时的剩余分配"""
+        """范围不能被worker数整除时的剩余分配."""
         engine = KeyCollisionEngine(
             targets={"1NoMatchAddrXYZ"},
             max_workers=3,
@@ -201,7 +201,7 @@ class TestRangescanMultiWorkerBoundary:
 
 @pytest.mark.gpu_kernel
 class TestRangescanGPUFirstBatchBoundary:
-    """GPU range_scan 第一批发包 off-by-one 修复验证
+    """GPU range_scan 第一批发包 off-by-one 修复验证.
 
     通过直接实例化 RangeScanSearchMode 并使用 Mock 引擎来避免
     GPUCollisionEngine 完整初始化（需要真实 pyopencl 环境）。
@@ -210,7 +210,7 @@ class TestRangescanGPUFirstBatchBoundary:
 
     @staticmethod
     def _make_mock_engine(batch_size):
-        """创建 Mock 引擎用于测试 RangeScanSearchMode"""
+        """创建 Mock 引擎用于测试 RangeScanSearchMode."""
         mock_engine = Mock()
         mock_engine.batch_size = batch_size
         mock_engine._current_position = 0
@@ -235,7 +235,7 @@ class TestRangescanGPUFirstBatchBoundary:
         return mock_engine
 
     def test_first_batch_small_range_smaller_than_batch_size(self):
-        """范围小于 batch_size 时不应遗漏最后一个key"""
+        """范围小于 batch_size 时不应遗漏最后一个key."""
         from src.gpu.search_modes.range_scan_search import RangeScanSearchMode
 
         mock_engine = self._make_mock_engine(batch_size=1000)
@@ -254,7 +254,7 @@ class TestRangescanGPUFirstBatchBoundary:
         assert total_generated == 6, f"范围[5,10]应生成6个私钥，实际{total_generated}"
 
     def test_first_batch_range_exactly_equals_batch_size(self):
-        """范围恰好等于 batch_size 时全部在首批完成"""
+        """范围恰好等于 batch_size 时全部在首批完成."""
         from src.gpu.search_modes.range_scan_search import RangeScanSearchMode
 
         mock_engine = self._make_mock_engine(batch_size=10)
@@ -274,7 +274,7 @@ class TestRangescanGPUFirstBatchBoundary:
         assert len(batch_sizes) == 1, f"应在一个批次完成，实际{len(batch_sizes)}批"
 
     def test_first_batch_range_slightly_larger_than_batch_size(self):
-        """范围略大于 batch_size 时分两批完成"""
+        """范围略大于 batch_size 时分两批完成."""
         from src.gpu.search_modes.range_scan_search import RangeScanSearchMode
 
         mock_engine = self._make_mock_engine(batch_size=10)
@@ -294,7 +294,7 @@ class TestRangescanGPUFirstBatchBoundary:
         assert len(batch_sizes) == 2, f"应分两批完成，实际{len(batch_sizes)}批"
 
     def test_first_batch_single_element_range(self):
-        """单元素范围（start==end）首批只生成一个私钥"""
+        """单元素范围（start==end）首批只生成一个私钥."""
         from src.gpu.search_modes.range_scan_search import RangeScanSearchMode
 
         mock_engine = self._make_mock_engine(batch_size=1000)
@@ -313,7 +313,7 @@ class TestRangescanGPUFirstBatchBoundary:
         assert total_generated == 1, f"单元素范围[100,100]应生成1个，实际{total_generated}"
 
     def test_first_batch_range_multi_batch_exact_fit(self):
-        """范围恰好是 batch_size 整数倍时边界正确"""
+        """范围恰好是 batch_size 整数倍时边界正确."""
         from src.gpu.search_modes.range_scan_search import RangeScanSearchMode
 
         mock_engine = self._make_mock_engine(batch_size=5)
@@ -334,10 +334,10 @@ class TestRangescanGPUFirstBatchBoundary:
 
 
 class TestCLIValidationBoundary:
-    """CLI 参数验证边界测试"""
+    """CLI 参数验证边界测试."""
 
     def test_range_start_greater_equal_end_rejected(self):
-        """Start >= end 被拒绝"""
+        """Start >= end 被拒绝."""
         from unittest.mock import Mock
 
         from src.cli.validation import validate_args
@@ -376,7 +376,7 @@ class TestCLIValidationBoundary:
         assert result is False, "start>=end 应被拒绝"
 
     def test_range_start_less_than_one_rejected(self):
-        """Start < 1 被拒绝"""
+        """Start < 1 被拒绝."""
         from unittest.mock import Mock
 
         from src.cli.validation import validate_args
@@ -415,7 +415,7 @@ class TestCLIValidationBoundary:
         assert result is False, "start<1 应被拒绝"
 
     def test_range_valid_boundary_accepted(self):
-        """start=1 end=2 合法范围被接受"""
+        """start=1 end=2 合法范围被接受."""
         from unittest.mock import Mock
 
         from src.cli.validation import validate_args

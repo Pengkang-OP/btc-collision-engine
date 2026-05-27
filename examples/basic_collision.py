@@ -1,4 +1,4 @@
-"""基础碰撞示例 - Basic Collision Example
+"""基础碰撞示例 - Basic Collision Example.
 
 演示最简单的比特币私钥碰撞使用方式。
 
@@ -87,7 +87,7 @@ def main():
                         "address": address,
                         "elapsed": elapsed,
                         "checked_count": checked,
-                    }
+                    },
                 )
                 print(f"\n  [!!] 发现匹配！地址: {address}")
                 print(f"       私钥: {private_key.hex()}")
@@ -98,7 +98,7 @@ def main():
                 speed = checked / elapsed if elapsed > 0 else 0
                 print(
                     f"  [{elapsed:.1f}s] 已检查: {checked:,} | "
-                    f"速度: {speed / 1000:.1f}K/s | 匹配: {len(matches)}"
+                    f"速度: {speed / 1000:.1f}K/s | 匹配: {len(matches)}",
                 )
 
     except KeyboardInterrupt:

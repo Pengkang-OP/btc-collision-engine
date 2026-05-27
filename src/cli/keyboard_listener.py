@@ -1,4 +1,4 @@
-"""非阻塞键盘输入检测，支持跨平台 'q' 键优雅退出。
+r"""非阻塞键盘输入检测，支持跨平台 'q' 键优雅退出。.
 
 用法::
 
@@ -23,7 +23,7 @@ _is_windows = sys.platform == "win32"
 if _is_windows:
 
     def check_key() -> str | None:
-        """Windows: 使用 msvcrt.kbhit 非阻塞检测按键。"""
+        """Windows: 使用 msvcrt.kbhit 非阻塞检测按键。."""
         try:
             import msvcrt
 
@@ -40,7 +40,7 @@ if _is_windows:
 else:
 
     def check_key() -> str | None:
-        """Unix: 使用 select 非阻塞检测 stdin。"""
+        """Unix: 使用 select 非阻塞检测 stdin。."""
         try:
             import select
 
@@ -53,24 +53,25 @@ else:
 
 # 兼容旧接口
 class KeyboardListener:
-    """键盘监听器（兼容旧接口，推荐直接使用 check_key()）。"""
+    """键盘监听器（兼容旧接口，推荐直接使用 check_key()）。."""
 
     def __init__(self):
+        """初始化键盘监听器。."""
         self._running = False
 
     def start(self) -> None:
-        """标记为运行中。"""
+        """标记为运行中。."""
         self._running = True
 
     def stop(self) -> None:
-        """停止监听。"""
+        """停止监听。."""
         self._running = False
 
     def is_running(self) -> bool:
-        """返回运行状态。"""
+        """返回运行状态。."""
         return self._running
 
     @staticmethod
     def check() -> str | None:
-        """检测按键，返回字符或 None。"""
+        """检测按键，返回字符或 None。."""
         return check_key()

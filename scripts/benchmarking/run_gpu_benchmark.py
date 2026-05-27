@@ -1,4 +1,4 @@
-"""GPU 性能基准测试 - 在本地 GPU 上运行"""
+"""GPU 性能基准测试 - 在本地 GPU 上运行."""
 
 import json
 import os
@@ -78,7 +78,7 @@ def main():
                 s = engine.stats
                 if s and hasattr(s, "speed") and s.speed:
                     print(
-                        f"    剩余 {remaining}s - 当前速度: {s.speed:,.0f} keys/s, 已检测: {s.total_checked:,}"
+                        f"    剩余 {remaining}s - 当前速度: {s.speed:,.0f} keys/s, 已检测: {s.total_checked:,}",
                     )
             except Exception:
                 pass

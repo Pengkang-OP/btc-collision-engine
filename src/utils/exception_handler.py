@@ -19,7 +19,7 @@ logger = get_configured_logger("ExceptionHandler")
 
 
 class ExceptionHandler:
-    """统一异常处理器
+    """统一异常处理器.
 
     提供标准化的异常处理方法,确保:
     1. 异常日志格式统一
@@ -34,7 +34,7 @@ class ExceptionHandler:
         stats: Any = None,
         context: str = "",
     ) -> None:
-        """统一处理引擎错误
+        """统一处理引擎错误.
 
         Args:
             engine_type: 引擎类型 ("CPU" 或 "GPU")
@@ -97,7 +97,7 @@ class ExceptionHandler:
 
     @staticmethod
     def handle_gpu_error(mode: str, error: Exception, stats: Any = None) -> bool:
-        """统一处理GPU错误(复用GPUDevice.handle_gpu_batch_error逻辑)
+        """统一处理GPU错误(复用GPUDevice.handle_gpu_batch_error逻辑).
 
         P3-6增强: 新增 MemoryError 分类，避免被归类为"未知错误"
 
@@ -166,7 +166,7 @@ class ExceptionHandler:
 
     @staticmethod
     def handle_gpu_async_error(error: Exception, context: str = "") -> bool:
-        """P3-6新增: 统一处理GPU异步执行错误
+        """P3-6新增: 统一处理GPU异步执行错误.
 
         用于 async_executor 包中的异步执行回退逻辑，
         区分 OpenCL 运行时错误与其他可恢复错误。
@@ -210,7 +210,7 @@ class ExceptionHandler:
 
     @staticmethod
     def handle_cl_resource_error(error: Exception, resource_type: str = "") -> bool:
-        """P3-6新增: 分类处理OpenCL资源错误
+        """P3-6新增: 分类处理OpenCL资源错误.
 
         根据错误消息关键字判断是否为资源耗尽型错误，
         为自动降批/重试策略提供决策依据。
@@ -248,7 +248,7 @@ class ExceptionHandler:
 
     @staticmethod
     def handle_gpu_cleanup_error(error: Exception, resource_name: str = "") -> None:
-        """P3-6新增: 统一处理GPU资源清理错误
+        """P3-6新增: 统一处理GPU资源清理错误.
 
         GPU资源清理（buffer释放、队列完成）时的错误处理。
         清理失败通常为非致命错误，使用 WARNING 级别。
@@ -267,7 +267,7 @@ class ExceptionHandler:
 
     @staticmethod
     def handle_config_error(error: Exception, config_type: str = "") -> None:
-        """统一处理配置错误
+        """统一处理配置错误.
 
         Args:
             error: 捕获的异常
@@ -285,7 +285,7 @@ class ExceptionHandler:
 
     @staticmethod
     def handle_file_error(error: Exception, operation: str, filepath: str = "") -> None:
-        """统一处理文件操作错误
+        """统一处理文件操作错误.
 
         Args:
             error: 捕获的异常

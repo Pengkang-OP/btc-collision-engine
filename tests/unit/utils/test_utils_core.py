@@ -1,4 +1,4 @@
-"""工具模块测试 — exception_handler, exceptions 基础验证"""
+"""工具模块测试 — exception_handler, exceptions 基础验证."""
 
 import unittest
 from unittest.mock import Mock
@@ -21,7 +21,7 @@ from src.utils.exceptions import (
 
 
 class TestExceptionBasics:
-    """异常类基础存在性验证 — 对齐 src/utils/exceptions.py 真实 API"""
+    """异常类基础存在性验证 — 对齐 src/utils/exceptions.py 真实 API."""
 
     def test_collision_engine_error_is_base(self):
         err = CollisionEngineError("test")
@@ -30,14 +30,14 @@ class TestExceptionBasics:
         assert err.error_code == 1000
 
     def test_collision_error_alias(self):
-        """CollisionError 是 CollisionEngineError 的别名"""
+        """CollisionError 是 CollisionEngineError 的别名."""
         from src.utils.exceptions import CollisionError
 
         err = CollisionError("test")
         assert isinstance(err, CollisionEngineError)
 
     def test_key_generation_error_has_custom_init(self):
-        """KeyGenerationError 有 error_code 和 context"""
+        """KeyGenerationError 有 error_code 和 context."""
         err = KeyGenerationError("key fail", error_code=2, context={"reason": "entropy"})
         assert err.message == "key fail"
         assert err.error_code == 2
@@ -49,7 +49,7 @@ class TestExceptionBasics:
         assert err.context == {}
 
     def test_all_subclasses_exist(self):
-        """验证所有异常子类可实例化"""
+        """验证所有异常子类可实例化."""
         for cls in [
             AddressGenerationError,
             CheckpointError,
@@ -66,7 +66,7 @@ class TestExceptionBasics:
 
 
 class TestExceptionHandler:
-    """ExceptionHandler 统一异常处理器测试"""
+    """ExceptionHandler 统一异常处理器测试."""
 
     def test_handle_engine_error_runtime(self):
         stats = Mock()

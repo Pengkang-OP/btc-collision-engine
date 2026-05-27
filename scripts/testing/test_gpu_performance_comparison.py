@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """GPU碰撞引擎性能对比测试
-测试不同配置下的性能差异
+测试不同配置下的性能差异.
 
 配置对比:
 - A: 显存效率45% + batch_size=65536 (原始配置)
@@ -18,7 +18,7 @@ from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
 
 
 def test_config(config_name, batch_size, test_duration=30):
-    """测试特定配置"""
+    """测试特定配置."""
     print(f"\n{'=' * 80}")
     print(f"  配置测试: {config_name}")
     print(f"{'=' * 80}")
@@ -36,7 +36,7 @@ def test_config(config_name, batch_size, test_duration=30):
                 "total_checked": stats.total_checked,
                 "keys_per_second": stats.speed,  # 修复: 使用speed而非keys_per_second
                 "matches": stats.matches,
-            }
+            },
         )
 
     def on_match(match_info):
@@ -77,7 +77,7 @@ def test_config(config_name, batch_size, test_duration=30):
                 elapsed = time.time() - start_time
                 print(
                     f"  [{elapsed:5.1f}s] {latest['total_checked']:>10,} keys | "
-                    f"{latest['keys_per_second']:>10.2f} keys/s"
+                    f"{latest['keys_per_second']:>10.2f} keys/s",
                 )
 
         engine.stop()
@@ -113,7 +113,7 @@ def test_config(config_name, batch_size, test_duration=30):
 
 
 def main():
-    """主函数"""
+    """主函数."""
     print("=" * 80)
     print("  GPU碰撞引擎性能对比测试")
     print("=" * 80)
@@ -157,7 +157,7 @@ def main():
             improvement = ((r["avg_speed"] - baseline) / baseline * 100) if baseline > 0 else 0
             print(
                 f"{r['config']:<30} {r['batch_size']:>10,} {r['avg_speed']:>10,.2f} "
-                f"{r['max_speed']:>10,.2f} {improvement:>6.1f}%"
+                f"{r['max_speed']:>10,.2f} {improvement:>6.1f}%",
             )
 
         print()

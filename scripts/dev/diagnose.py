@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""BTC 碰撞引擎 - 自助诊断工具
+"""BTC 碰撞引擎 - 自助诊断工具.
 
 用法:
     python scripts/dev/diagnose.py          # 完整诊断
@@ -59,16 +59,16 @@ _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 def check_python_version() -> tuple[bool, str]:
-    """检查 Python 版本 >= 3.7"""
+    """检查 Python 版本 >= 3.7."""
     v = sys.version_info
     ver_str = f"{v.major}.{v.minor}.{v.micro}"
     if v >= (3, 7):
         return True, f"Python {ver_str}"
-    return False, f"Python {ver_str}（要求 >= 3.7）"  # noqa: E501
+    return False, f"Python {ver_str}（要求 >= 3.7）"
 
 
 def check_core_deps() -> list[dict[str, Any]]:
-    """检查核心必选依赖"""
+    """检查核心必选依赖."""
     deps = [
         ("hashlib", "内置", "哈希计算"),
         ("hmac", "内置", "HMAC"),
@@ -93,10 +93,10 @@ def check_core_deps() -> list[dict[str, Any]]:
 
 
 def check_perf_deps() -> list[dict[str, Any]]:
-    """检查可选性能依赖"""
+    """检查可选性能依赖."""
     deps = [
         ("coincurve", "coincurve", "libsecp256k1 绑定（3-5x 加速，强烈推荐）"),
-        ("gmpy2", "gmpy2", "GMP 大整数加速（椭圆曲线计算）"),  # noqa: E501
+        ("gmpy2", "gmpy2", "GMP 大整数加速（椭圆曲线计算）"),
         ("numpy", "numpy", "数值计算加速"),
         ("ecdsa", "ecdsa", "纯 Python ECDSA 后备"),
         ("pyopencl", "pyopencl", "OpenCL GPU 支持"),
@@ -114,7 +114,7 @@ def check_perf_deps() -> list[dict[str, Any]]:
                     "ok": True,
                     "version": ver,
                     "error": None,
-                }
+                },
             )
         except ImportError as e:
             results.append(
@@ -125,13 +125,13 @@ def check_perf_deps() -> list[dict[str, Any]]:
                     "ok": False,
                     "version": None,
                     "error": str(e),
-                }
+                },
             )
     return results
 
 
 def check_config() -> tuple[bool, str, dict]:
-    """检查 config.json 是否存在且有效"""
+    """检查 config.json 是否存在且有效."""
     config_path = os.path.join(_PROJECT_ROOT, "config.json")
     if not os.path.exists(config_path):
         return False, "config.json 不存在（请执行: copy config.example.json config.json）", {}
@@ -147,7 +147,7 @@ def check_config() -> tuple[bool, str, dict]:
 
 
 def check_gpu(quick: bool = False) -> list[dict[str, Any]]:
-    """检查 GPU / OpenCL 设备"""
+    """检查 GPU / OpenCL 设备."""
     if quick:
         return [{"note": "快速模式已跳过 GPU 检查"}]
     try:
@@ -170,7 +170,7 @@ def check_gpu(quick: bool = False) -> list[dict[str, Any]]:
                         "vram_mb": mem_mb,
                         "max_work_group": device.max_work_group_size,
                         "opencl_version": device.version,
-                    }
+                    },
                 )
     except Exception as e:
         return [{"error": f"OpenCL 设备枚举失败: {e}"}]
@@ -181,7 +181,7 @@ def check_gpu(quick: bool = False) -> list[dict[str, Any]]:
 
 
 def check_disk() -> dict[str, Any]:
-    """检查磁盘空间"""
+    """检查磁盘空间."""
     logs_dir = os.path.join(_PROJECT_ROOT, "logs")
     check_path = logs_dir if os.path.exists(logs_dir) else _PROJECT_ROOT
     try:
@@ -202,11 +202,11 @@ def check_disk() -> dict[str, Any]:
 
 
 def check_cli_import() -> tuple[bool, str]:
-    """检查 CLI 入口能否正常导入"""
+    """检查 CLI 入口能否正常导入."""
     try:
         from src.cli.main import main  # noqa: F401
 
-        return True, "src.cli.main 导入成功"  # noqa: E501
+        return True, "src.cli.main 导入成功"
     except ImportError as e:
         return False, f"src.cli.main 导入失败: {e}"
     except Exception as e:
@@ -214,7 +214,7 @@ def check_cli_import() -> tuple[bool, str]:
 
 
 def check_crypto_backend() -> tuple[str, str]:
-    """检测当前使用的加密后端"""
+    """检测当前使用的加密后端."""
     try:
         from src.crypto.backend import get_backend_name
 
@@ -312,7 +312,7 @@ def print_report(results: dict[str, Any], as_json: bool = False):
             print(f"  {PASS} [{dev['platform_index']}:{dev['device_index']}] {dev['name']}")
             print(
                 f"         厂商={dev['vendor']}  VRAM={dev['vram_mb']} MB  "
-                f"MaxWG={dev['max_work_group']}  OpenCL={dev['opencl_version']}"
+                f"MaxWG={dev['max_work_group']}  OpenCL={dev['opencl_version']}",
             )
 
     # 总结

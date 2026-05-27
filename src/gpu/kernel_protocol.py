@@ -1,4 +1,4 @@
-"""GPU内核协议定义
+"""GPU内核协议定义.
 
 定义GPU内核的标准接口，用于依赖注入和测试Mock（P1-2修复）。
 解耦GPU引擎和具体内核实现。
@@ -12,7 +12,7 @@ from typing import Any, Protocol, cast, runtime_checkable
 
 @runtime_checkable
 class GPUKernelProtocol(Protocol):
-    """GPU内核接口
+    """GPU内核接口.
 
     所有GPU内核实现必须遵循此接口。
     用于解耦GPU引擎和具体内核实现，支持：
@@ -34,7 +34,7 @@ class GPUKernelProtocol(Protocol):
 
     @abstractmethod
     def run_batch(self, seed: bytes, num_keys: int) -> list[dict[str, int]]:
-        """执行一批密钥碰撞计算（PRNG模式）
+        """执行一批密钥碰撞计算（PRNG模式）.
 
         v4.2.1 PRNG改造：CPU仅传递32字节随机种子，GPU内核自行生成
         每个工作单元的私钥（key = seed XOR gid），大幅减少PCIe传输量。
@@ -62,7 +62,7 @@ class GPUKernelProtocol(Protocol):
         num_targets: int,
         check_uncompressed: int = 0,
     ) -> None:
-        """设置目标地址Hash160
+        """设置目标地址Hash160.
 
         只需在初始化时设置一次，后续批次自动复用。
 
@@ -80,7 +80,7 @@ class GPUKernelProtocol(Protocol):
 
     @abstractmethod
     def cleanup(self) -> None:
-        """清理GPU资源
+        """清理GPU资源.
 
         释放所有GPU内存缓冲区，重置内核状态。
         应在引擎停止时调用。
@@ -94,7 +94,7 @@ class GPUKernelProtocol(Protocol):
     @property
     @abstractmethod
     def max_batch_size(self) -> int:
-        """最大批次大小
+        """最大批次大小.
 
         GPU内核能够处理的最大私钥数量。
         基于GPU显存大小自动计算。
@@ -108,7 +108,7 @@ class GPUKernelProtocol(Protocol):
     @property
     @abstractmethod
     def device(self) -> Any:
-        """GPU设备对象
+        """GPU设备对象.
 
         Returns:
             GPUDevice实例
@@ -119,7 +119,7 @@ class GPUKernelProtocol(Protocol):
     @property
     @abstractmethod
     def program(self) -> Any:
-        """已编译的OpenCL程序
+        """已编译的OpenCL程序.
 
         Returns:
             pyopencl.Program实例
@@ -129,7 +129,7 @@ class GPUKernelProtocol(Protocol):
 
 
 class GPUKernelFactory:
-    """GPU内核工厂
+    """GPU内核工厂.
 
     用于创建GPU内核实例，支持依赖注入。
 
@@ -149,7 +149,7 @@ class GPUKernelFactory:
 
     @classmethod
     def register(cls, kernel_class: type[GPUKernelProtocol]) -> None:
-        """注册内核类
+        """注册内核类.
 
         Args:
             kernel_class: GPU内核实现类（必须实现GPUKernelProtocol接口）
@@ -168,7 +168,7 @@ class GPUKernelFactory:
         max_batch_size: int | None = None,
         program: Any = None,
     ) -> GPUKernelProtocol:
-        """创建GPU内核实例
+        """创建GPU内核实例.
 
         Args:
             device: GPUDevice实例
@@ -194,5 +194,5 @@ class GPUKernelFactory:
 
     @classmethod
     def reset(cls) -> None:
-        """重置工厂（用于测试）"""
+        """重置工厂（用于测试）."""
         cls._kernel_class = cast("type[GPUKernelProtocol] | None", None)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""NVIDIA GPU实时监控工具
+"""NVIDIA GPU实时监控工具.
 
 监控内容:
 - GPU使用率
@@ -20,7 +20,7 @@ from pathlib import Path
 
 
 def get_nvidia_gpu_stats():
-    """获取NVIDIA GPU状态(使用nvidia-smi)"""
+    """获取NVIDIA GPU状态(使用nvidia-smi)."""
     try:
         result = subprocess.run(
             [
@@ -50,7 +50,7 @@ def get_nvidia_gpu_stats():
 
 
 def get_process_info():
-    """获取碰撞引擎进程信息"""
+    """获取碰撞引擎进程信息."""
     try:
         # 查找主窗口标题包含"collision"的进程
         result = subprocess.run(
@@ -83,7 +83,7 @@ def get_process_info():
 
 
 def read_log_recent_errors():
-    """读取最近的错误日志"""
+    """读取最近的错误日志."""
     log_file = Path("logs/collision.log")
     if not log_file.exists():
         return []
@@ -101,14 +101,14 @@ def read_log_recent_errors():
 
 
 def format_size(size_mb):
-    """格式化大小显示"""
+    """格式化大小显示."""
     if size_mb >= 1024:
         return f"{size_mb / 1024:.2f} GB"
     return f"{size_mb:.1f} MB"
 
 
 def print_monitor_header():
-    """打印监控头"""
+    """打印监控头."""
     print("\n" + "=" * 80)
     print("🎮 NVIDIA GPU 实时监控面板")
     print("=" * 80)
@@ -119,7 +119,7 @@ def print_monitor_header():
 
 
 def print_gpu_stats(stats, iteration):
-    """打印GPU统计信息"""
+    """打印GPU统计信息."""
     print(f"\n{'─' * 80}")
     print(f"📈 监控周期 #{iteration} - {datetime.now().strftime('%H:%M:%S')}")
     print(f"{'─' * 80}")
@@ -161,7 +161,7 @@ def print_gpu_stats(stats, iteration):
 
 
 def print_process_info(proc_info):
-    """打印进程信息"""
+    """打印进程信息."""
     if not proc_info:
         print("\n⚠️  未检测到碰撞引擎进程")
         return
@@ -173,7 +173,7 @@ def print_process_info(proc_info):
 
 
 def print_errors(errors):
-    """打印错误信息"""
+    """打印错误信息."""
     if not errors:
         print("\n✅ 最近无错误")
         return
@@ -187,7 +187,7 @@ def print_errors(errors):
 
 
 def main():
-    """主函数"""
+    """主函数."""
     print_monitor_header()
 
     iteration = 0

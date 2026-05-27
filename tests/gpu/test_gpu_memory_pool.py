@@ -1,4 +1,4 @@
-"""GPU内存池优化模块单元测试"""
+"""GPU内存池优化模块单元测试."""
 
 from unittest.mock import Mock
 
@@ -14,10 +14,10 @@ pytestmark = pytest.mark.gpu
 
 
 class TestGPUMemoryPool:
-    """GPU内存池测试类"""
+    """GPU内存池测试类."""
 
     def test_initialization(self):
-        """测试初始化"""
+        """测试初始化."""
         mock_context = Mock()
         pool = GPUMemoryPool(mock_context, max_buffers=50, max_memory_mb=256)
 
@@ -25,7 +25,7 @@ class TestGPUMemoryPool:
         assert pool._max_memory_bytes == 256 * 1024 * 1024
 
     def test_allocate_new_buffer(self):
-        """测试分配新缓冲区"""
+        """测试分配新缓冲区."""
         try:
             pass
         except ImportError:
@@ -45,7 +45,7 @@ class TestGPUMemoryPool:
             assert pool._total_allocated == 1
 
     def test_reuse_buffer(self):
-        """测试缓冲区复用"""
+        """测试缓冲区复用."""
         try:
             pass
         except ImportError:
@@ -79,7 +79,7 @@ class TestGPUMemoryPool:
             assert pool._total_reused == 1
 
     def test_max_buffers_limit(self):
-        """测试最大缓冲区限制"""
+        """测试最大缓冲区限制."""
         mock_context = Mock()
 
         with pytest.MonkeyPatch.context() as mp:
@@ -101,7 +101,7 @@ class TestGPUMemoryPool:
             assert total_pooled <= 3
 
     def test_get_stats(self):
-        """测试统计信息获取"""
+        """测试统计信息获取."""
         mock_context = Mock()
 
         with pytest.MonkeyPatch.context() as mp:
@@ -124,7 +124,7 @@ class TestGPUMemoryPool:
             assert stats["total_reused"] >= 1
 
     def test_clear(self):
-        """测试清空池"""
+        """测试清空池."""
         mock_context = Mock()
 
         with pytest.MonkeyPatch.context() as mp:
@@ -144,17 +144,17 @@ class TestGPUMemoryPool:
 
 
 class TestGPUBufferAllocator:
-    """GPU缓冲区分配器测试类"""
+    """GPU缓冲区分配器测试类."""
 
     def test_initialization(self):
-        """测试初始化"""
+        """测试初始化."""
         mock_context = Mock()
         allocator = GPUBufferAllocator(mock_context, max_pool_size=30)
 
         assert allocator is not None
 
     def test_allocate_different_types(self):
-        """测试分配不同类型缓冲区"""
+        """测试分配不同类型缓冲区."""
         mock_context = Mock()
 
         with pytest.MonkeyPatch.context() as mp:
@@ -172,16 +172,16 @@ class TestGPUBufferAllocator:
 
 
 class TestGlobalGPUMemoryManager:
-    """全局GPU内存管理器测试类"""
+    """全局GPU内存管理器测试类."""
 
     def test_singleton_pattern(self):
-        """测试单例模式"""
+        """测试单例模式."""
         manager1 = GlobalGPUMemoryManager()
         manager2 = GlobalGPUMemoryManager()
         assert manager1 is manager2
 
     def test_get_pool_caching(self):
-        """测试池缓存"""
+        """测试池缓存."""
         mock_context = Mock()
         manager = GlobalGPUMemoryManager()
         manager._pools.clear()  # 清空测试
@@ -192,7 +192,7 @@ class TestGlobalGPUMemoryManager:
         assert pool1 is pool2
 
     def test_clear_all(self):
-        """测试清空所有池"""
+        """测试清空所有池."""
         mock_context = Mock()
         manager = GlobalGPUMemoryManager()
         manager._pools.clear()

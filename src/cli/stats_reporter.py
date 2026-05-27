@@ -15,7 +15,7 @@ logger = get_configured_logger("StatsReporter")
 
 
 def _mask_value(value: str, mode: str = "masked") -> str:
-    """对敏感值进行脱敏处理。
+    """对敏感值进行脱敏处理。.
 
     Args:
         value: 原始值（如私钥十六进制字符串）
@@ -107,7 +107,7 @@ def _print_final_summary(engine: Any, engine_type: str, args: Any) -> None:
 
 
 def _build_stats_rows(stats: dict, multi_gpu: bool = False) -> list:
-    """构建统计行数据。"""
+    """构建统计行数据。."""
     if multi_gpu:
         return [
             ("总检查私钥", f"{stats.get('total_keys_checked', 0):,}"),
@@ -125,7 +125,7 @@ def _build_stats_rows(stats: dict, multi_gpu: bool = False) -> list:
 
 
 def _get_matches(engine: Any, engine_type: str) -> list[dict]:
-    """安全获取匹配结果列表。"""
+    """安全获取匹配结果列表。."""
     try:
         if engine_type == "MultiGPU" and hasattr(engine, "get_matches"):
             return engine.get_matches() or []
@@ -145,7 +145,7 @@ def _print_single_match(
     index: int,
     sensitive_mode: str,
 ) -> None:
-    """打印单条匹配结果，应用脱敏模式 (Rich 格式化)。"""
+    """打印单条匹配结果，应用脱敏模式 (Rich 格式化)。."""
     addr = match.get("address", match.get("target", "N/A"))
     pk = match.get("private_key", match.get("key", ""))
 
@@ -164,7 +164,7 @@ def _print_single_match(
 
 
 def _export_matches_if_requested(args: Any, matches: list[dict]) -> None:
-    """如果指定了 --export-matches，导出为 JSON 文件。"""
+    """如果指定了 --export-matches，导出为 JSON 文件。."""
     export_path = getattr(args, "export_matches", None)
     if not export_path:
         return

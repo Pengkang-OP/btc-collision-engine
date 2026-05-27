@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """持续监控GPU异步优化运行效果
-每5秒检查一次性能指标
+每5秒检查一次性能指标.
 """
 
 import sys
@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 def monitor_performance(duration_seconds=60):
-    """监控指定时间的性能"""
+    """监控指定时间的性能."""
     print("=" * 80)
     print("  GPU异步优化持续监控")
     print("=" * 80)
@@ -19,7 +19,7 @@ def monitor_performance(duration_seconds=60):
     print()
     print("-" * 80)
     print(
-        f"{'时间':<8} | {'当前吞吐量':<15} | {'平均吞吐量':<15} | {'峰值':<15} | {'批次':<8} | {'错误率':<8}"
+        f"{'时间':<8} | {'当前吞吐量':<15} | {'平均吞吐量':<15} | {'峰值':<15} | {'批次':<8} | {'错误率':<8}",
     )
     print("-" * 80)
 
@@ -70,7 +70,7 @@ def monitor_performance(duration_seconds=60):
             print(
                 f"{sample_count * 5}s | {current_throughput:>12} | "
                 f"{avg_throughput:>12} | {peak_throughput:>12} | "
-                f"{total_batches:>6} | {error_rate:>6}"
+                f"{total_batches:>6} | {error_rate:>6}",
             )
 
         except Exception as e:

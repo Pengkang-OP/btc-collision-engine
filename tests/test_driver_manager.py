@@ -1,4 +1,4 @@
-"""GPU驱动管理器单元测试"""
+"""GPU驱动管理器单元测试."""
 
 from unittest.mock import Mock, patch
 
@@ -6,28 +6,28 @@ from src.gpu.driver_manager import DriverManager, DriverVersionParser
 
 
 class TestDriverVersionParser:
-    """测试驱动版本解析器"""
+    """测试驱动版本解析器."""
 
     def test_parse_simple_version(self):
-        """测试简单版本号解析"""
+        """测试简单版本号解析."""
         assert DriverVersionParser.parse_version("520.67") == (520, 67)
         assert DriverVersionParser.parse_version("450.00") == (450, 0)
 
     def test_parse_complex_version(self):
-        """测试复杂版本号解析"""
+        """测试复杂版本号解析."""
         assert DriverVersionParser.parse_version("31.0.101.4500") == (31, 0, 101, 4500)
 
     def test_parse_with_suffix(self):
-        """测试带后缀的版本号"""
+        """测试带后缀的版本号."""
         assert DriverVersionParser.parse_version("520.67.03-beta") == (520, 67, 3)
 
     def test_parse_empty(self):
-        """测试空版本号"""
+        """测试空版本号."""
         assert DriverVersionParser.parse_version("") == (0,)
         assert DriverVersionParser.parse_version(None) == (0,)
 
     def test_compare_versions(self):
-        """测试版本比较"""
+        """测试版本比较."""
         # 大于
         assert DriverVersionParser.compare_versions("520.00", "510.00") == 1
         # 等于
@@ -36,24 +36,24 @@ class TestDriverVersionParser:
         assert DriverVersionParser.compare_versions("510.00", "520.00") == -1
 
     def test_compare_different_lengths(self):
-        """测试不同长度版本号比较"""
+        """测试不同长度版本号比较."""
         assert DriverVersionParser.compare_versions("520.67.03", "520.67") == 1
         assert DriverVersionParser.compare_versions("31.0.101", "31.0.101.4500") == -1
 
     def test_is_version_compatible(self):
-        """测试版本兼容性检查"""
+        """测试版本兼容性检查."""
         assert DriverVersionParser.is_version_compatible("520.00", "510.00")
         assert DriverVersionParser.is_version_compatible("520.67", "520.67")
         assert not DriverVersionParser.is_version_compatible("500.00", "510.00")
 
 
 class TestDriverManager:
-    """测试驱动管理器"""
+    """测试驱动管理器."""
 
     @patch("src.gpu.driver_manager.platform.system")
     @patch("src.gpu.driver_manager.subprocess.run")
     def test_detect_nvidia_driver(self, mock_run, mock_platform):
-        """测试NVIDIA驱动检测"""
+        """测试NVIDIA驱动检测."""
         mock_platform.return_value = "Windows"  # Mock平台为Windows
 
         mock_result = Mock()
@@ -67,7 +67,7 @@ class TestDriverManager:
     @patch("src.gpu.driver_manager.platform.system")
     @patch("src.gpu.driver_manager.subprocess.run")
     def test_detect_nvidia_driver_not_found(self, mock_run, mock_platform):
-        """测试NVIDIA驱动未找到"""
+        """测试NVIDIA驱动未找到."""
         mock_platform.return_value = "Windows"
         mock_run.side_effect = FileNotFoundError()
 
@@ -77,7 +77,7 @@ class TestDriverManager:
     @patch("src.gpu.driver_manager.platform.system")
     @patch("src.gpu.driver_manager.subprocess.run")
     def test_detect_amd_driver(self, mock_run, mock_platform):
-        """测试AMD驱动检测"""
+        """测试AMD驱动检测."""
         mock_platform.return_value = "Windows"  # Mock平台为Windows
 
         mock_result = Mock()
@@ -89,14 +89,14 @@ class TestDriverManager:
         assert version == "23.10.1.0"
 
     def test_detect_driver_by_vendor(self):
-        """测试根据厂商检测驱动"""
+        """测试根据厂商检测驱动."""
         with patch.object(DriverManager, "detect_nvidia_driver_version") as mock:
             mock.return_value = "520.67"
             version = DriverManager.detect_driver_version("NVIDIA Corporation")
             assert version == "520.67"
 
     def test_check_driver_health_good(self):
-        """测试驱动健康检查 - 正常"""
+        """测试驱动健康检查 - 正常."""
         result = DriverManager.check_driver_health(
             "NVIDIA",
             "520.67",
@@ -107,7 +107,7 @@ class TestDriverManager:
         assert len(result["recommendations"]) == 0
 
     def test_check_driver_health_warning(self):
-        """测试驱动健康检查 - 警告"""
+        """测试驱动健康检查 - 警告."""
         result = DriverManager.check_driver_health(
             "NVIDIA",
             "510.00",
@@ -118,7 +118,7 @@ class TestDriverManager:
         assert "推荐" in result["message"]
 
     def test_check_driver_health_critical(self):
-        """测试驱动健康检查 - 严重"""
+        """测试驱动健康检查 - 严重."""
         result = DriverManager.check_driver_health(
             "NVIDIA",
             "400.00",
@@ -129,21 +129,21 @@ class TestDriverManager:
         assert "最低要求" in result["message"]
 
     def test_check_driver_health_unstable(self):
-        """测试驱动健康检查 - 不稳定版本"""
+        """测试驱动健康检查 - 不稳定版本."""
         result = DriverManager.check_driver_health("NVIDIA", "450.50", None)  # 在不稳定范围内
 
         assert result["status"] == "warning"
         assert "不稳定" in result["message"]
 
     def test_check_driver_health_no_version(self):
-        """测试驱动健康检查 - 无法检测版本"""
+        """测试驱动健康检查 - 无法检测版本."""
         result = DriverManager.check_driver_health("NVIDIA", None, None)
 
         assert result["status"] == "warning"
         assert "无法检测" in result["message"]
 
     def test_get_optimization_flags_new_driver(self):
-        """测试新驱动的优化标志"""
+        """测试新驱动的优化标志."""
         flags = DriverManager.get_driver_optimization_flags("NVIDIA", "520.67", {})
 
         assert flags["enable_async_compute"]
@@ -152,20 +152,20 @@ class TestDriverManager:
         assert not flags["conservative_mode"]
 
     def test_get_optimization_flags_old_driver(self):
-        """测试旧驱动的优化标志"""
+        """测试旧驱动的优化标志."""
         flags = DriverManager.get_driver_optimization_flags("NVIDIA", "460.00", {})  # 旧于470.00
 
         assert not flags["enable_async_compute"]
         assert flags["conservative_mode"]
 
     def test_get_optimization_flags_no_version(self):
-        """测试无版本信息的优化标志"""
+        """测试无版本信息的优化标志."""
         flags = DriverManager.get_driver_optimization_flags("NVIDIA", None, {})
 
         assert flags["conservative_mode"]
 
     def test_get_optimization_flags_amd(self):
-        """测试AMD驱动优化标志"""
+        """测试AMD驱动优化标志."""
         # 新驱动
         flags = DriverManager.get_driver_optimization_flags("AMD", "23.10.1", {})
         assert flags["enable_fast_math"]
@@ -175,7 +175,7 @@ class TestDriverManager:
         assert not flags["enable_fast_math"]
 
     def test_get_optimization_flags_intel(self):
-        """测试Intel驱动优化标志"""
+        """测试Intel驱动优化标志."""
         # 新驱动
         flags = DriverManager.get_driver_optimization_flags("Intel", "31.0.101.4500", {})
         assert not flags["conservative_mode"]
@@ -191,31 +191,31 @@ class TestDriverManager:
 
 
 class TestDriverVersionEdgeCases:
-    """测试驱动版本边界情况"""
+    """测试驱动版本边界情况."""
 
     def test_parse_malformed_version(self):
-        """测试畸形版本号"""
+        """测试畸形版本号."""
         result = DriverVersionParser.parse_version("abc.def")
         assert result == (0,)
 
     def test_compare_with_build_number(self):
-        """测试带编译号的版本比较"""
+        """测试带编译号的版本比较."""
         assert DriverVersionParser.compare_versions("31.0.101.4500", "31.0.101.4600") == -1
 
     def test_health_check_intel_arc(self):
-        """测试Intel Arc特殊建议"""
+        """测试Intel Arc特殊建议."""
         result = DriverManager.check_driver_health("Intel", "31.0.101.4500", {})
 
         # 应该包含Arc驱动更新频繁的建议
         assert any("Arc" in rec for rec in result["recommendations"])
 
     def test_parse_zero_version(self):
-        """测试零版本号"""
+        """测试零版本号."""
         result = DriverVersionParser.parse_version("0.0.0.0")
         assert result == (0, 0, 0, 0)
 
     def test_health_check_multiple_issues(self):
-        """测试健康检查多个问题同时存在"""
+        """测试健康检查多个问题同时存在."""
         # 不稳定版本 + 低于最低要求
         result = DriverManager.check_driver_health(
             "NVIDIA",
@@ -227,7 +227,7 @@ class TestDriverVersionEdgeCases:
         assert result["status"] == "critical"
 
     def test_optimization_flags_conservative_default(self):
-        """测试优化标志默认保守模式"""
+        """测试优化标志默认保守模式."""
         flags = DriverManager.get_driver_optimization_flags("NVIDIA", None, {})  # 无版本信息
 
         # 默认应该是保守模式
@@ -236,7 +236,7 @@ class TestDriverVersionEdgeCases:
         assert not flags["enable_shader_cache"]
 
     def test_optimization_flags_nvidia_modern(self):
-        """测试NVIDIA现代驱动优化标志"""
+        """测试NVIDIA现代驱动优化标志."""
         flags = DriverManager.get_driver_optimization_flags("NVIDIA", "520.67", {})  # 现代驱动
 
         assert flags["enable_async_compute"]
@@ -245,7 +245,7 @@ class TestDriverVersionEdgeCases:
         assert not flags["conservative_mode"]
 
     def test_optimization_flags_amd_modern(self):
-        """测试AMD现代驱动优化标志"""
+        """测试AMD现代驱动优化标志."""
         flags = DriverManager.get_driver_optimization_flags("AMD", "23.10.1", {})  # 现代驱动
 
         assert flags["enable_async_compute"]
@@ -253,7 +253,7 @@ class TestDriverVersionEdgeCases:
         assert not flags["conservative_mode"]
 
     def test_optimization_flags_intel_modern(self):
-        """测试Intel现代驱动优化标志"""
+        """测试Intel现代驱动优化标志."""
         flags = DriverManager.get_driver_optimization_flags(
             "Intel",
             "31.0.101.4500",
@@ -264,27 +264,27 @@ class TestDriverVersionEdgeCases:
         assert not flags["conservative_mode"]
 
     def test_detection_timeout_config(self):
-        """测试检测超时配置"""
+        """测试检测超时配置."""
         assert hasattr(DriverManager, "DETECTION_TIMEOUT")
         assert isinstance(DriverManager.DETECTION_TIMEOUT, (int, float))
         assert DriverManager.DETECTION_TIMEOUT > 0
 
 
 class TestDriverCache:
-    """测试驱动缓存机制"""
+    """测试驱动缓存机制."""
 
     def setup_method(self, method):
-        """清除缓存"""
+        """清除缓存."""
         DriverManager.clear_driver_cache()
 
     def teardown_method(self, method):
-        """清除缓存"""
+        """清除缓存."""
         DriverManager.clear_driver_cache()
 
     @patch("src.gpu.driver_manager.platform.system")
     @patch("src.gpu.driver_manager.subprocess.run")
     def test_driver_version_caching(self, mock_run, mock_platform):
-        """测试驱动版本缓存"""
+        """测试驱动版本缓存."""
         mock_platform.return_value = "Windows"
         mock_result = Mock()
         mock_result.returncode = 0
@@ -304,7 +304,7 @@ class TestDriverCache:
     @patch("src.gpu.driver_manager.platform.system")
     @patch("src.gpu.driver_manager.subprocess.run")
     def test_driver_cache_ttl(self, mock_run, mock_platform):
-        """测试缓存过期机制"""
+        """测试缓存过期机制."""
         mock_platform.return_value = "Windows"
         mock_result = Mock()
         mock_result.returncode = 0
@@ -331,7 +331,7 @@ class TestDriverCache:
         assert mock_run.call_count == 2  # 应该增加
 
     def test_clear_driver_cache(self):
-        """测试清除缓存"""
+        """测试清除缓存."""
         # 添加一些缓存数据
         DriverManager._driver_version_cache["nvidia"] = ("520.67.03", 1000)
 
@@ -343,10 +343,10 @@ class TestDriverCache:
 
 
 class TestUnstableDriverBlacklist:
-    """测试不稳定驱动黑名单"""
+    """测试不稳定驱动黑名单."""
 
     def test_unstable_driver_report(self):
-        """测试获取不稳定驱动报告"""
+        """测试获取不稳定驱动报告."""
         report = DriverManager.get_unstable_driver_report()
 
         assert "last_updated" in report
@@ -360,7 +360,7 @@ class TestUnstableDriverBlacklist:
         assert len(report["recommendations"]) > 0
 
     def test_add_unstable_driver(self):
-        """测试添加不稳定驱动"""
+        """测试添加不稳定驱动."""
         initial_count = len(DriverManager.UNSTABLE_DRIVERS.get("nvidia", []))
 
         # 添加新的不稳定驱动
@@ -374,7 +374,7 @@ class TestUnstableDriverBlacklist:
         DriverManager.UNSTABLE_DRIVERS["nvidia"].pop()
 
     def test_health_check_with_blacklist(self):
-        """测试健康检查使用黑名单"""
+        """测试健康检查使用黑名单."""
         # 测试黑名单中的驱动版本
         result = DriverManager.check_driver_health("NVIDIA", "450.50", {})  # 在黑名单中
 
@@ -383,12 +383,12 @@ class TestUnstableDriverBlacklist:
 
 
 class TestLinuxDriverDetection:
-    """测试Linux平台驱动检测(模拟)"""
+    """测试Linux平台驱动检测(模拟)."""
 
     @patch("src.gpu.driver_manager.platform.system")
     @patch("src.gpu.driver_manager.subprocess.run")
     def test_nvidia_linux_proc_detection(self, mock_run, mock_platform):
-        """测试Linux NVIDIA驱动检测(/proc方式)"""
+        """测试Linux NVIDIA驱动检测(/proc方式)."""
         mock_platform.return_value = "Linux"
 
         # 第一次调用nvidia-smi失败,第二次/proc成功
@@ -407,7 +407,7 @@ class TestLinuxDriverDetection:
     @patch("src.gpu.driver_manager.platform.system")
     @patch("src.gpu.driver_manager.subprocess.run")
     def test_amd_linux_sysfs_detection(self, mock_run, mock_platform):
-        """测试Linux AMD驱动检测(/sys方式)"""
+        """测试Linux AMD驱动检测(/sys方式)."""
         mock_platform.return_value = "Linux"
 
         mock_result = Mock()
@@ -423,7 +423,7 @@ class TestLinuxDriverDetection:
     @patch("src.gpu.driver_manager.platform.system")
     @patch("src.gpu.driver_manager.subprocess.run")
     def test_intel_linux_detection(self, mock_run, mock_platform):
-        """测试Linux Intel驱动检测"""
+        """测试Linux Intel驱动检测."""
         mock_platform.return_value = "Linux"
 
         mock_result = Mock()

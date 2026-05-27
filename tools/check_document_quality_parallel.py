@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""文档质量并行检查工具
+"""文档质量并行检查工具.
 
 使用多进程加速文档质量检查，适用于大规模文档项目
 
@@ -21,7 +21,7 @@ from tools.check_document_quality import DocumentScore  # noqa: E402
 
 
 def check_single_doc(args) -> DocumentScore:
-    """检查单个文档(用于多进程)
+    """检查单个文档(用于多进程).
 
     Args:
         args: (file_path, docs_dir, config_dict)
@@ -42,7 +42,7 @@ def check_single_doc(args) -> DocumentScore:
 
 
 def parallel_check(docs_dir: str, workers: int = None, config_dict: dict = None) -> list[DocumentScore]:
-    """并行检查所有文档
+    """并行检查所有文档.
 
     Args:
         docs_dir: 文档目录
@@ -115,7 +115,7 @@ def parallel_check(docs_dir: str, workers: int = None, config_dict: dict = None)
 
 
 def print_summary(scores: list[DocumentScore]):
-    """打印评分摘要"""
+    """打印评分摘要."""
     if not scores:
         return
 
@@ -157,7 +157,7 @@ def print_summary(scores: list[DocumentScore]):
 
 
 def main():
-    """主函数"""
+    """主函数."""
     import argparse
 
     parser = argparse.ArgumentParser(description="文档质量并行检查工具")

@@ -1,4 +1,4 @@
-"""随机搜索模式 - RandomSearchMode
+"""随机搜索模式 - RandomSearchMode.
 
 将 GPUCollisionEngine 中的随机搜索相关方法迁移至此独立模块，
 包括同步模式（_execute_sync）和异步双缓冲模式（_execute_async）。
@@ -24,13 +24,14 @@ from contextlib import suppress
 from typing import TYPE_CHECKING, Any
 
 # 统一日志获取 + 修复缺失导入
-from ...utils import get_configured_logger
-from ...utils.exception_handler import ExceptionHandler
+from src.utils import get_configured_logger
+from src.utils.exception_handler import ExceptionHandler
+
 from .base_search import BaseSearchMode
 
 if TYPE_CHECKING:
     # ROADMAP #13: 使用协议接口替代直接引用，消除反向依赖
-    from ...gpu._engine_protocol import GPUEngineProtocol as GPUCollisionEngine
+    from src.gpu._engine_protocol import GPUEngineProtocol as GPUCollisionEngine
 
 logger = get_configured_logger("RandomSearchMode")
 
@@ -61,7 +62,7 @@ ASYNC_KEY_GEN_SAFETY_FACTOR = 2.0
 
 
 class RandomSearchMode(BaseSearchMode):
-    """随机搜索模式
+    """随机搜索模式.
 
     对应原 GPUCollisionEngine 中的 _random_search_sync / _random_search_async 方法。
     通过 self.engine 访问所有引擎状态，不复制状态。
@@ -71,14 +72,14 @@ class RandomSearchMode(BaseSearchMode):
     """
 
     __slots__ = (
-        "_seed_prefetch_size",
         "_adaptive_controller",
+        "_seed_generated_count",
+        "_seed_generation_errors",
+        "_seed_prefetch_size",
         "_seed_queue",
         "_seed_stop_event",
         "_seed_thread",
-        "_seed_generated_count",
         "_seed_used_count",
-        "_seed_generation_errors",
     )
 
     def __init__(
@@ -87,6 +88,7 @@ class RandomSearchMode(BaseSearchMode):
         seed_prefetch_size: int = SEED_PREFETCH_SIZE,
         adaptive_controller=None,
     ) -> None:
+        """初始化随机搜索模式。."""
         super().__init__(engine)
         self._seed_prefetch_size = seed_prefetch_size
         self._adaptive_controller = adaptive_controller
@@ -111,7 +113,7 @@ class RandomSearchMode(BaseSearchMode):
         logger.debug("随机搜索模式已初始化 (种子深度=%s%s)", seed_prefetch_size, ctrl_info)
 
     def _start_seed_prefetch_thread(self) -> None:
-        """启动后台种子预生成 daemon 线程（幂等：已启动则跳过）"""
+        """启动后台种子预生成 daemon 线程（幂等：已启动则跳过）."""
         if self._seed_thread is not None and self._seed_thread.is_alive():
             return
         self._seed_stop_event.clear()
@@ -124,12 +126,12 @@ class RandomSearchMode(BaseSearchMode):
         logger.debug("种子预生成线程已启动 (缓存深度=%d)", self._seed_prefetch_size)
 
     def _ensure_seed_thread_running(self) -> None:
-        """确保种子预生成线程在运行（在 execute() 入口调用）"""
+        """确保种子预生成线程在运行（在 execute() 入口调用）."""
         if self._seed_thread is None or not self._seed_thread.is_alive():
             self._start_seed_prefetch_thread()
 
     def _prefill_seed_queue(self) -> None:
-        """启动时预填充种子队列
+        """启动时预填充种子队列.
 
         v5.1: 预填充更大比例（1/4 队列），确保启动后 GPU 不被种子等待阻塞。
         """
@@ -166,7 +168,7 @@ class RandomSearchMode(BaseSearchMode):
             logger.warning("种子预填充失败: %s", e)
 
     def _generate_seed_batch(self, count: int) -> list[bytes]:
-        """批量生成种子（高效）"""
+        """批量生成种子（高效）."""
         seeds = []
         try:
             # 一次性读取大块随机数据，然后分割
@@ -189,7 +191,7 @@ class RandomSearchMode(BaseSearchMode):
         return seeds
 
     def _seed_prefetch_worker(self) -> None:
-        """后台线程：持续填充种子队列 - v5.1.2 自适应速率版"""
+        """后台线程：持续填充种子队列 - v5.1.2 自适应速率版."""
         while not self._seed_stop_event.is_set():
             try:
                 current_size = self._seed_queue.qsize()
@@ -237,7 +239,7 @@ class RandomSearchMode(BaseSearchMode):
         logger.debug("种子预生成线程已退出")
 
     def _generate_seed(self) -> bytes:
-        """获取一个预生成的种子（从队列）"""
+        """获取一个预生成的种子（从队列）."""
         while not self.engine._stop_event.is_set():
             try:
                 seed = self._seed_queue.get(timeout=1.0)
@@ -250,7 +252,7 @@ class RandomSearchMode(BaseSearchMode):
         raise RuntimeError("种子生成被中断")
 
     def get_seed_stats(self) -> dict[str, int]:
-        """获取种子生成统计信息"""
+        """获取种子生成统计信息."""
         return {
             "generated": self._seed_generated_count,
             "used": self._seed_used_count,
@@ -259,7 +261,7 @@ class RandomSearchMode(BaseSearchMode):
         }
 
     def stop(self) -> None:
-        """停止种子预生成线程和执行循环（cleanup 入口）"""
+        """停止种子预生成线程和执行循环（cleanup 入口）."""
         # 停止种子预生成线程
         self._seed_stop_event.set()
         if self._seed_thread is not None and self._seed_thread.is_alive():
@@ -276,7 +278,7 @@ class RandomSearchMode(BaseSearchMode):
             self.engine._running = False
 
     def execute(self) -> None:
-        """执行随机搜索（入口，自动选择同步或异步模式）"""
+        """执行随机搜索（入口，自动选择同步或异步模式）."""
         engine = self.engine
 
         # 确保种子预生成线程已启动（延迟初始化）
@@ -295,7 +297,7 @@ class RandomSearchMode(BaseSearchMode):
     # ------------------------------------------------------------------
 
     def _execute_sync(self) -> None:
-        """同步执行版本 (PRNG + CPU过载保护)
+        """同步执行版本 (PRNG + CPU过载保护).
 
         PRNG模式: CPU仅生成32字节种子, GPU内核自行计算 key = seed + gid。
         CPU过载保护: 批次间最小间隔 + psutil CPU使用率节流 + 指数退避。
@@ -409,7 +411,7 @@ class RandomSearchMode(BaseSearchMode):
     # ========================================================================
 
     def _detect_gpu_model(self, engine: Any) -> str:
-        """检测GPU型号（v5.2.0: 委托给 AsyncGPUExecutor，消除 ~50 行重复检测逻辑）"""
+        """检测GPU型号（v5.2.0: 委托给 AsyncGPUExecutor，消除 ~50 行重复检测逻辑）."""
         if hasattr(engine, "_async_executor") and engine._async_executor:
             executor = engine._async_executor
             if hasattr(executor, "_detect_gpu_model"):
@@ -417,7 +419,7 @@ class RandomSearchMode(BaseSearchMode):
         return "default"
 
     def _check_engine_availability(self, engine: Any) -> bool:
-        """检查引擎组件是否可用"""
+        """检查引擎组件是否可用."""
         if not hasattr(engine, "_async_executor") or engine._async_executor is None:
             logger.warning("异步执行器不可用")
             return False
@@ -437,7 +439,7 @@ class RandomSearchMode(BaseSearchMode):
         batch_optimizer: Any,
         batch_num: int,
     ) -> "tuple[list[tuple[bytes, list[dict]]], float]":
-        """执行单个批次并返回结果（v5.2.0: 每批次种子随匹配绑定）
+        """执行单个批次并返回结果（v5.2.0: 每批次种子随匹配绑定）.
 
         Returns:
             (batch_results, execution_time_ms)
@@ -462,7 +464,7 @@ class RandomSearchMode(BaseSearchMode):
         execution_time_ms,
         speed,
     ) -> None:
-        """记录性能数据"""
+        """记录性能数据."""
         # 内存使用
         if hasattr(engine, "_gpu_device") and engine._gpu_device:
             device_info = engine._gpu_device.get_device_info()
@@ -486,7 +488,7 @@ class RandomSearchMode(BaseSearchMode):
         batch_num,
         consecutive_errors,
     ) -> int:
-        """处理批次执行错误"""
+        """处理批次执行错误."""
         if isinstance(e, KeyboardInterrupt):
             logger.info("用户中断，停止异步执行")
             return -1  # 表示中断
@@ -501,8 +503,9 @@ class RandomSearchMode(BaseSearchMode):
 
     # ── _execute_async 辅助方法（降低 C901） ──────────────────────
 
-    def _setup_async_buffers(self, engine: Any, current_batch_size: int) -> tuple[dict, int, str]:
-        """初始化双缓冲区和 GPU 型号检测。"""
+    # v5.2.4: 修正返回类型注解 tuple[dict, int, str, Any]（原本漏掉 batch_optimizer 的第4个返回值）
+    def _setup_async_buffers(self, engine: Any, current_batch_size: int) -> tuple[dict, int, str, Any]:
+        """初始化双缓冲区和 GPU 型号检测。."""
         gpu_model = self._detect_gpu_model(engine)
         from ..batch_size_optimizer import get_batch_size_optimizer
 
@@ -522,7 +525,7 @@ class RandomSearchMode(BaseSearchMode):
             "A": {"seed": self._generate_seed(), "batch_size": current_batch_size},
             "B": {"seed": None, "batch_size": current_batch_size},
         }
-        return buffer_data, current_batch_size, "A", batch_optimizer  # type: ignore[return-value]
+        return buffer_data, current_batch_size, "A", batch_optimizer
 
     def _run_async_batch_cycle(
         self,
@@ -534,7 +537,7 @@ class RandomSearchMode(BaseSearchMode):
         batch_num: int,
         consecutive_errors: int,
     ) -> tuple[int, str, int, int, bool, int]:
-        """执行一次异步批处理周期。
+        """执行一次异步批处理周期。.
 
         Returns:
             (current_batch_size, current_buffer, batch_num,
@@ -611,7 +614,7 @@ class RandomSearchMode(BaseSearchMode):
         return current_batch_size, current_buffer, batch_num, consecutive_errors, False, batch_size
 
     def _execute_async(self) -> None:
-        """异步执行版本（v5.1 流水线并行 + PRNG + CPU过载保护）。
+        """异步执行版本（v5.1 流水线并行 + PRNG + CPU过载保护）。.
 
         v5.1 优化:
         - 后台结果收集器持续主动收集 GPU 完成批次（消除主循环阻塞）
@@ -698,7 +701,7 @@ class RandomSearchMode(BaseSearchMode):
             engine.on_complete(engine.stats.snapshot())
 
     def _process_matches(self, matches, seed, batch_size) -> None:
-        """处理匹配结果
+        """处理匹配结果.
 
         注意: 此方法当前为死代码，无任何调用者。
         保留用于未来重构。

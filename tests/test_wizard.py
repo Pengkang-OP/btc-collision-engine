@@ -1,4 +1,4 @@
-"""Tests for src/wizard package - 引导界面模块
+"""Tests for src/wizard package - 引导界面模块.
 
 Covers all wizard modules:
 - __init__.py, selector_protocol.py, events.py, interfaces.py
@@ -738,7 +738,7 @@ class TestGPUSelector:
             [
                 {"name": "GPU1", "index": 0},
                 {"name": "GPU2", "index": 1},
-            ]
+            ],
         )
         assert result == [0, 1]
 
@@ -759,7 +759,7 @@ class TestGPUSelector:
                 {"name": "GPU0"},
                 {"name": "GPU1", "index": 5},
                 {"name": "GPU2"},
-            ]
+            ],
         )
         assert result == [0, 5, 2]
 

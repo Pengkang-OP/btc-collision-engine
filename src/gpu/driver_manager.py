@@ -1,4 +1,4 @@
-"""GPU驱动版本检测和管理
+"""GPU驱动版本检测和管理.
 
 提供驱动版本检测、兼容性检查和健康评估功能。
 支持Windows和Linux平台。
@@ -15,11 +15,11 @@ logger = get_configured_logger("GPUDriverManager")
 
 
 class DriverVersionParser:
-    """驱动版本解析和比较工具"""
+    """驱动版本解析和比较工具."""
 
     @staticmethod
     def parse_version(version_str: str) -> tuple[int, ...]:
-        """解析驱动版本字符串为元组
+        """解析驱动版本字符串为元组.
 
         Args:
             version_str: 版本字符串,如 "520.67.03" 或 "23.20.15002"
@@ -44,7 +44,7 @@ class DriverVersionParser:
 
     @staticmethod
     def compare_versions(v1: str, v2: str) -> int:
-        """比较两个版本号
+        """比较两个版本号.
 
         Args:
             v1: 版本1
@@ -72,7 +72,7 @@ class DriverVersionParser:
 
     @staticmethod
     def is_version_compatible(current: str, minimum: str) -> bool:
-        """检查当前版本是否满足最低要求
+        """检查当前版本是否满足最低要求.
 
         Args:
             current: 当前版本
@@ -86,7 +86,7 @@ class DriverVersionParser:
 
 
 class DriverManager:
-    """GPU驱动管理器"""
+    """GPU驱动管理器."""
 
     # 检测超时配置(秒)
     DETECTION_TIMEOUT = 5
@@ -119,7 +119,7 @@ class DriverManager:
 
     @staticmethod
     def detect_nvidia_driver_version() -> str | None:
-        """检测NVIDIA驱动版本(支持Windows和Linux)
+        """检测NVIDIA驱动版本(支持Windows和Linux).
 
         Returns:
             驱动版本字符串或None
@@ -226,7 +226,7 @@ class DriverManager:
 
     @staticmethod
     def _parse_nvidia_output(output: str, parser_type: str) -> str | None:
-        """解析NVIDIA驱动版本输出
+        """解析NVIDIA驱动版本输出.
 
         Args:
             output: 命令输出
@@ -255,7 +255,7 @@ class DriverManager:
 
     @staticmethod
     def detect_amd_driver_version() -> str | None:
-        """检测AMD驱动版本(支持Windows和Linux)
+        """检测AMD驱动版本(支持Windows和Linux).
 
         Returns:
             驱动版本字符串或None
@@ -294,7 +294,7 @@ class DriverManager:
 
     @staticmethod
     def _detect_amd_windows() -> str | None:
-        """Windows平台检测AMD驱动"""
+        """Windows平台检测AMD驱动."""
         try:
             ps_command = (
                 "Get-WmiObject Win32_PnPSignedDriver | "
@@ -323,7 +323,7 @@ class DriverManager:
 
     @staticmethod
     def _detect_amd_linux() -> str | None:
-        """Linux平台检测AMD驱动"""
+        """Linux平台检测AMD驱动."""
         try:
             # 尝试多种方式
             methods = [
@@ -365,7 +365,7 @@ class DriverManager:
 
     @staticmethod
     def detect_intel_driver_version() -> str | None:
-        """检测Intel驱动版本(支持Windows和Linux)
+        """检测Intel驱动版本(支持Windows和Linux).
 
         Returns:
             驱动版本字符串或None
@@ -404,7 +404,7 @@ class DriverManager:
 
     @staticmethod
     def _detect_intel_windows() -> str | None:
-        """Windows平台检测Intel驱动"""
+        """Windows平台检测Intel驱动."""
         try:
             ps_command = (
                 "Get-WmiObject Win32_PnPSignedDriver | "
@@ -433,7 +433,7 @@ class DriverManager:
 
     @staticmethod
     def _detect_intel_linux() -> str | None:
-        """Linux平台检测Intel驱动"""
+        """Linux平台检测Intel驱动."""
         try:
             # 尝试多种方式
             methods = [
@@ -476,7 +476,7 @@ class DriverManager:
 
     @staticmethod
     def clear_driver_cache() -> None:
-        """清除驱动版本缓存
+        """清除驱动版本缓存.
 
         用于驱动更新后强制重新检测
         """
@@ -485,7 +485,7 @@ class DriverManager:
 
     @staticmethod
     def get_unstable_driver_report() -> dict:
-        """获取不稳定驱动报告
+        """获取不稳定驱动报告.
 
         Returns:
             包含不稳定驱动信息的字典
@@ -509,7 +509,7 @@ class DriverManager:
 
     @staticmethod
     def add_unstable_driver(vendor: str, min_version: str, max_version: str, issue: str) -> None:
-        """添加不稳定驱动版本到黑名单
+        """添加不稳定驱动版本到黑名单.
 
         Args:
             vendor: 厂商标识('nvidia', 'amd', 'intel')
@@ -527,7 +527,7 @@ class DriverManager:
 
     @staticmethod
     def detect_driver_version(vendor: str) -> str | None:
-        """根据厂商检测驱动版本(带缓存)
+        """根据厂商检测驱动版本(带缓存).
 
         Args:
             vendor: 厂商标识 ('nvidia', 'amd', 'intel')
@@ -570,7 +570,7 @@ class DriverManager:
 
     @staticmethod
     def check_driver_health(vendor: str, driver_version: str, profile: dict | None = None) -> dict:
-        """检查驱动健康状态
+        """检查驱动健康状态.
 
         Args:
             vendor: 厂商标识
@@ -650,7 +650,7 @@ class DriverManager:
         driver_version: str,
         profile: dict | None = None,
     ) -> dict[str, bool]:
-        """根据驱动版本获取优化标志
+        """根据驱动版本获取优化标志.
 
         Args:
             vendor: 厂商标识

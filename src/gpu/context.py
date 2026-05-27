@@ -1,4 +1,4 @@
-"""GPU上下文管理
+"""GPU上下文管理.
 
 管理GPU设备上下文、厂商优化器和内核编译。
 
@@ -48,7 +48,7 @@ VENDOR_BUILD_OPTIONS: dict[str, dict[str, Any]] = {
 
 
 class GPUContext:
-    """GPU上下文管理器
+    """GPU上下文管理器.
 
     负责:
     1. 创建厂商特定的优化器
@@ -58,14 +58,14 @@ class GPUContext:
     """
 
     __slots__ = (
-        "device",
-        "vendor_handler",
-        "program",
         "_kernel_cache",
+        "device",
+        "program",
+        "vendor_handler",
     )
 
     def __init__(self, device: GPUDevice) -> None:
-        """初始化GPU上下文
+        """初始化GPU上下文.
 
         Args:
             device: 已初始化的GPUDevice实例
@@ -86,7 +86,7 @@ class GPUContext:
         )
 
     def _create_vendor_handler(self) -> GPUVendorBase:
-        """根据厂商创建对应的优化处理器
+        """根据厂商创建对应的优化处理器.
 
         Returns:
             厂商优化器实例
@@ -109,7 +109,7 @@ class GPUContext:
         return GPUVendorBase()
 
     def apply_optimizations(self) -> None:
-        """应用厂商特定优化
+        """应用厂商特定优化.
 
         调用厂商优化器的apply_optimizations方法
         """
@@ -124,7 +124,7 @@ class GPUContext:
             logger.error("应用GPU优化失败: %s", e)
 
     def calculate_batch_size(self) -> int:
-        """计算最优batch_size
+        """计算最优batch_size.
 
         Returns:
             推荐的batch_size值
@@ -142,7 +142,7 @@ class GPUContext:
             return 65536
 
     def compile_kernel(self, kernel_source: str) -> Any:
-        """编译OpenCL内核（自动使用内核缓存）
+        """编译OpenCL内核（自动使用内核缓存）.
 
         Args:
             kernel_source: OpenCL内核源码
@@ -154,7 +154,7 @@ class GPUContext:
         return self._get_or_compile_kernel(kernel_source)
 
     def _get_or_compile_kernel(self, kernel_source: str):
-        """获取或编译OpenCL内核（内核缓存 + 重试机制）
+        """获取或编译OpenCL内核（内核缓存 + 重试机制）.
 
         OpenCL Program 不能跨 context 共享，但同一 context 内相同源码可以复用。
         缓存策略: 以 (source_hash + build_options) 为键，避免同一 context 内
@@ -239,7 +239,7 @@ class GPUContext:
             raise
 
     def _get_build_options(self) -> str:
-        """获取厂商特定的编译选项
+        """获取厂商特定的编译选项.
 
         使用 VENDOR_BUILD_OPTIONS 配置表，按厂商返回精细化编译选项。
 
@@ -267,11 +267,11 @@ class GPUContext:
         return ""
 
     def get_vendor_handler(self) -> GPUVendorBase:
-        """获取厂商优化器"""
+        """获取厂商优化器."""
         return self.vendor_handler
 
     def cleanup(self) -> None:
-        """释放资源（尽力而为）"""
+        """释放资源（尽力而为）."""
         # 先清理内核缓存，再清理 program
         try:
             if hasattr(self, "_kernel_cache") and self._kernel_cache:

@@ -3,7 +3,7 @@
 比特币私钥碰撞引擎，支持CPU和GPU加速，用于学习和研究比特币地址碰撞。
 
 [![Python](https://img.shields.io/badge/Python-3.12+-blue.svg)](https://www.python.org/)
-[![Version](https://img.shields.io/badge/Version-5.0.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-5.0.1-blue.svg)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Contributions](https://img.shields.io/badge/Contributions-Welcome-orange.svg)](CONTRIBUTING.md)
 
@@ -11,7 +11,7 @@
 
 ## 功能特性
 
-- ✅ **交互式向导** (v5.0.0 成熟稳定模块化架构)
+- ✅ **交互式向导** (成熟稳定模块化架构)
   - 4 步引导流程 (目标地址 → 碰撞模式 → 功能选项 → GPU加速)
   - 模块化策略组件 (目标/模式/选项/GPU 选择器)
   - 自动设备检测与推荐
@@ -25,7 +25,7 @@
   - 批量并行计算
   - 异步流水线优化
   - 自动内存优化
-- ✅ **多格式地址智能匹配** (v5.0.0 稳定支持)
+- ✅ **多格式地址智能匹配** (稳定支持)
   - 自动检测目标地址格式
   - 按需生成对应格式地址
   - P2PKH只匹配P2PKH目标，Bech32只匹配Bech32目标
@@ -46,6 +46,7 @@
   - 性能指标统计
   - 进度可视化
   - 数据日志记录
+- ✅ **代码规范统一** (v5.0.1) — 28项治理 + ruff/pre-commit + PERF-2修复
 - ✅ **性能优化** (v5.0.0)
   - GPU PRNG 私钥生成（消除 CPU→GPU 传输瓶颈）
   - secp256k1 预计算表常数化（`__constant` 内存）
@@ -54,13 +55,13 @@
   - **GPU 引擎架构重构** (协议层+外观层+核心层+监控管道+厂商策略)
   - Intel Arc A770: **4.89M keys/s**（异步模式,峰值5.08M）
   - **引擎代码复杂度 -73%** (1466→<400行), 导入模块 -70% (49→<15)
-- ✅ **GPU 引擎架构重构** (v5.0.0, 2026-05)
+- ✅ **GPU 引擎架构重构** (2026-05)
   - 协议层+外观层+核心层+监控管道+厂商策略 完整解耦
   - 代码复杂度 -73%（1466→<400行），导入模块 -70%（49→<15）
   - Shim 层 100% 向后兼容，29 个专项测试全部通过
   - 新增 search_mode_coordinator / data_logger_adapter 等 5 个子模块
 
-> 📢 **v5.0.0 重大重构**: 移除 LegacyTargetResolver 和 CollisionCLI 旧版 CLI，Shim 层 100% 向后兼容，29 项专项测试全通过。配置预设文件注释化，文档链接全面修复。详见 [CHANGELOG](CHANGELOG.md)。
+> 📢 **v5.0.1 代码规范统一**: 28 项代码治理全闭环 — 死配置清除、依赖降级、PYOPENCL 单源化、绝对导入统一、常量整合、ruff 规范、pre-commit 配置。Intel Arc A770 profiling 序列化修复。详见 [CHANGELOG](CHANGELOG.md)。
 > 📢 **v4.4.0 安全修复**: 新增多项安全修复（安全清零、侧信道安全、敏感数据脱敏、线程安全统计等）。详见 [SECURITY_IMPROVEMENTS](docs/SECURITY_IMPROVEMENTS.md)。
 > 📢 **v4.3.0 多格式地址支持**: 新增格式感知目标管理器，支持P2PKH/P2SH/Bech32/Taproot格式智能匹配，按需生成地址提升性能。
 > 📢 **v5.0.0 重大重构**: GPU 引擎架构重构完成（引擎行数 -73%, 导入模块 -70%）, 29 项专项测试全通过。详见 [CHANGELOG](CHANGELOG.md)。

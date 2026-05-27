@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GPU 基准测试套件 — v5.0.1 轻量实现。
+"""GPU 基准测试套件 — v5.0.1 轻量实现。.
 
 提供 GPU 性能基准测试，用于检测设备理论吞吐量和内存带宽。
 """
@@ -13,14 +13,14 @@ logger = get_configured_logger(__name__)
 
 
 class GPUBenchmarkSuite:
-    """GPU 基准测试套件。
+    """GPU 基准测试套件。.
 
     对 GPU 设备运行轻量级基准测试，评估实际计算和内存传输性能，
     为自动调优和批次大小选择提供参考数据。
     """
 
     def __init__(self, device: Any) -> None:
-        """初始化基准测试套件。
+        """初始化基准测试套件。.
 
         Args:
             device: GPU 设备对象（需提供 device_info 属性和 compute_units 信息）
@@ -31,7 +31,7 @@ class GPUBenchmarkSuite:
         self._initialized = True
 
     def run_benchmark(self, quick: bool = True) -> dict[str, float]:
-        """执行 GPU 基准测试。
+        """执行 GPU 基准测试。.
 
         Args:
             quick: True 为快速模式（估算），False 为完整测试
@@ -72,5 +72,5 @@ class GPUBenchmarkSuite:
 
     @property
     def results(self) -> dict[str, float]:
-        """获取最新的基准测试结果。"""
+        """获取最新的基准测试结果。."""
         return self._results

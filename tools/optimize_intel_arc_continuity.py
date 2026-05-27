@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Intel Arc A770 GPU运算连续性优化方案
+"""Intel Arc A770 GPU运算连续性优化方案.
 
 根据Intel官方开发者指南和社区反馈,针对GPU运算间隔问题的优化方案。
 
@@ -18,7 +18,7 @@
 
 
 def apply_intel_arc_continuity_optimizations(engine):
-    """应用Intel Arc GPU运算连续性优化
+    """应用Intel Arc GPU运算连续性优化.
 
     Args:
         engine: GPUCollisionEngine实例
@@ -53,7 +53,7 @@ def apply_intel_arc_continuity_optimizations(engine):
                 "name": "双命令队列",
                 "detail": "已启用Compute队列+Transfer队列并发执行",
                 "expected_improvement": "减少队列等待时间30-50%",
-            }
+            },
         )
     else:
         optimizations["warnings"].append("未启用双命令队列")
@@ -86,7 +86,7 @@ def apply_intel_arc_continuity_optimizations(engine):
                 "name": "大批次优化",
                 "detail": f"batch_size={current_batch_size:,}, 符合Intel Arc最佳实践",
                 "expected_improvement": "减少驱动层开销,提升GPU利用率20-40%",
-            }
+            },
         )
 
     # ========================================
@@ -109,7 +109,7 @@ def apply_intel_arc_continuity_optimizations(engine):
                 "name": "异步双缓冲",
                 "detail": "已实现Compute/Transfer重叠执行",
                 "expected_improvement": "消除CPU等待,提升GPU连续性50-70%",
-            }
+            },
         )
     else:
         optimizations["warnings"].append("未启用异步执行器")
@@ -135,7 +135,7 @@ def apply_intel_arc_continuity_optimizations(engine):
                 "name": "显存访问优化",
                 "detail": "uint32 workaround + 内存池复用",
                 "expected_improvement": "避免hang bug,减少显存分配开销",
-            }
+            },
         )
 
     # ========================================
@@ -172,14 +172,14 @@ def apply_intel_arc_continuity_optimizations(engine):
                 "how_to": "Windows电源选项 = 高性能; Intel Arc Control = 最大性能",
                 "expected_improvement": "稳定的GPU频率,减少性能波动",
             },
-        ]
+        ],
     )
 
     return optimizations
 
 
 def print_optimization_report(optimizations):
-    """打印优化报告"""
+    """打印优化报告."""
     print("=" * 80)
     print("  Intel Arc A770 GPU运算连续性优化报告")
     print("=" * 80)

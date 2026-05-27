@@ -1,5 +1,4 @@
-"""GPU performance monitoring module - real-time monitoring of GPU
-collision engine.
+"""GPU 性能监控模块，实时监控 GPU 碰撞引擎的关键指标。.
 
 监控GPU碰撞引擎的关键性能指标:
 - GPU利用率和计算效率
@@ -38,7 +37,7 @@ logger = logging.getLogger("GPUPerformanceMonitor")
 
 @dataclass
 class GPUKernelMetrics:
-    """GPU内核执行指标"""
+    """GPU内核执行指标."""
 
     timestamp: float
     batch_size: int
@@ -53,7 +52,7 @@ class GPUKernelMetrics:
     data_transfer_time_ms: float = 0.0
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "timestamp": self.timestamp,
             "datetime": datetime.fromtimestamp(self.timestamp).isoformat(),
@@ -70,7 +69,7 @@ class GPUKernelMetrics:
 
 @dataclass
 class GPUMemoryMetrics:
-    """GPU显存指标"""
+    """GPU显存指标."""
 
     timestamp: float
     total_memory_mb: float
@@ -84,7 +83,7 @@ class GPUMemoryMetrics:
     pool_misses: int = 0
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "timestamp": self.timestamp,
             "datetime": datetime.fromtimestamp(self.timestamp).isoformat(),
@@ -103,7 +102,7 @@ class GPUMemoryMetrics:
 
 @dataclass
 class GPUPerformanceReport:
-    """GPU性能报告"""
+    """GPU性能报告."""
 
     device_name: str
     vendor: str
@@ -122,7 +121,7 @@ class GPUPerformanceReport:
     performance_stability_percent: float
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "device_name": self.device_name,
             "vendor": self.vendor,
@@ -143,7 +142,7 @@ class GPUPerformanceReport:
 
 
 class GPUPerformanceMonitor:
-    """GPU性能监控器
+    """GPU性能监控器.
 
     实时监控GPU碰撞引擎的性能指标,包括:
     - 内核执行性能
@@ -175,7 +174,7 @@ class GPUPerformanceMonitor:
         degradation_threshold: float = 0.75,
         history_size: int = 500,
     ) -> None:
-        """初始化GPU性能监控器
+        """初始化GPU性能监控器.
 
         Args:
             engine: GPU碰撞引擎实例(GPUCollisionEngine)
@@ -249,7 +248,7 @@ class GPUPerformanceMonitor:
         )
 
     def _init_device_info(self):
-        """初始化GPU设备信息"""
+        """初始化GPU设备信息."""
         try:
             if hasattr(self.engine, "_gpu_device") and self.engine._gpu_device:
                 device_info = self.engine._gpu_device.get_device_info()
@@ -263,7 +262,7 @@ class GPUPerformanceMonitor:
             logger.warning("获取GPU设备信息失败: %s", e)
 
     def _init_hardware_monitoring(self) -> None:
-        """初始化GPU硬件监控
+        """初始化GPU硬件监控.
 
         根据 self._vendor 检测 GPU 厂商并初始化对应监控后端:
         - NVIDIA: pynvml (NVML)
@@ -338,7 +337,7 @@ class GPUPerformanceMonitor:
                 self._amd_initialized = False
 
     def _get_gpu_hardware_metrics(self) -> dict[str, float]:
-        """获取GPU硬件指标
+        """获取GPU硬件指标.
 
         Returns:
             包含GPU利用率、显存使用、温度、功耗的字典
@@ -419,7 +418,7 @@ class GPUPerformanceMonitor:
         return metrics
 
     def start(self) -> None:
-        """启动监控"""
+        """启动监控."""
         if self._running:
             return
 
@@ -435,7 +434,7 @@ class GPUPerformanceMonitor:
         logger.info(f"GPU性能监控已启动: {self._device_name}")
 
     def stop(self) -> None:
-        """停止监控"""
+        """停止监控."""
         self._running = False
         if self._thread:
             self._thread.join(timeout=5)
@@ -459,7 +458,7 @@ class GPUPerformanceMonitor:
         logger.info(f"GPU性能监控已停止: {self._total_batches}批次, {self._total_keys:,}密钥")
 
     def _monitor_loop(self) -> None:
-        """监控循环 - 定期收集GPU硬件指标"""
+        """监控循环 - 定期收集GPU硬件指标."""
         while self._running:
             try:
                 # 收集GPU硬件指标
@@ -507,7 +506,7 @@ class GPUPerformanceMonitor:
             time.sleep(self.check_interval)
 
     def get_stats(self) -> dict[str, Any]:
-        """获取GPU性能统计
+        """获取GPU性能统计.
 
         Returns:
             包含完整GPU性能统计的字典
@@ -570,7 +569,7 @@ class GPUPerformanceMonitor:
         queue_wait_time_ms: float = 0.0,
         data_transfer_time_ms: float = 0.0,
     ) -> None:
-        """记录内核执行指标
+        """记录内核执行指标.
 
         Args:
             batch_size: 批次大小
@@ -636,7 +635,7 @@ class GPUPerformanceMonitor:
         allocation: bool = True,
         pool_hit: bool = False,
     ) -> None:
-        """记录显存指标
+        """记录显存指标.
 
         Args:
             used_memory_mb: 已使用显存(MB)
@@ -692,7 +691,7 @@ class GPUPerformanceMonitor:
         logger.debug(f"GPU显存指标: used={used_memory_mb:.1f}MB, usage={usage_percent:.1f}%")
 
     def _get_baseline_throughput_locked(self) -> float:
-        """P1修复: 计算滑动窗口P50基准吞吐量（需在持锁时调用）
+        """P1修复: 计算滑动窗口P50基准吞吐量（需在持锁时调用）.
 
         取最近 _baseline_window_size 条记录的中位数（P50）为基准。
         P50对偶发峰值最鲁棒：即使50%的批次都是偶发高峰，中位数也不受影响。
@@ -714,14 +713,14 @@ class GPUPerformanceMonitor:
         return throughputs[median_idx]
 
     def get_current_throughput(self) -> float:
-        """获取当前吞吐量(keys/秒)"""
+        """获取当前吞吐量(keys/秒)."""
         with self._lock:
             if self._kernel_metrics:
                 return self._kernel_metrics[-1].keys_per_second
         return 0.0
 
     def get_average_throughput(self, window_seconds: float = 60.0) -> float:
-        """获取平均吞吐量
+        """获取平均吞吐量.
 
         Args:
             window_seconds: 时间窗口(秒)
@@ -744,7 +743,7 @@ class GPUPerformanceMonitor:
             return total_throughput / len(recent_metrics)
 
     def get_memory_usage(self) -> dict[str, float]:
-        """获取显存使用情况
+        """获取显存使用情况.
 
         Returns:
             显存使用字典
@@ -774,7 +773,7 @@ class GPUPerformanceMonitor:
         }
 
     def get_performance_report(self) -> GPUPerformanceReport:
-        """获取GPU性能报告
+        """获取GPU性能报告.
 
         Returns:
             性能报告
@@ -848,7 +847,7 @@ class GPUPerformanceMonitor:
             )
 
     def on_degradation(self, callback: Callable) -> None:
-        """注册性能退化回调
+        """注册性能退化回调.
 
         Args:
             callback: 回调函数 fn(metrics, degradation_ratio)
@@ -857,7 +856,7 @@ class GPUPerformanceMonitor:
         self._degradation_callbacks.append(callback)
 
     def on_error(self, callback: Callable) -> None:
-        """注册错误回调
+        """注册错误回调.
 
         Args:
             callback: 回调函数 fn(error_count, error_rate)
@@ -866,7 +865,7 @@ class GPUPerformanceMonitor:
         self._error_callbacks.append(callback)
 
     def export_metrics(self, format: str = "json") -> str:
-        """导出指标数据
+        """导出指标数据.
 
         Args:
             format: 导出格式 ('json' 或 'csv')
@@ -910,7 +909,7 @@ class GPUPerformanceMonitor:
             raise ValueError(f"不支持的格式: {format}")
 
     def _collect_engine_metrics(self):
-        """从GPU引擎收集指标"""
+        """从GPU引擎收集指标."""
         try:
             # 收集显存信息
             if hasattr(self.engine, "memory_monitor") and self.engine.memory_monitor:
@@ -929,7 +928,7 @@ class GPUPerformanceMonitor:
             logger.debug("收集GPU引擎指标失败: %s", e)
 
     def _check_memory_leak(self):
-        """检测显存泄漏"""
+        """检测显存泄漏."""
         with self._lock:
             if len(self._memory_metrics) < 50:
                 return
@@ -952,7 +951,7 @@ class GPUPerformanceMonitor:
                     )
 
     def _check_error_rate(self):
-        """检查错误率"""
+        """检查错误率."""
         with self._lock:
             if self._total_batches < 10:
                 return
@@ -1007,7 +1006,7 @@ class GPUPerformanceMonitor:
                         logger.error("错误回调执行失败: %s", e)
 
     def _on_performance_degradation(self, metrics: GPUKernelMetrics):
-        """性能退化处理"""
+        """性能退化处理."""
         degradation_ratio = (
             metrics.keys_per_second / self._peak_throughput if self._peak_throughput > 0 else 0
         )
@@ -1065,7 +1064,7 @@ _monitor_lock = threading.Lock()
 
 
 def get_gpu_performance_monitor(engine: Any = None) -> GPUPerformanceMonitor:
-    """获取全局GPU性能监控器
+    """获取全局GPU性能监控器.
 
     线程安全：使用 _monitor_lock 双重检查锁定，确保并发安全。
     外部调用方（如 engine.py 的 _get_gpu_monitor）可安全缓存返回的引用。
@@ -1083,7 +1082,7 @@ def get_gpu_performance_monitor(engine: Any = None) -> GPUPerformanceMonitor:
 
 
 def reset_gpu_performance_monitor() -> None:
-    """重置全局GPU性能监控器"""
+    """重置全局GPU性能监控器."""
     global _global_gpu_monitor
 
     with _monitor_lock:

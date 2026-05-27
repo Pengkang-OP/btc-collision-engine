@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GPU 引擎验收测试 - 多状态 + 多数据组合
+"""GPU 引擎验收测试 - 多状态 + 多数据组合.
 
 本模块测试 `src.gpu.async_executor.AsyncGPUExecutor` 的 GPU 引擎功能，
 补充现有单元测试中缺失的场景，确保：
@@ -28,7 +28,7 @@ import pytest
 @pytest.mark.white_box
 @pytest.mark.functional
 class TestAsyncGPUExecutorWhiteBox:
-    """AsyncGPUExecutor 白盒测试
+    """AsyncGPUExecutor 白盒测试.
 
     基于内部代码结构的测试，验证：
     1. 内部状态转换的正确性
@@ -38,7 +38,7 @@ class TestAsyncGPUExecutorWhiteBox:
     """
 
     def test_init_state_transitions(self, mock_gpu_chain):
-        """白盒测试：验证 __init__ 中的状态转换
+        """白盒测试：验证 __init__ 中的状态转换.
 
         验证点：
         - is_async_ready 初始为 False
@@ -62,7 +62,7 @@ class TestAsyncGPUExecutorWhiteBox:
         assert executor.sync_fallback_count == 0, "初始化后 sync_fallback_count 应为 0"
 
     def test_dual_buffer_mechanism_logic(self, mock_gpu_chain):
-        """白盒测试：验证双缓冲机制的逻辑分支
+        """白盒测试：验证双缓冲机制的逻辑分支.
 
         验证点：
         - current_buffer 在 "A" 和 "B" 之间切换
@@ -91,7 +91,7 @@ class TestAsyncGPUExecutorWhiteBox:
         assert executor.current_buffer == "A", "再次切换后应为 buffer A"
 
     def test_queue_depth_management_logic(self, mock_gpu_chain):
-        """白盒测试：验证队列深度管理的逻辑分支
+        """白盒测试：验证队列深度管理的逻辑分支.
 
         验证点：
         - queue_depth 正确设置
@@ -124,7 +124,7 @@ class TestAsyncGPUExecutorWhiteBox:
         )
 
     def test_timeout_handling_logic(self, mock_gpu_chain):
-        """白盒测试：验证超时处理的逻辑分支
+        """白盒测试：验证超时处理的逻辑分支.
 
         验证点：
         - 超时时间正确设置
@@ -160,7 +160,7 @@ class TestAsyncGPUExecutorWhiteBox:
 @pytest.mark.black_box
 @pytest.mark.functional
 class TestAsyncGPUExecutorBlackBox:
-    """AsyncGPUExecutor 黑盒测试
+    """AsyncGPUExecutor 黑盒测试.
 
     基于规格说明的功能测试，不依赖内部实现细节，验证：
     1. 输入输出规范
@@ -170,7 +170,7 @@ class TestAsyncGPUExecutorBlackBox:
     """
 
     def test_black_box_init_with_valid_parameters(self, mock_gpu_chain):
-        """黑盒测试：使用有效参数初始化异步执行器
+        """黑盒测试：使用有效参数初始化异步执行器.
 
         规格说明：
         - 输入：有效的 GPU 设备、最大批次大小、队列深度
@@ -203,7 +203,7 @@ class TestAsyncGPUExecutorBlackBox:
         )
 
     def test_black_box_init_with_invalid_parameters(self, mock_gpu_chain):
-        """黑盒测试：使用无效参数初始化异步执行器
+        """黑盒测试：使用无效参数初始化异步执行器.
 
         规格说明：
         - 输入：无效的参数（如负的队列深度）
@@ -234,7 +234,7 @@ class TestAsyncGPUExecutorBlackBox:
             pass
 
     def test_black_box_execute_batch(self, mock_gpu_chain):
-        """黑盒测试：执行批次
+        """黑盒测试：执行批次.
 
         规格说明：
         - 输入：私钥种子、批次大小
@@ -268,7 +268,7 @@ class TestAsyncGPUExecutorBlackBox:
             pass
 
     def test_black_box_get_performance_stats(self, mock_gpu_chain):
-        """黑盒测试：获取性能统计
+        """黑盒测试：获取性能统计.
 
         规格说明：
         - 输入：无
@@ -306,7 +306,7 @@ class TestAsyncGPUExecutorBlackBox:
 @pytest.mark.acceptance
 @pytest.mark.functional
 class TestAsyncGPUExecutorFunctionalLayer:
-    """AsyncGPUExecutor 功能层测试
+    """AsyncGPUExecutor 功能层测试.
 
     验证功能层：
     1. 功能正确性：验证所有 public 方法的功能正确性
@@ -315,7 +315,7 @@ class TestAsyncGPUExecutorFunctionalLayer:
     """
 
     def test_functional_start_stop(self, mock_gpu_chain):
-        """功能层测试：start() 和 stop() 功能正确性
+        """功能层测试：start() 和 stop() 功能正确性.
 
         验证点：
         - start() 后执行器应处于就绪状态
@@ -342,7 +342,7 @@ class TestAsyncGPUExecutorFunctionalLayer:
             pass
 
     def test_functional_callback_invocation(self, mock_gpu_chain):
-        """功能层测试：回调函数调用时机
+        """功能层测试：回调函数调用时机.
 
         验证点：
         - 回调函数在批次完成时调用
@@ -372,7 +372,7 @@ class TestAsyncGPUExecutorFunctionalLayer:
         assert executor is not None, "executor 实例不应为 None"
 
     def test_functional_state_judgment(self, mock_gpu_chain):
-        """功能层测试：状态判断逻辑
+        """功能层测试：状态判断逻辑.
 
         验证点：
         - is_async_ready 在执行器就绪时应返回 True
@@ -407,7 +407,7 @@ class TestAsyncGPUExecutorFunctionalLayer:
 @pytest.mark.acceptance
 @pytest.mark.logic_layer
 class TestAsyncGPUExecutorLogicLayer:
-    """AsyncGPUExecutor 逻辑层测试
+    """AsyncGPUExecutor 逻辑层测试.
 
     验证逻辑层：
     1. 代码正确性：验证核心算法逻辑正确性
@@ -417,7 +417,7 @@ class TestAsyncGPUExecutorLogicLayer:
     """
 
     def test_logic_dual_buffer_mechanism(self, mock_gpu_chain):
-        """逻辑层测试：双缓冲机制逻辑
+        """逻辑层测试：双缓冲机制逻辑.
 
         验证点：
         - 双缓冲机制逻辑正确
@@ -440,7 +440,7 @@ class TestAsyncGPUExecutorLogicLayer:
         assert executor.current_buffer == "B", "双缓冲机制逻辑不正确：切换后应为 'B'"
 
     def test_logic_queue_depth_management(self, mock_gpu_chain):
-        """逻辑层测试：队列深度管理逻辑
+        """逻辑层测试：队列深度管理逻辑.
 
         验证点：
         - 队列深度管理逻辑正确
@@ -462,7 +462,7 @@ class TestAsyncGPUExecutorLogicLayer:
         )
 
     def test_logic_timeout_handling(self, mock_gpu_chain):
-        """逻辑层测试：超时处理逻辑
+        """逻辑层测试：超时处理逻辑.
 
         验证点：
         - 超时处理逻辑正确
@@ -483,7 +483,7 @@ class TestAsyncGPUExecutorLogicLayer:
         assert executor.sync_fallback_count == 1, "超时处理逻辑不正确：sync_fallback_count 应正确增加"
 
     def test_logic_error_handling_paths(self, mock_gpu_chain):
-        """逻辑层测试：错误处理路径
+        """逻辑层测试：错误处理路径.
 
         验证点：
         - 错误处理路径正确覆盖
@@ -511,7 +511,7 @@ class TestAsyncGPUExecutorLogicLayer:
             pass
 
     def test_logic_concurrent_safety(self, mock_gpu_chain):
-        """逻辑层测试：并发逻辑和线程安全性
+        """逻辑层测试：并发逻辑和线程安全性.
 
         验证点：
         - 多线程同时访问共享状态应安全
@@ -564,7 +564,7 @@ class TestAsyncGPUExecutorLogicLayer:
 
 @pytest.mark.acceptance
 class TestAsyncGPUExecutorMultiState:
-    """AsyncGPUExecutor 多状态测试
+    """AsyncGPUExecutor 多状态测试.
 
     测试所有状态转换：
     1. 初始化（initialized）
@@ -574,7 +574,7 @@ class TestAsyncGPUExecutorMultiState:
     """
 
     def test_state_initialized(self, mock_gpu_chain):
-        """多状态测试：初始化状态
+        """多状态测试：初始化状态.
 
         验证点：
         - 初始化后执行器应处于 initialized 状态
@@ -593,7 +593,7 @@ class TestAsyncGPUExecutorMultiState:
         assert executor.is_async_ready is False, "初始化状态不正确：is_async_ready 应返回 False"
 
     def test_state_running(self, mock_gpu_chain):
-        """多状态测试：运行状态
+        """多状态测试：运行状态.
 
         验证点：
         - start() 后执行器应处于 running 状态
@@ -617,7 +617,7 @@ class TestAsyncGPUExecutorMultiState:
             pass
 
     def test_state_stopped(self, mock_gpu_chain):
-        """多状态测试：停止状态
+        """多状态测试：停止状态.
 
         验证点：
         - stop() 后执行器应处于 stopped 状态
@@ -645,7 +645,7 @@ class TestAsyncGPUExecutorMultiState:
         assert executor.is_async_ready is False, "停止状态不正确：is_async_ready 应返回 False"
 
     def test_state_error_handling(self, mock_gpu_chain):
-        """多状态测试：错误状态
+        """多状态测试：错误状态.
 
         验证点：
         - 发生错误时执行器应进入错误状态
@@ -678,7 +678,7 @@ class TestAsyncGPUExecutorMultiState:
     ids=["small_batch", "medium_batch", "large_batch"],
 )
 class TestAsyncGPUExecutorMultiData:
-    """AsyncGPUExecutor 多数据组合测试
+    """AsyncGPUExecutor 多数据组合测试.
 
     测试不同数据类型和格式：
     1. 小批次（1024）
@@ -687,7 +687,7 @@ class TestAsyncGPUExecutorMultiData:
     """
 
     def test_multi_data_init_with_different_batch_sizes(self, mock_gpu_chain, batch_size):
-        """多数据组合测试：使用不同批次大小初始化
+        """多数据组合测试：使用不同批次大小初始化.
 
         验证点：
         - 所有批次大小都能成功初始化
@@ -710,7 +710,7 @@ class TestAsyncGPUExecutorMultiData:
         )
 
     def test_multi_data_execute_with_different_batch_sizes(self, mock_gpu_chain, batch_size):
-        """多数据组合测试：使用不同批次大小执行
+        """多数据组合测试：使用不同批次大小执行.
 
         验证点：
         - 所有批次大小都能成功执行
@@ -744,10 +744,10 @@ class TestAsyncGPUExecutorMultiData:
 @pytest.mark.acceptance
 @pytest.mark.edge_cases
 class TestAsyncGPUExecutorEdgeCases:
-    """AsyncGPUExecutor 边界条件测试"""
+    """AsyncGPUExecutor 边界条件测试."""
 
     def test_edge_case_zero_batch_size(self, mock_gpu_chain):
-        """边界条件测试：零批次大小"""
+        """边界条件测试：零批次大小."""
         from src.gpu.async_executor import AsyncGPUExecutor
 
         mock_device, mock_context, mock_kernel = mock_gpu_chain
@@ -766,7 +766,7 @@ class TestAsyncGPUExecutorEdgeCases:
             pass
 
     def test_edge_case_negative_queue_depth(self, mock_gpu_chain):
-        """边界条件测试：负队列深度"""
+        """边界条件测试：负队列深度."""
         from src.gpu.async_executor import AsyncGPUExecutor
 
         mock_device, mock_context, mock_kernel = mock_gpu_chain
@@ -785,7 +785,7 @@ class TestAsyncGPUExecutorEdgeCases:
             pass
 
     def test_edge_case_max_queue_depth(self, mock_gpu_chain):
-        """边界条件测试：最大队列深度"""
+        """边界条件测试：最大队列深度."""
         from src.gpu.async_executor import AsyncGPUExecutor
 
         mock_device, mock_context, mock_kernel = mock_gpu_chain
@@ -802,7 +802,7 @@ class TestAsyncGPUExecutorEdgeCases:
         )
 
     def test_edge_case_empty_seed(self, mock_gpu_chain):
-        """边界条件测试：空种子"""
+        """边界条件测试：空种子."""
         from src.gpu.async_executor import AsyncGPUExecutor
 
         mock_device, mock_context, mock_kernel = mock_gpu_chain

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CLI人性化改进测试脚本
+"""CLI人性化改进测试脚本.
 
 测试新增的CLI功能：
 1. --examples 命令
@@ -13,7 +13,7 @@ import sys
 
 
 def run_test(test_name, command, expected_output=None, should_fail=False):
-    """运行单个测试"""
+    """运行单个测试."""
     print(f"\n{'=' * 70}")
     print(f"测试: {test_name}")
     print(f"命令: {command}")
@@ -54,27 +54,23 @@ def run_test(test_name, command, expected_output=None, should_fail=False):
             if found:
                 print("✅ 通过 - 找到预期输出")
                 return True
-            else:
-                print(f"❌ 失败 - 未找到预期输出: {expected_output}")
-                print(f"实际输出:\n{output[:500]}")
-                return False
+            print(f"❌ 失败 - 未找到预期输出: {expected_output}")
+            print(f"实际输出:\n{output[:500]}")
+            return False
 
         # 检查是否应该失败
         if should_fail:
             if result.returncode != 0:
                 print(f"✅ 通过 - 命令按预期失败 (退出码: {result.returncode})")
                 return True
-            else:
-                print("❌ 失败 - 命令应该失败但成功了")
-                return False
-        else:
-            if result.returncode == 0:
-                print("✅ 通过 - 命令成功执行")
-                return True
-            else:
-                print(f"❌ 失败 - 命令执行失败 (退出码: {result.returncode})")
-                print(f"输出:\n{output[:500]}")
-                return False
+            print("❌ 失败 - 命令应该失败但成功了")
+            return False
+        if result.returncode == 0:
+            print("✅ 通过 - 命令成功执行")
+            return True
+        print(f"❌ 失败 - 命令执行失败 (退出码: {result.returncode})")
+        print(f"输出:\n{output[:500]}")
+        return False
 
     except subprocess.TimeoutExpired:
         print("❌ 失败 - 命令执行超时")
@@ -85,7 +81,7 @@ def run_test(test_name, command, expected_output=None, should_fail=False):
 
 
 def main():
-    """运行所有测试"""
+    """运行所有测试."""
     print("=" * 70)
     print("🧪 CLI人性化改进测试套件")
     print("=" * 70)
@@ -128,7 +124,7 @@ def main():
     results = []
     for test in tests:
         success = run_test(
-            test["name"], test["command"], test.get("expected"), test.get("should_fail", False)
+            test["name"], test["command"], test.get("expected"), test.get("should_fail", False),
         )
         results.append((test["name"], success))
 
@@ -158,9 +154,8 @@ def main():
         print("   5. 可视化进度条     更直观的进度显示")
         print("   6. 首次运行向导     自动检测并引导")
         return 0
-    else:
-        print(f"\n⚠️  {total - passed} 个测试失败，请检查实现")
-        return 1
+    print(f"\n⚠️  {total - passed} 个测试失败，请检查实现")
+    return 1
 
 
 if __name__ == "__main__":

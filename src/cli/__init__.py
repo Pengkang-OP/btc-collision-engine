@@ -27,8 +27,8 @@ from .optimization_cli import OptimizationCLI
 from .output import CLIOutput
 
 __all__ = [
-    "main",
-    "parse_args",
     "CLIOutput",
     "OptimizationCLI",
+    "main",
+    "parse_args",
 ]

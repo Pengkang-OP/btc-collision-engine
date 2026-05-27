@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""比特币密钥生成和地址匹配完整验证演示
+"""比特币密钥生成和地址匹配完整验证演示.
 
 演示完整的Bitcoin Core规范验证流程：
 1. 私钥生成公钥
@@ -29,14 +29,14 @@ from src.core.secp256k1 import Secp256k1  # noqa: E402
 
 
 def print_section(title: str):
-    """打印分隔标题"""
+    """打印分隔标题."""
     print("\n" + "=" * 80)
     print(f"  {title}")
     print("=" * 80)
 
 
 def print_result(title: str, result):
-    """打印验证结果"""
+    """打印验证结果."""
     print(f"\n📋 {title}")
     print(f"  状态: {'✅ 通过' if result.success else '❌ 失败'}")
 
@@ -60,7 +60,7 @@ def print_result(title: str, result):
 
 
 def demo_private_key_validation():
-    """演示私钥验证"""
+    """演示私钥验证."""
     print_section("1. 私钥验证（Bitcoin Core规范）")
 
     validator = BitcoinKeyValidator()
@@ -92,7 +92,7 @@ def demo_private_key_validation():
 
 
 def demo_public_key_generation():
-    """演示公钥生成"""
+    """演示公钥生成."""
     print_section("2. 公钥生成（secp256k1椭圆曲线）")
 
     validator = BitcoinKeyValidator()
@@ -129,7 +129,7 @@ def demo_public_key_generation():
 
 
 def demo_address_generation():
-    """演示地址生成"""
+    """演示地址生成."""
     print_section("3. 地址生成（P2PKH/P2SH/Bech32）")
 
     validator = BitcoinKeyValidator()
@@ -163,7 +163,7 @@ def demo_address_generation():
 
 
 def demo_wif_encoding():
-    """演示WIF编码"""
+    """演示WIF编码."""
     print_section("4. WIF编码（Wallet Import Format）")
 
     validator = BitcoinKeyValidator()
@@ -199,7 +199,7 @@ def demo_wif_encoding():
 
 
 def demo_address_matching():
-    """演示地址匹配"""
+    """演示地址匹配."""
     print_section("5. 地址匹配验证（安全比较）")
 
     validator = BitcoinKeyValidator()
@@ -228,7 +228,7 @@ def demo_address_matching():
 
 
 def demo_full_validation_chain():
-    """演示完整验证链"""
+    """演示完整验证链."""
     print_section("6. 完整验证链（私钥→公钥→地址→WIF→匹配）")
 
     validator = BitcoinKeyValidator()
@@ -267,7 +267,7 @@ def demo_full_validation_chain():
 
 
 def main():
-    """主函数"""
+    """主函数."""
     print("=" * 80)
     print("  比特币密钥生成和地址匹配完整验证系统")
     print("  Bitcoin Core规范符合性验证")

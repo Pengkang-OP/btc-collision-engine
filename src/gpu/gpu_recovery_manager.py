@@ -1,4 +1,4 @@
-"""GPU异常恢复管理器
+"""GPU异常恢复管理器.
 
 提供GPU失败时的优雅降级、自动恢复和负载重分配功能。
 解决P1-2问题：GPU碰撞引擎异常恢复机制不完善。
@@ -19,7 +19,7 @@ logger = get_configured_logger("GPURecoveryManager")
 
 
 class GPUFailureType(Enum):
-    """GPU失败类型"""
+    """GPU失败类型."""
 
     OUT_OF_MEMORY = "out_of_memory"  # 内存不足
     COMPUTE_ERROR = "compute_error"  # 计算错误
@@ -29,7 +29,7 @@ class GPUFailureType(Enum):
 
 
 class RecoveryStrategy(Enum):
-    """恢复策略"""
+    """恢复策略."""
 
     RETRY_IMMEDIATE = "retry_immediate"  # 立即重试
     RETRY_WITH_DELAY = "retry_with_delay"  # 延迟重试
@@ -41,7 +41,7 @@ class RecoveryStrategy(Enum):
 
 @dataclass
 class GPUFailureRecord:
-    """GPU失败记录
+    """GPU失败记录.
 
     Attributes:
         gpu_id: 发生故障的GPU设备ID
@@ -61,7 +61,7 @@ class GPUFailureRecord:
 
 
 class GPURecoveryManager:
-    """GPU异常恢复管理器
+    """GPU异常恢复管理器.
 
     功能:
     - 检测GPU失败并分类
@@ -82,27 +82,27 @@ class GPURecoveryManager:
     """
 
     __slots__ = (
-        "max_retry_count",
-        "retry_delay_seconds",
-        "batch_size_reduction_factor",
-        "auto_redistribute",
-        "max_failed_gpus_before_fallback",
-        "_max_failure_history_per_gpu",
         "_failed_gpus",
         "_failed_gpus_lock",
+        "_failed_recoveries",
+        "_failure_history",
+        "_fallback_callback",
         "_fallback_lock",
         "_fallback_to_cpu",
-        "_fallback_callback",
-        "_recovery_callback",
-        "_failure_history",
-        "_history_lock",
-        "_recovery_callbacks",
-        "_total_failures",
-        "_successful_recoveries",
-        "_failed_recoveries",
-        "_stats_lock",
-        "health_check_timeout",
         "_health_check_executor",
+        "_history_lock",
+        "_max_failure_history_per_gpu",
+        "_recovery_callback",
+        "_recovery_callbacks",
+        "_stats_lock",
+        "_successful_recoveries",
+        "_total_failures",
+        "auto_redistribute",
+        "batch_size_reduction_factor",
+        "health_check_timeout",
+        "max_failed_gpus_before_fallback",
+        "max_retry_count",
+        "retry_delay_seconds",
     )
 
     def __init__(
@@ -113,7 +113,7 @@ class GPURecoveryManager:
         auto_redistribute: bool = True,
         max_failed_gpus_before_fallback: int | None = None,  # 新增：降级阈值
     ) -> None:
-        """初始化恢复管理器
+        """初始化恢复管理器.
 
         Args:
             max_retry_count: 最大重试次数
@@ -172,7 +172,7 @@ class GPURecoveryManager:
         redistribute_callback: Callable[..., Any] | None = None,
         alert_callback: Callable[..., Any] | None = None,
     ) -> bool:
-        """处理GPU失败
+        """处理GPU失败.
 
         Args:
             gpu_id: GPU设备ID
@@ -247,7 +247,7 @@ class GPURecoveryManager:
         return True
 
     def _classify_failure(self, error: Exception) -> GPUFailureType:
-        """分类失败类型
+        """分类失败类型.
 
         Args:
             error: 异常对象
@@ -298,7 +298,7 @@ class GPURecoveryManager:
         return GPUFailureType.UNKNOWN
 
     def set_fallback_callback(self, callback: Callable[..., Any]) -> None:
-        """设置降级到CPU模式的回调函数
+        """设置降级到CPU模式的回调函数.
 
         Args:
             callback: 回调函数，签名为 callback(reason: str)
@@ -308,7 +308,7 @@ class GPURecoveryManager:
             self._fallback_callback = callback
 
     def set_recovery_callback(self, callback: Callable[..., Any]) -> None:
-        """设置从CPU模式恢复到GPU模式的回调函数
+        """设置从CPU模式恢复到GPU模式的回调函数.
 
         Args:
             callback: 回调函数，签名为 callback()
@@ -318,7 +318,7 @@ class GPURecoveryManager:
             self._recovery_callback = callback
 
     def _check_and_trigger_fallback(self, gpu_id: int) -> None:
-        """检查是否需要降级到CPU模式
+        """检查是否需要降级到CPU模式.
 
         当失败GPU数量超过阈值时，触发降级。
 
@@ -341,7 +341,7 @@ class GPURecoveryManager:
             )
 
     def _trigger_cpu_fallback(self, reason: str) -> None:
-        """触发降级到CPU模式
+        """触发降级到CPU模式.
 
         Args:
             reason: 降级原因
@@ -367,7 +367,7 @@ class GPURecoveryManager:
                 logger.error("降级回调执行失败: %s", e)
 
     def recover_from_fallback(self) -> None:
-        """从CPU模式恢复到GPU模式
+        """从CPU模式恢复到GPU模式.
 
         当GPU恢复正常后调用。
         """
@@ -398,13 +398,13 @@ class GPURecoveryManager:
 
     @property
     def is_fallback_to_cpu(self) -> bool:
-        """是否已降级到CPU模式"""
+        """是否已降级到CPU模式."""
         # 审查修复#1: 使用锁保护状态读取
         with self._fallback_lock:
             return self._fallback_to_cpu
 
     def _select_recovery_strategy(self, gpu_id: int, failure_type: GPUFailureType) -> RecoveryStrategy:
-        """选择恢复策略
+        """选择恢复策略.
 
         Args:
             gpu_id: GPU ID
@@ -444,7 +444,7 @@ class GPURecoveryManager:
         failure_type: GPUFailureType,
         strategy: RecoveryStrategy,
     ) -> bool:
-        """执行恢复策略
+        """执行恢复策略.
 
         Args:
             gpu_id: GPU ID
@@ -498,7 +498,7 @@ class GPURecoveryManager:
             return False
 
     def _record_failure(self, gpu_id: int, record: GPUFailureRecord) -> None:
-        """记录失败历史（带容量上限防止内存无限增长）
+        """记录失败历史（带容量上限防止内存无限增长）.
 
         Args:
             gpu_id: GPU ID
@@ -525,7 +525,7 @@ class GPURecoveryManager:
         )
 
     def _verify_gpu_health(self, gpu_id: int, timeout: float | None = None) -> bool:
-        """H1/H3/H4修复: 验证GPU是否健康（带超时控制和取消机制）
+        """H1/H3/H4修复: 验证GPU是否健康（带超时控制和取消机制）.
 
         通过回调函数执行GPU健康检查，验证GPU是否真正恢复。
         使用超时机制防止健康检查阻塞恢复流程。
@@ -596,7 +596,7 @@ class GPURecoveryManager:
             return True
 
     def register_recovery_callback(self, gpu_id: int, callback: Callable[[str, Any], None]) -> None:
-        """注册恢复回调
+        """注册恢复回调.
 
         Args:
             gpu_id: GPU ID
@@ -607,7 +607,7 @@ class GPURecoveryManager:
         logger.info("GPU %s 恢复回调已注册", gpu_id)
 
     def is_gpu_failed(self, gpu_id: int) -> bool:
-        """检查GPU是否已失败
+        """检查GPU是否已失败.
 
         Args:
             gpu_id: GPU ID
@@ -620,7 +620,7 @@ class GPURecoveryManager:
             return gpu_id in self._failed_gpus
 
     def get_failed_gpus(self) -> set[int]:
-        """获取所有失败的GPU ID
+        """获取所有失败的GPU ID.
 
         Returns:
             失败GPU ID集合
@@ -630,7 +630,7 @@ class GPURecoveryManager:
             return self._failed_gpus.copy()
 
     def get_recovery_stats(self) -> dict:
-        """M2修复: 获取恢复统计（一致性快照）
+        """M2修复: 获取恢复统计（一致性快照）.
 
         使用锁保护读取操作，确保统计数据的一致性。
 
@@ -656,7 +656,7 @@ class GPURecoveryManager:
         }
 
     def reset_failure_history(self, gpu_id: int | None = None) -> None:
-        """重置失败历史
+        """重置失败历史.
 
         Args:
             gpu_id: GPU ID（None表示重置所有）
@@ -677,7 +677,7 @@ class GPURecoveryManager:
         logger.info(f"GPU {gpu_id or '所有'} 失败历史已重置")
 
     def reset_batch_size(self, gpu_id: int, initial_batch_size: int) -> None:
-        """v4.2.1: 重置GPU的batch_size到初始值
+        """v4.2.1: 重置GPU的batch_size到初始值.
 
         当性能持续下降时，调用此方法恢复初始batch_size。
 
@@ -694,7 +694,7 @@ class GPURecoveryManager:
             logger.warning("GPU %s 未注册回调，无法重置batch_size", gpu_id)
 
     def cleanup(self) -> None:
-        """清理资源：关闭健康检查线程池
+        """清理资源：关闭健康检查线程池.
 
         在 GPURecoveryManager 生命周期结束时调用，确保线程资源正确释放。
         """

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""性能衰减曲线监控脚本 - 长时间运行性能记录
+"""性能衰减曲线监控脚本 - 长时间运行性能记录.
 
 使用方法:
     python scripts/benchmarking/monitor_performance_decay.py --duration 3600 --interval 60
@@ -10,11 +10,11 @@
 import argparse
 import csv
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 
 def get_gpu_devices():
-    """获取 GPU 设备信息"""
+    """获取 GPU 设备信息."""
     try:
         import pyopencl as cl
 
@@ -25,7 +25,7 @@ def get_gpu_devices():
                     {
                         "name": device.name.strip(),
                         "platform": platform.name.strip(),
-                    }
+                    },
                 )
         return devices
     except ImportError:
@@ -33,9 +33,9 @@ def get_gpu_devices():
 
 
 def get_performance(engine=None):
-    """获取当前性能指标"""
+    """获取当前性能指标."""
     data = {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "speed_keys_per_sec": 0,
         "total_checked": 0,
         "matches": 0,
@@ -69,7 +69,7 @@ def get_performance(engine=None):
 def main():
     parser = argparse.ArgumentParser(description="性能衰减曲线监控")
     parser.add_argument(
-        "--duration", type=int, default=3600, help="监控持续时间（秒），默认 3600 (1 小时)"
+        "--duration", type=int, default=3600, help="监控持续时间（秒），默认 3600 (1 小时)",
     )
     parser.add_argument("--interval", type=int, default=60, help="采样间隔（秒），默认 60")
     parser.add_argument("--output", type=str, default=None, help="输出 CSV 文件路径")
@@ -122,7 +122,7 @@ def main():
                 f"{data['speed_keys_per_sec']:<15.0f} "
                 f"{data['total_checked']:<15} "
                 f"{data['memory_rss_mb']:<12.2f} "
-                f"{data['cpu_percent']:<8.1f}"
+                f"{data['cpu_percent']:<8.1f}",
             )
 
             # 等待下一个采样间隔
@@ -139,7 +139,7 @@ def main():
         f"df['elapsed'] = df['elapsed_seconds']; "
         f"plt.plot(df['elapsed'], df['speed_keys_per_sec']); "
         f"plt.xlabel('Time (s)'); plt.ylabel('Speed (keys/s)'); "
-        f"plt.title('Performance Decay Curve'); plt.savefig('decay_curve.png')\""
+        f"plt.title('Performance Decay Curve'); plt.savefig('decay_curve.png')\"",
     )
 
 

@@ -1,5 +1,5 @@
 """集成测试: 验证优化模块在主引擎中的效果
-测试KeyCollisionEngine使用优化版地址生成器的性能
+测试KeyCollisionEngine使用优化版地址生成器的性能.
 """
 
 import io
@@ -19,7 +19,7 @@ from src.collision.key_collision_engine import KeyCollisionEngine
 
 
 def test_optimized_engine():
-    """测试优化版碰撞引擎"""
+    """测试优化版碰撞引擎."""
     print("=" * 80)
     print("集成测试: 优化版 KeyCollisionEngine")
     print("=" * 80)

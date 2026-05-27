@@ -10,7 +10,8 @@
 from typing import Any
 
 # 统一日志获取
-from ...utils import get_configured_logger
+from src.utils import get_configured_logger
+
 from .base import GPUVendorBase
 
 logger = get_configured_logger("NvidiaVendor")

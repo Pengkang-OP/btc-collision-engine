@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""自动修复代码块语言类型
+"""自动修复代码块语言类型.
 
 将所有未指定语言的代码块添加语言类型（python/bash/markdown等）
 
@@ -15,7 +15,7 @@ from pathlib import Path
 
 
 def detect_language(code_content: str, context: str) -> str:
-    """根据代码内容和上下文检测语言类型"""
+    """根据代码内容和上下文检测语言类型."""
     code_content = code_content.strip()
 
     # Python代码特征
@@ -83,7 +83,7 @@ def detect_language(code_content: str, context: str) -> str:
 
 
 def fix_code_blocks_in_file(file_path: Path, dry_run: bool = False) -> tuple[int, int]:
-    """修复单个文件中的代码块
+    """修复单个文件中的代码块.
 
     Returns:
         (修复数量, 文件行数)
@@ -139,7 +139,7 @@ def fix_code_blocks_in_file(file_path: Path, dry_run: bool = False) -> tuple[int
 
 
 def main():
-    """主函数"""
+    """主函数."""
     import argparse
 
     parser = argparse.ArgumentParser(description="自动修复代码块语言类型")

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""随机搜索模式 (RandomSearchMode) 单元测试
+"""随机搜索模式 (RandomSearchMode) 单元测试.
 
 覆盖：
 - RandomSearchMode 初始化与种子预生成线程
@@ -23,7 +23,7 @@ import pytest
 
 @pytest.mark.unit
 class TestConstants:
-    """常量值验证测试"""
+    """常量值验证测试."""
 
     def test_initial_batch_size(self):
         from src.gpu.search_modes.random_search import INITIAL_BATCH_SIZE
@@ -68,7 +68,7 @@ class TestConstants:
 
 
 def _make_engine_stub(**kwargs):
-    """创建 GPUCollisionEngine stub，支持 __getattr__ 避免 MagicMock 无限递归"""
+    """创建 GPUCollisionEngine stub，支持 __getattr__ 避免 MagicMock 无限递归."""
     engine = MagicMock()
     engine.targets = kwargs.get("targets", set())
     engine.batch_size = kwargs.get("batch_size", 1000000)
@@ -91,7 +91,7 @@ def _make_engine_stub(**kwargs):
 
 
 def threading_mock():
-    """创建支持 is_set() 的 Mock Event"""
+    """创建支持 is_set() 的 Mock Event."""
     m = MagicMock()
     m.is_set.return_value = False
     return m
@@ -104,7 +104,7 @@ def threading_mock():
 
 @pytest.mark.unit
 class TestRandomSearchModeInit:
-    """初始化测试"""
+    """初始化测试."""
 
     @patch("src.gpu.search_modes.random_search.threading.Thread")
     def test_init_creates_seed_queue(self, mock_thread):
@@ -117,7 +117,7 @@ class TestRandomSearchModeInit:
 
     @patch("src.gpu.search_modes.random_search.threading.Thread")
     def test_init_does_not_start_thread(self, mock_thread):
-        """v6.5: __init__ 不再启动线程（延迟到 execute()）"""
+        """v6.5: __init__ 不再启动线程（延迟到 execute()）."""
         from src.gpu.search_modes.random_search import RandomSearchMode
 
         engine = _make_engine_stub()
@@ -149,7 +149,7 @@ class TestRandomSearchModeInit:
 
 @pytest.mark.unit
 class TestGenerateSeed:
-    """种子生成测试"""
+    """种子生成测试."""
 
     @patch("src.gpu.search_modes.random_search.threading.Thread")
     def test_generate_from_cache(self, mock_thread):
@@ -213,7 +213,7 @@ class TestGenerateSeed:
 
 @pytest.mark.unit
 class TestSeedPrefetchWorker:
-    """后台预生成线程测试"""
+    """后台预生成线程测试."""
 
     @patch("src.gpu.search_modes.random_search.threading.Thread")
     def test_worker_stops_on_stop_event(self, mock_thread):
@@ -308,7 +308,7 @@ class TestSeedPrefetchWorker:
 
 @pytest.mark.unit
 class TestStop:
-    """停止测试"""
+    """停止测试."""
 
     @patch("src.gpu.search_modes.random_search.threading.Thread")
     def test_stop_sets_stop_event(self, mock_thread):
@@ -377,7 +377,7 @@ class TestStop:
 
 @pytest.mark.unit
 class TestProcessMatches:
-    """匹配结果处理测试"""
+    """匹配结果处理测试."""
 
     @patch("src.gpu.search_modes.random_search.threading.Thread")
     def test_process_empty_matches(self, mock_thread):
@@ -456,7 +456,7 @@ class TestProcessMatches:
 
 @pytest.mark.unit
 class TestExecute:
-    """执行模式分发测试"""
+    """执行模式分发测试."""
 
     @patch("src.gpu.search_modes.random_search.threading.Thread")
     @pytest.mark.gpu_kernel
@@ -491,11 +491,11 @@ class TestExecute:
 
 @pytest.mark.unit
 class TestExecuteSyncPartial:
-    """同步执行部分逻辑测试（不运行完整循环）"""
+    """同步执行部分逻辑测试（不运行完整循环）."""
 
     @patch("src.gpu.search_modes.random_search.threading.Thread")
     def test_sync_cpu_overload_throttle(self, mock_thread):
-        """验证 CPU 过载时节流逻辑被触发"""
+        """验证 CPU 过载时节流逻辑被触发."""
         from src.gpu.search_modes.random_search import RandomSearchMode
 
         engine = _make_engine_stub()
@@ -516,7 +516,7 @@ class TestExecuteSyncPartial:
 
     @patch("src.gpu.search_modes.random_search.threading.Thread")
     def test_sync_stop_event_checked(self, mock_thread):
-        """验证 _stop_event 被检查"""
+        """验证 _stop_event 被检查."""
         from src.gpu.search_modes.random_search import RandomSearchMode
 
         engine = _make_engine_stub()
@@ -530,7 +530,7 @@ class TestExecuteSyncPartial:
 
     @patch("src.gpu.search_modes.random_search.threading.Thread")
     def test_sync_exception_recovery(self, mock_thread):
-        """验证异常恢复与退避"""
+        """验证异常恢复与退避."""
         from src.gpu.search_modes.random_search import RandomSearchMode
 
         engine = _make_engine_stub()

@@ -1,4 +1,4 @@
-"""GPU性能监控使用示例
+"""GPU性能监控使用示例.
 
 演示如何使用GPUPerformanceMonitor监控GPU碰撞引擎
 """
@@ -15,7 +15,7 @@ from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
 
 
 def example_1_basic_gpu_monitoring():
-    """示例1: 基本GPU监控"""
+    """示例1: 基本GPU监控."""
     print("=" * 80)
     print("示例1: 基本GPU监控")
     print("=" * 80)
@@ -69,7 +69,7 @@ def example_1_basic_gpu_monitoring():
 
 
 def example_2_real_time_monitoring():
-    """示例2: 实时监控GPU指标"""
+    """示例2: 实时监控GPU指标."""
     print("=" * 80)
     print("示例2: 实时监控GPU指标")
     print("=" * 80)
@@ -109,7 +109,7 @@ def example_2_real_time_monitoring():
         print(f"  当前吞吐量: {throughput:,.0f} keys/s")
         print(
             f"  显存使用: {memory['used_mb']:.1f}MB / {memory['total_mb']:.0f}MB "
-            f"({memory['usage_percent']:.1f}%)"
+            f"({memory['usage_percent']:.1f}%)",
         )
         print(f"  内存池命中率: {memory['pool_hit_rate']:.1f}%")
 
@@ -125,7 +125,7 @@ def example_2_real_time_monitoring():
 
 
 def example_3_memory_tracking():
-    """示例3: 显存使用跟踪"""
+    """示例3: 显存使用跟踪."""
     print("=" * 80)
     print("示例3: 显存使用跟踪")
     print("=" * 80)
@@ -145,7 +145,7 @@ def example_3_memory_tracking():
 
     # 分配128MB
     monitor.record_memory_metrics(
-        used_memory_mb=128.0, total_memory_mb=8192.0, allocation=True, pool_hit=False
+        used_memory_mb=128.0, total_memory_mb=8192.0, allocation=True, pool_hit=False,
     )
     print(f"  分配128MB后: {monitor.get_memory_usage()}")
 
@@ -160,7 +160,7 @@ def example_3_memory_tracking():
 
     # 释放128MB
     monitor.record_memory_metrics(
-        used_memory_mb=256.0, total_memory_mb=8192.0, allocation=False, pool_hit=False
+        used_memory_mb=256.0, total_memory_mb=8192.0, allocation=False, pool_hit=False,
     )
     print(f"  释放128MB后: {monitor.get_memory_usage()}")
 
@@ -177,7 +177,7 @@ def example_3_memory_tracking():
 
 
 def example_4_comparison_cpu_vs_gpu():
-    """示例4: CPU vs GPU性能对比"""
+    """示例4: CPU vs GPU性能对比."""
     print("=" * 80)
     print("示例4: CPU vs GPU性能对比")
     print("=" * 80)
@@ -241,7 +241,7 @@ if __name__ == "__main__":
     import logging
 
     logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
     print("GPU性能监控使用示例")

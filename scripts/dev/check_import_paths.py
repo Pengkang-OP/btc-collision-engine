@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""导入路径检查脚本
+"""导入路径检查脚本.
 
 检查项目中是否使用了已弃用的导入路径。
 
@@ -45,18 +45,18 @@ CHECK_EXTENSIONS = [".py"]
 
 
 def is_ignored_dir(dirpath: str) -> bool:
-    """检查目录是否应该被忽略"""
+    """检查目录是否应该被忽略."""
     dir_name = os.path.basename(dirpath)
     return dir_name in IGNORE_DIRS
 
 
 def should_check_file(filepath: str) -> bool:
-    """检查文件是否应该被检查"""
+    """检查文件是否应该被检查."""
     return any(filepath.endswith(ext) for ext in CHECK_EXTENSIONS)
 
 
 def check_file_for_deprecated_imports(filepath: str) -> list:
-    """检查文件中的弃用导入路径"""
+    """检查文件中的弃用导入路径."""
     issues = []
 
     # 检查是否是允许使用旧路径的文件
@@ -85,7 +85,7 @@ def check_file_for_deprecated_imports(filepath: str) -> list:
                             "line": line_num,
                             "content": line.rstrip(),
                             "pattern": pattern,
-                        }
+                        },
                     )
                     break
     except Exception as e:
@@ -95,7 +95,7 @@ def check_file_for_deprecated_imports(filepath: str) -> list:
 
 
 def check_project() -> list:
-    """检查整个项目"""
+    """检查整个项目."""
     all_issues = []
     project_root = Path(__file__).parent.parent
 
@@ -122,7 +122,7 @@ def check_project() -> list:
 
 
 def print_report(issues: list) -> None:
-    """打印检查报告"""
+    """打印检查报告."""
     if not issues:
         print("[PASS] 所有导入路径正确")
         print("\n推荐的导入方式:")
@@ -151,7 +151,7 @@ def print_report(issues: list) -> None:
 
 
 def main():
-    """主函数"""
+    """主函数."""
     print("=" * 80)
     print("[INFO] 导入路径检查工具")
     print("=" * 80)

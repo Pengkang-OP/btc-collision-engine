@@ -1,4 +1,4 @@
-"""GPU 引擎 Mock 测试（依赖 mock_gpu_chain fixture）
+"""GPU 引擎 Mock 测试（依赖 mock_gpu_chain fixture）.
 
 这些测试需要 mock_gpu_chain 模拟 GPU 环境，
 CI 中通过 -m "not (gpu or gpu_kernel)" 自动跳过。
@@ -25,10 +25,10 @@ pytestmark = [
 
 @pytest.mark.usefixtures("mock_gpu_chain")
 class TestGPUEngineInit:
-    """GPU 引擎初始化测试"""
+    """GPU 引擎初始化测试."""
 
     def test_engine_instantiation(self, mock_gpu_chain):
-        """测试：GPU 引擎可实例化"""
+        """测试：GPU 引擎可实例化."""
         from src.collision.gpu.engine import GPUCollisionEngine
 
         engine = GPUCollisionEngine(
@@ -41,7 +41,7 @@ class TestGPUEngineInit:
         assert hasattr(engine, "get_device_info")
 
     def test_engine_with_multiple_targets(self, mock_gpu_chain):
-        """测试：多目标地址初始化"""
+        """测试：多目标地址初始化."""
         from src.collision.gpu.engine import GPUCollisionEngine
 
         targets = {
@@ -53,7 +53,7 @@ class TestGPUEngineInit:
         assert engine is not None
 
     def test_engine_get_device_info(self, mock_gpu_chain):
-        """测试：获取 GPU 设备信息"""
+        """测试：获取 GPU 设备信息."""
         from src.collision.gpu.engine import GPUCollisionEngine
 
         engine = GPUCollisionEngine(
@@ -72,10 +72,10 @@ class TestGPUEngineInit:
 
 @pytest.mark.usefixtures("mock_gpu_chain")
 class TestGPUEngineLifecycle:
-    """GPU 引擎生命周期测试"""
+    """GPU 引擎生命周期测试."""
 
     def test_engine_initial_state(self, mock_gpu_chain):
-        """测试：初始状态为未运行"""
+        """测试：初始状态为未运行."""
         from src.collision.gpu.engine import GPUCollisionEngine
 
         engine = GPUCollisionEngine(
@@ -85,7 +85,7 @@ class TestGPUEngineLifecycle:
         assert not engine.is_running()
 
     def test_engine_start_and_stop(self, mock_gpu_chain):
-        """测试：启动和停止"""
+        """测试：启动和停止."""
         from src.collision.gpu.engine import GPUCollisionEngine
 
         engine = GPUCollisionEngine(

@@ -1,4 +1,4 @@
-"""GPU负载均衡器
+"""GPU负载均衡器.
 
 为多GPU环境提供智能的任务分配和负载均衡。
 支持按性能分配和平均分配两种策略。
@@ -25,7 +25,7 @@ logger = get_configured_logger("GPULoadBalancer")
 
 
 class GPULoadBalancer:
-    """GPU负载均衡器
+    """GPU负载均衡器.
 
     根据GPU设备性能智能分配私钥搜索任务。
 
@@ -46,19 +46,19 @@ class GPULoadBalancer:
     # 厂商性能系数已迁移到 GPUDeviceScorer (P3-11)
 
     __slots__ = (
-        "devices",
-        "strategy",
-        "rebalance_interval",
-        "min_rebalance_threshold",
-        "memory_usage_threshold",
-        "_scorer",
-        "_weights",
+        "_historical_performance",
         "_key_ranges",
         "_last_rebalance_time",
-        "_performance_stats",
-        "_memory_stats",
-        "_historical_performance",
         "_load_history",
+        "_memory_stats",
+        "_performance_stats",
+        "_scorer",
+        "_weights",
+        "devices",
+        "memory_usage_threshold",
+        "min_rebalance_threshold",
+        "rebalance_interval",
+        "strategy",
     )
 
     def __init__(
@@ -70,7 +70,7 @@ class GPULoadBalancer:
         memory_usage_threshold: float = 0.75,  # 减少内存使用阈值，避免内存不足
         scorer: GPUDeviceScorer | None = None,
     ) -> None:
-        """初始化负载均衡器
+        """初始化负载均衡器.
 
         Args:
             devices: GPU设备列表
@@ -107,7 +107,7 @@ class GPULoadBalancer:
         logger.info("GPU负载均衡器已初始化: 设备数=%s, 策略=%s, 重平衡间隔=%ss", _n, strategy, _interval)
 
     def _calculate_initial_weights(self) -> None:
-        """计算初始负载权重"""
+        """计算初始负载权重."""
         if self.strategy == "equal":
             # 平均分配
             weight = 1.0 / len(self.devices)
@@ -119,7 +119,7 @@ class GPULoadBalancer:
         logger.info(f"初始负载权重: {self._weights}")
 
     def _calculate_performance_weights(self) -> dict[int, float]:
-        """基于设备性能计算权重
+        """基于设备性能计算权重.
 
         委托给统一的 GPUDeviceScorer 计算归一化权重。
 
@@ -130,7 +130,7 @@ class GPULoadBalancer:
         return self._scorer.calculate_performance_weights(self.devices)
 
     def calculate_weights(self) -> dict[int, float]:
-        """获取当前负载权重
+        """获取当前负载权重.
 
         Returns:
             设备索引 -> 权重映射
@@ -144,7 +144,7 @@ class GPULoadBalancer:
         device_idx: int,
         key_offset: int = 0,
     ) -> tuple[int, int]:
-        """为指定GPU分配私钥搜索范围
+        """为指定GPU分配私钥搜索范围.
 
         Args:
             total_keys: 总私钥数量
@@ -178,7 +178,7 @@ class GPULoadBalancer:
         return start_key, end_key
 
     def _get_cumulative_weight(self, device_idx: int) -> float:
-        """获取设备的累积权重(用于计算偏移)
+        """获取设备的累积权重(用于计算偏移).
 
         Args:
             device_idx: 设备索引
@@ -203,7 +203,7 @@ class GPULoadBalancer:
         total_keys: int,
         key_offset: int = 0,
     ) -> dict[int, tuple[int, int]]:
-        """为所有GPU分配私钥范围
+        """为所有GPU分配私钥范围.
 
         Args:
             total_keys: 总私钥数量
@@ -246,7 +246,7 @@ class GPULoadBalancer:
         throughput: float,
         error_rate: float = 0.0,
     ) -> None:
-        """记录GPU实际性能
+        """记录GPU实际性能.
 
         Args:
             device_idx: 设备索引
@@ -281,7 +281,7 @@ class GPULoadBalancer:
         used_memory_mb: float,
         total_memory_mb: float,
     ) -> None:
-        """记录GPU内存使用情况
+        """记录GPU内存使用情况.
 
         Args:
             device_idx: 设备索引
@@ -299,7 +299,7 @@ class GPULoadBalancer:
         }
 
     def should_rebalance(self) -> bool:
-        """检查是否需要重新平衡负载
+        """检查是否需要重新平衡负载.
 
         Returns:
             True表示需要重新平衡
@@ -320,7 +320,7 @@ class GPULoadBalancer:
         return bool(self._detect_memory_pressure())
 
     def _detect_load_imbalance(self) -> bool:
-        """检测负载不均衡情况
+        """检测负载不均衡情况.
 
         Returns:
             True表示负载不均衡
@@ -350,7 +350,7 @@ class GPULoadBalancer:
         return False
 
     def _detect_memory_pressure(self) -> bool:
-        """检测内存压力
+        """检测内存压力.
 
         Returns:
             True表示存在内存压力
@@ -367,7 +367,7 @@ class GPULoadBalancer:
         return False
 
     def redistribute_load(self) -> dict[int, float]:
-        """根据实际性能重新分配负载
+        """根据实际性能重新分配负载.
 
         Returns:
             新的权重映射
@@ -467,7 +467,7 @@ class GPULoadBalancer:
         return self._weights
 
     def _calculate_historical_performance(self, device_idx: int) -> float:
-        """计算设备的历史性能
+        """计算设备的历史性能.
 
         Args:
             device_idx: 设备索引
@@ -490,7 +490,7 @@ class GPULoadBalancer:
         return cast("float", statistics.mean(throughputs))
 
     def _get_memory_factor(self, device_idx: int) -> float:
-        """获取内存影响因子
+        """获取内存影响因子.
 
         Args:
             device_idx: 设备索引
@@ -513,7 +513,7 @@ class GPULoadBalancer:
         return cast("float", 0.8 - (usage_ratio - 0.8) * 0.5)
 
     def _record_load_history(self) -> None:
-        """记录负载历史"""
+        """记录负载历史."""
         timestamp = time.time()
 
         for idx, weight in self._weights.items():
@@ -527,7 +527,7 @@ class GPULoadBalancer:
                 self._load_history[idx] = self._load_history[idx][-100:]
 
     def get_device_load(self, device_idx: int) -> dict | None:
-        """获取指定GPU的负载信息
+        """获取指定GPU的负载信息.
 
         Args:
             device_idx: 设备索引
@@ -555,7 +555,7 @@ class GPULoadBalancer:
         }
 
     def get_all_loads(self) -> dict[int, dict]:
-        """获取所有GPU的负载信息
+        """获取所有GPU的负载信息.
 
         Returns:
             设备索引 -> 负载信息映射
@@ -571,7 +571,7 @@ class GPULoadBalancer:
         return loads
 
     def get_strategy(self) -> str:
-        """获取当前负载策略
+        """获取当前负载策略.
 
         Returns:
             策略名称
@@ -580,7 +580,7 @@ class GPULoadBalancer:
         return self.strategy
 
     def set_strategy(self, strategy: str) -> None:
-        """设置负载策略
+        """设置负载策略.
 
         Args:
             strategy: 'performance' 或 'equal'
@@ -595,7 +595,7 @@ class GPULoadBalancer:
         logger.info("负载策略已更改为: %s", strategy)
 
     def get_performance_prediction(self, device_idx: int) -> float | None:
-        """预测设备性能
+        """预测设备性能.
 
         Args:
             device_idx: 设备索引
@@ -627,7 +627,7 @@ class GPULoadBalancer:
         return cast("float", max(predicted, 0))
 
     def reset(self) -> None:
-        """重置负载均衡器"""
+        """重置负载均衡器."""
         self._weights = {}
         self._key_ranges = {}
         self._performance_stats = {}
@@ -641,7 +641,7 @@ class GPULoadBalancer:
         logger.info("负载均衡器已重置")
 
     def get_stats(self) -> dict[str, Any]:
-        """获取负载均衡器统计信息
+        """获取负载均衡器统计信息.
 
         Returns:
             统计信息字典

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Sensitive data pattern constants.
 
 Centralizes regex patterns for detecting sensitive data shared by

@@ -1,4 +1,4 @@
-"""Bech32/P2SH地址转换性能基准测试
+"""Bech32/P2SH地址转换性能基准测试.
 
 测试目标:
 - 验证LRU缓存效果
@@ -20,11 +20,11 @@ pytestmark = pytest.mark.benchmark
 
 
 class TestBech32P2SHPerformance:
-    """Bech32/P2SH地址转换性能测试"""
+    """Bech32/P2SH地址转换性能测试."""
 
     @pytest.mark.skipif(BenchmarkFixture is None, reason="需要 pytest-benchmark 插件")
     def test_bech32_cache_performance(self, benchmark):
-        """测试Bech32地址缓存性能"""
+        """测试Bech32地址缓存性能."""
         resolver = TargetResolver(enable_cache=True)
         bech32_addr = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
 
@@ -39,7 +39,7 @@ class TestBech32P2SHPerformance:
 
     @pytest.mark.skipif(BenchmarkFixture is None, reason="需要 pytest-benchmark 插件")
     def test_p2sh_cache_performance(self, benchmark):
-        """测试P2SH地址解析性能（P2SH返回None - 密码学上不可匹配）"""
+        """测试P2SH地址解析性能（P2SH返回None - 密码学上不可匹配）."""
         resolver = TargetResolver(enable_cache=True)
         p2sh_addr = "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy"
 
@@ -50,7 +50,7 @@ class TestBech32P2SHPerformance:
 
     @pytest.mark.skipif(BenchmarkFixture is None, reason="需要 pytest-benchmark 插件")
     def test_bech32_first_resolve_performance(self, benchmark):
-        """测试Bech32首次解析性能（缓存未命中）"""
+        """测试Bech32首次解析性能（缓存未命中）."""
         resolver = TargetResolver(enable_cache=True)
         # 使用不同的地址避免缓存
         bech32_addr = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
@@ -66,7 +66,7 @@ class TestBech32P2SHPerformance:
 
     @pytest.mark.skipif(BenchmarkFixture is None, reason="需要 pytest-benchmark 插件")
     def test_batch_resolve_performance(self, benchmark):
-        """测试批量解析性能"""
+        """测试批量解析性能."""
         resolver = TargetResolver(enable_cache=True)
 
         # 准备混合地址列表（使用真实有效的地址）
@@ -87,7 +87,7 @@ class TestBech32P2SHPerformance:
             assert stats["hits"] > 0, "批量解析应该有缓存命中"
 
     def test_cache_hit_rate_improvement(self):
-        """测试缓存命中率提升"""
+        """测试缓存命中率提升."""
         resolver = TargetResolver(enable_cache=True)
 
         addresses = [
@@ -117,7 +117,7 @@ class TestBech32P2SHPerformance:
 
     @pytest.mark.skipif(BenchmarkFixture is None, reason="需要 pytest-benchmark 插件")
     def test_resolve_without_cache_performance(self, benchmark):
-        """测试禁用缓存的性能"""
+        """测试禁用缓存的性能."""
         resolver = TargetResolver(enable_cache=False)
         bech32_addr = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
 
@@ -129,7 +129,7 @@ class TestBech32P2SHPerformance:
     @pytest.mark.skipif(BenchmarkFixture is None, reason="需要 pytest-benchmark 插件")
     @pytest.mark.benchmark(group="address_types")
     def test_p2pkh_resolve_performance(self, benchmark):
-        """测试P2PKH地址解析性能"""
+        """测试P2PKH地址解析性能."""
         resolver = TargetResolver(enable_cache=True)
         p2pkh_addr = "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
 
@@ -143,7 +143,7 @@ class TestBech32P2SHPerformance:
     @pytest.mark.skipif(BenchmarkFixture is None, reason="需要 pytest-benchmark 插件")
     @pytest.mark.benchmark(group="address_types")
     def test_p2sh_resolve_performance(self, benchmark):
-        """测试P2SH地址解析性能（P2SH返回None - 密码学上不可匹配）"""
+        """测试P2SH地址解析性能（P2SH返回None - 密码学上不可匹配）."""
         resolver = TargetResolver(enable_cache=True)
         p2sh_addr = "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy"
 
@@ -154,7 +154,7 @@ class TestBech32P2SHPerformance:
     @pytest.mark.skipif(BenchmarkFixture is None, reason="需要 pytest-benchmark 插件")
     @pytest.mark.benchmark(group="address_types")
     def test_bech32_resolve_performance(self, benchmark):
-        """测试Bech32地址解析性能"""
+        """测试Bech32地址解析性能."""
         resolver = TargetResolver(enable_cache=True)
         bech32_addr = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
 
@@ -167,10 +167,10 @@ class TestBech32P2SHPerformance:
 
 
 class TestMemoryUsage:
-    """内存使用测试"""
+    """内存使用测试."""
 
     def test_cache_memory_limit(self):
-        """测试缓存内存限制"""
+        """测试缓存内存限制."""
         # 创建小容量缓存
         resolver = TargetResolver(enable_cache=True, cache_max_size=10)
 
@@ -194,7 +194,7 @@ class TestMemoryUsage:
             )
 
     def test_large_batch_memory_stability(self):
-        """测试大批量解析的内存稳定性"""
+        """测试大批量解析的内存稳定性."""
         resolver = TargetResolver(enable_cache=True, cache_max_size=1000)
 
         # 生成大量地址（重复使用相同的3个地址）

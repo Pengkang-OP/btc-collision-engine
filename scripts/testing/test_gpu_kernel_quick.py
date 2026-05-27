@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""快速验证GPU内核可用性"""
+"""快速验证GPU内核可用性."""
 
 import os
 import sys
@@ -9,7 +9,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 
 def test_kernel_load():
-    """测试内核加载"""
+    """测试内核加载."""
     print("=" * 60)
     print("GPU内核快速验证")
     print("=" * 60)

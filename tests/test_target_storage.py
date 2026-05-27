@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""地址持久化存储 (storage) 单元测试
+"""地址持久化存储 (storage) 单元测试.
 
 覆盖：
 - validate_bitcoin_address 地址验证函数
@@ -42,7 +42,7 @@ def sample_addresses():
 
 @pytest.mark.unit
 class TestValidateBitcoinAddress:
-    """地址格式验证测试"""
+    """地址格式验证测试."""
 
     def test_valid_p2pkh(self):
         from src.collision.targets.storage import validate_bitcoin_address
@@ -97,7 +97,7 @@ class TestValidateBitcoinAddress:
 
 @pytest.mark.unit
 class TestAddressPatterns:
-    """地址正则模式测试"""
+    """地址正则模式测试."""
 
     def test_patterns_exist(self):
         from src.collision.targets.storage import ADDRESS_PATTERNS
@@ -126,7 +126,7 @@ class TestAddressPatterns:
 
 @pytest.mark.unit
 class TestAddressStorageJson:
-    """JSON 存储测试"""
+    """JSON 存储测试."""
 
     def test_init_creates_directory(self, temp_dir):
         from src.collision.targets.storage import AddressStorage
@@ -171,7 +171,7 @@ class TestAddressStorageJson:
 
 @pytest.mark.unit
 class TestAddressStorageSqlite:
-    """SQLite 存储测试"""
+    """SQLite 存储测试."""
 
     def test_init_creates_directory(self, temp_dir):
         from src.collision.targets.storage import AddressStorage
@@ -205,7 +205,7 @@ class TestAddressStorageSqlite:
 
 @pytest.mark.unit
 class TestAddressStorageCsv:
-    """CSV 存储测试"""
+    """CSV 存储测试."""
 
     def test_save_and_load_csv(self, temp_dir, sample_addresses):
         from src.collision.targets.storage import AddressStorage
@@ -231,7 +231,7 @@ class TestAddressStorageCsv:
 
 @pytest.mark.unit
 class TestGetStorageInfo:
-    """存储信息测试"""
+    """存储信息测试."""
 
     def test_info_for_existing(self, temp_dir, sample_addresses):
         from src.collision.targets.storage import AddressStorage

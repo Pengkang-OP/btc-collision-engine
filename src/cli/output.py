@@ -25,7 +25,7 @@ except ImportError:
 
 
 def _get_utf8_console(stderr: bool = False, no_color: bool = False) -> Any:
-    """获取 UTF-8 兼容的 Console 实例。"""
+    """获取 UTF-8 兼容的 Console 实例。."""
     if platform.system() == "Windows":
         # Windows 特殊处理：尝试设置 stdout/stderr 为 utf-8
         try:
@@ -58,7 +58,7 @@ def _get_utf8_console(stderr: bool = False, no_color: bool = False) -> Any:
 
 
 class CLIOutput:
-    """CLI 输出管理器单例类。"""
+    """CLI 输出管理器单例类。."""
 
     _instance: "CLIOutput | None" = None
     _instance_lock: threading.Lock = threading.Lock()
@@ -73,7 +73,7 @@ class CLIOutput:
 
     @classmethod
     def get_instance(cls) -> "CLIOutput":
-        """获取单例实例（线程安全）。"""
+        """获取单例实例（线程安全）。."""
         if cls._instance is None:
             with cls._instance_lock:
                 if cls._instance is None:
@@ -82,7 +82,7 @@ class CLIOutput:
 
     @classmethod
     def init(cls, quiet: bool = False, no_color: bool = False, compact: bool = False) -> "CLIOutput":
-        """初始化/重置单例（创建全新实例）。"""
+        """初始化/重置单例（创建全新实例）。."""
         # v5.2.2: 使用 reset_instance 后通过正常构造创建，避免绕过 __new__
         cls.reset_instance()
         instance = cls(quiet=quiet, no_color=no_color, compact=compact)
@@ -90,7 +90,7 @@ class CLIOutput:
 
     @classmethod
     def reset_instance(cls) -> None:
-        """重置单例（仅用于测试）。"""
+        """重置单例（仅用于测试）。."""
         cls._instance = None
         cls._adaptive_console = None
 
@@ -104,16 +104,16 @@ class CLIOutput:
         self.err_console: Any = _get_utf8_console(stderr=True, no_color=no_color)
 
     def print(self, message: Any = "", **kwargs: Any) -> None:
-        """普通打印（受 quiet 模式影响。"""
+        """普通打印（受 quiet 模式影响。."""
         if not self.quiet:
             self.console.print(message, **kwargs)
 
     def print_always(self, message: Any = "", **kwargs: Any) -> None:
-        """总是打印（不受 quiet 影响）。"""
+        """总是打印（不受 quiet 影响）。."""
         self.console.print(message, **kwargs)
 
     def info(self, message: str) -> None:
-        """打印 INFO 级别消息。"""
+        """打印 INFO 级别消息。."""
         if not self.quiet:
             if Text is not None:
                 self.console.print(Text.assemble(("[INFO] ", "blue"), message))
@@ -121,21 +121,21 @@ class CLIOutput:
                 self.console.print(f"[INFO] {message}")
 
     def success(self, message: str) -> None:
-        """打印 SUCCESS 级别消息。"""
+        """打印 SUCCESS 级别消息。."""
         if Text is not None:
             self.console.print(Text.assemble(("[OK] ", "green"), message))
         else:
             self.console.print(f"[OK] {message}")
 
     def hint(self, message: str) -> None:
-        """打印 HINT 级别消息。"""
+        """打印 HINT 级别消息。."""
         if Text is not None:
             self.console.print(Text.assemble(("[HINT] ", "cyan"), message))
         else:
             self.console.print(f"[HINT] {message}")
 
     def warning(self, message: str, details: str | None = None) -> None:
-        """打印 WARNING 级别消息。"""
+        """打印 WARNING 级别消息。."""
         if Text is not None:
             self.err_console.print(Text.assemble(("[WARN] ", "yellow"), message))
         else:
@@ -147,7 +147,7 @@ class CLIOutput:
                 self.err_console.print(details)
 
     def error(self, message: str, details: str | None = None) -> None:
-        """打印 ERROR 级别消息。"""
+        """打印 ERROR 级别消息。."""
         if Text is not None:
             self.err_console.print(Text.assemble(("[ERROR] ", "red"), message))
         else:
@@ -159,7 +159,7 @@ class CLIOutput:
                 self.err_console.print(details)
 
     def rule(self, title: str = "", style: str = "dim") -> None:
-        """打印分隔线。"""
+        """打印分隔线。."""
         if not self.quiet:
             if self.console and hasattr(self.console, "rule"):
                 self.console.rule(title, style=style)
@@ -167,7 +167,7 @@ class CLIOutput:
                 self.console.print(title)
 
     def header(self, title: str) -> None:
-        """打印标题头。"""
+        """打印标题头。."""
         if not self.quiet:
             if not self.compact:
                 self.print()
@@ -176,9 +176,11 @@ class CLIOutput:
                 self.print()
 
     def startup_panel(
-        self, title_or_config: str | dict[str, str], rows: list[tuple[str, str]] | None = None
+        self,
+        title_or_config: str | dict[str, str],
+        rows: list[tuple[str, str]] | None = None,
     ) -> None:
-        """打印启动配置面板 (Rich Panel + Table)，自适应终端宽度。
+        """打印启动配置面板 (Rich Panel + Table)，自适应终端宽度。.
 
         支持两种调用方式:
             startup_panel("标题", [("key", "value"), ...])  # 新版
@@ -234,7 +236,7 @@ class CLIOutput:
                 self.console.print(f"    {k}: {v}")
 
     def dynamic_stats_panel(self, stats: dict[str, str], title: str = "System Status") -> None:
-        """打印动态统计面板（自适应宽度）。
+        """打印动态统计面板（自适应宽度）。.
 
         Args:
             stats: 统计数据字典，key 为标签，value 为值
@@ -276,7 +278,7 @@ class CLIOutput:
 
     @classmethod
     def _adaptive_width(cls) -> int | None:
-        """获取自适应面板宽度（缓存 Console 实例）。返回 None 表示不限制。"""
+        """获取自适应面板宽度（缓存 Console 实例）。返回 None 表示不限制。."""
         try:
             if Console is not None:
                 con = cls._adaptive_console
@@ -292,7 +294,7 @@ class CLIOutput:
         return None
 
     def final_summary(self, title: str, stats: dict[str, str]) -> None:
-        """打印最终摘要（自适应宽度）。"""
+        """打印最终摘要（自适应宽度）。."""
         panel_width = self._adaptive_width()
         if Panel is not None and Table is not None:
             table = Table(show_header=False, box=None, width=panel_width - 8 if panel_width else None)
@@ -311,7 +313,7 @@ class CLIOutput:
                 self.console.print(f"  {k}: {v}")
 
     def stats_panel(self, title: str, rows: list[tuple[str, str] | tuple[str, str, str]]) -> None:
-        """打印统计面板（自适应宽度）。"""
+        """打印统计面板（自适应宽度）。."""
         panel_width = self._adaptive_width()
         if Panel is not None and Table is not None:
             table = Table(show_header=False, box=None, width=panel_width - 8 if panel_width else None)
@@ -343,13 +345,13 @@ class CLIOutput:
                     self.console.print(f"  {k}: {v}")
 
     def status_line(self, text: str) -> None:
-        """打印状态行（覆盖式）。"""
+        """打印状态行（覆盖式）。."""
         if not self.quiet:
             _ = sys.stdout.write(f"\r{text}")
             sys.stdout.flush()
 
     def performance_status(self, stats: dict[str, str | int | float]) -> None:
-        """打印性能状态行。"""
+        """打印性能状态行。."""
         if not self.quiet and stats:
             parts: list[str] = []
             if "speed" in stats:

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""碰撞引擎与监控系统集成测试
+"""碰撞引擎与监控系统集成测试.
 
 启动碰撞引擎并验证监控系统的各项功能：
 - 数据日志记录
@@ -29,7 +29,7 @@ logger = logging.getLogger("EngineMonitorTest")
 
 
 class EngineMonitorIntegration:
-    """引擎与监控集成测试类"""
+    """引擎与监控集成测试类."""
 
     def __init__(self):
         self.monitoring_system = None
@@ -37,7 +37,7 @@ class EngineMonitorIntegration:
         self.running = False
 
     def setup_monitoring(self):
-        """配置并启动监控系统"""
+        """配置并启动监控系统."""
         logger.info("=" * 70)
         logger.info("配置全面监控系统")
         logger.info("=" * 70)
@@ -78,7 +78,7 @@ class EngineMonitorIntegration:
         logger.info("✅ 监控系统初始化完成")
 
     def setup_engine(self, targets: set):
-        """配置并初始化碰撞引擎"""
+        """配置并初始化碰撞引擎."""
         logger.info("\n" + "=" * 70)
         logger.info("配置碰撞引擎")
         logger.info("=" * 70)
@@ -102,7 +102,7 @@ class EngineMonitorIntegration:
         logger.info(f"   增强监控: {'启用' if self.engine.enhanced_monitoring else '禁用'}")
 
     def on_progress(self, stats: CollisionStats):
-        """进度回调"""
+        """进度回调."""
         speed_str = f"{stats.speed:.2f}/s" if stats.speed < 1000 else f"{stats.speed / 1000:.2f}K/s"
         logger.info(
             f"📊 进度: 已检测={stats.total_checked:,} | "
@@ -112,7 +112,7 @@ class EngineMonitorIntegration:
         )
 
     def on_match(self, private_key: bytes, address: str, wif: str):
-        """匹配回调"""
+        """匹配回调."""
         logger.info("\n" + "=" * 70)
         logger.info("🎯 发现匹配！")
         logger.info("   地址: %s", address)
@@ -121,7 +121,7 @@ class EngineMonitorIntegration:
         logger.info("=" * 70 + "\n")
 
     def on_complete(self, stats: CollisionStats):
-        """完成回调"""
+        """完成回调."""
         logger.info("\n" + "=" * 70)
         logger.info("✅ 碰撞引擎完成")
         logger.info(f"   总检测: {stats.total_checked:,}")
@@ -131,7 +131,7 @@ class EngineMonitorIntegration:
         logger.info("=" * 70 + "\n")
 
     def start_engine(self, mode: str = "random", duration: int = 30):
-        """启动碰撞引擎"""
+        """启动碰撞引擎."""
         logger.info("\n" + "=" * 70)
         logger.info("启动碰撞引擎 - 模式: %s, 时长: %s秒", mode, duration)
         logger.info("=" * 70)
@@ -158,7 +158,7 @@ class EngineMonitorIntegration:
             self.stop()
 
     def stop(self):
-        """停止引擎和监控"""
+        """停止引擎和监控."""
         self.running = False
 
         if self.engine:
@@ -170,7 +170,7 @@ class EngineMonitorIntegration:
         logger.info("=" * 70)
 
     def print_monitoring_status(self):
-        """打印监控系统状态"""
+        """打印监控系统状态."""
         if not self.engine or not self.engine.enhanced_monitoring:
             return
 
@@ -201,7 +201,7 @@ class EngineMonitorIntegration:
 
 
 def create_test_targets() -> set:
-    """创建测试目标地址"""
+    """创建测试目标地址."""
     # 使用已知的测试地址（私钥=1的地址）
     # 这个地址在小范围内可以被找到，用于测试
     test_address = "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"
@@ -213,7 +213,7 @@ def create_test_targets() -> set:
 
 
 def verify_monitoring_data():
-    """验证监控数据是否正确记录"""
+    """验证监控数据是否正确记录."""
     logger.info("\n" + "=" * 70)
     logger.info("验证监控数据")
     logger.info("=" * 70)
@@ -247,7 +247,7 @@ def verify_monitoring_data():
 
 
 def main():
-    """主函数"""
+    """主函数."""
     logger.info("=" * 70)
     logger.info("🚀 碰撞引擎与监控系统集成测试")
     logger.info("=" * 70)

@@ -1,4 +1,4 @@
-"""KeyCollisionEngine 断点测试 (MAINT-1拆分)
+"""KeyCollisionEngine 断点测试 (MAINT-1拆分).
 
 原 file: test_key_collision_engine.py
 抽取类: TestKeyCollisionEngineP3Checkpoint
@@ -15,7 +15,7 @@ from src.collision.key_collision_engine import KeyCollisionEngine
 
 
 class TestKeyCollisionEngineP3Checkpoint:
-    """P3: Checkpoint 持久化：resume_from / start_from / start resume"""
+    """P3: Checkpoint 持久化：resume_from / start_from / start resume."""
 
     def setup_method(self, method):
         self._ckpt_dir = tempfile.mkdtemp(prefix="test_ckpt_")
@@ -41,7 +41,7 @@ class TestKeyCollisionEngineP3Checkpoint:
             json.dump(data, f)
 
     def test_resume_from_checkpoint_no_file(self):
-        """无断点文件时返回 None"""
+        """无断点文件时返回 None."""
         from src.collision.checkpoint_manager import CheckpointManager
 
         mgr = CheckpointManager(filepath=self._ckpt_path)
@@ -52,7 +52,7 @@ class TestKeyCollisionEngineP3Checkpoint:
         engine.stop()
 
     def test_resume_from_checkpoint_range(self):
-        """从 range 模式断点恢复"""
+        """从 range 模式断点恢复."""
         from src.collision.checkpoint_manager import CheckpointManager
 
         self._create_checkpoint(mode="range", current_position=100, total_checked=500, range_end=1000)
@@ -66,7 +66,7 @@ class TestKeyCollisionEngineP3Checkpoint:
         engine.stop()
 
     def test_resume_from_checkpoint_brute_force(self):
-        """从 brute_force 模式断点恢复"""
+        """从 brute_force 模式断点恢复."""
         from src.collision.checkpoint_manager import CheckpointManager
 
         self._create_checkpoint(
@@ -84,7 +84,7 @@ class TestKeyCollisionEngineP3Checkpoint:
         engine.stop()
 
     def test_start_from_checkpoint_range(self):
-        """start_from_checkpoint range 模式"""
+        """start_from_checkpoint range 模式."""
         data = {"mode": "range", "current_position": 50, "range_end": 500000}
         engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         engine.start_from_checkpoint(data)
@@ -93,7 +93,7 @@ class TestKeyCollisionEngineP3Checkpoint:
         engine.stop()
 
     def test_start_from_checkpoint_brute_force(self):
-        """start_from_checkpoint brute_force 模式"""
+        """start_from_checkpoint brute_force 模式."""
         data = {"mode": "brute_force", "current_position": 50}
         engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         engine.start_from_checkpoint(data)
@@ -102,7 +102,7 @@ class TestKeyCollisionEngineP3Checkpoint:
         engine.stop()
 
     def test_start_from_checkpoint_random(self):
-        """start_from_checkpoint random 模式"""
+        """start_from_checkpoint random 模式."""
         data = {"mode": "random"}
         engine = KeyCollisionEngine(targets={"1TestAddr"}, max_workers=1, data_logging_enabled=False)
         engine.start_from_checkpoint(data)
@@ -111,7 +111,7 @@ class TestKeyCollisionEngineP3Checkpoint:
         engine.stop()
 
     def test_start_resume_from_range_checkpoint(self):
-        """start(resume=True) 从 range 断点恢复"""
+        """start(resume=True) 从 range 断点恢复."""
         from src.collision.checkpoint_manager import CheckpointManager
 
         self._create_checkpoint(mode="range", current_position=1, total_checked=0, range_end=500000)
@@ -129,7 +129,7 @@ class TestKeyCollisionEngineP3Checkpoint:
         engine.stop()
 
     def test_start_resume_from_brute_force_checkpoint(self):
-        """start(resume=True) 从 brute_force 断点恢复"""
+        """start(resume=True) 从 brute_force 断点恢复."""
         from src.collision.checkpoint_manager import CheckpointManager
 
         self._create_checkpoint(mode="brute_force", current_position=1, total_checked=0, range_end=None)
@@ -147,7 +147,7 @@ class TestKeyCollisionEngineP3Checkpoint:
         engine.stop()
 
     def test_start_resume_from_random_checkpoint(self):
-        """start(resume=True) 从 random 断点恢复"""
+        """start(resume=True) 从 random 断点恢复."""
         from src.collision.checkpoint_manager import CheckpointManager
 
         self._create_checkpoint(mode="random", current_position=0, total_checked=100, range_end=None)
@@ -165,7 +165,7 @@ class TestKeyCollisionEngineP3Checkpoint:
         engine.stop()
 
     def test_start_resume_checkpoint_load_failure(self):
-        """start(resume=True) 断点加载失败时回退到正常启动"""
+        """start(resume=True) 断点加载失败时回退到正常启动."""
         from src.collision.checkpoint_manager import CheckpointManager
 
         class FailingCheckpointManager(CheckpointManager):

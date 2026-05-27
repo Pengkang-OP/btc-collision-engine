@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""断裂链接修复工具
+"""断裂链接修复工具.
 
 自动修复文档中的断裂链接：
 1. 更新指向已删除文档的链接
@@ -38,7 +38,7 @@ FILE_PATH_MAP = {
 
 
 def auto_detect_archive_path(filename: str, docs_dir: Path) -> str | None:
-    """自动扫描archive目录查找文件
+    """自动扫描archive目录查找文件.
 
     Args:
         filename: 文件名
@@ -59,7 +59,7 @@ def auto_detect_archive_path(filename: str, docs_dir: Path) -> str | None:
 
 
 def find_markdown_links(content: str) -> list[tuple[int, str, str, str]]:
-    """查找所有Markdown链接
+    """查找所有Markdown链接.
 
     Returns:
         List of (line_num, full_match, link_text, link_url)
@@ -78,7 +78,7 @@ def find_markdown_links(content: str) -> list[tuple[int, str, str, str]]:
 
 
 def is_broken_link(link_url: str, docs_dir: Path, current_file: Path) -> bool:
-    """检查链接是否断裂"""
+    """检查链接是否断裂."""
     # 跳过外部链接
     if link_url.startswith(("http://", "https://", "mailto:", "#")):
         return False
@@ -108,7 +108,7 @@ def is_broken_link(link_url: str, docs_dir: Path, current_file: Path) -> bool:
 
 
 def fix_file_protocol_link(link_url: str) -> str:
-    """修复file://协议链接"""
+    """修复file://协议链接."""
     if not link_url.startswith("file://"):
         return link_url
 
@@ -133,7 +133,7 @@ def fix_file_protocol_link(link_url: str) -> str:
 
 
 def fix_relative_path(link_url: str, current_file: Path, docs_dir: Path) -> str:
-    """修复错误的相对路径"""
+    """修复错误的相对路径."""
     # 解析链接
     parsed = urlparse(link_url)
     file_path = parsed.path.split("#")[0]
@@ -166,7 +166,7 @@ def fix_relative_path(link_url: str, current_file: Path, docs_dir: Path) -> str:
 
 
 def fix_links_in_file(file_path: Path, docs_dir: Path, dry_run: bool = False) -> dict:
-    """修复单个文件中的链接
+    """修复单个文件中的链接.
 
     Returns:
         修复统计信息
@@ -188,7 +188,7 @@ def fix_links_in_file(file_path: Path, docs_dir: Path, dry_run: bool = False) ->
                         "old": full_match,
                         "new": f"[{link_text}]({new_url})",
                         "type": "file_protocol",
-                    }
+                    },
                 )
                 fixed_count += 1
                 continue
@@ -203,7 +203,7 @@ def fix_links_in_file(file_path: Path, docs_dir: Path, dry_run: bool = False) ->
                         "old": full_match,
                         "new": f"[{link_text}]({new_url})",
                         "type": "relative_path",
-                    }
+                    },
                 )
                 fixed_count += 1
 
@@ -226,7 +226,7 @@ def fix_links_in_file(file_path: Path, docs_dir: Path, dry_run: bool = False) ->
 
 
 def main():
-    """主函数"""
+    """主函数."""
     import argparse
 
     parser = argparse.ArgumentParser(description="断裂链接修复工具")

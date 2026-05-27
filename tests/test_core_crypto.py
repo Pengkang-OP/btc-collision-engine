@@ -16,17 +16,17 @@ class TestSecp256k1:
     """secp256k1 curve parameter tests."""
 
     def test_curve_order_valid(self):
-        """N should be a valid curve order (N < P)"""
+        """N should be a valid curve order (N < P)."""
         assert Secp256k1.N < Secp256k1.P
 
     def test_generator_point_on_curve(self):
-        """Generator point G should satisfy y² = x³ + 7 (mod p)"""
+        """Generator point G should satisfy y² = x³ + 7 (mod p)."""
         lhs = pow(Secp256k1.Gy, 2, Secp256k1.P)
         rhs = (pow(Secp256k1.Gx, 3, Secp256k1.P) + 7) % Secp256k1.P
         assert lhs == rhs
 
     def test_scalar_mult_identity(self):
-        """1 * G should equal G"""
+        """1 * G should equal G."""
         ec = EllipticCurve()
         g = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
         result = ec.scalar_multiply_const_time(1, g)
@@ -34,14 +34,14 @@ class TestSecp256k1:
         assert result.y == Secp256k1.Gy
 
     def test_known_key_address(self):
-        """Known private key 1 should produce known address"""
+        """Known private key 1 should produce known address."""
         priv = (1).to_bytes(32, "big")
         gen = P2PKHAddressGenerator()
         addr, _, _ = gen.generate_address(priv)
         assert addr.startswith("1")
 
     def test_large_private_key(self):
-        """Large valid private key should work"""
+        """Large valid private key should work."""
         priv = (Secp256k1.N - 1).to_bytes(32, "big")
         gen = P2PKHAddressGenerator()
         addr, _, _ = gen.generate_address(priv)

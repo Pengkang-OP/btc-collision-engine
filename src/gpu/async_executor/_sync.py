@@ -1,4 +1,4 @@
-"""GPU 同步回退执行和资源管理。
+"""GPU 同步回退执行和资源管理。.
 
 实现 AsyncGPUExecutor 的同步回退模式、异步模式恢复和资源清理逻辑。
 
@@ -12,7 +12,8 @@ from typing import Any, NoReturn
 
 import numpy as np
 
-from ...utils import get_configured_logger
+from src.utils import get_configured_logger
+
 from ..executor_types import (
     ASYNC_RECOVER_AFTER_SYNC_COUNT,
     MAX_CONSECUTIVE_SYNC_FALLBACKS,
@@ -24,7 +25,7 @@ logger = get_configured_logger("AsyncGPUExecutor.SyncFallback")
 
 
 class _SyncFallbackMixin:
-    """同步回退执行 Mixin。
+    """同步回退执行 Mixin。.
 
     为 AsyncGPUExecutor 提供：
     - _run_batch_sync: 纯同步 GPU 执行（PRNG 模式）
@@ -40,7 +41,7 @@ class _SyncFallbackMixin:
 
     @staticmethod
     def _log_cleanup(level: int, msg: str, *args: Any) -> None:
-        """Cleanup 安全日志：抑制因日志基础设施关闭导致的异常。"""
+        """Cleanup 安全日志：抑制因日志基础设施关闭导致的异常。."""
         with suppress(OSError, RuntimeError, AttributeError):
             logger.log(level, msg, *args)
 
@@ -56,7 +57,7 @@ class _SyncFallbackMixin:
         targets_buf: Any,
         num_targets: int,
     ) -> "tuple[list[tuple[bytes, list[dict]]], float]":
-        """同步执行（回退模式，PRNG 模式）。
+        """同步执行（回退模式，PRNG 模式）。.
 
         当异步执行失败时使用。seed 替代 private_keys。
 
@@ -150,7 +151,7 @@ class _SyncFallbackMixin:
         targets_buf: Any,
         num_targets: int,
     ) -> NoReturn:
-        """回退到同步执行并抛出结果异常（供 _allocate_buffer 使用）。"""
+        """回退到同步执行并抛出结果异常（供 _allocate_buffer 使用）。."""
         matches, exec_time = self._run_batch_sync(seed, num_keys, program, targets_buf, num_targets)
         self.sync_fallbacks += 1
         self._track_sync_fallback()
@@ -164,7 +165,7 @@ class _SyncFallbackMixin:
         targets_buf: Any,
         num_targets: int,
     ) -> NoReturn:
-        """回退到同步执行并抛出结果异常（供 _transfer_seed / _clear_matches_buffer 使用）。"""
+        """回退到同步执行并抛出结果异常（供 _transfer_seed / _clear_matches_buffer 使用）。."""
         matches, exec_time = self._run_batch_sync(seed, num_keys, program, targets_buf, num_targets)
         self.sync_fallbacks += 1
         self._track_sync_fallback()
@@ -175,7 +176,7 @@ class _SyncFallbackMixin:
     # ------------------------------------------------------------------
 
     def _track_sync_fallback(self) -> None:
-        """追踪连续同步回退，管理异步模式禁用。"""
+        """追踪连续同步回退，管理异步模式禁用。."""
         self._consecutive_sync_fallbacks += 1
         if (
             self._consecutive_sync_fallbacks >= MAX_CONSECUTIVE_SYNC_FALLBACKS
@@ -188,7 +189,7 @@ class _SyncFallbackMixin:
             )
 
     def _check_async_recovery(self) -> None:
-        """检查是否可以恢复异步模式。
+        """检查是否可以恢复异步模式。.
 
         当连续同步执行次数足够低时，尝试恢复异步执行。
         """
@@ -206,7 +207,7 @@ class _SyncFallbackMixin:
             logger.info(f"尝试恢复异步模式 (连续同步次数: {self._consecutive_sync_fallbacks})")
 
     def _on_async_success(self) -> None:
-        """异步执行成功后重置回退计数。"""
+        """异步执行成功后重置回退计数。."""
         self.async_executions += 1
         self._consecutive_sync_fallbacks = 0
         if self._async_mode_disabled:
@@ -214,7 +215,7 @@ class _SyncFallbackMixin:
             logger.info("异步模式已恢复")
 
     def _is_buffer_valid(self) -> bool:
-        """检查缓冲区和传输队列的有效性。"""
+        """检查缓冲区和传输队列的有效性。."""
         if self.seed_buffer is None:
             logger.warning("种子缓冲区已释放，回退到同步模式")
             return False
@@ -232,7 +233,7 @@ class _SyncFallbackMixin:
         targets_buf: Any,
         num_targets: int,
     ) -> NoReturn:
-        """统一处理同步回退逻辑。"""
+        """统一处理同步回退逻辑。."""
         try:
             sync_matches, sync_time = self._run_batch_sync(
                 seed,
@@ -261,7 +262,7 @@ class _SyncFallbackMixin:
         targets_buf: Any,
         num_targets: int,
     ) -> None:
-        """调整缓冲区大小并清空。"""
+        """调整缓冲区大小并清空。."""
         import pyopencl as cl
 
         if current_buf["matches"] is not None:
@@ -287,7 +288,7 @@ class _SyncFallbackMixin:
     # ------------------------------------------------------------------
 
     def cleanup(self) -> None:
-        """释放所有GPU缓冲区资源。
+        """释放所有GPU缓冲区资源。.
 
         按安全依赖顺序执行清理：
         0. 停止后台结果收集器线程
@@ -325,7 +326,7 @@ class _SyncFallbackMixin:
         self._log_cleanup(logging.INFO, "异步GPU执行器资源已清理")
 
     def _finish_all_queues(self) -> None:
-        """安全地完成所有命令队列。"""
+        """安全地完成所有命令队列。."""
         queues = [
             ("计算", getattr(self.device, "compute_queue", None)),
             ("传输", getattr(self.device, "transfer_queue", None)),
@@ -339,11 +340,12 @@ class _SyncFallbackMixin:
                     self._log_cleanup(logging.WARNING, "完成%s队列命令OpenCL错误: %s", name, e)
                 except Exception as e:
                     self._log_cleanup(
-                        logging.WARNING, f"完成{name}队列命令失败: {type(e).__name__}: {e}"
+                        logging.WARNING,
+                        f"完成{name}队列命令失败: {type(e).__name__}: {e}",
                     )
 
     def _wait_pending_event(self) -> None:
-        """安全地等待待处理事件完成。"""
+        """安全地等待待处理事件完成。."""
         if self.pending_event:
             try:
                 self.pending_event.wait()
@@ -355,7 +357,7 @@ class _SyncFallbackMixin:
             self.pending_event = None
 
     def _release_buffer_safe(self, name: str, getter, setter) -> None:
-        """安全地释放缓冲区资源。"""
+        """安全地释放缓冲区资源。."""
         buf = getter()
         if buf is not None:
             try:
@@ -368,7 +370,7 @@ class _SyncFallbackMixin:
             setter(None)
 
     def _try_create_fallback_buffer(self, buf_dict: dict, num_keys: int, start_time: float) -> bool:
-        """尝试创建临时回退缓冲区并清空。"""
+        """尝试创建临时回退缓冲区并清空。."""
         import pyopencl as cl
 
         try:
@@ -395,7 +397,7 @@ class _SyncFallbackMixin:
             return False
 
     def _release_buffer_pool(self) -> None:
-        """释放缓冲区池中的所有缓冲区。"""
+        """释放缓冲区池中的所有缓冲区。."""
         buf_pool = getattr(self, "_buffer_pool", None)
         if buf_pool is not None:
             for idx, buf_dict in enumerate(buf_pool):

@@ -1,0 +1,94 @@
+classDiagram
+    direction TB
+
+    class PyOpenCLAvailability {
+        <<src/gpu/_availability.py (NEW)>>
+        +bool PYOPENCL_AVAILABLE
+    }
+    note for PyOpenCLAvailability "单一事实来源模块\n唯一 try/except ImportError pyopencl 位置"
+
+    class GPUDevice {
+        <<src/gpu/device.py>>
+        +bool PYOPENCL_AVAILABLE (re-export)
+        +GPUDeviceDetector.detect() List~GPUDevice~
+        +identify_vendor(device) str
+    }
+
+    class GPUKernelImpl {
+        <<src/gpu/kernel_impl.py>>
+        +bool PYOPENCL_AVAILABLE (re-export)
+        +GPUKernel compile_kernel_with_retry()
+    }
+
+    class GPUCollisionEngine {
+        <<src/collision/gpu/engine.py>>
+        +bool PYOPENCL_AVAILABLE (re-export)
+        +start() None
+        +stop() None
+        +~~GPU_CONFIG_MANAGER_AVAILABLE~~ DELETED
+        +~~ASYNC_LOG_AVAILABLE~~ EXPANDED(inline True)
+    }
+
+    class UnifiedConstants {
+        <<src/constants.py (NEW)>>
+        +int EXIT_SUCCESS
+        +int EXIT_ERROR
+        +int EXIT_INVALID_CONFIG
+        +int EXIT_GPU_ERROR
+        +int PROGRESS_BAR_WIDTH
+        +int DEFAULT_PAGE_SIZE
+        +str CONFIG_FILE_NAME
+        +str RANDOM_SEARCH
+        +str SEQUENTIAL_SEARCH
+        +str HYBRID_SEARCH
+        +str P2PKH
+        +str P2SH
+        +str BECH32
+        +str TAPROOT
+        +int DEFAULT_BATCH_SIZE
+        +int DEFAULT_MAX_WORKERS
+        +int DEFAULT_CHECKPOINT_INTERVAL
+        +int MATCH_BATCH_FLUSH_THRESHOLD
+        +int TARGET_THROUGHPUT_KEYS_PER_SEC
+        +int BATCH_SIZE
+        +float PROGRESS_INTERVAL_SEC
+        +int DEDUP_MAX_RECENT_SIZE
+        +int PER_KEY_MEMORY_BYTES
+        +int MIN_BATCH_SIZE
+        +int MAX_BATCH_SIZE
+        +float OPENCL_MIN_REQUIRED_VERSION
+        +float OPENCL_RECOMMENDED_VERSION
+        +float OPENCL_OPTIMAL_VERSION
+        +dict OPENCL_CL_STANDARDS
+        +dict OPENCL_UPGRADE_ADVICE
+        +align_batch_size(batch_size, alignment) int
+        +clamp_batch_size(batch_size) int
+    }
+
+    class CLIConstants {
+        <<src/cli/constants.py>>
+        re-exports from src.constants
+    }
+
+    class CollisionConstants {
+        <<src/collision/constants.py>>
+        re-exports from src.constants
+    }
+
+    class EngineConstants {
+        <<src/collision/_engine_constants.py>>
+        re-exports from src.constants
+    }
+
+    class GPUConstants {
+        <<src/gpu/constants.py>>
+        re-exports from src.constants
+    }
+
+    PyOpenCLAvailability <.. GPUDevice : "from ._availability import"
+    PyOpenCLAvailability <.. GPUKernelImpl : "from ._availability import"
+    PyOpenCLAvailability <.. GPUCollisionEngine : "from ...gpu._availability import"
+    UnifiedConstants <.. CLIConstants : "re-export"
+    UnifiedConstants <.. CollisionConstants : "re-export"
+    UnifiedConstants <.. EngineConstants : "re-export"
+    UnifiedConstants <.. GPUConstants : "re-export"

@@ -4,7 +4,7 @@ import pathlib
 import secrets
 import threading
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from ..utils import get_configured_logger
@@ -71,7 +71,7 @@ class SecureKeyGenerator:
 
         # Statistics
         self._total_generated = 0
-        self._start_time = datetime.now(timezone.utc)
+        self._start_time = datetime.now(UTC)
         self.stats: dict[str, Any] = {
             "low_entropy_count": 0,
             "entropy_checks": 0,
@@ -332,7 +332,7 @@ class SecureKeyGenerator:
 
         """
         with self._lock:
-            elapsed = (datetime.now(timezone.utc) - self._start_time).total_seconds()
+            elapsed = (datetime.now(UTC) - self._start_time).total_seconds()
             rate = self._total_generated / elapsed if elapsed > 0 else 0
 
             stats = {
@@ -361,5 +361,5 @@ class SecureKeyGenerator:
         """Reset statistics."""
         with self._lock:
             self._total_generated = 0
-            self._start_time = datetime.now(timezone.utc)
+            self._start_time = datetime.now(UTC)
             logger.info("Statistics reset")

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GPU内存池修复验证测试
+"""GPU内存池修复验证测试.
 
 验证内容:
 1. 内存池是否正确初始化
@@ -20,7 +20,7 @@ from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
 
 
 def test_memory_pool_fix():
-    """测试内存池修复"""
+    """测试内存池修复."""
     print("\n" + "=" * 80)
     print("🔍 GPU内存池修复验证测试")
     print("=" * 80)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""端到端验收测试 - 完整用户场景
+"""端到端验收测试 - 完整用户场景.
 
 本模块测试完整的用户场景，确保：
 1. 完整用户场景：从 CLI 启动到结果输出
@@ -30,7 +30,7 @@ from tests.acceptance.conftest import (
 @pytest.mark.acceptance
 @pytest.mark.e2e
 class TestEndToEnd:
-    """端到端验收测试
+    """端到端验收测试.
 
     测试完整的用户场景：
     1. CLI 启动 → 引擎初始化 → 目标地址解析
@@ -40,7 +40,7 @@ class TestEndToEnd:
     """
 
     def test_e2e_complete_workflow(self, mock_event_bus, temp_dir):
-        """端到端测试：完整工作流
+        """端到端测试：完整工作流.
 
         验证点：
         - 初始化 → 启动 → 运行 → 停止 → 清理
@@ -89,7 +89,7 @@ class TestEndToEnd:
         # 注意：具体清理逻辑取决于实现
 
     def test_e2e_multi_mode_workflow(self, mock_event_bus, temp_dir):
-        """端到端测试：多模式工作流
+        """端到端测试：多模式工作流.
 
         验证点：
         - 所有搜索模式下工作流都能成功完成
@@ -133,7 +133,7 @@ class TestEndToEnd:
             assert engine.is_running() is False, f"端到端测试失败：模式 {mode} 停止失败"
 
     def test_e2e_callback_workflow(self, mock_event_bus):
-        """端到端测试：回调工作流"""
+        """端到端测试：回调工作流."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 端到端：回调工作流
@@ -161,7 +161,7 @@ class TestEndToEnd:
         # 这里主要验证回调函数的设置和工作流
 
     def test_e2e_checkpoint_workflow(self, mock_event_bus, temp_dir):
-        """端到端测试：检查点工作流"""
+        """端到端测试：检查点工作流."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 端到端：检查点工作流
@@ -210,7 +210,7 @@ class TestEndToEnd:
     ids=["random", "range_scan", "brute_force"],
 )
 class TestEndToEndMultiMode:
-    """端到端多模式测试
+    """端到端多模式测试.
 
     使用参数化测试覆盖三种搜索模式：
     1. 随机碰撞（random）
@@ -219,7 +219,7 @@ class TestEndToEndMultiMode:
     """
 
     def test_multi_mode_init(self, mock_event_bus, search_mode):
-        """多模式端到端测试：初始化"""
+        """多模式端到端测试：初始化."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 多模式：初始化
@@ -240,7 +240,7 @@ class TestEndToEndMultiMode:
         assert engine._current_mode == search_mode, f"多模式端到端测试失败：模式 {search_mode} 设置失败"
 
     def test_multi_mode_start_stop(self, mock_event_bus, search_mode):
-        """多模式端到端测试：启动和停止"""
+        """多模式端到端测试：启动和停止."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 多模式：启动和停止
@@ -272,7 +272,7 @@ class TestEndToEndMultiMode:
         assert engine.is_running() is False, f"多模式端到端测试失败：模式 {search_mode} 停止失败"
 
     def test_multi_mode_batch_size(self, mock_event_bus, search_mode, monkeypatch):
-        """多模式端到端测试：batch_size"""
+        """多模式端到端测试：batch_size."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 设置 CPU 核心数
@@ -298,10 +298,10 @@ class TestEndToEndMultiMode:
 
 @pytest.mark.acceptance
 class TestCompleteWorkflow:
-    """完整工作流测试"""
+    """完整工作流测试."""
 
     def test_workflow_initialization(self, mock_event_bus):
-        """完整工作流测试：初始化阶段"""
+        """完整工作流测试：初始化阶段."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 完整工作流：初始化阶段
@@ -317,7 +317,7 @@ class TestCompleteWorkflow:
         assert isinstance(engine.targets, set), "完整工作流测试失败：初始化阶段 targets 应为 set 类型"
 
     def test_workflow_startup(self, mock_event_bus):
-        """完整工作流测试：启动阶段"""
+        """完整工作流测试：启动阶段."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 完整工作流：启动阶段
@@ -343,7 +343,7 @@ class TestCompleteWorkflow:
         engine.stop(timeout=2.0)
 
     def test_workflow_running(self, mock_event_bus):
-        """完整工作流测试：运行阶段"""
+        """完整工作流测试：运行阶段."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 完整工作流：运行阶段
@@ -375,7 +375,7 @@ class TestCompleteWorkflow:
         engine.stop(timeout=2.0)
 
     def test_workflow_stopping(self, mock_event_bus):
-        """完整工作流测试：停止阶段"""
+        """完整工作流测试：停止阶段."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 完整工作流：停止阶段
@@ -400,7 +400,7 @@ class TestCompleteWorkflow:
         assert engine.is_running() is False, "完整工作流测试失败：停止阶段 is_running() 应返回 False"
 
     def test_workflow_cleanup(self, mock_event_bus):
-        """完整工作流测试：清理阶段"""
+        """完整工作流测试：清理阶段."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 完整工作流：清理阶段
@@ -429,10 +429,10 @@ class TestCompleteWorkflow:
 
 @pytest.mark.acceptance
 class TestErrorHandlingEndToEnd:
-    """错误处理端到端测试"""
+    """错误处理端到端测试."""
 
     def test_error_handling_detection(self, mock_event_bus):
-        """错误处理端到端测试：错误检测"""
+        """错误处理端到端测试：错误检测."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 错误处理：错误检测
@@ -449,7 +449,7 @@ class TestErrorHandlingEndToEnd:
         assert engine._engine_stop_reason == "error", "错误处理端到端测试失败：错误检测失败"
 
     def test_error_handling_handling(self, mock_event_bus):
-        """错误处理端到端测试：错误处理"""
+        """错误处理端到端测试：错误处理."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 错误处理：错误处理
@@ -464,7 +464,7 @@ class TestErrorHandlingEndToEnd:
         assert engine is not None, "错误处理端到端测试失败：错误处理失败"
 
     def test_error_handling_recovery(self, mock_event_bus):
-        """错误处理端到端测试：错误恢复"""
+        """错误处理端到端测试：错误恢复."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 错误处理：错误恢复
@@ -491,10 +491,10 @@ class TestErrorHandlingEndToEnd:
 @pytest.mark.acceptance
 @pytest.mark.edge_cases
 class TestEndToEndEdgeCases:
-    """端到端边界条件测试"""
+    """端到端边界条件测试."""
 
     def test_edge_case_empty_targets(self, mock_event_bus):
-        """边界条件测试：空目标地址集合"""
+        """边界条件测试：空目标地址集合."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         engine = KeyCollisionEngine(
@@ -504,7 +504,7 @@ class TestEndToEndEdgeCases:
         assert len(engine.targets) == 0, "边界条件测试失败：空目标集合时 targets 长度应为 0"
 
     def test_edge_case_single_target(self, mock_event_bus):
-        """边界条件测试：单个目标地址"""
+        """边界条件测试：单个目标地址."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         targets = {AcceptanceTestConstants.VALID_P2PKH_ADDRESS}
@@ -516,7 +516,7 @@ class TestEndToEndEdgeCases:
         assert isinstance(engine.targets, set), "边界条件测试失败：targets 应为 set 类型"
 
     def test_edge_case_max_workers(self, mock_event_bus):
-        """边界条件测试：最大工作线程数"""
+        """边界条件测试：最大工作线程数."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         targets = {AcceptanceTestConstants.VALID_P2PKH_ADDRESS}

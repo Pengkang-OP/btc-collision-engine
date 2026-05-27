@@ -1,4 +1,4 @@
-"""LogStorage 单元测试 - 匹配真实 API
+"""LogStorage 单元测试 - 匹配真实 API.
 
 API:
 - __init__(storage_dir="logs")
@@ -49,7 +49,7 @@ class TestLogStorageInit:
             assert Path(d).is_dir()
 
     def test_default_path_works(self):
-        """默认路径 'logs' 能正常工作"""
+        """默认路径 'logs' 能正常工作."""
         with tempfile.TemporaryDirectory() as d:
             logs_dir = pathlib.Path(d) / "logs"
             LogStorage(storage_dir=str(logs_dir))
@@ -130,7 +130,7 @@ class TestLogStorageLoad:
         assert [e["id"] for e in result] == [1, 2, 3]
 
     def test_load_all_sorted_by_filename(self, storage, tmpdir):
-        """文件按名称排序加载，保证时间顺序"""
+        """文件按名称排序加载，保证时间顺序."""
         import time
 
         storage.save([{"seq": 1}])
@@ -149,13 +149,13 @@ class TestLogStorageLoad:
 
 class TestLogStorageEdgeCases:
     def test_storage_dir_with_subdirs(self, tmpdir):
-        """支持子目录路径"""
+        """支持子目录路径."""
         sub = pathlib.Path(tmpdir) / "sub" / "logs"
         LogStorage(storage_dir=str(sub))
         assert sub.is_dir()
 
     def test_save_and_load_roundtrip(self, storage, tmpdir):
-        """保存后重新加载数据一致"""
+        """保存后重新加载数据一致."""
         original = [
             {"ts": 1, "msg": "first"},
             {"ts": 2, "msg": "second"},
@@ -165,7 +165,7 @@ class TestLogStorageEdgeCases:
         assert loaded == original
 
     def test_large_number_of_entries(self, storage, tmpdir):
-        """大量条目保存和加载"""
+        """大量条目保存和加载."""
         entries = [{"id": i, "data": f"entry_{i}"} for i in range(1000)]
         storage.save(entries)
         loaded = storage.load_all()
@@ -173,7 +173,7 @@ class TestLogStorageEdgeCases:
         assert loaded == entries
 
     def test_load_all_ignores_non_json_files(self, storage, tmpdir):
-        """load_all 只读取 log_*.json 文件"""
+        """load_all 只读取 log_*.json 文件."""
         storage.save([{"valid": True}])
         # 创建干扰文件
         (pathlib.Path(tmpdir) / "other.txt").write_text("not json")

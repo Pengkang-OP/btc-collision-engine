@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""数据日志系统单元测试
+"""数据日志系统单元测试.
 
 测试src.monitoring.data_logger模块的所有功能。
 
@@ -27,19 +27,19 @@ from src.monitoring.data_logger import DataLogger
 
 
 class TestDataLoggerInit:
-    """测试DataLogger初始化"""
+    """测试DataLogger初始化."""
 
     def setup_method(self):
-        """每个测试前准备"""
+        """每个测试前准备."""
         self.test_dir = tempfile.mkdtemp()
 
     def teardown_method(self):
-        """每个测试后清理"""
+        """每个测试后清理."""
         if pathlib.Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_init_default(self):
-        """测试默认初始化"""
+        """测试默认初始化."""
         logger = DataLogger()
 
         assert logger is not None
@@ -48,20 +48,20 @@ class TestDataLoggerInit:
         assert logger.performance_log_file is not None
 
     def test_init_custom_storage_dir(self):
-        """测试自定义存储目录"""
+        """测试自定义存储目录."""
         logger = DataLogger(storage_dir=self.test_dir)
 
         assert logger.storage_dir == self.test_dir
 
     def test_init_creates_directory(self):
-        """测试初始化时创建目录"""
+        """测试初始化时创建目录."""
         new_dir = os.path.join(self.test_dir, "new_logs")
         logger = DataLogger(storage_dir=new_dir)  # noqa: F841
 
         assert pathlib.Path(new_dir).exists()
 
     def test_init_performance_log_file(self):
-        """测试性能日志文件初始化"""
+        """测试性能日志文件初始化."""
         logger = DataLogger(storage_dir=self.test_dir)
 
         # 验证performance_log_file属性已设置（文件可能延迟创建）
@@ -70,20 +70,20 @@ class TestDataLoggerInit:
 
 
 class TestDataLoggerPerformanceRecording:
-    """测试性能数据记录"""
+    """测试性能数据记录."""
 
     def setup_method(self):
-        """每个测试前准备"""
+        """每个测试前准备."""
         self.test_dir = tempfile.mkdtemp()
         self.logger = DataLogger(storage_dir=self.test_dir)
 
     def teardown_method(self):
-        """每个测试后清理"""
+        """每个测试后清理."""
         if pathlib.Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_record_performance_data(self):
-        """测试记录性能数据"""
+        """测试记录性能数据."""
         self.logger.record_performance_data(
             speed=1000.0,
             total_checked=5000,
@@ -99,7 +99,7 @@ class TestDataLoggerPerformanceRecording:
         assert "avg_speed" in stats  # DataLogger使用avg_speed而不是speed
 
     def test_record_multiple_performance_data(self):
-        """测试记录多条性能数据"""
+        """测试记录多条性能数据."""
         for i in range(5):
             self.logger.record_performance_data(
                 speed=1000.0 + i * 100,
@@ -115,7 +115,7 @@ class TestDataLoggerPerformanceRecording:
         assert "avg_speed" in stats  # 使用avg_speed
 
     def test_record_performance_with_zero_values(self):
-        """测试记录零值性能数据"""
+        """测试记录零值性能数据."""
         self.logger.record_performance_data(
             speed=0.0,
             total_checked=0,
@@ -131,20 +131,20 @@ class TestDataLoggerPerformanceRecording:
 
 
 class TestDataLoggerEngineRecording:
-    """测试引擎数据记录"""
+    """测试引擎数据记录."""
 
     def setup_method(self):
-        """每个测试前准备"""
+        """每个测试前准备."""
         self.test_dir = tempfile.mkdtemp()
         self.logger = DataLogger(storage_dir=self.test_dir)
 
     def teardown_method(self):
-        """每个测试后清理"""
+        """每个测试后清理."""
         if pathlib.Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_record_engine_data(self):
-        """测试记录引擎数据"""
+        """测试记录引擎数据."""
         self.logger.record_engine_data(
             mode="random",
             target_count=10,
@@ -157,7 +157,7 @@ class TestDataLoggerEngineRecording:
         assert current_data is not None
 
     def test_record_engine_data_with_additional_info(self):
-        """测试记录引擎数据（包含附加信息）"""
+        """测试记录引擎数据（包含附加信息）."""
         additional_info = {"batch_size": 100, "max_workers": 4, "dedup_enabled": True}
 
         self.logger.record_engine_data(
@@ -174,27 +174,27 @@ class TestDataLoggerEngineRecording:
 
 
 class TestDataLoggerSystemRecording:
-    """测试系统数据记录"""
+    """测试系统数据记录."""
 
     def setup_method(self):
-        """每个测试前准备"""
+        """每个测试前准备."""
         self.test_dir = tempfile.mkdtemp()
         self.logger = DataLogger(storage_dir=self.test_dir)
 
     def teardown_method(self):
-        """每个测试后清理"""
+        """每个测试后清理."""
         if pathlib.Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_record_system_data(self):
-        """测试记录系统数据"""
+        """测试记录系统数据."""
         self.logger.record_system_data()
 
         current_data = self.logger.get_current_data()
         assert current_data is not None
 
     def test_record_system_data_with_custom_values(self):
-        """测试记录自定义系统数据"""
+        """测试记录自定义系统数据."""
         self.logger.record_system_data(
             os_name="Windows",
             python_version="3.12.0",
@@ -207,20 +207,20 @@ class TestDataLoggerSystemRecording:
 
 
 class TestDataLoggerErrorRecording:
-    """测试错误日志记录"""
+    """测试错误日志记录."""
 
     def setup_method(self):
-        """每个测试前准备"""
+        """每个测试前准备."""
         self.test_dir = tempfile.mkdtemp()
         self.logger = DataLogger(storage_dir=self.test_dir)
 
     def teardown_method(self):
-        """每个测试后清理"""
+        """每个测试后清理."""
         if pathlib.Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_record_error(self):
-        """测试记录错误"""
+        """测试记录错误."""
         self.logger.record_error(
             error_type="test_error",
             message="Test error message",
@@ -236,7 +236,7 @@ class TestDataLoggerErrorRecording:
         assert has_in_buffer or has_in_file, "错误未在内存缓冲区或错误日志文件中找到"
 
     def test_record_error_with_context(self):
-        """测试记录错误（包含上下文）"""
+        """测试记录错误（包含上下文）."""
         context = {"worker_id": 1, "batch_size": 100}
 
         self.logger.record_error(
@@ -254,7 +254,7 @@ class TestDataLoggerErrorRecording:
         assert has_in_buffer or has_in_file, "错误未在内存缓冲区或错误日志文件中找到"
 
     def test_record_multiple_errors(self):
-        """测试记录多个错误"""
+        """测试记录多个错误."""
         for i in range(5):
             self.logger.record_error(error_type=f"error_{i}", message=f"Error message {i}")
 
@@ -267,20 +267,20 @@ class TestDataLoggerErrorRecording:
 
 
 class TestDataLoggerSaveLoad:
-    """测试数据保存和加载"""
+    """测试数据保存和加载."""
 
     def setup_method(self):
-        """每个测试前准备"""
+        """每个测试前准备."""
         self.test_dir = tempfile.mkdtemp()
         self.logger = DataLogger(storage_dir=self.test_dir)
 
     def teardown_method(self):
-        """每个测试后清理"""
+        """每个测试后清理."""
         if pathlib.Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_save_current_data(self):
-        """测试保存当前数据"""
+        """测试保存当前数据."""
         self.logger.record_performance_data(
             speed=1000.0,
             total_checked=5000,
@@ -297,7 +297,7 @@ class TestDataLoggerSaveLoad:
         assert pathlib.Path(current_data_path).exists()
 
     def test_save_history_data(self):
-        """测试保存历史数据"""
+        """测试保存历史数据."""
         # 在保存前先验证数据已被记录到内存缓冲区
         self.logger.record_performance_data(
             speed=1000.0,
@@ -317,7 +317,7 @@ class TestDataLoggerSaveLoad:
         assert stats["total_checks"] == 5000
 
     def test_load_current_data(self):
-        """测试加载当前数据"""
+        """测试加载当前数据."""
         # 先保存数据
         self.logger.record_performance_data(
             speed=1000.0,
@@ -336,7 +336,7 @@ class TestDataLoggerSaveLoad:
         assert current_data is not None
 
     def test_save_and_load_cycle(self):
-        """测试保存和加载循环"""
+        """测试保存和加载循环."""
         # 记录数据
         self.logger.record_performance_data(
             speed=1500.0,
@@ -371,27 +371,27 @@ class TestDataLoggerSaveLoad:
 
 
 class TestDataLoggerStatistics:
-    """测试统计数据查询"""
+    """测试统计数据查询."""
 
     def setup_method(self):
-        """每个测试前准备"""
+        """每个测试前准备."""
         self.test_dir = tempfile.mkdtemp()
         self.logger = DataLogger(storage_dir=self.test_dir)
 
     def teardown_method(self):
-        """每个测试后清理"""
+        """每个测试后清理."""
         if pathlib.Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_get_statistics_empty(self):
-        """测试获取空统计数据"""
+        """测试获取空统计数据."""
         stats = self.logger.get_statistics()
 
         assert isinstance(stats, dict)
         assert "total_checks" in stats
 
     def test_get_statistics_after_recording(self):
-        """测试记录后获取统计数据"""
+        """测试记录后获取统计数据."""
         self.logger.record_performance_data(
             speed=1000.0,
             total_checked=5000,
@@ -408,7 +408,7 @@ class TestDataLoggerStatistics:
         assert stats["matches_found"] == 0
 
     def test_get_statistics_with_multiple_records(self):
-        """测试多条记录后的统计数据"""
+        """测试多条记录后的统计数据."""
         for i in range(3):
             self.logger.record_performance_data(
                 speed=1000.0 + i * 500,
@@ -428,20 +428,20 @@ class TestDataLoggerStatistics:
 
 
 class TestDataLoggerReports:
-    """测试报告生成"""
+    """测试报告生成."""
 
     def setup_method(self):
-        """每个测试前准备"""
+        """每个测试前准备."""
         self.test_dir = tempfile.mkdtemp()
         self.logger = DataLogger(storage_dir=self.test_dir)
 
     def teardown_method(self):
-        """每个测试后清理"""
+        """每个测试后清理."""
         if pathlib.Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_generate_daily_report(self):
-        """测试生成每日报告"""
+        """测试生成每日报告."""
         # 记录一些数据
         self.logger.record_performance_data(
             speed=1000.0,
@@ -458,13 +458,13 @@ class TestDataLoggerReports:
         assert isinstance(report, dict)
 
     def test_generate_report_with_no_data(self):
-        """测试无数据时生成报告"""
+        """测试无数据时生成报告."""
         report = self.logger.generate_report("daily")
 
         assert report is not None
 
     def test_report_saved_to_file(self):
-        """测试报告保存到文件"""
+        """测试报告保存到文件."""
         self.logger.record_performance_data(
             speed=1000.0,
             total_checked=5000,
@@ -490,20 +490,20 @@ class TestDataLoggerReports:
 
 
 class TestDataLoggerCleanup:
-    """测试自动清理功能"""
+    """测试自动清理功能."""
 
     def setup_method(self):
-        """每个测试前准备"""
+        """每个测试前准备."""
         self.test_dir = tempfile.mkdtemp()
         self.logger = DataLogger(storage_dir=self.test_dir)
 
     def teardown_method(self):
-        """每个测试后清理"""
+        """每个测试后清理."""
         if pathlib.Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_cleanup_old_history(self):
-        """测试清理旧历史数据 (v4.3.1: 适配 JSONL 格式)"""
+        """测试清理旧历史数据 (v4.3.1: 适配 JSONL 格式)."""
         # 创建一些历史数据
         for i in range(10):
             self.logger.record_performance_data(
@@ -525,20 +525,20 @@ class TestDataLoggerCleanup:
 
 
 class TestDataLoggerThreadSafety:
-    """测试线程安全性"""
+    """测试线程安全性."""
 
     def setup_method(self):
-        """每个测试前准备"""
+        """每个测试前准备."""
         self.test_dir = tempfile.mkdtemp()
         self.logger = DataLogger(storage_dir=self.test_dir)
 
     def teardown_method(self):
-        """每个测试后清理"""
+        """每个测试后清理."""
         if pathlib.Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_concurrent_record(self):
-        """测试并发记录"""
+        """测试并发记录."""
         import threading
 
         def record_data(thread_id):

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""自动修复标题层级跳跃
+"""自动修复标题层级跳跃.
 
 检测并修复Markdown文档中的标题层级跳跃问题
 例如：从 # 直接跳到 ###，缺少 ##
@@ -18,7 +18,7 @@ from pathlib import Path
 
 @dataclass
 class HeadingInfo:
-    """标题信息"""
+    """标题信息."""
 
     line_num: int
     level: int  # 1-6
@@ -27,7 +27,7 @@ class HeadingInfo:
 
 
 def extract_headings(content: str) -> list[HeadingInfo]:
-    """提取文档中的所有标题"""
+    """提取文档中的所有标题."""
     headings = []
     lines = content.split("\n")
 
@@ -42,7 +42,7 @@ def extract_headings(content: str) -> list[HeadingInfo]:
 
 
 def detect_heading_jumps(headings: list[HeadingInfo]) -> list[tuple[int, int, int]]:
-    """检测标题层级跳跃
+    """检测标题层级跳跃.
 
     Returns:
         List of (from_level, to_level, line_num)
@@ -61,7 +61,7 @@ def detect_heading_jumps(headings: list[HeadingInfo]) -> list[tuple[int, int, in
 
 
 def fix_heading_jumps(content: str, dry_run: bool = False) -> tuple[str, int]:
-    """修复标题层级跳跃
+    """修复标题层级跳跃.
 
     Returns:
         (修复后的内容, 修复数量)
@@ -96,12 +96,11 @@ def fix_heading_jumps(content: str, dry_run: bool = False) -> tuple[str, int]:
 
     if not dry_run:
         return "\n".join(lines), fixed_count
-    else:
-        return content, len(jumps)
+    return content, len(jumps)
 
 
 def analyze_file(file_path: Path) -> dict:
-    """分析单个文件的标题层级问题"""
+    """分析单个文件的标题层级问题."""
     content = file_path.read_text(encoding="utf-8")
     headings = extract_headings(content)
     jumps = detect_heading_jumps(headings)
@@ -116,7 +115,7 @@ def analyze_file(file_path: Path) -> dict:
 
 
 def main():
-    """主函数"""
+    """主函数."""
     import argparse
 
     parser = argparse.ArgumentParser(description="自动修复标题层级跳跃")

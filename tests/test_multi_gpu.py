@@ -1,4 +1,4 @@
-"""多GPU功能单元测试"""
+"""多GPU功能单元测试."""
 
 import pytest
 
@@ -6,16 +6,16 @@ pytestmark = pytest.mark.gpu
 
 
 class TestGPUDeviceSelector:
-    """测试GPU设备选择器"""
+    """测试GPU设备选择器."""
 
     def setup_method(self, method):
-        """测试准备"""
+        """测试准备."""
         from src.gpu.selector import GPUDeviceSelector
 
         self.selector = GPUDeviceSelector()
 
     def test_score_device_nvidia(self):
-        """测试NVIDIA设备评分"""
+        """测试NVIDIA设备评分."""
         device = {
             "global_index": 0,
             "name": "NVIDIA GeForce GTX 1660 Ti",
@@ -32,7 +32,7 @@ class TestGPUDeviceSelector:
         assert score == pytest.approx(expected, abs=5.0)
 
     def test_score_device_intel(self):
-        """测试Intel设备评分"""
+        """测试Intel设备评分."""
         device = {
             "global_index": 1,
             "name": "Intel Arc A770",
@@ -49,7 +49,7 @@ class TestGPUDeviceSelector:
         assert score == pytest.approx(expected, abs=10.0)
 
     def test_select_best_device(self):
-        """测试选择最佳设备"""
+        """测试选择最佳设备."""
         devices = [
             {
                 "global_index": 0,
@@ -76,10 +76,10 @@ class TestGPUDeviceSelector:
 
 
 class TestGPULoadBalancer:
-    """测试GPU负载均衡器"""
+    """测试GPU负载均衡器."""
 
     def setup_method(self, method):
-        """测试准备"""
+        """测试准备."""
         self.devices = [
             {
                 "global_index": 0,
@@ -98,7 +98,7 @@ class TestGPULoadBalancer:
         ]
 
     def test_performance_weights(self):
-        """测试性能权重计算"""
+        """测试性能权重计算."""
         from src.gpu.load_balancer import GPULoadBalancer
 
         balancer = GPULoadBalancer(self.devices, strategy="performance")
@@ -112,7 +112,7 @@ class TestGPULoadBalancer:
         assert weights[1] > weights[0]
 
     def test_equal_weights(self):
-        """测试平均分配权重"""
+        """测试平均分配权重."""
         from src.gpu.load_balancer import GPULoadBalancer
 
         balancer = GPULoadBalancer(self.devices, strategy="equal")
@@ -123,7 +123,7 @@ class TestGPULoadBalancer:
         assert weights[1] == pytest.approx(0.5, abs=10**-2)
 
     def test_assign_key_range(self):
-        """测试私钥范围分配"""
+        """测试私钥范围分配."""
         from src.gpu.load_balancer import GPULoadBalancer
 
         balancer = GPULoadBalancer(self.devices, strategy="equal")
@@ -134,16 +134,16 @@ class TestGPULoadBalancer:
 
 
 class TestGPUAutoConfigurator:
-    """测试GPU自动调优器"""
+    """测试GPU自动调优器."""
 
     def setup_method(self, method):
-        """测试准备"""
+        """测试准备."""
         from src.gpu.auto_config import GPUAutoConfigurator
 
         self.configurator = GPUAutoConfigurator()
 
     def test_nvidia_config(self):
-        """测试NVIDIA配置"""
+        """测试NVIDIA配置."""
         device = {"vendor": "nvidia", "global_mem_gb": 8.0}
 
         config = self.configurator.get_nvidia_config(device)
@@ -154,7 +154,7 @@ class TestGPUAutoConfigurator:
         assert config["batch_size"] in [32768, 65536, 131072]
 
     def test_intel_config(self):
-        """测试Intel配置（v4.2.3: Arc A770 16GB优化为2097152 (2M)）"""
+        """测试Intel配置（v4.2.3: Arc A770 16GB优化为2097152 (2M)）."""
         device = {"vendor": "intel", "global_mem_gb": 16.0}
 
         config = self.configurator.get_intel_config(device)
@@ -165,7 +165,7 @@ class TestGPUAutoConfigurator:
         assert config["batch_size"] in [65536, 131072, 262144, 1048576, 2097152]
 
     def test_configure_for_device_intel_full_vendor_name(self):
-        """测试完整厂商名称路由 - Intel(R) Corporation 应走 INTEL_ARC_CONFIG"""
+        """测试完整厂商名称路由 - Intel(R) Corporation 应走 INTEL_ARC_CONFIG."""
         device = {
             "vendor": "Intel(R) Corporation",
             "name": "Intel(R) Arc(TM) A770 Graphics",
@@ -178,7 +178,7 @@ class TestGPUAutoConfigurator:
         assert config["batch_size"] == 2097152, "Intel Arc A770(≥15GB) 应使用2097152批次(v4.2.3优化: 2M)"
 
     def test_configure_for_device_amd_full_vendor_name(self):
-        """测试完整厂商名称路由 - Advanced Micro Devices, Inc. 应走 AMD_CONFIG"""
+        """测试完整厂商名称路由 - Advanced Micro Devices, Inc. 应走 AMD_CONFIG."""
         device = {
             "vendor": "Advanced Micro Devices, Inc.",
             "name": "AMD Radeon RX 6800 XT",
@@ -189,7 +189,7 @@ class TestGPUAutoConfigurator:
         assert not config["use_uint32_workaround"], "AMD GPU 不需要uint32 workaround"
 
     def test_configure_for_device_unknown_vendor(self):
-        """测试未知厂商应回退到保守配置"""
+        """测试未知厂商应回退到保守配置."""
         device = {
             "vendor": "SomeUnknownVendor",
             "name": "Unknown GPU",
@@ -201,7 +201,7 @@ class TestGPUAutoConfigurator:
 
 
 class TestGPUConfigValidator:
-    """v5.2.1: GPUConfigValidator 模块已移除 - 测试跳过"""
+    """v5.2.1: GPUConfigValidator 模块已移除 - 测试跳过."""
 
     def test_dummy(self):
         pass  # placeholder to satisfy unittest collection

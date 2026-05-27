@@ -1,4 +1,4 @@
-"""引擎启动与主循环 (engine_runner) 单元测试 — 对齐 src/cli/engine_runner.py 真实 API
+"""引擎启动与主循环 (engine_runner) 单元测试 — 对齐 src/cli/engine_runner.py 真实 API.
 
 注意:
 - _setup_and_start_engine 在函数内做相对导入，patch 路径必须对应实际模块
@@ -22,7 +22,7 @@ from src.cli.engine_runner import (
 
 @pytest.mark.unit
 class TestComputeRange:
-    """范围计算测试"""
+    """范围计算测试."""
 
     def test_random_mode_returns_none(self):
         args = Mock(mode="random")
@@ -72,7 +72,7 @@ class TestComputeRange:
 
 @pytest.mark.unit
 class TestPrintConfigInfo:
-    """配置信息打印测试 — 使用 print() 非 CLIOutput"""
+    """配置信息打印测试 — 使用 print() 非 CLIOutput."""
 
     def test_random_mode_output(self, capsys):
         args = Mock(
@@ -139,7 +139,7 @@ class TestPrintConfigInfo:
 
 @pytest.mark.unit
 class TestSetupAndStartEngine:
-    """引擎启动测试 — patch 实际导入路径"""
+    """引擎启动测试 — patch 实际导入路径."""
 
     def test_cpu_engine_created(self):
         from src.cli.engine_runner import _setup_and_start_engine
@@ -262,7 +262,7 @@ class TestSetupAndStartEngine:
 
 @pytest.mark.unit
 class TestRunCollisionLoop:
-    """主循环测试"""
+    """主循环测试."""
 
     def _make_mock_engine(self, is_running_side_effect=None):
         eng = MagicMock()

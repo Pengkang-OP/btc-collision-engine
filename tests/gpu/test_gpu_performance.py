@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GPU碰撞引擎性能验证专项测试
+"""GPU碰撞引擎性能验证专项测试.
 
 覆盖:
 - 性能优化器
@@ -26,10 +26,10 @@ pytestmark = pytest.mark.gpu
 
 
 class TestPerformanceOptimizer:
-    """性能优化器测试"""
+    """性能优化器测试."""
 
     def test_gpu_optimizer_profile_creation(self):
-        """测试GPU配置文件创建"""
+        """测试GPU配置文件创建."""
         optimizer = GPUPerformanceOptimizer()
 
         # 测试NVIDIA配置
@@ -70,7 +70,7 @@ class TestPerformanceOptimizer:
         assert intel_profile.enable_async_execution is True
 
     def test_gpu_optimizer_adaptive_adjustment(self):
-        """测试自适应调整 — 性能下降触发减少batch"""
+        """测试自适应调整 — 性能下降触发减少batch."""
         optimizer = GPUPerformanceOptimizer()
 
         # 先创建配置文件(必需)
@@ -104,7 +104,7 @@ class TestPerformanceOptimizer:
         assert new_batch_size < initial_batch_size
 
     def test_gpu_optimizer_performance_recording(self):
-        """测试性能指标记录"""
+        """测试性能指标记录."""
         optimizer = GPUPerformanceOptimizer()
 
         # 记录100个批次
@@ -121,7 +121,7 @@ class TestPerformanceOptimizer:
             assert len(optimizer._metrics_history) == 100
 
     def test_vendor_detection(self):
-        """测试GPU厂商检测"""
+        """测试GPU厂商检测."""
         optimizer = GPUPerformanceOptimizer()
         # NVIDIA
         nv = optimizer.detect_vendor("NVIDIA GeForce RTX 3080", "NVIDIA Corporation")
@@ -136,13 +136,13 @@ class TestPerformanceOptimizer:
         assert optimizer.detect_vendor("Unknown GPU", "Unknown") == GPUVendor.UNKNOWN
 
     def test_singleton_pattern(self):
-        """测试单例模式"""
+        """测试单例模式."""
         optimizer1 = get_gpu_optimizer()
         optimizer2 = get_gpu_optimizer()
         assert optimizer1 is optimizer2
 
     def test_reset(self):
-        """测试重置功能"""
+        """测试重置功能."""
         optimizer = GPUPerformanceOptimizer()
         optimizer.record_performance(PerformanceMetrics())
         optimizer.create_optimized_profile("Test", "Test", 8 * 1024**3)
@@ -154,7 +154,7 @@ class TestPerformanceOptimizer:
         assert optimizer._last_adjustment_time == 0.0
 
     def test_memory_based_batch_adjustment(self):
-        """测试基于显存的batch_size调整"""
+        """测试基于显存的batch_size调整."""
         optimizer = GPUPerformanceOptimizer()
         # 小显存（1GB）
         profile_small = optimizer.create_optimized_profile(
@@ -171,7 +171,7 @@ class TestPerformanceOptimizer:
         assert profile_large.max_batch_size > profile_small.max_batch_size
 
     def test_compile_time_based_adjustment(self):
-        """测试基于编译时间的调整"""
+        """测试基于编译时间的调整."""
         optimizer = GPUPerformanceOptimizer()
         profile_fast = optimizer.create_optimized_profile(
             device_name="Test GPU",
@@ -188,7 +188,7 @@ class TestPerformanceOptimizer:
         assert profile_fast.max_batch_size > profile_slow.max_batch_size
 
     def test_get_optimization_report(self):
-        """测试优化报告生成"""
+        """测试优化报告生成."""
         optimizer = GPUPerformanceOptimizer()
         optimizer.create_optimized_profile(
             device_name="NVIDIA RTX 3080",
@@ -209,10 +209,10 @@ class TestPerformanceOptimizer:
 
 @pytest.mark.skip(reason="Mock GPU engine performance needs real hardware setup")
 class TestThroughput:
-    """吞吐量测试"""
+    """吞吐量测试."""
 
     def test_batch_processing_throughput(self):
-        """测试批次处理吞吐量"""
+        """测试批次处理吞吐量."""
         stats = CollisionStats()
         stats.start_time = time.time()
 
@@ -235,10 +235,10 @@ class TestThroughput:
 
 @pytest.mark.skip(reason="Mock GPU engine performance needs real hardware setup")
 class TestMemoryUsage:
-    """内存使用测试"""
+    """内存使用测试."""
 
     def test_gpu_memory_buffer_allocation(self):
-        """测试GPU内存缓冲区分配"""
+        """测试GPU内存缓冲区分配."""
         batch_size = 10000
 
         # 计算预期内存使用
@@ -249,7 +249,7 @@ class TestMemoryUsage:
         assert expected_memory < 100 * 1024**2  # 小于100MB
 
     def test_memory_leak_detection(self):
-        """测试内存泄漏检测"""
+        """测试内存泄漏检测."""
         process = psutil.Process(os.getpid())
 
         # 记录初始内存
@@ -279,10 +279,10 @@ class TestMemoryUsage:
 
 @pytest.mark.skip(reason="Checkpoint snapshot API mismatch")
 class TestSecurityValidation:
-    """安全验证测试"""
+    """安全验证测试."""
 
     def test_private_key_not_logged(self):
-        """测试私钥不记录到日志"""
+        """测试私钥不记录到日志."""
         import logging
         from io import StringIO
 
@@ -309,7 +309,7 @@ class TestSecurityValidation:
         logger.removeHandler(handler)
 
     def test_checkpoint_no_private_key(self):
-        """测试断点文件不包含私钥"""
+        """测试断点文件不包含私钥."""
         import json
         import tempfile
 
@@ -351,10 +351,10 @@ class TestSecurityValidation:
 
 @pytest.mark.skip(reason="Race condition test needs real multi-threaded engine")
 class TestRaceConditions:
-    """竞态条件测试"""
+    """竞态条件测试."""
 
     def test_race_condition_stats_update(self):
-        """测试统计数据竞态条件
+        """测试统计数据竞态条件.
 
         注意: 这个测试验证的是"弱线程安全"- 即不会崩溃
         CollisionStats.update() 使用赋值语义（设置累计值），所有调用者
@@ -399,7 +399,7 @@ class TestRaceConditions:
         assert stats.speed >= 0  # 验证可以正常计算速度
 
     def test_race_condition_checkpoint(self):
-        """测试断点竞态条件"""
+        """测试断点竞态条件."""
         import tempfile
         import threading
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""基础搜索模式 (BaseSearchMode) 单元测试
+"""基础搜索模式 (BaseSearchMode) 单元测试.
 
 覆盖：
 - BaseSearchMode 初始化（引擎引用）
@@ -25,7 +25,7 @@ from src.gpu.search_modes.base_search import BaseSearchMode
 
 
 def _make_engine_stub(**kwargs):
-    """创建 GPUCollisionEngine stub"""
+    """创建 GPUCollisionEngine stub."""
     engine = MagicMock()
     engine._stop_event = MagicMock()
     engine._stop_event.is_set.return_value = kwargs.get("stop_event_set", False)
@@ -64,16 +64,16 @@ def _make_engine_stub(**kwargs):
 @pytest.mark.unit
 @pytest.mark.gpu_kernel
 class TestBaseSearchModeInit:
-    """BaseSearchMode 初始化测试"""
+    """BaseSearchMode 初始化测试."""
 
     def test_init_stores_engine_reference(self):
-        """测试初始化存储引擎引用"""
+        """测试初始化存储引擎引用."""
         engine = _make_engine_stub()
         mode = BaseSearchMode(engine)
         assert mode.engine is engine
 
     def test_init_does_not_copy_state(self):
-        """测试初始化不复制引擎状态（通过引用访问）"""
+        """测试初始化不复制引擎状态（通过引用访问）."""
         engine = _make_engine_stub()
         mode = BaseSearchMode(engine)
         # 修改原始引擎，mode 应反映变化
@@ -89,10 +89,10 @@ class TestBaseSearchModeInit:
 @pytest.mark.unit
 @pytest.mark.gpu_kernel
 class TestGenerateSequentialKeys:
-    """连续私钥生成测试"""
+    """连续私钥生成测试."""
 
     def test_generate_single_key(self):
-        """测试生成单个私钥"""
+        """测试生成单个私钥."""
         engine = _make_engine_stub()
         mode = BaseSearchMode(engine)
         keys = mode._generate_sequential_keys(1, 1)
@@ -102,7 +102,7 @@ class TestGenerateSequentialKeys:
         assert keys == expected
 
     def test_generate_zero_key(self):
-        """测试生成私钥 0"""
+        """测试生成私钥 0."""
         engine = _make_engine_stub()
         mode = BaseSearchMode(engine)
         keys = mode._generate_sequential_keys(0, 1)
@@ -110,7 +110,7 @@ class TestGenerateSequentialKeys:
         assert keys == expected
 
     def test_generate_multiple_keys(self):
-        """测试生成多个私钥"""
+        """测试生成多个私钥."""
         engine = _make_engine_stub()
         mode = BaseSearchMode(engine)
         count = 5
@@ -123,7 +123,7 @@ class TestGenerateSequentialKeys:
         assert last == (10 + count - 1).to_bytes(32, "big")
 
     def test_generate_large_count(self):
-        """测试生成大量私钥"""
+        """测试生成大量私钥."""
         engine = _make_engine_stub()
         mode = BaseSearchMode(engine)
         count = 10000
@@ -131,7 +131,7 @@ class TestGenerateSequentialKeys:
         assert len(keys) == count * 32
 
     def test_generate_keys_sequential(self):
-        """测试生成的私钥是连续序列"""
+        """测试生成的私钥是连续序列."""
         engine = _make_engine_stub()
         mode = BaseSearchMode(engine)
         start = 42
@@ -143,7 +143,7 @@ class TestGenerateSequentialKeys:
             assert chunk == expected_int.to_bytes(32, "big"), f"Key {i} mismatch"
 
     def test_generate_large_start_value(self):
-        """测试大起始值"""
+        """测试大起始值."""
         engine = _make_engine_stub()
         mode = BaseSearchMode(engine)
         start = 2**255  # 接近最大值
@@ -151,7 +151,7 @@ class TestGenerateSequentialKeys:
         assert len(keys) == 32
 
     def test_generate_max_range(self):
-        """测试接近 2**256-1 的起始值"""
+        """测试接近 2**256-1 的起始值."""
         engine = _make_engine_stub()
         mode = BaseSearchMode(engine)
         start = 2**256 - 2
@@ -162,7 +162,7 @@ class TestGenerateSequentialKeys:
         assert last == 2**256 - 1
 
     def test_generate_zero_count_returns_empty(self):
-        """测试生成 0 个私钥返回空字节串"""
+        """测试生成 0 个私钥返回空字节串."""
         engine = _make_engine_stub()
         mode = BaseSearchMode(engine)
         keys = mode._generate_sequential_keys(0, 0)
@@ -171,7 +171,7 @@ class TestGenerateSequentialKeys:
     # ── 确定性测试 ──
 
     def test_deterministic_output(self):
-        """测试相同输入产生相同输出"""
+        """测试相同输入产生相同输出."""
         engine = _make_engine_stub()
         mode = BaseSearchMode(engine)
         keys1 = mode._generate_sequential_keys(100, 5)
@@ -187,10 +187,10 @@ class TestGenerateSequentialKeys:
 @pytest.mark.unit
 @pytest.mark.gpu_kernel
 class TestExecuteBatchLoopNormal:
-    """批处理循环正常流程测试"""
+    """批处理循环正常流程测试."""
 
     def test_normal_execution_single_batch(self):
-        """测试单批次正常执行"""
+        """测试单批次正常执行."""
         engine = _make_engine_stub()
         engine._stop_event.is_set.side_effect = [False, True]  # 1 iter, then stop
         engine._gpu_kernel.run_batch.return_value = []  # no matches
@@ -210,7 +210,7 @@ class TestExecuteBatchLoopNormal:
         engine._gpu_kernel.run_batch.assert_called_once_with(b"keys" * 8, 100)
 
     def test_normal_execution_with_matches(self):
-        """测试匹配结果处理（无 key_extractor_fn）"""
+        """测试匹配结果处理（无 key_extractor_fn）."""
         engine = _make_engine_stub(_target_list=["addr0", "addr1"])
         engine._stop_event.is_set.side_effect = [False, True]
 
@@ -234,7 +234,7 @@ class TestExecuteBatchLoopNormal:
         assert batch_count == 2
 
     def test_normal_execution_multiple_batches(self):
-        """测试多批次执行"""
+        """测试多批次执行."""
         engine = _make_engine_stub()
         engine._stop_event.is_set.side_effect = [False, False, False, True]
 
@@ -255,7 +255,7 @@ class TestExecuteBatchLoopNormal:
         assert batch_count == 300  # 3 batches * 100
 
     def test_empty_data_breaks_loop(self):
-        """测试空 batch_data 停止循环"""
+        """测试空 batch_data 停止循环."""
         engine = _make_engine_stub()
         engine._stop_event.is_set.side_effect = [False, True]
 
@@ -273,7 +273,7 @@ class TestExecuteBatchLoopNormal:
         engine._gpu_kernel.run_batch.assert_not_called()
 
     def test_none_generator_breaks_loop(self):
-        """测试 key_gen 返回 None 停止循环"""
+        """测试 key_gen 返回 None 停止循环."""
         engine = _make_engine_stub()
         engine._stop_event.is_set.return_value = False
 
@@ -290,7 +290,7 @@ class TestExecuteBatchLoopNormal:
         assert batch_count == 0
 
     def test_zero_batch_size_breaks_loop(self):
-        """测试 actual_batch_size=0 停止循环"""
+        """测试 actual_batch_size=0 停止循环."""
         engine = _make_engine_stub()
         engine._stop_event.is_set.return_value = False
 
@@ -315,10 +315,10 @@ class TestExecuteBatchLoopNormal:
 @pytest.mark.unit
 @pytest.mark.gpu_kernel
 class TestExecuteBatchLoopStopConditions:
-    """停止条件测试"""
+    """停止条件测试."""
 
     def test_stop_event_checked(self):
-        """测试 _stop_event 被检查"""
+        """测试 _stop_event 被检查."""
         engine = _make_engine_stub()
         engine._stop_event.is_set.return_value = True
 
@@ -336,7 +336,7 @@ class TestExecuteBatchLoopStopConditions:
         assert batch_count == 0
 
     def test_stop_condition_fn(self):
-        """测试自定义停止条件"""
+        """测试自定义停止条件."""
         engine = _make_engine_stub()
         engine._stop_event.is_set.side_effect = [False, True]
 
@@ -358,7 +358,7 @@ class TestExecuteBatchLoopStopConditions:
         assert batch_count == 0
 
     def test_stop_condition_after_batch(self):
-        """测试批处理后停止条件满足"""
+        """测试批处理后停止条件满足."""
         engine = _make_engine_stub()
         engine._stop_event.is_set.side_effect = [False, False, True]
 
@@ -391,10 +391,10 @@ class TestExecuteBatchLoopStopConditions:
 @pytest.mark.unit
 @pytest.mark.gpu_kernel
 class TestExecuteBatchLoopErrors:
-    """异常处理测试"""
+    """异常处理测试."""
 
     def test_oom_reduces_batch_size(self):
-        """测试 OOM 时缩减 batch_size"""
+        """测试 OOM 时缩减 batch_size."""
         engine = _make_engine_stub(_batch_size=4096)
         engine._stop_event.is_set.side_effect = [False, False, True]
         engine._gpu_kernel.run_batch.side_effect = [
@@ -416,7 +416,7 @@ class TestExecuteBatchLoopErrors:
         assert engine._batch_size == 2048
 
     def test_oom_minimum_batch_size(self):
-        """测试 OOM 时最小 batch_size 为 1024"""
+        """测试 OOM 时最小 batch_size 为 1024."""
         engine = _make_engine_stub(_batch_size=1024)
         engine._stop_event.is_set.side_effect = [False, True]
         engine._gpu_kernel.run_batch.side_effect = MemoryError("mem_object_allocation_failure")
@@ -435,7 +435,7 @@ class TestExecuteBatchLoopErrors:
         assert engine._batch_size == 1024
 
     def test_timeout_continues(self):
-        """测试超时继续执行"""
+        """测试超时继续执行."""
         engine = _make_engine_stub()
         engine._stop_event.is_set.side_effect = [False, False, True]
         engine._gpu_kernel.run_batch.side_effect = [
@@ -456,7 +456,7 @@ class TestExecuteBatchLoopErrors:
         assert batch_count == 100
 
     def test_device_lost_triggers_recovery(self):
-        """测试设备丢失触发恢复"""
+        """测试设备丢失触发恢复."""
         engine = _make_engine_stub()
         engine._recovery_manager = MagicMock()
         engine._recovery_manager.handle_gpu_failure.return_value = True
@@ -482,7 +482,7 @@ class TestExecuteBatchLoopErrors:
         assert batch_count == 100
 
     def test_device_lost_recovery_failure_stops(self):
-        """测试设备恢复失败时停止引擎"""
+        """测试设备恢复失败时停止引擎."""
         engine = _make_engine_stub()
         engine._recovery_manager = MagicMock()
         engine._recovery_manager.handle_gpu_failure.return_value = False
@@ -503,7 +503,7 @@ class TestExecuteBatchLoopErrors:
         assert engine._running is False
 
     def test_max_consecutive_errors_stops_engine(self):
-        """测试最大连续错误数达到上限时停止引擎"""
+        """测试最大连续错误数达到上限时停止引擎."""
         engine = _make_engine_stub(_consecutive_gpu_errors=4, _max_gpu_error_retries=5)
         engine._stop_event.is_set.return_value = False
         engine._gpu_kernel.run_batch.side_effect = RuntimeError("random GPU error")
@@ -530,10 +530,10 @@ class TestExecuteBatchLoopErrors:
 @pytest.mark.unit
 @pytest.mark.gpu_kernel
 class TestExecuteBatchLoopPRNG:
-    """PRNG 模式 key_extractor_fn 测试"""
+    """PRNG 模式 key_extractor_fn 测试."""
 
     def test_prng_extracts_correct_key(self):
-        """测试 PRNG 模式正确提取私钥"""
+        """测试 PRNG 模式正确提取私钥."""
         engine = _make_engine_stub(_target_list=["addr0"])
         engine._stop_event.is_set.side_effect = [False, True]
         engine._gpu_kernel.run_batch.return_value = [{"key_index": 5, "target_index": 0}]
@@ -557,7 +557,7 @@ class TestExecuteBatchLoopPRNG:
         engine.stats.add_match.assert_called_once()
 
     def test_prng_key_index_out_of_range(self):
-        """测试 PRNG 模式 key_index 越界跳过"""
+        """测试 PRNG 模式 key_index 越界跳过."""
         engine = _make_engine_stub(_target_list=["addr0"])
         engine._stop_event.is_set.side_effect = [False, True]
         # key_index=10，但 batch_data 只有 32 字节 → 越界
@@ -586,10 +586,10 @@ class TestExecuteBatchLoopPRNG:
 @pytest.mark.unit
 @pytest.mark.gpu_kernel
 class TestProgressCallback:
-    """进度回调测试"""
+    """进度回调测试."""
 
     def test_progress_callback_triggered(self):
-        """测试进度回调被触发"""
+        """测试进度回调被触发."""
         engine = _make_engine_stub(
             on_progress=MagicMock(),
             _last_progress_time=0,
@@ -611,7 +611,7 @@ class TestProgressCallback:
         engine._save_checkpoint.assert_called_once_with(100)
 
     def test_progress_not_triggered_before_interval(self):
-        """测试进度间隔未到时不被触发"""
+        """测试进度间隔未到时不被触发."""
         import time
 
         engine = _make_engine_stub(
@@ -643,10 +643,10 @@ class TestProgressCallback:
 @pytest.mark.unit
 @pytest.mark.gpu_kernel
 class TestBaseSearchBoundary:
-    """BaseSearchMode 边界值测试"""
+    """BaseSearchMode 边界值测试."""
 
     def test_large_batch_count_accumulation(self):
-        """测试大量批次计数累积"""
+        """测试大量批次计数累积."""
         engine = _make_engine_stub()
         engine._stop_event.is_set.side_effect = [False, False, False, True]
 
@@ -663,7 +663,7 @@ class TestBaseSearchBoundary:
         assert batch_count == 3000000
 
     def test_match_without_on_match_callback(self):
-        """测试无 on_match 回调时仍然正常处理匹配"""
+        """测试无 on_match 回调时仍然正常处理匹配."""
         engine = _make_engine_stub(
             _target_list=["addr0"],
             on_match=None,

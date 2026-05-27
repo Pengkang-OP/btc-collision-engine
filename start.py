@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Simple Python launcher for BTC Collision Engine"""
+"""Simple Python launcher for BTC Collision Engine."""
 
 import os
 import subprocess

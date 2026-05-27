@@ -1,4 +1,4 @@
-"""综合验证测试：基于动态生成密钥对的端到端验证
+"""综合验证测试：基于动态生成密钥对的端到端验证.
 
 安全说明：测试数据在模块加载时通过 os.urandom(32) 动态生成，
 源码中不包含任何真实或固定私钥/WIF。每次测试运行使用不同的密钥对。
@@ -37,17 +37,17 @@ del _test_pk, _validator, _result, _pubkey, _generator
 # 1. TestKeyDerivation - 密钥派生验证
 # ──────────────────────────────────────────────
 class TestKeyDerivation:
-    """从WIF到公钥到地址的完整派生链验证"""
+    """从WIF到公钥到地址的完整派生链验证."""
 
     def test_wif_decode_to_private_key(self):
-        """从WIF解码私钥，验证compressed=True"""
+        """从WIF解码私钥，验证compressed=True."""
         private_key, compressed = WIF.decode(KNOWN_WIF)
         assert isinstance(private_key, bytes), "私钥应为bytes类型"
         assert len(private_key) == 32, f"私钥长度应为32字节，实际{len(private_key)}"
         assert compressed is True, "应解码为压缩格式"
 
     def test_private_key_to_public_key(self):
-        """从解码的私钥生成公钥，断言==已知公钥hex"""
+        """从解码的私钥生成公钥，断言==已知公钥hex."""
         private_key, _ = WIF.decode(KNOWN_WIF)
         validator = BitcoinKeyValidator(secure_mode=False)
         result, pubkey_bytes = validator.generate_public_key(private_key, compressed=True)
@@ -57,14 +57,14 @@ class TestKeyDerivation:
         )
 
     def test_private_key_to_address(self):
-        """从解码的私钥生成地址，断言==已知地址"""
+        """从解码的私钥生成地址，断言==已知地址."""
         private_key, _ = WIF.decode(KNOWN_WIF)
         generator = P2PKHAddressGenerator()
         address, _, _ = generator.generate_address(private_key)
         assert address == KNOWN_ADDRESS, f"地址不匹配:\n期望: {KNOWN_ADDRESS}\n实际: {address}"
 
     def test_full_derivation_chain(self):
-        """完整链路 WIF->私钥->公钥->地址"""
+        """完整链路 WIF->私钥->公钥->地址."""
         # Step1: WIF -> 私钥
         private_key, compressed = WIF.decode(KNOWN_WIF)
         assert compressed is True
@@ -85,25 +85,25 @@ class TestKeyDerivation:
 # 2. TestAddressFormat - 地址格式验证
 # ──────────────────────────────────────────────
 class TestAddressFormat:
-    """P2PKH地址格式验证"""
+    """P2PKH地址格式验证."""
 
     def test_address_starts_with_1(self):
-        """地址以'1'开头"""
+        """地址以'1'开头."""
         assert KNOWN_ADDRESS.startswith("1"), f"地址应以'1'开头，实际: {KNOWN_ADDRESS[0]}"
 
     def test_address_base58check_decode(self):
-        """check_decode返回version=0x00, payload长度20"""
+        """check_decode返回version=0x00, payload长度20."""
         version, payload = Base58.check_decode(KNOWN_ADDRESS)
         assert version == 0x00, f"版本字节应为0x00，实际: 0x{version:02x}"
         assert len(payload) == 20, f"payload长度应为20字节，实际: {len(payload)}"
 
     def test_address_length_range(self):
-        """地址长度在26-35之间"""
+        """地址长度在26-35之间."""
         length = len(KNOWN_ADDRESS)
         assert 26 <= length <= 35, f"地址长度{length}不在26-35范围内"
 
     def test_address_roundtrip(self):
-        """Base58Check编码解码往返一致"""
+        """Base58Check编码解码往返一致."""
         version, payload = Base58.check_decode(KNOWN_ADDRESS)
         re_encoded = Base58.check_encode(version, payload)
         assert re_encoded == KNOWN_ADDRESS, f"往返编码不一致:\n期望: {KNOWN_ADDRESS}\n实际: {re_encoded}"
@@ -113,23 +113,23 @@ class TestAddressFormat:
 # 3. TestPublicKeyFormat - 公钥格式验证
 # ──────────────────────────────────────────────
 class TestPublicKeyFormat:
-    """压缩公钥格式验证"""
+    """压缩公钥格式验证."""
 
     def _pubkey_bytes(self):
         return bytes.fromhex(KNOWN_PUBKEY_HEX)
 
     def test_compressed_prefix(self):
-        """压缩公钥前缀为0x02或0x03"""
+        """压缩公钥前缀为0x02或0x03."""
         pubkey = self._pubkey_bytes()
         assert pubkey[0] in (0x02, 0x03), f"前缀应为0x02或0x03，实际: 0x{pubkey[0]:02x}"
 
     def test_compressed_length(self):
-        """压缩公钥总长度33字节"""
+        """压缩公钥总长度33字节."""
         pubkey = self._pubkey_bytes()
         assert len(pubkey) == 33, f"压缩公钥长度应为33，实际: {len(pubkey)}"
 
     def test_on_secp256k1_curve(self):
-        """使用BitcoinKeyValidator验证公钥在secp256k1曲线上"""
+        """使用BitcoinKeyValidator验证公钥在secp256k1曲线上."""
         pubkey = self._pubkey_bytes()
         validator = BitcoinKeyValidator()
         result = validator.validate_public_key(pubkey)
@@ -141,32 +141,32 @@ class TestPublicKeyFormat:
 # 4. TestPrivateKeyFormat - 私钥格式验证
 # ──────────────────────────────────────────────
 class TestPrivateKeyFormat:
-    """WIF私钥格式验证"""
+    """WIF私钥格式验证."""
 
     def test_wif_starts_with_k_or_l(self):
-        """压缩WIF以'K'或'L'开头"""
+        """压缩WIF以'K'或'L'开头."""
         assert KNOWN_WIF[0] in ("K", "L"), f"压缩WIF应以K或L开头，实际: {KNOWN_WIF[0]}"
 
     def test_wif_length(self):
-        """压缩WIF长度为52"""
+        """压缩WIF长度为52."""
         assert len(KNOWN_WIF) == KeyValidationConstants.COMPRESSED_WIF_LENGTH, (
             f"压缩WIF长度应为52，实际: {len(KNOWN_WIF)}"
         )
 
     def test_wif_decode_compressed_flag(self):
-        """decode返回compressed=True"""
+        """decode返回compressed=True."""
         _, compressed = WIF.decode(KNOWN_WIF)
         assert compressed is True, "应解码为压缩标志=True"
 
     def test_wif_base58check_version(self):
-        """check_decode返回version=0x80"""
+        """check_decode返回version=0x80."""
         version, payload = Base58.check_decode(KNOWN_WIF)
         assert version == KeyValidationConstants.WIF_VERSION_BYTE, (
             f"WIF版本字节应为0x80，实际: 0x{version:02x}"
         )
 
     def test_private_key_in_valid_range(self):
-        """私钥值在[1, N)范围内"""
+        """私钥值在[1, N)范围内."""
         private_key, _ = WIF.decode(KNOWN_WIF)
         k = int.from_bytes(private_key, "big")
         assert 1 <= k < Secp256k1.N, f"私钥整数值应在[1, N)范围内，实际: {k}"
@@ -176,10 +176,10 @@ class TestPrivateKeyFormat:
 # 5. TestEndToEnd - 端到端功能测试
 # ──────────────────────────────────────────────
 class TestEndToEnd:
-    """端到端功能测试"""
+    """端到端功能测试."""
 
     def test_bitcoin_key_validator_full_chain(self):
-        """调用full_validation_chain()验证overall_success=True"""
+        """调用full_validation_chain()验证overall_success=True."""
         private_key, _ = WIF.decode(KNOWN_WIF)
         validator = BitcoinKeyValidator()
         report = validator.full_validation_chain(private_key, {KNOWN_ADDRESS})
@@ -188,7 +188,7 @@ class TestEndToEnd:
         )
 
     def test_p2pkh_address_generator(self):
-        """使用P2PKHAddressGenerator生成地址验证"""
+        """使用P2PKHAddressGenerator生成地址验证."""
         private_key, _ = WIF.decode(KNOWN_WIF)
         generator = P2PKHAddressGenerator()
         address, compressed_pk, uncompressed_pk = generator.generate_address(private_key)
@@ -198,7 +198,7 @@ class TestEndToEnd:
         assert isinstance(uncompressed_pk, bytes), "非压缩公钥应为bytes"
 
     def test_collision_engine_target_loading(self):
-        """创建KeyCollisionEngine验证targets集合包含目标地址"""
+        """创建KeyCollisionEngine验证targets集合包含目标地址."""
         engine = KeyCollisionEngine(
             targets={KNOWN_ADDRESS},
             data_logging_enabled=False,
@@ -210,7 +210,7 @@ class TestEndToEnd:
         )
 
     def test_data_logger_recording(self, tmp_path):
-        """DataLogger记录不抛出异常"""
+        """DataLogger记录不抛出异常."""
         logger = DataLogger(storage_dir=str(tmp_path))
         try:
             logger.record_performance_data(
@@ -236,36 +236,36 @@ class TestEndToEnd:
 # 6. TestSecurity - 安全测试验证
 # ──────────────────────────────────────────────
 class TestSecurity:
-    """安全相关测试"""
+    """安全相关测试."""
 
     def test_address_match_positive(self):
-        """verify_address_match对已知地址返回match=True"""
+        """verify_address_match对已知地址返回match=True."""
         validator = BitcoinKeyValidator()
         result = validator.verify_address_match(KNOWN_ADDRESS, {KNOWN_ADDRESS})
         assert result.details.get("match") is True, f"已知地址应匹配，errors: {result.errors}"
 
     def test_address_match_negative(self):
-        """对非匹配地址返回match=False"""
+        """对非匹配地址返回match=False."""
         validator = BitcoinKeyValidator()
         non_matching = "1A1zP1eP5QGefi2DMPTfTL5SLmv7Divfna"  # 创世区块地址
         result = validator.verify_address_match(non_matching, {KNOWN_ADDRESS})
         assert result.details.get("match") is False, "非匹配地址不应返回match=True"
 
     def test_validate_private_key_success(self):
-        """validate_private_key对有效私钥返回success=True"""
+        """validate_private_key对有效私钥返回success=True."""
         private_key, _ = WIF.decode(KNOWN_WIF)
         validator = BitcoinKeyValidator()
         result = validator.validate_private_key(private_key)
         assert result.success is True, f"有效私钥应通过验证，errors: {result.errors}"
 
     def test_wif_roundtrip(self):
-        """WIF编码解码往返一致"""
+        """WIF编码解码往返一致."""
         private_key, compressed = WIF.decode(KNOWN_WIF)
         re_encoded = WIF.encode(private_key, compressed)
         assert re_encoded == KNOWN_WIF, f"WIF往返编码不一致:\n期望: {KNOWN_WIF}\n实际: {re_encoded}"
 
     def test_secure_mode_no_plaintext(self):
-        """安全模式下details中不包含private_key_hex"""
+        """安全模式下details中不包含private_key_hex."""
         private_key, _ = WIF.decode(KNOWN_WIF)
         validator = BitcoinKeyValidator(secure_mode=True)
         result = validator.validate_private_key(private_key)
@@ -276,10 +276,10 @@ class TestSecurity:
 # 7. TestCollisionDetection - 目标地址碰撞测试
 # ──────────────────────────────────────────────
 class TestCollisionDetection:
-    """碰撞引擎相关测试"""
+    """碰撞引擎相关测试."""
 
     def test_target_address_loaded(self):
-        """创建KeyCollisionEngine验证目标地址在self.targets中"""
+        """创建KeyCollisionEngine验证目标地址在self.targets中."""
         engine = KeyCollisionEngine(
             targets={KNOWN_ADDRESS},
             data_logging_enabled=False,
@@ -291,7 +291,7 @@ class TestCollisionDetection:
         )
 
     def test_checkpoint_save_load(self, tmp_path):
-        """CheckpointManager save后load验证数据正确"""
+        """CheckpointManager save后load验证数据正确."""
         checkpoint_file = str(tmp_path / "test_checkpoint.json")
         manager = CheckpointManager(filepath=checkpoint_file)
 
@@ -311,7 +311,7 @@ class TestCollisionDetection:
         assert loaded.get("total_checked") == 54321, "断点total_checked应正确"
 
     def test_match_callback_invoked(self):
-        """验证on_match回调机制：地址在targets中且_safe_invoke_match_callback可调用"""
+        """验证on_match回调机制：地址在targets中且_safe_invoke_match_callback可调用."""
         callback_results = []
 
         def on_match(private_key: bytes, address: str, wif: str):
@@ -351,10 +351,10 @@ class TestCollisionDetection:
 # 8. TestIntegration - 多地址格式集成测试
 # ──────────────────────────────────────────────
 class TestIntegration:
-    """多地址格式集成测试"""
+    """多地址格式集成测试."""
 
     def test_generate_all_address_types(self):
-        """从同一公钥生成P2PKH、P2SH、Bech32三种地址，验证格式不同且各自格式正确"""
+        """从同一公钥生成P2PKH、P2SH、Bech32三种地址，验证格式不同且各自格式正确."""
         pubkey = bytes.fromhex(KNOWN_PUBKEY_HEX)
 
         # P2PKH地址
@@ -376,7 +376,7 @@ class TestIntegration:
         assert len(addresses) == 3, f"三种地址格式应互不相同，实际: {addresses}"
 
     def test_p2sh_bech32_test_suite(self):
-        """直接验证P2SH和Bech32地址的关键格式约束"""
+        """直接验证P2SH和Bech32地址的关键格式约束."""
         pubkey = bytes.fromhex(KNOWN_PUBKEY_HEX)
 
         # P2SH格式验证

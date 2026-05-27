@@ -1,4 +1,4 @@
-"""secp256k1 深度覆盖率提升测试 — 覆盖之前未测试的路径"""
+"""secp256k1 深度覆盖率提升测试 — 覆盖之前未测试的路径."""
 
 import math
 import os
@@ -10,7 +10,7 @@ from src.core.secp256k1 import ECPoint, EllipticCurve, Secp256k1
 
 
 class TestSecp256k1Parameters:
-    """Secp256k1参数类测试 — 覆盖 verify_parameters / get_security_info"""
+    """Secp256k1参数类测试 — 覆盖 verify_parameters / get_security_info."""
 
     def test_verify_parameters_returns_true(self):
         assert Secp256k1.verify_parameters()
@@ -60,7 +60,7 @@ class TestSecp256k1Parameters:
 
 
 class TestECPointEdge:
-    """ECPoint 边界测试"""
+    """ECPoint 边界测试."""
 
     def test_eq_non_ecpoint(self):
         p = ECPoint(100, 200)
@@ -103,7 +103,7 @@ class TestECPointEdge:
 
 
 class TestIsOnCurve:
-    """椭圆曲线点验证测试 — is_on_curve 方法（之前完全未覆盖）"""
+    """椭圆曲线点验证测试 — is_on_curve 方法（之前完全未覆盖）."""
 
     def setup_method(self, method):
         self.ec = EllipticCurve()
@@ -134,7 +134,7 @@ class TestIsOnCurve:
 
 
 class TestConstTimeSelect:
-    """恒定时间条件选择深度测试 — _const_time_select"""
+    """恒定时间条件选择深度测试 — _const_time_select."""
 
     def setup_method(self, method):
         self.ec = EllipticCurve()
@@ -187,7 +187,7 @@ class TestConstTimeSelect:
 
 
 class TestValidateScalarMultiply:
-    """_validate_scalar_multiply 输入验证测试"""
+    """_validate_scalar_multiply 输入验证测试."""
 
     def setup_method(self, method):
         self.ec = EllipticCurve()
@@ -210,7 +210,7 @@ class TestValidateScalarMultiply:
 
 
 class TestScalarMultiplyDeprecated:
-    """scalar_multiply 已锁定 — 验证 RuntimeError 行为 (v4.2.2 BLOCK #9)"""
+    """scalar_multiply 已锁定 — 验证 RuntimeError 行为 (v4.2.2 BLOCK #9)."""
 
     def setup_method(self, method):
         self.ec = EllipticCurve()
@@ -222,13 +222,13 @@ class TestScalarMultiplyDeprecated:
             os.environ["BTC_ALLOW_NON_CONST_TIME"] = self._saved_env
 
     def test_emits_deprecation_warning(self):
-        """调用 scalar_multiply 应抛出 RuntimeError (非 DeprecationWarning)"""
+        """调用 scalar_multiply 应抛出 RuntimeError (非 DeprecationWarning)."""
         with pytest.raises(RuntimeError) as ctx:
             self.ec.scalar_multiply(1, self.G)
         assert "已被永久禁用" in str(ctx.value)
 
     def test_k_mod_n_result(self):
-        """K % N 结果测试 → RuntimeError (已锁定)"""
+        """K % N 结果测试 → RuntimeError (已锁定)."""
         k = Secp256k1.N + 1
         with pytest.raises(RuntimeError) as ctx:
             self.ec.scalar_multiply(k, self.G)
@@ -236,7 +236,7 @@ class TestScalarMultiplyDeprecated:
 
 
 class TestScalarMultiplyConstTimeDeep:
-    """恒定时间标量乘法深度测试"""
+    """恒定时间标量乘法深度测试."""
 
     def setup_method(self, method):
         self.ec = EllipticCurve()
@@ -269,7 +269,7 @@ class TestScalarMultiplyConstTimeDeep:
         assert not result.is_infinity
 
     def test_consistency_with_standard(self):
-        """恒定时间算法与自身一致（scalar_multiply 已锁定不可对比）"""
+        """恒定时间算法与自身一致（scalar_multiply 已锁定不可对比）."""
         for k in [13, 77, 256, 65535, 12345678901234567890]:
             r1 = self.ec.scalar_multiply_const_time(k, self.G)
             r2 = self.ec.scalar_multiply_const_time(k, self.G)
@@ -277,7 +277,7 @@ class TestScalarMultiplyConstTimeDeep:
 
 
 class TestGeneratePublicKeyDeep:
-    """公钥生成深度测试"""
+    """公钥生成深度测试."""
 
     def setup_method(self, method):
         self.ec = EllipticCurve()
@@ -349,7 +349,7 @@ class TestGeneratePublicKeyDeep:
 
 
 class TestModInverseEdge:
-    """模逆元边界测试"""
+    """模逆元边界测试."""
 
     def setup_method(self, method):
         self.ec = EllipticCurve()
@@ -370,7 +370,7 @@ class TestModInverseEdge:
 
 
 class TestPointAddEdge:
-    """点加法边界测试"""
+    """点加法边界测试."""
 
     def setup_method(self, method):
         self.ec = EllipticCurve()
@@ -396,7 +396,7 @@ class TestPointAddEdge:
 
 
 class TestModInverseSummary:
-    """模逆元高级测试"""
+    """模逆元高级测试."""
 
     def setup_method(self, method):
         self.ec = EllipticCurve()

@@ -1,4 +1,4 @@
-"""CLI 工具命令 (commands.py) 单元测试。
+"""CLI 工具命令 (commands.py) 单元测试。.
 
 覆盖范围：
 - _cmd_examples: 示例输出
@@ -15,10 +15,10 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.cli.commands import (
-    dispatch_utility_commands,
     _handle_info_commands,
     _handle_system_commands,
     _handle_wizard_and_quickstart,
+    dispatch_utility_commands,
 )
 
 # ============================================================================
@@ -27,10 +27,10 @@ from src.cli.commands import (
 
 
 class TestHandleInfoCommands:
-    """信息类工具命令测试。"""
+    """信息类工具命令测试。."""
 
     def test_examples_calls_cmd_examples(self):
-        """--examples 调用 _cmd_examples 并退出。"""
+        """--examples 调用 _cmd_examples 并退出。."""
         args = MagicMock()
         args.examples = True
         args.config_check = False
@@ -43,7 +43,7 @@ class TestHandleInfoCommands:
             mock_cmd.assert_called_once()
 
     def test_config_check_calls_cmd_config_check(self):
-        """--config-check 调用 _cmd_config_check 并退出。"""
+        """--config-check 调用 _cmd_config_check 并退出。."""
         args = MagicMock()
         args.examples = False
         args.config_check = True
@@ -56,7 +56,7 @@ class TestHandleInfoCommands:
             mock_cmd.assert_called_once()
 
     def test_template_applies_and_exits_success(self):
-        """--template 有效名称应用成功。"""
+        """--template 有效名称应用成功。."""
         args = MagicMock()
         args.examples = False
         args.config_check = False
@@ -70,7 +70,7 @@ class TestHandleInfoCommands:
             assert exc_info.value.code == 0
 
     def test_template_applies_and_exits_failure(self):
-        """--template 应用失败返回错误码。"""
+        """--template 应用失败返回错误码。."""
         args = MagicMock()
         args.examples = False
         args.config_check = False
@@ -83,7 +83,7 @@ class TestHandleInfoCommands:
             assert exc_info.value.code == 1
 
     def test_recommend_shows_and_exits(self):
-        """--recommend 显示推荐并退出。"""
+        """--recommend 显示推荐并退出。."""
         args = MagicMock()
         args.examples = False
         args.config_check = False
@@ -102,7 +102,7 @@ class TestHandleInfoCommands:
             mock_rec.assert_called_once_with(args)
 
     def test_no_info_command_returns_false(self):
-        """无信息类命令时返回 False。"""
+        """无信息类命令时返回 False。."""
         args = MagicMock()
         args.examples = False
         args.config_check = False
@@ -119,10 +119,10 @@ class TestHandleInfoCommands:
 
 
 class TestHandleWizardAndQuickstart:
-    """向导和快速启动命令测试。"""
+    """向导和快速启动命令测试。."""
 
     def test_quick_run_dispatched(self):
-        """--quick-run 被正确分发。"""
+        """--quick-run 被正确分发。."""
         args = MagicMock()
         args.quick_run = True
         args.quick_start = False
@@ -134,7 +134,7 @@ class TestHandleWizardAndQuickstart:
             mock_cmd.assert_called_once()
 
     def test_quick_start_dispatched(self):
-        """--quick-start 被正确分发（含 compact）。"""
+        """--quick-start 被正确分发（含 compact）。."""
         args = MagicMock()
         args.quick_run = False
         args.quick_start = True
@@ -146,7 +146,7 @@ class TestHandleWizardAndQuickstart:
             mock_cmd.assert_called_once_with(executor=None, compact=True)
 
     def test_quick_start_compact_false(self):
-        """--quick-start 不传 compact 时默认 False。"""
+        """--quick-start 不传 compact 时默认 False。."""
         args = MagicMock()
         args.quick_run = False
         args.quick_start = True
@@ -158,7 +158,7 @@ class TestHandleWizardAndQuickstart:
             mock_cmd.assert_called_once_with(executor=None, compact=False)
 
     def test_no_wizard_command_returns_false(self):
-        """无向导/快速启动命令时返回 False。"""
+        """无向导/快速启动命令时返回 False。."""
         args = MagicMock()
         args.quick_run = False
         args.quick_start = False
@@ -175,10 +175,10 @@ class TestHandleWizardAndQuickstart:
 
 
 class TestHandleSystemCommands:
-    """系统工具命令测试。"""
+    """系统工具命令测试。."""
 
     def test_health_check_dispatched(self):
-        """--health-check 被正确分发。"""
+        """--health-check 被正确分发。."""
         args = MagicMock()
         args.health_check = True
         args.platform_check = False
@@ -196,7 +196,7 @@ class TestHandleSystemCommands:
             assert exc_info.value.code == 0
 
     def test_health_check_fails_exits_with_error(self):
-        """--health-check 检查失败返回错误码。"""
+        """--health-check 检查失败返回错误码。."""
         args = MagicMock()
         args.health_check = True
         args.platform_check = False
@@ -213,7 +213,7 @@ class TestHandleSystemCommands:
             assert exc_info.value.code == 1
 
     def test_platform_check_dispatched(self, capsys):
-        """--platform-check 正确分发并成功完成。"""
+        """--platform-check 正确分发并成功完成。."""
         args = MagicMock()
         args.health_check = False
         args.platform_check = True
@@ -226,7 +226,7 @@ class TestHandleSystemCommands:
         assert exc_info.value.code == 0
 
     def test_cleanup_dispatched(self):
-        """--cleanup 被正确分发。"""
+        """--cleanup 被正确分发。."""
         args = MagicMock()
         args.health_check = False
         args.platform_check = False
@@ -247,7 +247,7 @@ class TestHandleSystemCommands:
             mock_cleaner.clean_all.assert_called_once_with()
 
     def test_cleanup_dry_run(self):
-        """--cleanup --dry-run 不会调用 clean_all()，只输出预览。"""
+        """--cleanup --dry-run 不会调用 clean_all()，只输出预览。."""
         args = MagicMock()
         args.health_check = False
         args.platform_check = False
@@ -267,7 +267,7 @@ class TestHandleSystemCommands:
             mock_cleaner.clean_all.assert_not_called()
 
     def test_no_system_command_returns_false(self):
-        """无系统命令时返回 False。"""
+        """无系统命令时返回 False。."""
         args = MagicMock()
         args.health_check = False
         args.platform_check = False
@@ -285,10 +285,10 @@ class TestHandleSystemCommands:
 
 
 class TestDispatchUtilityCommands:
-    """命令分发总入口测试。"""
+    """命令分发总入口测试。."""
 
     def test_dispatch_falls_through_all_handlers(self):
-        """无任何命令时各处理器返回 False，最终返回 False。"""
+        """无任何命令时各处理器返回 False，最终返回 False。."""
         args = MagicMock()
         args.examples = False
         args.config_check = False
@@ -313,10 +313,10 @@ class TestDispatchUtilityCommands:
 
 
 class TestCmdConfigCheck:
-    """配置检查命令测试。"""
+    """配置检查命令测试。."""
 
     def test_config_check_output(self, capsys):
-        """--config-check 输出合理内容。"""
+        """--config-check 输出合理内容。."""
         from src.cli.commands import _cmd_config_check
 
         _cmd_config_check()
@@ -332,10 +332,10 @@ class TestCmdConfigCheck:
 
 
 class TestCmdExamples:
-    """示例输出命令测试。"""
+    """示例输出命令测试。."""
 
     def test_examples_output(self, capsys):
-        """--examples 输出包含常见用例。"""
+        """--examples 输出包含常见用例。."""
         from src.cli.commands import _cmd_examples
 
         _cmd_examples()
@@ -352,10 +352,10 @@ class TestCmdExamples:
 
 
 class TestYNPrompt:
-    """_yn_prompt 交互测试。"""
+    """_yn_prompt 交互测试。."""
 
     def test_yn_prompt_yes(self):
-        """输入 y 返回 True。"""
+        """输入 y 返回 True。."""
         from src.cli.commands import _yn_prompt
 
         mock_output = MagicMock()
@@ -364,7 +364,7 @@ class TestYNPrompt:
             assert result is True
 
     def test_yn_prompt_no(self):
-        """输入 n 返回 False。"""
+        """输入 n 返回 False。."""
         from src.cli.commands import _yn_prompt
 
         mock_output = MagicMock()
@@ -373,7 +373,7 @@ class TestYNPrompt:
             assert result is False
 
     def test_yn_prompt_default_yes(self):
-        """空输入默认返回 True。"""
+        """空输入默认返回 True。."""
         from src.cli.commands import _yn_prompt
 
         mock_output = MagicMock()
@@ -383,10 +383,10 @@ class TestYNPrompt:
 
 
 class TestDurationPrompt:
-    """_duration_prompt 交互测试。"""
+    """_duration_prompt 交互测试。."""
 
     def test_duration_prompt_unlimited(self):
-        """选择1(无限)返回 0。"""
+        """选择1(无限)返回 0。."""
         from src.cli.commands import _duration_prompt
 
         mock_output = MagicMock()
@@ -395,7 +395,7 @@ class TestDurationPrompt:
             assert result == 0
 
     def test_duration_prompt_hours(self):
-        """选择2 + 小时输入返回秒数。"""
+        """选择2 + 小时输入返回秒数。."""
         from src.cli.commands import _duration_prompt
 
         mock_output = MagicMock()
@@ -404,7 +404,7 @@ class TestDurationPrompt:
             assert result == 18000  # 5 * 3600
 
     def test_duration_prompt_days(self):
-        """选择3 + 天数输入返回秒数。"""
+        """选择3 + 天数输入返回秒数。."""
         from src.cli.commands import _duration_prompt
 
         mock_output = MagicMock()
@@ -414,10 +414,10 @@ class TestDurationPrompt:
 
 
 class TestQuickRunDefaults:
-    """快速模式默认配置测试。"""
+    """快速模式默认配置测试。."""
 
     def test_defaults_structure(self):
-        """默认配置包含所有必要字段。"""
+        """默认配置包含所有必要字段。."""
         from src.cli.commands import QUICK_RUN_DEFAULTS
 
         assert "target_file" in QUICK_RUN_DEFAULTS
@@ -429,7 +429,7 @@ class TestQuickRunDefaults:
         assert QUICK_RUN_DEFAULTS["mode"] == "random"
 
     def test_quick_run_config_summary(self):
-        """配置摘要构建正确。"""
+        """配置摘要构建正确。."""
         from src.cli.commands import _quick_run_config_summary
 
         summary = _quick_run_config_summary("test_targets.txt")

@@ -1,5 +1,5 @@
 """BTC碰撞引擎性能优化基准测试
-验证所有优化模块的性能提升效果
+验证所有优化模块的性能提升效果.
 """
 
 import hashlib
@@ -15,7 +15,7 @@ from src.core.simd_hash import get_simd_hash_optimizer
 
 
 def benchmark_precomputed_table(iterations=100):
-    """基准测试: 预计算点表性能"""
+    """基准测试: 预计算点表性能."""
     print("\n" + "=" * 80)
     print("基准测试1: 预计算点表优化")
     print("=" * 80)
@@ -50,7 +50,7 @@ def benchmark_precomputed_table(iterations=100):
 
 
 def benchmark_simd_hash(iterations=100000):
-    """基准测试: SIMD哈希性能
+    """基准测试: SIMD哈希性能.
 
     测试目的: 验证 pycryptodome 在批量 SHA256 计算上相对 hashlib 的性能优势。
     规模选择: 100000 条数据足以触发 pycryptodome 的向量化路径，消除启动开销的
@@ -90,7 +90,7 @@ def benchmark_simd_hash(iterations=100000):
 
 
 def benchmark_memory_pool(iterations=1000):
-    """基准测试: 内存池性能"""
+    """基准测试: 内存池性能."""
     print("\n" + "=" * 80)
     print("基准测试4: 内存池优化")
     print("=" * 80)
@@ -125,14 +125,14 @@ def benchmark_memory_pool(iterations=1000):
     stats = ec_pool.get_stats()
     print(
         f"  池统计: 创建={stats['created_count']}, "
-        f"获取={stats['acquire_count']}, 归还={stats['release_count']}"
+        f"获取={stats['acquire_count']}, 归还={stats['release_count']}",
     )
 
     return speedup
 
 
 def benchmark_gpu_scale():
-    """基准测试: 大规模批量操作性能（GPU 工作负载模拟）
+    """基准测试: 大规模批量操作性能（GPU 工作负载模拟）.
 
     测试目的: 模拟 GPU 批量地址生成的典型工作负载，对比不同规模下（10K / 100K / 500K）
               的批量密钥生成与哈希计算性能，找出吞吐量拐点并验证线性扩展能力。
@@ -209,7 +209,7 @@ def benchmark_gpu_scale():
 
 
 def benchmark_batch_hash160(iterations=10000):
-    """基准测试: 批量Hash160性能"""
+    """基准测试: 批量Hash160性能."""
     print("\n" + "=" * 80)
     print("基准测试5: 批量Hash160优化")
     print("=" * 80)
@@ -247,7 +247,7 @@ def benchmark_batch_hash160(iterations=10000):
 
 
 def main():
-    """运行所有基准测试"""
+    """运行所有基准测试."""
     # 修复Windows终端编码
     if sys.platform == "win32":
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")

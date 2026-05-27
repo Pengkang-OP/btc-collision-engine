@@ -2,10 +2,11 @@
 
 import contextlib
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from queue import Queue
-from typing import Any, Callable
+from typing import Any
 
 from ..utils import get_configured_logger
 

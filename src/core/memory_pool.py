@@ -151,7 +151,7 @@ class ObjectPool:
         )
 
     def _preallocate(self, count: int):
-        """Pre-allocate objects into the pool"""
+        """Pre-allocate objects into the pool."""
         for _ in range(count):
             obj = self._factory()
             self._pool.append(obj)
@@ -341,7 +341,7 @@ class ObjectPool:
             return adjusted
 
     def clear(self) -> None:
-        """Clear the object pool"""
+        """Clear the object pool."""
         with self._lock:
             self._pool.clear()
             logger.info("Object pool cleared")
@@ -408,11 +408,11 @@ class ECPointPool:
         return point
 
     def release(self, point: Any) -> None:
-        """Return ECPoint object to pool"""
+        """Return ECPoint object to pool."""
         self._pool.release(point)
 
     def get_stats(self) -> dict:
-        """Get pool statistics"""
+        """Get pool statistics."""
         return self._pool.get_stats()
 
 
@@ -451,7 +451,7 @@ class ByteArrayPool:
         )
 
     def acquire(self) -> bytearray:
-        """Acquire a bytearray object"""
+        """Acquire a bytearray object."""
         return self._pool.acquire()
 
     def release(self, buffer: bytearray) -> None:
@@ -470,7 +470,7 @@ class ByteArrayPool:
         self._pool.release(buffer)
 
     def get_stats(self) -> dict:
-        """Get pool statistics"""
+        """Get pool statistics."""
         return self._pool.get_stats()
 
 
@@ -507,6 +507,7 @@ class GlobalPoolManager:
     DEFAULT_AUTO_CLEANUP_INTERVAL = 300  # 5 minutes
 
     def __new__(cls) -> "GlobalPoolManager":
+        """创建或返回全局单例实例。."""
         if cls._instance is None:
             with cls._lock:
                 if cls._instance is None:
@@ -516,7 +517,7 @@ class GlobalPoolManager:
         return cls._instance
 
     def initialize(self) -> None:
-        """Initialize all global pools"""
+        """Initialize all global pools."""
         if self._initialized:
             return
 
@@ -550,7 +551,7 @@ class GlobalPoolManager:
                 )
 
     def get_ecpoint_pool(self) -> ECPointPool:
-        """Get ECPoint pool"""
+        """Get ECPoint pool."""
         if not self._initialized:
             self.initialize()
         return self.ecpoint_pool
@@ -559,7 +560,7 @@ class GlobalPoolManager:
         self,
         size: int = 32,
     ) -> ByteArrayPool:
-        """Get bytearray pool"""
+        """Get bytearray pool."""
         if not self._initialized:
             self.initialize()
 
@@ -767,5 +768,5 @@ pool_manager = GlobalPoolManager()
 
 
 def get_pool_manager() -> GlobalPoolManager:
-    """Get global pool manager instance"""
+    """Get global pool manager instance."""
     return pool_manager

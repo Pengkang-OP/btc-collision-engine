@@ -1,4 +1,4 @@
-"""GPU 性能优化管道
+"""GPU 性能优化管道.
 
 协调 auto_tuner、benchmark_suite、performance_reporter 的初始化与调用，
 从 GPUCollisionEngine 中解耦性能优化相关逻辑。
@@ -6,10 +6,13 @@
 
 import logging
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 # 统一日志获取
 from ..utils import get_configured_logger
+
+# 报告配置类型（无循环导入风险：performance_reporter 不依赖本模块）
+from .performance_reporter import ReportConfig
 
 if TYPE_CHECKING:
     from ..gpu.auto_tuner import GPUAutoTuner
@@ -20,7 +23,7 @@ logger = get_configured_logger("GPUOptimizationPipeline")
 
 
 class PerformanceOptimizationPipeline:
-    """性能优化管道
+    """性能优化管道.
 
     协调调优器、基准测试套件、性能报告生成器的生命周期与调用。
     可独立测试，通过委托集成到 GPUCollisionEngine。
@@ -32,16 +35,16 @@ class PerformanceOptimizationPipeline:
 
     """
 
-    __slots__ = ("auto_tuner", "benchmark_suite", "performance_reporter", "_logger")
+    __slots__ = ("_logger", "auto_tuner", "benchmark_suite", "performance_reporter")
 
     def __init__(
         self,
-        auto_tuner: Optional["GPUAutoTuner"] = None,
-        benchmark_suite: Optional["GPUBenchmarkSuite"] = None,
-        reporter: Optional["PerformanceReportGenerator"] = None,
+        auto_tuner: "GPUAutoTuner | None" = None,
+        benchmark_suite: "GPUBenchmarkSuite | None" = None,
+        reporter: "PerformanceReportGenerator | None" = None,
         logger_instance: logging.Logger | None = None,
     ) -> None:
-        """初始化性能优化管道
+        """初始化性能优化管道.
 
         Args:
             auto_tuner:       GPUAutoTuner 实例（可选）
@@ -60,7 +63,7 @@ class PerformanceOptimizationPipeline:
     # ------------------------------------------------------------------
 
     def initialize(self, device_info: dict[str, Any]) -> None:
-        """根据设备信息进行管道级初始化（留作扩展点）
+        """根据设备信息进行管道级初始化（留作扩展点）.
 
         Args:
             device_info: GPU 设备信息字典
@@ -74,7 +77,7 @@ class PerformanceOptimizationPipeline:
     # ------------------------------------------------------------------
 
     def optimize_batch_size(self, current_size: int, metrics: dict[str, Any]) -> int:
-        """根据性能指标推荐最优 batch_size
+        """根据性能指标推荐最优 batch_size.
 
         委托给 auto_tuner（若存在），否则返回当前大小。
 
@@ -102,7 +105,7 @@ class PerformanceOptimizationPipeline:
     # ------------------------------------------------------------------
 
     def run_benchmark(self, iterations: int = 5) -> dict[str, Any]:
-        """运行 GPU 性能基准测试
+        """运行 GPU 性能基准测试.
 
         Args:
             iterations: 迭代次数
@@ -132,9 +135,9 @@ class PerformanceOptimizationPipeline:
     def start_auto_tuning(
         self,
         max_iterations: int = 30,
-        on_new_batch_size: Callable | None = None,
+        on_new_batch_size: Callable[..., Any] | None = None,
     ) -> dict[str, Any]:
-        """启动自动调优
+        """启动自动调优.
 
         Args:
             max_iterations:      最大迭代次数
@@ -152,16 +155,28 @@ class PerformanceOptimizationPipeline:
         self._logger.info("开始自动调优")
         self._logger.info("=" * 60)
 
+        # GPUAutoTuner 使用 auto_tune() 而非 start_tuning()
         tuner: Any = self.auto_tuner
-        results = tuner.start_tuning(
-            max_iterations=max_iterations,
-            callback=on_new_batch_size,
-        )
+        try:
+            results = tuner.auto_tune()
+        except (AttributeError, TypeError) as exc:
+            self._logger.error("自动调优失败: %s", exc)
+            return {}
 
-        optimal_size = results.get("optimal_batch_size")
+        optimal_size = results.get("batch_size")
+        if on_new_batch_size and optimal_size is not None:
+            try:
+                on_new_batch_size(optimal_size)
+            except Exception as cb_exc:
+                self._logger.warning("调优回调执行异常: %s", cb_exc)
+
+        throughput = results.get("expected_throughput", 0)
+        try:
+            throughput_str = f"{throughput:,.0f}"
+        except (TypeError, ValueError):
+            throughput_str = str(throughput)
         self._logger.info(
-            f"调优完成！最优 batch_size: {optimal_size}, "
-            f"预期吞吐量: {results.get('expected_throughput', 0):,.0f} keys/s",
+            f"调优完成！最优 batch_size: {optimal_size}, 预期吞吐量: {throughput_str} keys/s",
         )
         return results
 
@@ -178,7 +193,7 @@ class PerformanceOptimizationPipeline:
         include_comparison: bool = False,
         output_dir: str | None = None,
     ) -> str:
-        """生成性能报告
+        """生成性能报告.
 
         Args:
             include_benchmarks:     包含基准测试结果
@@ -196,27 +211,22 @@ class PerformanceOptimizationPipeline:
             self._logger.warning("性能报告生成器未初始化")
             return ""
 
-        # 延迟导入避免循环依赖
-        try:
-            from ..gpu.performance_reporter import ReportConfig  # type: ignore[attr-defined]
-        except ImportError:
-            self._logger.error("无法导入 ReportConfig")
-            return ""
-
-        self._logger.info("\n" + "=" * 60)
-        self._logger.info("生成 GPU 性能报告")
-        self._logger.info("=" * 60)
-
+        # v5.2.4: 直接使用已存在的 ReportConfig + generate_report API，
+        # 不再使用 try/except 延迟导入（ReportConfig 已于 performance_reporter.py 中定义）
         reporter: Any = self.performance_reporter
-        report_path = reporter.generate_report(
-            config=ReportConfig(
-                include_device_info=True,
-                include_benchmark_results=include_benchmarks,
-                include_tuning_results=include_tuning,
-                include_history=include_history,
-                include_recommendations=include_recommendations,
-                include_comparison=include_comparison,
-            ),
-            output_dir=output_dir,
-        )
-        return report_path
+        try:
+            report_path = reporter.generate_report(
+                config=ReportConfig(
+                    include_device_info=True,
+                    include_benchmark_results=include_benchmarks,
+                    include_tuning_results=include_tuning,
+                    include_history=include_history,
+                    include_recommendations=include_recommendations,
+                    include_comparison=include_comparison,
+                ),
+                output_dir=output_dir,
+            )
+            return report_path
+        except (ImportError, AttributeError, OSError) as exc:
+            self._logger.error("生成性能报告失败: %s", exc)
+            return ""

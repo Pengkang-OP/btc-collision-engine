@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""配置验证脚本 — CI/CD 集成用
+"""配置验证脚本 — CI/CD 集成用.
 
 双重验证策略:
     1. DEFAULT_CONFIG 自洽性: 始终验证代码中的 DEFAULT_CONFIG 是否与
@@ -38,7 +38,7 @@ _SCHEMA_PATH = Path(__file__).resolve().parent.parent / "config.schema.json"
 
 
 def _load_schema() -> dict:
-    """从 config.schema.json 加载 Schema（ROADMAP #5: 单一真相源）。
+    """从 config.schema.json 加载 Schema（ROADMAP #5: 单一真相源）。.
 
     返回:
         完整的 JSON Schema 字典
@@ -55,7 +55,7 @@ def _load_schema() -> dict:
 
 
 def _strip_comments(config: Any) -> Any:
-    """递归移除所有以 '_comment' 开头的键。
+    """递归移除所有以 '_comment' 开头的键。.
 
     复用自 ConfigManager._strip_comments 的逻辑，确保与加载流程一致。
     """
@@ -65,7 +65,7 @@ def _strip_comments(config: Any) -> Any:
 
 
 def _load_json_file(filepath: str) -> dict:
-    """安全加载 JSON 文件并去除注释键。
+    """安全加载 JSON 文件并去除注释键。.
 
     参数:
         filepath: JSON 文件路径
@@ -86,14 +86,14 @@ def _load_json_file(filepath: str) -> dict:
 
 
 def _get_config_manager():
-    """延迟导入 ConfigManager，避免顶层导入失败时整个模块不可用。"""
+    """延迟导入 ConfigManager，避免顶层导入失败时整个模块不可用。."""
     from src.config.config_manager import ConfigManager
 
     return ConfigManager
 
 
 def _get_config_manager_instance():
-    """延迟导入 ConfigManager 并获取实例，用于获取 DEFAULT_CONFIG。"""
+    """延迟导入 ConfigManager 并获取实例，用于获取 DEFAULT_CONFIG。."""
     ConfigManager = _get_config_manager()
     return ConfigManager
 
@@ -102,7 +102,7 @@ def _get_config_manager_instance():
 
 
 def _format_error_report(errors: dict[str, str], label: str) -> str:
-    """格式化验证错误报告为可读文本。
+    """格式化验证错误报告为可读文本。.
 
     参数:
         errors: {字段路径: 错误信息} 字典，空字典表示通过
@@ -136,7 +136,7 @@ def _format_error_report(errors: dict[str, str], label: str) -> str:
 
 
 def _validate_with_schema(config: dict, schema: dict) -> dict[str, str]:
-    """使用 jsonschema 库直接验证配置。
+    """使用 jsonschema 库直接验证配置。.
 
     从 config.schema.json（Draft 2020-12）加载 schema。
     优先使用 Draft202012Validator 收集所有错误。
@@ -161,7 +161,7 @@ def _validate_with_schema(config: dict, schema: dict) -> dict[str, str]:
 
 
 def validate_default_config() -> dict[str, str]:
-    """验证 DEFAULT_CONFIG 与 config.schema.json 的自洽性。
+    """验证 DEFAULT_CONFIG 与 config.schema.json 的自洽性。.
 
     这是最关键的内部一致性检查 —— 确保代码中定义的默认配置
     与 Schema 声明完全一致。如果这里失败，说明代码存在 bug。
@@ -182,7 +182,7 @@ def validate_default_config() -> dict[str, str]:
 
 
 def validate_config_file(filepath: str) -> dict[str, str]:
-    """验证单个配置文件。
+    """验证单个配置文件。.
 
     从 config.schema.json 加载 Schema 进行验证（ROADMAP #5: 单一真相源）。
     如果 Schema 文件缺失，降级为直接使用 jsonschema 验证。
@@ -217,7 +217,7 @@ def validate_config_file(filepath: str) -> dict[str, str]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """主入口。
+    """主入口。.
 
     验证流程:
         1. 始终验证 DEFAULT_CONFIG 与 CONFIG_SCHEMA 的自洽性
@@ -311,7 +311,7 @@ def main(argv: list[str] | None = None) -> int:
         for filepath in args.files:
             # 文件不存在时优雅跳过，不视为错误
             if not os.path.exists(filepath):
-                print("")
+                print()
                 print(f"  SKIP   文件不存在，跳过: {filepath}")
                 print("         (仅当文件存在时才进行验证)")
                 continue
@@ -331,7 +331,7 @@ def main(argv: list[str] | None = None) -> int:
             if filepath == "config.example.json" and not args.strict:
                 print(
                     f"  WARNING  config.example.json 存在 {len(errors)} 个 Schema 不一致"
-                    f"（非严格模式仅警告，不会阻塞 CI）\n"
+                    f"（非严格模式仅警告，不会阻塞 CI）\n",
                 )
                 continue
 
@@ -344,9 +344,8 @@ def main(argv: list[str] | None = None) -> int:
             parts.append(f"{files_checked} 个外部配置文件验证通过")
         print(f"SUMMARY  {'; '.join(parts)}。")
         return 0
-    else:
-        print(f"SUMMARY  配置验证失败，共 {error_count} 个问题待修复。")
-        return 1
+    print(f"SUMMARY  配置验证失败，共 {error_count} 个问题待修复。")
+    return 1
 
 
 if __name__ == "__main__":

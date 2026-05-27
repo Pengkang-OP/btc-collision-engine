@@ -1,4 +1,4 @@
-"""性能监控管道
+"""性能监控管道.
 
 整合GPU性能监控、引擎监控、数据日志，
 提供统一的性能指标收集和异常检测。
@@ -17,7 +17,8 @@
 import time
 from typing import Any
 
-from ...utils import get_configured_logger
+from src.utils import get_configured_logger
+
 from .data_logger_adapter import DataLoggerAdapter
 from .protocols import IMonitoringPipeline
 
@@ -25,7 +26,7 @@ logger = get_configured_logger(__name__)
 
 
 class PerformanceMonitoringPipeline(IMonitoringPipeline):
-    """性能监控管道
+    """性能监控管道.
 
     职责:
     - 协调多个监控器（性能/引擎/厂商特定）
@@ -43,7 +44,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
     """
 
     def __init__(self, engine: Any = None, config: dict[str, Any] | None = None) -> None:
-        """初始化监控管道
+        """初始化监控管道.
 
         Args:
             engine: 引擎实例（用于监控回调）
@@ -63,7 +64,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
         logger.debug("PerformanceMonitoringPipeline 初始化完成")
 
     def start(self) -> None:
-        """启动所有监控器"""
+        """启动所有监控器."""
         if self._running:
             logger.warning("监控管道已运行，跳过重复启动")
             return
@@ -97,7 +98,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
             raise
 
     def stop(self) -> None:
-        """停止所有监控器"""
+        """停止所有监控器."""
         if not self._running:
             return
 
@@ -128,7 +129,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
             logger.error("性能监控管道停止失败: %s", e)
 
     def record_metrics(self, batch_size: int, execution_time_ms: float, **metrics: Any) -> None:
-        """记录性能指标
+        """记录性能指标.
 
         Args:
             batch_size: 批次大小
@@ -166,7 +167,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
             logger.error("记录性能指标失败: %s", e)
 
     def flush(self) -> None:
-        """刷写所有缓冲数据"""
+        """刷写所有缓冲数据."""
         if self._data_logger:
             try:
                 self._data_logger.flush()
@@ -175,7 +176,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
                 logger.error("刷写数据日志失败: %s", e)
 
     def get_stats(self) -> dict[str, Any]:
-        """获取监控统计
+        """获取监控统计.
 
         整合所有监控器的统计数据。
 
@@ -201,7 +202,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
         return stats
 
     def get_data_logger(self):
-        """获取数据日志适配器
+        """获取数据日志适配器.
 
         Returns:
             DataLoggerAdapter 实例，未初始化时返回 None
@@ -210,13 +211,13 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
         return self._data_logger
 
     def is_running(self) -> bool:
-        """检查监控管道是否运行"""
+        """检查监控管道是否运行."""
         return self._running
 
     # ========== 私有方法 ==========
 
     def _create_performance_monitor(self):
-        """创建GPU性能监控器
+        """创建GPU性能监控器.
 
         从现有 GPUPerformanceMonitor 单例获取实例，
         若引擎可用则注入引擎引用以启用设备信息采集。
@@ -226,7 +227,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
 
         """
         try:
-            from ...monitoring.gpu_performance_monitor import (
+            from src.monitoring.gpu_performance_monitor import (
                 get_gpu_performance_monitor,
             )
 
@@ -241,7 +242,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
             return None
 
     def _create_engine_monitor(self):
-        """创建引擎监控器
+        """创建引擎监控器.
 
         从现有 GPUEngineMonitor 适配，用于追踪 batch_size 调整历史
         和引擎运行状态快照。
@@ -251,7 +252,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
 
         """
         try:
-            from ...gpu.engine_monitor import GPUEngineMonitor
+            from src.gpu.engine_monitor import GPUEngineMonitor
 
             if self.engine:
                 return GPUEngineMonitor(self.engine)
@@ -261,7 +262,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
             return None
 
     def _create_data_logger(self):
-        """创建数据日志适配器
+        """创建数据日志适配器.
 
         通过 DataLoggerAdapter 桥接 DataLogger API，
         优先复用引擎已有实例，否则创建独立 DataLogger。
@@ -277,7 +278,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
             return None
 
     def _create_vendor_monitors(self) -> list[Any]:
-        """创建厂商特定监控器
+        """创建厂商特定监控器.
 
         Returns:
             厂商监控器列表
@@ -291,8 +292,8 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
         # Intel特定监控
         if vendor == "intel":
             try:
-                from ...gpu.intel_memory_monitor import IntelMemoryMonitor
-                from ...gpu.intel_timeout_manager import AdaptiveTimeoutManager
+                from src.gpu.intel_memory_monitor import IntelMemoryMonitor
+                from src.gpu.intel_timeout_manager import AdaptiveTimeoutManager
 
                 if self.engine and hasattr(self.engine, "_gpu_device"):
                     monitors.append(IntelMemoryMonitor(self.engine._gpu_device))
@@ -308,7 +309,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
         execution_time_ms: float,
         metrics: dict[str, Any],
     ) -> None:
-        """异常检测
+        """异常检测.
 
         Args:
             batch_size: 批次大小
@@ -334,14 +335,14 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
                 )
 
     def _detect_vendor(self) -> str:
-        """检测GPU厂商
+        """检测GPU厂商.
 
         优先从 engine._gpu_device 获取，
         其次从 engine 的 device_info 推断。
         """
         try:
             if self.engine and hasattr(self.engine, "_gpu_device"):
-                from ...gpu.device import identify_vendor
+                from src.gpu.device import identify_vendor
 
                 return identify_vendor(self.engine._gpu_device)
         except (AttributeError, ImportError, RuntimeError):

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""加密后端验收测试 - 功能层 + 数据层 + 逻辑层
+"""加密后端验收测试 - 功能层 + 数据层 + 逻辑层.
 
 本模块测试 `src.core.crypto_backend` 的加密后端功能，
 补充现有单元测试中缺失的场景，确保：
@@ -47,7 +47,7 @@ from src.core.crypto_backend import (
     ids=["pure_python", "openssl", "coincurve", "ecdsa"],
 )
 class TestCryptoBackendWhiteBox:
-    """加密后端白盒测试
+    """加密后端白盒测试.
 
     基于内部代码结构的测试，验证：
     1. 后端切换逻辑的正确性
@@ -57,7 +57,7 @@ class TestCryptoBackendWhiteBox:
     """
 
     def test_backend_switching_logic(self, backend_type, expected_name, monkeypatch):
-        """白盒测试：验证后端切换逻辑
+        """白盒测试：验证后端切换逻辑.
 
         验证点：
         - 后端类型正确设置
@@ -75,7 +75,7 @@ class TestCryptoBackendWhiteBox:
             )
 
     def test_backend_availability_detection(self, backend_type, expected_name, monkeypatch):
-        """白盒测试：验证后端可用性检测
+        """白盒测试：验证后端可用性检测.
 
         验证点：
         - 检测逻辑正确分支
@@ -101,7 +101,7 @@ class TestCryptoBackendWhiteBox:
                 assert backend.is_available in (True, False), "coincurve 后端可用性检测逻辑应返回布尔值"
 
     def test_backend_degradation_logic(self, backend_type, expected_name, monkeypatch):
-        """白盒测试：验证后端降级逻辑
+        """白盒测试：验证后端降级逻辑.
 
         验证点：
         - 首选后端不可用时正确降级
@@ -127,7 +127,7 @@ class TestCryptoBackendWhiteBox:
         )
 
     def test_backend_thread_safety_logic(self, backend_type, expected_name, monkeypatch):
-        """白盒测试：验证后端切换的线程安全
+        """白盒测试：验证后端切换的线程安全.
 
         验证点：
         - 多线程同时切换后端应安全
@@ -171,7 +171,7 @@ class TestCryptoBackendWhiteBox:
 @pytest.mark.black_box
 @pytest.mark.functional
 class TestCryptoBackendBlackBox:
-    """加密后端黑盒测试
+    """加密后端黑盒测试.
 
     基于规格说明的功能测试，不依赖内部实现细节，验证：
     1. 输入输出规范
@@ -181,7 +181,7 @@ class TestCryptoBackendBlackBox:
     """
 
     def test_black_box_generate_public_key_valid_input(self, mock_crypto_backend, monkeypatch):
-        """黑盒测试：使用有效私钥生成公钥
+        """黑盒测试：使用有效私钥生成公钥.
 
         规格说明：
         - 输入：32 字节有效私钥
@@ -231,7 +231,7 @@ class TestCryptoBackendBlackBox:
             pytest.skip("加密后端不可用，跳过测试")
 
     def test_black_box_generate_public_key_invalid_input(self, mock_crypto_backend):
-        """黑盒测试：使用无效私钥生成公钥
+        """黑盒测试：使用无效私钥生成公钥.
 
         规格说明：
         - 输入：无效私钥（0、n、非 32 字节）
@@ -266,7 +266,7 @@ class TestCryptoBackendBlackBox:
                 pass
 
     def test_black_box_scalar_multiply_valid_input(self, mock_crypto_backend, monkeypatch):
-        """黑盒测试：有效的标量乘法
+        """黑盒测试：有效的标量乘法.
 
         规格说明：
         - 输入：标量 k、基点坐标 (point_x, point_y)
@@ -295,7 +295,7 @@ class TestCryptoBackendBlackBox:
             pytest.skip("加密后端不可用，跳过测试")
 
     def test_black_box_constant_time_property(self, mock_crypto_backend):
-        """黑盒测试：恒定时间属性
+        """黑盒测试：恒定时间属性.
 
         规格说明：
         - 输入：无
@@ -327,7 +327,7 @@ class TestCryptoBackendBlackBox:
 @pytest.mark.acceptance
 @pytest.mark.functional
 class TestCryptoBackendFunctionalLayer:
-    """加密后端功能层测试
+    """加密后端功能层测试.
 
     验证功能层：
     1. 功能正确性：验证所有 public 方法的功能正确性
@@ -336,7 +336,7 @@ class TestCryptoBackendFunctionalLayer:
     """
 
     def test_functional_generate_public_key_correctness(self, mock_crypto_backend):
-        """功能层测试：generate_public_key 功能正确性
+        """功能层测试：generate_public_key 功能正确性.
 
         验证点：
         - 相同私钥生成相同公钥
@@ -375,7 +375,7 @@ class TestCryptoBackendFunctionalLayer:
             pytest.skip("加密后端不可用，跳过测试")
 
     def test_functional_backend_switching(self, mock_crypto_backend):
-        """功能层测试：后端切换功能
+        """功能层测试：后端切换功能.
 
         验证点：
         - set_backend() 正确切换后端
@@ -402,7 +402,7 @@ class TestCryptoBackendFunctionalLayer:
                 continue
 
     def test_functional_backend_availability_judgment(self, mock_crypto_backend):
-        """功能层测试：后端可用性判断
+        """功能层测试：后端可用性判断.
 
         验证点：
         - is_secure_backend_available() 正确判断后端可用性
@@ -434,7 +434,7 @@ class TestCryptoBackendFunctionalLayer:
 @pytest.mark.acceptance
 @pytest.mark.logic_layer
 class TestCryptoBackendLogicLayer:
-    """加密后端逻辑层测试
+    """加密后端逻辑层测试.
 
     验证逻辑层：
     1. 代码正确性：验证核心算法逻辑正确性
@@ -444,7 +444,7 @@ class TestCryptoBackendLogicLayer:
     """
 
     def test_logic_backend_selection_priority(self, monkeypatch):
-        """逻辑层测试：后端选择优先级逻辑
+        """逻辑层测试：后端选择优先级逻辑.
 
         验证点：
         - 优先级：coincurve > openssl > ecdsa > pure_python
@@ -471,7 +471,7 @@ class TestCryptoBackendLogicLayer:
         # )
 
     def test_logic_error_handling_paths(self, mock_crypto_backend):
-        """逻辑层测试：错误处理路径
+        """逻辑层测试：错误处理路径.
 
         验证点：
         - 后端不可用时的错误处理
@@ -495,7 +495,7 @@ class TestCryptoBackendLogicLayer:
             pass
 
     def test_logic_concurrent_safety(self, mock_crypto_backend):
-        """逻辑层测试：并发安全性
+        """逻辑层测试：并发安全性.
 
         验证点：
         - 多线程同时调用应安全
@@ -542,7 +542,7 @@ class TestCryptoBackendLogicLayer:
 @pytest.mark.acceptance
 @pytest.mark.data_layer
 class TestCryptoBackendDataLayer:
-    """加密后端数据层测试
+    """加密后端数据层测试.
 
     验证数据层：
     1. 数据：验证数据格式和值
@@ -553,7 +553,7 @@ class TestCryptoBackendDataLayer:
     """
 
     def test_data_format_and_values(self, mock_crypto_backend):
-        """数据层测试：数据格式和值
+        """数据层测试：数据格式和值.
 
         验证点：
         - 私钥数据为 32 字节 bytes
@@ -582,7 +582,7 @@ class TestCryptoBackendDataLayer:
             pytest.skip("加密后端不可用，跳过测试")
 
     def test_data_flow_integrity(self, mock_crypto_backend):
-        """数据层测试：数据流完整性
+        """数据层测试：数据流完整性.
 
         验证点：
         - 输入私钥 → 处理 → 输出公钥
@@ -615,7 +615,7 @@ class TestCryptoBackendDataLayer:
             pytest.skip("加密后端不可用，跳过测试")
 
     def test_data_type_conversion(self, mock_crypto_backend):
-        """数据层测试：数据类型转换
+        """数据层测试：数据类型转换.
 
         验证点：
         - 私钥 bytes → int 转换正确
@@ -654,7 +654,7 @@ class TestCryptoBackendDataLayer:
             pytest.skip("加密后端不可用，跳过测试")
 
     def test_data_backend_invocation(self, mock_crypto_backend):
-        """数据层测试：后端调用接口
+        """数据层测试：后端调用接口.
 
         验证点：
         - 后端调用接口正确
@@ -692,7 +692,7 @@ class TestCryptoBackendDataLayer:
     ids=["pure_python", "openssl", "coincurve", "ecdsa"],
 )
 class TestCryptoBackendMultiBackend:
-    """加密后端多后端测试
+    """加密后端多后端测试.
 
     使用参数化测试覆盖四种后端：
     1. Pure Python 后端
@@ -702,7 +702,7 @@ class TestCryptoBackendMultiBackend:
     """
 
     def test_multi_backend_init(self, backend_type, monkeypatch):
-        """多后端测试：后端初始化
+        """多后端测试：后端初始化.
 
         验证点：
         - 所有后端都能成功初始化
@@ -728,7 +728,7 @@ class TestCryptoBackendMultiBackend:
         assert isinstance(backend.is_available, bool), f"{backend_type} 后端可用性应返回 bool 类型"
 
     def test_multi_backend_generate_public_key(self, backend_type, monkeypatch):
-        """多后端测试：生成公钥
+        """多后端测试：生成公钥.
 
         验证点：
         - 所有后端都能生成公钥
@@ -767,7 +767,7 @@ class TestCryptoBackendMultiBackend:
             pytest.skip(f"{backend_type} 后端不可用，跳过测试")
 
     def test_multi_backend_constant_time(self, backend_type, monkeypatch):
-        """多后端测试：恒定时间属性
+        """多后端测试：恒定时间属性.
 
         验证点：
         - coincurve 后端应返回 True（恒定时间）
@@ -803,10 +803,10 @@ class TestCryptoBackendMultiBackend:
 @pytest.mark.acceptance
 @pytest.mark.edge_cases
 class TestCryptoBackendEdgeCases:
-    """加密后端边界条件测试"""
+    """加密后端边界条件测试."""
 
     def test_edge_case_private_key_zero(self, mock_crypto_backend):
-        """边界条件测试：私钥为 0"""
+        """边界条件测试：私钥为 0."""
         manager = CryptoBackendManager()
 
         # 边界条件：私钥为 0
@@ -822,7 +822,7 @@ class TestCryptoBackendEdgeCases:
             pass
 
     def test_edge_case_private_key_n(self, mock_crypto_backend):
-        """边界条件测试：私钥为 n（Secp256k1 曲线的阶）"""
+        """边界条件测试：私钥为 n（Secp256k1 曲线的阶）."""
         from src.core.secp256k1 import Secp256k1
 
         manager = CryptoBackendManager()
@@ -840,7 +840,7 @@ class TestCryptoBackendEdgeCases:
             pass
 
     def test_edge_case_private_key_n_minus_1(self, mock_crypto_backend):
-        """边界条件测试：私钥为 n-1（最大有效私钥）"""
+        """边界条件测试：私钥为 n-1（最大有效私钥）."""
         from src.core.secp256k1 import Secp256k1
 
         manager = CryptoBackendManager()

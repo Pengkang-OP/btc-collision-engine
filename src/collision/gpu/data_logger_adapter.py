@@ -1,4 +1,4 @@
-"""数据日志适配器
+"""数据日志适配器.
 
 将现有 DataLogger 适配为 IMonitoringPipeline 期望的接口，
 桥接 `log_performance()` / `flush()` / `get_stats()` 到
@@ -11,13 +11,13 @@ DataLogger 的实际 API (`record_performance_data()` 等)。
 from contextlib import suppress
 from typing import Any
 
-from ...utils import get_configured_logger
+from src.utils import get_configured_logger
 
 logger = get_configured_logger(__name__)
 
 
 class DataLoggerAdapter:
-    """数据日志适配器
+    """数据日志适配器.
 
     将 DataLogger 的 record_performance_data() 接口适配为
     PerformanceMonitoringPipeline 期望的 log_performance() 接口。
@@ -39,7 +39,7 @@ class DataLoggerAdapter:
         engine: Any = None,
         config: dict[str, Any] | None = None,
     ) -> None:
-        """初始化数据日志适配器
+        """初始化数据日志适配器.
 
         Args:
             engine: 引擎实例。若引擎有 data_logger 属性则复用；
@@ -58,7 +58,7 @@ class DataLoggerAdapter:
         else:
             # 创建独立的 DataLogger
             try:
-                from ...monitoring.data_logger import DataLogger
+                from src.monitoring.data_logger import DataLogger
 
                 self._logger = DataLogger(storage_dir="data_logs")
                 self._owns_logger = True
@@ -67,7 +67,7 @@ class DataLoggerAdapter:
                 logger.warning("创建 DataLogger 失败: %s", e)
 
     def log_performance(self, data: dict[str, Any]) -> None:
-        """记录性能数据（桥接方法）
+        """记录性能数据（桥接方法）.
 
         将 dict 形式的性能数据映射到 DataLogger.record_performance_data()
         的参数签名。
@@ -114,7 +114,7 @@ class DataLoggerAdapter:
             logger.error("记录性能数据失败: %s", e)
 
     def flush(self) -> None:
-        """刷写缓冲数据到磁盘"""
+        """刷写缓冲数据到磁盘."""
         if self._logger and hasattr(self._logger, "flush"):
             try:
                 self._logger.flush()
@@ -123,7 +123,7 @@ class DataLoggerAdapter:
                 logger.error("刷写数据日志失败: %s", e)
 
     def get_stats(self) -> dict[str, Any]:
-        """获取数据日志统计
+        """获取数据日志统计.
 
         Returns:
             统计信息字典
@@ -141,7 +141,7 @@ class DataLoggerAdapter:
             return {"status": "error", "message": str(e)}
 
     def save_current_data(self) -> None:
-        """持久化当前数据到磁盘"""
+        """持久化当前数据到磁盘."""
         if self._logger and hasattr(self._logger, "save_current_data"):
             try:
                 self._logger.save_current_data()
@@ -149,7 +149,7 @@ class DataLoggerAdapter:
                 logger.error("保存当前数据失败: %s", e)
 
     def save_history_data(self) -> None:
-        """持久化历史数据到磁盘"""
+        """持久化历史数据到磁盘."""
         if self._logger and hasattr(self._logger, "save_history_data"):
             try:
                 self._logger.save_history_data()
@@ -157,7 +157,7 @@ class DataLoggerAdapter:
                 logger.error("保存历史数据失败: %s", e)
 
     def cleanup(self) -> None:
-        """清理资源
+        """清理资源.
 
         仅当适配器自己创建了 DataLogger 时才清理。
         """
@@ -169,7 +169,7 @@ class DataLoggerAdapter:
             logger.debug("DataLoggerAdapter: 独立 DataLogger 已清理")
 
     def is_available(self) -> bool:
-        """检查数据日志是否可用
+        """检查数据日志是否可用.
 
         Returns:
             DataLogger 已初始化时返回 True
@@ -178,7 +178,7 @@ class DataLoggerAdapter:
         return self._logger is not None
 
     def get_native_logger(self) -> Any:
-        """获取底层 DataLogger 实例
+        """获取底层 DataLogger 实例.
 
         Returns:
             底层 DataLogger 实例，或 None

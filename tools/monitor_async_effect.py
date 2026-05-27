@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""监控GPU异步优化重启效果"""
+"""监控GPU异步优化重启效果."""
 
 import sys
 import time
@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 def check_async_enabled():
-    """检查异步是否启用"""
+    """检查异步是否启用."""
     log_file = Path("logs/collision.log")
 
     if not log_file.exists():
@@ -39,7 +39,7 @@ def check_async_enabled():
 
 
 def get_recent_performance():
-    """获取最近的性能数据"""
+    """获取最近的性能数据."""
     log_file = Path("logs/collision.log")
 
     if not log_file.exists():
@@ -53,7 +53,7 @@ def get_recent_performance():
 
         # 查找最近的启动时间
         start_matches = list(
-            re.finditer(r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}).*?GPU引擎初始化成功", content)
+            re.finditer(r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}).*?GPU引擎初始化成功", content),
         )
 
         if not start_matches:
@@ -85,7 +85,7 @@ def get_recent_performance():
 
 
 def monitor_async_stats():
-    """持续监控异步执行统计"""
+    """持续监控异步执行统计."""
     print("=" * 80)
     print("  GPU异步优化效果监控")
     print(f"  {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
@@ -220,7 +220,7 @@ def monitor_async_stats():
 
 
 def continuous_monitor(interval=10):
-    """持续监控"""
+    """持续监控."""
     print("启动持续监控模式...")
     print(f"每{interval}秒刷新一次")
     print("按 Ctrl+C 停止")
@@ -248,7 +248,7 @@ def continuous_monitor(interval=10):
 
 
 def main():
-    """主函数"""
+    """主函数."""
     if "--continuous" in sys.argv or "-c" in sys.argv:
         # 持续监控模式
         continuous_monitor()

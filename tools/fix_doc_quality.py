@@ -1,4 +1,4 @@
-"""自动修复文档质量问题 - 批量脚本
+"""自动修复文档质量问题 - 批量脚本.
 
 修复内容：
 1. 添加版本信息头（缺失时）
@@ -45,7 +45,7 @@ CODE_LANG_HINTS: dict[str, str] = {
 
 
 def add_version_header(content: str, filepath: Path) -> str:
-    """如果文件顶部没有版本信息，添加版本头"""
+    """如果文件顶部没有版本信息，添加版本头."""
     first_100 = content[:500]
     version_patterns = [
         r"\*\*版本\*\*",
@@ -67,7 +67,7 @@ def add_version_header(content: str, filepath: Path) -> str:
 
 
 def fix_fenced_code_blocks(content: str, filepath: Path) -> str:
-    """修复未指定语言的围栏代码块``` → ```lang"""
+    """修复未指定语言的围栏代码块``` → ```lang."""
     # 查找 ``` 后没有语言标识的代码块
     lines = content.split("\n")
     result = []
@@ -114,7 +114,7 @@ def fix_fenced_code_blocks(content: str, filepath: Path) -> str:
 
 
 def _infer_language(content: str, filepath: Path) -> str:
-    """基于文件内容和文件名推断主要语言"""
+    """基于文件内容和文件名推断主要语言."""
     filename = filepath.stem.lower()
     name_lower = filepath.name.lower()
 
@@ -124,7 +124,7 @@ def _infer_language(content: str, filepath: Path) -> str:
 
     # Python 特征
     if re.search(
-        r"^import\s+|^from\s+|^def\s+|^class\s+|print\(|os\.|sys\.|pathlib", content, re.MULTILINE
+        r"^import\s+|^from\s+|^def\s+|^class\s+|print\(|os\.|sys\.|pathlib", content, re.MULTILINE,
     ):
         return "python"
 
@@ -134,7 +134,7 @@ def _infer_language(content: str, filepath: Path) -> str:
 
     # YAML 特征
     if re.search(r"^---\s*$", content, re.MULTILINE) or re.search(
-        r"^[a-zA-Z_]+:\s", content, re.MULTILINE
+        r"^[a-zA-Z_]+:\s", content, re.MULTILINE,
     ):
         return "yaml"
 
@@ -156,7 +156,7 @@ def _infer_language(content: str, filepath: Path) -> str:
 
 
 def run_quality_check() -> list[tuple[float, str]]:
-    """运行质量检查并返回低分文档列表"""
+    """运行质量检查并返回低分文档列表."""
     import subprocess
 
     result = subprocess.run(

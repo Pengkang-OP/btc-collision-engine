@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""冒烟测试 (Smoke Tests) - 核心功能快速验证
+"""冒烟测试 (Smoke Tests) - 核心功能快速验证.
 
 目的：在短时间内 (通常 < 30 秒) 验证项目核心功能是否正常工作。
 可用作 CI/CD 的第一道关口和开发中的快速自检。
@@ -27,10 +27,10 @@ import pytest
 
 @pytest.mark.smoke
 class TestCryptoSmoke:
-    """加密模块冒烟测试"""
+    """加密模块冒烟测试."""
 
     def test_base58_encode_decode(self):
-        """Base58 编解码基本功能"""
+        """Base58 编解码基本功能."""
         from src.core.base58 import Base58
 
         data = b"\x00" + bytes(range(20))
@@ -39,7 +39,7 @@ class TestCryptoSmoke:
         assert data == decoded
 
     def test_sha256(self):
-        """SHA256 已知向量验证"""
+        """SHA256 已知向量验证."""
         from src.core.hash_utils import HashUtils
 
         result = HashUtils.sha256(b"hello")
@@ -47,7 +47,7 @@ class TestCryptoSmoke:
         assert result == expected
 
     def test_wif_encode_decode(self):
-        """WIF 编解码往返"""
+        """WIF 编解码往返."""
         from src.core.wif import WIF
 
         pk = bytes(range(1, 33))
@@ -60,7 +60,7 @@ class TestCryptoSmoke:
         assert decoded == pk
 
     def test_secp256k1_constants(self):
-        """secp256k1 常量检查"""
+        """secp256k1 常量检查."""
         from src.core.secp256k1 import Secp256k1
 
         assert Secp256k1.N > 0
@@ -76,7 +76,7 @@ class TestCryptoSmoke:
 
 @pytest.mark.smoke
 class TestCollisionStatsSmoke:
-    """碰撞统计冒烟测试"""
+    """碰撞统计冒烟测试."""
 
     def test_stats_update(self):
         from src.collision.collision_stats import CollisionStats
@@ -119,7 +119,7 @@ class TestCollisionStatsSmoke:
 
 @pytest.mark.smoke
 class TestEventSystemSmoke:
-    """事件系统冒烟测试"""
+    """事件系统冒烟测试."""
 
     def test_event_bus_publish_subscribe(self):
         from src.collision.event_bus import EventBus, reset_event_bus
@@ -157,7 +157,7 @@ class TestEventSystemSmoke:
 
 @pytest.mark.smoke
 class TestLoggingSmoke:
-    """日志系统冒烟测试"""
+    """日志系统冒烟测试."""
 
     def test_log_storage_save_query(self):
         from src.log_engine.log_storage import LogStorage
@@ -187,7 +187,7 @@ class TestLoggingSmoke:
 
 @pytest.mark.smoke
 class TestConfigSmoke:
-    """配置系统冒烟测试"""
+    """配置系统冒烟测试."""
 
     def test_config_manager_load(self):
         from src.config.config_manager import ConfigManager
@@ -210,7 +210,7 @@ class TestConfigSmoke:
 
 @pytest.mark.smoke
 class TestTypeDefinitionsSmoke:
-    """类型定义冒烟测试"""
+    """类型定义冒烟测试."""
 
     def test_collision_event_types_import(self):
         from src.collision.events import (
@@ -238,7 +238,7 @@ class TestTypeDefinitionsSmoke:
 
 @pytest.mark.smoke
 class TestImportSmoke:
-    """关键模块导入冒烟测试"""
+    """关键模块导入冒烟测试."""
 
     def test_core_imports(self):
         from src.core.base58 import Base58
@@ -277,10 +277,10 @@ class TestImportSmoke:
 
 
 class TestArgParserModuleCoverage:
-    """arg_parser.py 模块级代码覆盖测试 (L15, L22-23)。"""
+    """arg_parser.py 模块级代码覆盖测试 (L15, L22-23)。."""
 
     def test_sys_path_insert_when_root_not_in_path(self):
-        """v4.5.1: _path_setup 确保项目根目录在 sys.path 中。"""
+        """v4.5.1: _path_setup 确保项目根目录在 sys.path 中。."""
         import sys
 
         from src.cli import _path_setup
@@ -294,7 +294,7 @@ class TestArgParserModuleCoverage:
         assert project_root in sys.path
 
     def test_version_import_fallback(self):
-        """From src import __version__ 失败时回退到 '4.5.1' (L22-23)。"""
+        """From src import __version__ 失败时回退到 '4.5.1' (L22-23)。."""
         import builtins
         import importlib
         import sys
@@ -322,7 +322,7 @@ class TestArgParserModuleCoverage:
 
 @pytest.mark.smoke
 def test_smoke_all_modules_importable():
-    """验证所有主要模块可被导入"""
+    """验证所有主要模块可被导入."""
     modules_to_check = [
         "src.core",
         "src.collision",

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""BTC碰撞引擎 - 生产环境打包脚本
+r"""BTC碰撞引擎 - 生产环境打包脚本.
 
 功能:
 - 清理开发和测试文件
@@ -112,7 +112,7 @@ PRODUCTION_EXCLUDE = [
 
 
 def get_git_info():
-    """获取Git版本信息"""
+    """获取Git版本信息."""
     try:
         # 获取当前commit hash
         commit_hash = (
@@ -132,7 +132,7 @@ def get_git_info():
         try:
             tag = (
                 subprocess.check_output(
-                    ["git", "describe", "--tags", "--abbrev=0"], stderr=subprocess.DEVNULL
+                    ["git", "describe", "--tags", "--abbrev=0"], stderr=subprocess.DEVNULL,
                 )
                 .decode()
                 .strip()
@@ -150,7 +150,7 @@ def get_git_info():
         # 获取分支名
         branch = (
             subprocess.check_output(
-                ["git", "rev-parse", "--abbrev-ref", "HEAD"], stderr=subprocess.DEVNULL
+                ["git", "rev-parse", "--abbrev-ref", "HEAD"], stderr=subprocess.DEVNULL,
             )
             .decode()
             .strip()
@@ -175,7 +175,7 @@ def get_git_info():
 
 
 def should_exclude(filepath: Path, base_dir: Path) -> bool:
-    """判断文件是否应该排除"""
+    """判断文件是否应该排除."""
     rel_path = filepath.relative_to(base_dir)
     rel_str = str(rel_path).replace("\\", "/")
 
@@ -192,15 +192,14 @@ def should_exclude(filepath: Path, base_dir: Path) -> bool:
             if fnmatch.fnmatch(rel_str, pattern) or fnmatch.fnmatch(filepath.name, pattern):
                 return True
         # 精确匹配
-        else:
-            if rel_str == pattern:
-                return True
+        elif rel_str == pattern:
+            return True
 
     return False
 
 
 def copy_production_files(source_dir: Path, target_dir: Path):
-    """复制生产环境文件"""
+    """复制生产环境文件."""
     copied_count = 0
     skipped_count = 0
     total_size = 0
@@ -235,7 +234,7 @@ def copy_production_files(source_dir: Path, target_dir: Path):
 
 
 def generate_version_info(target_dir: Path, git_info: dict):
-    """生成版本信息文件"""
+    """生成版本信息文件."""
     version_info = {
         "version": git_info["tag"],
         "build_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -253,7 +252,7 @@ def generate_version_info(target_dir: Path, git_info: dict):
 
 
 def generate_release_notes(target_dir: Path, version_info: dict):
-    """生成发布说明"""
+    """生成发布说明."""
     release_notes = f"""# BTC碰撞引擎 生产环境版本
 
 ## 版本信息
@@ -345,7 +344,7 @@ btc-collision-engine/
 
 
 def main():
-    """主函数"""
+    """主函数."""
     parser = argparse.ArgumentParser(description="BTC碰撞引擎生产环境打包工具")
     parser.add_argument("--output", required=True, help="输出目录路径")
     parser.add_argument("--clean", action="store_true", help="清理已存在的输出目录")

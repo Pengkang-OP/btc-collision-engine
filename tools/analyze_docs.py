@@ -1,4 +1,4 @@
-"""分析文档质量修复进度"""
+"""分析文档质量修复进度."""
 
 import re
 from pathlib import Path
@@ -40,5 +40,5 @@ for fname in sorted(d.name for d in docs):
     print(
         f"   代码块: {code_blocks} | 无语言: {no_lang_blocks} | "
         f"标题跳跃: {heading_jumps} | 目录: {'有' if has_toc else '无'} | "
-        f"版本: {'有' if has_version else '无'}"
+        f"版本: {'有' if has_version else '无'}",
     )

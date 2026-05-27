@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GPU停止阻塞修复 - 异常处理专项测试
+"""GPU停止阻塞修复 - 异常处理专项测试.
 
 测试目标:
 1. 验证command_execution_status查询的异常处理
@@ -17,7 +17,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 
 def test_1_exception_handling_code_review():
-    """测试1: 代码审查 - 异常处理完整性"""
+    """测试1: 代码审查 - 异常处理完整性."""
     print("=" * 70)
     print("测试1: 异常处理代码审查")
     print("=" * 70)
@@ -51,7 +51,7 @@ def test_1_exception_handling_code_review():
 
 
 def test_2_timeout_monitor_optimization():
-    """测试2: 超时监控优化"""
+    """测试2: 超时监控优化."""
     print("\n" + "=" * 70)
     print("测试2: 超时监控线程优化")
     print("=" * 70)
@@ -82,7 +82,7 @@ def test_2_timeout_monitor_optimization():
 
 
 def test_3_race_condition_fix():
-    """测试3: 竞态条件修复"""
+    """测试3: 竞态条件修复."""
     print("\n" + "=" * 70)
     print("测试3: 停止信号竞态条件优化")
     print("=" * 70)
@@ -116,7 +116,7 @@ def test_3_race_condition_fix():
 
 
 def test_4_max_iterations_calculation():
-    """测试4: 最大迭代次数计算"""
+    """测试4: 最大迭代次数计算."""
     print("\n" + "=" * 70)
     print("测试4: 最大迭代次数计算逻辑")
     print("=" * 70)
@@ -141,7 +141,7 @@ def test_4_max_iterations_calculation():
 
 
 def test_5_polling_interval_performance():
-    """测试5: 轮询间隔性能影响"""
+    """测试5: 轮询间隔性能影响."""
     print("\n" + "=" * 70)
     print("测试5: 轮询间隔性能影响评估")
     print("=" * 70)
@@ -167,7 +167,7 @@ def test_5_polling_interval_performance():
 
 
 def test_6_exception_types_coverage():
-    """测试6: 异常类型覆盖范围"""
+    """测试6: 异常类型覆盖范围."""
     print("\n" + "=" * 70)
     print("测试6: 异常类型覆盖分析")
     print("=" * 70)
@@ -193,7 +193,7 @@ def test_6_exception_types_coverage():
 
 
 def main():
-    """运行所有测试"""
+    """运行所有测试."""
     print("=" * 70)
     print("GPU停止阻塞修复 - 异常处理专项测试")
     print("=" * 70)
@@ -240,9 +240,8 @@ def main():
     if passed == total:
         print("✅ 所有测试通过! 异常处理修复验证成功!")
         return 0
-    else:
-        print("❌ 部分测试失败,请检查修复代码")
-        return 1
+    print("❌ 部分测试失败,请检查修复代码")
+    return 1
 
 
 if __name__ == "__main__":

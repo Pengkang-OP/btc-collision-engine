@@ -1,4 +1,4 @@
-"""GPU自适应性能优化器
+"""GPU自适应性能优化器.
 
 基于性能监控数据动态调整GPU碰撞引擎参数，实现：
 1. 根据GPU设备类型和性能特征自动优化参数
@@ -33,7 +33,7 @@ DEFAULT_ADJUST_STRATEGY: dict[str, float] = {"growth_ratio": 1.15, "reduction_ra
 
 
 class GPUVendor(Enum):
-    """GPU厂商枚举"""
+    """GPU厂商枚举."""
 
     NVIDIA = "nvidia"
     AMD = "amd"
@@ -43,7 +43,7 @@ class GPUVendor(Enum):
 
 @dataclass
 class PerformanceMetrics:
-    """性能指标数据类"""
+    """性能指标数据类."""
 
     kernel_compile_time_ms: float = 0.0  # 内核编译时间
     engine_init_time_ms: float = 0.0  # 引擎初始化时间
@@ -56,7 +56,7 @@ class PerformanceMetrics:
 
 @dataclass
 class GPUProfile:
-    """GPU性能配置文件"""
+    """GPU性能配置文件."""
 
     vendor: GPUVendor
     device_name: str
@@ -89,7 +89,7 @@ class GPUProfile:
     max_batch_size_limit: int = 16777216  # 16M上限
 
     def __post_init__(self) -> None:
-        """P3-02修复 + CR-04增强: 验证字段值范围"""
+        """P3-02修复 + CR-04增强: 验证字段值范围."""
         if self.max_batch_size < 1:
             raise ValueError(f"max_batch_size 必须 >= 1, 实际: {self.max_batch_size}")
         if self.work_group_size < 1:
@@ -132,21 +132,21 @@ class GPUProfile:
 
 
 class GPUPerformanceOptimizer:
-    """GPU自适应性能优化器
+    """GPU自适应性能优化器.
 
     根据性能监控数据动态调整GPU碰撞引擎参数。
     """
 
     __slots__ = (
+        "_adjustment_cooldown_sec",
+        "_adjustment_count",
+        "_current_profile",
+        "_initial_batch_size",
+        "_last_adjustment_time",
         "_lock",
         "_metrics_history",
-        "_current_profile",
-        "_vendor_profiles",
         "_performance_degraded",
-        "_adjustment_count",
-        "_last_adjustment_time",
-        "_adjustment_cooldown_sec",
-        "_initial_batch_size",
+        "_vendor_profiles",
     )
 
     # P2-02修复: 提取魔法数字为类级别常量
@@ -162,6 +162,7 @@ class GPUPerformanceOptimizer:
     RECENT_METRICS_WINDOW = 10  # 最近指标分析窗口大小
 
     def __init__(self) -> None:
+        """初始化性能优化器。."""
         self._lock = threading.Lock()
         self._metrics_history: list[PerformanceMetrics] = []
         self._current_profile: GPUProfile | None = None
@@ -175,7 +176,7 @@ class GPUPerformanceOptimizer:
         logger.info("GPU性能优化器初始化完成")
 
     def _init_vendor_profiles(self) -> dict[GPUVendor, GPUProfile]:
-        """初始化各厂商默认配置"""
+        """初始化各厂商默认配置."""
         return {
             GPUVendor.NVIDIA: GPUProfile(
                 vendor=GPUVendor.NVIDIA,
@@ -211,7 +212,7 @@ class GPUPerformanceOptimizer:
         }
 
     def detect_vendor(self, device_name: str, vendor_str: str = "") -> GPUVendor:
-        """检测GPU厂商"""
+        """检测GPU厂商."""
         name_lower = device_name.lower()
         vendor_lower = vendor_str.lower()
 
@@ -236,7 +237,7 @@ class GPUPerformanceOptimizer:
         global_mem_size: int,
         compile_time_ms: float = 0.0,
     ) -> GPUProfile:
-        """创建优化的GPU配置
+        """创建优化的GPU配置.
 
         Args:
             device_name: GPU设备名称
@@ -305,7 +306,7 @@ class GPUPerformanceOptimizer:
         return profile
 
     def record_performance(self, metrics: PerformanceMetrics) -> None:
-        """记录性能指标
+        """记录性能指标.
 
         Args:
             metrics: 性能指标数据
@@ -336,7 +337,7 @@ class GPUPerformanceOptimizer:
         current_batch_size: int,
         engine: Any = None,
     ) -> tuple[int, dict[str, Any]] | None:
-        """检查是否可以进行调整（profile存在、冷却期、频率限流）
+        """检查是否可以进行调整（profile存在、冷却期、频率限流）.
 
         Returns:
             None 表示可以继续调整；否则返回 (batch_size, info) 用于提前返回
@@ -369,7 +370,7 @@ class GPUPerformanceOptimizer:
         return None
 
     def _analyze_get_vendor_strategy(self, engine: Any = None) -> tuple[str, dict[str, Any]]:
-        """获取厂商标识和调整策略"""
+        """获取厂商标识和调整策略."""
         vendor_key = "unknown"
         if engine is not None:
             vendor_key = getattr(engine, "_vendor", "unknown")
@@ -391,7 +392,7 @@ class GPUPerformanceOptimizer:
         strategy: dict[str, Any],
         now: float,
     ) -> tuple[int, dict[str, Any]]:
-        """在持有锁的情况下执行性能分析和batch调整（锁由调用方持有）"""
+        """在持有锁的情况下执行性能分析和batch调整（锁由调用方持有）."""
         if len(self._metrics_history) < self.MIN_DATA_POINTS:
             return current_batch_size, {"action": "insufficient_data", "reason": "数据不足"}
 
@@ -486,7 +487,7 @@ class GPUPerformanceOptimizer:
         min_target: float,
         strategy: dict[str, Any],
     ) -> float:
-        """计算增长比率：GPU利用率低时更激进"""
+        """计算增长比率：GPU利用率低时更激进."""
         if gpu_utilization > 0 and gpu_utilization < min_target:
             deficit_ratio = min_target / max(gpu_utilization, 0.1)
             growth_ratio = min(
@@ -506,7 +507,7 @@ class GPUPerformanceOptimizer:
         recent_metrics: list[Any],
         adjustments: dict[str, Any],
     ) -> int:
-        """尝试恢复batch_size：连续稳定时恢复到初始水平"""
+        """尝试恢复batch_size：连续稳定时恢复到初始水平."""
         if not self._current_profile or self._initial_batch_size <= 0:
             return new_batch_size
 
@@ -536,7 +537,7 @@ class GPUPerformanceOptimizer:
         error_rate: float = 0.0,
         engine: Any = None,
     ) -> tuple[int, dict[str, Any]]:
-        """分析性能数据并调整参数
+        """分析性能数据并调整参数.
 
         Args:
             current_batch_size: 当前批次大小
@@ -564,7 +565,7 @@ class GPUPerformanceOptimizer:
             )
 
     def get_optimization_report(self) -> dict[str, Any]:
-        """获取优化报告"""
+        """获取优化报告."""
         if not self._current_profile:
             return {"status": "no_profile"}
 
@@ -611,7 +612,7 @@ class GPUPerformanceOptimizer:
             }
 
     def _generate_recommendations(self) -> list[str]:
-        """生成优化建议"""
+        """生成优化建议."""
         recommendations: list[str] = []
 
         if not self._current_profile or not self._metrics_history:
@@ -643,7 +644,7 @@ class GPUPerformanceOptimizer:
         return recommendations
 
     def reset(self) -> None:
-        """重置优化器状态"""
+        """重置优化器状态."""
         with self._lock:
             self._metrics_history.clear()
             self._current_profile = None
@@ -658,7 +659,7 @@ _optimizer_lock = threading.Lock()
 
 
 def get_gpu_optimizer() -> GPUPerformanceOptimizer:
-    """获取全局GPU性能优化器实例（单例模式）"""
+    """获取全局GPU性能优化器实例（单例模式）."""
     global _global_optimizer
 
     if _global_optimizer is None:

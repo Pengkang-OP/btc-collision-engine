@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""暴力穷举搜索模式 (BruteForceSearchMode) 单元测试
+"""暴力穷举搜索模式 (BruteForceSearchMode) 单元测试.
 
 覆盖：
 - execute 执行入口（start 起始值）
@@ -23,7 +23,7 @@ from src.gpu.search_modes.brute_force_search import BruteForceSearchMode
 
 
 def _make_engine_stub(**kwargs):
-    """创建 GPUCollisionEngine stub"""
+    """创建 GPUCollisionEngine stub."""
     engine = MagicMock()
     engine._stop_event = MagicMock()
     engine._stop_event.is_set.side_effect = kwargs.get("stop_side_effect", [False, True])
@@ -60,10 +60,10 @@ def _make_engine_stub(**kwargs):
 @pytest.mark.unit
 @pytest.mark.gpu_kernel
 class TestBruteForceExecute:
-    """BruteForceSearchMode.execute 测试"""
+    """BruteForceSearchMode.execute 测试."""
 
     def test_execute_sets_range_start(self):
-        """测试 execute 设置 _range_start"""
+        """测试 execute 设置 _range_start."""
         engine = _make_engine_stub()
         mode = BruteForceSearchMode(engine)
         mode.execute(start=100)
@@ -71,7 +71,7 @@ class TestBruteForceExecute:
         assert engine._range_start == 100
 
     def test_execute_sets_current_position(self):
-        """测试 execute 设置 _current_position"""
+        """测试 execute 设置 _current_position."""
         engine = _make_engine_stub(batch_size=100, stop_side_effect=[False, True])
         mode = BruteForceSearchMode(engine)
         mode.execute(start=42)
@@ -80,7 +80,7 @@ class TestBruteForceExecute:
         assert engine._current_position == 42 + 100
 
     def test_execute_delegates_to_batch_loop(self):
-        """测试 execute 委托给 _execute_batch_loop"""
+        """测试 execute 委托给 _execute_batch_loop."""
         engine = _make_engine_stub(stop_side_effect=[False, True])
 
         mode = BruteForceSearchMode(engine)
@@ -91,7 +91,7 @@ class TestBruteForceExecute:
         mock_loop.assert_called_once()
 
     def test_execute_sets_running_false(self):
-        """测试 execute 完成后设置 _running=False"""
+        """测试 execute 完成后设置 _running=False."""
         engine = _make_engine_stub()
 
         mode = BruteForceSearchMode(engine)
@@ -100,7 +100,7 @@ class TestBruteForceExecute:
         assert engine._running is False
 
     def test_execute_updates_stats(self):
-        """测试 execute 更新统计信息"""
+        """测试 execute 更新统计信息."""
         engine = _make_engine_stub(stop_side_effect=[False, True])
 
         mode = BruteForceSearchMode(engine)
@@ -109,7 +109,7 @@ class TestBruteForceExecute:
         engine.stats.update.assert_called()
 
     def test_execute_calls_on_complete(self):
-        """测试 execute 调用 on_complete 回调"""
+        """测试 execute 调用 on_complete 回调."""
         engine = _make_engine_stub(on_complete=MagicMock())
 
         mode = BruteForceSearchMode(engine)
@@ -118,7 +118,7 @@ class TestBruteForceExecute:
         engine.on_complete.assert_called_once()
 
     def test_execute_no_on_complete(self):
-        """测试无 on_complete 回调时不崩溃"""
+        """测试无 on_complete 回调时不崩溃."""
         engine = _make_engine_stub(on_complete=None)
 
         mode = BruteForceSearchMode(engine)
@@ -126,7 +126,7 @@ class TestBruteForceExecute:
         mode.execute(start=0)
 
     def test_execute_gen_keys_produces_correct_keys(self):
-        """测试 gen_keys 闭包生成正确的私钥字节串"""
+        """测试 gen_keys 闭包生成正确的私钥字节串."""
         engine = _make_engine_stub(
             batch_size=3,
             stop_side_effect=[False, True],
@@ -143,7 +143,7 @@ class TestBruteForceExecute:
             mock_gen.assert_called_once_with(10, 3)
 
     def test_execute_advances_current_position(self):
-        """测试 gen_keys 闭包推进 _current_position"""
+        """测试 gen_keys 闭包推进 _current_position."""
         engine = _make_engine_stub(
             batch_size=100,
             stop_side_effect=[False, True],
@@ -165,10 +165,10 @@ class TestBruteForceExecute:
 @pytest.mark.unit
 @pytest.mark.gpu_kernel
 class TestBruteForceMultiBatch:
-    """多批次执行测试"""
+    """多批次执行测试."""
 
     def test_multiple_batches(self):
-        """测试多个批次执行"""
+        """测试多个批次执行."""
         engine = _make_engine_stub(
             batch_size=100,
             # 允许 3 个批次
@@ -183,7 +183,7 @@ class TestBruteForceMultiBatch:
         assert engine._running is False
 
     def test_batches_advance_correctly(self):
-        """测试每个批次后位置正确推进"""
+        """测试每个批次后位置正确推进."""
         engine = _make_engine_stub(
             batch_size=50,
             stop_side_effect=[False, False, False, True],
@@ -204,10 +204,10 @@ class TestBruteForceMultiBatch:
 @pytest.mark.unit
 @pytest.mark.gpu_kernel
 class TestBruteForceBoundary:
-    """BroForceSearchMode 边界值测试"""
+    """BroForceSearchMode 边界值测试."""
 
     def test_start_zero(self):
-        """测试 start=0"""
+        """测试 start=0."""
         engine = _make_engine_stub()
 
         mode = BruteForceSearchMode(engine)
@@ -218,7 +218,7 @@ class TestBruteForceBoundary:
         assert engine._running is False
 
     def test_start_large_value(self):
-        """测试大起始值"""
+        """测试大起始值."""
         engine = _make_engine_stub(
             batch_size=10,
             stop_side_effect=[False, True],
@@ -231,7 +231,7 @@ class TestBruteForceBoundary:
         assert engine._current_position == 2**250 + 10
 
     def test_start_negative_raises(self):
-        """测试负起始值抛出 struct.error（Q 格式不支持负数）"""
+        """测试负起始值抛出 struct.error（Q 格式不支持负数）."""
         import struct
 
         engine = _make_engine_stub(
@@ -244,7 +244,7 @@ class TestBruteForceBoundary:
             mode.execute(start=-5)
 
     def test_zero_batch_size(self):
-        """测试 batch_size=0（不应发生，但需处理）"""
+        """测试 batch_size=0（不应发生，但需处理）."""
         engine = _make_engine_stub(batch_size=0)
 
         mode = BruteForceSearchMode(engine)
@@ -255,7 +255,7 @@ class TestBruteForceBoundary:
         assert engine._running is False
 
     def test_single_element_batch(self):
-        """测试 batch_size=1"""
+        """测试 batch_size=1."""
         engine = _make_engine_stub(
             batch_size=1,
             stop_side_effect=[False, True],

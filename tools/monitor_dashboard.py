@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GPU碰撞引擎监控面板 - 显示实时状态"""
+"""GPU碰撞引擎监控面板 - 显示实时状态."""
 
 import os
 import time
@@ -8,14 +8,14 @@ from pathlib import Path
 
 
 def clear_screen():
-    """清屏"""
+    """清屏."""
     import subprocess
 
     subprocess.call("cls" if os.name == "nt" else "clear", shell=True)  # nosec B605
 
 
 def analyze_current_run():
-    """分析当前运行的程序"""
+    """分析当前运行的程序."""
     log_file = Path("logs/collision.log")
 
     if not log_file.exists():
@@ -104,7 +104,7 @@ def analyze_current_run():
 
 
 def display_dashboard():
-    """显示监控面板"""
+    """显示监控面板."""
     clear_screen()
 
     print("=" * 80)
@@ -204,7 +204,7 @@ def display_dashboard():
 
 
 def main():
-    """主循环"""
+    """主循环."""
     print("启动监控面板...")
     print("按 Ctrl+C 停止")
     print()

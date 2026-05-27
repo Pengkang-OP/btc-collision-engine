@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""核心模块性能基准测试
+"""核心模块性能基准测试.
 
 测试内容:
 1. secp256k1 椭圆曲线运算性能
@@ -22,7 +22,7 @@ from src.utils.logger import AsyncFileHandler, SampledLogger, ThreadSafeLogger
 
 
 def benchmark_secp256k1_scalar_multiply(iterations=100):
-    """基准测试: 标量乘法性能"""
+    """基准测试: 标量乘法性能."""
     print("\n" + "=" * 60)
     print("基准测试 1: secp256k1 标量乘法性能")
     print("=" * 60)
@@ -74,7 +74,7 @@ def benchmark_secp256k1_scalar_multiply(iterations=100):
 
 
 def benchmark_logger_performance(iterations=1000):
-    """基准测试: 日志系统性能"""
+    """基准测试: 日志系统性能."""
     print("\n" + "=" * 60)
     print("基准测试 2: 日志系统性能对比")
     print("=" * 60)
@@ -166,7 +166,7 @@ def benchmark_logger_performance(iterations=1000):
 
 
 def benchmark_sampled_logger(iterations=10000):
-    """基准测试: 采样日志性能"""
+    """基准测试: 采样日志性能."""
     print("\n" + "=" * 60)
     print("基准测试 3: SampledLogger 性能")
     print("=" * 60)
@@ -196,7 +196,7 @@ def benchmark_sampled_logger(iterations=10000):
 
 
 def benchmark_concurrent_logging(thread_count=5, messages_per_thread=100):
-    """基准测试: 并发日志性能"""
+    """基准测试: 并发日志性能."""
     print("\n" + "=" * 60)
     print("基准测试 4: 并发日志性能")
     print("=" * 60)
@@ -233,7 +233,7 @@ def benchmark_concurrent_logging(thread_count=5, messages_per_thread=100):
 
 
 def main():
-    """运行所有基准测试"""
+    """运行所有基准测试."""
     print("\n" + "=" * 60)
     print("BTC碰撞引擎核心模块性能基准测试")
     print("=" * 60)

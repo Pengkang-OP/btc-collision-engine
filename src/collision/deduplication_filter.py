@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Deduplication filter for collision detection results.
 
 Thread-safe filter that prevents re-processing of already-seen

@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-"""加密配置管理
+"""加密配置管理.
 
 管理加密后端的选择和配置。
 支持从配置文件加载和保存加密设置。
@@ -13,7 +12,7 @@ from typing import Any
 
 
 class CryptoBackendType(str, Enum):
-    """加密后端类型（字符串版本，用于配置）
+    """加密后端类型（字符串版本，用于配置）.
 
     使用 (str, Enum) 而非 StrEnum 以保证一致性。
     StrEnum 在 Python 3.11 引入，本项目最低要求 3.12 但保持该约定。
@@ -28,7 +27,7 @@ class CryptoBackendType(str, Enum):
 
 
 class CryptoConfig:
-    """加密配置管理器
+    """加密配置管理器.
 
     管理加密相关的配置选项。
     """
@@ -41,7 +40,7 @@ class CryptoConfig:
     }
 
     def __init__(self, config_file: str | None = None, config_manager=None) -> None:
-        """初始化加密配置
+        """初始化加密配置.
 
         Args:
             config_file: 配置文件路径，None表示使用默认配置
@@ -56,7 +55,7 @@ class CryptoConfig:
             self.load()
 
     def load(self) -> bool:
-        """从文件加载配置
+        """从文件加载配置.
 
         Returns:
             加载成功返回True
@@ -76,7 +75,7 @@ class CryptoConfig:
             return False
 
     def save(self) -> bool:
-        """保存配置到文件
+        """保存配置到文件.
 
         Returns:
             保存成功返回True
@@ -99,7 +98,7 @@ class CryptoConfig:
             return False
 
     def get(self, key: str, default: Any = None) -> Any:
-        """获取配置值
+        """获取配置值.
 
         Args:
             key: 配置键
@@ -112,7 +111,7 @@ class CryptoConfig:
         return self.config.get(key, default)
 
     def set(self, key: str, value: Any) -> bool:
-        """设置配置值
+        """设置配置值.
 
         Args:
             key: 配置键
@@ -126,7 +125,7 @@ class CryptoConfig:
         return True
 
     def get_backend_type(self) -> CryptoBackendType:
-        """获取当前配置的后端类型
+        """获取当前配置的后端类型.
 
         Returns:
             CryptoBackendType枚举值
@@ -139,7 +138,7 @@ class CryptoConfig:
             return CryptoBackendType.AUTO
 
     def set_backend_type(self, backend_type: CryptoBackendType) -> bool:
-        """设置后端类型
+        """设置后端类型.
 
         Args:
             backend_type: 后端类型
@@ -152,7 +151,7 @@ class CryptoConfig:
         return True
 
     def apply_to_crypto_manager(self) -> bool:
-        """将配置应用到加密后端管理器（线程安全）
+        """将配置应用到加密后端管理器（线程安全）.
 
         Returns:
             应用成功返回True
@@ -195,7 +194,7 @@ class CryptoConfig:
 
     @staticmethod
     def is_gpu_available() -> bool:
-        """检测GPU环境是否就绪（pyopencl可用且有设备）
+        """检测GPU环境是否就绪（pyopencl可用且有设备）.
 
         Returns:
             True if GPU可用，False otherwise
@@ -206,7 +205,7 @@ class CryptoConfig:
         return GPUDeviceDetector.is_gpu_available()
 
     def get_gpu_device_info(self) -> list:
-        """获取可用GPU设备列表
+        """获取可用GPU设备列表.
 
         Returns:
             可用GPU设备信息列表，每个设备是一个字典
@@ -220,7 +219,7 @@ class CryptoConfig:
         return gpu_config.get_gpu_device_info()
 
     def create_gpu_engine(self, targets) -> Any:
-        """根据当前GPU配置创建GPU碰撞引擎
+        """根据当前GPU配置创建GPU碰撞引擎.
 
         Args:
             targets: 目标地址集合
@@ -242,7 +241,7 @@ class CryptoConfig:
         )
 
     def get_gpu_config(self) -> dict[str, Any]:
-        """获取GPU配置
+        """获取GPU配置.
 
         优先从ConfigManager获取,如果没有则使用默认值
 
@@ -277,7 +276,7 @@ class CryptoConfig:
         device_index: int | None = None,
         batch_size: int | None = None,
     ) -> bool:
-        """设置GPU配置
+        """设置GPU配置.
 
         Args:
             use_gpu: 是否使用GPU
@@ -297,7 +296,7 @@ class CryptoConfig:
         return True
 
     def validate(self) -> list:
-        """验证配置
+        """验证配置.
 
         Returns:
             错误信息列表，空列表表示验证通过
@@ -332,7 +331,7 @@ class CryptoConfig:
         return errors
 
     def to_dict(self) -> dict[str, Any]:
-        """导出配置为字典
+        """导出配置为字典.
 
         Returns:
             配置字典
@@ -341,13 +340,13 @@ class CryptoConfig:
         return self.config.copy()
 
     def reset_to_defaults(self) -> None:
-        """重置为默认配置"""
+        """重置为默认配置."""
         self.config = self.DEFAULT_CONFIG.copy()
 
 
 # 全局配置实例
 def get_crypto_config(config_file: str | None = None) -> CryptoConfig:
-    """获取加密配置实例
+    """获取加密配置实例.
 
     Args:
         config_file: 配置文件路径
@@ -366,7 +365,7 @@ def get_crypto_config(config_file: str | None = None) -> CryptoConfig:
 
 # 便捷函数
 def init_crypto_from_config(config_file: str | None = None) -> CryptoConfig:
-    """从配置文件初始化加密系统
+    """从配置文件初始化加密系统.
 
     Args:
         config_file: 配置文件路径

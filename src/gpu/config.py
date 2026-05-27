@@ -1,4 +1,4 @@
-"""GPU配置管理器
+"""GPU配置管理器.
 
 与crypto_config.py集成,提供GPU配置管理功能。
 """
@@ -7,9 +7,8 @@ import os
 import pathlib
 from typing import Any
 
-from ..utils.fast_json import fast_dump, fast_load
-
 from ..utils import get_configured_logger
+from ..utils.fast_json import fast_dump, fast_load
 from .device import GPUDevice, GPUDeviceDetector
 from .profiles.loader import GPUProfileLoader
 
@@ -17,7 +16,7 @@ logger = get_configured_logger("GPUConfig")
 
 
 class GPUConfig:
-    """GPU配置管理器
+    """GPU配置管理器.
 
     负责:
     1. 加载和保存GPU配置
@@ -34,10 +33,10 @@ class GPUConfig:
         "enable_vendor_optimizations": True,
     }
 
-    __slots__ = ("config_file", "config", "profile_loader")
+    __slots__ = ("config", "config_file", "profile_loader")
 
     def __init__(self, config_file: str | None = None) -> None:
-        """初始化GPU配置
+        """初始化GPU配置.
 
         Args:
             config_file: 配置文件路径
@@ -51,7 +50,7 @@ class GPUConfig:
             self._load_config()
 
     def _load_config(self) -> None:
-        """从文件加载配置"""
+        """从文件加载配置."""
         if self.config_file is None:
             return
         try:
@@ -73,7 +72,7 @@ class GPUConfig:
             logger.warning("加载GPU配置失败: %s", e)
 
     def get_gpu_config(self) -> dict[str, Any]:
-        """获取GPU配置
+        """获取GPU配置.
 
         Returns:
             GPU配置字典
@@ -95,7 +94,7 @@ class GPUConfig:
         batch_size: int | None = None,
         **kwargs: Any,
     ) -> bool:
-        """设置GPU配置
+        """设置GPU配置.
 
         Args:
             use_gpu: 是否使用GPU
@@ -123,7 +122,7 @@ class GPUConfig:
         return True
 
     def get_gpu_device_info(self) -> list:
-        """获取可用GPU设备列表
+        """获取可用GPU设备列表.
 
         Returns:
             GPU设备信息列表
@@ -150,7 +149,7 @@ class GPUConfig:
             return []
 
     def is_gpu_available(self) -> bool:
-        """检查GPU是否可用
+        """检查GPU是否可用.
 
         Returns:
             True如果GPU可用
@@ -159,7 +158,7 @@ class GPUConfig:
         return GPUDeviceDetector.is_gpu_available()
 
     def create_gpu_device(self, device_index: int | None = None) -> GPUDevice:
-        """创建并初始化GPU设备
+        """创建并初始化GPU设备.
 
         Args:
             device_index: 设备索引,None则使用配置中的值
@@ -177,7 +176,7 @@ class GPUConfig:
         return device
 
     def create_gpu_engine(self, targets: Any) -> Any:
-        """创建GPU碰撞引擎
+        """创建GPU碰撞引擎.
 
         Args:
             targets: 目标地址集合
@@ -202,7 +201,7 @@ class GPUConfig:
             raise RuntimeError("GPUCollisionEngine不可用") from e
 
     def save_config(self) -> bool:
-        """保存配置到文件
+        """保存配置到文件.
 
         Returns:
             保存成功返回True
@@ -236,7 +235,7 @@ class GPUConfig:
             return False
 
     def validate(self) -> list:
-        """验证配置
+        """验证配置.
 
         Returns:
             错误信息列表

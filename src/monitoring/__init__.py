@@ -1,5 +1,4 @@
-"""
-Monitoring and alerting package for BTC Collision Engine.
+"""Monitoring and alerting package for BTC Collision Engine.
 
 Provides GPU performance monitoring (gpu_performance_monitor), system-level
 monitoring (monitoring_system), data logging (data_logger), alert dispatch
@@ -7,7 +6,7 @@ monitoring (monitoring_system), data logging (data_logger), alert dispatch
 Supports configurable thresholds, metric storage, and real-time dashboards.
 """
 
-from src import __version__ as __version__  # noqa: F401 — 从包根统一读取
+from src import __version__ as __version__  # noqa: F401
 
 __all__ = [
     "alert_system",

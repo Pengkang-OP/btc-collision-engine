@@ -1,4 +1,4 @@
-"""P1-3修复: 熵池健康检查单元测试
+"""P1-3修复: 熵池健康检查单元测试.
 
 测试SecureKeyGenerator的熵池检测功能,验证在不同熵池状态下的行为。
 """
@@ -15,17 +15,17 @@ from src.core.key_generator import SecureKeyGenerator
 @pytest.mark.entropy
 @pytest.mark.p1_high
 class TestEntropyHealthCheck:
-    """测试熵池健康检查功能"""
+    """测试熵池健康检查功能."""
 
     def setup_method(self, method):
-        """测试前准备"""
+        """测试前准备."""
         self.key_gen = SecureKeyGenerator(config={"batch_size": 100})
 
     @pytest.mark.skipif(
-        sys.platform != "linux", reason="Linux /proc entropy test - non-Linux fallback returns True"
+        sys.platform != "linux", reason="Linux /proc entropy test - non-Linux fallback returns True",
     )
     def test_low_entropy_linux(self):
-        """测试Linux低熵场景(< 1000 bits)"""
+        """测试Linux低熵场景(< 1000 bits)."""
         # Mock熵池文件读取
         with patch("pathlib.Path.exists", return_value=True):
             with patch("builtins.open", mock_open(read_data="500")):
@@ -38,7 +38,7 @@ class TestEntropyHealthCheck:
                 assert self.key_gen.stats.get("low_entropy_count" == 0, 1)
 
     def test_medium_entropy_linux(self):
-        """测试Linux中等熵场景(1000-2000 bits)"""
+        """测试Linux中等熵场景(1000-2000 bits)."""
         with patch("pathlib.Path.exists", return_value=True):
             with patch("builtins.open", mock_open(read_data="1500")):
                 result = self.key_gen._check_entropy_health()
@@ -47,7 +47,7 @@ class TestEntropyHealthCheck:
                 assert result
 
     def test_high_entropy_linux(self):
-        """测试Linux高熵场景(> 2000 bits)"""
+        """测试Linux高熵场景(> 2000 bits)."""
         with patch("pathlib.Path.exists", return_value=True):
             with patch("builtins.open", mock_open(read_data="3000")):
                 result = self.key_gen._check_entropy_health()
@@ -56,7 +56,7 @@ class TestEntropyHealthCheck:
                 assert result
 
     def test_very_high_entropy_linux(self):
-        """测试Linux极高熵场景(> 4000 bits)"""
+        """测试Linux极高熵场景(> 4000 bits)."""
         with patch("pathlib.Path.exists", return_value=True):
             with patch("builtins.open", mock_open(read_data="4096")):
                 result = self.key_gen._check_entropy_health()
@@ -64,7 +64,7 @@ class TestEntropyHealthCheck:
                 assert result
 
     def test_entropy_file_not_exists(self):
-        """测试熵池文件不存在场景(Windows/macOS)"""
+        """测试熵池文件不存在场景(Windows/macOS)."""
         with patch("pathlib.Path.exists", return_value=False):
             result = self.key_gen._check_entropy_health()
 
@@ -72,7 +72,7 @@ class TestEntropyHealthCheck:
             assert result
 
     def test_entropy_file_read_error(self):
-        """测试熵池文件读取错误"""
+        """测试熵池文件读取错误."""
         with patch("pathlib.Path.exists", return_value=True):
             with patch("builtins.open", side_effect=OSError("Permission denied")):
                 result = self.key_gen._check_entropy_health()
@@ -81,7 +81,7 @@ class TestEntropyHealthCheck:
                 assert result
 
     def test_entropy_file_invalid_data(self):
-        """测试熵池文件数据格式错误"""
+        """测试熵池文件数据格式错误."""
         with patch("pathlib.Path.exists", return_value=True):
             with patch("builtins.open", mock_open(read_data="invalid")):
                 result = self.key_gen._check_entropy_health()
@@ -90,7 +90,7 @@ class TestEntropyHealthCheck:
                 assert result
 
     def test_generate_batch_with_low_entropy(self):
-        """测试低熵环境下生成密钥(应警告但不阻塞)"""
+        """测试低熵环境下生成密钥(应警告但不阻塞)."""
         with patch.object(self.key_gen, "_check_entropy_health", return_value=False):
             with patch("secrets.token_bytes", return_value=b"\x01" * 32):
                 # 低熵时应能继续生成
@@ -100,7 +100,7 @@ class TestEntropyHealthCheck:
                 assert len(keys) == 5
 
     def test_generate_batch_with_high_entropy(self):
-        """测试高熵环境下生成密钥"""
+        """测试高熵环境下生成密钥."""
         with patch.object(self.key_gen, "_check_entropy_health", return_value=True):
             with patch("secrets.token_bytes", return_value=b"\x01" * 32):
                 keys = self.key_gen.generate_batch(5)
@@ -108,10 +108,10 @@ class TestEntropyHealthCheck:
                 assert len(keys) == 5
 
     @pytest.mark.skipif(
-        sys.platform != "linux", reason="Linux /proc entropy test - non-Linux fallback returns True"
+        sys.platform != "linux", reason="Linux /proc entropy test - non-Linux fallback returns True",
     )
     def test_multiple_low_entropy_warnings(self):
-        """测试多次低熵警告统计"""
+        """测试多次低熵警告统计."""
         with patch("pathlib.Path.exists", return_value=True):
             with patch("builtins.open", mock_open(read_data="800")):
                 # 连续检查3次
@@ -123,7 +123,7 @@ class TestEntropyHealthCheck:
                 assert self.key_gen.stats.get("low_entropy_count" == 0, 3)
 
     def test_entropy_boundary_1000(self):
-        """测试熵值边界条件(1000)"""
+        """测试熵值边界条件(1000)."""
         with patch("pathlib.Path.exists", return_value=True):
             with patch("builtins.open", mock_open(read_data="1000")):
                 result = self.key_gen._check_entropy_health()
@@ -132,10 +132,10 @@ class TestEntropyHealthCheck:
                 assert result
 
     @pytest.mark.skipif(
-        sys.platform != "linux", reason="Linux /proc entropy test - non-Linux fallback returns True"
+        sys.platform != "linux", reason="Linux /proc entropy test - non-Linux fallback returns True",
     )
     def test_entropy_boundary_999(self):
-        """测试熵值边界条件(999)"""
+        """测试熵值边界条件(999)."""
         with patch("pathlib.Path.exists", return_value=True):
             with patch("builtins.open", mock_open(read_data="999")):
                 result = self.key_gen._check_entropy_health()
@@ -144,7 +144,7 @@ class TestEntropyHealthCheck:
                 assert not result
 
     def test_entropy_boundary_2000(self):
-        """测试熵值边界条件(2000)"""
+        """测试熵值边界条件(2000)."""
         with patch("pathlib.Path.exists", return_value=True):
             with patch("builtins.open", mock_open(read_data="2000")):
                 result = self.key_gen._check_entropy_health()
@@ -152,7 +152,7 @@ class TestEntropyHealthCheck:
                 assert result
 
     def test_entropy_boundary_1999(self):
-        """测试熵值边界条件(1999)"""
+        """测试熵值边界条件(1999)."""
         with patch("pathlib.Path.exists", return_value=True):
             with patch("builtins.open", mock_open(read_data="1999")):
                 result = self.key_gen._check_entropy_health()

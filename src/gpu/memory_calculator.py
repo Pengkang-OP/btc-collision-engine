@@ -1,4 +1,4 @@
-"""GPU 显存计算模块
+"""GPU 显存计算模块.
 
 提供独立的显存需求计算工具，封装与 GPU 内存相关的所有计算逻辑，包括：
 - 给定 batch_size 和目标地址数量时的显存需求估算
@@ -14,7 +14,7 @@ logger = get_configured_logger("GPUMemoryCalculator")
 
 
 class GPUMemoryCalculator:
-    """GPU 显存计算器
+    """GPU 显存计算器.
 
     提供静态工具方法，用于估算 GPU 内核执行时的显存需求。
 
@@ -46,7 +46,7 @@ class GPUMemoryCalculator:
 
     @staticmethod
     def calculate_batch_memory(batch_size: int, num_targets: int) -> int:
-        """计算给定 batch_size 和目标数的显存需求（字节）
+        """计算给定 batch_size 和目标数的显存需求（字节）.
 
         PRNG 模式：私钥在 GPU 端由 seed+gid 生成，host 仅传输 32 字节 seed_buf。
 
@@ -78,7 +78,7 @@ class GPUMemoryCalculator:
 
     @staticmethod
     def calculate_batch_memory_mb(batch_size: int, num_targets: int) -> float:
-        """计算给定 batch_size 和目标数的显存需求（MB）
+        """计算给定 batch_size 和目标数的显存需求（MB）.
 
         Args:
             batch_size:   每批处理的私钥数量
@@ -97,7 +97,7 @@ class GPUMemoryCalculator:
         num_targets: int,
         memory_ratio: float = 0.7,
     ) -> int:
-        """估算可用显存下的最大 batch_size
+        """估算可用显存下的最大 batch_size.
 
         Args:
             available_memory: 可用显存（字节）
@@ -149,7 +149,7 @@ class GPUMemoryCalculator:
 
     @staticmethod
     def get_memory_breakdown(batch_size: int, num_targets: int) -> dict[str, float]:
-        """获取显存使用明细（MB）
+        """获取显存使用明细（MB）.
 
         Args:
             batch_size:   每批处理的私钥数量
@@ -198,7 +198,7 @@ class GPUMemoryCalculator:
 
     @staticmethod
     def calculate_from_hash160_bytes(num_keys: int, hash160_bytes: bytes) -> float:
-        """根据 hash160 字节串计算显存需求（MB）
+        """根据 hash160 字节串计算显存需求（MB）.
 
         与 GPUCollisionEngine._calculate_gpu_memory_usage 保持一致的计算逻辑：
         目标缓冲区大小取 hash160_bytes 的实际字节长度（而非 num_targets * 20）。

@@ -1,20 +1,20 @@
-"""ConfigManager配置验证一致性测试 - 确保JSON Schema和手动验证逻辑一致"""
-
-import pytest
+"""ConfigManager配置验证一致性测试 - 确保JSON Schema和手动验证逻辑一致."""
 
 import unittest
+
+import pytest
 
 from src.config.config_manager import HAS_JSONSCHEMA, ConfigManager
 
 
 class TestConfigValidationConsistency:
-    """验证JSON Schema和手动验证的一致性"""
+    """验证JSON Schema和手动验证的一致性."""
 
     def setup_method(self, method):
         self.mgr = ConfigManager()
 
     def test_valid_config_passes_both_validators(self):
-        """有效的配置应该同时通过JSON Schema和手动验证"""
+        """有效的配置应该同时通过JSON Schema和手动验证."""
         valid_config = {
             "collision": {
                 "max_workers": 8,
@@ -62,28 +62,28 @@ class TestConfigValidationConsistency:
         assert len(errors) == 0, f"有效配置不应有错误: {errors}"
 
     def test_invalid_max_workers_fails_validation(self):
-        """无效的max_workers应该被检测到"""
+        """无效的max_workers应该被检测到."""
         invalid_config = {"collision": {"max_workers": -1}}
 
         errors = self.mgr.validate(invalid_config)
-        assert errors in "collision.max_workers"
+        assert "collision.max_workers" in errors
 
     def test_invalid_log_level_fails_validation(self):
-        """无效的日志级别应该被检测到"""
+        """无效的日志级别应该被检测到."""
         invalid_config = {"logging": {"level": "INVALID_LEVEL"}}
 
         errors = self.mgr.validate(invalid_config)
-        assert errors in "logging.level"
+        assert "logging.level" in errors
 
     def test_invalid_gpu_batch_size_fails_validation(self):
-        """无效的GPU批处理大小应该被检测到"""
+        """无效的GPU批处理大小应该被检测到."""
         invalid_config = {"gpu": {"batch_size": 0}}
 
         errors = self.mgr.validate(invalid_config)
-        assert errors in "gpu.batch_size"
+        assert "gpu.batch_size" in errors
 
     def test_boolean_validation_strict(self):
-        """严格的布尔值检查 - 整数不应被接受为布尔值"""
+        """严格的布尔值检查 - 整数不应被接受为布尔值."""
         # 测试布尔值字段接收整数的情况
         invalid_config = {
             "gpu": {"use_gpu": 1},  # 应该是布尔值，不是整数
@@ -92,11 +92,11 @@ class TestConfigValidationConsistency:
 
         errors = self.mgr.validate(invalid_config)
         # 确保整数不会被误判为布尔值
-        assert errors in "gpu.use_gpu"
-        assert errors in "logging.enable_console"
+        assert "gpu.use_gpu" in errors
+        assert "logging.enable_console" in errors
 
     def test_config_dependencies_validation(self):
-        """配置依赖关系验证 - 日志轮转模式依赖（仅手动验证）"""
+        """配置依赖关系验证 - 日志轮转模式依赖（仅手动验证）."""
         # 配置依赖关系验证仅在手动验证模式下生效
         # 当jsonschema可用时，validate()优先使用Schema验证
         from src.config.config_manager import HAS_JSONSCHEMA
@@ -107,19 +107,19 @@ class TestConfigValidationConsistency:
             size_without_max_bytes = {"logging": {"rotation_type": "size"}}
 
             errors = self.mgr.validate(size_without_max_bytes)
-            assert errors in "logging.max_bytes"
+            assert "logging.max_bytes" in errors
 
             # time轮转模式需要rotation_when
             time_without_when = {"logging": {"rotation_type": "time"}}
 
             errors = self.mgr.validate(time_without_when)
-            assert errors in "logging.rotation_when"
+            assert "logging.rotation_when" in errors
         else:
             # jsonschema模式下跳过此测试（依赖检查仅在手动验证中）
             pytest.skip("jsonschema可用，依赖关系验证由Schema处理")
 
     def test_additional_properties_rejected(self):
-        """额外属性应该被拒绝（Schema验证）"""
+        """额外属性应该被拒绝（Schema验证）."""
         config_with_extra = {
             "collision": {"max_workers": 8, "invalid_extra_field": "value"},  # 不应该被允许
             "logging": {"level": "INFO"},
@@ -132,13 +132,13 @@ class TestConfigValidationConsistency:
             assert len(errors) > 0
 
     def test_default_config_validation(self):
-        """默认配置应该完全通过验证"""
+        """默认配置应该完全通过验证."""
         mgr = ConfigManager()
         errors = mgr.validate()
         assert len(errors) == 0, f"默认配置不应有错误: {errors}"
 
     def test_merge_config_validation(self):
-        """合并后的配置应该通过验证"""
+        """合并后的配置应该通过验证."""
         mgr = ConfigManager()
         mgr.set("collision.max_workers", 16)
         mgr.set("logging.level", "DEBUG")
@@ -148,14 +148,14 @@ class TestConfigValidationConsistency:
         assert len(errors) == 0, f"合并配置不应有错误: {errors}"
 
     def test_empty_config_validation(self):
-        """空配置应该通过验证（使用默认值）"""
+        """空配置应该通过验证（使用默认值）."""
         empty_config = {}
         errors = self.mgr.validate(empty_config)
         # 空配置应该是有效的（所有字段可选）
         assert len(errors) == 0, f"空配置不应有错误: {errors}"
 
     def test_none_values_validation(self):
-        """None值应该被正确处理"""
+        """None值应该被正确处理."""
         config_with_none = {
             "collision": {"max_workers": None},  # None是有效的
             "logging": {"level": "INFO"},
@@ -166,10 +166,10 @@ class TestConfigValidationConsistency:
 
 
 class TestConfigValidationEdgeCases:
-    """验证边界条件测试"""
+    """验证边界条件测试."""
 
     def test_max_workers_boundary(self):
-        """max_workers边界值测试"""
+        """max_workers边界值测试."""
         mgr = ConfigManager()
 
         # 最小值边界
@@ -185,10 +185,10 @@ class TestConfigValidationEdgeCases:
         # 超过最大值
         mgr.set("collision.max_workers", 1025)
         errors = mgr.validate()
-        assert errors in "collision.max_workers"
+        assert "collision.max_workers" in errors
 
     def test_gpu_batch_size_boundary(self):
-        """GPU批处理大小边界值测试"""
+        """GPU批处理大小边界值测试."""
         mgr = ConfigManager()
 
         # 最小值边界
@@ -204,10 +204,10 @@ class TestConfigValidationEdgeCases:
         # 超过最大值
         mgr.set("gpu.batch_size", 16777217)
         errors = mgr.validate()
-        assert errors in "gpu.batch_size"
+        assert "gpu.batch_size" in errors
 
     def test_memory_ratio_boundary(self):
-        """内存比率边界值测试"""
+        """内存比率边界值测试."""
         mgr = ConfigManager()
 
         # 边界值
@@ -218,12 +218,12 @@ class TestConfigValidationEdgeCases:
         # 无效值（小于等于0）
         mgr.set("gpu.memory_usage_ratio", 0)
         errors = mgr.validate()
-        assert errors in "gpu.memory_usage_ratio"
+        assert "gpu.memory_usage_ratio" in errors
 
         # 无效值（大于1）
         mgr.set("gpu.memory_usage_ratio", 1.5)
         errors = mgr.validate()
-        assert errors in "gpu.memory_usage_ratio"
+        assert "gpu.memory_usage_ratio" in errors
 
 
 if __name__ == "__main__":

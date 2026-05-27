@@ -28,8 +28,8 @@ from ._path_setup import ensure_project_root
 ensure_project_root()
 
 # ── 模块级必需导入（仅保留被多处引用或模块级调用的轻量模块） ─────────────
-from .output import CLIOutput  # noqa: E402 — 被5个函数引用
 from ..utils import get_configured_logger, init_logging  # noqa: E402 — 模块级使用
+from .output import CLIOutput  # noqa: E402 — 被5个函数引用
 
 # 初始化日志
 init_logging()
@@ -37,7 +37,7 @@ logger = get_configured_logger("CLI")
 
 
 def _apply_output_flags(args) -> None:
-    """根据 --verbose / --quiet / --no-color 调整日志级别和输出行为"""
+    """根据 --verbose / --quiet / --no-color 调整日志级别和输出行为."""
     import logging
 
     verbose = getattr(args, "verbose", 0)
@@ -73,7 +73,7 @@ def _apply_output_flags(args) -> None:
 
 
 def load_targets(args: Any) -> set[str]:
-    """加载目标地址集合，显示详细的加载/丢弃统计。"""
+    """加载目标地址集合，显示详细的加载/丢弃统计。."""
     # 延迟导入 TargetResolver（属于重量级依赖链）
     from src.collision.targets.resolver import TargetResolver
 
@@ -121,7 +121,7 @@ def _print_load_result(
     dropped_count: int,
     dropped_detail: dict[str, int] | None,
 ) -> None:
-    """打印文件加载结果摘要。"""
+    """打印文件加载结果摘要。."""
     output.success(f"已加载 {valid_count} 个有效目标地址")
     if dropped_count > 0 and dropped_detail:
         _print_dropped_summary(output, dropped_detail)
@@ -131,7 +131,7 @@ def _print_dropped_summary(
     output: "CLIOutput",
     dropped_detail: dict[str, int],
 ) -> None:
-    """打印被丢弃的不兼容格式统计。"""
+    """打印被丢弃的不兼容格式统计。."""
     total = sum(dropped_detail.values())
     type_names = {
         "p2sh_address": "P2SH (3...)",
@@ -146,7 +146,7 @@ def _print_dropped_summary(
 
 
 def _run_security_check(args) -> None:
-    """在引擎启动前自动验证加密后端安全性（非阻塞模式）。
+    """在引擎启动前自动验证加密后端安全性（非阻塞模式）。.
 
     默认自动执行；使用 --skip-security-check 可跳过。
     通过时显示绿色成功信息；不通过时显示黄色警告但允许继续运行。
@@ -195,7 +195,7 @@ def _run_security_check(args) -> None:
 
 
 def _run_main() -> None:
-    """CLI 主逻辑（由 main() 包装异常处理）"""
+    """CLI 主逻辑（由 main() 包装异常处理）."""
     # 延迟导入：保留 ensure_project_root() 的调用顺序约束，同时避免模块级 E402
     from src.cli.arg_parser import parse_args
     from src.cli.commands import dispatch_utility_commands
@@ -291,7 +291,7 @@ def _run_main() -> None:
 
 
 def _export_progress_data(engine: Any, args: Any) -> None:
-    """如果指定了 --export-progress，将进度数据导出为 JSON。"""
+    """如果指定了 --export-progress，将进度数据导出为 JSON。."""
     export_path = getattr(args, "export_progress", None)
     if not export_path:
         return
@@ -314,7 +314,7 @@ def _export_progress_data(engine: Any, args: Any) -> None:
 
 
 def _handle_error(e: Exception) -> None:
-    """统一错误处理 — 向用户显示友好消息并将完整堆栈写入日志
+    """统一错误处理 — 向用户显示友好消息并将完整堆栈写入日志.
 
     可在 CLIOutput 未初始化时安全调用（get_instance() 自动创建默认实例）。
     ROADMAP #11: 增强兜底逻辑，确保所有入口路径（key_collision_cli.py / -m / btc-collision）一致。
@@ -354,7 +354,7 @@ def _handle_error(e: Exception) -> None:
 
 
 def main() -> None:
-    """CLI 主入口（单一真相源）
+    """CLI 主入口（单一真相源）.
 
     ROADMAP #11: 此函数是所有入口路径（key_collision_cli.py / -m / btc-collision）
     的单一实现。顶层异常处理已集成在此，代理文件无需重复。

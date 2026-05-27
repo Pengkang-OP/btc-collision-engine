@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Delta statistics tracking for collision detection progress."""
 
 import threading

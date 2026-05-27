@@ -1,4 +1,4 @@
-"""线程池优化模块单元测试"""
+"""线程池优化模块单元测试."""
 
 import time
 
@@ -17,16 +17,16 @@ from src.core.thread_pool import (
 
 
 class TestWorkStealingThreadPool:
-    """工作窃取线程池测试类"""
+    """工作窃取线程池测试类."""
 
     def test_initialization(self):
-        """测试初始化"""
+        """测试初始化."""
         pool = WorkStealingThreadPool(num_threads=4)
         assert pool.num_threads == 4
         assert len(pool._queues) == 4
 
     def test_default_thread_count(self):
-        """测试默认线程数 (P3-8: 不再-1, 直接使用CPU核心数)"""
+        """测试默认线程数 (P3-8: 不再-1, 直接使用CPU核心数)."""
         import os
 
         pool = WorkStealingThreadPool()
@@ -34,7 +34,7 @@ class TestWorkStealingThreadPool:
         assert pool.num_threads == expected
 
     def test_submit_and_execute(self):
-        """测试任务提交和执行"""
+        """测试任务提交和执行."""
         pool = WorkStealingThreadPool(num_threads=2)
         pool.start()
 
@@ -48,7 +48,7 @@ class TestWorkStealingThreadPool:
             pool.stop()
 
     def test_multiple_tasks(self):
-        """测试多任务执行"""
+        """测试多任务执行."""
         pool = WorkStealingThreadPool(num_threads=4)
         pool.start()
 
@@ -66,7 +66,7 @@ class TestWorkStealingThreadPool:
             pool.stop()
 
     def test_work_stealing(self):
-        """测试工作窃取机制"""
+        """测试工作窃取机制."""
         pool = WorkStealingThreadPool(num_threads=4, enable_work_stealing=True)
         pool.start()
 
@@ -88,7 +88,7 @@ class TestWorkStealingThreadPool:
             pool.stop()
 
     def test_exception_handling(self):
-        """测试异常处理"""
+        """测试异常处理."""
         pool = WorkStealingThreadPool(num_threads=2)
         pool.start()
 
@@ -105,7 +105,7 @@ class TestWorkStealingThreadPool:
             pool.stop()
 
     def test_get_stats(self):
-        """测试统计信息获取"""
+        """测试统计信息获取."""
         pool = WorkStealingThreadPool(num_threads=4)
         pool.start()
 
@@ -125,7 +125,7 @@ class TestWorkStealingThreadPool:
             pool.stop()
 
     def test_stop_wait(self):
-        """测试停止时等待任务完成"""
+        """测试停止时等待任务完成."""
         pool = WorkStealingThreadPool(num_threads=2)
         pool.start()
 
@@ -143,10 +143,10 @@ class TestWorkStealingThreadPool:
 
 
 class TestTaskBatch:
-    """批量任务执行器测试类"""
+    """批量任务执行器测试类."""
 
     def test_batch_execution(self):
-        """测试批量执行"""
+        """测试批量执行."""
         pool = WorkStealingThreadPool(num_threads=2)
         pool.start()
 
@@ -166,10 +166,10 @@ class TestTaskBatch:
 
 
 class TestGlobalThreadPoolManager:
-    """全局线程池管理器测试类"""
+    """全局线程池管理器测试类."""
 
     def test_singleton_pattern(self):
-        """测试单例模式"""
+        """测试单例模式."""
         # 注意: get_thread_pool返回的是pool,不是manager
         pool1 = get_thread_pool()
         manager = thread_pool_manager
@@ -177,7 +177,7 @@ class TestGlobalThreadPoolManager:
         assert pool1 is manager._pool  # pool应该是manager的_pool
 
     def test_initialize(self):
-        """测试初始化"""
+        """测试初始化."""
         # 创建新manager实例以避免全局状态干扰
         manager = GlobalThreadPoolManager()
         manager._pool = None
@@ -189,13 +189,13 @@ class TestGlobalThreadPoolManager:
         assert manager._pool.num_threads == 4
 
     def test_get_pool(self):
-        """测试获取池"""
+        """测试获取池."""
         pool = get_thread_pool()
         assert pool is not None
         assert isinstance(pool, WorkStealingThreadPool)
 
     def test_initialize_already_initialized(self):
-        """测试重复初始化被忽略"""
+        """测试重复初始化被忽略."""
         manager = GlobalThreadPoolManager()
         manager._pool = None
         manager._initialized = False
@@ -208,7 +208,7 @@ class TestGlobalThreadPoolManager:
         assert manager._pool.num_threads == 2
 
     def test_shutdown_clean(self):
-        """测试正常关闭"""
+        """测试正常关闭."""
         manager = GlobalThreadPoolManager()
         manager._pool = None
         manager._initialized = False
@@ -219,7 +219,7 @@ class TestGlobalThreadPoolManager:
         assert manager._initialized is False
 
     def test_shutdown_already_complete(self):
-        """测试重复关闭不报错"""
+        """测试重复关闭不报错."""
         manager = GlobalThreadPoolManager()
         manager._pool = None
         manager._initialized = False
@@ -231,7 +231,7 @@ class TestGlobalThreadPoolManager:
         assert manager._shutdown_complete is True
 
     def test_shutdown_with_health_issues(self):
-        """测试关闭时检测到健康问题"""
+        """测试关闭时检测到健康问题."""
         manager = GlobalThreadPoolManager()
         manager._pool = None
         manager._initialized = False
@@ -254,7 +254,7 @@ class TestGlobalThreadPoolManager:
                 pool.stop()
 
     def test_resize_pool_not_initialized(self):
-        """测试线程池未初始化时 resize 返回 False"""
+        """测试线程池未初始化时 resize 返回 False."""
         manager = GlobalThreadPoolManager()
         original_pool = manager._pool
         manager._pool = None
@@ -267,7 +267,7 @@ class TestGlobalThreadPoolManager:
             manager._initialized = True
 
     def test_resize_new_gte_current(self):
-        """测试 resize 新线程数 >= 当前时返回 False"""
+        """测试 resize 新线程数 >= 当前时返回 False."""
         manager = GlobalThreadPoolManager()
         manager._pool = None
         manager._initialized = False
@@ -283,7 +283,7 @@ class TestGlobalThreadPoolManager:
             manager._initialized = False
 
     def test_resize_success(self):
-        """测试 resize 缩容成功"""
+        """测试 resize 缩容成功."""
         manager = GlobalThreadPoolManager()
         manager._pool = None
         manager._initialized = False
@@ -297,7 +297,7 @@ class TestGlobalThreadPoolManager:
             manager._initialized = False
 
     def test_get_health_no_pool(self):
-        """测试 get_health 线程池未初始化返回 None"""
+        """测试 get_health 线程池未初始化返回 None."""
         manager = GlobalThreadPoolManager()
         original_pool = manager._pool
         manager._pool = None
@@ -308,7 +308,7 @@ class TestGlobalThreadPoolManager:
             manager._pool = original_pool
 
     def test_get_health_with_pool(self):
-        """测试 get_health 正常返回"""
+        """测试 get_health 正常返回."""
         manager = GlobalThreadPoolManager()
         manager._pool = None
         manager._initialized = False
@@ -325,41 +325,41 @@ class TestGlobalThreadPoolManager:
 
 
 class TestValidateWorkerCount:
-    """_validate_worker_count 函数边界测试"""
+    """_validate_worker_count 函数边界测试."""
 
     def test_none_returns_cpu_count(self):
-        """None 返回 CPU 核心数"""
+        """None 返回 CPU 核心数."""
         import os
 
         result = _validate_worker_count(None)
         assert result == (os.cpu_count() or 4)
 
     def test_zero_returns_cpu_count(self):
-        """0 返回 CPU 核心数"""
+        """0 返回 CPU 核心数."""
         import os
 
         result = _validate_worker_count(0)
         assert result == (os.cpu_count() or 4)
 
     def test_negative_returns_cpu_count(self):
-        """负数返回 CPU 核心数"""
+        """负数返回 CPU 核心数."""
         import os
 
         result = _validate_worker_count(-5)
         assert result == (os.cpu_count() or 4)
 
     def test_above_max_capped(self):
-        """超过上限被截断"""
+        """超过上限被截断."""
         result = _validate_worker_count(2000)
         assert result == DEFAULT_MAX_WORKERS
 
     def test_below_min_capped(self):
-        """低于下限（浮点数小数）被修正"""
+        """低于下限（浮点数小数）被修正."""
         result = _validate_worker_count(0.5)
         assert result == DEFAULT_MIN_WORKERS
 
     def test_valid_count_passthrough(self):
-        """合法值原样返回"""
+        """合法值原样返回."""
         result = _validate_worker_count(8)
         assert result == 8
         result = _validate_worker_count(1024)
@@ -369,16 +369,16 @@ class TestValidateWorkerCount:
 
 
 class TestWorkStealingPoolEdgeCases:
-    """WorkStealingThreadPool 边界/未覆盖路径测试"""
+    """WorkStealingThreadPool 边界/未覆盖路径测试."""
 
     def test_init_without_work_stealing(self):
-        """测试禁用工作窃取初始化"""
+        """测试禁用工作窃取初始化."""
         pool = WorkStealingThreadPool(num_threads=2, enable_work_stealing=False)
         assert pool.enable_work_stealing is False
         assert pool.num_threads == 2
 
     def test_get_task_no_stealing(self):
-        """测试禁用窃取时 _get_task 返回 None"""
+        """测试禁用窃取时 _get_task 返回 None."""
         pool = WorkStealingThreadPool(num_threads=2, enable_work_stealing=False)
         pool.start()
         try:
@@ -389,7 +389,7 @@ class TestWorkStealingPoolEdgeCases:
             pool.stop()
 
     def test_stop_no_wait(self):
-        """测试 stop(wait=False) 不等待"""
+        """测试 stop(wait=False) 不等待."""
         pool = WorkStealingThreadPool(num_threads=2)
         pool.start()
         pool.stop(wait=False)
@@ -397,7 +397,7 @@ class TestWorkStealingPoolEdgeCases:
         assert pool._stop_event.is_set()
 
     def test_stop_timeout_thread_alive(self):
-        """测试 stop timeout 触发 is_alive 检查"""
+        """测试 stop timeout 触发 is_alive 检查."""
         pool = WorkStealingThreadPool(num_threads=1)
         pool.start()
         # 提交一个长时间任务
@@ -408,13 +408,13 @@ class TestWorkStealingPoolEdgeCases:
         pool.stop(wait=True, timeout=0.001)
 
     def test_stats_before_start(self):
-        """测试未启动时 get_stats（_start_time 为 None）"""
+        """测试未启动时 get_stats（_start_time 为 None）."""
         pool = WorkStealingThreadPool(num_threads=2)
         stats = pool.get_stats()
         assert stats["uptime_seconds"] == 0
 
     def test_steal_work_returns_none_when_all_empty(self):
-        """测试所有队列为空时窃取返回 None"""
+        """测试所有队列为空时窃取返回 None."""
         pool = WorkStealingThreadPool(num_threads=2, enable_work_stealing=True)
         pool.start()
         try:
@@ -425,10 +425,10 @@ class TestWorkStealingPoolEdgeCases:
 
 
 class TestHealthCheck:
-    """health_check 全面测试"""
+    """health_check 全面测试."""
 
     def test_health_check_healthy(self):
-        """测试健康检查：正常状态"""
+        """测试健康检查：正常状态."""
         pool = WorkStealingThreadPool(num_threads=2)
         pool.start()
         try:
@@ -443,7 +443,7 @@ class TestHealthCheck:
             pool.stop()
 
     def test_health_check_dead_thread_detected(self):
-        """测试健康检查：检测死线程"""
+        """测试健康检查：检测死线程."""
         pool = WorkStealingThreadPool(num_threads=4)
         pool.start()
         try:
@@ -458,7 +458,7 @@ class TestHealthCheck:
             pool.stop()
 
     def test_health_check_thread_starvation(self):
-        """测试健康检查：线程饥饿检测"""
+        """测试健康检查：线程饥饿检测."""
         pool = WorkStealingThreadPool(num_threads=4)
         pool.start()
         try:
@@ -477,7 +477,7 @@ class TestHealthCheck:
             pool.stop()
 
     def test_health_check_high_failure_rate(self):
-        """测试健康检查：高失败率检测"""
+        """测试健康检查：高失败率检测."""
         pool = WorkStealingThreadPool(num_threads=2)
         pool.start()
         try:
@@ -503,10 +503,10 @@ class TestHealthCheck:
 
 
 class TestGetThreadPool:
-    """get_thread_pool 函数边界测试"""
+    """get_thread_pool 函数边界测试."""
 
     def test_get_thread_pool_initializes_if_needed(self):
-        """测试 pool 为 None 时自动初始化"""
+        """测试 pool 为 None 时自动初始化."""
         # 模拟未初始化状态
         original_pool = thread_pool_manager._pool
         original_initialized = thread_pool_manager._initialized
@@ -526,7 +526,7 @@ class TestGetThreadPool:
             thread_pool_manager._initialized = original_initialized
 
     def test_get_thread_pool_reinitialize_on_none(self):
-        """测试 pool=None 但 initialized=True 时的二次初始化路径 (lines 505-506)"""
+        """测试 pool=None 但 initialized=True 时的二次初始化路径 (lines 505-506)."""
         original_pool = thread_pool_manager._pool
         original_initialized = thread_pool_manager._initialized
         original_shutdown = thread_pool_manager._shutdown_complete

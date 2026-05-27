@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""日志工具 (logger) 单元测试
+"""日志工具 (logger) 单元测试.
 
 覆盖：
 - ColoredFormatter 彩色格式化
@@ -28,7 +28,7 @@ import pytest
 
 @pytest.fixture
 def temp_log_dir():
-    """临时日志目录"""
+    """临时日志目录."""
     tmpdir = tempfile.mkdtemp()
     yield tmpdir
     # 关闭所有处理器
@@ -45,7 +45,7 @@ def temp_log_dir():
 
 @pytest.fixture
 def clean_logger():
-    """清理指定 logger 的处理器"""
+    """清理指定 logger 的处理器."""
     loggers_to_clean = []
 
     def _cleanup(name):
@@ -67,7 +67,7 @@ def clean_logger():
 
 @pytest.mark.unit
 class TestColoredFormatter:
-    """彩色格式化器测试"""
+    """彩色格式化器测试."""
 
     def test_format_adds_color_for_tty(self):
         from src.utils.logger import ColoredFormatter
@@ -117,7 +117,7 @@ class TestColoredFormatter:
 
 @pytest.mark.unit
 class TestSafeStreamHandler:
-    """安全流处理器测试"""
+    """安全流处理器测试."""
 
     def test_emit_writes_message(self, capsys):
         from src.utils.logger import SafeStreamHandler
@@ -130,7 +130,7 @@ class TestSafeStreamHandler:
         assert "test message" in captured.out
 
     def test_emit_handles_closed_stream(self):
-        """关闭的流不会抛出异常"""
+        """关闭的流不会抛出异常."""
         import io
 
         from src.utils.logger import SafeStreamHandler
@@ -143,7 +143,7 @@ class TestSafeStreamHandler:
         handler.emit(record)
 
     def test_emit_handles_none_stream(self):
-        """None stream 不会抛出异常"""
+        """None stream 不会抛出异常."""
         from src.utils.logger import SafeStreamHandler
 
         handler = SafeStreamHandler(sys.stdout)
@@ -152,7 +152,7 @@ class TestSafeStreamHandler:
         handler.emit(record)  # 不应抛出异常
 
     def test_emit_gbk_encoding_safe(self):
-        """GBK 编码下中文不会崩溃"""
+        """GBK 编码下中文不会崩溃."""
         from src.utils.logger import SafeStreamHandler
 
         handler = SafeStreamHandler(sys.stdout)
@@ -169,7 +169,7 @@ class TestSafeStreamHandler:
 
 @pytest.mark.unit
 class TestPerformanceMonitor:
-    """性能监控测试"""
+    """性能监控测试."""
 
     def test_context_manager_logs_elapsed(self):
         from src.utils.logger import PerformanceMonitor
@@ -220,7 +220,7 @@ class TestPerformanceMonitor:
 
 @pytest.mark.unit
 class TestSampledLogger:
-    """采样日志测试"""
+    """采样日志测试."""
 
     def test_logs_only_at_sample_rate(self):
         from src.utils.logger import SampledLogger
@@ -263,7 +263,7 @@ class TestSampledLogger:
         assert "[Sampled 1/1]" in call_arg
 
     def test_error_always_logs_at_rate_1(self):
-        """rate=1 时每条都记录"""
+        """rate=1 时每条都记录."""
         from src.utils.logger import SampledLogger
 
         base = MagicMock(spec=logging.Logger)
@@ -273,7 +273,7 @@ class TestSampledLogger:
         assert base.error.call_count == 3
 
     def test_counter_wraps_at_max(self):
-        """计数器超过上限后应重置为0"""
+        """计数器超过上限后应重置为0."""
         from src.utils.logger import SampledLogger
 
         base = MagicMock(spec=logging.Logger)
@@ -284,7 +284,7 @@ class TestSampledLogger:
         assert sampled._counter == 0
 
     def test_max_per_second_zero_disabled(self):
-        """max_per_second=0 表示不限频"""
+        """max_per_second=0 表示不限频."""
         from src.utils.logger import SampledLogger
 
         base = MagicMock(spec=logging.Logger)
@@ -301,7 +301,7 @@ class TestSampledLogger:
 
 @pytest.mark.unit
 class TestAsyncLogger:
-    """异步日志器测试"""
+    """异步日志器测试."""
 
     def test_init_starts_writer_thread(self):
         from src.utils.logger import AsyncLogger
@@ -381,7 +381,7 @@ class TestAsyncLogger:
 
 @pytest.mark.unit
 class TestAsyncFileHandler:
-    """异步文件处理器测试"""
+    """异步文件处理器测试."""
 
     def test_creates_handler(self, temp_log_dir):
         from src.utils.logger import AsyncFileHandler
@@ -416,7 +416,7 @@ class TestAsyncFileHandler:
 
 @pytest.mark.unit
 class TestSetupLogger:
-    """setup_logger 函数测试"""
+    """setup_logger 函数测试."""
 
     def test_creates_logger_with_console_handler(self):
         from src.utils.logger import setup_logger
@@ -462,7 +462,7 @@ class TestSetupLogger:
 
 @pytest.mark.unit
 class TestGetLogger:
-    """get_logger 函数测试"""
+    """get_logger 函数测试."""
 
     def test_returns_existing_logger(self):
         from src.utils.logger import get_logger
@@ -473,7 +473,7 @@ class TestGetLogger:
 
 @pytest.mark.unit
 class TestGetSampledLogger:
-    """get_sampled_logger 函数测试"""
+    """get_sampled_logger 函数测试."""
 
     def test_returns_sampled_logger(self):
         from src.utils.logger import SampledLogger, get_sampled_logger

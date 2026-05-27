@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""引擎核心验收测试 - 功能层 + 逻辑层 + 白盒 + 黑盒
+"""引擎核心验收测试 - 功能层 + 逻辑层 + 白盒 + 黑盒.
 
 本模块测试 `src.collision.key_collision_engine.KeyCollisionEngine` 的核心功能，
 补充现有单元测试中缺失的场景，确保：
@@ -35,7 +35,7 @@ from tests.acceptance.conftest import (
 @pytest.mark.white_box
 @pytest.mark.functional
 class TestKeyCollisionEngineWhiteBox:
-    """KeyCollisionEngine 白盒测试
+    """KeyCollisionEngine 白盒测试.
 
     基于内部代码结构的测试，验证：
     1. 内部状态转换的正确性
@@ -45,7 +45,7 @@ class TestKeyCollisionEngineWhiteBox:
     """
 
     def test_init_state_transitions(self, mock_event_bus, mock_target_resolver):
-        """白盒测试：验证 __init__ 中的状态转换
+        """白盒测试：验证 __init__ 中的状态转换.
 
         验证点：
         - _running 初始为 False
@@ -65,7 +65,7 @@ class TestKeyCollisionEngineWhiteBox:
         assert engine.on_complete is None, "初始化后 on_complete 应为 None"
 
     def test_auto_detect_compression(self, mock_event_bus):
-        """白盒测试：验证 _auto_detect_compression_needed 逻辑分支
+        """白盒测试：验证 _auto_detect_compression_needed 逻辑分支.
 
         验证点：
         - 目标地址数量 < 10000 时返回 True（启用双格式检查）
@@ -99,7 +99,7 @@ class TestKeyCollisionEngineWhiteBox:
         )
 
     def test_auto_tune_batch_size_logic(self, mock_event_bus):
-        """白盒测试：验证 _tune_batch_size 的逻辑分支
+        """白盒测试：验证 _tune_batch_size 的逻辑分支.
 
         验证点：
         - 1-2 核：BATCH_TUNE_1_2_CORE (500)
@@ -141,7 +141,7 @@ class TestKeyCollisionEngineWhiteBox:
                 )
 
     def test_memory_downgrade_logic(self, mock_event_bus, temp_dir):
-        """白盒测试：验证 _check_memory_and_downgrade 的逻辑分支
+        """白盒测试：验证 _check_memory_and_downgrade 的逻辑分支.
 
         验证点：
         - 内存使用 < high_threshold：不降级
@@ -177,7 +177,7 @@ class TestKeyCollisionEngineWhiteBox:
             )
 
     def test_event_bus_integration_white_box(self, mock_event_bus):
-        """白盒测试：验证事件总线集成的内部逻辑
+        """白盒测试：验证事件总线集成的内部逻辑.
 
         验证点：
         - 事件发布后，订阅者能收到事件
@@ -214,7 +214,7 @@ class TestKeyCollisionEngineWhiteBox:
 @pytest.mark.black_box
 @pytest.mark.functional
 class TestKeyCollisionEngineBlackBox:
-    """KeyCollisionEngine 黑盒测试
+    """KeyCollisionEngine 黑盒测试.
 
     基于规格说明的功能测试，不依赖内部实现细节，验证：
     1. 输入输出规范
@@ -224,7 +224,7 @@ class TestKeyCollisionEngineBlackBox:
     """
 
     def test_black_box_init_with_valid_targets(self, mock_event_bus):
-        """黑盒测试：使用有效目标地址初始化引擎
+        """黑盒测试：使用有效目标地址初始化引擎.
 
         规格说明：
         - 输入：有效的 Bitcoin 地址集合
@@ -250,7 +250,7 @@ class TestKeyCollisionEngineBlackBox:
         assert engine.is_running() is False, "初始化后 is_running() 应返回 False"
 
     def test_black_box_init_with_empty_targets(self, mock_event_bus):
-        """黑盒测试：使用空目标地址集合初始化引擎
+        """黑盒测试：使用空目标地址集合初始化引擎.
 
         规格说明：
         - 输入：空集合
@@ -270,7 +270,7 @@ class TestKeyCollisionEngineBlackBox:
         assert len(engine.targets) == 0, "targets 应为空集合"
 
     def test_black_box_init_with_invalid_targets(self, mock_event_bus):
-        """黑盒测试：使用无效目标地址初始化引擎
+        """黑盒测试：使用无效目标地址初始化引擎.
 
         规格说明：
         - 输入：包含无效地址的集合
@@ -294,7 +294,7 @@ class TestKeyCollisionEngineBlackBox:
         assert len(engine.targets) <= 2, "无效地址应被过滤掉"
 
     def test_black_box_start_stop_cycle(self, mock_event_bus):
-        """黑盒测试：启动-停止循环
+        """黑盒测试：启动-停止循环.
 
         规格说明：
         - 输入：无
@@ -329,7 +329,7 @@ class TestKeyCollisionEngineBlackBox:
         assert engine.is_running() is False, "stop() 后 is_running() 应返回 False"
 
     def test_black_box_callback_invocation(self, mock_event_bus):
-        """黑盒测试：回调函数调用时机和参数
+        """黑盒测试：回调函数调用时机和参数.
 
         规格说明：
         - 输入：回调函数
@@ -371,7 +371,7 @@ class TestKeyCollisionEngineBlackBox:
         ids=["random", "range_scan", "brute_force"],
     )
     def test_black_box_search_modes(self, mock_event_bus, search_mode):
-        """黑盒测试：三种搜索模式
+        """黑盒测试：三种搜索模式.
 
         规格说明：
         - 输入：搜索模式（random/range_scan/brute_force）
@@ -408,7 +408,7 @@ class TestKeyCollisionEngineBlackBox:
 @pytest.mark.acceptance
 @pytest.mark.functional
 class TestKeyCollisionEngineFunctionalLayer:
-    """KeyCollisionEngine 功能层测试
+    """KeyCollisionEngine 功能层测试.
 
     验证功能层：
     1. 功能正确性：验证所有 public 方法的功能正确性
@@ -417,7 +417,7 @@ class TestKeyCollisionEngineFunctionalLayer:
     """
 
     def test_functional_start_stop(self, mock_event_bus):
-        """功能层测试：start() 和 stop() 功能正确性
+        """功能层测试：start() 和 stop() 功能正确性.
 
         验证点：
         - start() 后引擎应处于运行状态
@@ -443,7 +443,7 @@ class TestKeyCollisionEngineFunctionalLayer:
         assert engine.is_running() is False, "stop() 功能不正确：is_running() 应返回 False"
 
     def test_functional_callback_invocation_timing(self, mock_event_bus):
-        """功能层测试：回调函数调用时机
+        """功能层测试：回调函数调用时机.
 
         验证点：
         - on_match 回调在匹配到目标地址时被调用
@@ -478,7 +478,7 @@ class TestKeyCollisionEngineFunctionalLayer:
         assert engine.on_complete is not None, "on_complete 回调函数应被正确设置"
 
     def test_functional_state_judgment(self, mock_event_bus):
-        """功能层测试：状态判断逻辑
+        """功能层测试：状态判断逻辑.
 
         验证点：
         - is_running() 在引擎运行时应返回 True
@@ -519,7 +519,7 @@ class TestKeyCollisionEngineFunctionalLayer:
 @pytest.mark.acceptance
 @pytest.mark.logic_layer
 class TestKeyCollisionEngineLogicLayer:
-    """KeyCollisionEngine 逻辑层测试
+    """KeyCollisionEngine 逻辑层测试.
 
     验证逻辑层：
     1. 代码正确性：验证核心算法逻辑正确性
@@ -529,7 +529,7 @@ class TestKeyCollisionEngineLogicLayer:
     """
 
     def test_logic_batch_size_auto_tune(self, mock_event_bus, monkeypatch):
-        """逻辑层测试：batch_size 自动调优逻辑
+        """逻辑层测试：batch_size 自动调优逻辑.
 
         验证点：
         - 根据 CPU 核心数自动调整 batch_size
@@ -557,7 +557,7 @@ class TestKeyCollisionEngineLogicLayer:
             )
 
     def test_logic_memory_downgrade_conditions(self, mock_event_bus):
-        """逻辑层测试：内存降级条件判断
+        """逻辑层测试：内存降级条件判断.
 
         验证点：
         - 内存使用超过 high_threshold 时触发降级
@@ -585,7 +585,7 @@ class TestKeyCollisionEngineLogicLayer:
         # 这里主要验证逻辑分支的覆盖
 
     def test_logic_checkpoint_save_load(self, mock_event_bus, temp_dir):
-        """逻辑层测试：检查点保存和加载逻辑
+        """逻辑层测试：检查点保存和加载逻辑.
 
         验证点：
         - 检查点保存后应能正确加载
@@ -615,7 +615,7 @@ class TestKeyCollisionEngineLogicLayer:
         assert loaded_data is None, "损坏的检查点文件应返回 None"
 
     def test_logic_deduplication_filter(self, mock_event_bus):
-        """逻辑层测试：去重过滤逻辑
+        """逻辑层测试：去重过滤逻辑.
 
         验证点：
         - 已检查的私钥应被过滤
@@ -644,7 +644,7 @@ class TestKeyCollisionEngineLogicLayer:
         assert stats["unique_keys"] >= 100, "过滤器应保留已跟踪的去重键"
 
     def test_logic_concurrent_safety(self, mock_event_bus):
-        """逻辑层测试：并发逻辑和线程安全性
+        """逻辑层测试：并发逻辑和线程安全性.
 
         验证点：
         - 多线程同时访问共享状态应安全
@@ -697,7 +697,7 @@ class TestKeyCollisionEngineLogicLayer:
     ids=["random", "range_scan", "brute_force"],
 )
 class TestKeyCollisionEngineMultiMode:
-    """KeyCollisionEngine 多模式测试
+    """KeyCollisionEngine 多模式测试.
 
     使用参数化测试覆盖三种搜索模式：
     1. 随机碰撞（random）
@@ -706,7 +706,7 @@ class TestKeyCollisionEngineMultiMode:
     """
 
     def test_multi_mode_init(self, mock_event_bus, search_mode):
-        """多模式测试：不同搜索模式的初始化
+        """多模式测试：不同搜索模式的初始化.
 
         验证点：
         - 所有搜索模式下引擎都能成功初始化
@@ -729,7 +729,7 @@ class TestKeyCollisionEngineMultiMode:
         assert engine._current_mode == search_mode, f"搜索模式 {search_mode} 应被正确设置"
 
     def test_multi_mode_batch_size(self, mock_event_bus, search_mode, monkeypatch):
-        """多模式测试：不同搜索模式下的 batch_size
+        """多模式测试：不同搜索模式下的 batch_size.
 
         验证点：
         - 所有搜索模式下 batch_size 都应被正确设置
@@ -756,7 +756,7 @@ class TestKeyCollisionEngineMultiMode:
 
 @pytest.mark.acceptance
 class TestKeyCollisionEngineMultiState:
-    """KeyCollisionEngine 多状态测试
+    """KeyCollisionEngine 多状态测试.
 
     测试所有状态转换：
     1. 初始化（initialized）
@@ -766,7 +766,7 @@ class TestKeyCollisionEngineMultiState:
     """
 
     def test_state_initialized(self, mock_event_bus):
-        """多状态测试：初始化状态
+        """多状态测试：初始化状态.
 
         验证点：
         - 初始化后引擎应处于 initialized 状态
@@ -783,7 +783,7 @@ class TestKeyCollisionEngineMultiState:
         assert engine._initialized is True, "初始化状态不正确：_initialized 应为 True"
 
     def test_state_running(self, mock_event_bus):
-        """多状态测试：运行状态
+        """多状态测试：运行状态.
 
         验证点：
         - start() 后引擎应处于 running 状态
@@ -807,7 +807,7 @@ class TestKeyCollisionEngineMultiState:
         engine.stop(timeout=2.0)
 
     def test_state_stopped(self, mock_event_bus):
-        """多状态测试：停止状态
+        """多状态测试：停止状态.
 
         验证点：
         - stop() 后引擎应处于 stopped 状态
@@ -836,7 +836,7 @@ class TestKeyCollisionEngineMultiState:
         assert engine._running is False, "停止状态不正确：_running 应为 False"
 
     def test_state_error_handling(self, mock_event_bus):
-        """多状态测试：错误状态
+        """多状态测试：错误状态.
 
         验证点：
         - 发生错误时引擎应进入错误状态
@@ -869,7 +869,7 @@ class TestKeyCollisionEngineMultiState:
     ids=["p2pkh", "p2sh", "bech32"],
 )
 class TestKeyCollisionEngineMultiData:
-    """KeyCollisionEngine 多数据组合测试
+    """KeyCollisionEngine 多数据组合测试.
 
     测试不同数据类型和格式：
     1. P2PKH 地址（1 开头）
@@ -878,7 +878,7 @@ class TestKeyCollisionEngineMultiData:
     """
 
     def test_multi_data_init_with_different_addresses(self, mock_event_bus, address_type, address):
-        """多数据组合测试：使用不同类型的地址初始化
+        """多数据组合测试：使用不同类型的地址初始化.
 
         验证点：
         - 所有类型的地址都能被正确解析
@@ -893,7 +893,7 @@ class TestKeyCollisionEngineMultiData:
         assert engine is not None, f"{address_type} 地址应成功初始化引擎"
 
     def test_multi_data_hash160_extraction(self, mock_event_bus, address_type, address):
-        """多数据组合测试：Hash160 提取
+        """多数据组合测试：Hash160 提取.
 
         验证点：
         - 所有类型的地址都能正确提取 Hash160
@@ -916,17 +916,17 @@ class TestKeyCollisionEngineMultiData:
 @pytest.mark.acceptance
 @pytest.mark.edge_cases
 class TestKeyCollisionEngineEdgeCases:
-    """KeyCollisionEngine 边界条件测试"""
+    """KeyCollisionEngine 边界条件测试."""
 
     def test_edge_case_empty_targets(self, mock_event_bus):
-        """边界条件测试：空目标地址集合"""
+        """边界条件测试：空目标地址集合."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         engine = KeyCollisionEngine(targets=set(), event_bus=mock_event_bus)
         assert len(engine.targets) == 0, "空目标集合时 targets 长度应为 0"
 
     def test_edge_case_single_target(self, mock_event_bus):
-        """边界条件测试：单个目标地址"""
+        """边界条件测试：单个目标地址."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         targets = {AcceptanceTestConstants.VALID_P2PKH_ADDRESS}
@@ -935,7 +935,7 @@ class TestKeyCollisionEngineEdgeCases:
         assert engine is not None, "单个目标地址时引擎应成功初始化"
 
     def test_edge_case_max_workers(self, mock_event_bus):
-        """边界条件测试：最大工作线程数"""
+        """边界条件测试：最大工作线程数."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         targets = {AcceptanceTestConstants.VALID_P2PKH_ADDRESS}
@@ -947,7 +947,7 @@ class TestKeyCollisionEngineEdgeCases:
         assert engine.max_workers is not None, "max_workers 应被正确设置"
 
     def test_edge_case_zero_workers(self, mock_event_bus):
-        """边界条件测试：零工作线程数"""
+        """边界条件测试：零工作线程数."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         targets = {AcceptanceTestConstants.VALID_P2PKH_ADDRESS}
@@ -967,7 +967,7 @@ class TestKeyCollisionEngineEdgeCases:
 
 @pytest.mark.acceptance
 class TestKeyCollisionEngineExceptionHandling:
-    """KeyCollisionEngine 异常处理测试"""
+    """KeyCollisionEngine 异常处理测试."""
 
     @pytest.mark.parametrize(
         "exception_type,exception",
@@ -979,13 +979,13 @@ class TestKeyCollisionEngineExceptionHandling:
         ids=["value_error", "runtime_error", "os_error"],
     )
     def test_exception_handling_init(self, mock_event_bus, exception_type, exception):
-        """异常处理测试：初始化时的异常处理"""
+        """异常处理测试：初始化时的异常处理."""
         # 注意：KeyCollisionEngine 初始化时的异常处理
         # 某些异常可能会被捕获并记录日志，而不是直接抛出
-        pass  # 具体实现取决于代码
+        # 具体实现取决于代码
 
     def test_exception_handling_callback(self, mock_event_bus):
-        """异常处理测试：回调函数异常"""
+        """异常处理测试：回调函数异常."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         targets = {AcceptanceTestConstants.VALID_P2PKH_ADDRESS}

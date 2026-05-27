@@ -13,8 +13,7 @@ pytest-timeout>=2.0,<3.0.0         # 测试超时控制
 pytest-rerunfailures>=3.0,<17.0.0  # 测试失败重跑
 
 # 代码质量
-black>=24.0.0,<26.0.0             # 代码格式化（与 pyproject.toml 一致）
-flake8>=6.0.0,<8.0.0              # Lint 检查（与 pyproject.toml 一致）
+ruff>=0.9.0,<2.0.0                # Lint + 格式化（替代 black/flake8）
 mypy>=1.0.0,<2.0.0                # 类型检查（与 pyproject.toml 一致）
 types-cachetools>=5.0,<7.0.0      # cachetools 类型存根（与 pyproject.toml 一致）
 bandit>=1.7.0,<2.0.0              # 安全扫描（与 pyproject.toml 一致）

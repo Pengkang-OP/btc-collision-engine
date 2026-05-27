@@ -1,4 +1,4 @@
-"""GPU模块单元测试
+"""GPU模块单元测试.
 
 测试新GPU模块的各项功能,包括:
 - 设备检测
@@ -16,23 +16,23 @@ pytestmark = pytest.mark.gpu
 
 
 class TestGPUProfileLoader:
-    """测试GPU型号数据库加载器"""
+    """测试GPU型号数据库加载器."""
 
     def setup_method(self, method):
-        """测试前准备"""
+        """测试前准备."""
         from src.gpu.profiles.loader import GPUProfileLoader
 
         self.loader = GPUProfileLoader()
 
     def test_load_profiles(self):
-        """测试加载配置文件"""
+        """测试加载配置文件."""
         assert self.loader.profiles is not None
         assert "nvidia" in self.loader.profiles
         assert "amd" in self.loader.profiles
         assert "intel" in self.loader.profiles
 
     def test_get_nvidia_profile(self):
-        """测试获取NVIDIA型号配置"""
+        """测试获取NVIDIA型号配置."""
         # 测试RTX 3080
         profile = self.loader.get_profile("nvidia", "RTX 3080")
         assert profile is not None
@@ -40,14 +40,14 @@ class TestGPUProfileLoader:
         assert profile["year"] == 2020
 
     def test_get_amd_profile(self):
-        """测试获取AMD型号配置"""
+        """测试获取AMD型号配置."""
         # 测试RX 6800 XT
         profile = self.loader.get_profile("amd", "RX 6800 XT")
         assert profile is not None
         assert "RX 6800 XT" in profile["models"]
 
     def test_get_intel_profile(self):
-        """测试获取Intel型号配置"""
+        """测试获取Intel型号配置."""
         # 测试Arc A770
         profile = self.loader.get_profile("intel", "Intel Arc A770")
         assert profile is not None
@@ -55,20 +55,20 @@ class TestGPUProfileLoader:
         assert "uint32_workaround" in profile["optimizations"]
 
     def test_model_fuzzy_match(self):
-        """测试型号模糊匹配"""
+        """测试型号模糊匹配."""
         # 测试带前缀的型号
         profile = self.loader.get_profile("nvidia", "GeForce RTX 3080")
         assert profile is not None
 
     def test_default_profile(self):
-        """测试默认配置"""
+        """测试默认配置."""
         profile = self.loader.get_default_profile("nvidia")
         assert profile is not None
         # 默认配置包含recommended_batch_size等字段
         assert "recommended_batch_size" in profile
 
     def test_get_all_vendors(self):
-        """测试获取所有厂商"""
+        """测试获取所有厂商."""
         vendors = self.loader.get_all_vendors()
         assert "nvidia" in vendors
         assert "amd" in vendors
@@ -76,11 +76,11 @@ class TestGPUProfileLoader:
 
 
 class TestGPUDeviceDetector:
-    """测试GPU设备检测器"""
+    """测试GPU设备检测器."""
 
-    @patch("src.gpu.device.PYOPENCL_AVAILABLE", False)
+    @patch("src.gpu._availability.PYOPENCL_AVAILABLE", False)
     def test_gpu_not_available(self):
-        """测试GPU不可用的情况"""
+        """测试GPU不可用的情况."""
         from src.gpu.device import GPUDeviceDetector
 
         # 清除缓存以确保测试准确性
@@ -89,7 +89,7 @@ class TestGPUDeviceDetector:
 
     @patch("src.gpu.device.cl")
     def test_detect_devices_mocked(self, mock_cl):
-        """测试设备检测(模拟)"""
+        """测试设备检测(模拟)."""
         from src.gpu.device import GPUDeviceDetector
 
         # 模拟pyopencl返回
@@ -112,7 +112,7 @@ class TestGPUDeviceDetector:
         assert devices[0]["name"] == "NVIDIA GeForce RTX 3080"
 
     def test_select_best_device_priority(self):
-        """测试设备选择优先级"""
+        """测试设备选择优先级."""
         from src.gpu.device import GPUDeviceDetector
 
         devices = [
@@ -121,15 +121,15 @@ class TestGPUDeviceDetector:
             {"name": "NVIDIA GeForce RTX 3080", "vendor": "NVIDIA", "priority_test": True},
         ]
 
-        best = GPUDeviceDetector._select_best_device(devices)
+        best = GPUDeviceDetector.select_best_device(devices)
         assert "NVIDIA" in best["name"]
 
 
 class TestGPUVendors:
-    """测试厂商优化模块"""
+    """测试厂商优化模块."""
 
     def test_nvidia_vendor(self):
-        """测试NVIDIA优化器"""
+        """测试NVIDIA优化器."""
         from src.gpu.vendors.nvidia import NVIDIAGPUVendor
 
         vendor = NVIDIAGPUVendor()
@@ -149,14 +149,14 @@ class TestGPUVendors:
         assert batch_size % 1024 == 0  # 应该对齐到1024
 
     def test_amd_vendor(self):
-        """测试AMD优化器"""
+        """测试AMD优化器."""
         from src.gpu.vendors.amd import AMDGPUVendor
 
         vendor = AMDGPUVendor()
         assert vendor.get_vendor_name() == "AMD"
 
     def test_intel_vendor(self):
-        """测试Intel优化器"""
+        """测试Intel优化器."""
         from src.gpu.vendors.intel import IntelGPUVendor
 
         vendor = IntelGPUVendor()
@@ -169,10 +169,10 @@ class TestGPUVendors:
 
 
 class TestGPUConfig:
-    """测试GPU配置管理器"""
+    """测试GPU配置管理器."""
 
     def test_default_config(self):
-        """测试默认配置"""
+        """测试默认配置."""
         from src.gpu.config import GPUConfig
 
         config = GPUConfig()
@@ -183,7 +183,7 @@ class TestGPUConfig:
         assert "batch_size" in gpu_config
 
     def test_set_config(self):
-        """测试设置配置"""
+        """测试设置配置."""
         from src.gpu.config import GPUConfig
 
         config = GPUConfig()
@@ -194,28 +194,28 @@ class TestGPUConfig:
         assert gpu_config["device_index"] == 0
 
     def test_validate_config(self):
-        """测试配置验证"""
+        """测试配置验证."""
         from src.gpu.config import GPUConfig
 
         config = GPUConfig()
         config.set_gpu_config(batch_size=-1)
 
         errors = config.validate()
-        assert len(errors > 0)
+        assert len(errors) > 0
 
 
 class TestBackwardCompatibility:
-    """测试向后兼容性"""
+    """测试向后兼容性."""
 
     def test_gpu_collision_engine_import(self):
-        """测试gpu_collision_engine.py能正常导入"""
+        """测试gpu_collision_engine.py能正常导入."""
         try:
             assert True
         except ImportError as e:
             pytest.fail(f"导入失败: {e}")
 
     def test_crypto_config_integration(self):
-        """测试crypto_config.py集成"""
+        """测试crypto_config.py集成."""
         try:
             from src.config.crypto_config import CryptoConfig
 
@@ -230,10 +230,10 @@ class TestBackwardCompatibility:
 
 
 class TestGPUContext:
-    """测试GPU上下文管理"""
+    """测试GPU上下文管理."""
 
     def test_context_creation(self):
-        """测试上下文创建"""
+        """测试上下文创建."""
         # 清理 test_gpu_memory_pool_part2.py 造成的 sys.modules mock 泄漏
         from unittest.mock import Mock
 
@@ -272,7 +272,7 @@ class TestGPUContext:
         assert context.vendor_handler.get_vendor_name() == "NVIDIA"
 
     def test_identify_vendor(self):
-        """测试厂商识别函数"""
+        """测试厂商识别函数."""
         from src.gpu.device import identify_vendor
 
         # NVIDIA
@@ -293,11 +293,11 @@ class TestGPUContext:
 
 
 class TestResourceCleanup:
-    """测试资源清理"""
+    """测试资源清理."""
 
     @patch("src.gpu.device.cl")
     def test_cleanup_releases_resources(self, mock_cl):
-        """测试清理释放资源"""
+        """测试清理释放资源."""
         from src.gpu.device import GPUDevice
 
         device = GPUDevice()

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""生产模式测试脚本
+"""生产模式测试脚本.
 
 此脚本用于测试系统在生产环境下的性能和稳定性，包括更大的任务量、更长的运行时间、更复杂的目标地址集合等。
 """
@@ -20,7 +20,7 @@ logger = get_configured_logger("ProductionTest")
 
 
 def test_single_gpu_production():
-    """测试单GPU生产模式"""
+    """测试单GPU生产模式."""
     logger.info("开始测试单GPU生产模式")
 
     # 创建一个更大的测试目标地址集合
@@ -83,7 +83,7 @@ def test_single_gpu_production():
 
 
 def test_multi_gpu_production():
-    """测试多GPU生产模式"""
+    """测试多GPU生产模式."""
     logger.info("开始测试多GPU生产模式")
 
     # 创建一个更大的测试目标地址集合
@@ -163,7 +163,7 @@ def test_multi_gpu_production():
 
 
 def main():
-    """主函数"""
+    """主函数."""
     try:
         # 测试单GPU生产模式
         single_gpu_result = test_single_gpu_production()

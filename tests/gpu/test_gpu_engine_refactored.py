@@ -1,4 +1,4 @@
-"""GPU碰撞引擎重构模块测试
+"""GPU碰撞引擎重构模块测试.
 
 Phase 1集成测试框架，验证:
 1. 模块导入无循环依赖
@@ -18,10 +18,10 @@ pytestmark = pytest.mark.gpu
 
 
 class TestModuleImports:
-    """测试模块导入"""
+    """测试模块导入."""
 
     def test_import_protocols(self):
-        """测试协议模块导入"""
+        """测试协议模块导入."""
         from src.collision.gpu.protocols import (
             IAsyncExecutionPipeline,
             IGPUDeviceManager,
@@ -33,22 +33,22 @@ class TestModuleImports:
         assert IAsyncExecutionPipeline is not None
 
     def test_import_facade(self):
-        """（已移除-GPUEngineFacade 已删除）"""
+        """（已移除-GPUEngineFacade 已删除）."""
 
     def test_import_monitoring(self):
-        """测试监控管道导入"""
+        """测试监控管道导入."""
         from src.collision.gpu.monitoring import PerformanceMonitoringPipeline
 
         assert PerformanceMonitoringPipeline is not None
 
     def test_import_core(self):
-        """测试碰撞核心导入"""
+        """测试碰撞核心导入."""
         from src.collision.gpu.core import CollisionCore
 
         assert CollisionCore is not None
 
     def test_import_vendor_strategy(self):
-        """测试厂商策略导入"""
+        """测试厂商策略导入."""
         from src.collision.gpu.vendor_strategy import (
             VendorOptimizationFactory,
         )
@@ -56,7 +56,7 @@ class TestModuleImports:
         assert VendorOptimizationFactory is not None
 
     def test_import_module_init(self):
-        """测试模块入口导入"""
+        """测试模块入口导入."""
         from src.collision.gpu import (
             get_gpu_engine_facade,
         )
@@ -67,10 +67,10 @@ class TestModuleImports:
 
 @pytest.mark.skip(reason="Import order test needs update for Phase 6 imports")
 class TestNoCircularDependency:
-    """测试无循环依赖"""
+    """测试无循环依赖."""
 
     def test_import_order_independence(self):
-        """测试导入顺序无关性"""
+        """测试导入顺序无关性."""
         # 保存原始模块引用，防止清除后污染其他测试
         saved_modules = {k: v for k, v in sys.modules.items() if "src.collision.gpu" in k}
         modules_to_clear = list(saved_modules.keys())
@@ -92,7 +92,7 @@ class TestNoCircularDependency:
             sys.modules.update(saved_modules)
 
     def test_all_modules_importable(self):
-        """测试所有模块可导入"""
+        """测试所有模块可导入."""
         module_list = [
             "src.collision.gpu",
             "src.collision.gpu.protocols",
@@ -112,10 +112,10 @@ class TestNoCircularDependency:
 
 
 class TestProtocolDefinitions:
-    """测试接口协议定义"""
+    """测试接口协议定义."""
 
     def test_gpu_execution_context(self):
-        """测试GPU执行上下文"""
+        """测试GPU执行上下文."""
         from src.collision.gpu.protocols import GPUExecutionContext
 
         context = GPUExecutionContext(batch_size=1000000, vendor="intel")
@@ -125,7 +125,7 @@ class TestProtocolDefinitions:
         assert context.context is None
 
     def test_collision_result(self):
-        """测试碰撞结果"""
+        """测试碰撞结果."""
         from src.collision.gpu.protocols import CollisionResult
 
         result = CollisionResult(matches=[], execution_time_ms=50.0, batch_size=1000)
@@ -135,10 +135,10 @@ class TestProtocolDefinitions:
 
 
 class TestComponentInstantiation:
-    """测试组件实例化"""
+    """测试组件实例化."""
 
     def test_monitoring_instantiation(self):
-        """测试监控管道实例化"""
+        """测试监控管道实例化."""
         from src.collision.gpu.monitoring import PerformanceMonitoringPipeline
 
         monitoring = PerformanceMonitoringPipeline(engine=None, config={})
@@ -146,7 +146,7 @@ class TestComponentInstantiation:
         assert not monitoring.is_running()
 
     def test_core_instantiation(self):
-        """测试碰撞核心实例化"""
+        """测试碰撞核心实例化."""
         from src.collision.gpu.core import CollisionCore
 
         targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
@@ -155,7 +155,7 @@ class TestComponentInstantiation:
         assert not core.is_running()
 
     def test_vendor_factory(self):
-        """测试厂商工厂"""
+        """测试厂商工厂."""
         from src.collision.gpu.vendor_strategy import VendorOptimizationFactory
 
         # 测试Intel策略
@@ -171,7 +171,7 @@ class TestComponentInstantiation:
         assert unknown_strategy is not None
 
     def test_supported_vendors(self):
-        """测试支持的厂商列表"""
+        """测试支持的厂商列表."""
         from src.collision.gpu.vendor_strategy import VendorOptimizationFactory
 
         vendors = VendorOptimizationFactory.get_supported_vendors()
@@ -181,10 +181,10 @@ class TestComponentInstantiation:
 
 
 class TestBackwardCompatibility:
-    """测试向后兼容性"""
+    """测试向后兼容性."""
 
     def test_delayed_import_functions(self):
-        """测试延迟导入函数"""
+        """测试延迟导入函数."""
         from src.collision.gpu import (
             get_collision_core,
             get_gpu_engine_facade,

@@ -1,4 +1,4 @@
-"""Intel GPU 专有优化模块
+"""Intel GPU 专有优化模块.
 
 封装所有 Intel GPU 特定的优化逻辑，包括：
 - uint32 workaround 验证
@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 
 
 class IntelGPUOptimizer:
-    """Intel GPU 专有优化器
+    """Intel GPU 专有优化器.
 
     封装所有 Intel GPU 特定的优化逻辑，提供统一接口供引擎委托调用。
 
@@ -39,14 +39,14 @@ class IntelGPUOptimizer:
     """
 
     __slots__ = (
-        "_device",
-        "_config",
-        "_logger",
-        "_timeout_manager",
-        "_memory_monitor",
-        "_benchmark_suite",
         "_auto_tuner",
+        "_benchmark_suite",
+        "_config",
+        "_device",
+        "_logger",
+        "_memory_monitor",
         "_performance_reporter",
+        "_timeout_manager",
     )
 
     def __init__(self, device: Any, config: dict[str, Any], engine_logger: Any = None) -> None:
@@ -66,7 +66,7 @@ class IntelGPUOptimizer:
     # ------------------------------------------------------------------
 
     def apply_optimizations(self, engine_context: dict[str, Any]) -> dict[str, Any]:
-        """应用 Intel GPU 特定优化
+        """应用 Intel GPU 特定优化.
 
         验证 uint32 workaround 是否正确应用，并初始化所有监控/调优组件。
 
@@ -130,7 +130,8 @@ class IntelGPUOptimizer:
     @staticmethod
     def _lazy_import_components() -> tuple:
         """延迟导入所有 5 个监控/调优组件类，返回 (Timeout, Memory, Benchmark, Tuner, Reporter)。
-        导入失败的组件对应位置为 None。
+
+        导入失败的组件对应位置为 None。.
         """
         classes = []
         for mod_rel, cls_name in [
@@ -148,7 +149,7 @@ class IntelGPUOptimizer:
         return tuple(classes)
 
     def _init_timeout_manager(self, timeout_cls) -> None:
-        """初始化自适应超时管理器（P1）。"""
+        """初始化自适应超时管理器（P1）。."""
         self._timeout_manager = None
         if not timeout_cls:
             return
@@ -169,7 +170,7 @@ class IntelGPUOptimizer:
             )
 
     def _init_memory_monitor(self, memory_cls) -> None:
-        """初始化显存监控器（P1）。"""
+        """初始化显存监控器（P1）。."""
         self._memory_monitor = None
         if not memory_cls:
             return
@@ -205,7 +206,7 @@ class IntelGPUOptimizer:
             )
 
     def _init_benchmark_suite(self, benchmark_cls, engine) -> None:
-        """初始化基准测试套件（P2）。"""
+        """初始化基准测试套件（P2）。."""
         self._benchmark_suite = None
         if not benchmark_cls or engine is None:
             return
@@ -219,7 +220,7 @@ class IntelGPUOptimizer:
             )
 
     def _init_auto_tuner(self, tuner_cls, engine) -> None:
-        """初始化自动调优器（P2）。"""
+        """初始化自动调优器（P2）。."""
         self._auto_tuner = None
         if not tuner_cls or engine is None:
             return
@@ -233,7 +234,7 @@ class IntelGPUOptimizer:
             )
 
     def _init_performance_reporter(self, reporter_cls, engine) -> None:
-        """初始化性能报告生成器（P2）。"""
+        """初始化性能报告生成器（P2）。."""
         self._performance_reporter = None
         if not reporter_cls or engine is None:
             return
@@ -247,7 +248,7 @@ class IntelGPUOptimizer:
             )
 
     def _log_init_summary(self) -> None:
-        """记录 5 个组件的初始化结果摘要。"""
+        """记录 5 个组件的初始化结果摘要。."""
         initialized_count = sum(
             [
                 self._timeout_manager is not None,
@@ -272,7 +273,7 @@ class IntelGPUOptimizer:
         self._logger.info("✅ Intel GPU 监控和调优组件初始化完成\n")
 
     def init_monitoring_and_tuning(self, engine_context: dict[str, Any]) -> dict[str, Any]:
-        """初始化 Intel GPU 监控和调优组件（P1/P2）。"""
+        """初始化 Intel GPU 监控和调优组件（P1/P2）。."""
         self._logger.info("\n📊 初始化 Intel GPU 监控和调优组件...")
         engine = engine_context.get("engine")
 
@@ -295,7 +296,7 @@ class IntelGPUOptimizer:
         }
 
     def get_optimization_flags(self) -> dict[str, Any]:
-        """获取当前 Intel 优化标志状态
+        """获取当前 Intel 优化标志状态.
 
         Returns:
             包含各项优化标志的字典
@@ -319,27 +320,27 @@ class IntelGPUOptimizer:
 
     @property
     def timeout_manager(self) -> AdaptiveTimeoutManager | None:
-        """自适应超时管理器"""
+        """自适应超时管理器."""
         return self._timeout_manager
 
     @property
     def memory_monitor(self) -> IntelMemoryMonitor | None:
-        """显存监控器"""
+        """显存监控器."""
         return self._memory_monitor
 
     @property
     def benchmark_suite(self) -> GPUBenchmarkSuite | None:
-        """基准测试套件"""
+        """基准测试套件."""
         return self._benchmark_suite
 
     @property
     def auto_tuner(self) -> GPUAutoTuner | None:
-        """自动调优器"""
+        """自动调优器."""
         return self._auto_tuner
 
     @property
     def performance_reporter(self) -> PerformanceReportGenerator | None:
-        """性能报告生成器"""
+        """性能报告生成器."""
         return self._performance_reporter
 
     # ------------------------------------------------------------------
@@ -347,7 +348,7 @@ class IntelGPUOptimizer:
     # ------------------------------------------------------------------
 
     def _verify_uint32_workaround(self, kernel_source: str) -> bool:
-        """验证 uint32 workaround 是否正确应用
+        """验证 uint32 workaround 是否正确应用.
 
         Args:
             kernel_source: OpenCL 内核源码字符串

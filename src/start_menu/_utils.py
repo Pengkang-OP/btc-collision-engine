@@ -1,16 +1,15 @@
 """启动菜单工具函数 — 清屏、等待按键、终端宽度、GPU 检测、统计收集."""
 
-from typing import Any
-
 import concurrent.futures
 import os
 import platform
 from pathlib import Path
+from typing import Any
 
 from ._shared import (
-    _has_rich,
     _PROJECT_ROOT,
     _console,
+    _has_rich,
 )
 
 
@@ -38,12 +37,11 @@ def _term_width() -> int:
 def _format_size(size_bytes: int) -> str:
     if size_bytes < 1024:
         return f"{size_bytes} B"
-    elif size_bytes < 1024 * 1024:
+    if size_bytes < 1024 * 1024:
         return f"{size_bytes / 1024:.1f} KB"
-    elif size_bytes < 1024 * 1024 * 1024:
+    if size_bytes < 1024 * 1024 * 1024:
         return f"{size_bytes / (1024 * 1024):.1f} MB"
-    else:
-        return f"{size_bytes / (1024 * 1024 * 1024):.2f} GB"
+    return f"{size_bytes / (1024 * 1024 * 1024):.2f} GB"
 
 
 def _detect_gpu_quick() -> str | None:

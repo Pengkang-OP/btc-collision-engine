@@ -1,4 +1,4 @@
-"""数据监控器测试
+"""数据监控器测试.
 
 测试DataMonitor类的功能:
 - 数据报告
@@ -15,10 +15,10 @@ from src.gpu.data_monitor import DataMonitor, DataQualityIssue
 
 
 class TestDataMonitor:
-    """测试数据监控器"""
+    """测试数据监控器."""
 
     def setup_method(self, method):
-        """设置测试环境"""
+        """设置测试环境."""
         self.monitor = DataMonitor(
             config={
                 "check_interval": 0.5,  # 加快测试
@@ -29,11 +29,11 @@ class TestDataMonitor:
         )
 
     def teardown_method(self, method):
-        """清理测试环境"""
+        """清理测试环境."""
         self.monitor.stop()
 
     def test_monitor_start_stop(self):
-        """测试监控器启动和停止"""
+        """测试监控器启动和停止."""
         self.monitor.start()
         assert self.monitor._running
 
@@ -41,7 +41,7 @@ class TestDataMonitor:
         assert not self.monitor._running
 
     def test_report_keys_generated(self):
-        """测试报告私钥生成"""
+        """测试报告私钥生成."""
         self.monitor.start()
 
         self.monitor.report_keys_generated(device_idx=0, count=1000, key_range=(0, 1000))
@@ -51,7 +51,7 @@ class TestDataMonitor:
         assert stats["devices"][0]["total_keys"] == 1000
 
     def test_report_match(self):
-        """测试报告匹配结果"""
+        """测试报告匹配结果."""
         self.monitor.start()
 
         match_data = {
@@ -68,7 +68,7 @@ class TestDataMonitor:
         assert stats["devices"][0]["total_matches"] == 1
 
     def test_report_error(self):
-        """测试报告错误"""
+        """测试报告错误."""
         self.monitor.start()
 
         self.monitor.report_error(device_idx=0, error_msg="测试错误", error_type="test_error")
@@ -77,7 +77,7 @@ class TestDataMonitor:
         assert stats["devices"][0]["total_errors"] == 1
 
     def test_detect_duplicate_key(self):
-        """测试检测重复私钥"""
+        """测试检测重复私钥."""
         self.monitor.start()
 
         match_data = {
@@ -98,7 +98,7 @@ class TestDataMonitor:
         assert len(duplicate_issues) > 0
 
     def test_detect_invalid_key(self):
-        """测试检测无效私钥"""
+        """测试检测无效私钥."""
         self.monitor.start()
 
         match_data = {
@@ -114,7 +114,7 @@ class TestDataMonitor:
         assert len(invalid_issues) > 0
 
     def test_detect_stale_data(self):
-        """测试检测过期数据"""
+        """测试检测过期数据."""
         self.monitor.start()
 
         # 报告一次数据
@@ -130,7 +130,7 @@ class TestDataMonitor:
         assert len(stale_issues) > 0
 
     def test_throughput_tracking(self):
-        """测试吞吐量跟踪"""
+        """测试吞吐量跟踪."""
         self.monitor.start()
 
         # 报告多次数据生成
@@ -145,7 +145,7 @@ class TestDataMonitor:
         assert avg_throughput > 0
 
     def test_anomaly_callback(self):
-        """测试异常回调"""
+        """测试异常回调."""
         anomalies = []
 
         def callback(device_idx, issue):
@@ -168,7 +168,7 @@ class TestDataMonitor:
         assert anomalies[0][0] == 0
 
     def test_get_issues_filter(self):
-        """测试问题过滤"""
+        """测试问题过滤."""
         self.monitor.start()
 
         # 触发不同类型的问题
@@ -197,7 +197,7 @@ class TestDataMonitor:
         assert len(issues_device1) == 0  # 设备1没有问题
 
     def test_validation_statistics(self):
-        """测试验证统计"""
+        """测试验证统计."""
         self.monitor.start()
 
         self.monitor.report_validation_result(device_idx=0, passed=True)
@@ -209,7 +209,7 @@ class TestDataMonitor:
         assert stats["validation_pass_rate"] == pytest.approx(2 / 3, abs=10**-2)
 
     def test_monitor_thread_runs_independently(self):
-        """测试监控线程独立运行"""
+        """测试监控线程独立运行."""
         self.monitor.start()
 
         # 主线程不应该被阻塞
@@ -224,7 +224,7 @@ class TestDataMonitor:
         assert elapsed < 0.1
 
     def test_issue_severity_levels(self):
-        """测试问题严重级别"""
+        """测试问题严重级别."""
         self.monitor.start()
 
         # 创建不同严重级别的问题
@@ -249,10 +249,10 @@ class TestDataMonitor:
 
 
 class TestDataQualityIssue:
-    """测试数据质量问题类"""
+    """测试数据质量问题类."""
 
     def test_issue_creation(self):
-        """测试问题创建"""
+        """测试问题创建."""
         issue = DataQualityIssue(
             issue_type=DataQualityIssue.INVALID_KEY,
             severity="high",
@@ -268,7 +268,7 @@ class TestDataQualityIssue:
         assert issue.datetime is not None
 
     def test_issue_to_dict(self):
-        """测试问题转字典"""
+        """测试问题转字典."""
         issue = DataQualityIssue(issue_type="test", severity="medium", message="测试", device_idx=1)
 
         issue_dict = issue.to_dict()

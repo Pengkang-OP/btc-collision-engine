@@ -1,4 +1,4 @@
-"""GPU碰撞引擎接口协议定义
+"""GPU碰撞引擎接口协议定义.
 
 定义所有组件的接口协议，遵循依赖倒置原则(DIP)。
 所有实现类都应该实现这些接口。
@@ -24,7 +24,7 @@ from typing import Any, Protocol, TypedDict
 
 
 class GPUDeviceInfo(TypedDict, total=False):
-    """GPU设备信息"""
+    """GPU设备信息."""
 
     device_id: int
     vendor: str
@@ -37,7 +37,7 @@ class GPUDeviceInfo(TypedDict, total=False):
 
 
 class GPUDevice:
-    """GPU设备实例（轻量级封装）"""
+    """GPU设备实例（轻量级封装）."""
 
     def __init__(
         self,
@@ -63,7 +63,7 @@ class GPUDevice:
 
 
 class GPUContext:
-    """GPU上下文封装"""
+    """GPU上下文封装."""
 
     def __init__(self, context_obj: Any = None, device: GPUDevice | None = None) -> None:
         self.context_obj = context_obj  # 底层上下文对象（cl.Context等）
@@ -71,7 +71,7 @@ class GPUContext:
 
 
 class GPUKernel:
-    """GPU内核封装"""
+    """GPU内核封装."""
 
     def __init__(
         self,
@@ -85,7 +85,7 @@ class GPUKernel:
 
 
 class MatchResult(TypedDict, total=False):
-    """匹配结果"""
+    """匹配结果."""
 
     address: str
     private_key: str
@@ -97,10 +97,10 @@ class MatchResult(TypedDict, total=False):
 
 
 class IGPUDeviceManager(Protocol):
-    """GPU设备管理器接口"""
+    """GPU设备管理器接口."""
 
     def list_devices(self) -> list[GPUDevice]:
-        """列出所有可用GPU设备
+        """列出所有可用GPU设备.
 
         Returns:
             GPU设备列表
@@ -109,7 +109,7 @@ class IGPUDeviceManager(Protocol):
         ...
 
     def select_device(self, device_index: int = -1) -> GPUDevice:
-        """选择GPU设备
+        """选择GPU设备.
 
         Args:
             device_index: 设备索引，-1表示自动选择
@@ -121,7 +121,7 @@ class IGPUDeviceManager(Protocol):
         ...
 
     def create_context(self, device: GPUDevice) -> GPUContext:
-        """创建GPU上下文
+        """创建GPU上下文.
 
         Args:
             device: GPU设备实例
@@ -133,15 +133,15 @@ class IGPUDeviceManager(Protocol):
         ...
 
     def release_all(self) -> None:
-        """释放所有GPU资源"""
+        """释放所有GPU资源."""
         ...
 
 
 class IKernelExecutor(Protocol):
-    """GPU内核执行器接口"""
+    """GPU内核执行器接口."""
 
     def compile_kernel(self, device: GPUDevice, context: GPUContext) -> GPUKernel:
-        """编译GPU内核
+        """编译GPU内核.
 
         Args:
             device: GPU设备
@@ -160,7 +160,7 @@ class IKernelExecutor(Protocol):
         batch_size: int,
         stop_event: Any = None,
     ) -> tuple[list[MatchResult], float]:
-        """执行单个批次
+        """执行单个批次.
 
         Args:
             kernel: GPU内核
@@ -176,10 +176,10 @@ class IKernelExecutor(Protocol):
 
 
 class IAsyncExecutionPipeline(Protocol):
-    """异步执行管道接口"""
+    """异步执行管道接口."""
 
     def initialize(self, kernel: GPUKernel, batch_size: int) -> None:
-        """初始化异步管道
+        """初始化异步管道.
 
         Args:
             kernel: GPU内核
@@ -189,7 +189,7 @@ class IAsyncExecutionPipeline(Protocol):
         ...
 
     def is_ready(self) -> bool:
-        """检查管道是否就绪
+        """检查管道是否就绪.
 
         Returns:
             是否就绪
@@ -198,7 +198,7 @@ class IAsyncExecutionPipeline(Protocol):
         ...
 
     def run_batch(self, seed: bytes, batch_size: int) -> tuple[list[MatchResult], float]:
-        """运行单个批次
+        """运行单个批次.
 
         Args:
             seed: 随机种子
@@ -211,23 +211,23 @@ class IAsyncExecutionPipeline(Protocol):
         ...
 
     def cleanup(self) -> None:
-        """清理异步管道资源"""
+        """清理异步管道资源."""
         ...
 
 
 class IMonitoringPipeline(Protocol):
-    """监控管道接口"""
+    """监控管道接口."""
 
     def start(self) -> None:
-        """启动所有监控器"""
+        """启动所有监控器."""
         ...
 
     def stop(self) -> None:
-        """停止所有监控器"""
+        """停止所有监控器."""
         ...
 
     def record_metrics(self, batch_size: int, execution_time_ms: float, **metrics: Any) -> None:
-        """记录性能指标
+        """记录性能指标.
 
         Args:
             batch_size: 批次大小
@@ -238,15 +238,15 @@ class IMonitoringPipeline(Protocol):
         ...
 
     def flush(self) -> None:
-        """刷写所有缓冲数据"""
+        """刷写所有缓冲数据."""
         ...
 
 
 class ICollisionCore(Protocol):
-    """碰撞核心接口"""
+    """碰撞核心接口."""
 
     def start(self, mode: str = "random", **kwargs) -> None:
-        """启动碰撞
+        """启动碰撞.
 
         Args:
             mode: 碰撞模式 (random/range/brute_force)
@@ -256,23 +256,23 @@ class ICollisionCore(Protocol):
         ...
 
     def stop(self) -> None:
-        """停止碰撞"""
+        """停止碰撞."""
         ...
 
     def pause(self) -> None:
-        """暂停碰撞"""
+        """暂停碰撞."""
         ...
 
     def resume(self) -> None:
-        """恢复碰撞"""
+        """恢复碰撞."""
         ...
 
     def reset(self) -> None:
-        """重置统计"""
+        """重置统计."""
         ...
 
     def on_batch_complete(self, matches: list[MatchResult], batch_size: int) -> None:
-        """批次完成回调
+        """批次完成回调.
 
         Args:
             matches: 匹配结果列表
@@ -282,7 +282,7 @@ class ICollisionCore(Protocol):
         ...
 
     def get_stats(self) -> dict[str, Any]:
-        """获取碰撞统计
+        """获取碰撞统计.
 
         Returns:
             统计信息字典
@@ -293,7 +293,7 @@ class ICollisionCore(Protocol):
 
 @dataclass
 class GPUExecutionContext:
-    """GPU执行上下文
+    """GPU执行上下文.
 
     包含GPU执行所需的所有资源和配置。
 
@@ -313,7 +313,7 @@ class GPUExecutionContext:
 
 @dataclass
 class CollisionResult:
-    """碰撞结果
+    """碰撞结果.
 
     单次批次执行的完整结果。
     """
@@ -329,7 +329,7 @@ class CollisionResult:
     seed: bytes | None = None  # 可追溯性
 
     def __post_init__(self) -> None:
-        """计算派生字段"""
+        """计算派生字段."""
         if self.execution_time_ms > 0 and self.batch_size > 0:
             self.keys_per_second = self.batch_size / (self.execution_time_ms / 1000.0)
         if self.timestamp == 0.0:
@@ -339,10 +339,10 @@ class CollisionResult:
 
 
 class VendorOptimizationStrategy(Protocol):
-    """厂商优化策略接口"""
+    """厂商优化策略接口."""
 
     def apply_optimizations(self, context: GPUExecutionContext) -> dict[str, Any]:
-        """应用厂商特定优化
+        """应用厂商特定优化.
 
         Args:
             context: GPU执行上下文
@@ -354,7 +354,7 @@ class VendorOptimizationStrategy(Protocol):
         ...
 
     def get_monitoring_components(self) -> dict[str, Any]:
-        """获取厂商特定监控组件
+        """获取厂商特定监控组件.
 
         Returns:
             监控组件字典

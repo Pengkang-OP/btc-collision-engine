@@ -42,7 +42,7 @@ if TYPE_CHECKING:
     from flask import Flask, abort, jsonify, redirect, render_template_string, request
 
 try:
-    from flask import (  # noqa: F811  # TYPE_CHECKING 块有同名导入，属条件导入兼容模式
+    from flask import (  # TYPE_CHECKING 块有同名导入，属条件导入兼容模式  # noqa: F811
         Flask,
         abort,
         jsonify,
@@ -109,7 +109,7 @@ _request_history: defaultdict[str, list[float]] = defaultdict(list)
 
 
 def rate_limit(f):
-    """滑动窗口速率限制装饰器（基于客户端 IP + 端点）"""
+    """滑动窗口速率限制装饰器（基于客户端 IP + 端点）."""
 
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -429,7 +429,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
 
 
 def _find_data_logs_dir() -> Path:
-    """查找 data_logs 目录"""
+    """查找 data_logs 目录."""
     candidates = [
         Path("data_logs"),
         Path(__file__).parent.parent.parent / "data_logs",
@@ -441,7 +441,7 @@ def _find_data_logs_dir() -> Path:
 
 
 def _safe_read_json(path: Path) -> Any:
-    """安全读取 JSON 文件"""
+    """安全读取 JSON 文件."""
     if not path.exists():
         return None
     try:
@@ -453,7 +453,7 @@ def _safe_read_json(path: Path) -> Any:
 
 
 def get_current_stats(data_dir: Path) -> dict[str, Any]:
-    """获取当前统计信息"""
+    """获取当前统计信息."""
     data = _safe_read_json(data_dir / "current_data.json") or {}
     perf = data.get("performance", {})
     engine_info = data.get("engine", {})
@@ -485,7 +485,7 @@ def get_current_stats(data_dir: Path) -> dict[str, Any]:
 
 
 def get_history(data_dir: Path, limit: int = 20) -> list[dict[str, Any]]:
-    """获取历史数据"""
+    """获取历史数据."""
     data = _safe_read_json(data_dir / "history_data.json") or []
     if isinstance(data, list):
         return data[-limit:]
@@ -493,7 +493,7 @@ def get_history(data_dir: Path, limit: int = 20) -> list[dict[str, Any]]:
 
 
 def get_errors(data_dir: Path, limit: int = 20) -> list[dict[str, Any]]:
-    """获取错误日志"""
+    """获取错误日志."""
     data = _safe_read_json(data_dir / "error_log.json") or []
     if isinstance(data, list):
         return data[-limit:]
@@ -501,7 +501,7 @@ def get_errors(data_dir: Path, limit: int = 20) -> list[dict[str, Any]]:
 
 
 def format_uptime(seconds: float) -> str:
-    """格式化运行时间"""
+    """格式化运行时间."""
     if seconds < 60:
         return f"{int(seconds)}秒"
     if seconds < 3600:
@@ -512,7 +512,7 @@ def format_uptime(seconds: float) -> str:
 
 
 def get_security_audit_data(data_dir: Path) -> dict[str, Any]:
-    """获取安全审计状态数据（已脱敏，不暴露私钥等敏感信息）
+    """获取安全审计状态数据（已脱敏，不暴露私钥等敏感信息）.
 
     聚合多来源审计信息：
     1. CryptoBackend 安全性验证（verify_production_ready）
@@ -640,7 +640,7 @@ def get_security_audit_data(data_dir: Path) -> dict[str, Any]:
 
 
 def _parse_audit_log_entries(log_path: Path, limit: int = 20) -> list[dict[str, Any]]:
-    """解析 key_audit.log 文件，提取最近 N 条审计条目（已脱敏）
+    """解析 key_audit.log 文件，提取最近 N 条审计条目（已脱敏）.
 
     日志格式示例:
     2026-05-20 12:00:00,000 - src.utils.key_audit - INFO - [KEY_AUDIT] 2026-05-20T12:00:00 | Operation: display | Level: info | Address: 1A1zP1...eP5Q | KeyHash: a1b2c3d4e5f6... | DisplayMode: masked | Details: 私钥已脱敏显示
@@ -705,7 +705,7 @@ def _parse_audit_log_entries(log_path: Path, limit: int = 20) -> list[dict[str, 
 
 
 def create_app(data_dir: Path | None = None, debug: bool = False) -> "Flask":
-    """创建 Flask 应用
+    """创建 Flask 应用.
 
     Args:
         data_dir: data_logs 目录路径，为 None 时自动查找
@@ -746,7 +746,7 @@ def create_app(data_dir: Path | None = None, debug: bool = False) -> "Flask":
     @app.route("/")
     @require_auth
     def index():
-        """仪表板主页"""
+        """仪表板主页."""
         stats = get_current_stats(data_logs_dir)
         history = get_history(data_logs_dir, limit=20)
         errors = get_errors(data_logs_dir, limit=15)
@@ -779,14 +779,14 @@ def create_app(data_dir: Path | None = None, debug: bool = False) -> "Flask":
     @rate_limit
     @require_auth
     def api_status():
-        """API: 当前运行状态"""
+        """API: 当前运行状态."""
         return jsonify(get_current_stats(data_logs_dir))
 
     @app.route(f"{API_PREFIX}/history")
     @rate_limit
     @require_auth
     def api_history():
-        """API: 历史数据
+        """API: 历史数据.
 
         Query params:
             limit: 返回条数 (默认 50, 最大 200)
@@ -799,7 +799,7 @@ def create_app(data_dir: Path | None = None, debug: bool = False) -> "Flask":
     @rate_limit
     @require_auth
     def api_errors():
-        """API: 错误日志
+        """API: 错误日志.
 
         Query params:
             limit: 返回条数 (默认 50, 最大 200)
@@ -812,7 +812,7 @@ def create_app(data_dir: Path | None = None, debug: bool = False) -> "Flask":
     @rate_limit
     @require_auth
     def api_report():
-        """API: 日报告摘要"""
+        """API: 日报告摘要."""
         stats = get_current_stats(data_logs_dir)
         history = get_history(data_logs_dir, limit=100)
 
@@ -843,7 +843,7 @@ def create_app(data_dir: Path | None = None, debug: bool = False) -> "Flask":
     @rate_limit
     @require_auth
     def api_security_audit():
-        """API: 安全审计状态（已脱敏，不暴露私钥等敏感信息）
+        """API: 安全审计状态（已脱敏，不暴露私钥等敏感信息）.
 
         Returns:
             密钥操作统计、审计日志概述、安全过滤器状态、
@@ -855,12 +855,12 @@ def create_app(data_dir: Path | None = None, debug: bool = False) -> "Flask":
 
     @app.route("/health")
     def health():
-        """健康检查端点"""
+        """健康检查端点."""
         return jsonify({"status": "ok", "timestamp": time.time()})
 
     @app.route("/api/<path:subpath>")
     def api_redirect(subpath: str):
-        """旧 /api/* 路径自动 301 重定向至 /api/v1/*"""
+        """旧 /api/* 路径自动 301 重定向至 /api/v1/*."""
         return redirect(f"{API_PREFIX}/{subpath}"), 301
 
     return app
@@ -874,7 +874,7 @@ def run_dashboard(
     use_reloader: bool = False,
     api_key: str | None = None,
 ) -> None:
-    """启动 Web 监控仪表板
+    """启动 Web 监控仪表板.
 
     Args:
         host: 监听地址 (默认 0.0.0.0)
@@ -899,7 +899,7 @@ def run_dashboard(
         "BTC 碰撞引擎 - Web 监控仪表板 v4.2.1",
         f"本地访问: http://127.0.0.1:{port}",
         f"API Key: {auth_status}",
-        f"API 端点 (v{API_PREFIX.split('/')[-1]}):",
+        f"API 端点 (v{API_PREFIX.rsplit('/', maxsplit=1)[-1]}):",
         f"  GET {API_PREFIX}/status         - 当前运行状态",
         f"  GET {API_PREFIX}/history        - 历史数据 (?limit=N)",
         f"  GET {API_PREFIX}/errors         - 错误日志 (?limit=N)",

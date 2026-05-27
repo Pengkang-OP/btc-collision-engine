@@ -1,4 +1,4 @@
-"""GPU引擎重构 Phase 6 测试套件 - 集成与兼容性
+"""GPU引擎重构 Phase 6 测试套件 - 集成与兼容性.
 
 测试范围:
 1. TestEngineIntegration: 构造函数参数完整性, 组件创建
@@ -24,13 +24,13 @@ pytestmark = pytest.mark.gpu
 
 @pytest.fixture
 def mock_targets():
-    """创建测试目标地址集合"""
+    """创建测试目标地址集合."""
     return {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", "1CounterpartyXXXXXXXXXXXXXXXUWLpVr"}
 
 
 @pytest.fixture
 def mock_device():
-    """创建 Mock GPU 设备"""
+    """创建 Mock GPU 设备."""
     device = GPUDevice(
         device_id=0,
         vendor="nvidia",
@@ -42,7 +42,7 @@ def mock_device():
 
 @pytest.fixture
 def mock_engine_patches(mock_targets):
-    """创建 GPU 引擎所需的最小 Mock 集合"""
+    """创建 GPU 引擎所需的最小 Mock 集合."""
     mock_device_manager = MagicMock()
     mock_device = MagicMock()
     mock_device.name = "Mock GPU"
@@ -62,7 +62,7 @@ def mock_engine_patches(mock_targets):
     mock_collision_core.dedup_filter = MagicMock()
 
     patches = [
-        patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True),
+        patch("src.gpu._availability.PYOPENCL_AVAILABLE", True),
         patch("src.collision.gpu.engine.GPUDeviceManager", return_value=mock_device_manager),
         patch("src.collision.gpu.engine.CollisionCore", return_value=mock_collision_core),
         patch("src.collision.gpu.engine.SearchModeCoordinator"),
@@ -77,10 +77,10 @@ def mock_engine_patches(mock_targets):
 
 
 class TestEngineIntegration:
-    """测试引擎构造函数参数完整性"""
+    """测试引擎构造函数参数完整性."""
 
     def test_constructor_all_17_params(self, mock_targets, mock_engine_patches, tmp_path):
-        """测试构造函数接受全部 17 个参数"""
+        """测试构造函数接受全部 17 个参数."""
         patches, _, _ = mock_engine_patches
 
         active_patches = []
@@ -123,15 +123,22 @@ class TestEngineIntegration:
                 p.stop()
 
     def test_constructor_pyopencl_unavailable(self, mock_targets):
-        """测试 pyopencl 不可用时抛出 RuntimeError"""
-        with patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", False):
+        """测试 pyopencl 不可用时抛出 RuntimeError.
+
+        P0-9: engine.py 导入 PYOPENCL_AVAILABLE 后会创建模块级本地副本，
+        因此 patch 需同时覆盖 _availability 源和 engine 本地变量。
+        """
+        with (
+            patch("src.gpu._availability.PYOPENCL_AVAILABLE", False),
+            patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", False),
+        ):
             from src.collision.gpu.engine import GPUCollisionEngine
 
             with pytest.raises(RuntimeError, match="pyopencl"):
                 GPUCollisionEngine(targets=mock_targets)
 
     def test_constructor_creates_core(self, mock_targets, mock_engine_patches):
-        """测试构造函数创建 CollisionCore"""
+        """测试构造函数创建 CollisionCore."""
         patches, _, mock_core = mock_engine_patches
 
         # 需要收集所有 patcher
@@ -154,7 +161,7 @@ class TestEngineIntegration:
                 p.stop()
 
     def test_constructor_exposes_core_attributes(self, mock_targets, mock_engine_patches):
-        """测试构造函数暴露 CollisionCore 属性"""
+        """测试构造函数暴露 CollisionCore 属性."""
         patches, device_mgr, mock_core = mock_engine_patches
 
         active_patches = []
@@ -174,7 +181,7 @@ class TestEngineIntegration:
                 p.stop()
 
     def test_constructor_exposes_gpu_attributes(self, mock_targets, mock_engine_patches):
-        """测试构造函数暴露 GPU 设备属性"""
+        """测试构造函数暴露 GPU 设备属性."""
         patches, device_mgr, mock_core = mock_engine_patches
 
         active_patches = []
@@ -203,10 +210,10 @@ class TestEngineIntegration:
 
 
 class TestComponentDelegation:
-    """测试组件委托: 验证委托到 Facade/Core/Monitoring"""
+    """测试组件委托: 验证委托到 Facade/Core/Monitoring."""
 
     def test_get_device_info_delegation(self, mock_targets, mock_engine_patches):
-        """测试 get_device_info 委托"""
+        """测试 get_device_info 委托."""
         patches, device_mgr, _ = mock_engine_patches
 
         active_patches = []
@@ -225,7 +232,7 @@ class TestComponentDelegation:
                 p.stop()
 
     def test_get_stats_delegation(self, mock_targets, mock_engine_patches):
-        """测试 get_stats 委托到 CollisionCore"""
+        """测试 get_stats 委托到 CollisionCore."""
         patches, _, _ = mock_engine_patches
 
         active_patches = []
@@ -244,7 +251,7 @@ class TestComponentDelegation:
                 p.stop()
 
     def test_get_adjustment_history_delegation(self, mock_targets, mock_engine_patches):
-        """测试 get_adjustment_history 委托到 GPUEngineMonitor"""
+        """测试 get_adjustment_history 委托到 GPUEngineMonitor."""
         patches, _, _ = mock_engine_patches
 
         active_patches = []
@@ -268,7 +275,7 @@ class TestComponentDelegation:
                 p.stop()
 
     def test_vendor_detection(self, mock_targets, mock_engine_patches):
-        """测试厂商检测逻辑"""
+        """测试厂商检测逻辑."""
         patches, device_mgr, _ = mock_engine_patches
 
         active_patches = []
@@ -292,10 +299,10 @@ class TestComponentDelegation:
 
 
 class TestSearchModeAccess:
-    """测试搜索模式属性代理"""
+    """测试搜索模式属性代理."""
 
     def test_search_mode_attributes_delegation(self, mock_targets, mock_engine_patches):
-        """测试搜索模式方法委托"""
+        """测试搜索模式方法委托."""
         patches, _, _ = mock_engine_patches
 
         active_patches = []
@@ -324,16 +331,16 @@ class TestSearchModeAccess:
 
 
 class TestModuleImports:
-    """测试模块导入完整性"""
+    """测试模块导入完整性."""
 
     def test_package_version(self):
-        """测试包版本号与 __init__.py 一致"""
+        """测试包版本号与 __init__.py 一致."""
         from src.collision import gpu
 
         assert gpu.__version__ == "5.0.0"
 
     def test_package_all_exports(self):
-        """测试 __all__ 包含新组件"""
+        """测试 __all__ 包含新组件."""
         from src.collision.gpu import __all__
 
         required = [
@@ -351,13 +358,13 @@ class TestModuleImports:
             assert name in __all__, f"{name} 不在 __all__ 中"
 
     def test_factory_function_returns_class(self):
-        """测试工厂函数返回正确的类"""
+        """测试工厂函数返回正确的类."""
         from src.collision.gpu import GPUEngineFacade, get_gpu_engine_facade
 
         assert get_gpu_engine_facade() is GPUEngineFacade
 
     def test_gpuenginefacade_importable(self):
-        """测试 GPUEngineFacade 可以从包中导入"""
+        """测试 GPUEngineFacade 可以从包中导入."""
         from src.collision.gpu import GPUEngineFacade
 
         assert GPUEngineFacade is not None
@@ -371,10 +378,10 @@ class TestModuleImports:
 
 @pytest.mark.skip(reason="Lifecycle API test needs engine refactor completion")
 class TestLifecycle:
-    """测试引擎生命周期"""
+    """测试引擎生命周期."""
 
     def test_context_manager(self, mock_targets, mock_engine_patches):
-        """测试上下文管理器"""
+        """测试上下文管理器."""
         patches, _, _ = mock_engine_patches
 
         active_patches = []
@@ -393,7 +400,7 @@ class TestLifecycle:
                 p.stop()
 
     def test_start_stop_cycle(self, mock_targets, mock_engine_patches):
-        """测试 start/stop 完整生命周期"""
+        """测试 start/stop 完整生命周期."""
         patches, _, _ = mock_engine_patches
 
         active_patches = []
@@ -424,7 +431,7 @@ class TestLifecycle:
                 p.stop()
 
     def test_del_calls_stop(self, mock_targets, mock_engine_patches):
-        """测试 __del__ 调用 stop"""
+        """测试 __del__ 调用 stop."""
         patches, _, _ = mock_engine_patches
 
         active_patches = []
@@ -443,7 +450,7 @@ class TestLifecycle:
                 p.stop()
 
     def test_from_config_creates_engine(self, mock_targets, mock_engine_patches):
-        """测试 from_config() 从 GPUEngineConfig 创建引擎实例
+        """测试 from_config() 从 GPUEngineConfig 创建引擎实例.
 
         BLOCK-1修复验证: 确保 GPUEngineConfig 包含 from_config() 所需的全部字段。
         """
@@ -488,7 +495,7 @@ class TestLifecycle:
                 p.stop()
 
     def test_from_config_fields_completeness(self):
-        """测试 GPUEngineConfig 包含 from_config() 引用的所有字段
+        """测试 GPUEngineConfig 包含 from_config() 引用的所有字段.
 
         BLOCK-1修复验证: 确保所有字段在 dataclass 中存在，避免 AttributeError。
         """

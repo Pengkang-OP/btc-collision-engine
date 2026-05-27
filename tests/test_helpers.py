@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""测试辅助函数模块
+"""测试辅助函数模块.
 
 提供Mock验证辅助函数,可在测试中使用
 """
 
 
 class MockAssertions:
-    """Mock断言辅助类
+    """Mock断言辅助类.
 
     提供常用的Mock验证方法,简化测试代码
 
@@ -21,14 +21,14 @@ class MockAssertions:
 
     @staticmethod
     def assert_cleanup_called(mock_device, mock_context, mock_kernel):
-        """验证GPU资源清理是否正确调用"""
+        """验证GPU资源清理是否正确调用."""
         mock_kernel.cleanup.assert_called_once()
         mock_context.cleanup.assert_called_once()
         mock_device.cleanup.assert_called_once()
 
     @staticmethod
     def assert_kernel_executed(mock_kernel, min_calls=1):
-        """验证GPU内核执行批次调用
+        """验证GPU内核执行批次调用.
 
         Args:
             mock_kernel: GPU内核Mock
@@ -41,7 +41,7 @@ class MockAssertions:
 
     @staticmethod
     def assert_targets_set(mock_kernel, expected_count):
-        """验证目标地址设置
+        """验证目标地址设置.
 
         Args:
             mock_kernel: GPU内核Mock
@@ -54,17 +54,17 @@ class MockAssertions:
 
     @staticmethod
     def assert_engine_running(engine):
-        """验证引擎正在运行"""
+        """验证引擎正在运行."""
         assert engine.is_running() is True
 
     @staticmethod
     def assert_engine_stopped(engine):
-        """验证引擎已停止"""
+        """验证引擎已停止."""
         assert engine.is_running() is False
 
     @staticmethod
     def assert_batch_size_configured(mock_context, expected_batch_size):
-        """验证batch_size配置
+        """验证batch_size配置.
 
         Args:
             mock_context: GPU上下文Mock
@@ -79,7 +79,7 @@ class MockAssertions:
 
     @staticmethod
     def assert_gpu_initialized(mock_device):
-        """验证GPU设备已初始化
+        """验证GPU设备已初始化.
 
         Args:
             mock_device: GPU设备Mock
@@ -89,7 +89,7 @@ class MockAssertions:
 
     @staticmethod
     def assert_gpu_cleaned(mock_device, mock_context, mock_kernel):
-        """验证GPU资源已清理(同assert_cleanup_called)
+        """验证GPU资源已清理(同assert_cleanup_called).
 
         Args:
             mock_device: GPU设备Mock
@@ -102,7 +102,7 @@ class MockAssertions:
 
     @staticmethod
     def assert_no_collisions_found(mock_kernel):
-        """验证未找到碰撞
+        """验证未找到碰撞.
 
         Args:
             mock_kernel: GPU内核Mock
@@ -118,7 +118,7 @@ class MockAssertions:
 
     @staticmethod
     def assert_optimizer_called(mock_kernel):
-        """验证GPU优化器被调用
+        """验证GPU优化器被调用.
 
         Args:
             mock_kernel: GPU内核Mock

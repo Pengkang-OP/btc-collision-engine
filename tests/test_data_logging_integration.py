@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""数据日志集成竞态条件测试
+"""数据日志集成竞态条件测试.
 
 验证优化后的代码在并发场景下的正确性。
 """
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 def test_stats_consistency():
-    """测试统计信息一致性（验证竞态条件修复）"""
+    """测试统计信息一致性（验证竞态条件修复）."""
     print("\n" + "=" * 60)
     print("测试 1: 统计信息一致性测试")
     print("=" * 60)
@@ -64,7 +64,7 @@ def test_stats_consistency():
 
 
 def test_data_logging_thread_safety():
-    """测试数据日志线程安全性
+    """测试数据日志线程安全性.
 
     使用轮询+超时模式替代固定sleep，消除timing依赖。
     """
@@ -116,7 +116,7 @@ def test_data_logging_thread_safety():
 
 
 def test_error_logging_rate_limit():
-    """测试错误记录限频功能"""
+    """测试错误记录限频功能."""
     print("\n" + "=" * 60)
     print("测试 3: 错误记录限频测试")
     print("=" * 60)
@@ -176,7 +176,7 @@ def test_error_logging_rate_limit():
 
 
 def test_cpu_cache_mechanism():
-    """测试CPU缓存机制
+    """测试CPU缓存机制.
 
     使用轮询+超时模式替代固定sleep，消除timing依赖，确保批量运行环境下的稳定性。
     """
@@ -244,7 +244,7 @@ def test_cpu_cache_mechanism():
 
 
 def test_data_save_frequency():
-    """测试数据保存频率"""
+    """测试数据保存频率."""
     print("\n" + "=" * 60)
     print("测试 5: 数据保存频率测试")
     print("=" * 60)
@@ -291,7 +291,7 @@ def test_data_save_frequency():
 
 
 def main():
-    """主测试函数"""
+    """主测试函数."""
     # 初始化日志
     init_logging()
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""系统健康检查 (HealthChecker) 单元测试
+"""系统健康检查 (HealthChecker) 单元测试.
 
 覆盖：
 - Python 版本检查
@@ -34,7 +34,7 @@ from src.utils.health_check import HealthChecker, main
 
 @pytest.fixture
 def checker():
-    """创建 HealthChecker 实例（临时目录）"""
+    """创建 HealthChecker 实例（临时目录）."""
     with tempfile.TemporaryDirectory() as tmpdir:
         c = HealthChecker(project_root=tmpdir)
         yield c
@@ -42,7 +42,7 @@ def checker():
 
 @pytest.fixture
 def checker_with_config():
-    """创建带配置文件的 HealthChecker"""
+    """创建带配置文件的 HealthChecker."""
     with tempfile.TemporaryDirectory() as tmpdir:
         # 创建 config.json
         config_path = os.path.join(tmpdir, "config.json")
@@ -64,7 +64,7 @@ def checker_with_config():
 
 @pytest.mark.unit
 class TestPythonVersionCheck:
-    """Python 版本检查测试"""
+    """Python 版本检查测试."""
 
     def test_current_python_version_passes(self, checker):
         passed, message = checker.check_python_version()
@@ -80,7 +80,7 @@ class TestPythonVersionCheck:
 
 @pytest.mark.unit
 class TestDependencyCheck:
-    """依赖检查测试"""
+    """依赖检查测试."""
 
     def test_check_dependencies(self, checker):
         passed, message = checker.check_dependencies()
@@ -107,7 +107,7 @@ class TestDependencyCheck:
 
 @pytest.mark.unit
 class TestConfigFileCheck:
-    """配置文件检查测试"""
+    """配置文件检查测试."""
 
     def test_no_config_file(self, checker):
         passed, message = checker.check_config_file()
@@ -120,7 +120,7 @@ class TestConfigFileCheck:
         assert "有效" in message
 
     def test_invalid_json_config(self, checker):
-        """无效 JSON 配置文件"""
+        """无效 JSON 配置文件."""
         config_path = os.path.join(checker.project_root, "config.json")
         pathlib.Path(config_path).write_text("not valid json{{{", encoding="utf-8")
 
@@ -129,7 +129,7 @@ class TestConfigFileCheck:
         assert "JSON" in message
 
     def test_config_not_dict(self, checker):
-        """配置文件根节点不是字典"""
+        """配置文件根节点不是字典."""
         config_path = os.path.join(checker.project_root, "config.json")
         with pathlib.Path(config_path).open("w", encoding="utf-8") as f:
             json.dump(["list", "not", "dict"], f)
@@ -153,7 +153,7 @@ class TestConfigFileCheck:
 
 @pytest.mark.unit
 class TestDiskSpaceCheck:
-    """磁盘空间检查测试"""
+    """磁盘空间检查测试."""
 
     def test_check_disk_space(self, checker):
         passed, message = checker.check_disk_space(min_mb=1)
@@ -162,7 +162,7 @@ class TestDiskSpaceCheck:
         assert "MB" in message or "磁盘" in message
 
     def test_check_disk_space_insufficient(self, checker):
-        """要求极大空间时检查应失败"""
+        """要求极大空间时检查应失败."""
         passed, message = checker.check_disk_space(min_mb=10 * 1024 * 1024)  # 10TB
         # 10TB 基本不可能有，应返回失败
         assert passed is False
@@ -176,7 +176,7 @@ class TestDiskSpaceCheck:
 
 @pytest.mark.unit
 class TestDirectoryCheck:
-    """目录检查测试"""
+    """目录检查测试."""
 
     def test_no_directories(self, checker):
         passed, message = checker.check_directories()
@@ -196,7 +196,7 @@ class TestDirectoryCheck:
 
 @pytest.mark.unit
 class TestGPUCheck:
-    """GPU 设备检查测试"""
+    """GPU 设备检查测试."""
 
     def test_check_gpu_availability(self, checker):
         passed, message = checker.check_gpu_availability()
@@ -205,7 +205,7 @@ class TestGPUCheck:
         assert len(message) > 5  # 应有有意义的描述信息
 
     def test_check_gpu_pyopencl_not_installed(self, checker):
-        """模拟 pyopencl 未安装"""
+        """模拟 pyopencl 未安装."""
         with patch("builtins.__import__") as mock_import:
             original_import = __import__
 
@@ -227,7 +227,7 @@ class TestGPUCheck:
 
 @pytest.mark.unit
 class TestMonitoringCheck:
-    """监控系统检查测试"""
+    """监控系统检查测试."""
 
     def test_check_monitoring_system(self, checker):
         passed, message = checker.check_monitoring_system()
@@ -243,7 +243,7 @@ class TestMonitoringCheck:
 
 @pytest.mark.unit
 class TestNetworkCheck:
-    """网络检查测试"""
+    """网络检查测试."""
 
     @patch("socket.socket")
     def test_check_network_connectivity(self, mock_socket_class, checker):
@@ -271,7 +271,7 @@ class TestNetworkCheck:
 
 @pytest.mark.unit
 class TestPortCheck:
-    """端口检查测试"""
+    """端口检查测试."""
 
     @patch("socket.socket")
     def test_check_port_availability_all_free(self, mock_socket_class, checker):
@@ -292,7 +292,7 @@ class TestPortCheck:
 
 @pytest.mark.unit
 class TestProcessCheck:
-    """进程状态检查测试"""
+    """进程状态检查测试."""
 
     def test_check_process_status(self, checker):
         passed, message = checker.check_process_status()
@@ -308,7 +308,7 @@ class TestProcessCheck:
 
 @pytest.mark.unit
 class TestHealthCheckerIntegration:
-    """综合测试"""
+    """综合测试."""
 
     def test_run_all_checks(self, checker):
         results = checker.run_all_checks(include_gpu=False, include_network=False)
@@ -350,11 +350,11 @@ class TestHealthCheckerIntegration:
 
 @pytest.mark.unit
 class TestHealthCheckCLI:
-    """CLI 入口测试"""
+    """CLI 入口测试."""
 
     @patch("sys.argv", ["health_check.py"])
     def test_main_basic(self, checker):
-        """基本运行不应崩溃"""
+        """基本运行不应崩溃."""
         with patch("src.utils.health_check.HealthChecker") as mock_cls:
             mock_instance = Mock()
             mock_instance.run_all_checks.return_value = {"test": (True, "all good")}

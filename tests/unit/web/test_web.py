@@ -1,4 +1,4 @@
-"""Tests for src/web package - Web 监控仪表板
+"""Tests for src/web package - Web 监控仪表板.
 
 Covers:
 - __init__.py: version, re-exports

@@ -1,4 +1,4 @@
-"""GPU 型号检测和配置适配。
+"""GPU 型号检测和配置适配。.
 
 为 AsyncGPUExecutor 提供 GPU 型号检测、配置选择和 work_group 调优。
 
@@ -7,14 +7,15 @@ v5.2.3: 从 async_executor.py 提取为独立模块（代码质量优化 #M1）�
 
 from contextlib import suppress
 
-from ...utils import get_configured_logger
+from src.utils import get_configured_logger
+
 from ..executor_types import GPU_SPECIFIC_CONFIG
 
 logger = get_configured_logger("AsyncGPUExecutor.GPUInfo")
 
 
 class _GPUInfoMixin:
-    """GPU 型号检测和配置适配 Mixin。
+    """GPU 型号检测和配置适配 Mixin。.
 
     为 AsyncGPUExecutor 提供 GPU 型号检测、配置选择和 work_group 调优。
     使用 Mixin 模式以避免对 self 属性的侵入性访问。
@@ -25,7 +26,7 @@ class _GPUInfoMixin:
     """
 
     def _detect_gpu_model(self) -> str:
-        """检测GPU型号并返回配置标识。
+        """检测GPU型号并返回配置标识。.
 
         通过设备信息中的 name 字段检测具体 GPU 型号，
         返回与 GPU_SPECIFIC_CONFIG 中对应的配置键名。
@@ -75,7 +76,7 @@ class _GPUInfoMixin:
         return "default"
 
     def _get_gpu_config(self, gpu_model: str) -> dict:
-        """获取GPU特定配置。
+        """获取GPU特定配置。.
 
         Args:
             gpu_model: GPU型号标识
@@ -87,7 +88,7 @@ class _GPUInfoMixin:
         return GPU_SPECIFIC_CONFIG.get(gpu_model, GPU_SPECIFIC_CONFIG.get("default", {}))
 
     def _detect_optimal_work_group_size(self, gpu_config: dict) -> int:
-        """检测最优 work_group_size。
+        """检测最优 work_group_size。.
 
         从 GPU 设备信息和型号配置推断最优 work_group_size。
         显式设置 work_group_size 可避免 OpenCL 运行时自动选择次优值。

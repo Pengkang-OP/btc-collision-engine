@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GPU异步执行器 (AsyncGPUExecutor) 单元测试
+"""GPU异步执行器 (AsyncGPUExecutor) 单元测试.
 
 覆盖：
 - _seed_bytes_to_u32_be_array 种子转换
@@ -26,7 +26,7 @@ import pytest
 
 @pytest.mark.unit
 class TestSeedBytesToU32:
-    """种子字节转换测试"""
+    """种子字节转换测试."""
 
     def test_valid_32_byte_seed(self):
         from src.gpu.async_executor import _seed_bytes_to_u32_be_array
@@ -85,7 +85,7 @@ class TestSeedBytesToU32:
 
 @pytest.mark.unit
 class TestGpuSpecificConfig:
-    """GPU配置完整性测试"""
+    """GPU配置完整性测试."""
 
     REQUIRED_KEYS = ["queue_depth", "initial_batch_size", "max_batch_size", "memory_factor"]
 
@@ -150,7 +150,7 @@ class TestGpuSpecificConfig:
 
 @pytest.mark.unit
 class TestPendingBatch:
-    """待处理批次数据类测试"""
+    """待处理批次数据类测试."""
 
     def test_create_pending_batch(self):
         from src.gpu.async_executor import _PendingBatch
@@ -180,7 +180,7 @@ class TestPendingBatch:
 
 @pytest.mark.unit
 class TestAsyncExecutorInit:
-    """异步执行器初始化测试"""
+    """异步执行器初始化测试."""
 
     def test_init_defaults(self):
         from src.gpu.async_executor import AsyncGPUExecutor
@@ -241,7 +241,7 @@ class TestAsyncExecutorInit:
 
 @pytest.mark.unit
 class TestDetectGpuModel:
-    """GPU型号检测测试"""
+    """GPU型号检测测试."""
 
     def _make_executor_with_name(self, name):
         from src.gpu.async_executor import AsyncGPUExecutor
@@ -310,7 +310,7 @@ class TestDetectGpuModel:
 
 @pytest.mark.unit
 class TestGetGpuConfig:
-    """GPU配置获取测试"""
+    """GPU配置获取测试."""
 
     def test_get_known_model_config(self):
         from src.gpu.async_executor import GPU_SPECIFIC_CONFIG, AsyncGPUExecutor
@@ -338,7 +338,7 @@ class TestGetGpuConfig:
 
 @pytest.mark.unit
 class TestIsBufferValid:
-    """缓冲区有效性检查测试"""
+    """缓冲区有效性检查测试."""
 
     def test_valid_buffers(self):
         from src.gpu.async_executor import AsyncGPUExecutor
@@ -388,7 +388,7 @@ class TestIsBufferValid:
 
 @pytest.mark.unit
 class TestPrefetchNextBatch:
-    """预取下一批次测试"""
+    """预取下一批次测试."""
 
     def test_prefetch_disabled(self):
         from src.gpu.async_executor import AsyncGPUExecutor
@@ -440,7 +440,7 @@ class TestPrefetchNextBatch:
 
 @pytest.mark.unit
 class TestFlushPending:
-    """结果回收测试"""
+    """结果回收测试."""
 
     def test_flush_empty_queue(self):
         from src.gpu.async_executor import AsyncGPUExecutor
@@ -492,7 +492,7 @@ class TestFlushPending:
 
 @pytest.mark.unit
 class TestGetStats:
-    """统计信息测试"""
+    """统计信息测试."""
 
     def test_get_stats_initial(self):
         from src.gpu.async_executor import AsyncGPUExecutor
@@ -565,7 +565,7 @@ class TestGetStats:
 
 @pytest.mark.unit
 class TestCleanup:
-    """资源清理测试"""
+    """资源清理测试."""
 
     def test_cleanup_no_buffers(self):
         from src.gpu.async_executor import AsyncGPUExecutor

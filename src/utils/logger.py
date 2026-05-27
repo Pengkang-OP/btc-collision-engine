@@ -28,7 +28,7 @@ from typing import Any
 
 
 def _make_rotating_handler(filename: str, max_bytes: int, backup_count: int) -> RotatingFileHandler:
-    """工厂函数：Windows 返回 SafeRotatingFileHandler，其他平台返回原生 RotatingFileHandler"""
+    """工厂函数：Windows 返回 SafeRotatingFileHandler，其他平台返回原生 RotatingFileHandler."""
     if platform.system() == "Windows":
         # 延迟导入避免循环依赖（logging_config 也导入 logger）
         with suppress(ImportError):
@@ -44,7 +44,7 @@ def _make_rotating_handler(filename: str, max_bytes: int, backup_count: int) -> 
 
 
 class SafeStreamHandler(logging.StreamHandler):
-    """Windows GBK 编码安全控制台处理器
+    """Windows GBK 编码安全控制台处理器.
 
     在 Windows CMD/PowerShell（默认 GBK 编码）环境下，中文日志消息会乱码。
     本处理器在 emit 时尝试将无法编码的字符替换为 '?'，同时在真实终端下尝试强制 UTF-8 输出。
@@ -74,7 +74,7 @@ class SafeStreamHandler(logging.StreamHandler):
 
 
 class ColoredFormatter(logging.Formatter):
-    """带颜色的日志格式化器"""
+    """带颜色的日志格式化器."""
 
     # ANSI 颜色代码
     COLORS = {
@@ -101,7 +101,7 @@ class ColoredFormatter(logging.Formatter):
 
 
 class PerformanceMonitor:
-    """性能监控上下文管理器"""
+    """性能监控上下文管理器."""
 
     def __init__(self, logger: logging.Logger, operation: str, level: str = "DEBUG") -> None:
         self.logger = logger
@@ -134,7 +134,7 @@ class PerformanceMonitor:
 
     @property
     def elapsed_ms(self) -> float:
-        """获取已耗时的毫秒数"""
+        """获取已耗时的毫秒数."""
         if self.start_time is None:
             raise RuntimeError("EnhancedPerformanceMonitor 未正确进入上下文: start_time 为 None")
         if self.end_time is None:
@@ -143,7 +143,7 @@ class PerformanceMonitor:
 
 
 class SampledLogger:
-    """采样日志记录器（用于高频操作）
+    """采样日志记录器（用于高频操作）.
 
     通过降低日志记录频率来减少I/O开销，适用于：
     - 循环内部的状态报告
@@ -166,9 +166,10 @@ class SampledLogger:
         max_per_second: float = 0.0,
     ) -> None:
         """参数:
+
         logger: 底层日志记录器
         sample_rate: 采样率（每N条记录1条，计数采样）
-        max_per_second: 每秒最多记录N条（时间限频），0表示不限制
+        max_per_second: 每秒最多记录N条（时间限频），0表示不限制.
         """
         self.logger = logger
         self.sample_rate = sample_rate
@@ -182,7 +183,7 @@ class SampledLogger:
         self._time_window_count = 0
 
     def _should_log_by_time(self) -> bool:
-        """检查是否满足时间限频条件（调用前须持有 _lock）
+        """检查是否满足时间限频条件（调用前须持有 _lock）.
 
         返回 True 表示允许记录，同时更新时间窗口计数器。
         若 max_per_second <= 0 则始终返回 True（不限频）。
@@ -250,7 +251,7 @@ def setup_logger(
     backup_count: int = 5,
     use_color: bool = True,
 ) -> logging.Logger:
-    """设置日志记录器（增强版）
+    """设置日志记录器（增强版）.
 
     Args:
         name: 日志记录器名称
@@ -301,7 +302,7 @@ def setup_logger(
 
 
 def get_logger(name: str) -> logging.Logger:
-    """获取已配置的日志记录器，如果不存在则创建默认记录器。
+    """获取已配置的日志记录器，如果不存在则创建默认记录器。.
 
     Args:
         name: 日志记录器名称
@@ -319,7 +320,7 @@ def get_logger(name: str) -> logging.Logger:
 
 
 def get_sampled_logger(name: str, sample_rate: int = 100, max_per_second: float = 0.0) -> SampledLogger:
-    """获取采样日志记录器（用于高频操作）
+    """获取采样日志记录器（用于高频操作）.
 
     注意: 使用此函数前应先调用 init_logging() 配置全局日志系统，
     以避免重复配置 handlers 导致日志重复输出。
@@ -340,7 +341,7 @@ def get_sampled_logger(name: str, sample_rate: int = 100, max_per_second: float 
 
 
 def log_performance(logger: logging.Logger, operation: str, level: str = "DEBUG") -> Callable:
-    """性能监控装饰器工厂
+    """性能监控装饰器工厂.
 
     使用示例:
         @log_performance(logger, "expensive_operation")
@@ -360,7 +361,7 @@ def log_performance(logger: logging.Logger, operation: str, level: str = "DEBUG"
 
 
 class AsyncLogger:
-    """异步日志记录器（v4.2.1新增）
+    """异步日志记录器（v4.2.1新增）.
 
     使用后台线程异步写入日志，避免I/O阻塞计算线程。
     适用于高频日志记录场景（如GPU碰撞引擎的批量处理）。
@@ -386,7 +387,8 @@ class AsyncLogger:
 
     def __init__(self, max_queue_size: int = 10000) -> None:
         """参数:
-        max_queue_size: 队列最大长度，超出时丢弃最旧日志
+
+        max_queue_size: 队列最大长度，超出时丢弃最旧日志.
         """
         self._queue: queue.Queue = queue.Queue(maxsize=max_queue_size)
         self._handler: logging.Handler | None = None
@@ -404,7 +406,7 @@ class AsyncLogger:
         _logger.info("AsyncLogger 已初始化: max_queue_size=%s", max_queue_size)
 
     def set_handler(self, handler: logging.Handler) -> None:
-        """Q1修复: 设置底层日志处理器（替代直接访问私有属性）
+        """Q1修复: 设置底层日志处理器（替代直接访问私有属性）.
 
         Args:
             handler: 底层日志处理器
@@ -413,7 +415,7 @@ class AsyncLogger:
         self._handler = handler
 
     def _write_loop(self) -> None:
-        """后台写入循环"""
+        """后台写入循环."""
         while not self._stop_event.is_set():
             try:
                 record = self._queue.get(timeout=0.5)
@@ -445,7 +447,7 @@ class AsyncLogger:
                 self._queue.task_done()
 
     def emit(self, record: logging.LogRecord) -> None:
-        """异步发出日志记录"""
+        """异步发出日志记录."""
         try:
             self._queue.put_nowait(record)
         except queue.Full:
@@ -462,7 +464,7 @@ class AsyncLogger:
                 sys.stderr.write(f"⚠️ 异步日志队列已满，已丢弃 {dropped:,} 条记录\n")
 
     def close(self) -> None:
-        """关闭异步日志器，等待队列清空"""
+        """关闭异步日志器，等待队列清空."""
         _logger = logging.getLogger(__name__)
         _logger.info(
             f"AsyncLogger 正在关闭: queue_size={self._queue.qsize()}, "
@@ -489,7 +491,7 @@ class AsyncLogger:
         _logger.info("AsyncLogger 已关闭")
 
     def get_stats(self) -> dict:
-        """获取异步日志统计信息"""
+        """获取异步日志统计信息."""
         return {
             "queue_size": self._queue.qsize(),
             "dropped_count": self._dropped_count,
@@ -498,7 +500,7 @@ class AsyncLogger:
 
 
 class AsyncFileHandler(logging.Handler):
-    """异步文件日志处理器
+    """异步文件日志处理器.
 
     包装AsyncLogger，提供标准的logging.Handler接口。
 
@@ -509,9 +511,10 @@ class AsyncFileHandler(logging.Handler):
 
     def __init__(self, filename: str, max_bytes: int = 0, backup_count: int = 0) -> None:
         """参数:
+
         filename: 日志文件路径
         max_bytes: 单个文件最大字节数（0表示不轮转）
-        backup_count: 保留的备份文件数
+        backup_count: 保留的备份文件数.
         """
         super().__init__()
 
@@ -526,14 +529,14 @@ class AsyncFileHandler(logging.Handler):
         self._async_logger.set_handler(self._handler)
 
     def emit(self, record: logging.LogRecord) -> None:
-        """异步发出日志记录"""
+        """异步发出日志记录."""
         self._async_logger.emit(record)
 
     def close(self) -> None:
-        """关闭处理器"""
+        """关闭处理器."""
         self._async_logger.close()
         super().close()
 
     def get_stats(self) -> dict:
-        """获取统计信息"""
+        """获取统计信息."""
         return self._async_logger.get_stats()

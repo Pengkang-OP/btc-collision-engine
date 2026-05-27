@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""日志系统兼容性测试
+"""日志系统兼容性测试.
 
 验证日志系统在不同版本的平台环境和浏览器中的表现，确保日志功能在各种场景下均能正常工作。
 """
@@ -18,10 +18,10 @@ from src.utils.logging_config import get_configured_logger, init_logging
 
 
 class TestLogCompatibility:
-    """日志系统兼容性测试"""
+    """日志系统兼容性测试."""
 
     def setup_method(self, method):
-        """设置测试环境"""
+        """设置测试环境."""
         # 创建临时目录用于测试日志文件
         self.temp_dir = tempfile.mkdtemp()
         self.log_file = os.path.join(self.temp_dir, "test.log")
@@ -46,7 +46,7 @@ class TestLogCompatibility:
         pathlib.Path(os.path.dirname(self.log_file)).mkdir(exist_ok=True, parents=True)
 
     def teardown_method(self, method):
-        """清理测试环境"""
+        """清理测试环境."""
         # 关闭所有日志处理器
         import logging
 
@@ -79,7 +79,7 @@ class TestLogCompatibility:
             print(f"清理测试环境时出错: {e}")
 
     def test_platform_compatibility(self):
-        """测试平台兼容性"""
+        """测试平台兼容性."""
         platform_info = get_platform_info()
         assert isinstance(platform_info, dict)
         assert "name" in platform_info
@@ -99,7 +99,7 @@ class TestLogCompatibility:
         assert adapter.ensure_directory(self.temp_dir)
 
     def test_logger_initialization(self):
-        """测试日志记录器初始化"""
+        """测试日志记录器初始化."""
         # 测试基本日志记录器
         logger = get_logger("test.logger")
         assert isinstance(logger, logging.Logger)
@@ -113,7 +113,7 @@ class TestLogCompatibility:
         assert sampled_logger is not None
 
     def test_log_levels(self):
-        """测试日志级别"""
+        """测试日志级别."""
         # 直接使用setup_logger创建带有文件处理器的日志记录器
         logger = setup_logger("test.levels", level="DEBUG", log_file=self.log_file)
 
@@ -132,7 +132,7 @@ class TestLogCompatibility:
         assert pathlib.Path(self.log_file).exists()
 
     def test_log_collection_rules(self):
-        """测试日志收集规则"""
+        """测试日志收集规则."""
         # 直接创建一个新的规则管理器实例，确保使用正确的配置文件路径
         from src.utils.log_collection_rules import LogCollectionRule, LogCollectionRuleManager
 
@@ -153,7 +153,7 @@ class TestLogCompatibility:
         assert pathlib.Path(self.rule_config).exists()
 
     def test_log_dependencies(self):
-        """测试日志依赖"""
+        """测试日志依赖."""
         dependencies = check_dependencies()
         assert isinstance(dependencies, dict)
 
@@ -162,7 +162,7 @@ class TestLogCompatibility:
         assert dependencies.get("json", True)
 
     def test_log_performance_optimizer(self):
-        """测试日志性能优化器"""
+        """测试日志性能优化器."""
         optimizer = get_performance_optimizer()
         assert optimizer is not None
 
@@ -176,7 +176,7 @@ class TestLogCompatibility:
         assert isinstance(stats, dict)
 
     def test_log_file_operations(self):
-        """测试日志文件操作"""
+        """测试日志文件操作."""
         # 直接使用setup_logger创建带有文件处理器的日志记录器
         logger = setup_logger("test.file", level="INFO", log_file=self.log_file)
         test_message = "Test log message"
@@ -193,7 +193,7 @@ class TestLogCompatibility:
             assert test_message in content
 
     def test_async_logging(self):
-        """测试异步日志"""
+        """测试异步日志."""
         from src.utils.logger import AsyncFileHandler
 
         # 创建异步文件处理器
@@ -212,7 +212,7 @@ class TestLogCompatibility:
         assert pathlib.Path(self.log_file + ".async").exists()
 
     def test_sampled_logging(self):
-        """测试采样日志"""
+        """测试采样日志."""
         # 先创建基础日志记录器
         base_logger = setup_logger("test.sampled", level="INFO", log_file=self.log_file)
         # 创建采样日志记录器
@@ -230,7 +230,7 @@ class TestLogCompatibility:
         assert pathlib.Path(self.log_file).exists()
 
     def test_platform_specific_handlers(self):
-        """测试平台特定的处理器"""
+        """测试平台特定的处理器."""
         from src.utils.log_platform_adapter import get_platform_specific_handlers
 
         handlers = get_platform_specific_handlers()
@@ -239,7 +239,7 @@ class TestLogCompatibility:
         assert "console_handler" in handlers
 
     def test_error_handling(self):
-        """测试错误处理"""
+        """测试错误处理."""
         # 直接使用setup_logger创建带有文件处理器的日志记录器
         logger = setup_logger("test.error", level="ERROR", log_file=self.log_file)
 
@@ -257,7 +257,7 @@ class TestLogCompatibility:
         assert pathlib.Path(self.log_file).exists()
 
     def test_log_formatting(self):
-        """测试日志格式化"""
+        """测试日志格式化."""
         # 测试自定义格式
         custom_logger = setup_logger(
             "test.format",

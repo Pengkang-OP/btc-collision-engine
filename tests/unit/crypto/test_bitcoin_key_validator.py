@@ -1,4 +1,4 @@
-"""比特币密钥验证器完整测试 — bitcoin_key_validator.py (487行零覆盖)"""
+"""比特币密钥验证器完整测试 — bitcoin_key_validator.py (487行零覆盖)."""
 
 import unittest
 
@@ -16,7 +16,7 @@ from src.core.wif import WIF
 
 
 class TestWIFEncoder:
-    """WIF 编解码测试 (WIFEncoder 已迁移为 src.core.wif.WIF)"""
+    """WIF 编解码测试 (WIFEncoder 已迁移为 src.core.wif.WIF)."""
 
     def setup_method(self, method):
         self.pk = (1).to_bytes(32, "big")
@@ -100,7 +100,7 @@ class TestWIFEncoder:
 
 
 class TestKeyValidationConstants:
-    """KeyValidationConstants 常量测试"""
+    """KeyValidationConstants 常量测试."""
 
     def test_constants_defined(self):
         assert KeyValidationConstants.PRIVATE_KEY_LENGTH == 32
@@ -116,7 +116,7 @@ class TestKeyValidationConstants:
 
 
 class TestAddressType:
-    """AddressType 枚举测试"""
+    """AddressType 枚举测试."""
 
     def test_enum_values(self):
         assert AddressType.P2PKH.value == "p2pkh"
@@ -133,7 +133,7 @@ class TestAddressType:
 
 
 class TestKeyValidationResult:
-    """KeyValidationResult 测试"""
+    """KeyValidationResult 测试."""
 
     def test_initial_state(self):
         r = KeyValidationResult()
@@ -183,7 +183,7 @@ class TestKeyValidationResult:
 
 
 class TestBitcoinKeyValidatorBasic:
-    """BitcoinKeyValidator 基础测试"""
+    """BitcoinKeyValidator 基础测试."""
 
     def setup_method(self, method):
         self.validator = BitcoinKeyValidator(secure_mode=False)
@@ -234,7 +234,7 @@ class TestBitcoinKeyValidatorBasic:
 
 
 class TestBitcoinKeyValidatorPubKey:
-    """BitcoinKeyValidator 公钥生成测试"""
+    """BitcoinKeyValidator 公钥生成测试."""
 
     def setup_method(self, method):
         self.validator = BitcoinKeyValidator(secure_mode=False)
@@ -296,7 +296,7 @@ class TestBitcoinKeyValidatorPubKey:
 
 
 class TestBitcoinKeyValidatorAddress:
-    """BitcoinKeyValidator 地址生成与验证测试"""
+    """BitcoinKeyValidator 地址生成与验证测试."""
 
     def setup_method(self, method):
         self.validator = BitcoinKeyValidator(secure_mode=False)
@@ -366,7 +366,7 @@ class TestBitcoinKeyValidatorAddress:
 
 
 class TestBitcoinKeyValidatorWIF:
-    """BitcoinKeyValidator WIF 编解码测试"""
+    """BitcoinKeyValidator WIF 编解码测试."""
 
     def setup_method(self, method):
         self.validator = BitcoinKeyValidator(secure_mode=False)
@@ -425,7 +425,7 @@ class TestBitcoinKeyValidatorWIF:
 
 
 class TestBitcoinKeyValidatorMatch:
-    """BitcoinKeyValidator 地址匹配测试"""
+    """BitcoinKeyValidator 地址匹配测试."""
 
     def setup_method(self, method):
         self.validator = BitcoinKeyValidator(secure_mode=False)
@@ -470,7 +470,7 @@ class TestBitcoinKeyValidatorMatch:
 
 
 class TestBitcoinKeyValidatorFullChain:
-    """完整验证链测试"""
+    """完整验证链测试."""
 
     def setup_method(self, method):
         self.pk = (42).to_bytes(32, "big")
@@ -531,7 +531,7 @@ class TestBitcoinKeyValidatorFullChain:
 
 
 class TestValidateBitcoinKeyChain:
-    """便捷函数 validate_bitcoin_key_chain 测试"""
+    """便捷函数 validate_bitcoin_key_chain 测试."""
 
     def test_convenience_function(self):
         pk = (42).to_bytes(32, "big")
@@ -553,7 +553,7 @@ class TestValidateBitcoinKeyChain:
 
 
 class TestBitcoinKeyValidatorP2SH:
-    """P2SH 地址生成静态方法测试"""
+    """P2SH 地址生成静态方法测试."""
 
     def test_generate_p2sh_address(self):
         pk = (42).to_bytes(32, "big")
@@ -582,7 +582,7 @@ class TestBitcoinKeyValidatorP2SH:
 
 
 class TestBitcoinKeyValidatorBech32:
-    """Bech32 地址生成测试"""
+    """Bech32 地址生成测试."""
 
     def test_generate_bech32_address(self):
         pk = (42).to_bytes(32, "big")
@@ -615,7 +615,7 @@ class TestBitcoinKeyValidatorBech32:
 
 
 class TestBitcoinKeyValidatorUncompressedWIF:
-    """非压缩WIF前缀检查"""
+    """非压缩WIF前缀检查."""
 
     def setup_method(self, method):
         self.validator = BitcoinKeyValidator(secure_mode=False)

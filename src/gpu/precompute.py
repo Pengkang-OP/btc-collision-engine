@@ -1,4 +1,4 @@
-"""secp256k1 预计算表生成模块
+"""secp256k1 预计算表生成模块.
 
 为 GPU 内核提供基点倍数表 [1G, 2G, ..., 31G]。
 表布局：31 个点，每点 16 个 uint32（x:8 + y:8），共 496 个 uint32。
@@ -28,7 +28,7 @@ _EXPECTED_10G_Y = 0x893ABA425419BC27A3B6C7E693A24C696F794C2ED877A1593CBEE53B0373
 
 
 def _point_add(p1: tuple[int, int] | None, p2: tuple[int, int] | None) -> tuple[int, int] | None:
-    """仿射坐标下的椭圆曲线点加法 (secp256k1)
+    """仿射坐标下的椭圆曲线点加法 (secp256k1).
 
     Args:
         p1: 第一个点 (x1, y1)，使用 None 表示无穷远点
@@ -65,7 +65,7 @@ def _point_add(p1: tuple[int, int] | None, p2: tuple[int, int] | None) -> tuple[
 
 
 def _int_to_uint32_le(value: int) -> np.ndarray:
-    """将 256-bit 整数转为 8 个 uint32 小端序数组
+    """将 256-bit 整数转为 8 个 uint32 小端序数组.
 
     小端序：limb[0] 为最低有效 32 位，limb[7] 为最高有效 32 位。
     与 OpenCL 内核中 uint256_t.d[0]=LSB 保持一致。
@@ -85,7 +85,7 @@ def _int_to_uint32_le(value: int) -> np.ndarray:
 
 
 def generate_secp256k1_precomp_table() -> np.ndarray:
-    """计算 secp256k1 基点 G 的倍数表 [1G, 2G, 3G, ..., 31G]
+    """计算 secp256k1 基点 G 的倍数表 [1G, 2G, 3G, ..., 31G].
 
     Returns:
         np.ndarray: dtype=np.uint32, shape=(496,)
@@ -118,9 +118,9 @@ def generate_secp256k1_precomp_table() -> np.ndarray:
     # P3-9: 验证本地常量与 secp256k1 参考实现一致
     from ..core.secp256k1 import Secp256k1 as _Secp256k1
 
-    _ref_p = _Secp256k1.P  # noqa: N806
-    _ref_gx = _Secp256k1.Gx  # noqa: N806
-    _ref_gy = _Secp256k1.Gy  # noqa: N806
+    _ref_p = _Secp256k1.P
+    _ref_gx = _Secp256k1.Gx
+    _ref_gy = _Secp256k1.Gy
     if _ref_p != _P:
         raise RuntimeError(f"p 参数不一致: precompute.P=0x{_P:X}, secp256k1.P=0x{_ref_p:X}")
     if _ref_gx != _GX:
@@ -187,7 +187,7 @@ _cached_table: np.ndarray | None = None
 
 
 def get_precomp_table() -> np.ndarray:
-    """获取预计算表（带缓存，模块首次调用时计算一次）
+    """获取预计算表（带缓存，模块首次调用时计算一次）.
 
     Returns:
         np.ndarray: dtype=np.uint32, shape=(496,)，同 generate_secp256k1_precomp_table()

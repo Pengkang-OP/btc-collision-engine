@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""P1-2模块解耦核心功能验证脚本"""
+"""P1-2模块解耦核心功能验证脚本."""
 
 import logging
 import sys
@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
 
 
 def test_all():
-    """运行所有验证测试"""
+    """运行所有验证测试."""
     print("=" * 60)
     print("P1-2模块解耦核心功能验证")
     print("=" * 60)

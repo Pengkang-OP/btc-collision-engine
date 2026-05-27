@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""智能配置推荐系统
+"""智能配置推荐系统.
 
 根据项目特征自动推荐最合适的评分配置
 
@@ -21,7 +21,7 @@ from retry_helper import read_with_retry  # noqa: E402
 
 
 def analyze_project(docs_dir: str) -> dict:
-    """分析项目特征
+    """分析项目特征.
 
     Returns:
         项目特征字典
@@ -84,7 +84,7 @@ def analyze_project(docs_dir: str) -> dict:
 
 
 def recommend_config(features: dict) -> tuple[str, dict]:
-    """根据项目特征推荐配置
+    """根据项目特征推荐配置.
 
     Args:
         features: 项目特征字典
@@ -136,7 +136,7 @@ def recommend_config(features: dict) -> tuple[str, dict]:
             "toc_bonus": 0.2,
             "version_bonus": 0.2,
         }
-    elif score <= -1:
+    if score <= -1:
         return "宽松模式", {
             "error_weight": 1.0,
             "code_block_weight": 0.1,
@@ -148,22 +148,21 @@ def recommend_config(features: dict) -> tuple[str, dict]:
             "toc_bonus": 0.4,
             "version_bonus": 0.3,
         }
-    else:
-        return "平衡模式", {
-            "error_weight": 1.5,
-            "code_block_weight": 0.2,
-            "code_block_max": 2.0,
-            "link_weight": 0.8,
-            "link_max": 3.0,
-            "other_warning_weight": 0.3,
-            "info_weight": 0.1,
-            "toc_bonus": 0.3,
-            "version_bonus": 0.2,
-        }
+    return "平衡模式", {
+        "error_weight": 1.5,
+        "code_block_weight": 0.2,
+        "code_block_max": 2.0,
+        "link_weight": 0.8,
+        "link_max": 3.0,
+        "other_warning_weight": 0.3,
+        "info_weight": 0.1,
+        "toc_bonus": 0.3,
+        "version_bonus": 0.2,
+    }
 
 
 def print_recommendation(features: dict, config_name: str, config: dict):
-    """打印推荐结果"""
+    """打印推荐结果."""
     print(f"\n{'=' * 60}")
     print("🤖 智能配置推荐系统")
     print(f"{'=' * 60}")
@@ -185,14 +184,14 @@ def print_recommendation(features: dict, config_name: str, config: dict):
         print("\n💡 使用方式:")
         print(
             f"  python tools/check_document_quality.py "
-            f"--config tools/scoring_{config_name[:4].lower()}.json"
+            f"--config tools/scoring_{config_name[:4].lower()}.json",
         )
 
     print(f"\n{'=' * 60}")
 
 
 def main():
-    """主函数"""
+    """主函数."""
     import argparse
 
     parser = argparse.ArgumentParser(description="智能配置推荐系统")

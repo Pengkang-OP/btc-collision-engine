@@ -1,4 +1,4 @@
-"""数据清理模块测试
+"""数据清理模块测试.
 
 测试当前简化版 DataCleaner API:
 - 初始化
@@ -15,10 +15,10 @@ from src.utils.data_cleanup import DataCleaner
 
 
 class TestDataCleanerBasic:
-    """DataCleaner 基础功能测试"""
+    """DataCleaner 基础功能测试."""
 
     def setup_method(self):
-        """创建临时目录结构"""
+        """创建临时目录结构."""
         self.test_dir = tempfile.mkdtemp()
         self._orig_cwd = os.getcwd()
         os.chdir(self.test_dir)
@@ -28,7 +28,7 @@ class TestDataCleanerBasic:
             Path(d).mkdir(exist_ok=True, parents=True)
 
     def teardown_method(self):
-        """清理并恢复工作目录"""
+        """清理并恢复工作目录."""
         os.chdir(self._orig_cwd)
         import shutil
 
@@ -36,7 +36,7 @@ class TestDataCleanerBasic:
             shutil.rmtree(self.test_dir)
 
     def test_initialization_default(self):
-        """默认初始化 — retention_days=7, 默认 target_dirs 解析为项目根路径"""
+        """默认初始化 — retention_days=7, 默认 target_dirs 解析为项目根路径."""
         cleaner = DataCleaner()
         assert cleaner._retention_seconds == 7 * 86400
         assert len(cleaner._target_dirs) == 3
@@ -47,17 +47,17 @@ class TestDataCleanerBasic:
         assert names == ["data_logs", "logs", "temp"]
 
     def test_initialization_custom(self):
-        """自定义参数初始化"""
+        """自定义参数初始化."""
         cleaner = DataCleaner(retention_days=3, target_dirs=["custom_dir"])
         assert cleaner._retention_seconds == 3 * 86400
         assert cleaner._target_dirs == [Path("custom_dir")]
 
 
 class TestDataCleanerCleanAll:
-    """clean_all() 测试"""
+    """clean_all() 测试."""
 
     def setup_method(self):
-        """创建临时目录和文件"""
+        """创建临时目录和文件."""
         self.test_dir = tempfile.mkdtemp()
         self._orig_cwd = os.getcwd()
         os.chdir(self.test_dir)
@@ -66,7 +66,7 @@ class TestDataCleanerCleanAll:
             Path(d).mkdir(exist_ok=True, parents=True)
 
     def teardown_method(self):
-        """清理"""
+        """清理."""
         os.chdir(self._orig_cwd)
         import shutil
 
@@ -74,7 +74,7 @@ class TestDataCleanerCleanAll:
             shutil.rmtree(self.test_dir)
 
     def test_clean_all_empty_dirs(self):
-        """空目录 — 返回 0"""
+        """空目录 — 返回 0."""
         cleaner = DataCleaner(
             retention_days=7,
             target_dirs=[str(Path(d)) for d in ["data_logs", "logs", "temp"]],
@@ -83,7 +83,7 @@ class TestDataCleanerCleanAll:
         assert result == 0
 
     def test_clean_all_old_files(self):
-        """清理过期文件"""
+        """清理过期文件."""
         dirs = [str(Path(d)) for d in ["data_logs", "logs", "temp"]]
         cleaner = DataCleaner(retention_days=1, target_dirs=dirs)
 
@@ -98,7 +98,7 @@ class TestDataCleanerCleanAll:
         assert not old_file.exists()
 
     def test_clean_all_new_files_preserved(self):
-        """新文件不被清理"""
+        """新文件不被清理."""
         dirs = [str(Path(d)) for d in ["data_logs", "logs", "temp"]]
         cleaner = DataCleaner(retention_days=7, target_dirs=dirs)
 
@@ -111,7 +111,7 @@ class TestDataCleanerCleanAll:
         assert new_file.exists()
 
     def test_clean_all_multiple_dirs(self):
-        """清理多个目录中的过期文件"""
+        """清理多个目录中的过期文件."""
         dirs = [str(Path(d)) for d in ["data_logs", "logs", "temp"]]
         cleaner = DataCleaner(retention_days=1, target_dirs=dirs)
 
@@ -125,7 +125,7 @@ class TestDataCleanerCleanAll:
         assert result == 3
 
     def test_clean_all_mixed_old_new(self):
-        """混合新旧文件 — 只清理过期的"""
+        """混合新旧文件 — 只清理过期的."""
         dirs = [str(Path(d)) for d in ["data_logs", "logs", "temp"]]
         cleaner = DataCleaner(retention_days=1, target_dirs=dirs)
 
@@ -147,7 +147,7 @@ class TestDataCleanerCleanAll:
 
 
 class TestDataCleanerEdgeCases:
-    """边界情况测试"""
+    """边界情况测试."""
 
     def setup_method(self):
         self.test_dir = tempfile.mkdtemp()
@@ -162,13 +162,13 @@ class TestDataCleanerEdgeCases:
             shutil.rmtree(self.test_dir)
 
     def test_nonexistent_target_dirs(self):
-        """目标目录不存在时不报错"""
+        """目标目录不存在时不报错."""
         cleaner = DataCleaner(target_dirs=["nonexistent_dir"])
         result = cleaner.clean_all()
         assert result == 0
 
     def test_zero_retention_days(self):
-        """retention_days=0 — 所有文件都被清理"""
+        """retention_days=0 — 所有文件都被清理."""
         Path("data_logs").mkdir(exist_ok=True)
         f = Path("data_logs") / "file.tmp"
         f.write_text("data")
@@ -183,7 +183,7 @@ class TestDataCleanerEdgeCases:
         assert result == 1
 
     def test_custom_target_dirs(self):
-        """自定义 target_dirs"""
+        """自定义 target_dirs."""
         Path("custom").mkdir(exist_ok=True)
         old_file = Path("custom") / "old.tmp"
         old_file.write_text("old")

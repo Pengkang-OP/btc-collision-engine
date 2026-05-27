@@ -1,27 +1,17 @@
-#!/usr/bin/env python3
-"""Collision detection constants and configuration defaults."""
+"""Collision constants — re-exported from src.constants for backward compatibility."""
 
-# Search mode constants
-RANDOM_SEARCH = "random"
-SEQUENTIAL_SEARCH = "sequential"
-HYBRID_SEARCH = "hybrid"
-
-# Address type constants
-P2PKH = "p2pkh"
-P2SH = "p2sh"
-BECH32 = "bech32"
-TAPROOT = "taproot"
-
-# Default configuration
-DEFAULT_BATCH_SIZE = 100000
-DEFAULT_MAX_WORKERS = 4
-DEFAULT_CHECKPOINT_INTERVAL = 60
-MATCH_BATCH_FLUSH_THRESHOLD = 10
-
-# Performance targets
-TARGET_THROUGHPUT_KEYS_PER_SEC = 1000
-MIN_THROUGHPUT_WARNING = 100
-
-# Timeouts
-WORKER_JOIN_TIMEOUT = 30
-GPU_KERNEL_TIMEOUT = 300
+from src.constants import (  # noqa: F401, E402
+    BECH32,
+    DEFAULT_CHECKPOINT_INTERVAL,
+    GPU_KERNEL_TIMEOUT,
+    HYBRID_SEARCH,
+    MATCH_BATCH_FLUSH_THRESHOLD,
+    MIN_THROUGHPUT_WARNING,
+    P2PKH,
+    P2SH,
+    RANDOM_SEARCH,
+    SEQUENTIAL_SEARCH,
+    TAPROOT,
+    TARGET_THROUGHPUT_KEYS_PER_SEC,
+    WORKER_JOIN_TIMEOUT,
+)

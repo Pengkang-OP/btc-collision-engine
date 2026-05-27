@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""使用真实目标地址的集成测试"""
+"""使用真实目标地址的集成测试."""
 
 import os
 import pathlib
@@ -14,10 +14,10 @@ from src.collision.key_collision_engine import KeyCollisionEngine
 
 
 class TestRealAddressIntegration:
-    """使用真实地址的集成测试类"""
+    """使用真实地址的集成测试类."""
 
     def setup_method(self):
-        """设置测试环境"""
+        """设置测试环境."""
         # 加载真实目标地址
         self.address_file = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
@@ -26,7 +26,7 @@ class TestRealAddressIntegration:
         self.targets = self._load_addresses()
 
     def _load_addresses(self):
-        """从文件加载目标地址"""
+        """从文件加载目标地址."""
         addresses = set()
         with pathlib.Path(self.address_file).open() as f:
             for line in f:
@@ -36,7 +36,7 @@ class TestRealAddressIntegration:
         return addresses
 
     def test_load_real_addresses(self):
-        """测试加载真实地址文件"""
+        """测试加载真实地址文件."""
         assert len(self.targets) == 38, f"应该加载38个地址，实际加载{len(self.targets)}个"
         # 验证几个已知地址
         assert "12ib7dApVFvg82TXKycWBNpN8kFyiAN1dr" in self.targets
@@ -44,7 +44,7 @@ class TestRealAddressIntegration:
         assert "12369JpcbysoEu1C8ahdCEmokMNMAGibAw" in self.targets
 
     def test_engine_initialization_with_real_addresses(self):
-        """测试使用真实地址初始化引擎"""
+        """测试使用真实地址初始化引擎."""
         engine = KeyCollisionEngine(
             targets=self.targets,
             max_workers=2,
@@ -57,7 +57,7 @@ class TestRealAddressIntegration:
 
     @pytest.mark.flaky(reruns=2, reruns_delay=1)
     def test_short_duration_random_search(self):
-        """短时间随机搜索测试（不期望找到匹配）"""
+        """短时间随机搜索测试（不期望找到匹配）."""
         # 优化：添加flaky标记，自动重试2次，减少竞态条件导致的假阴性失败
         engine = KeyCollisionEngine(
             targets=self.targets,
@@ -82,7 +82,7 @@ class TestRealAddressIntegration:
         print(f"\n[OK] 检查了 {stats.total_checked} 个私钥，速度: {stats.speed:.0f} 次/秒")
 
     def test_target_validation(self):
-        """测试目标地址验证"""
+        """测试目标地址验证."""
         # 所有地址应该是有效的P2PKH地址（以1开头）
         for addr in self.targets:
             assert addr.startswith("1"), f"地址 {addr} 不是有效的P2PKH地址"
@@ -90,7 +90,7 @@ class TestRealAddressIntegration:
 
     @pytest.mark.flaky(reruns=2, reruns_delay=1)  # 允许重试2次
     def test_engine_with_subset_addresses(self):
-        """测试使用地址子集"""
+        """测试使用地址子集."""
         # 只使用前5个地址
         subset = list(self.targets)[:5]
         engine = KeyCollisionEngine(
@@ -109,7 +109,7 @@ class TestRealAddressIntegration:
 
     @pytest.mark.flaky(reruns=2, reruns_delay=1)  # 允许重试2次
     def test_multiple_workers_with_real_addresses(self):
-        """测试多工作线程处理真实地址"""
+        """测试多工作线程处理真实地址."""
         # 优化：添加flaky标记，自动重试2次
         engine = KeyCollisionEngine(
             targets=self.targets,
@@ -129,7 +129,7 @@ class TestRealAddressIntegration:
 
     @pytest.mark.flaky(reruns=2, reruns_delay=1)
     def test_engine_stats_with_real_targets(self):
-        """测试使用真实目标时的统计信息"""
+        """测试使用真实目标时的统计信息."""
         # 优化：添加flaky标记，自动重试2次（失败率60% -> 预计<10%）
         engine = KeyCollisionEngine(
             targets=self.targets,
@@ -161,14 +161,14 @@ class TestRealAddressIntegration:
         print(f"\n[OK] 统计信息验证通过: 总检查数={stats.total_checked}")
 
     def test_address_uniqueness(self):
-        """测试地址唯一性"""
+        """测试地址唯一性."""
         # 确保没有重复地址
         assert len(self.targets) == len(set(self.targets)), "地址列表中存在重复"
         print(f"\n[OK] 验证了 {len(self.targets)} 个地址都是唯一的")
 
     @pytest.mark.flaky(reruns=2, reruns_delay=1)
     def test_engine_stop_restart(self):
-        """测试引擎停止和重启"""
+        """测试引擎停止和重启."""
         # 优化：添加flaky标记，自动重试2次（失败率30% -> 预计<5%）
         engine = KeyCollisionEngine(
             targets=self.targets,

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""测试: 目标地址包含多格式时的处理逻辑"""
+"""测试: 目标地址包含多格式时的处理逻辑."""
 
 from src.collision.targets.format_aware_manager import FormatAwareTargetManager
 from src.core.multi_format_generator import AddressFormat, MultiFormatAddressGenerator

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""BTC Collision Engine - Release Build Script
+r"""BTC Collision Engine - Release Build Script
 Packages the project into a distributable release at the output directory.
 
 Usage:
@@ -1042,7 +1042,7 @@ def copy_entry_files(root: Path, out: Path) -> None:
 
 
 def copy_batch_scripts(root: Path, out: Path) -> None:
-    """复制所有 .bat 脚本到输出目录"""
+    """复制所有 .bat 脚本到输出目录."""
     bat_files = [
         "diagnostic.bat",
         "generate_report.bat",
@@ -1203,7 +1203,7 @@ def generate_start_sh(out: Path) -> None:
 
 
 def generate_start_bat(out: Path) -> None:
-    """复制源目录的 start.bat（带交互式菜单）"""
+    """复制源目录的 start.bat（带交互式菜单）."""
     src = PROJECT_ROOT / "start.bat"
     if src.exists():
         # 直接复制源文件，保留所有功能
@@ -1272,7 +1272,7 @@ def print_summary(out: Path) -> None:
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description=f"BTC Collision Engine v{VERSION} - Release Build Script"
+        description=f"BTC Collision Engine v{VERSION} - Release Build Script",
     )
     _ = parser.add_argument(
         "--output-dir",

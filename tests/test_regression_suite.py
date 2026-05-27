@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""回归测试套件 (Regression Test Suite)
+"""回归测试套件 (Regression Test Suite).
 
 集中验证历史修复问题不会回退，确保已知 Bug 不会再次出现。
 
@@ -24,10 +24,10 @@ import pytest
 
 @pytest.mark.regression
 class TestP0SecurityRegression:
-    """P0 安全修复回归测试"""
+    """P0 安全修复回归测试."""
 
     def test_sensitive_data_not_leaked_in_logs(self):
-        """确保私钥不会泄露到日志中"""
+        """确保私钥不会泄露到日志中."""
         from src.log_engine.log_processor import SensitiveDataFilter
 
         sf = SensitiveDataFilter()
@@ -42,7 +42,7 @@ class TestP0SecurityRegression:
         assert "***REDACTED***" in redacted
 
     def test_address_not_exposed_in_unfiltered_logs(self):
-        """确保地址在过滤时不会被日志泄露"""
+        """确保地址在过滤时不会被日志泄露."""
         from src.log_engine.log_processor import SensitiveDataFilter
 
         sf = SensitiveDataFilter()  # noqa: F841
@@ -54,7 +54,7 @@ class TestP0SecurityRegression:
         assert "[P2PKH_ADDRESS]" in result
 
     def test_event_bus_null_safety(self):
-        """None 事件和 None event_type 应被安全处理"""
+        """None 事件和 None event_type 应被安全处理."""
         from src.collision.event_bus import EventBus, reset_event_bus
         from src.collision.events import CollisionEvent
 
@@ -80,10 +80,10 @@ class TestP0SecurityRegression:
 
 @pytest.mark.regression
 class TestP1DataIntegrityRegression:
-    """P1 数据完整性回归测试"""
+    """P1 数据完整性回归测试."""
 
     def test_collision_stats_thread_safety(self):
-        """CollisionStats 线程安全快照不被并发修改破坏"""
+        """CollisionStats 线程安全快照不被并发修改破坏."""
         import threading
 
         from src.collision.collision_stats import CollisionStats
@@ -116,7 +116,7 @@ class TestP1DataIntegrityRegression:
             assert snap.speed >= 0
 
     def test_event_bus_handler_exception_isolation(self):
-        """一个 handler 异常不影响其他 handler"""
+        """一个 handler 异常不影响其他 handler."""
         from src.collision.event_bus import EventBus, reset_event_bus
         from src.collision.events import EngineStartEvent, EventType
 
@@ -142,7 +142,7 @@ class TestP1DataIntegrityRegression:
         bus.stop()
 
     def test_log_collector_queue_full_no_crash(self):
-        """队列满时不应崩溃"""
+        """队列满时不应崩溃."""
         from src.log_engine.events import LogEventType
         from src.log_engine.log_collector import LogCollector
 
@@ -159,10 +159,10 @@ class TestP1DataIntegrityRegression:
 
 @pytest.mark.regression
 class TestP2BoundaryRegression:
-    """P2 边界条件回归测试"""
+    """P2 边界条件回归测试."""
 
     def test_empty_data_handling(self):
-        """空数据处理"""
+        """空数据处理."""
         from src.log_engine.events import LogEvent, LogEventType
         from src.log_engine.log_processor import LogProcessor, SensitiveDataFilter
 
@@ -177,14 +177,14 @@ class TestP2BoundaryRegression:
         assert sf.filter(event_empty) is True
 
     def test_base58_empty_string(self):
-        """Base58 空字符串编解码"""
+        """Base58 空字符串编解码."""
         from src.core.base58 import Base58
 
         result = Base58.decode("")
         assert result == b""
 
     def test_log_storage_empty_queries(self):
-        """空存储查询返回空"""
+        """空存储查询返回空."""
         from src.log_engine.log_storage import LogStorage
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -195,7 +195,7 @@ class TestP2BoundaryRegression:
             assert s.get_stats()["total_count"] == 0
 
     def test_event_bus_clear_then_publish(self):
-        """清空后重新发布"""
+        """清空后重新发布."""
         from src.collision.event_bus import EventBus, reset_event_bus
         from src.collision.events import EngineStartEvent, EventType
 
@@ -218,10 +218,10 @@ class TestP2BoundaryRegression:
 
 @pytest.mark.regression
 class TestP3APICompatibility:
-    """P3 API兼容性回归测试"""
+    """P3 API兼容性回归测试."""
 
     def test_event_bus_context_manager(self):
-        """验证上下文管理器 API 正常工作"""
+        """验证上下文管理器 API 正常工作."""
         from src.collision.event_bus import EventBus, reset_event_bus
         from src.collision.events import EngineStartEvent, EventType
 
@@ -234,7 +234,7 @@ class TestP3APICompatibility:
             handler.assert_called_once()
 
     def test_collision_stats_reset(self):
-        """CollisionStats.reset() API 兼容性"""
+        """CollisionStats.reset() API 兼容性."""
         from src.collision.collision_stats import CollisionStats
 
         stats = CollisionStats()
@@ -248,7 +248,7 @@ class TestP3APICompatibility:
         assert stats.gpu_errors == 0
 
     def test_collision_stats_error_tracking(self):
-        """错误追踪 API 兼容性"""
+        """错误追踪 API 兼容性."""
         from src.collision.collision_stats import CollisionStats
 
         stats = CollisionStats()
@@ -273,10 +273,10 @@ class TestP3APICompatibility:
 
 @pytest.mark.regression
 class TestSecurityRegression:
-    """安全性回归测试"""
+    """安全性回归测试."""
 
     def test_private_key_not_in_event_metadata(self):
-        """EngineMatchEvent 元数据不应包含私钥"""
+        """EngineMatchEvent 元数据不应包含私钥."""
         from src.collision.events import EngineMatchEvent
 
         event = EngineMatchEvent(
@@ -289,7 +289,7 @@ class TestSecurityRegression:
         assert "wif" not in event.metadata
 
     def test_sensitive_filter_covers_all_address_types(self):
-        """敏感数据过滤器覆盖所有地址类型"""
+        """敏感数据过滤器覆盖所有地址类型."""
         from src.log_engine.log_processor import SensitiveDataFilter
 
         patterns = SensitiveDataFilter.SENSITIVE_PATTERNS

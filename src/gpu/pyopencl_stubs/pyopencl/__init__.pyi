@@ -217,5 +217,3 @@ class LocalMemory:
 
 class Error(Exception):
     """Base pyopencl error."""
-
-    ...

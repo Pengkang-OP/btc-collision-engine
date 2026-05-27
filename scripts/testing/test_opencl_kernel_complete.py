@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """OpenCL内核完整验证测试
-测试GPU内核的所有关键功能
+测试GPU内核的所有关键功能.
 """
 
 import os
@@ -14,7 +14,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 
 def test_kernel_compilation():
-    """测试1: 内核编译"""
+    """测试1: 内核编译."""
     print("\n" + "=" * 70)
     print("测试1: OpenCL内核编译")
     print("=" * 70)
@@ -68,7 +68,7 @@ def test_kernel_compilation():
 
 
 def test_verify_arithmetic():
-    """测试2: 验证算术内核（2*G计算）"""
+    """测试2: 验证算术内核（2*G计算）."""
     print("\n" + "=" * 70)
     print("测试2: 验证算术内核 (2*G计算)")
     print("=" * 70)
@@ -103,7 +103,7 @@ def test_verify_arithmetic():
 
         # 转换uint32数组为hex字符串（小端序）
         def uint256_to_hex(arr):
-            """将8个uint32（小端序）转换为64位hex字符串"""
+            """将8个uint32（小端序）转换为64位hex字符串."""
             hex_str = ""
             for i in range(7, -1, -1):
                 hex_str += f"{arr[i]:08x}"
@@ -123,12 +123,11 @@ def test_verify_arithmetic():
         if x_hex == expected_x and y_hex == expected_y:
             print("✓ 算术验证通过 - 2*G计算正确")
             return True
-        else:
-            print("⚠️  算术验证结果不匹配")
-            print(f"  预期X: 0x{expected_x}")
-            print(f"  预期Y: 0x{expected_y}")
-            # 注意：这不一定是错误，可能是字节序问题
-            return True  # 仍然返回True，因为内核执行成功
+        print("⚠️  算术验证结果不匹配")
+        print(f"  预期X: 0x{expected_x}")
+        print(f"  预期Y: 0x{expected_y}")
+        # 注意：这不一定是错误，可能是字节序问题
+        return True  # 仍然返回True，因为内核执行成功
 
     except Exception as e:
         print(f"❌ 算术验证失败: {e}")
@@ -139,7 +138,7 @@ def test_verify_arithmetic():
 
 
 def test_debug_hash():
-    """测试3: 调试哈希内核"""
+    """测试3: 调试哈希内核."""
     print("\n" + "=" * 70)
     print("测试3: 调试哈希内核 (k=1)")
     print("=" * 70)
@@ -172,7 +171,7 @@ def test_debug_hash():
         # 执行内核（k=1）
         debug_kernel = program.debug_hash
         debug_kernel(
-            queue, (1,), None, pubkey_buf, sha256_buf, hash160_buf, np.uint32(1), qx_buf, qy_buf
+            queue, (1,), None, pubkey_buf, sha256_buf, hash160_buf, np.uint32(1), qx_buf, qy_buf,
         )
         queue.finish()
 
@@ -193,9 +192,8 @@ def test_debug_hash():
         if pubkey_out[0] in [0x02, 0x03]:
             print(f"✓ 公钥格式正确 (首字节: 0x{pubkey_out[0]:02x})")
             return True
-        else:
-            print(f"⚠️  公钥格式异常 (首字节: 0x{pubkey_out[0]:02x})")
-            return True  # 仍然返回True
+        print(f"⚠️  公钥格式异常 (首字节: 0x{pubkey_out[0]:02x})")
+        return True  # 仍然返回True
 
     except Exception as e:
         print(f"❌ 哈希验证失败: {e}")
@@ -206,7 +204,7 @@ def test_debug_hash():
 
 
 def test_batch_check_structure():
-    """测试4: 批量检查内核结构验证"""
+    """测试4: 批量检查内核结构验证."""
     print("\n" + "=" * 70)
     print("测试4: 批量检查内核结构验证")
     print("=" * 70)
@@ -256,7 +254,7 @@ def test_batch_check_structure():
 
 
 def test_intel_arc_workaround():
-    """测试5: Intel Arc workaround验证"""
+    """测试5: Intel Arc workaround验证."""
     print("\n" + "=" * 70)
     print("测试5: Intel Arc workaround验证")
     print("=" * 70)
@@ -286,7 +284,7 @@ def test_intel_arc_workaround():
 
 
 def main():
-    """运行所有测试"""
+    """运行所有测试."""
     print("=" * 70)
     print("OpenCL内核完整验证测试套件")
     print("=" * 70)
@@ -327,10 +325,9 @@ def main():
         print("🎉 所有测试通过！GPU内核完全可用！")
         print("=" * 70)
         return 0
-    else:
-        print(f"⚠️  {total - passed} 个测试未通过")
-        print("=" * 70)
-        return 1
+    print(f"⚠️  {total - passed} 个测试未通过")
+    print("=" * 70)
+    return 1
 
 
 if __name__ == "__main__":

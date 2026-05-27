@@ -5,14 +5,33 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
-## [Unreleased]
+## [5.0.1] — 2026-05-28
 
 ### Changed
 
-- **全项目版本号统一至 v5.0.0**:
-  - 50+ 文档文件版本头/脚从 v4.2.2/v4.5.1 更新至 v5.0.0
-  - README.md 内联版本引用从 v3.4.0/v3.5.0/v4.3.0/v4.4.0 统一至 v5.0.0
-  - `src/__init__.py` 模块文档字符串扩展为多行描述
+- **全项目代码规范统一** (28 项治理闭环):
+  - P0: 删除 `.flake8`、`[tool.black]`、`[tool.flake8]`、`[tool.basedpyright]` 死配置段 (P0-3/4/11/12)
+  - P0: `.env.example` 从 11 未用变量精简至 7 实际变量 (P0-5)
+  - P0: `requirements-dev.txt` 替换 `black`/`flake8` → `ruff` (P0-6)
+  - P0: PYOPENCL_AVAILABLE 从 3 处分散定义收敛至 `src/gpu/_availability.py` 单源 (P0-9)
+  - P0: 死代码消除 — 移除 `GPU_CONFIG_MANAGER_AVAILABLE`、`ASYNC_LOG_AVAILABLE` 及相关死分支 (P0-1/2)
+  - P0: 依赖版本上限补全 — `cachetools<7.0`、`numpy<2.0`、`pyopencl<2026.0`、`psutil<8.0` 等 (P0-7/8)
+  - P1: 18 库文件 shebang 清理 (P1-19)、src/ 全编码声明清理 (P1-20)
+  - P1: ruff 自动修复 I/Q + format 全部通过 (P1-15/16)
+  - P1: 32 文件 `from ...` 三层点相对导入 → `from src.` 绝对导入 (P1-18)
+  - P1: requirements-*.txt → pyproject.toml 依赖版本同步 (P1-17)
+  - P1: 常量 4→1 整合至 `src/constants.py` (P1-22)
+  - P1: `src/` 全 public API 补充 Google-style docstring (P1-14)
+  - P2: `.pre-commit-config.yaml` 创建 (P2-25)、`.gitignore` 336→50 行 (P2-26)
+  - P2: `ROADMAP.md` 创建 (P2-27)、pytest.ini 移除 DeprecationWarning 抑制 (P2-28)
+
+### Fixed
+
+- **PERF-2: Intel Arc profiling 序列化修复** — `device.py` 创建 OOO 队列时移除 `PROFILING_ENABLE`，修复内核串行导致的尖刺/齿轮状 GPU 利用率 (Intel compute-runtime FAQ 确认)
+- **CLI 启动修复** — `commands.py` `--quick-start` 向导的 `python -m src.cli` → `python key_collision_cli.py`，修复 argparse 误收 `src.cli` 为未知参数
+- **测试修复** — `test_gpu_engine_initialization_without_gpu` 和 `test_constructor_pyopencl_unavailable` 补 `engine.PYOPENCL_AVAILABLE` 本地副本 patch
+
+## [5.0.0] — 2026-05
   - 根目录 `GPU_CONFIG_GUIDE.md`、`deploy/QUICK_START.md` 添加 v5.0.0 版本标记
 - **ROADMAP #15 启用 pydocstyle Google convention 强制校验**:
   - 在 `[tool.ruff.lint]` select 中添加 `"D"` 规则
@@ -54,8 +73,6 @@
   - 引入 Mixin 模式（`_GPUInfoMixin`, `_ResultCollectorMixin`, `_SyncFallbackMixin`）降低类复杂度
   - 提取 `with_sync_fallback` 装饰器至 `_error_utils.py`，消除重复的 `_run_batch_sync_fallback` 实现
   - 所有模块向后兼容导出，外部导入路径不变
-
-### Fixed
 
 - **`src/gpu/async_executor/_sync.py`**: 新增 `_log_cleanup()` 静态方法，在 cleanup 路径中抑制 `OSError`/`RuntimeError`/`AttributeError`，解决 Python 解释器关闭时日志轮转"句柄无效"崩溃
 - **`src/gpu/async_executor/_executor.py`**: 新增 `__del__` 方法安全调用 `cleanup()`，并包裹 `suppress(Exception)` 防止析构时异常冒泡

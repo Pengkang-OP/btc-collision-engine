@@ -1,334 +1,99 @@
-# ===========================================
-# btc-collision-engine .gitignore
-# ===========================================
-
-# --- Python 缓存 ---
+# === Python / Virtual envs ===
 __pycache__/
 *.py[cod]
-*$py.class
 *.pyo
+*.so
+*.egg
+*.egg-info/
 .pytest_cache/
 .benchmarks/
 .mypy_cache/
 .ruff_cache/
 .hypothesis/
-
-# --- 测试覆盖率 ---
-.coverage
-.coverage.*
-coverage.xml
-htmlcov/
-*.cover
-
-# --- 虚拟环境 ---
-.venv/
 venv/
+.venv/
 ENV/
 env/
 
-# --- IDE 配置 ---
-.qoder/
-.qodo/
-.history/
-.trae/
+# === IDE / Editor / OS ===
 .vscode/
 .idea/
+.qoder/
+.qodo/
+.trae/
+.codebuddy/
+.history/
 *.swp
 *.swo
 *~
-
-# --- 日志文件 ---
-logs/*.log
-logs/*.log.*
-data_logs/
-src/data_logs/
-monitoring_data/
-test_results.log
-
-# --- 运行时数据 ---
-test_matches/
-test_data/
-test_results/
-/checkpoint.json
-/targets.lock
-/targets.txt
-/start_error.log
-/.flake8.archived
-
-# --- 根目录临时测试输出文件（仅匹配根目录）---
-/btc_addresses_only.txt
-/dm_output.txt
-/final_verify.txt
-/_*.txt
-/_*.py
-/_*.json
-/result*.txt
-/test_output*.txt
-/test_result*.txt
-/test_acceptance.txt
-/test_af.txt
-/test_cmd*.txt
-/test_fix*.txt
-/test_stdout.txt
-/test_stderr.txt
-/test_targets.txt
-/fail_detail.txt
-/failed_tests.txt
-/skip_analysis.txt
-/report.txt
-/p2.txt
-/p3.txt
-/p4.txt
-/ver8.txt
-/wif_verify.txt
-/int_test*.txt
-/full_test_result.txt
-/unit_full*_result.txt
-/final_test_output.txt
-/full_acceptance_result.txt
-/all_cli_tests.txt
-/template_result.txt
-/validate_result.txt
-/cleanup_result.txt
-/acceptance_result*.txt
-/acceptance_test_result.txt
-/phase*_test_result.txt
-/phase*_v*_result.txt
-/round*_verify.txt
-/cli_result*.txt
-/cli_file_result.txt
-/config_result.txt
-/crypto_test_result.txt
-/crypto_verify_result.txt
-/examples_result.txt
-/gpu_lifecycle_result.txt
-/gpu_result.txt
-/health_result.txt
-/lifecycle_gpu_result.txt
-/mypy_result.txt
-/platform_result.txt
-/range_result.txt
-/recommend_result.txt
-
-# --- 根目录一次性测试脚本 ---
-/run_all_tests*.py
-/run_final*.py
-/run_final_clean.py
-/run_acceptance.py
-/run_failed_check.py
-/run_single.py
-/run_one.py
-/run_specific_tests.py
-/run_start_tests.py
-/run_no_timeout.py
-/final_run.py
-/find_start_tests.py
-/analyze_skips.py
-/check_results.py
-/show_failures.py
-
-# --- 根目录临时 JSON ---
-/AI_AUTO_SORT_*.json
-/intel_arc_*.json
-
-# --- 根目录临时 Python 脚本 ---
-/comprehensive_test.py
-/quick_verify_*.py
-/verify_*.py
-/analysis.py
-/calc_cost.py
-/check_i18n.py
-/check_package_stats.py
-/diagnose_shell_environment.ps1
-/generate_report.py
-/generate_report.bat
-/log_monitor.py
-/log_monitor.bat
-/monitor.ps1
-/monitor_cli_status.py
-/optimize_gpu_performance.py
-/production_acceptance_test.py
-/run_engine_no_log.py
-/run_engine_with_log.py
-/run_with_log.py
-/start_collision_full.py
-/test_address_case_impact.py
-/test_checkpoint.py
-/view_monitor_data.py
-
-# --- 根目录临时报告 ---
-/_batch_cov.py
-/_run_cov.py
-/black_diff_*.txt
-/review_diff_*.txt
-/cov_report.txt
-/screenshot_*.png
-/dual_launcher.py
-/pr_page_top.png
-/start_dual.bat
-
-# --- 配置文件备份 ---
-/config.backup.*.json
-
-# --- 性能分析 ---
-*.prof
-*.pstats
-
-# --- 安全扫描 ---
-bandit-result*.json
-bandit-report*.json
-/_ruff_*.txt
-
-# --- 临时文件 ---
-*.tmp
-*.bak
-*.cache
-*.pid
-tmp/
-
-# --- 测试运行时残留 ---
-tests/logs/
-
-# --- 临时 HTML（非 docs 目录）---
-*.html
-!docs/**/*.html
-
-# --- 根目录 AI/工具自动生成的报告（保留标准项目文件）---
-/*_REPORT*.md
-/*_ANALYSIS*.md
-/*_REVIEW*.md
-/*_SUMMARY*.md
-/*_PLAN*.md
-/*_INDEX*.md
-!README.md
-!CHANGELOG.md
-!CONTRIBUTING.md
-
-# --- 根目录临时结果和日志文件 ---
-/ci_test_result.txt
-/device_lint.txt
-/final_check.txt
-/test_stats_output.txt
-/tests_report.txt
-/tests_errors.txt
-/out.log
-
-# --- flake8 检查输出 ---
-/flake8_*.txt
-
-# --- 根目录临时批处理脚本 ---
-/run_ci_tests.bat
-/run_collision_stats_test.bat
-
-# --- 根目录纯数字命名文件 ---
-/[0-9][0-9][0-9]
-
-# --- Shell 集成错误产物（Trae CN IDE）---
-utput*
-s -File*
-criptsshell*
-
-# --- 根目录数字命名文件 ---
-/[0-9]
-/(3
-
-# --- .codebuddy/ (IDE内部文件，已迁移至 .qoder/) ---
-.codebuddy/
-
-# --- 基准测试临时数据 ---
-benchmarks/results/benchmark_*.json
-benchmarks/benchmark_*.json
-benchmarks/btc_addresses_sorted.txt
-
-# --- scripts 运行时残留 ---
-scripts/venv/
-scripts/data_logs/
-scripts/kernels/
-scripts/logs/
-scripts/monitoring_data/
-
-# --- data_logs 运行时报告 ---
-data_logs/report_daily_*.json
-data_logs/current_data.json
-data_logs/history_data.json
-data_logs/performance.log
-
-# --- 编译器产物 ---
-*.so
-*.egg
-*.egg-info/
-dist/
-build/
-
-# --- Jupyter ---
-.ipynb_checkpoints/
-
-# --- 运行环境 ---
-.env
-.env.local
-
-# --- 运行时配置（config.example.json 作为模板被跟踪）---
-/config.json
-/src/collision/collision_checkpoint.json
-
-# --- 操作系统 ---
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# --- Python 版本 ---
+# === Build / Dist / Env / Runtime ===
+dist/
+build/
+.env
+.env.local
 .python-version
+logs/
+data_logs/
+monitoring_data/
+checkpoint.json
+config.json
+.coverage*
+htmlcov/
+*.tmp
+*.bak
+*.cache
+*.pid
+*.prof
 
-# --- 清理引擎残留 ---
-.cleanup_quarantine/
-.cleanup_logs/
-
-# --- 中文临时报告（根目录）---
-/业务*.md
-/拓扑*.md
-/目标*.md
-
-# --- 根目录 .bat 临时脚本 ---
-/_test_*.bat
-
-# --- 历史文档归档（一次性审查/修复/测试报告，保留项目文档） ---
-docs/archive/
-docs/audit-reports/
-docs/*_audit_report.md
-docs/*_fixes_report.md
-docs/*_improvement_report.md
-docs/*_review.md
-docs/manual_code_review_*.md
-docs/code_review_*.md
-docs/real_environment_test_report.md
-docs/test_address_matching_flow_report.md
-docs/CRYPTO_BACKEND_*.md
-docs/MULTI_GPU_ISSUES_ANALYSIS.md
-docs/PROJECT_ANALYSIS.md
-docs/PROJECT_CLEANUP_REPORT_*.md
-docs/PROJECT_COMPREHENSIVE_ANALYSIS_*.md
-docs/RELEASE_NOTES_v3.*.md
-docs/TEST_ID_INDEX.md
-docs/TEST_PLAN.md
-docs/TEST_REPORT.md
-
-# --- 根目录临时工具报告 ---
-tools/CODE_REVIEW_UTF8*.md
-tools/UTF8_*.md
-
-# --- 根目录调试文件 ---
-/ci_debug*.txt
-/coverage_check.txt
-/web_test_errors.txt
-/nt
-
-# --- docs 中已跟踪的大文档（建议 git rm --cached 后生效） ---
-docs/PROJECT_COMPREHENSIVE_ANALYSIS_V3.md
-docs/api-reference.md
-docs/topology-diagrams-v4.2.1.md
-docs/intel-arc-gpu-compatibility-research.md
-docs/user-interface.md
-
-# --- benchmarks 运行时数据 ---
-benchmarks/*.json
-benchmarks/*.txt
+# === Temporary / Debug / Report Files ===
+_*.py
+_*.txt
+_*.json
+_*.toml
+debug_*.py
+debug_*.txt
+quick_test_*.py
+check_failures.py
+check_failures2.py
+fix_*.py
+fix_*.txt
+verify_*.py
+flake8_*.txt
+test_kernel_*.txt
+test_output*.txt
+test_nongpu*.txt
+test_scorer*.txt
+test_final_*.txt
+test_pre_existing_*.txt
+ruff_all_check.txt
+full_test_results*.txt
+full_test_summary.txt
+remaining_failures.txt
+web_test_errors.txt
+tests_errors.txt
+report.txt
+device_lint.txt
+fail_list.txt
+final_check.txt
+final_verify.txt
+fixed_gpu_tests.txt
+out.log
+debug_gpu_out.txt
+CI_PROBLEM_ANALYSIS.md
+CLI_BAT_CHECK_REPORT.md
+common.bat
+install.bat
+run_all_modes.bat
+run_ci_tests.bat
+run_collision_stats_test.bat
+run_tests.bat
+start.bat
+start.sh
+nt
+377
+btc_addresses_*.txt
+targets.txt

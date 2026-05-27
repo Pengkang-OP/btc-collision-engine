@@ -1,4 +1,4 @@
-"""性能基准测试 - 用于检测性能回归
+"""性能基准测试 - 用于检测性能回归.
 
 使用pytest-benchmark框架，自动记录性能指标并检测退化。
 运行方式: pytest tests/test_performance_benchmarks.py --benchmark-only
@@ -14,14 +14,14 @@ from src.core.address_generator import P2PKHAddressGenerator
 
 
 class TestPerformanceBenchmarks:
-    """性能基准测试类"""
+    """性能基准测试类."""
 
     def test_private_key_generation_speed(self, benchmark):
-        """基准测试：私钥生成速度"""
+        """基准测试：私钥生成速度."""
         generator = P2PKHAddressGenerator()
 
         def generate_100_keys():
-            """生成100个随机私钥"""
+            """生成100个随机私钥."""
             keys = []
             for _ in range(100):
                 keys.append(generator.generate_private_key())
@@ -36,12 +36,12 @@ class TestPerformanceBenchmarks:
         assert all(len(k) == 32 for k in keys)
 
     def test_address_generation_speed(self, benchmark):
-        """基准测试：地址生成速度"""
+        """基准测试：地址生成速度."""
         generator = P2PKHAddressGenerator()
         test_key = (1).to_bytes(32, "big")
 
         def generate_address():
-            """生成一个地址"""
+            """生成一个地址."""
             return generator.generate_address(test_key)
 
         # 基准测试
@@ -53,10 +53,10 @@ class TestPerformanceBenchmarks:
         assert len(compressed_pub) == 33  # 压缩公钥
 
     def test_deduplication_filter_throughput(self, benchmark):
-        """基准测试：去重过滤器吞吐量"""
+        """基准测试：去重过滤器吞吐量."""
 
         def check_1000_keys():
-            """检查1000个私钥"""
+            """检查1000个私钥."""
             dedup = DeduplicationFilter(max_size=100000, enabled=True)  # 每次创建新实例
             count = 0
             for i in range(1000):
@@ -73,7 +73,7 @@ class TestPerformanceBenchmarks:
         assert count == 1000
 
     def test_engine_single_thread_throughput(self, benchmark):
-        """基准测试：引擎单线程吞吐量
+        """基准测试：引擎单线程吞吐量.
 
         注意：这个测试需要较长时间，默认禁用
         运行方式: pytest tests/test_performance_benchmarks.py -k test_engine_single_thread
@@ -87,7 +87,7 @@ class TestPerformanceBenchmarks:
         )
 
         def run_engine_2_seconds():
-            """运行引擎2秒"""
+            """运行引擎2秒."""
             engine.start(mode="random")
             time.sleep(2)
             engine.stop()
@@ -101,7 +101,7 @@ class TestPerformanceBenchmarks:
         assert total_checked > 10, f"吞吐量过低: {total_checked} 私钥/2秒"
 
     def test_engine_multi_thread_throughput(self, benchmark):
-        """基准测试：引擎多线程吞吐量
+        """基准测试：引擎多线程吞吐量.
 
         注意：这个测试需要较长时间，默认禁用
         运行方式: pytest tests/test_performance_benchmarks.py -k test_engine_multi_thread
@@ -115,7 +115,7 @@ class TestPerformanceBenchmarks:
         )
 
         def run_engine_2_seconds():
-            """运行引擎2秒"""
+            """运行引擎2秒."""
             engine.start(mode="random")
             time.sleep(2)
             engine.stop()
@@ -130,14 +130,14 @@ class TestPerformanceBenchmarks:
 
 
 class TestPerformanceRegression:
-    """性能回归检测
+    """性能回归检测.
 
     这些测试会与历史基准对比，检测性能退化。
     使用 --benchmark-compare 参数启用对比。
     """
 
     def test_address_generation_no_regression(self, benchmark):
-        """检测地址生成性能回归"""
+        """检测地址生成性能回归."""
         generator = P2PKHAddressGenerator()
         test_key = (42).to_bytes(32, "big")
 
@@ -154,7 +154,7 @@ class TestPerformanceRegression:
         # 如果性能退化超过阈值（默认20%），会发出警告
 
     def test_deduplication_no_regression(self, benchmark):
-        """检测去重过滤器性能回归"""
+        """检测去重过滤器性能回归."""
 
         def check_500_keys():
             dedup = DeduplicationFilter(max_size=50000, enabled=True)  # 每次创建新实例
@@ -173,7 +173,7 @@ class TestPerformanceRegression:
 # 性能基准配置
 @pytest.fixture(scope="session")
 def benchmark_config():
-    """基准测试配置"""
+    """基准测试配置."""
     return {
         "min_rounds": 5,
         "max_time": 1.0,

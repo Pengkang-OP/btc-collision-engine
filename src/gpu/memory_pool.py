@@ -1,4 +1,4 @@
-"""GPU内存池优化模块
+"""GPU内存池优化模块.
 
 实现GPU缓冲区复用机制,减少OpenCL内存分配开销。
 
@@ -32,7 +32,7 @@
 import threading
 import time
 from collections import OrderedDict
-from typing import Any, Optional, cast
+from typing import Any, cast
 
 # 导入日志配置
 from ..utils import get_configured_logger
@@ -52,7 +52,7 @@ LOG_DEFAULT_MAX_BYTES = 10 * 1024 * 1024
 
 
 class GPUMemoryPool:
-    """GPU内存池 - 复用OpenCL缓冲区
+    """GPU内存池 - 复用OpenCL缓冲区.
 
     管理GPU缓冲区的分配和释放,优先复用已有缓冲区。
 
@@ -84,23 +84,23 @@ class GPUMemoryPool:
     """
 
     __slots__ = (
+        "_adjustment_interval",
+        "_allocation_count",
+        "_allocation_patterns",
         "_context",
+        "_current_memory",
+        "_enable_dynamic_adjustment",
+        "_last_adjustment_time",
+        "_lock",
+        "_lru_cache",
         "_max_buffers",
         "_max_memory_bytes",
-        "_enable_dynamic_adjustment",
+        "_memory_usage_history",
         "_pool",
-        "_type_pools",
-        "_lock",
+        "_preallocated_sizes",
         "_total_allocated",
         "_total_reused",
-        "_current_memory",
-        "_allocation_count",
-        "_preallocated_sizes",
-        "_lru_cache",
-        "_memory_usage_history",
-        "_allocation_patterns",
-        "_last_adjustment_time",
-        "_adjustment_interval",
+        "_type_pools",
     )
 
     def __init__(
@@ -110,7 +110,7 @@ class GPUMemoryPool:
         max_memory_mb: int = 512,
         enable_dynamic_adjustment: bool = True,
     ) -> None:
-        """初始化GPU内存池
+        """初始化GPU内存池.
 
         Args:
             context: OpenCL上下文
@@ -164,7 +164,7 @@ class GPUMemoryPool:
         )
 
     def allocate(self, size: int, flags: Any | None = None, buffer_type: str = "generic") -> Any:
-        """分配GPU内存(优先复用)
+        """分配GPU内存(优先复用).
 
         Args:
             size: 缓冲区大小(字节)
@@ -241,7 +241,7 @@ class GPUMemoryPool:
             return buf
 
     def release(self, buf: Any, size: int | None = None, buffer_type: str = "generic") -> None:
-        """归还GPU缓冲区到池中
+        """归还GPU缓冲区到池中.
 
         Args:
             buf: OpenCL缓冲区对象
@@ -327,7 +327,7 @@ class GPUMemoryPool:
         flags: Any | None = None,
         buffer_type: str = "generic",
     ) -> None:
-        """预分配常用大小的缓冲区（性能优化v4.2.1）
+        """预分配常用大小的缓冲区（性能优化v4.2.1）.
 
         在初始化阶段预分配常用缓冲区，避免运行时频繁分配。
 
@@ -388,7 +388,7 @@ class GPUMemoryPool:
             logger.info("GPU内存池预分配完成: %s个%s类型缓冲区", allocated, buffer_type)
 
     def _update_lru_access(self, buf_id: int, buf: Any, size: int, buffer_type: str) -> None:
-        """更新缓冲区的 LRU 访问时间（O(1) 操作）
+        """更新缓冲区的 LRU 访问时间（O(1) 操作）.
 
         Args:
             buf_id: 缓冲区对象的 id()
@@ -404,7 +404,7 @@ class GPUMemoryPool:
         self._lru_cache[buf_id] = (buf, size, buffer_type, time.monotonic())
 
     def _remove_lru_from_pool(self, lru_type: str, lru_size: int, lru_id: int) -> None:
-        """从对应池分组中移除指定 ID 的 LRU 缓冲区。"""
+        """从对应池分组中移除指定 ID 的 LRU 缓冲区。."""
         if lru_type != "generic" and lru_type in self._type_pools:
             pool_list: list[Any] = self._type_pools[lru_type].get(lru_size, [])
         else:
@@ -415,7 +415,7 @@ class GPUMemoryPool:
                 break
 
     def _find_lru_candidate(self, min_idle_seconds: float, now: float) -> tuple | None:
-        """在 LRU 缓存中查找符合条件的最久未使用的候选缓冲区
+        """在 LRU 缓存中查找符合条件的最久未使用的候选缓冲区.
 
         Args:
             min_idle_seconds: 最小空闲时间，0 表示不限制
@@ -433,7 +433,7 @@ class GPUMemoryPool:
         return None
 
     def _evict_lru_locked(self, count: int = 1, min_idle_seconds: float = 0) -> int:
-        """淘汰最久未使用的空闲缓冲区（必须在持有 _lock 时调用）
+        """淘汰最久未使用的空闲缓冲区（必须在持有 _lock 时调用）.
 
         使用 OrderedDict 实现 O(1) 的 LRU 淘汰
         """
@@ -475,12 +475,12 @@ class GPUMemoryPool:
         return evicted
 
     def _evict_lru(self) -> None:
-        """淘汰最久未使用的缓冲区（线程安全的外部接口）"""
+        """淘汰最久未使用的缓冲区（线程安全的外部接口）."""
         with self._lock:
             self._evict_lru_locked()
 
     def _adjust_pool_size(self) -> None:
-        """动态调整内存池大小"""
+        """动态调整内存池大小."""
         current_time = time.monotonic()
         if current_time - self._last_adjustment_time < self._adjustment_interval:
             return
@@ -521,14 +521,14 @@ class GPUMemoryPool:
                     logger.debug("最常用的缓冲区大小: %s", top_sizes)
 
     def _record_allocation_pattern(self, size: int) -> None:
-        """记录分配模式"""
+        """记录分配模式."""
         if size in self._allocation_patterns:
             self._allocation_patterns[size] += 1
         else:
             self._allocation_patterns[size] = 1
 
     def _record_memory_usage(self) -> None:
-        """记录内存使用情况"""
+        """记录内存使用情况."""
         self._memory_usage_history.append(
             {
                 "timestamp": time.monotonic(),
@@ -543,7 +543,7 @@ class GPUMemoryPool:
             self._memory_usage_history = self._memory_usage_history[-100:]
 
     def adapt_capacity(self, context: Any | None = None) -> None:
-        """根据GPU显存压力动态调整池容量
+        """根据GPU显存压力动态调整池容量.
 
         通过尝试分配100MB测试缓冲区来检测当前显存是否充足：
         - 成功：显存充足，尝试扩展池容量上限（最多500）
@@ -582,7 +582,7 @@ class GPUMemoryPool:
             self._evict_lru()
 
     def get_pool_stats(self) -> dict:
-        """获取内存池统计信息（含LRU跟踪状态）
+        """获取内存池统计信息（含LRU跟踪状态）.
 
         Returns:
             包含内存池状态的字典
@@ -612,7 +612,7 @@ class GPUMemoryPool:
             }
 
     def get_stats(self) -> dict:
-        """获取内存池统计信息
+        """获取内存池统计信息.
 
         Returns:
             包含统计数据的字典
@@ -642,7 +642,7 @@ class GPUMemoryPool:
             }
 
     def clear(self) -> None:
-        """清空内存池,释放所有缓冲区（尽力而为）"""
+        """清空内存池,释放所有缓冲区（尽力而为）."""
         with self._lock:
             # 清理通用池
             for size, buffers in self._pool.items():
@@ -694,7 +694,7 @@ class GPUMemoryPool:
         contexts: list | None = None,
         total_pool_mb: int = 512,
     ) -> dict[int, "GPUMemoryPool"]:
-        """根据GPU显存按比例创建内存池
+        """根据GPU显存按比例创建内存池.
 
         根据各GPU的显存大小按比例分配内存池大小。
         显存越大的GPU分得更大的内存池，最小保持 64MB。
@@ -744,7 +744,7 @@ class GPUMemoryPool:
 
 
 class GPUBufferAllocator:
-    """[实验性] GPU缓冲区分配器
+    """[实验性] GPU缓冲区分配器.
 
     高级分配器，支持不同类型缓冲区的智能管理。
 
@@ -764,7 +764,7 @@ class GPUBufferAllocator:
     """
 
     def __init__(self, context: Any, max_pool_size: int = 200) -> None:
-        """初始化GPU缓冲区分配器
+        """初始化GPU缓冲区分配器.
 
         Args:
             context: OpenCL上下文
@@ -782,31 +782,31 @@ class GPUBufferAllocator:
         logger.info("GPU缓冲区分配器初始化完成")
 
     def allocate_input(self, size: int) -> Any:
-        """分配输入缓冲区(主机到设备)"""
+        """分配输入缓冲区(主机到设备)."""
         return self._input_pool.allocate(size, buffer_type="input")
 
     def allocate_output(self, size: int) -> Any:
-        """分配输出缓冲区(设备到主机)"""
+        """分配输出缓冲区(设备到主机)."""
         return self._output_pool.allocate(size, buffer_type="output")
 
     def allocate_temp(self, size: int) -> Any:
-        """分配临时缓冲区(内核内部使用)"""
+        """分配临时缓冲区(内核内部使用)."""
         return self._temp_pool.allocate(size, buffer_type="temp")
 
     def release_input(self, buf: Any, size: int | None = None) -> None:
-        """归还输入缓冲区"""
+        """归还输入缓冲区."""
         self._input_pool.release(buf, size, buffer_type="input")
 
     def release_output(self, buf: Any, size: int | None = None) -> None:
-        """归还输出缓冲区"""
+        """归还输出缓冲区."""
         self._output_pool.release(buf, size, buffer_type="output")
 
     def release_temp(self, buf: Any, size: int | None = None) -> None:
-        """归还临时缓冲区"""
+        """归还临时缓冲区."""
         self._temp_pool.release(buf, size, buffer_type="temp")
 
     def get_stats(self) -> dict:
-        """获取分配器统计"""
+        """获取分配器统计."""
         return {
             "input_pool": self._input_pool.get_stats(),
             "output_pool": self._output_pool.get_stats(),
@@ -816,7 +816,7 @@ class GPUBufferAllocator:
 
 # 全局GPU内存池管理器
 class GlobalGPUMemoryManager:
-    """全局GPU内存管理器（单例模式）
+    """全局GPU内存管理器（单例模式）.
 
     管理所有GPU设备的内存池。
 
@@ -837,10 +837,10 @@ class GlobalGPUMemoryManager:
     _pools: dict[int, GPUMemoryPool]
 
     def __new__(cls) -> "GlobalGPUMemoryManager":
-        _inst = cast("Optional[GlobalGPUMemoryManager]", cls._instance)
+        _inst = cast("GlobalGPUMemoryManager | None", cls._instance)
         if _inst is None:
             with cls._creation_lock:
-                _inst = cast("Optional[GlobalGPUMemoryManager]", cls._instance)
+                _inst = cast("GlobalGPUMemoryManager | None", cls._instance)
                 if _inst is None:
                     _inst = super().__new__(cls)
                     # 实例级别：每个实例有独立的锁和状态
@@ -856,7 +856,7 @@ class GlobalGPUMemoryManager:
     DEFAULT_LRU_IDLE_TIMEOUT = 600  # 10分钟
 
     def get_pool(self, context: Any, max_buffers: int = 100) -> GPUMemoryPool:
-        """获取或创建GPU内存池
+        """获取或创建GPU内存池.
 
         Args:
             context: OpenCL上下文
@@ -874,7 +874,7 @@ class GlobalGPUMemoryManager:
             return self._pools[context_id]
 
     def clear_all(self) -> None:
-        """清空所有内存池"""
+        """清空所有内存池."""
         with self._lock:
             for pool in self._pools.values():
                 pool.clear()
@@ -884,7 +884,7 @@ class GlobalGPUMemoryManager:
     # ──────────────────────────── 自动清理 ────────────────────────────
 
     def _auto_cleanup_loop(self, interval: float, lru_timeout: float) -> None:
-        """GPU自动清理后台循环（daemon 线程入口）
+        """GPU自动清理后台循环（daemon 线程入口）.
 
         v4.2.4: 使用共享 run_cleanup_loop_safely() 统一异常处理
         """
@@ -915,7 +915,7 @@ class GlobalGPUMemoryManager:
         interval_seconds: float | None = None,
         lru_idle_timeout: float | None = None,
     ) -> None:
-        """P1-6新增: 启动GPU后台自动清理线程
+        """P1-6新增: 启动GPU后台自动清理线程.
 
         v4.2.4: 使用共享 start_cleanup_thread() 统一管理
 
@@ -937,7 +937,7 @@ class GlobalGPUMemoryManager:
         )
 
     def stop_auto_cleanup(self, timeout: float | None = 5.0) -> None:
-        """P1-6新增: 停止自动清理线程
+        """P1-6新增: 停止自动清理线程.
 
         v4.2.4: 使用共享 stop_cleanup_thread() 统一管理
 
@@ -957,5 +957,5 @@ gpu_memory_manager = GlobalGPUMemoryManager()
 
 
 def get_gpu_memory_pool(context: Any, max_buffers: int = 100) -> GPUMemoryPool:
-    """获取GPU内存池的便捷函数"""
+    """获取GPU内存池的便捷函数."""
     return gpu_memory_manager.get_pool(context, max_buffers)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""配置一致性验证脚本（支持自动修复）
+"""配置一致性验证脚本（支持自动修复）.
 
 检查 CONFIG_SCHEMA 和 DEFAULT_CONFIG 之间的一致性，并支持自动修复缺失字段。
 """
@@ -18,7 +18,7 @@ _SCHEMA_PATH = Path(__file__).resolve().parent.parent.parent / "config.schema.js
 
 
 class ConfigFixer:
-    """配置修复器"""
+    """配置修复器."""
 
     def __init__(self):
         self.schema = self._load_schema()
@@ -27,7 +27,7 @@ class ConfigFixer:
 
     @staticmethod
     def _load_schema() -> dict:
-        """从 config.schema.json 文件加载 Schema。"""
+        """从 config.schema.json 文件加载 Schema。."""
         schema_path = _SCHEMA_PATH
         if not schema_path.exists():
             print(f"ERROR: Schema 文件不存在: {schema_path}", file=sys.stderr)
@@ -36,7 +36,7 @@ class ConfigFixer:
             return json.load(f)
 
     def find_missing_fields(self) -> list[dict[str, str]]:
-        """查找缺失的配置字段"""
+        """查找缺失的配置字段."""
         missing_fields = []
 
         def check_schema(schema_obj: dict, defaults_obj: dict, path: str = "root"):
@@ -60,18 +60,17 @@ class ConfigFixer:
                                 "path": full_path,
                                 "field": field,
                                 "suggested_value": self._get_suggested_value(field_schema),
-                            }
+                            },
                         )
-                    else:
-                        # 递归检查嵌套对象
-                        if "properties" in field_schema:
-                            check_schema(field_schema, defaults_obj[field], full_path)
+                    # 递归检查嵌套对象
+                    elif "properties" in field_schema:
+                        check_schema(field_schema, defaults_obj[field], full_path)
 
         check_schema(self.schema, self.defaults)
         return missing_fields
 
     def _get_suggested_value(self, field_schema: dict) -> Any:
-        """根据Schema获取建议值"""
+        """根据Schema获取建议值."""
         if "default" in field_schema:
             return field_schema["default"]
 
@@ -92,7 +91,7 @@ class ConfigFixer:
         return ""
 
     def apply_fixes(self, dry_run: bool = False) -> bool:
-        """应用配置修复"""
+        """应用配置修复."""
         missing_fields = self.find_missing_fields()
 
         if not missing_fields:
@@ -116,7 +115,7 @@ class ConfigFixer:
         return len(self.fixes_applied) == len(missing_fields)
 
     def _apply_field_fix(self, path: str, value: Any) -> bool:
-        """应用单个字段修复"""
+        """应用单个字段修复."""
         try:
             path_parts = path.split(".")
             current = copy.deepcopy(ConfigManager.DEFAULT_CONFIG)
@@ -135,14 +134,14 @@ class ConfigFixer:
             return False
 
     def get_fixes_summary(self) -> str:
-        """获取修复摘要"""
+        """获取修复摘要."""
         if not self.fixes_applied:
             return "没有应用任何修复"
         return f"已修复 {len(self.fixes_applied)} 个字段: {', '.join(self.fixes_applied)}"
 
 
 def check_config_consistency(auto_fix: bool = False, dry_run: bool = False):
-    """检查配置一致性"""
+    """检查配置一致性."""
     print("=" * 70)
     print("配置一致性检查工具")
     print("=" * 70)
@@ -179,13 +178,12 @@ def check_config_consistency(auto_fix: bool = False, dry_run: bool = False):
         for field in remaining_missing:
             print(f"  - {field['path']}")
         return False
-    else:
-        print("\n✅ 所有配置字段一致！")
-        return True
+    print("\n✅ 所有配置字段一致！")
+    return True
 
 
 def main():
-    """主函数"""
+    """主函数."""
     import argparse
 
     parser = argparse.ArgumentParser(description="配置一致性检查工具")

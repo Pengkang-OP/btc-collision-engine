@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""BTC 碰撞引擎 — 模拟运行 + 实时监测
+"""BTC 碰撞引擎 — 模拟运行 + 实时监测.
 
 在可控时长内启动引擎（默认 CPU 随机模式），并轮询 data_logs/current_data.json
 输出吞吐量、引擎状态与系统指标。
@@ -46,7 +46,7 @@ def _load_metrics() -> dict[str, Any] | None:
 
 
 def _extract_snapshot(data: dict[str, Any]) -> dict[str, Any]:
-    """从 data_logs/current_data.json 提取可读的监测快照。"""
+    """从 data_logs/current_data.json 提取可读的监测快照。."""
     perf = data.get("performance") or {}
     engine = data.get("engine") or {}
     system = data.get("system") or {}
@@ -81,14 +81,14 @@ def print_snapshot(snap: dict[str, Any], label: str = "") -> None:
         f"已检={snap.get('total_checked'):,} | "
         f"速度={snap.get('speed'):,.1f} keys/s | "
         f"匹配={snap.get('matches')} | "
-        f"运行={float(snap.get('uptime') or 0):.1f}s"
+        f"运行={float(snap.get('uptime') or 0):.1f}s",
     )
     if snap.get("cpu_usage") is not None:
         print(
             f"      CPU={snap.get('cpu_usage'):.1f}% "
             f"MEM={snap.get('memory_usage') or 0:.1f}% "
             f"GPU={snap.get('gpu_utilization') or 0:.1f}% "
-            f"PID={snap.get('pid', '—')}"
+            f"PID={snap.get('pid', '—')}",
         )
 
 
@@ -97,7 +97,7 @@ def poll_while_running(
     interval: float,
     stop_when_done: bool = True,
 ) -> list[dict[str, Any]]:
-    """在子进程运行期间轮询监控文件。"""
+    """在子进程运行期间轮询监控文件。."""
     history: list[dict[str, Any]] = []
     print("\n── 实时监测 (data_logs/current_data.json) ──")
     while True:

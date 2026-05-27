@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GPU vs CPU 性能对比测试脚本
+"""GPU vs CPU 性能对比测试脚本.
 
 测试相同配置下GPU和CPU模式的性能差异
 """
@@ -16,7 +16,7 @@ from src.collision.targets.resolver import TargetResolver
 
 
 def run_cpu_test(targets, duration=15):
-    """运行CPU模式测试"""
+    """运行CPU模式测试."""
     print("\n" + "=" * 70)
     print("🔵 开始 CPU 模式测试")
     print("=" * 70)
@@ -62,7 +62,7 @@ def run_cpu_test(targets, duration=15):
 
 
 def run_gpu_test(targets, duration=15):
-    """运行GPU模式测试"""
+    """运行GPU模式测试."""
     print("\n" + "=" * 70)
     print("🟢 开始 GPU 模式测试")
     print("=" * 70)
@@ -113,7 +113,7 @@ def run_gpu_test(targets, duration=15):
 
 
 def compare_results(cpu_result, gpu_result):
-    """对比CPU和GPU结果"""
+    """对比CPU和GPU结果."""
     print("\n" + "=" * 70)
     print("📊 性能对比分析")
     print("=" * 70)
@@ -150,7 +150,7 @@ def compare_results(cpu_result, gpu_result):
 
 
 def main():
-    """主函数"""
+    """主函数."""
     print("=" * 70)
     print("  GPU vs CPU 性能对比测试")
     print("=" * 70)

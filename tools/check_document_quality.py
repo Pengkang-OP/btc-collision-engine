@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""文档质量检查工具
+"""文档质量检查工具.
 
 检查项目文档的质量，包括：
 - 文档结构完整性
@@ -28,7 +28,7 @@ _ = setup_windows_utf8()
 
 
 class Severity(Enum):
-    """问题严重程度"""
+    """问题严重程度."""
 
     ERROR = "❌"
     WARNING = "⚠️"
@@ -37,7 +37,7 @@ class Severity(Enum):
 
 
 class IssueType:
-    """问题类型常量 - 用于分类统计"""
+    """问题类型常量 - 用于分类统计."""
 
     CODE_BLOCK = "代码块"
     LINK = "链接"
@@ -51,7 +51,7 @@ class IssueType:
 
 @dataclass
 class ScoringConfig:
-    """评分配置 - 可定制权重"""
+    """评分配置 - 可定制权重."""
 
     error_weight: float = 1.5
     code_block_weight: float = 0.2
@@ -64,7 +64,7 @@ class ScoringConfig:
     version_bonus: float = 0.2
 
     def validate(self) -> None:
-        """验证配置有效性
+        """验证配置有效性.
 
         Raises:
             ValueError: 当配置值无效时
@@ -100,14 +100,14 @@ class ScoringConfig:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "ScoringConfig":
-        """从字典创建配置"""
+        """从字典创建配置."""
         config = cls(**{k: v for k, v in data.items() if k in cls.__annotations__})
         config.validate()  # 验证配置
         return config
 
     @classmethod
     def from_file(cls, path: str) -> "ScoringConfig":
-        """从 JSON文件加载配置"""
+        """从 JSON文件加载配置."""
         import json
 
         with open(path, encoding="utf-8") as f:
@@ -115,7 +115,7 @@ class ScoringConfig:
         return cls.from_dict(data)
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "error_weight": self.error_weight,
             "code_block_weight": self.code_block_weight,
@@ -129,7 +129,7 @@ class ScoringConfig:
         }
 
     def save_to_file(self, path: str):
-        """保存配置到JSON文件"""
+        """保存配置到JSON文件."""
         import json
 
         with open(path, "w", encoding="utf-8") as f:
@@ -138,7 +138,7 @@ class ScoringConfig:
 
 @dataclass
 class Issue:
-    """文档问题"""
+    """文档问题."""
 
     severity: Severity
     file: str
@@ -148,7 +148,7 @@ class Issue:
 
 @dataclass
 class DocumentScore:
-    """文档评分"""
+    """文档评分."""
 
     file: str
     score: float
@@ -156,7 +156,7 @@ class DocumentScore:
 
 
 class DocumentQualityChecker:
-    """文档质量检查器"""
+    """文档质量检查器."""
 
     def __init__(self, docs_dir: str = "docs", config: ScoringConfig | None = None):
         self.docs_dir = Path(docs_dir)
@@ -166,7 +166,7 @@ class DocumentQualityChecker:
 
     @staticmethod
     def get_changed_docs(docs_dir: Path) -> list[Path]:
-        """获取Git变更的文档列表
+        """获取Git变更的文档列表.
 
         Returns:
             变更的.md文件列表
@@ -197,7 +197,7 @@ class DocumentQualityChecker:
             return []
 
     def check_all(self, changed_only: bool = False) -> list[DocumentScore]:
-        """检查所有文档
+        """检查所有文档.
 
         Args:
             changed_only: 是否只检查变更的文档
@@ -228,7 +228,7 @@ class DocumentQualityChecker:
         return self.scores
 
     def check_document(self, file_path: Path) -> DocumentScore:
-        """检查单个文档"""
+        """检查单个文档."""
         self.issues = []
 
         try:
@@ -264,21 +264,21 @@ class DocumentQualityChecker:
             )
 
     def check_file_encoding(self, file_path: Path):
-        """检查文件编码"""
+        """检查文件编码."""
         try:
             file_path.read_text(encoding="utf-8")
         except UnicodeDecodeError:
             self.issues.append(Issue(Severity.ERROR, str(file_path), 0, "文件编码不是UTF-8"))
 
     def check_file_ending(self, file_path: Path, content: str):
-        """检查文件末尾是否有换行符"""
+        """检查文件末尾是否有换行符."""
         if content and not content.endswith("\n"):
             self.issues.append(
-                Issue(Severity.WARNING, str(file_path), len(content.split("\n")), "文件末尾缺少换行符")
+                Issue(Severity.WARNING, str(file_path), len(content.split("\n")), "文件末尾缺少换行符"),
             )
 
     def check_document_structure(self, file_path: Path, content: str, lines: list[str]):
-        """检查文档结构"""
+        """检查文档结构."""
         # 检查是否有标题
         if not re.search(r"^#\s+.+", content, re.MULTILINE):
             self.issues.append(Issue(Severity.ERROR, str(file_path), 0, "缺少主标题 (# Title)"))
@@ -288,7 +288,7 @@ class DocumentQualityChecker:
             self.issues.append(Issue(Severity.WARNING, str(file_path), 0, "长文档建议添加目录"))
 
     def check_version_info(self, file_path: Path, content: str, lines: list[str]):
-        """检查版本信息"""
+        """检查版本信息."""
         # 检查是否包含版本信息（在前20行）
         first_20_lines = "\n".join(lines[:20])
         if not re.search(r"[*]*[*]版本[*]*[*]:\s*v?\d+\.\d+", first_20_lines) and file_path.name not in [
@@ -296,11 +296,11 @@ class DocumentQualityChecker:
             "CONTRIBUTING.md",
         ]:
             self.issues.append(
-                Issue(Severity.WARNING, str(file_path), 1, "建议添加版本信息 (例如: **版本**: v4.2.2)")
+                Issue(Severity.WARNING, str(file_path), 1, "建议添加版本信息 (例如: **版本**: v4.2.2)"),
             )
 
     def check_links(self, file_path: Path, content: str, lines: list[str]):
-        """检查链接"""
+        """检查链接."""
         # 查找Markdown链接
         link_pattern = r"\[([^\]]+)\]\(([^)]+)\)"
         links = re.finditer(link_pattern, content)
@@ -334,11 +334,11 @@ class DocumentQualityChecker:
                                 str(file_path),
                                 line_num,
                                 f"链接可能断裂: [{link_text}]({link_url})",
-                            )
+                            ),
                         )
 
     def check_code_blocks(self, file_path: Path, content: str, lines: list[str]):
-        """检查代码块格式"""
+        """检查代码块格式."""
         in_code_block = False
 
         for i, line in enumerate(lines, 1):
@@ -353,14 +353,14 @@ class DocumentQualityChecker:
                                 str(file_path),
                                 i,
                                 "代码块建议指定语言类型 (例如: ```python)",
-                            )
+                            ),
                         )
                 else:
                     in_code_block = False
 
     @staticmethod
     def _lines_in_code_blocks(lines: list[str]) -> set[int]:
-        """识别代码块内的行号集合（代码块内注释 # 不是标题）"""
+        """识别代码块内的行号集合（代码块内注释 # 不是标题）."""
         in_code_block = False
         code_lines: set[int] = set()
         for i, line in enumerate(lines, 1):
@@ -376,7 +376,7 @@ class DocumentQualityChecker:
         return code_lines
 
     def check_headings(self, file_path: Path, content: str, lines: list[str]):
-        """检查标题层级"""
+        """检查标题层级."""
         code_lines = self._lines_in_code_blocks(lines)
         headings = []
         for i, line in enumerate(lines, 1):
@@ -399,11 +399,11 @@ class DocumentQualityChecker:
                         str(file_path),
                         headings[i][2],
                         f"标题层级跳跃: 从 {'#' * prev_level} 到 {'#' * curr_level}",
-                    )
+                    ),
                 )
 
     def check_tables(self, file_path: Path, content: str, lines: list[str]):
-        """检查表格格式"""
+        """检查表格格式."""
         in_table = False
 
         for _i, line in enumerate(lines, 1):
@@ -416,12 +416,11 @@ class DocumentQualityChecker:
                 if len(columns) > 1 and len(columns) < 10:  # 合理列数
                     # 可以在这里添加更复杂的表格检查
                     pass
-            else:
-                if in_table:
-                    in_table = False
+            elif in_table:
+                in_table = False
 
     def calculate_score(self) -> float:
-        """计算文档评分 - 优化版（使用可配置权重）"""
+        """计算文档评分 - 优化版（使用可配置权重）."""
         if not self.issues:
             return 10.0
 
@@ -448,7 +447,7 @@ class DocumentQualityChecker:
         code_block_deduction = 0.0
         if code_block_issues > 0:
             code_block_deduction = min(
-                code_block_issues * self.config.code_block_weight, self.config.code_block_max
+                code_block_issues * self.config.code_block_weight, self.config.code_block_max,
             )
             deduction += code_block_deduction
 
@@ -486,15 +485,15 @@ class DocumentQualityChecker:
         print(f"    ERROR: {error_count} × {self.config.error_weight} = {error_deduction:.1f}")
         print(
             f"    代码块: {code_block_issues} × {self.config.code_block_weight}"
-            f" = {code_block_deduction:.1f} (上限{self.config.code_block_max})"
+            f" = {code_block_deduction:.1f} (上限{self.config.code_block_max})",
         )
         print(
             f"    链接: {link_issues} × {self.config.link_weight}"
-            f" = {link_deduction:.1f} (上限{self.config.link_max})"
+            f" = {link_deduction:.1f} (上限{self.config.link_max})",
         )
         print(
             f"    其他WARNING: {other_warnings} × {self.config.other_warning_weight}"
-            f" = {other_warning_deduction:.1f}"
+            f" = {other_warning_deduction:.1f}",
         )
         print(f"    INFO: {info_count} × {self.config.info_weight} = {info_deduction:.1f}")
         print(f"  总扣分: {deduction:.1f}")
@@ -508,7 +507,7 @@ class DocumentQualityChecker:
         return round(score, 1)
 
     def print_document_result(self, file_path: Path, score: float):
-        """打印单个文档的检查结果"""
+        """打印单个文档的检查结果."""
         emoji = "✅" if score >= 8.5 else "⚠️" if score >= 7.0 else "❌"
 
         print(f"{emoji} {file_path.name} - 质量评分: {score}/10")
@@ -520,7 +519,7 @@ class DocumentQualityChecker:
         print()
 
     def print_summary(self):
-        """打印总体统计"""
+        """打印总体统计."""
         print("=" * 60)
         print("📊 文档质量检查报告")
         print("=" * 60)
@@ -565,7 +564,7 @@ class DocumentQualityChecker:
 
 
 def main():
-    """主函数"""
+    """主函数."""
     import argparse
 
     parser = argparse.ArgumentParser(description="文档质量检查工具")

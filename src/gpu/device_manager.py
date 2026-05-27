@@ -1,4 +1,4 @@
-"""GPU设备管理器
+"""GPU设备管理器.
 
 负责GPU设备的初始化、配置和管理。
 """
@@ -8,7 +8,7 @@ import logging
 import time
 import traceback
 from pathlib import Path
-from typing import Any, Optional, cast
+from typing import Any, cast
 
 from ..core.base58 import Base58
 from ..utils import get_configured_logger
@@ -30,28 +30,28 @@ _logger = get_configured_logger("GPUDeviceManager")
 
 
 class NoValidTargetsError(ValueError):
-    """没有有效的目标地址 (仅 P2PKH 格式可用, 其他格式已被跳过)"""
+    """没有有效的目标地址 (仅 P2PKH 格式可用, 其他格式已被跳过)."""
 
 
 class GPUDeviceManager:
-    """GPU设备管理器
+    """GPU设备管理器.
 
     负责GPU设备的初始化、配置和管理。
     """
 
     __slots__ = (
-        "device_index",
-        "config",
-        "logger",
-        "_gpu_device",
-        "_gpu_context",
-        "_gpu_kernel",
+        "_amd_optimizer",
         "_async_executor",
+        "_gpu_context",
+        "_gpu_device",
+        "_gpu_kernel",
         "_gpu_memory_pool",
-        "_profile_loader",
         "_intel_optimizer",
         "_nvidia_optimizer",
-        "_amd_optimizer",
+        "_profile_loader",
+        "config",
+        "device_index",
+        "logger",
         "target_hash160s",
         "target_list",
     )
@@ -62,11 +62,12 @@ class GPUDeviceManager:
         config: dict[str, Any] | None = None,
         logger: logging.Logger | None = None,
     ) -> None:
-        """Args:
-        device_index: GPU设备索引（-1表示自动选择）
-        config: 配置字典
-        logger: 日志记录器
+        """初始化 GPU 设备管理器。.
 
+        Args:
+            device_index: GPU设备索引（-1表示自动选择）
+            config: 配置字典
+            logger: 日志记录器
         """
         self.device_index = device_index
         self.config = config or {}
@@ -87,7 +88,7 @@ class GPUDeviceManager:
         self.target_list: list[str] = []
 
     def _require_device(self) -> GPUDevice:
-        """返回已初始化的 GPU 设备，未初始化则抛出 RuntimeError。
+        """返回已初始化的 GPU 设备，未初始化则抛出 RuntimeError。.
 
         替代 assert，确保 python -O 模式下仍有效。
         """
@@ -96,13 +97,13 @@ class GPUDeviceManager:
         return self._gpu_device
 
     def _require_context(self) -> GPUContext:
-        """返回已初始化的 GPU 上下文。"""
+        """返回已初始化的 GPU 上下文。."""
         if self._gpu_context is None:
             raise RuntimeError("GPU context not initialized")
         return self._gpu_context
 
     def _require_async_executor(self) -> AsyncGPUExecutor:
-        """返回已初始化的异步执行器。"""
+        """返回已初始化的异步执行器。."""
         if self._async_executor is None:
             raise RuntimeError("Async executor not initialized")
         return self._async_executor
@@ -110,10 +111,10 @@ class GPUDeviceManager:
     def initialize(
         self,
         targets: set[str],
-        batch_size: Optional[int] = None,
+        batch_size: int | None = None,
         check_uncompressed: int = 0,
     ) -> "GPUDeviceManager":
-        """初始化GPU设备及所有依赖组件
+        """初始化GPU设备及所有依赖组件.
 
         执行完整的GPU初始化流程，按依赖顺序依次初始化各组件:
 
@@ -254,7 +255,7 @@ class GPUDeviceManager:
         return self
 
     def _init_device(self) -> None:
-        """初始化GPU设备"""
+        """初始化GPU设备."""
         with EnhancedPerformanceMonitor(self.logger, "GPU设备初始化", level="DEBUG"):
             self._gpu_device = GPUDevice()
 
@@ -277,7 +278,7 @@ class GPUDeviceManager:
             )
 
     def _read_async_config(self) -> bool:
-        """读取异步执行配置"""
+        """读取异步执行配置."""
         enable_async = True
         config_source = "默认"
 
@@ -337,7 +338,7 @@ class GPUDeviceManager:
 
     @staticmethod
     def _classify_address_format(address: str) -> str:
-        """根据前缀识别比特币地址格式，用于用户友好的警告提示。
+        """根据前缀识别比特币地址格式，用于用户友好的警告提示。.
 
         Returns:
             格式名称字符串: "P2PKH", "P2SH", "Bech32", "Bech32m/Taproot", "未知"
@@ -354,7 +355,7 @@ class GPUDeviceManager:
         return "未知格式"
 
     def _prepare_targets(self, targets: set[str]):
-        """准备目标地址 (支持 P2PKH 和 Bech32 P2WPKH 格式)
+        """准备目标地址 (支持 P2PKH 和 Bech32 P2WPKH 格式).
 
         GPU 引擎支持以下目标格式:
         1. P2PKH (version=0x00, 以 '1' 开头): 直接提取 hash160
@@ -381,7 +382,7 @@ class GPUDeviceManager:
                             masked,
                             "Bech32m (Taproot)",
                             "Taproot的witness_program=x-only公钥，密码学上无法通过hash160(pubkey)匹配",
-                        )
+                        ),
                     )
                     continue
 
@@ -399,7 +400,7 @@ class GPUDeviceManager:
                                 masked,
                                 f"Bech32 (witness v{witness_version})",
                                 "仅支持 witness v0",
-                            )
+                            ),
                         )
                         continue
 
@@ -415,27 +416,26 @@ class GPUDeviceManager:
                         continue
 
                     # P2WSH: 32字节 witness_program = sha256(redeemScript) → 不可匹配
-                    elif len(witness_program) == 32:
+                    if len(witness_program) == 32:
                         masked = address[:8] + "..." + address[-6:] if len(address) >= 14 else address
                         skipped_addresses.append(
                             (
                                 masked,
                                 "Bech32 (P2WSH)",
                                 "P2WSH的witness_program=sha256(redeemScript)，密码学上无法通过hash160(pubkey)匹配",
-                            )
+                            ),
                         )
                         continue
 
-                    else:
-                        masked = address[:8] + "..." + address[-6:] if len(address) >= 14 else address
-                        skipped_addresses.append(
-                            (
-                                masked,
-                                "Bech32",
-                                f"不支持的 witness_program 长度: {len(witness_program)}",
-                            )
-                        )
-                        continue
+                    masked = address[:8] + "..." + address[-6:] if len(address) >= 14 else address
+                    skipped_addresses.append(
+                        (
+                            masked,
+                            "Bech32",
+                            f"不支持的 witness_program 长度: {len(witness_program)}",
+                        ),
+                    )
+                    continue
 
                 except Exception as e:
                     masked = address[:8] + "..." + address[-6:] if len(address) >= 14 else address
@@ -460,7 +460,7 @@ class GPUDeviceManager:
                             masked,
                             "P2SH",
                             "P2SH的payload=hash160(redeemScript)，密码学上无法通过hash160(pubkey)匹配",
-                        )
+                        ),
                     )
                 else:
                     fmt = self._classify_address_format(address)
@@ -503,27 +503,27 @@ class GPUDeviceManager:
             self.logger.warning(
                 "建议: P2SH/P2WSH/Taproot 目标因密码学路径不同无法通过私钥碰撞匹配。"
                 " 请使用 P2PKH (1开头) 或 Bech32 P2WPKH (bc1q开头，20字节witness) 地址。"
-                " 详细信息请参考 README.md 的 '目标地址格式支持' 章节。"
+                " 详细信息请参考 README.md 的 '目标地址格式支持' 章节。",
             )
 
         if not hash160_list:
             raise NoValidTargetsError(
                 f"没有有效的 P2PKH/Bech32 P2WPKH 目标地址 (已跳过 {len(skipped_addresses)} 个)。"
                 " 请添加 '1' 开头的 P2PKH 地址或 'bc1q' 开头的 Bech32 P2WPKH 地址。"
-                " 其他格式(P2SH/P2WSH/Taproot)因密码学路径不同无法通过私钥碰撞匹配。"
+                " 其他格式(P2SH/P2WSH/Taproot)因密码学路径不同无法通过私钥碰撞匹配。",
             )
 
         # 输出统计信息
         self.logger.info(
             f"GPU 目标准备完成: P2PKH={p2pkh_count}, Bech32 P2WPKH={bech32_p2wpkh_count}, "
-            f"总目标={total_targets}, 跳过={len(skipped_addresses)}"
+            f"总目标={total_targets}, 跳过={len(skipped_addresses)}",
         )
 
         target_hash160s = b"".join(hash160_list)
         return target_hash160s, target_list
 
     def _calculate_optimal_batch_size(self) -> int:
-        """计算最优batch_size"""
+        """计算最优batch_size."""
         self._require_device()
         if self._gpu_device is None:
             raise RuntimeError("GPUDeviceManager._require_device() did not set _gpu_device")
@@ -551,7 +551,7 @@ class GPUDeviceManager:
         return estimated_batch_size
 
     def _init_context(self) -> None:
-        """初始化GPU上下文"""
+        """初始化GPU上下文."""
         with EnhancedPerformanceMonitor(self.logger, "GPU上下文初始化", level="DEBUG"):
             self._gpu_context = GPUContext(self._require_device())
 
@@ -559,7 +559,7 @@ class GPUDeviceManager:
             self._gpu_context.apply_optimizations()
 
     def _init_kernel(self, batch_size: int) -> None:
-        """初始化GPU内核"""
+        """初始化GPU内核."""
         with EnhancedPerformanceMonitor(self.logger, "OpenCL内核编译", level="INFO"):
             ctx = self._require_context()
             dev = self._require_device()
@@ -570,11 +570,11 @@ class GPUDeviceManager:
             self._gpu_kernel = GPUKernel(
                 dev,
                 max_batch_size=batch_size,
-                program=cast(Any, self._gpu_context.program),  # type: ignore[union-attr]
+                program=cast("Any", self._gpu_context.program),  # type: ignore[union-attr]
             )
 
     def _init_memory_pool(self, batch_size: int = 0) -> None:
-        """初始化GPU内存池（含常用缓冲区预分配）
+        """初始化GPU内存池（含常用缓冲区预分配）.
 
         在池创建后立即预分配常用大小的缓冲区，
         消除运行时首次分配的延迟开销（通常节省 5-15ms）。
@@ -613,7 +613,7 @@ class GPUDeviceManager:
 
     @staticmethod
     def _compute_prealloc_sizes(batch_size: int) -> list:
-        """计算引擎常用缓冲区的预分配大小列表
+        """计算引擎常用缓冲区的预分配大小列表.
 
         基于引擎批大小推导关键缓冲区尺寸:
         - 匹配结果缓冲区: batch_size × 4 字节
@@ -632,7 +632,7 @@ class GPUDeviceManager:
         return sorted(sizes)
 
     def _init_async_executor(self, batch_size: int) -> None:
-        """初始化异步执行器"""
+        """初始化异步执行器."""
         dev = self._require_device()
         if dev.enable_async_execution:
             self.logger.info("初始化GPU异步执行器...")
@@ -683,7 +683,7 @@ class GPUDeviceManager:
             self.logger.debug("GPU异步执行器未初始化(使用同步模式)")
 
     def _apply_vendor_optimizations(self) -> None:
-        """应用厂商特定优化
+        """应用厂商特定优化.
 
         v4.2.1 修复: Intel 优化路径现在传递 self 引用作为 engine，
         使 benchmark_suite / auto_tuner / performance_reporter 三个
@@ -748,7 +748,7 @@ class GPUDeviceManager:
                 self._amd_optimizer = None
 
     def cleanup(self) -> None:
-        """清理GPU资源（按依赖逆序释放）
+        """清理GPU资源（按依赖逆序释放）.
 
         清理顺序（与初始化顺序相反）:
         1. 清理异步执行器（资源取消 + 等待完成）
@@ -818,33 +818,33 @@ class GPUDeviceManager:
 
     @property
     def device(self) -> GPUDevice:
-        """获取GPU设备实例"""
+        """获取GPU设备实例."""
         if self._gpu_device is None:
             raise RuntimeError("GPUDevice 尚未初始化，请先调用 initialize()")
         return self._gpu_device
 
     @property
     def context(self) -> GPUContext:
-        """获取GPU上下文实例"""
+        """获取GPU上下文实例."""
         if self._gpu_context is None:
             raise RuntimeError("GPUContext 尚未初始化，请先调用 initialize()")
         return self._gpu_context
 
     @property
     def kernel(self) -> GPUKernel:
-        """获取GPU内核实例"""
+        """获取GPU内核实例."""
         if self._gpu_kernel is None:
             raise RuntimeError("GPUKernel 尚未初始化，请先调用 initialize()")
         return self._gpu_kernel
 
     @property
     def async_executor(self) -> AsyncGPUExecutor:
-        """获取异步执行器实例"""
+        """获取异步执行器实例."""
         if self._async_executor is None:
             raise RuntimeError("AsyncGPUExecutor 尚未初始化，请先调用 initialize()")
         return self._async_executor
 
     @property
     def memory_pool(self) -> Any:
-        """获取内存池实例"""
+        """获取内存池实例."""
         return self._gpu_memory_pool

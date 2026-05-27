@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""为长文档自动添加目录
+"""为长文档自动添加目录.
 
 为超过50行的文档自动生成并添加目录（TOC）
 
@@ -18,7 +18,7 @@ setup_windows_utf8()
 
 
 def extract_headings(content: str) -> list[tuple[int, int, str]]:
-    """提取文档标题
+    """提取文档标题.
 
     Returns:
         List of (level, line_number, title_text)
@@ -37,7 +37,7 @@ def extract_headings(content: str) -> list[tuple[int, int, str]]:
 
 
 def generate_toc(headings: list[tuple[int, int, str]]) -> str:
-    """生成目录Markdown文本"""
+    """生成目录Markdown文本."""
     if not headings:
         return ""
 
@@ -62,13 +62,13 @@ def generate_toc(headings: list[tuple[int, int, str]]) -> str:
 
 
 def has_toc(content: str) -> bool:
-    """检查文档是否已有目录"""
+    """检查文档是否已有目录."""
     # 查找"目录"标题
     return bool(re.search(r"^##\s+目录\s*$", content, re.MULTILINE))
 
 
 def add_toc_to_file(content: str, min_headings: int = 3) -> tuple[str, bool]:
-    """为文档添加目录
+    """为文档添加目录.
 
     Returns:
         (新内容, 是否已添加)
@@ -123,7 +123,7 @@ def add_toc_to_file(content: str, min_headings: int = 3) -> tuple[str, bool]:
 
 
 def main():
-    """主函数"""
+    """主函数."""
     import argparse
 
     parser = argparse.ArgumentParser(description="为长文档自动添加目录")

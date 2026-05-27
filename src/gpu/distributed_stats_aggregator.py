@@ -1,4 +1,4 @@
-"""分布式统计聚合器
+"""分布式统计聚合器.
 
 支持大规模多GPU场景下的统计数据聚合。
 """
@@ -11,7 +11,7 @@ from typing import Any
 
 @dataclass
 class WorkerStats:
-    """工作器统计数据"""
+    """工作器统计数据."""
 
     keys_checked: int = 0
     matches_found: int = 0
@@ -22,7 +22,7 @@ class WorkerStats:
 
 
 class DistributedStatsAggregator:
-    """分布式统计聚合器
+    """分布式统计聚合器.
 
     为每个GPU工作器维护独立的统计对象，支持动态注册和聚合。
 
@@ -34,17 +34,18 @@ class DistributedStatsAggregator:
     """
 
     __slots__ = (
+        "_aggregated_stats",
+        "_aggregation_interval",
+        "_aggregation_thread",
+        "_cache_lock",
+        "_cache_valid",
         "_stop_event",
         "_workers",
         "_workers_lock",
-        "_aggregated_stats",
-        "_cache_valid",
-        "_cache_lock",
-        "_aggregation_interval",
-        "_aggregation_thread",
     )
 
     def __init__(self) -> None:
+        """初始化分布式统计聚合器。."""
         # 停止标志（必须在启动线程前初始化）
         self._stop_event = threading.Event()
 
@@ -63,21 +64,21 @@ class DistributedStatsAggregator:
         self._aggregation_thread.start()
 
     def register_worker(self, device_idx: int) -> None:
-        """注册GPU工作器"""
+        """注册GPU工作器."""
         with self._workers_lock:
             if device_idx not in self._workers:
                 self._workers[device_idx] = WorkerStats()
                 self._cache_valid = False
 
     def unregister_worker(self, device_idx: int) -> None:
-        """注销GPU工作器"""
+        """注销GPU工作器."""
         with self._workers_lock:
             if device_idx in self._workers:
                 del self._workers[device_idx]
                 self._cache_valid = False
 
     def update_worker_stats(self, device_idx: int, stats: dict[str, Any]) -> None:
-        """更新工作器统计数据"""
+        """更新工作器统计数据."""
         with self._workers_lock:
             if device_idx in self._workers:
                 worker = self._workers[device_idx]
@@ -96,13 +97,13 @@ class DistributedStatsAggregator:
                 self._cache_valid = False
 
     def _aggregation_loop(self) -> None:
-        """后台聚合循环"""
+        """后台聚合循环."""
         while not self._stop_event.is_set():
             self._aggregate_stats()
             time.sleep(self._aggregation_interval)
 
     def _aggregate_stats(self) -> None:
-        """执行统计聚合
+        """执行统计聚合.
 
         P1修复: 在锁保护下同时快照 worker 字典和值，防止聚合过程中
         update_worker_stats() 修改 worker 属性导致数据不一致。
@@ -158,7 +159,7 @@ class DistributedStatsAggregator:
             self._cache_valid = True
 
     def get_combined_stats(self) -> dict[str, Any]:
-        """获取聚合统计数据"""
+        """获取聚合统计数据."""
         if not self._cache_valid:
             self._aggregate_stats()
 
@@ -166,7 +167,7 @@ class DistributedStatsAggregator:
             return dict(self._aggregated_stats)
 
     def get_device_stats(self, device_idx: int) -> dict[str, Any] | None:
-        """获取指定设备的统计数据"""
+        """获取指定设备的统计数据."""
         with self._workers_lock:
             worker = self._workers.get(device_idx)
             if worker:
@@ -181,7 +182,7 @@ class DistributedStatsAggregator:
             return None
 
     def get_load_balance_info(self) -> dict[str, Any]:
-        """获取负载均衡信息"""
+        """获取负载均衡信息."""
         combined = self.get_combined_stats()
         per_device = combined.get("per_device", {})
 
@@ -213,7 +214,7 @@ class DistributedStatsAggregator:
         }
 
     def reset(self) -> None:
-        """重置所有统计数据"""
+        """重置所有统计数据."""
         with self._workers_lock:
             for worker in self._workers.values():
                 worker.keys_checked = 0
@@ -225,6 +226,6 @@ class DistributedStatsAggregator:
             self._cache_valid = False
 
     def stop(self) -> None:
-        """停止聚合器"""
+        """停止聚合器."""
         self._stop_event.set()
         self._aggregation_thread.join(timeout=1.0)

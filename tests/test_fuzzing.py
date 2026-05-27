@@ -1,4 +1,4 @@
-"""模糊测试 (Fuzzing) - 基于 Hypothesis 框架 - 中优先级
+"""模糊测试 (Fuzzing) - 基于 Hypothesis 框架 - 中优先级.
 
 覆盖范围：
 - 地址格式属性测试
@@ -37,12 +37,12 @@ if HYPOTHESIS_AVAILABLE:
 
     @pytest.mark.unit
     class TestFuzzingStats:
-        """Stats 属性测试"""
+        """Stats 属性测试."""
 
         @given(st.integers(min_value=0, max_value=10**12))
         @settings(max_examples=50)
         def test_fuzz_update_total_checked(self, value):
-            """测试：update 后 total_checked 等于输入值"""
+            """测试：update 后 total_checked 等于输入值."""
             from src.collision.collision_stats import CollisionStats
 
             stats = CollisionStats()
@@ -53,7 +53,7 @@ if HYPOTHESIS_AVAILABLE:
         @given(st.integers(min_value=0, max_value=10**6))
         @settings(max_examples=50)
         def test_fuzz_increment_accumulates(self, delta):
-            """测试：increment 累加后 total_checked >= delta"""
+            """测试：increment 累加后 total_checked >= delta."""
             from src.collision.collision_stats import CollisionStats
 
             stats = CollisionStats()
@@ -66,7 +66,7 @@ if HYPOTHESIS_AVAILABLE:
         )
         @settings(max_examples=50)
         def test_fuzz_add_match_safety(self, private_key, address):
-            """测试：add_match 不存储私钥原文"""
+            """测试：add_match 不存储私钥原文."""
             from src.collision.collision_stats import CollisionStats
 
             stats = CollisionStats()
@@ -79,7 +79,7 @@ if HYPOTHESIS_AVAILABLE:
         @given(st.integers(min_value=1, max_value=10000))
         @settings(max_examples=20)
         def test_fuzz_snapshot_never_raises(self, count):
-            """测试：大量快照不抛出异常"""
+            """测试：大量快照不抛出异常."""
             from src.collision.collision_stats import CollisionStats
 
             stats = CollisionStats()
@@ -91,7 +91,7 @@ if HYPOTHESIS_AVAILABLE:
 
     @pytest.mark.unit
     class TestFuzzingEvents:
-        """事件属性测试"""
+        """事件属性测试."""
 
         @given(
             st.integers(min_value=0, max_value=10**9),
@@ -100,7 +100,7 @@ if HYPOTHESIS_AVAILABLE:
         )
         @settings(max_examples=50)
         def test_fuzz_progress_event_fields(self, total, speed, matches):
-            """测试：进度事件字段任意组合不崩溃"""
+            """测试：进度事件字段任意组合不崩溃."""
             from src.collision.events import EngineProgressEvent
 
             event = EngineProgressEvent(
@@ -114,12 +114,12 @@ if HYPOTHESIS_AVAILABLE:
 
     @pytest.mark.unit
     class TestFuzzingEventBus:
-        """事件总线属性测试"""
+        """事件总线属性测试."""
 
         @given(st.integers(min_value=1, max_value=100))
         @settings(max_examples=20)
         def test_fuzz_event_publish_no_raise(self, count):
-            """测试：大量事件发布不抛出异常"""
+            """测试：大量事件发布不抛出异常."""
             from src.collision.event_bus import EventBus
             from src.collision.events import (
                 EngineProgressEvent,

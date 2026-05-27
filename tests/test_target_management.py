@@ -1,4 +1,4 @@
-"""目标地址管理模块单元测试"""
+"""目标地址管理模块单元测试."""
 
 import os
 import pathlib
@@ -17,10 +17,10 @@ from src.utils.encoding_utils import EncodingUtils
 
 
 class TestAddressCache:
-    """地址缓存测试"""
+    """地址缓存测试."""
 
     def test_cache_put_get(self):
-        """测试缓存存取"""
+        """测试缓存存取."""
         cache = AddressCache(lru_size=100)
 
         cache.put("test_key", "test_value")
@@ -29,14 +29,14 @@ class TestAddressCache:
         assert result == "test_value"
 
     def test_cache_miss(self):
-        """测试缓存未命中"""
+        """测试缓存未命中."""
         cache = AddressCache(lru_size=100)
 
         result = cache.get("nonexistent")
         assert result is None
 
     def test_cache_stats(self):
-        """测试缓存统计"""
+        """测试缓存统计."""
         cache = AddressCache(lru_size=100, enable_stats=True)
 
         cache.put("key1", "value1")
@@ -49,7 +49,7 @@ class TestAddressCache:
         assert stats["hit_rate"] == 0.5
 
     def test_cache_clear(self):
-        """测试清空缓存"""
+        """测试清空缓存."""
         cache = AddressCache(lru_size=100)
 
         cache.put("key1", "value1")
@@ -58,7 +58,7 @@ class TestAddressCache:
         assert cache.get("key1") is None
 
     def test_cache_contains(self):
-        """测试__contains__"""
+        """测试__contains__."""
         cache = AddressCache(lru_size=100)
 
         cache.put("key1", "value1")
@@ -68,10 +68,10 @@ class TestAddressCache:
 
 
 class TestTargetResolver:
-    """目标地址解析器测试"""
+    """目标地址解析器测试."""
 
     def test_resolve_p2pkh_address(self):
-        """测试P2PKH地址解析"""
+        """测试P2PKH地址解析."""
         resolver = TargetResolver(enable_cache=False)
 
         address = "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
@@ -80,7 +80,7 @@ class TestTargetResolver:
         assert result == address
 
     def test_resolve_unknown_format(self):
-        """测试未知格式"""
+        """测试未知格式."""
         resolver = TargetResolver(enable_cache=False)
 
         result = resolver.resolve("invalid_format!!!")
@@ -88,7 +88,7 @@ class TestTargetResolver:
         assert result is None
 
     def test_resolve_with_cache(self):
-        """测试缓存解析"""
+        """测试缓存解析."""
         resolver = TargetResolver(enable_cache=True)
 
         address = "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
@@ -110,7 +110,7 @@ class TestTargetResolver:
         assert stats["misses"] >= 1, f"缓存未命中次数应该>=1，实际: {stats['misses']}"
 
     def test_resolve_multiple(self):
-        """测试批量解析"""
+        """测试批量解析."""
         resolver = TargetResolver(enable_cache=False)
 
         inputs = [
@@ -124,7 +124,7 @@ class TestTargetResolver:
         assert "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa" in results
 
     def test_load_from_file(self):
-        """测试从文件加载"""
+        """测试从文件加载."""
         resolver = TargetResolver(enable_cache=False)
 
         # 创建临时文件（明确指定UTF-8编码）
@@ -152,17 +152,17 @@ class TestTargetResolver:
                 pathlib.Path(temp_path).unlink()
 
     def test_detect_format(self):
-        """测试格式检测"""
+        """测试格式检测."""
         assert TargetResolver.detect_format("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa") == "address"
         assert TargetResolver.detect_format("3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy") == "p2sh_address"
         assert TargetResolver.detect_format("invalid") == "unknown"
 
 
 class TestAddressValidator:
-    """地址验证器测试"""
+    """地址验证器测试."""
 
     def test_validate_valid_address(self):
-        """测试有效地址验证"""
+        """测试有效地址验证."""
         validator = AddressBatchValidator(max_workers=2)
 
         results = validator.validate_batch(["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"])
@@ -170,7 +170,7 @@ class TestAddressValidator:
         assert results["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"].valid is True
 
     def test_validate_invalid_address(self):
-        """测试无效地址验证"""
+        """测试无效地址验证."""
         validator = AddressBatchValidator(max_workers=2)
 
         results = validator.validate_batch(["invalid_address!!!"])
@@ -178,7 +178,7 @@ class TestAddressValidator:
         assert results["invalid_address!!!"].valid is False
 
     def test_filter_valid(self):
-        """测试过滤有效地址"""
+        """测试过滤有效地址."""
         validator = AddressBatchValidator(max_workers=2)
 
         addresses = [
@@ -192,7 +192,7 @@ class TestAddressValidator:
         assert "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa" in valid
 
     def test_validation_summary(self):
-        """测试验证摘要"""
+        """测试验证摘要."""
         validator = AddressBatchValidator(max_workers=2)
 
         results = validator.validate_batch(
@@ -209,7 +209,7 @@ class TestAddressValidator:
         assert summary["invalid"] == 1
 
     def test_validation_coverage(self):
-        """测试验证覆盖率统计"""
+        """测试验证覆盖率统计."""
         validator = AddressBatchValidator(max_workers=2)
 
         # 严格模式: 包含非字符串类型
@@ -231,7 +231,7 @@ class TestAddressValidator:
         assert coverage["invalid"] == 1
 
     def test_validation_coverage_empty(self):
-        """测试空列表的覆盖率统计"""
+        """测试空列表的覆盖率统计."""
         validator = AddressBatchValidator(max_workers=2)
 
         results = validator.validate_batch([])
@@ -243,7 +243,7 @@ class TestAddressValidator:
         assert coverage["coverage"] == 0.0
 
     def test_strict_mode_skip_strategy(self):
-        """测试严格模式的skip策略"""
+        """测试严格模式的skip策略."""
         validator = AddressBatchValidator(max_workers=2)
 
         addresses = [
@@ -265,7 +265,7 @@ class TestAddressValidator:
         assert all(r.validated for r in results.values())
 
     def test_strict_mode_convert_strategy(self):
-        """测试严格模式的convert策略"""
+        """测试严格模式的convert策略."""
         validator = AddressBatchValidator(max_workers=2)
 
         addresses = [
@@ -288,7 +288,7 @@ class TestAddressValidator:
         assert results["12345"].validated is True  # 确实验证了
 
     def test_strict_mode_invalid_strategy(self):
-        """测试无效的策略参数"""
+        """测试无效的策略参数."""
         validator = AddressBatchValidator(max_workers=2)
 
         addresses = ["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"]
@@ -299,10 +299,10 @@ class TestAddressValidator:
 
 
 class TestAddressMatcher:
-    """地址匹配引擎测试"""
+    """地址匹配引擎测试."""
 
     def test_hash_set_match(self):
-        """测试Hash集合匹配"""
+        """测试Hash集合匹配."""
         targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
         matcher = AddressMatcher(strategy="hash_set", targets=targets)
 
@@ -310,7 +310,7 @@ class TestAddressMatcher:
         assert matcher.is_match("1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2") is False
 
     def test_add_target(self):
-        """测试添加目标"""
+        """测试添加目标."""
         matcher = AddressMatcher(strategy="hash_set")
 
         matcher.add_target("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
@@ -318,7 +318,7 @@ class TestAddressMatcher:
         assert matcher.is_match("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa") is True
 
     def test_clear(self):
-        """测试清空"""
+        """测试清空."""
         targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
         matcher = AddressMatcher(strategy="hash_set", targets=targets)
 
@@ -327,14 +327,14 @@ class TestAddressMatcher:
         assert matcher.is_match("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa") is False
 
     def test_len(self):
-        """测试__len__"""
+        """测试__len__."""
         targets = {"addr1", "addr2", "addr3"}
         matcher = AddressMatcher(strategy="hash_set", targets=targets)
 
         assert len(matcher) == 3
 
     def test_contains(self):
-        """测试__contains__"""
+        """测试__contains__."""
         targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
         matcher = AddressMatcher(strategy="hash_set", targets=targets)
 
@@ -342,10 +342,10 @@ class TestAddressMatcher:
 
 
 class TestAddressStorage:
-    """地址存储测试"""
+    """地址存储测试."""
 
     def test_json_save_load(self):
-        """测试JSON保存和加载"""
+        """测试JSON保存和加载."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8") as f:
             temp_path = f.name
 
@@ -368,7 +368,7 @@ class TestAddressStorage:
                 pathlib.Path(temp_path).unlink()
 
     def test_csv_save_load(self):
-        """测试CSV保存和加载"""
+        """测试CSV保存和加载."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False, encoding="utf-8") as f:
             temp_path = f.name
 
@@ -389,7 +389,7 @@ class TestAddressStorage:
                 pathlib.Path(temp_path).unlink()
 
     def test_get_storage_info(self):
-        """测试获取存储信息"""
+        """测试获取存储信息."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8") as f:
             f.write("{}")
             temp_path = f.name
@@ -408,10 +408,10 @@ class TestAddressStorage:
 
 
 class TestEncodingCompatibility:
-    """编码兼容性测试"""
+    """编码兼容性测试."""
 
     def test_read_utf8_file(self):
-        """测试读取UTF-8编码文件"""
+        """测试读取UTF-8编码文件."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False, encoding="utf-8") as f:
             f.write("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\n")
             f.write("# 中文注释\n")
@@ -426,7 +426,7 @@ class TestEncodingCompatibility:
                 pathlib.Path(temp_path).unlink()
 
     def test_read_gbk_file(self):
-        """测试读取GBK编码文件"""
+        """测试读取GBK编码文件."""
         with tempfile.NamedTemporaryFile(mode="wb", suffix=".txt", delete=False) as f:
             # 写入GBK编码的内容
             content = "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\n# 中文注释\n"
@@ -442,7 +442,7 @@ class TestEncodingCompatibility:
                 pathlib.Path(temp_path).unlink()
 
     def test_detect_encoding(self):
-        """测试编码检测"""
+        """测试编码检测."""
         with tempfile.NamedTemporaryFile(mode="wb", suffix=".txt", delete=False) as f:
             content = "测试内容".encode()
             f.write(content)
@@ -457,7 +457,7 @@ class TestEncodingCompatibility:
                 pathlib.Path(temp_path).unlink()
 
     def test_write_and_read_utf8(self):
-        """测试写入和读取UTF-8文件"""
+        """测试写入和读取UTF-8文件."""
         with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as f:
             temp_path = f.name
 
@@ -472,7 +472,7 @@ class TestEncodingCompatibility:
                 pathlib.Path(temp_path).unlink()
 
     def test_fixed_sampling(self):
-        """测试固定采样模式"""
+        """测试固定采样模式."""
         with tempfile.NamedTemporaryFile(mode="wb", suffix=".txt", delete=False) as f:
             # 创建50KB的文件
             content = "测试内容" * 5000
@@ -493,7 +493,7 @@ class TestEncodingCompatibility:
                 pathlib.Path(temp_path).unlink()
 
     def test_boundary_sampling_small(self):
-        """测试边界大小文件采样 - 小文件边界"""
+        """测试边界大小文件采样 - 小文件边界."""
         # 10KB - 1字节（应该是小文件，全量读取）
         with tempfile.NamedTemporaryFile(mode="wb", suffix=".txt", delete=False) as f:
             content = "A" * (10 * 1024 - 1)
@@ -508,7 +508,7 @@ class TestEncodingCompatibility:
                 pathlib.Path(temp_path).unlink()
 
     def test_boundary_sampling_medium(self):
-        """测试边界大小文件采样 - 中文件边界"""
+        """测试边界大小文件采样 - 中文件边界."""
         # 10KB（边界，应该是中文件）
         with tempfile.NamedTemporaryFile(mode="wb", suffix=".txt", delete=False) as f:
             content = "A" * (10 * 1024)
@@ -523,7 +523,7 @@ class TestEncodingCompatibility:
                 pathlib.Path(temp_path).unlink()
 
     def test_dynamic_vs_fixed_sampling(self):
-        """对比动态和固定采样的差异"""
+        """对比动态和固定采样的差异."""
         # 创建100KB的文件
         with tempfile.NamedTemporaryFile(mode="wb", suffix=".txt", delete=False) as f:
             content = "测试内容" * 10000
@@ -549,7 +549,7 @@ class TestEncodingCompatibility:
                 pathlib.Path(temp_path).unlink()
 
     def test_none_max_sample_size(self):
-        """测试max_sample_size为None时使用默认值"""
+        """测试max_sample_size为None时使用默认值."""
         with tempfile.NamedTemporaryFile(mode="wb", suffix=".txt", delete=False) as f:
             content = "测试内容".encode()
             f.write(content)
@@ -564,7 +564,7 @@ class TestEncodingCompatibility:
                 pathlib.Path(temp_path).unlink()
 
     def test_sampling_strategy_matrix(self):
-        """测试采样策略矩阵：不同文件大小 x 不同max_sample_size"""
+        """测试采样策略矩阵：不同文件大小 x 不同max_sample_size."""
         test_cases = [
             # (文件大小, max_sample_size, use_dynamic_sampling, 描述)
             (1024, None, True, "1KB小文件，动态采样"),
@@ -616,7 +616,7 @@ class TestEncodingCompatibility:
                     pathlib.Path(temp_path).unlink()
 
     def test_sampling_size_calculation(self):
-        """测试采样大小计算的准确性"""
+        """测试采样大小计算的准确性."""
         from src.utils.encoding_utils import EncodingUtils
 
         # 测试不同文件大小的采样计算
@@ -651,10 +651,10 @@ class TestEncodingCompatibility:
 
 
 class TestDataCompatibility:
-    """数据类型兼容性测试"""
+    """数据类型兼容性测试."""
 
     def test_validator_with_mixed_types(self):
-        """测试验证器处理混合类型"""
+        """测试验证器处理混合类型."""
         validator = AddressBatchValidator(max_workers=2)
 
         # 混合类型输入
@@ -671,7 +671,7 @@ class TestDataCompatibility:
         assert len(results) >= 2  # 至少两个字符串地址
 
     def test_matcher_with_non_string(self):
-        """测试匹配器处理非字符串输入"""
+        """测试匹配器处理非字符串输入."""
         matcher = AddressMatcher(strategy="hash_set")
         matcher.add_target("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
 
@@ -680,7 +680,7 @@ class TestDataCompatibility:
         assert matcher.is_match(12345) is False  # 应该返回False而不是抛出异常
 
     def test_cache_with_mixed_types(self):
-        """测试缓存处理混合类型"""
+        """测试缓存处理混合类型."""
         cache = AddressCache(lru_size=100)
 
         # 测试字符串键值
@@ -692,7 +692,7 @@ class TestDataCompatibility:
         assert cache.get("123") == "value2"
 
     def test_strict_mode_validated_field(self):
-        """测试严格模式下的validated字段"""
+        """测试严格模式下的validated字段."""
         validator = AddressBatchValidator(max_workers=2)
 
         # 严格模式：包含非字符串类型
@@ -717,10 +717,10 @@ class TestDataCompatibility:
 
 
 class TestCrossPlatformCompatibility:
-    """跨平台兼容性测试"""
+    """跨平台兼容性测试."""
 
     def test_path_handling(self):
-        """测试路径处理"""
+        """测试路径处理."""
         # 测试Windows和Unix风格路径
         from src.collision.targets.resolver import TargetResolver
 
@@ -739,7 +739,7 @@ class TestCrossPlatformCompatibility:
                 pathlib.Path(temp_path).unlink()
 
     def test_platform_encoding_detection(self):
-        """测试平台编码检测"""
+        """测试平台编码检测."""
         platform_encoding = EncodingUtils.get_platform_default_encoding()
 
         # 根据不同平台返回不同编码
@@ -750,10 +750,10 @@ class TestCrossPlatformCompatibility:
 
 
 class TestErrorHandling:
-    """错误处理测试"""
+    """错误处理测试."""
 
     def test_resolver_invalid_file(self):
-        """测试解析器处理无效文件"""
+        """测试解析器处理无效文件."""
         resolver = TargetResolver(enable_cache=False)
 
         # 测试不存在的文件
@@ -761,7 +761,7 @@ class TestErrorHandling:
         assert len(addresses) == 0
 
     def test_storage_invalid_path(self):
-        """测试存储处理无效路径"""
+        """测试存储处理无效路径."""
         # 使用一个权限不足的路径（在测试环境中应该无法写入）
         import platform
 
@@ -792,7 +792,7 @@ class TestErrorHandling:
             pass
 
     def test_cache_error_recovery(self):
-        """测试缓存错误恢复"""
+        """测试缓存错误恢复."""
         cache = AddressCache(lru_size=100)
 
         # 测试异常情况
@@ -802,7 +802,7 @@ class TestErrorHandling:
 
 
 class TestTargetResolverSecurity:
-    """TargetResolver 安全测试 - 从test_target_resolver.py迁移"""
+    """TargetResolver 安全测试 - 从test_target_resolver.py迁移."""
 
     @pytest.mark.parametrize(
         "malicious_path,description",
@@ -816,33 +816,33 @@ class TestTargetResolverSecurity:
         ],
     )
     def test_path_traversal_variants(self, malicious_path, description):
-        """参数化路径遍历攻击测试"""
+        """参数化路径遍历攻击测试."""
         resolver = TargetResolver(enable_cache=False)
         result = resolver.load_from_file(malicious_path)
         # 所有路径遍历攻击都应被阻止
         assert result == set(), f"{description} 应该被阻止: {malicious_path}"
 
     def test_path_traversal_blocked(self):
-        """路径遍历攻击被阻止（向后兼容）"""
+        """路径遍历攻击被阻止（向后兼容）."""
         resolver = TargetResolver(enable_cache=False)
         result = resolver.load_from_file("../etc/passwd")
         # 路径遍历应被阻止，返回空集合
         assert result == set()
 
     def test_absolute_path_outside_cwd_blocked(self):
-        """工作目录外的绝对路径被阻止"""
+        """工作目录外的绝对路径被阻止."""
         resolver = TargetResolver(enable_cache=False)
         result = resolver.load_from_file("C:\\Windows\\System32\\drivers\\etc\\hosts")
         assert result == set()
 
     def test_double_dot_traversal_blocked(self):
-        """双点遍历被阻止"""
+        """双点遍历被阻止."""
         resolver = TargetResolver(enable_cache=False)
         result = resolver.load_from_file("../../secret.txt")
         assert result == set()
 
     def test_normal_path_allowed(self):
-        """正常路径允许（文件在当前目录）"""
+        """正常路径允许（文件在当前目录）."""
         resolver = TargetResolver(enable_cache=False)
         tmp = tempfile.NamedTemporaryFile(
             mode="w",
@@ -860,7 +860,7 @@ class TestTargetResolverSecurity:
             pathlib.Path(tmp.name).unlink()
 
     def test_oversized_file_rejected(self):
-        """文件超过100MB限制时返回空集合"""
+        """文件超过100MB限制时返回空集合."""
         resolver = TargetResolver(enable_cache=False)
         tmp = tempfile.NamedTemporaryFile(
             mode="w",

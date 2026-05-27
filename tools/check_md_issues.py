@@ -6,7 +6,7 @@ import re
 
 
 def check_file(fp):
-    with open(fp, "r", encoding="utf-8") as f:
+    with open(fp, encoding="utf-8") as f:
         content = f.read()
     lines = content.split("\n")
     md022 = md026 = md032 = 0
@@ -31,7 +31,7 @@ def check_file(fp):
         if re.match(r"^(#{1,6}\s+)(.+?)([：:])\s*$", stripped):
             md026 += 1
         is_list = bool(re.match(r"^[\s]*[-*+]\s", stripped)) or bool(
-            re.match(r"^[\s]*\d+[.)]\s", stripped)
+            re.match(r"^[\s]*\d+[.)]\s", stripped),
         )
         if is_list and i > 0 and lines[i - 1].strip() != "":
             before = lines[i - 1].strip()

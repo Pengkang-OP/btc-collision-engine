@@ -76,7 +76,11 @@ class EncodingUtils:
                 raise
 
         raise UnicodeDecodeError(
-            "utf-8", b"", 0, 0, f"Failed to decode {file_path} with all encodings: {errors}"
+            "utf-8",
+            b"",
+            0,
+            0,
+            f"Failed to decode {file_path} with all encodings: {errors}",
         )
 
     @staticmethod
@@ -98,7 +102,11 @@ class EncodingUtils:
                 raise
 
         raise UnicodeDecodeError(
-            "utf-8", b"", 0, 0, f"Failed to decode {file_path} with all encodings: {errors}"
+            "utf-8",
+            b"",
+            0,
+            0,
+            f"Failed to decode {file_path} with all encodings: {errors}",
         )
 
     @staticmethod

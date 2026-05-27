@@ -21,16 +21,16 @@ from .logging_config import get_configured_logger
 
 
 class PlatformAdapter:
-    """平台适配器"""
+    """平台适配器."""
 
     def __init__(self) -> None:
-        """初始化平台适配器"""
+        """初始化平台适配器."""
         self.platform_name = platform.system()
         self.platform_version = platform.version()
         self.platform_architecture = platform.architecture()
 
     def get_platform_info(self) -> dict[str, Any]:
-        """获取平台信息
+        """获取平台信息.
 
         Returns:
             平台信息字典
@@ -45,7 +45,7 @@ class PlatformAdapter:
         }
 
     def get_file_path(self, relative_path: str) -> str:
-        """获取平台特定的文件路径
+        """获取平台特定的文件路径.
 
         Args:
             relative_path: 相对路径
@@ -61,7 +61,7 @@ class PlatformAdapter:
         return os.path.abspath(relative_path)
 
     def get_log_directory(self) -> str:
-        """获取平台特定的日志目录
+        """获取平台特定的日志目录.
 
         Returns:
             日志目录路径
@@ -84,7 +84,7 @@ class PlatformAdapter:
         )
 
     def ensure_directory(self, directory: str) -> bool:
-        """确保目录存在
+        """确保目录存在.
 
         Args:
             directory: 目录路径
@@ -102,7 +102,7 @@ class PlatformAdapter:
             return False
 
     def get_file_encoding(self) -> str:
-        """获取平台特定的文件编码
+        """获取平台特定的文件编码.
 
         Returns:
             文件编码
@@ -115,7 +115,7 @@ class PlatformAdapter:
         return "utf-8"
 
     def get_console_encoding(self) -> str:
-        """获取控制台编码
+        """获取控制台编码.
 
         Returns:
             控制台编码
@@ -136,7 +136,7 @@ class PlatformAdapter:
             return "utf-8"
 
     def is_admin(self) -> bool:
-        """检查是否以管理员权限运行
+        """检查是否以管理员权限运行.
 
         Returns:
             是否以管理员权限运行
@@ -154,7 +154,7 @@ class PlatformAdapter:
                 return False
 
     def get_process_priority(self) -> int:
-        """获取进程优先级
+        """获取进程优先级.
 
         Returns:
             进程优先级
@@ -182,7 +182,7 @@ class PlatformAdapter:
                 return 0
 
     def set_process_priority(self, priority: int) -> bool:
-        """设置进程优先级
+        """设置进程优先级.
 
         Args:
             priority: 优先级
@@ -214,7 +214,7 @@ class PlatformAdapter:
                 return False
 
     def get_platform_specific_handlers(self) -> dict[str, Callable[..., Any]]:
-        """获取平台特定的处理器
+        """获取平台特定的处理器.
 
         Returns:
             平台特定的处理器字典
@@ -238,7 +238,7 @@ class PlatformAdapter:
         return handlers
 
     def _get_windows_file_handler(self, filename: str, level: int) -> logging.Handler:
-        """获取 Windows 文件处理器
+        """获取 Windows 文件处理器.
 
         Args:
             filename: 文件名
@@ -261,7 +261,7 @@ class PlatformAdapter:
         )
 
     def _get_unix_file_handler(self, filename: str, level: int) -> logging.Handler:
-        """获取 Unix 文件处理器
+        """获取 Unix 文件处理器.
 
         Args:
             filename: 文件名
@@ -286,7 +286,7 @@ class PlatformAdapter:
         )
 
     def _get_windows_console_handler(self, level: int) -> logging.Handler:
-        """获取 Windows 控制台处理器
+        """获取 Windows 控制台处理器.
 
         Args:
             level: 日志级别
@@ -300,7 +300,7 @@ class PlatformAdapter:
         return cast("logging.Handler", SafeStreamHandler(sys.stdout))
 
     def _get_unix_console_handler(self, level: int) -> logging.Handler:
-        """获取 Unix 控制台处理器
+        """获取 Unix 控制台处理器.
 
         Args:
             level: 日志级别
@@ -314,7 +314,7 @@ class PlatformAdapter:
         return cast("logging.Handler", SafeStreamHandler(sys.stdout))
 
     def get_platform_optimizations(self) -> dict[str, Any]:
-        """获取平台特定的优化策略
+        """获取平台特定的优化策略.
 
         Returns:
             优化策略
@@ -368,7 +368,7 @@ _platform_adapter: PlatformAdapter | None = None
 
 
 def get_platform_adapter() -> PlatformAdapter:
-    """获取平台适配器实例
+    """获取平台适配器实例.
 
     Returns:
         平台适配器实例
@@ -381,7 +381,7 @@ def get_platform_adapter() -> PlatformAdapter:
 
 
 def get_platform_info() -> dict[str, Any]:
-    """获取平台信息
+    """获取平台信息.
 
     Returns:
         平台信息字典
@@ -392,7 +392,7 @@ def get_platform_info() -> dict[str, Any]:
 
 
 def get_log_directory() -> str:
-    """获取平台特定的日志目录
+    """获取平台特定的日志目录.
 
     Returns:
         日志目录路径
@@ -403,7 +403,7 @@ def get_log_directory() -> str:
 
 
 def ensure_log_directory() -> bool:
-    """确保日志目录存在
+    """确保日志目录存在.
 
     Returns:
         是否成功
@@ -415,7 +415,7 @@ def ensure_log_directory() -> bool:
 
 
 def get_platform_specific_handlers() -> dict[str, Callable[..., Any]]:
-    """获取平台特定的处理器
+    """获取平台特定的处理器.
 
     Returns:
         平台特定的处理器字典
@@ -426,7 +426,7 @@ def get_platform_specific_handlers() -> dict[str, Callable[..., Any]]:
 
 
 def get_platform_optimizations() -> dict[str, Any]:
-    """获取平台特定的优化策略
+    """获取平台特定的优化策略.
 
     Returns:
         优化策略

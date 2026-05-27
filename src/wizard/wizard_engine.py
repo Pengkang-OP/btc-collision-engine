@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""向导引擎
+"""向导引擎.
 
 协调各选择器工作，实现完整的交互式引导流程。
 """
@@ -30,7 +30,7 @@ logger = get_configured_logger(__name__)
 
 
 class WizardEngine:
-    """向导引擎
+    """向导引擎.
 
     协调各选择器工作，实现完整的交互式引导流程。
 
@@ -49,7 +49,7 @@ class WizardEngine:
         config: WizardConfig | None = None,
         message_queue: WizardMessageQueue | None = None,
     ):
-        """初始化向导引擎
+        """初始化向导引擎.
 
         Args:
             config: 向导配置，默认使用标准配置
@@ -71,7 +71,7 @@ class WizardEngine:
         }
 
     def run(self) -> WizardResult:
-        """运行向导
+        """运行向导.
 
         Returns:
             WizardResult: 向导结果
@@ -108,7 +108,7 @@ class WizardEngine:
         return self.result
 
     def _show_intro(self):
-        """显示引导介绍"""
+        """显示引导介绍."""
         print()
         print("─" * 60)
         print("  BTC碰撞引擎 - 交互式向导")
@@ -120,38 +120,38 @@ class WizardEngine:
         time.sleep(0.5)
 
     def _select_target(self):
-        """选择目标地址"""
+        """选择目标地址."""
         selector = TargetSelector()
         targets = selector.select([])  # 存根：传入空列表，返回空列表
         self.result.targets = targets
         self.message_queue.send({"event": "target_selected", "targets": targets})
 
     def _select_mode(self):
-        """选择碰撞模式"""
+        """选择碰撞模式."""
         selector = ModeSelector()
         mode = selector.select([])  # 存根：传入空列表，返回空字符串
         self.result.mode = mode
         self.message_queue.send({"event": "mode_selected", "mode": mode})
 
     def _select_options(self):
-        """选择功能选项"""
+        """选择功能选项."""
         selector = OptionSelector()
         # 存根：传入空列表和空 key，返回 None，使用默认值
         _ = selector.select([], "")
         self.message_queue.send({"event": "options_selected"})
 
     def _select_gpu(self):
-        """选择GPU设备"""
+        """选择GPU设备."""
         selector = GPUSelector()
         gpu_indices = selector.select([])
         self.result.gpu_indices = gpu_indices
         self.result.use_multi_gpu = len(gpu_indices) > 1
         self.message_queue.send(
-            {"event": "gpu_selected", "gpu_indices": gpu_indices, "multi_gpu": len(gpu_indices) > 1}
+            {"event": "gpu_selected", "gpu_indices": gpu_indices, "multi_gpu": len(gpu_indices) > 1},
         )
 
     def _build_config(self):
-        """构建配置"""
+        """构建配置."""
         builder = ConfigBuilder()
         try:
             command = builder.build(self.result.to_dict())
@@ -162,7 +162,7 @@ class WizardEngine:
         self.message_queue.send({"event": "config_built", "command": command})
 
     def _complete(self):
-        """向导完成"""
+        """向导完成."""
         self.result.success = True
         self.message_queue.send({"event": "wizard_complete", "result": self.result.to_dict()})
 
@@ -179,21 +179,21 @@ class WizardEngine:
         self._execute()
 
     def _cancelled(self):
-        """向导取消"""
+        """向导取消."""
         self.result.success = False
         self.result.error_message = "用户取消"
         self.message_queue.send({"event": "wizard_cancelled"})
         print("\n\n[INFO] 向导已取消")
 
     def _error(self, error_message: str):
-        """向导出错"""
+        """向导出错."""
         self.result.success = False
         self.result.error_message = error_message
         self.message_queue.send({"event": "wizard_error", "error": error_message})
         print(f"\n\n[ERROR] 向导出错: {error_message}")
 
     def _show_summary(self):
-        """显示配置摘要"""
+        """显示配置摘要."""
         print()
         print("╭" + "─" * 58 + "╮")
         print("│" + " " * 15 + "启动配置" + " " * 33 + "│")
@@ -219,7 +219,7 @@ class WizardEngine:
         print("╰" + "─" * 58 + "╯")
 
     def _execute(self):
-        """执行生成的命令"""
+        """执行生成的命令."""
         if not self.result.command:
             print("[ERROR] 没有可执行的命令")
             return
@@ -239,15 +239,15 @@ class WizardEngine:
             print(f"[ERROR] 执行失败: {e}")
 
     def stop(self):
-        """停止向导"""
+        """停止向导."""
         self._running = False
 
     def is_running(self) -> bool:
-        """检查向导是否正在运行"""
+        """检查向导是否正在运行."""
         return self._running
 
     def register_step_handler(self, step_name: str, handler: Callable[..., Any]) -> None:
-        """注册步骤处理器
+        """注册步骤处理器.
 
         Args:
             step_name: 步骤名称
@@ -257,12 +257,12 @@ class WizardEngine:
         self._step_handlers[step_name] = handler
 
     def unregister_step_handler(self, step_name: str) -> None:
-        """取消注册步骤处理器"""
+        """取消注册步骤处理器."""
         self._step_handlers.pop(step_name, None)
 
 
 def main() -> int:
-    """独立运行向导"""
+    """独立运行向导."""
     import argparse
 
     parser = argparse.ArgumentParser(description="BTC碰撞引擎 - 交互式向导")

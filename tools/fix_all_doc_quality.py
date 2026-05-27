@@ -1,4 +1,4 @@
-"""批量修复所有文档的代码块语言缺失问题"""
+"""批量修复所有文档的代码块语言缺失问题."""
 
 import re
 from pathlib import Path

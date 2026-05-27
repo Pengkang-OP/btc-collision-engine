@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""BTC 碰撞引擎 - 统一测试运行器
+"""BTC 碰撞引擎 - 统一测试运行器.
 
 用法:
     python run_all_tests.py                    # 运行全部测试
@@ -88,7 +88,7 @@ TEST_SUITES = {
 
 
 def run_pytest(test_files, extra_args=None, verbose=True):
-    """运行 pytest 测试"""
+    """运行 pytest 测试."""
     args = [sys.executable, "-m", "pytest"]
     if verbose:
         args.append("-v")
@@ -99,7 +99,7 @@ def run_pytest(test_files, extra_args=None, verbose=True):
 
 
 def print_header(title):
-    """打印带格式的标题"""
+    """打印带格式的标题."""
     print()
     print("=" * 70)
     print(f"  {title}")
@@ -108,7 +108,7 @@ def print_header(title):
 
 
 def print_summary(results):
-    """打印测试摘要"""
+    """打印测试摘要."""
     print()
     print("=" * 70)
     print("  测试结果摘要")
@@ -133,7 +133,7 @@ def print_summary(results):
 
 
 def _select_test_files(args) -> list:
-    """根据命令行参数选择要运行的测试文件列表。"""
+    """根据命令行参数选择要运行的测试文件列表。."""
     if args.smoke:
         return TEST_SUITES["smoke"]
     if args.unit:
@@ -172,7 +172,7 @@ def _select_test_files(args) -> list:
 
 
 def _build_pytest_args(args) -> list:
-    """构建 pytest 额外参数列表。"""
+    """构建 pytest 额外参数列表。."""
     extra_args = []
     if args.ci:
         extra_args.extend(["--cov=src", "--cov-report=term-missing", "--cov-report=xml"])

@@ -1,4 +1,4 @@
-"""GPU 模块配置数据结构
+"""GPU 模块配置数据结构.
 
 定义类型安全的配置 dataclass，替代嵌套 dict 配置传递模式。
 提供从 dict 构造和从默认值构造的工厂方法。
@@ -17,7 +17,7 @@ from typing import Any
 
 @dataclass
 class GPURecoveryConfig:
-    """GPU 恢复管理器配置
+    """GPU 恢复管理器配置.
 
     控制 GPU 故障后的自动恢复行为。
     """
@@ -29,7 +29,7 @@ class GPURecoveryConfig:
 
     @classmethod
     def from_dict(cls, d: dict[str, Any] | None = None) -> "GPURecoveryConfig":
-        """从 dict 构造（兼容旧接口）"""
+        """从 dict 构造（兼容旧接口）."""
         if not d:
             return cls()
         return cls(
@@ -42,7 +42,7 @@ class GPURecoveryConfig:
 
 @dataclass
 class DataMonitorConfig:
-    """数据监控器配置
+    """数据监控器配置.
 
     兼容 DataMonitor 的所有配置项，支持 dict-like .get() 访问。
     """
@@ -58,12 +58,12 @@ class DataMonitorConfig:
     anomaly_threshold: float = 0.1
 
     def get(self, key: str, default: Any = None) -> Any:
-        """dict-like 访问（兼容旧 DataMonitor 代码）"""
+        """dict-like 访问（兼容旧 DataMonitor 代码）."""
         return getattr(self, key, default)
 
     @classmethod
     def from_dict(cls, d: dict[str, Any] | None = None) -> "DataMonitorConfig":
-        """从 dict 构造"""
+        """从 dict 构造."""
         if not d:
             return cls()
         return cls(
@@ -81,7 +81,7 @@ class DataMonitorConfig:
 
 @dataclass
 class MultiGPUConfig:
-    """多 GPU 引擎配置
+    """多 GPU 引擎配置.
 
     所有可配置参数集中在 dataclass 中，提供类型安全和 IDE 自动补全。
     替代原来的 `config: Dict` 嵌套字典传递模式。
@@ -113,7 +113,7 @@ class MultiGPUConfig:
 
     @classmethod
     def from_dict(cls, d: dict[str, Any] | None = None) -> "MultiGPUConfig":
-        """从 dict 构造（兼容旧接口，渐进式迁移用）
+        """从 dict 构造（兼容旧接口，渐进式迁移用）.
 
         Args:
             d: 旧版配置字典，为 None 时使用所有默认值
@@ -140,7 +140,7 @@ class MultiGPUConfig:
 
 @dataclass
 class WorkerConfig:
-    """单个 GPU 工作器配置
+    """单个 GPU 工作器配置.
 
     Attributes:
         batch_size: 批次大小 (None 表示自动计算)
@@ -155,7 +155,7 @@ class WorkerConfig:
 
     @classmethod
     def from_dict(cls, d: dict[str, Any] | None = None) -> "WorkerConfig":
-        """从 dict 构造（兼容旧接口）"""
+        """从 dict 构造（兼容旧接口）."""
         if not d:
             return cls()
         return cls(
@@ -165,7 +165,7 @@ class WorkerConfig:
         )
 
     def to_dict(self) -> dict[str, Any]:
-        """转换回 dict（兼容需要 dict 的旧接口）"""
+        """转换回 dict（兼容需要 dict 的旧接口）."""
         result: dict[str, Any] = {
             "batch_size": self.batch_size,
             "work_group_size": self.work_group_size,

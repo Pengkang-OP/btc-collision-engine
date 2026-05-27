@@ -1,4 +1,4 @@
-"""多GPU并发场景测试
+"""多GPU并发场景测试.
 
 验证多线程环境下的线程安全性和锁机制正确性。
 """
@@ -13,17 +13,17 @@ pytestmark = pytest.mark.gpu
 
 
 class TestConcurrentAccess:
-    """测试并发访问场景"""
+    """测试并发访问场景."""
 
     def test_concurrent_state_access(self):
-        """测试并发状态访问"""
+        """测试并发状态访问."""
         from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
 
         engine = MultiGPUCollisionEngine()
         errors = []
 
         def toggle_running():
-            """并发切换运行状态"""
+            """并发切换运行状态."""
             try:
                 for _ in range(100):
                     with engine._state_lock:
@@ -43,14 +43,14 @@ class TestConcurrentAccess:
         assert len(errors) == 0, f"并发访问出错: {errors}"
 
     def test_concurrent_workers_dict_access(self):
-        """测试并发workers字典访问"""
+        """测试并发workers字典访问."""
         from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
 
         engine = MultiGPUCollisionEngine()
         errors = []
 
         def add_workers():
-            """并发添加工作器"""
+            """并发添加工作器."""
             try:
                 for i in range(50):
                     with engine._workers_lock:
@@ -60,7 +60,7 @@ class TestConcurrentAccess:
                 errors.append(str(e))
 
         def read_workers():
-            """并发读取工作器"""
+            """并发读取工作器."""
             try:
                 for _ in range(50):
                     with engine._workers_lock:
@@ -83,7 +83,7 @@ class TestConcurrentAccess:
         assert len(errors) == 0, f"并发访问出错: {errors}"
 
     def test_concurrent_start_stop(self):
-        """测试并发启动停止"""
+        """测试并发启动停止."""
         from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
 
         engine = MultiGPUCollisionEngine()
@@ -92,14 +92,14 @@ class TestConcurrentAccess:
         lock = threading.Lock()
 
         def try_start():
-            """尝试启动"""
+            """尝试启动."""
             result = engine.start(targets=set(), mode="random", total_keys=1000)
             if result:
                 with lock:
                     results["starts"] += 1
 
         def try_stop():
-            """尝试停止"""
+            """尝试停止."""
             engine.stop()
             with lock:
                 results["stops"] += 1
@@ -119,17 +119,17 @@ class TestConcurrentAccess:
 
 
 class TestThreadSafety:
-    """测试线程安全机制"""
+    """测试线程安全机制."""
 
     def test_worker_stats_thread_safety(self):
-        """测试工作器统计信息线程安全"""
+        """测试工作器统计信息线程安全."""
         from src.gpu.worker import SingleGPUWorker
 
         worker = SingleGPUWorker(device_idx=0, key_range=(0, 1000), targets=set(), config={})
         errors = []
 
         def update_stats():
-            """并发更新统计"""
+            """并发更新统计."""
             try:
                 for _ in range(100):
                     with worker._lock:
@@ -139,7 +139,7 @@ class TestThreadSafety:
                 errors.append(str(e))
 
         def read_stats():
-            """并发读取统计"""
+            """并发读取统计."""
             try:
                 for _ in range(100):
                     stats = worker.get_stats()
@@ -166,7 +166,7 @@ class TestThreadSafety:
         assert final_stats["keys_checked"] == 500  # 5线程 × 100次
 
     def test_worker_event_control(self):
-        """测试工作器事件控制"""
+        """测试工作器事件控制."""
         from src.gpu.worker import SingleGPUWorker
 
         worker = SingleGPUWorker(device_idx=0, key_range=(0, 1000), targets=set(), config={})
@@ -185,10 +185,10 @@ class TestThreadSafety:
 
 
 class TestResourceCleanup:
-    """测试资源清理机制"""
+    """测试资源清理机制."""
 
     def test_cleanup_idempotent(self):
-        """测试清理操作的幂等性"""
+        """测试清理操作的幂等性."""
         from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
 
         engine = MultiGPUCollisionEngine()
@@ -208,7 +208,7 @@ class TestResourceCleanup:
         assert len(engine.workers) == 0
 
     def test_context_manager_cleanup(self):
-        """测试上下文管理器自动清理"""
+        """测试上下文管理器自动清理."""
         from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
 
         with MultiGPUCollisionEngine() as engine:
@@ -220,7 +220,7 @@ class TestResourceCleanup:
         assert not engine._initialized
 
     def test_del_cleanup(self):
-        """测试析构函数清理"""
+        """测试析构函数清理."""
         from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
 
         engine = MultiGPUCollisionEngine()
@@ -235,10 +235,10 @@ class TestResourceCleanup:
 
 
 class TestDeadlockPrevention:
-    """测试死锁预防"""
+    """测试死锁预防."""
 
     def test_no_deadlock_on_rapid_start_stop(self):
-        """测试快速启动停止不会死锁"""
+        """测试快速启动停止不会死锁."""
         from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
 
         engine = MultiGPUCollisionEngine()
@@ -268,7 +268,7 @@ class TestDeadlockPrevention:
         deadlock_detected = [False]
 
         def operation():
-            """执行操作"""
+            """执行操作."""
             try:
                 for _ in range(20):
                     engine.start(targets=set(), mode="random", total_keys=100)

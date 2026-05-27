@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""日志配置管理 (LoggingConfig) 单元测试
+"""日志配置管理 (LoggingConfig) 单元测试.
 
 覆盖：
 - LoggingConfig 单例与初始化
@@ -26,7 +26,7 @@ import pytest
 
 @pytest.fixture
 def reset_logging_config():
-    """每个测试前后重置 LoggingConfig 单例，并清理 root logger handlers"""
+    """每个测试前后重置 LoggingConfig 单例，并清理 root logger handlers."""
     from src.utils.logging_config import LoggingConfig
 
     # 保存原始 root logger 状态
@@ -57,7 +57,7 @@ def reset_logging_config():
 
 @pytest.fixture
 def temp_log_dir():
-    """临时日志目录（自动清理前关闭日志处理器，避免 Windows 文件锁定）"""
+    """临时日志目录（自动清理前关闭日志处理器，避免 Windows 文件锁定）."""
     tmpdir = tempfile.mkdtemp()
     yield tmpdir
     # 关闭所有 root logger handlers，释放文件句柄
@@ -82,7 +82,7 @@ def temp_log_dir():
 
 @pytest.mark.unit
 class TestLoggingConfigSingleton:
-    """单例模式测试"""
+    """单例模式测试."""
 
     def test_singleton_returns_same_instance(self, reset_logging_config):
         from src.utils.logging_config import LoggingConfig
@@ -126,7 +126,7 @@ class TestLoggingConfigSingleton:
         assert config["enable_console"] is False
 
     def test_init_idempotent(self, reset_logging_config):
-        """重复 init() 不应报错"""
+        """重复 init() 不应报错."""
         from src.utils.logging_config import LoggingConfig
 
         lc = LoggingConfig()
@@ -152,7 +152,7 @@ class TestLoggingConfigSingleton:
 
 @pytest.mark.unit
 class TestLoggingConfigGet:
-    """配置获取测试"""
+    """配置获取测试."""
 
     def test_get_config_returns_dict(self, reset_logging_config):
         from src.utils.logging_config import LoggingConfig
@@ -178,7 +178,7 @@ class TestLoggingConfigGet:
 
 @pytest.mark.unit
 class TestDiskSpaceCheck:
-    """磁盘空间检查测试"""
+    """磁盘空间检查测试."""
 
     def test_check_disk_space_sufficient(self, reset_logging_config):
         from src.utils.logging_config import LoggingConfig
@@ -190,7 +190,7 @@ class TestDiskSpaceCheck:
         assert result is True
 
     def test_check_disk_space_insufficient(self, reset_logging_config):
-        """mock磁盘空间不足场景，不依赖真实磁盘"""
+        """mock磁盘空间不足场景，不依赖真实磁盘."""
         from src.utils.logging_config import LoggingConfig
 
         lc = LoggingConfig()
@@ -206,7 +206,7 @@ class TestDiskSpaceCheck:
             assert result is False
 
     def test_check_disk_space_with_shutil(self, reset_logging_config):
-        """Mock shutil.disk_usage 模拟磁盘空间"""
+        """Mock shutil.disk_usage 模拟磁盘空间."""
         from src.utils.logging_config import LoggingConfig
 
         lc = LoggingConfig()
@@ -228,7 +228,7 @@ class TestDiskSpaceCheck:
 
 @pytest.mark.unit
 class TestSafeRotatingFileHandler:
-    """安全日志轮转测试"""
+    """安全日志轮转测试."""
 
     def test_creates_handler(self, temp_log_dir, reset_logging_config):
         from src.utils.logging_config import SafeRotatingFileHandler
@@ -239,7 +239,7 @@ class TestSafeRotatingFileHandler:
         handler.close()
 
     def test_doRollover_windows_retry(self, temp_log_dir, reset_logging_config):
-        """Windows 下 doRollover 重试不会崩溃"""
+        """Windows 下 doRollover 重试不会崩溃."""
         from src.utils.logging_config import SafeRotatingFileHandler
 
         log_file = os.path.join(temp_log_dir, "test_retry.log")
@@ -254,7 +254,7 @@ class TestSafeRotatingFileHandler:
         handler.close()
 
     def test_non_windows_uses_parent_doRollover(self, temp_log_dir, reset_logging_config):
-        """非 Windows 平台走父类 doRollover"""
+        """非 Windows 平台走父类 doRollover."""
         if sys.platform == "win32":
             pytest.skip("当前平台为 Windows，测试不适用")
         from src.utils.logging_config import SafeRotatingFileHandler
@@ -272,10 +272,10 @@ class TestSafeRotatingFileHandler:
 
 @pytest.mark.unit
 class TestLoggingInitFunctions:
-    """初始化函数测试"""
+    """初始化函数测试."""
 
     def test_init_logging_returns_none(self, reset_logging_config):
-        """init_logging() 返回 None（无返回值）"""
+        """init_logging() 返回 None（无返回值）."""
         from src.utils import init_logging
 
         result = init_logging()
@@ -303,7 +303,7 @@ class TestLoggingInitFunctions:
 
 @pytest.mark.unit
 class TestLoggingConfigIntegration:
-    """集成测试"""
+    """集成测试."""
 
     def test_full_init_workflow(self, reset_logging_config, temp_log_dir):
         from src.utils.logging_config import LoggingConfig

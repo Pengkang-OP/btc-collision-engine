@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""P2SH和Bech32地址生成专项测试
+"""P2SH和Bech32地址生成专项测试.
 
 测试BL-3/BR-1修复：添加P2SH和Bech32地址格式支持
 """
@@ -13,10 +13,10 @@ from src.core.bitcoin_key_validator import AddressType, BitcoinKeyValidator, Key
 
 
 class TestP2SHAddressGeneration:
-    """P2SH地址生成测试"""
+    """P2SH地址生成测试."""
 
     def test_p2sh_address_format(self):
-        """测试P2SH地址格式（以'3'开头）"""
+        """测试P2SH地址格式（以'3'开头）."""
         # 使用测试公钥（压缩格式）
         test_public_key = bytes.fromhex(
             "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
@@ -32,7 +32,7 @@ class TestP2SHAddressGeneration:
         print(f"\n[OK] P2SH地址生成成功: {address}")
 
     def test_p2sh_address_deterministic(self):
-        """测试P2SH地址生成的确定性（相同公钥生成相同地址）"""
+        """测试P2SH地址生成的确定性（相同公钥生成相同地址）."""
         test_public_key = bytes.fromhex(
             "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
         )
@@ -44,7 +44,7 @@ class TestP2SHAddressGeneration:
         print(f"\n[OK] P2SH地址确定性验证通过: {address1}")
 
     def test_p2sh_different_public_keys(self):
-        """测试不同公钥生成不同的P2SH地址"""
+        """测试不同公钥生成不同的P2SH地址."""
         public_key1 = bytes.fromhex("0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798")
         public_key2 = bytes.fromhex("02c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5")
 
@@ -57,7 +57,7 @@ class TestP2SHAddressGeneration:
         print(f"  公钥2 -> {address2}")
 
     def test_p2sh_with_compressed_and_uncompressed(self):
-        """测试压缩和未压缩公钥生成不同的P2SH地址"""
+        """测试压缩和未压缩公钥生成不同的P2SH地址."""
         # 压缩公钥（33字节）
         compressed_key = bytes.fromhex(
             "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
@@ -80,7 +80,7 @@ class TestP2SHAddressGeneration:
         print(f"  未压缩公钥 -> {address_uncompressed}")
 
     def test_p2sh_address_validation(self):
-        """测试P2SH地址的Base58Check校验"""
+        """测试P2SH地址的Base58Check校验."""
         test_public_key = bytes.fromhex(
             "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
         )
@@ -109,10 +109,10 @@ class TestP2SHAddressGeneration:
 
 
 class TestBech32AddressGeneration:
-    """Bech32地址生成测试"""
+    """Bech32地址生成测试."""
 
     def test_bech32_address_format(self):
-        """测试Bech32地址格式（以'bc1'开头）"""
+        """测试Bech32地址格式（以'bc1'开头）."""
         # 使用测试公钥（压缩格式）
         test_public_key = bytes.fromhex(
             "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
@@ -128,7 +128,7 @@ class TestBech32AddressGeneration:
         print(f"\n[OK] Bech32地址生成成功: {address}")
 
     def test_bech32_address_deterministic(self):
-        """测试Bech32地址生成的确定性"""
+        """测试Bech32地址生成的确定性."""
         test_public_key = bytes.fromhex(
             "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
         )
@@ -140,7 +140,7 @@ class TestBech32AddressGeneration:
         print(f"\n[OK] Bech32地址确定性验证通过: {address1}")
 
     def test_bech32_different_public_keys(self):
-        """测试不同公钥生成不同的Bech32地址"""
+        """测试不同公钥生成不同的Bech32地址."""
         public_key1 = bytes.fromhex("0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798")
         public_key2 = bytes.fromhex("02c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5")
 
@@ -153,7 +153,7 @@ class TestBech32AddressGeneration:
         print(f"  公钥2 -> {address2}")
 
     def test_bech32_rejects_uncompressed_key(self):
-        """测试Bech32地址拒绝未压缩公钥"""
+        """测试Bech32地址拒绝未压缩公钥."""
         # 未压缩公钥（65字节）
         uncompressed_key = bytes.fromhex(
             "0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
@@ -167,7 +167,7 @@ class TestBech32AddressGeneration:
         print("\n[OK] Bech32拒绝未压缩公钥验证通过")
 
     def test_bech32_testnet_address(self):
-        """测试Testnet Bech32地址生成（以'tb1'开头）"""
+        """测试Testnet Bech32地址生成（以'tb1'开头）."""
         test_public_key = bytes.fromhex(
             "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
         )
@@ -182,7 +182,7 @@ class TestBech32AddressGeneration:
         print(f"\n[OK] Testnet Bech32地址生成成功: {address}")
 
     def test_bech32_checksum_validation(self):
-        """测试Bech32校验和验证"""
+        """测试Bech32校验和验证."""
         test_public_key = bytes.fromhex(
             "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
         )
@@ -201,10 +201,10 @@ class TestBech32AddressGeneration:
 
 
 class TestAddressTypeDetection:
-    """地址类型识别测试"""
+    """地址类型识别测试."""
 
     def test_detect_p2pkh_address(self):
-        """测试识别P2PKH地址（以'1'开头）"""
+        """测试识别P2PKH地址（以'1'开头）."""
         address = "12ib7dApVFvg82TXKycWBNpN8kFyiAN1dr"
 
         # 手动检测地址类型
@@ -221,7 +221,7 @@ class TestAddressTypeDetection:
         print(f"\n[OK] P2PKH地址识别成功: {address}")
 
     def test_detect_p2sh_address(self):
-        """测试识别P2SH地址（以'3'开头）"""
+        """测试识别P2SH地址（以'3'开头）."""
         # 使用生成的P2SH地址
         test_public_key = bytes.fromhex(
             "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
@@ -242,7 +242,7 @@ class TestAddressTypeDetection:
         print(f"\n[OK] P2SH地址识别成功: {address}")
 
     def test_detect_bech32_address(self):
-        """测试识别Bech32地址（以'bc1'开头）"""
+        """测试识别Bech32地址（以'bc1'开头）."""
         # 使用生成的Bech32地址
         test_public_key = bytes.fromhex(
             "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
@@ -264,10 +264,10 @@ class TestAddressTypeDetection:
 
 
 class TestAddressGenerationIntegration:
-    """地址生成集成测试"""
+    """地址生成集成测试."""
 
     def test_all_address_types_from_same_key(self):
-        """测试从同一私钥生成所有地址类型"""
+        """测试从同一私钥生成所有地址类型."""
         # 使用私钥（32字节）
         test_private_key = bytes.fromhex(
             "0000000000000000000000000000000000000000000000000000000000000001",
@@ -301,7 +301,7 @@ class TestAddressGenerationIntegration:
         print(f"  Bech32: {bech32_address}")
 
     def test_known_test_vectors(self):
-        """测试已知的测试向量"""
+        """测试已知的测试向量."""
         # 使用已知私钥
         known_private_key = bytes.fromhex(
             "0000000000000000000000000000000000000000000000000000000000000001",

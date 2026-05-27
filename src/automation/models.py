@@ -1,4 +1,4 @@
-"""数据模型定义"""
+"""数据模型定义."""
 
 import json
 import pathlib
@@ -9,7 +9,7 @@ from typing import Any
 
 
 class SystemStatus(Enum):
-    """系统运行状态"""
+    """系统运行状态."""
 
     IDLE = "idle"
     ANALYZING = "analyzing"
@@ -22,7 +22,7 @@ class SystemStatus(Enum):
 
 
 class Severity(Enum):
-    """问题严重级别"""
+    """问题严重级别."""
 
     CRITICAL = "critical"
     HIGH = "high"
@@ -33,7 +33,7 @@ class Severity(Enum):
 
 @dataclass
 class Issue:
-    """问题描述"""
+    """问题描述."""
 
     id: str
     severity: Severity
@@ -61,7 +61,7 @@ class Issue:
 
 @dataclass
 class AnalysisReport:
-    """数据分析报告"""
+    """数据分析报告."""
 
     report_id: str
     timestamp: datetime
@@ -97,7 +97,7 @@ class AnalysisReport:
 
 @dataclass
 class TestCase:
-    """测试用例"""
+    """测试用例."""
 
     id: str
     name: str
@@ -111,7 +111,7 @@ class TestCase:
 
 @dataclass
 class TestResult:
-    """测试结果"""
+    """测试结果."""
 
     test_id: str
     test_name: str
@@ -141,7 +141,7 @@ class TestResult:
 
 @dataclass
 class TestSuiteResult:
-    """测试套件结果"""
+    """测试套件结果."""
 
     suite_id: str
     total: int
@@ -165,7 +165,7 @@ class TestSuiteResult:
 
 @dataclass
 class AuditRule:
-    """审核规则"""
+    """审核规则."""
 
     id: str
     name: str
@@ -177,7 +177,7 @@ class AuditRule:
 
 @dataclass
 class AuditResult:
-    """审核结果"""
+    """审核结果."""
 
     audit_id: str
     timestamp: datetime
@@ -223,7 +223,7 @@ class AuditResult:
 
 @dataclass
 class LoopState:
-    """闭环状态"""
+    """闭环状态."""
 
     iteration: int
     current_phase: SystemStatus

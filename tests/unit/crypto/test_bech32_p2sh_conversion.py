@@ -1,4 +1,4 @@
-"""Bech32/P2SH地址转换单元测试
+"""Bech32/P2SH地址转换单元测试.
 
 测试范围:
 - P2SH地址转换（5个用例）
@@ -16,14 +16,14 @@ from src.collision.targets.resolver import TargetResolver
 
 
 class TestP2SHAddressConversion:
-    """P2SH地址转换测试"""
+    """P2SH地址转换测试."""
 
     def setup_method(self):
-        """每个测试方法前执行"""
+        """每个测试方法前执行."""
         self.resolver = TargetResolver(enable_cache=True)
 
     def test_valid_p2sh_address_conversion(self):
-        """测试P2SH地址无法转换为P2PKH（数学上不可行）"""
+        """测试P2SH地址无法转换为P2PKH（数学上不可行）."""
         # P2SH地址(3开头)使用hash160(redeemScript)，而非公钥hash160，无法直接匹配到公钥
         p2sh_address = "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy"
         result = self.resolver.resolve(p2sh_address)
@@ -31,7 +31,7 @@ class TestP2SHAddressConversion:
         assert result is None, "P2SH地址数学上无法转换为P2PKH（不同hash类型）"
 
     def test_p2sh_address_consistency(self):
-        """测试P2SH地址转换的一致性（多次转换结果相同）"""
+        """测试P2SH地址转换的一致性（多次转换结果相同）."""
         p2sh_address = "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy"
 
         result1 = self.resolver.resolve(p2sh_address)
@@ -40,7 +40,7 @@ class TestP2SHAddressConversion:
         assert result1 == result2, "同一地址多次转换结果应该一致"
 
     def test_p2sh_cache_hit(self):
-        """测试P2SH地址不会被缓存（因为返回None）"""
+        """测试P2SH地址不会被缓存（因为返回None）."""
         # P2SH地址(3开头)使用hash160(redeemScript)，数学上无法匹配公钥，resolve返回None
         # 返回None的地址不会被缓存，因此不会有缓存命中
         p2sh_address = "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy"
@@ -59,7 +59,7 @@ class TestP2SHAddressConversion:
             assert stats["hits"] == 0, "P2SH地址不被缓存，应该有0次缓存命中"
 
     def test_p2sh_invalid_checksum(self):
-        """测试P2SH地址校验和失败"""
+        """测试P2SH地址校验和失败."""
         # 修改最后一个字符使校验和失效
         invalid_p2sh = "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLX"
         result = self.resolver.resolve(invalid_p2sh)
@@ -67,7 +67,7 @@ class TestP2SHAddressConversion:
         assert result is None, "校验和失败的P2SH地址应该返回None"
 
     def test_p2sh_wrong_version(self):
-        """测试P2SH地址版本字节错误"""
+        """测试P2SH地址版本字节错误."""
         # 创建一个版本字节不是0x05的地址（理论上不会出现，但测试边界情况）
         # 这里使用一个有效的P2PKH地址，它应该被识别为address而不是p2sh_address
         p2pkh_address = "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
@@ -78,14 +78,14 @@ class TestP2SHAddressConversion:
 
 
 class TestBech32AddressConversion:
-    """Bech32地址转换测试"""
+    """Bech32地址转换测试."""
 
     def setup_method(self):
-        """每个测试方法前执行"""
+        """每个测试方法前执行."""
         self.resolver = TargetResolver(enable_cache=True)
 
     def test_valid_bech32_p2wpkh_lowercase(self):
-        """测试有效的小写Bech32 P2WPKH地址"""
+        """测试有效的小写Bech32 P2WPKH地址."""
         # 标准的P2WPKH地址（20字节witness）
         bech32_addr = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
         result = self.resolver.resolve(bech32_addr)
@@ -94,7 +94,7 @@ class TestBech32AddressConversion:
         assert result.startswith("1"), "转换结果应该是P2PKH地址（1开头）"
 
     def test_valid_bech32_p2wpkh_uppercase(self):
-        """测试有效的大写Bech32 P2WPKH地址"""
+        """测试有效的大写Bech32 P2WPKH地址."""
         # 全大写的Bech32地址
         bech32_addr = "BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4"
         result = self.resolver.resolve(bech32_addr)
@@ -103,7 +103,7 @@ class TestBech32AddressConversion:
         assert result.startswith("1"), "转换结果应该是P2PKH地址"
 
     def test_bech32_mixed_case_rejected(self):
-        """测试混合大小写Bech32地址被拒绝"""
+        """测试混合大小写Bech32地址被拒绝."""
         # 混合大小写是无效的Bech32格式
         mixed_case = "Bc1Qw508d6qejxtdg4y5r3zarvary0c5xw7kMn8P3T4"
         result = self.resolver.resolve(mixed_case)
@@ -111,7 +111,7 @@ class TestBech32AddressConversion:
         assert result is None, "混合大小写的Bech32地址应该被拒绝"
 
     def test_bech32_conversion_consistency(self):
-        """测试Bech32地址转换的一致性"""
+        """测试Bech32地址转换的一致性."""
         bech32_addr = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
 
         result1 = self.resolver.resolve(bech32_addr)
@@ -120,7 +120,7 @@ class TestBech32AddressConversion:
         assert result1 == result2, "同一Bech32地址多次转换结果应该一致"
 
     def test_bech32_cache_hit(self):
-        """测试Bech32地址缓存命中"""
+        """测试Bech32地址缓存命中."""
         bech32_addr = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
 
         # 第一次解析
@@ -135,14 +135,14 @@ class TestBech32AddressConversion:
             assert stats["hits"] >= 1, "应该有至少一次缓存命中"
 
     def test_bech32_format_detection(self):
-        """测试Bech32地址格式检测"""
+        """测试Bech32地址格式检测."""
         bech32_addr = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
         fmt = self.resolver.detect_format(bech32_addr)
 
         assert fmt == "bech32_address", f"应该识别为bech32_address，实际为{fmt}"
 
     def test_bech32_p2wsh_32bytes(self):
-        """测试P2WSH地址（32字节witness）"""
+        """测试P2WSH地址（32字节witness）."""
         # P2WSH地址使用32字节witness program
         # 这里使用一个示例地址
         bech32_addr = "bc1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3qccfmv3"
@@ -156,7 +156,7 @@ class TestBech32AddressConversion:
         assert result is None or result.startswith("1"), "P2WSH地址应该返回None或P2PKH地址"
 
     def test_bech32_p2wsh_full_conversion(self):
-        """完整测试P2WSH地址转换流程"""
+        """完整测试P2WSH地址转换流程."""
         # 真实的P2WSH地址（32字节witness program）
         p2wsh_addr = "bc1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3qccfmv3"
 
@@ -180,7 +180,7 @@ class TestBech32AddressConversion:
             assert cached == result, "缓存应该返回相同结果"
 
     def test_bech32_invalid_address(self):
-        """测试无效的Bech32地址"""
+        """测试无效的Bech32地址."""
         # 无效的Bech32地址（校验和错误）
         invalid_bech32 = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kxxxxxx"
         result = self.resolver.resolve(invalid_bech32)
@@ -190,21 +190,21 @@ class TestBech32AddressConversion:
 
 
 class TestTaprootAddressDetection:
-    """Taproot地址检测测试"""
+    """Taproot地址检测测试."""
 
     def setup_method(self):
-        """每个测试方法前执行"""
+        """每个测试方法前执行."""
         self.resolver = TargetResolver(enable_cache=True)
 
     def test_taproot_format_detection(self):
-        """测试Taproot地址格式检测"""
+        """测试Taproot地址格式检测."""
         taproot_addr = "bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jj0"
         fmt = self.resolver.detect_format(taproot_addr)
 
         assert fmt == "taproot_address", f"应该识别为taproot_address，实际为{fmt}"
 
     def test_taproot_address_not_supported(self):
-        """测试Taproot地址暂不支持（使用有效BIP-350测试向量验证完整解码路径）"""
+        """测试Taproot地址暂不支持（使用有效BIP-350测试向量验证完整解码路径）."""
         # 使用 BIP-350 官方测试向量，确保覆盖完整解码→警告→None 路径
         taproot_addr = "bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jj0"
         result = self.resolver.resolve(taproot_addr)
@@ -212,7 +212,7 @@ class TestTaprootAddressDetection:
         assert result is None, "Taproot地址当前应该返回None（暂不支持）"
 
     def test_taproot_uppercase_detection(self):
-        """测试大写Taproot地址检测"""
+        """测试大写Taproot地址检测."""
         taproot_addr = "BC1P0XLXVLHEMJA6C4DQV22UAPCTQUPFHLXM9H8Z3K2E72Q4K9HCZ7VQZK5JJ0"
         fmt = self.resolver.detect_format(taproot_addr)
 
@@ -220,31 +220,31 @@ class TestTaprootAddressDetection:
 
 
 class TestExceptionHandling:
-    """异常处理测试"""
+    """异常处理测试."""
 
     def setup_method(self):
-        """每个测试方法前执行"""
+        """每个测试方法前执行."""
         self.resolver = TargetResolver(enable_cache=True)
 
     def test_empty_input(self):
-        """测试空输入"""
+        """测试空输入."""
         result = self.resolver.resolve("")
         assert result is None, "空输入应该返回None"
 
     def test_whitespace_only_input(self):
-        """测试仅空白字符输入"""
+        """测试仅空白字符输入."""
         result = self.resolver.resolve("   ")
         assert result is None, "空白字符输入应该返回None"
 
     def test_unknown_format(self):
-        """测试未知格式"""
+        """测试未知格式."""
         unknown_input = "invalid_address_format_12345"
         result = self.resolver.resolve(unknown_input)
 
         assert result is None, "未知格式应该返回None"
 
     def test_invalid_base58_characters(self):
-        """测试无效的Base58字符"""
+        """测试无效的Base58字符."""
         # 包含0、O、I、l等无效Base58字符
         invalid_base58 = "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfO0Il"
         result = self.resolver.resolve(invalid_base58)
@@ -253,14 +253,14 @@ class TestExceptionHandling:
         assert result is None or result is not None, "无效Base58字符应该被处理（返回None或验证失败）"
 
     def test_very_long_input(self):
-        """测试超长输入"""
+        """测试超长输入."""
         long_input = "1" * 1000
         result = self.resolver.resolve(long_input)
 
         assert result is None, "超长输入应该返回None"
 
     def test_resolve_batch_with_mixed_formats(self):
-        """测试批量解析混合格式"""
+        """测试批量解析混合格式."""
         inputs = [
             "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",  # P2PKH
             "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy",  # P2SH
@@ -285,7 +285,7 @@ class TestExceptionHandling:
         assert results[""] is None
 
     def test_batch_resolve_with_errors(self):
-        """测试批量解析中包含无效地址"""
+        """测试批量解析中包含无效地址."""
         # 混合有效和无效地址
         inputs = [
             "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",  # 有效P2PKH
@@ -313,21 +313,21 @@ class TestExceptionHandling:
 
 
 class TestEdgeCases:
-    """边界情况测试"""
+    """边界情况测试."""
 
     def setup_method(self):
-        """每个测试方法前执行"""
+        """每个测试方法前执行."""
         self.resolver = TargetResolver(enable_cache=False)  # 禁用缓存测试基本功能
 
     def test_resolver_without_cache(self):
-        """测试禁用缓存的解析器"""
+        """测试禁用缓存的解析器."""
         resolver = TargetResolver(enable_cache=False)
 
         result = resolver.resolve("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
         assert result is not None, "禁用缓存也应该能正常解析"
 
     def test_p2sh_address_starting_with_3(self):
-        """测试所有以3开头的地址都被识别为P2SH"""
+        """测试所有以3开头的地址都被识别为P2SH."""
         # 这不是一个真实的P2SH地址，但应该被格式检测识别
         test_addr = "3" + "a" * 33
         fmt = self.resolver.detect_format(test_addr)
@@ -337,7 +337,7 @@ class TestEdgeCases:
         assert fmt in ["p2sh_address", "unknown"], "以3开头的地址应该被识别为p2sh_address或unknown"
 
     def test_bech32_bc1q_vs_bc1p(self):
-        """测试bc1q和bc1p的区分"""
+        """测试bc1q和bc1p的区分."""
         addr_bc1q = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
         addr_bc1p = "bc1p5d7rjq7g6rdk2yhzqv9fjyq8z5qgkz9x3m2l8c7v6b5n4m3k2h"
 
@@ -349,7 +349,7 @@ class TestEdgeCases:
         assert fmt_q != fmt_p, "bc1q和bc1p应该被区分为不同格式"
 
     def test_cache_eviction(self):
-        """测试LRU缓存淘汰策略"""
+        """测试LRU缓存淘汰策略."""
         # 创建小容量缓存（只能容纳3个地址）
         resolver = TargetResolver(enable_cache=True, cache_max_size=3)
 

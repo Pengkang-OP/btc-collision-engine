@@ -1,4 +1,4 @@
-"""P0-2: GPU 内核已知向量正确性回归测试
+"""P0-2: GPU 内核已知向量正确性回归测试.
 
 验证 OpenCL 内核中 secp256k1 椭圆曲线运算的正确性：
 - 2*G 倍乘 (verify_arithmetic 内核)
@@ -7,8 +7,6 @@
 
 测试需 GPU 可用时运行，无 GPU 或 pyopencl 未安装时自动跳过。
 """
-
-import unittest
 
 import numpy as np
 import pytest
@@ -30,7 +28,7 @@ CURVE_ORDER_N = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD03641
 
 
 def _uint256_to_int(arr) -> int:
-    """将 8 个 uint32 数组转换回 Python int (小端序)"""
+    """将 8 个 uint32 数组转换回 Python int (小端序)."""
     result = 0
     for i in range(7, -1, -1):
         result = (result << 32) | int(arr[i])
@@ -38,7 +36,7 @@ def _uint256_to_int(arr) -> int:
 
 
 def _int_to_uint256(value: int):
-    """将 Python int 转换为 8 个 uint32 小端数组"""
+    """将 Python int 转换为 8 个 uint32 小端数组."""
     arr = np.zeros(8, dtype=np.uint32)
     for i in range(8):
         arr[i] = value & 0xFFFFFFFF
@@ -47,7 +45,7 @@ def _int_to_uint256(value: int):
 
 
 def _has_opencl_gpu() -> bool:
-    """检测是否有可用的 OpenCL GPU 设备"""
+    """检测是否有可用的 OpenCL GPU 设备."""
     try:
         import pyopencl as cl
 
@@ -66,7 +64,7 @@ def _has_opencl_gpu() -> bool:
 
 
 def _get_gpu_context():
-    """获取第一个可用 GPU 的 OpenCL context 和 queue"""
+    """获取第一个可用 GPU 的 OpenCL context 和 queue."""
     import pyopencl as cl
 
     for platform in cl.get_platforms():
@@ -85,27 +83,28 @@ def _get_gpu_context():
 
 @pytest.mark.gpu_kernel
 class TestGPUKernelArithmetic:
-    """GPU 内核算术正确性回归测试"""
+    """GPU 内核算术正确性回归测试."""
 
     @classmethod
-    def setUpClass(cls):
-        """初始化 OpenCL 并编译内核"""
-        if not _has_opencl_gpu():
-            raise unittest.SkipTest("No GPU device available")
-        cls.ctx, cls.queue, cls.device = _get_gpu_context()
+    def setup_class(cls):
+        """初始化 OpenCL 并编译内核 (pytest 钩子)."""
+        try:
+            cls.ctx, cls.queue, cls.device = _get_gpu_context()
 
-        import pyopencl as cl
+            import pyopencl as cl
 
-        from src.gpu.kernel import OPENCL_KERNEL_SOURCE
+            from src.gpu.kernel import OPENCL_KERNEL_SOURCE
 
-        cls.program = cl.Program(cls.ctx, OPENCL_KERNEL_SOURCE).build()
-        cls.verify_arithmetic = cls.program.verify_arithmetic
+            cls.program = cl.Program(cls.ctx, OPENCL_KERNEL_SOURCE).build()
+            cls.verify_arithmetic = cls.program.verify_arithmetic
+        except Exception as exc:
+            pytest.skip(f"GPU not available for kernel tests: {exc}")
 
     # ── 2*G 已知向量测试 ─────────────────────
 
     @skip_if_no_gpu
     def test_two_times_G_correct_x(self):
-        """verify_arithmetic 计算的 2*G 的 X 坐标应与标准值一致"""
+        """verify_arithmetic 计算的 2*G 的 X 坐标应与标准值一致."""
         import pyopencl as cl
 
         result_x = np.zeros(8, dtype=np.uint32)
@@ -119,15 +118,13 @@ class TestGPUKernelArithmetic:
         cl.enqueue_copy(self.queue, result_x, result_x_buf)
         x_val = _uint256_to_int(result_x)
 
-        self.assertEqual(
-            x_val,
-            TWO_GX_HEX,
-            f"2*G X 坐标不匹配: GPU={hex(x_val)}, 预期={hex(TWO_GX_HEX)}",
+        assert x_val == TWO_GX_HEX, (
+            f"2*G X 坐标不匹配: GPU={hex(x_val)}, 预期={hex(TWO_GX_HEX)}"
         )
 
     @skip_if_no_gpu
     def test_two_times_G_correct_y(self):
-        """verify_arithmetic 计算的 2*G 的 Y 坐标应与标准值一致"""
+        """verify_arithmetic 计算的 2*G 的 Y 坐标应与标准值一致."""
         import pyopencl as cl
 
         result_x = np.zeros(8, dtype=np.uint32)
@@ -141,17 +138,15 @@ class TestGPUKernelArithmetic:
         cl.enqueue_copy(self.queue, result_y, result_y_buf)
         y_val = _uint256_to_int(result_y)
 
-        self.assertEqual(
-            y_val,
-            TWO_GY_HEX,
-            f"2*G Y 坐标不匹配: GPU={hex(y_val)}, 预期={hex(TWO_GY_HEX)}",
+        assert y_val == TWO_GY_HEX, (
+            f"2*G Y 坐标不匹配: GPU={hex(y_val)}, 预期={hex(TWO_GY_HEX)}"
         )
 
     # ── 基点 G 恒等式 ──────────────────────────
 
     @skip_if_no_gpu
     def test_G_point_not_infinity(self):
-        """基点 G 不应是无穷远点（坐标均非零）"""
+        """基点 G 不应是无穷远点（坐标均非零）."""
         import pyopencl as cl
 
         result_x = np.zeros(8, dtype=np.uint32)
@@ -175,7 +170,7 @@ class TestGPUKernelArithmetic:
 
     @skip_if_no_gpu
     def test_repeated_computation_consistent(self):
-        """连续两次调用应返回相同结果（无状态污染）"""
+        """连续两次调用应返回相同结果（无状态污染）."""
         import pyopencl as cl
 
         def compute_2G():
@@ -198,29 +193,29 @@ class TestGPUKernelArithmetic:
 
 @pytest.mark.gpu_kernel
 class TestGPUKernelSourceValidation:
-    """GPU 内核源码结构验证（无需 GPU 设备）"""
+    """GPU 内核源码结构验证（无需 GPU 设备）."""
 
     def test_kernel_contains_verify_arithmetic(self):
-        """内核源码应包含 verify_arithmetic 函数"""
+        """内核源码应包含 verify_arithmetic 函数."""
         from src.gpu.kernel import OPENCL_KERNEL_SOURCE
 
         assert "__kernel void verify_arithmetic" in OPENCL_KERNEL_SOURCE
 
     def test_kernel_contains_G_point(self):
-        """内核源码应包含基点 G 的坐标定义"""
+        """内核源码应包含基点 G 的坐标定义."""
         from src.gpu.kernel import OPENCL_KERNEL_SOURCE
 
         assert "GX" in OPENCL_KERNEL_SOURCE
         assert "GY" in OPENCL_KERNEL_SOURCE
 
     def test_kernel_contains_ec_point_double(self):
-        """内核源码应包含点倍乘函数 ec_point_double"""
+        """内核源码应包含点倍乘函数 ec_point_double."""
         from src.gpu.kernel import OPENCL_KERNEL_SOURCE
 
         assert "ec_point_double" in OPENCL_KERNEL_SOURCE
 
     def test_kernel_contains_secp256k1_N(self):
-        """内核源码应包含 SECP256K1_N 常量"""
+        """内核源码应包含 SECP256K1_N 常量."""
         from src.gpu.kernel import OPENCL_KERNEL_SOURCE
 
         assert "SECP256K1_N" in OPENCL_KERNEL_SOURCE

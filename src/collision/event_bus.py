@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Event bus for decoupled communication between components."""
 
 import threading
@@ -42,7 +41,7 @@ def _build_event_class_map() -> None:
             EngineErrorEvent: EventType.ENGINE_ERROR,
             EngineProgressEvent: EventType.ENGINE_PROGRESS,
             EngineStateEvent: EventType.ENGINE_STATE,
-        }
+        },
     )
 
 
@@ -226,7 +225,7 @@ class EventBus:
         """Context manager entry."""
         return self
 
-    def __exit__(self, *args: Any) -> None:
+    def __exit__(self, *args: object) -> None:
         """Context manager exit – calls stop()."""
         self.stop()
 

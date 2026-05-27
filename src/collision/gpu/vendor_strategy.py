@@ -1,4 +1,4 @@
-"""厂商优化策略工厂
+"""厂商优化策略工厂.
 
 实现策略模式，解耦GPU厂商特定优化逻辑。
 支持Intel、NVIDIA、AMD等厂商的独立优化策略。
@@ -16,14 +16,15 @@
 
 from typing import Any, cast
 
-from ...utils import get_configured_logger
+from src.utils import get_configured_logger
+
 from .protocols import GPUExecutionContext, VendorOptimizationStrategy
 
 logger = get_configured_logger(__name__)
 
 
 class IntelOptimizationStrategy:
-    """Intel GPU优化策略
+    """Intel GPU优化策略.
 
     针对Intel Arc GPU的特定优化:
     - uint32 workaround
@@ -33,7 +34,7 @@ class IntelOptimizationStrategy:
     """
 
     def apply_optimizations(self, context: GPUExecutionContext) -> dict[str, Any]:
-        """应用Intel特定优化
+        """应用Intel特定优化.
 
         v4.2.1 修复:
         - AdaptiveTimeoutManager 构造参数从 config= 改为 base_timeout= 等正确签名
@@ -44,7 +45,7 @@ class IntelOptimizationStrategy:
 
         try:
             # 1. 超时管理器
-            from ...gpu.intel_timeout_manager import AdaptiveTimeoutManager
+            from src.gpu.intel_timeout_manager import AdaptiveTimeoutManager
 
             components["timeout_manager"] = AdaptiveTimeoutManager(
                 base_timeout=30.0,
@@ -55,7 +56,7 @@ class IntelOptimizationStrategy:
             )
 
             # 2. 内存监控器
-            from ...gpu.intel_memory_monitor import IntelMemoryMonitor
+            from src.gpu.intel_memory_monitor import IntelMemoryMonitor
 
             if context.device:
                 device_info = getattr(context.device, "device_info", None)
@@ -66,13 +67,13 @@ class IntelOptimizationStrategy:
                     )
 
             # 3. Intel优化器
-            from ...gpu.intel_optimizer import IntelGPUOptimizer
+            from src.gpu.intel_optimizer import IntelGPUOptimizer
 
             intel_optimizer = IntelGPUOptimizer(device=context.device, config=context.config or {})
             components["intel_optimizer"] = intel_optimizer
 
             # 4. 应用优化并传递 engine 引用（启用 P2 组件）
-            from ...gpu.kernel import OPENCL_KERNEL_SOURCE
+            from src.gpu.kernel import OPENCL_KERNEL_SOURCE
 
             intel_optimizer.apply_optimizations(
                 {
@@ -89,7 +90,7 @@ class IntelOptimizationStrategy:
         return components
 
     def get_monitoring_components(self) -> dict[str, Any]:
-        """获取Intel监控组件"""
+        """获取Intel监控组件."""
         return {
             "memory_monitor": "IntelMemoryMonitor",
             "timeout_manager": "AdaptiveTimeoutManager",
@@ -97,7 +98,7 @@ class IntelOptimizationStrategy:
 
 
 class NvidiaOptimizationStrategy:
-    """NVIDIA GPU优化策略
+    """NVIDIA GPU优化策略.
 
     针对NVIDIA GPU的特定优化:
     - 驱动版本检测与建议
@@ -110,7 +111,7 @@ class NvidiaOptimizationStrategy:
     """
 
     def apply_optimizations(self, context: GPUExecutionContext) -> dict[str, Any]:
-        """应用NVIDIA特定优化"""
+        """应用NVIDIA特定优化."""
         components: dict[str, Any] = {}
 
         try:
@@ -118,7 +119,7 @@ class NvidiaOptimizationStrategy:
             device_info = self._extract_device_info(context)
             config = context.config or {}
 
-            from ...gpu.nvidia_optimizer import NvidiaGPUOptimizer
+            from src.gpu.nvidia_optimizer import NvidiaGPUOptimizer
 
             optimizer = NvidiaGPUOptimizer(
                 device_info=device_info,
@@ -140,7 +141,7 @@ class NvidiaOptimizationStrategy:
         return components
 
     def get_monitoring_components(self) -> dict[str, Any]:
-        """获取NVIDIA监控组件"""
+        """获取NVIDIA监控组件."""
         return {
             "driver_detector": "NvidiaDriverDetector",
             "arch_detector": "NvidiaArchDetector",
@@ -149,7 +150,7 @@ class NvidiaOptimizationStrategy:
 
     @staticmethod
     def _extract_device_info(context: GPUExecutionContext) -> dict[str, Any]:
-        """从GPUExecutionContext提取设备信息字典
+        """从GPUExecutionContext提取设备信息字典.
 
         将 GPUDevice 对象转换为 optimizers 期望的 dict 格式。
         """
@@ -168,7 +169,7 @@ class NvidiaOptimizationStrategy:
 
 
 class AMDOptimizationStrategy:
-    """AMD GPU优化策略
+    """AMD GPU优化策略.
 
     针对AMD GPU的特定优化:
     - 驱动版本检测（Adrenalin/ROCm）
@@ -182,7 +183,7 @@ class AMDOptimizationStrategy:
     """
 
     def apply_optimizations(self, context: GPUExecutionContext) -> dict[str, Any]:
-        """应用AMD特定优化"""
+        """应用AMD特定优化."""
         components: dict[str, Any] = {}
 
         try:
@@ -190,7 +191,7 @@ class AMDOptimizationStrategy:
             device_info = self._extract_device_info(context)
             config = context.config or {}
 
-            from ...gpu.amd_optimizer import AmdGPUOptimizer
+            from src.gpu.amd_optimizer import AmdGPUOptimizer
 
             optimizer = AmdGPUOptimizer(
                 device_info=device_info,
@@ -215,7 +216,7 @@ class AMDOptimizationStrategy:
         return components
 
     def get_monitoring_components(self) -> dict[str, Any]:
-        """获取AMD监控组件"""
+        """获取AMD监控组件."""
         return {
             "driver_detector": "AmdDriverDetector",
             "arch_detector": "AmdArchDetector",
@@ -225,7 +226,7 @@ class AMDOptimizationStrategy:
 
     @staticmethod
     def _extract_device_info(context: GPUExecutionContext) -> dict[str, Any]:
-        """从GPUExecutionContext提取设备信息字典
+        """从GPUExecutionContext提取设备信息字典.
 
         将 GPUDevice 对象转换为 optimizers 期望的 dict 格式。
         """
@@ -244,23 +245,23 @@ class AMDOptimizationStrategy:
 
 
 class DefaultOptimizationStrategy:
-    """默认优化策略
+    """默认优化策略.
 
     当无法识别厂商时使用的基础优化。
     """
 
     def apply_optimizations(self, context: GPUExecutionContext) -> dict[str, Any]:
-        """应用默认优化"""
+        """应用默认优化."""
         logger.info("使用默认优化策略")
         return {}
 
     def get_monitoring_components(self) -> dict[str, Any]:
-        """获取默认监控组件"""
+        """获取默认监控组件."""
         return {}
 
 
 class VendorOptimizationFactory:
-    """厂商优化策略工厂
+    """厂商优化策略工厂.
 
     根据GPU厂商创建对应的优化策略。
 
@@ -279,7 +280,7 @@ class VendorOptimizationFactory:
 
     @classmethod
     def create(cls, vendor: str) -> VendorOptimizationStrategy:
-        """创建厂商优化策略
+        """创建厂商优化策略.
 
         Args:
             vendor: 厂商标识符 ('intel', 'nvidia', 'amd')
@@ -307,7 +308,7 @@ class VendorOptimizationFactory:
 
     @classmethod
     def register(cls, vendor: str, strategy_class: type) -> None:
-        """注册新的厂商优化策略
+        """注册新的厂商优化策略.
 
         Args:
             vendor: 厂商标识符
@@ -319,7 +320,7 @@ class VendorOptimizationFactory:
 
     @classmethod
     def get_supported_vendors(cls) -> list:
-        """获取支持的厂商列表
+        """获取支持的厂商列表.
 
         Returns:
             厂商标识符列表

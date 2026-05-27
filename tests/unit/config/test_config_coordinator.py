@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""配置协调器 (ConfigCoordinator) 单元测试
+"""配置协调器 (ConfigCoordinator) 单元测试.
 
 覆盖：
 - 初始化与配置同步
@@ -25,7 +25,7 @@ from src.config.config_coordinator import ConfigCoordinator
 
 @pytest.fixture
 def _mock_config_validations():
-    """Mock 所有配置验证和保存操作，避免深层 patch 嵌套"""
+    """Mock 所有配置验证和保存操作，避免深层 patch 嵌套."""
     with (
         patch("src.config.config_manager.ConfigManager.validate", return_value=[]),
         patch("src.config.crypto_config.CryptoConfig.validate", return_value=[]),
@@ -37,7 +37,7 @@ def _mock_config_validations():
 
 @pytest.fixture
 def temp_config_file():
-    """创建临时配置文件"""
+    """创建临时配置文件."""
     config_data = {
         "collision": {"max_workers": 4, "progress_interval": 1000},
         "gpu": {
@@ -67,7 +67,7 @@ def temp_config_file():
 
 @pytest.fixture
 def coordinator(temp_config_file, _mock_config_validations):
-    """创建 ConfigCoordinator 实例"""
+    """创建 ConfigCoordinator 实例."""
     c = ConfigCoordinator(config_file=temp_config_file)
     return c
 
@@ -79,7 +79,7 @@ def coordinator(temp_config_file, _mock_config_validations):
 
 @pytest.mark.unit
 class TestConfigCoordinatorInit:
-    """初始化测试"""
+    """初始化测试."""
 
     def test_creates_config_manager(self, temp_config_file, _mock_config_validations):
         c = ConfigCoordinator(config_file=temp_config_file)
@@ -95,7 +95,7 @@ class TestConfigCoordinatorInit:
 
 @pytest.mark.unit
 class TestConfigCoordinatorGet:
-    """获取配置测试"""
+    """获取配置测试."""
 
     def test_get_existing_key(self, coordinator):
         value = coordinator.get("collision.max_workers", 1)
@@ -118,7 +118,7 @@ class TestConfigCoordinatorGet:
 
 @pytest.mark.unit
 class TestConfigCoordinatorSet:
-    """设置配置测试"""
+    """设置配置测试."""
 
     def test_set_crypto_key(self, coordinator):
         result = coordinator.set("crypto.backend", "test_value")
@@ -131,7 +131,7 @@ class TestConfigCoordinatorSet:
 
 @pytest.mark.unit
 class TestConfigCoordinatorUnified:
-    """统一配置视图测试"""
+    """统一配置视图测试."""
 
     def test_get_unified_config(self, coordinator):
         config = coordinator.get_unified_config()
@@ -144,7 +144,7 @@ class TestConfigCoordinatorUnified:
 
 @pytest.mark.unit
 class TestConfigCoordinatorValidate:
-    """验证测试"""
+    """验证测试."""
 
     def test_validate_all(self, coordinator):
         errors = coordinator.validate_all()
@@ -158,7 +158,7 @@ class TestConfigCoordinatorValidate:
 
 @pytest.mark.unit
 class TestConfigCoordinatorGPU:
-    """GPU配置测试"""
+    """GPU配置测试."""
 
     def test_get_gpu_config(self, coordinator):
         gpu_config = coordinator.get_gpu_config()

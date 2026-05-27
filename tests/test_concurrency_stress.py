@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""并发与压力测试 (Concurrency & Stress Tests)
+"""并发与压力测试 (Concurrency & Stress Tests).
 
 验证系统在高并发和极端条件下的稳定性。
 
@@ -26,10 +26,10 @@ import pytest
 
 @pytest.mark.thread_safety
 class TestEventBusConcurrency:
-    """EventBus 并发测试"""
+    """EventBus 并发测试."""
 
     def test_concurrent_publish_no_data_race(self):
-        """多线程并发发布不应有数据竞争"""
+        """多线程并发发布不应有数据竞争."""
         from src.collision.event_bus import EventBus, reset_event_bus
         from src.collision.events import EngineProgressEvent
 
@@ -73,7 +73,7 @@ class TestEventBusConcurrency:
         assert len(received) == thread_count * events_per_thread
 
     @pytest.mark.skip(
-        reason="v5.2.1: EventBus subscribe/unsubscribe API changed, concurrent test needs rewrite"
+        reason="v5.2.1: EventBus subscribe/unsubscribe API changed, concurrent test needs rewrite",
     )
     def test_concurrent_subscribe_unsubscribe(self):
         pass
@@ -86,10 +86,10 @@ class TestEventBusConcurrency:
 
 @pytest.mark.thread_safety
 class TestLogStorageConcurrency:
-    """LogStorage 并发测试"""
+    """LogStorage 并发测试."""
 
     def test_concurrent_saves(self):
-        """大量并发保存不应丢失数据"""
+        """大量并发保存不应丢失数据."""
         from src.log_engine.log_storage import LogStorage
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -105,7 +105,7 @@ class TestLogStorageConcurrency:
                                 "timestamp": idx * 1000 + i,
                                 "type": f"type_{idx}",
                                 "message": f"message_{idx}_{i}",
-                            }
+                            },
                         )
                     # 批量保存（API 期望 list[dict]）
                     s.save(items)
@@ -126,7 +126,7 @@ class TestLogStorageConcurrency:
             assert stats["total_count"] == 2000  # 8 * 250
 
     def test_concurrent_read_write(self):
-        """并发读写不应导致数据损坏"""
+        """并发读写不应导致数据损坏."""
         from src.log_engine.log_storage import LogStorage
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -177,10 +177,10 @@ class TestLogStorageConcurrency:
 
 @pytest.mark.thread_safety
 class TestLogCollectorConcurrency:
-    """LogCollector 并发测试"""
+    """LogCollector 并发测试."""
 
     def test_concurrent_collection(self):
-        """并发收集不应丢失事件"""
+        """并发收集不应丢失事件."""
         from src.log_engine.events import LogEventType
         from src.log_engine.log_collector import LogCollector
 
@@ -221,7 +221,7 @@ class TestLogCollectorConcurrency:
 
 @pytest.mark.skip(reason="v5.2.1: Observers 模块已移除")
 class TestObserverManagerConcurrency:
-    """Observers 模块已移除 - 测试跳过"""
+    """Observers 模块已移除 - 测试跳过."""
 
 
 # ============================================================================
@@ -231,10 +231,10 @@ class TestObserverManagerConcurrency:
 
 @pytest.mark.thread_safety
 class TestStressTests:
-    """压力测试"""
+    """压力测试."""
 
     def test_high_volume_events(self):
-        """高容量事件处理压力测试"""
+        """高容量事件处理压力测试."""
         from src.collision.event_bus import EventBus, reset_event_bus
         from src.collision.events import EngineProgressEvent
 
@@ -264,7 +264,7 @@ class TestStressTests:
         print(f"\n[StressTest] 10000 事件处理耗时: {elapsed:.3f}s")
 
     def test_large_log_storage(self):
-        """大量日志存储压力测试"""
+        """大量日志存储压力测试."""
         from src.log_engine.log_storage import LogStorage
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -280,7 +280,7 @@ class TestStressTests:
                         "type": "stress_test",
                         "message": f"message_{i}" + "x" * 50,
                         "data": {"index": i, "value": i * math.pi},
-                    }
+                    },
                 )
             s.save(items)
             elapsed = time.perf_counter() - start
@@ -291,7 +291,7 @@ class TestStressTests:
             print(f"\n[StressTest] 5000 日志存储耗时: {elapsed:.3f}s")
 
     def test_sustained_load(self):
-        """持续负载测试 - 模拟长时间运行"""
+        """持续负载测试 - 模拟长时间运行."""
         from src.collision.event_bus import EventBus, reset_event_bus
         from src.collision.events import EngineProgressEvent
 

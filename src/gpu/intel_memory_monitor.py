@@ -1,4 +1,4 @@
-"""Intel GPU 显存监控器
+"""Intel GPU 显存监控器.
 
 监控 GPU 显存使用情况，提供：
 1. 实时显存使用跟踪
@@ -23,7 +23,7 @@ logger = get_configured_logger("IntelMemoryMonitor")
 
 
 class MemoryStatus(Enum):
-    """显存状态枚举"""
+    """显存状态枚举."""
 
     NORMAL = "normal"  # 正常 (< 70% 限制)
     WARNING = "warning"  # 警告 (70-85% 限制)
@@ -33,7 +33,7 @@ class MemoryStatus(Enum):
 
 @dataclass
 class MemorySnapshot:
-    """显存快照"""
+    """显存快照."""
 
     timestamp: float
     allocated_bytes: int
@@ -44,7 +44,7 @@ class MemorySnapshot:
 
 
 class IntelMemoryMonitor:
-    """Intel GPU 显存监控器
+    """Intel GPU 显存监控器.
 
     针对 Intel Arc GPU 的显存管理策略。
 
@@ -68,23 +68,23 @@ class IntelMemoryMonitor:
     EMERGENCY_THRESHOLD = 0.95
 
     __slots__ = (
-        "total_memory",
-        "safe_usage_ratio",
-        "safe_limit",
-        "warning_limit",
-        "critical_limit",
-        "emergency_limit",
-        "_warning_ratio",
+        "_allocation_sizes",
         "_critical_ratio",
         "_emergency_ratio",
+        "_history",
+        "_leak_detection_window",
+        "_max_history",
+        "_warning_ratio",
+        "critical_limit",
         "current_usage",
+        "emergency_limit",
         "peak_usage",
+        "safe_limit",
+        "safe_usage_ratio",
         "total_allocations",
         "total_deallocations",
-        "_history",
-        "_max_history",
-        "_allocation_sizes",
-        "_leak_detection_window",
+        "total_memory",
+        "warning_limit",
     )
 
     def __init__(
@@ -95,7 +95,7 @@ class IntelMemoryMonitor:
         critical_threshold: float = CRITICAL_THRESHOLD,
         emergency_threshold: float = EMERGENCY_THRESHOLD,
     ) -> None:
-        """初始化显存监控器
+        """初始化显存监控器.
 
         Args:
             total_memory_bytes: GPU 总显存（字节）
@@ -137,7 +137,7 @@ class IntelMemoryMonitor:
         )
 
     def track_allocation(self, size_bytes: int, batch_count: int = 0) -> bool:
-        """跟踪显存分配
+        """跟踪显存分配.
 
         Args:
             size_bytes: 分配的字节数
@@ -179,7 +179,7 @@ class IntelMemoryMonitor:
         return True
 
     def track_deallocation(self, size_bytes: int, batch_count: int = 0) -> None:
-        """跟踪显存释放
+        """跟踪显存释放.
 
         Args:
             size_bytes: 释放的字节数
@@ -200,7 +200,7 @@ class IntelMemoryMonitor:
         )
 
     def get_status(self) -> dict:
-        """获取当前显存状态
+        """获取当前显存状态.
 
         Returns:
             包含显存状态的字典
@@ -225,7 +225,7 @@ class IntelMemoryMonitor:
         }
 
     def check_warnings(self) -> list[str]:
-        """检查并发出警告
+        """检查并发出警告.
 
         Returns:
             警告消息列表
@@ -264,7 +264,7 @@ class IntelMemoryMonitor:
         return warnings
 
     def should_reduce_batch_size(self) -> bool:
-        """判断是否应该减小 batch_size
+        """判断是否应该减小 batch_size.
 
         Returns:
             如果显存压力过大返回 True
@@ -274,7 +274,7 @@ class IntelMemoryMonitor:
         return status["status"] in [MemoryStatus.CRITICAL, MemoryStatus.EMERGENCY]
 
     def get_recommended_batch_reduction(self) -> float:
-        """获取建议的 batch_size 减少比例
+        """获取建议的 batch_size 减少比例.
 
         Returns:
             减少比例（0.0-1.0），0.0 表示不需要减少
@@ -291,7 +291,7 @@ class IntelMemoryMonitor:
         return 0.0
 
     def _detect_memory_leak(self) -> bool:
-        """检测显存泄漏
+        """检测显存泄漏.
 
         策略：如果分配次数远大于释放次数，且当前使用量持续增长
 
@@ -312,7 +312,7 @@ class IntelMemoryMonitor:
         return ratio > 3.0
 
     def _determine_status(self) -> MemoryStatus:
-        """统一的状态判断逻辑
+        """统一的状态判断逻辑.
 
         基于 safe_limit 的使用比例判断，确保 get_status() 和
         _record_snapshot() 使用完全相同的判断标准。
@@ -335,7 +335,7 @@ class IntelMemoryMonitor:
         return MemoryStatus.NORMAL
 
     def _record_snapshot(self, batch_count: int = 0) -> None:
-        """记录显存快照
+        """记录显存快照.
 
         Args:
             batch_count: 当前批次计数
@@ -360,7 +360,7 @@ class IntelMemoryMonitor:
             self._history = self._history[-self._max_history :]
 
     def get_history(self, last_n: int = 10) -> list[MemorySnapshot]:
-        """获取历史记录
+        """获取历史记录.
 
         Args:
             last_n: 获取最近 N 条记录
@@ -372,7 +372,7 @@ class IntelMemoryMonitor:
         return self._history[-last_n:]
 
     def reset(self) -> None:
-        """重置监控器状态"""
+        """重置监控器状态."""
         self.current_usage = 0
         self.peak_usage = 0
         self.total_allocations = 0
@@ -382,7 +382,7 @@ class IntelMemoryMonitor:
         logger.info("Intel 显存监控器已重置")
 
     def get_report(self) -> str:
-        """生成显存使用报告
+        """生成显存使用报告.
 
         Returns:
             格式化的报告字符串

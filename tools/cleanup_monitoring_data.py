@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""监控数据自动清理工具
+"""监控数据自动清理工具.
 
 定期清理过期的监控数据，防止磁盘空间占用过多
-"""  # noqa: T201
+"""
 
 import argparse
 import time
@@ -18,14 +18,14 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
 class MonitoringDataCleaner:
-    """监控数据清理器"""
+    """监控数据清理器."""
 
     def __init__(
         self,
         monitoring_dir: str = "monitoring_data",
         data_logs_dir: str = "data_logs",
     ):
-        """初始化清理器
+        """初始化清理器.
 
         Args:
             monitoring_dir: 监控数据目录（相对于项目根）
@@ -39,7 +39,7 @@ class MonitoringDataCleaner:
         logger.info("数据日志目录: %s", self.data_logs_dir)
 
     def cleanup_old_files(self, max_age_days: int = 30, dry_run: bool = False) -> dict:
-        """清理过期文件
+        """清理过期文件.
 
         Args:
             max_age_days: 文件最大保存天数
@@ -99,7 +99,7 @@ class MonitoringDataCleaner:
         return stats
 
     def _cleanup_directory(self, directory: Path, cutoff_time: float, dry_run: bool = False) -> dict:
-        """清理指定目录
+        """清理指定目录.
 
         Args:
             directory: 目录路径
@@ -164,7 +164,7 @@ class MonitoringDataCleaner:
         return stats
 
     def get_directory_size(self, directory: Path) -> int:
-        """获取目录总大小（字节）
+        """获取目录总大小（字节）.
 
         Args:
             directory: 目录路径
@@ -178,7 +178,7 @@ class MonitoringDataCleaner:
         return sum(f.stat().st_size for f in directory.rglob("*") if f.is_file())
 
     def get_cleanup_recommendation(self, max_age_days: int = 30) -> dict:
-        """获取清理建议
+        """获取清理建议.
 
         Args:
             max_age_days: 建议的保留天数
@@ -205,7 +205,7 @@ class MonitoringDataCleaner:
 
 
 def main():
-    """主函数"""
+    """主函数."""
     parser = argparse.ArgumentParser(description="监控数据自动清理工具")
     parser.add_argument("--max-age", type=int, default=30, help="数据最大保存天数（默认30天）")
     parser.add_argument("--dry-run", action="store_true", help="试运行模式（不实际删除文件）")

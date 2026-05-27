@@ -18,6 +18,9 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from ..i18n import t as _t
+from ..utils import get_configured_logger
+from ..utils.platform_utils import PlatformUtils
 from .constants import (
     CONFIG_EXAMPLE_FILE,
     CONFIG_FILE_NAME,
@@ -29,10 +32,6 @@ from .constants import (
 )
 from .output import CLIOutput
 from .validation import validate_file_path
-from ..i18n import t as _t
-from ..utils.platform_utils import PlatformUtils
-
-from ..utils import get_configured_logger
 
 logger = get_configured_logger(__name__)
 
@@ -54,19 +53,18 @@ PREVIEW_CONFIG: dict[str, int] = {
 
 
 def _format_file_size(size_bytes: int) -> str:
-    """格式化文件大小为可读字符串。"""
+    """格式化文件大小为可读字符串。."""
     if size_bytes < 1024:
         return f"{size_bytes} B"
-    elif size_bytes < 1024 * 1024:
+    if size_bytes < 1024 * 1024:
         return f"{size_bytes / 1024:.1f} KB"
-    elif size_bytes < 1024 * 1024 * 1024:
+    if size_bytes < 1024 * 1024 * 1024:
         return f"{size_bytes / (1024 * 1024):.1f} MB"
-    else:
-        return f"{size_bytes / (1024 * 1024 * 1024):.2f} GB"
+    return f"{size_bytes / (1024 * 1024 * 1024):.2f} GB"
 
 
 def _cmd_validate_addresses(file_path: str) -> None:
-    """--validate-addresses 命令实现：批量验证文件中所有比特币地址"""
+    """--validate-addresses 命令实现：批量验证文件中所有比特币地址."""
     # 路径安全验证：防止路径遍历攻击
     # v4.2.2 P2修复: 路径验证失败应返回非零退出码
     if not validate_file_path(file_path):
@@ -136,7 +134,7 @@ def _cmd_validate_addresses(file_path: str) -> None:
 
 
 def _cmd_examples() -> None:
-    """--examples 命令实现：显示常用使用示例（带分页）"""
+    """--examples 命令实现：显示常用使用示例（带分页）."""
     # 确保UTF-8输出
     PlatformUtils.ensure_utf8_output()
 
@@ -242,7 +240,7 @@ _CONFIG_SCHEMA_PATH = str(Path(__file__).resolve().parent.parent.parent / "confi
 
 
 def _validate_config_schema(config: dict[str, Any]) -> list[str]:
-    """使用 JSON Schema 验证 config 结构和类型。
+    """使用 JSON Schema 验证 config 结构和类型。.
 
     返回错误信息列表，空列表表示验证通过。
     若 jsonschema 库不可用，返回提示信息。
@@ -273,7 +271,7 @@ def _validate_config_schema(config: dict[str, Any]) -> list[str]:
 
 
 def _cmd_config_check() -> None:
-    """--config-check 命令实现：检查配置文件状态 (含 JSON Schema 验证)"""
+    """--config-check 命令实现：检查配置文件状态 (含 JSON Schema 验证)."""
     # 确保UTF-8输出
     PlatformUtils.ensure_utf8_output()
 
@@ -367,9 +365,10 @@ DEFAULT_TARGETS_FILE = "targets.txt"
 
 def _save_address_to_targets_file(address: str, output: CLIOutput) -> None:
     """将单个地址去重合并写入 targets.txt。
+
     - 读取现有地址，若地址已存在则跳过；否则追加到文件末尾。
     - 若文件不存在则自动创建。
-    - 使用文件锁实现跨进程安全。
+    - 使用文件锁实现跨进程安全。.
     """
     targets_path = Path(DEFAULT_TARGETS_FILE)
     lock_path = targets_path.with_suffix(".lock")
@@ -456,7 +455,7 @@ def _save_address_to_targets_file(address: str, output: CLIOutput) -> None:
 
 
 def _scan_target_file_lines(target_file: str, max_scan: int = 50000) -> tuple[int, bool]:
-    """用多编码扫描目标文件中的有效地址行数。返回 (valid_count, truncated)。"""
+    """用多编码扫描目标文件中的有效地址行数。返回 (valid_count, truncated)。."""
     valid_count = 0
     truncated = False
     for enc in ("utf-8", "gbk"):
@@ -481,7 +480,8 @@ def _handle_missing_target_file(
     target_file: str,
 ) -> tuple[list[str], str | None] | None:
     """处理目标文件不存在时的菜单交互。
-    返回 (targets, target_file) 或 None（需要继续后续流程）。
+
+    返回 (targets, target_file) 或 None（需要继续后续流程）。.
     """
     output.warning(_t("errors.file_not_found", path=target_file))
     output.print("   1. " + _t("cli.commands.create_example_file"))
@@ -524,7 +524,7 @@ def _handle_missing_target_file(
 
 
 def _quick_start_select_target(compact: bool = False) -> tuple[list[str], str | None]:
-    """步骤1: 选择目标地址来源。返回 (targets_list, target_file)
+    """步骤1: 选择目标地址来源。返回 (targets_list, target_file).
 
     Args:
         compact: 紧凑模式，跳过详细帮助信息
@@ -599,7 +599,7 @@ def _quick_start_select_target(compact: bool = False) -> tuple[list[str], str | 
 
 
 def _quick_start_select_mode(compact: bool = False) -> tuple[str, str | None, str | None]:
-    """步骤2: 选择碰撞模式。返回 (mode, start_key, end_key)
+    """步骤2: 选择碰撞模式。返回 (mode, start_key, end_key).
 
     Args:
         compact: 紧凑模式，跳过详细帮助信息
@@ -658,7 +658,7 @@ def _quick_start_select_mode(compact: bool = False) -> tuple[str, str | None, st
 
 
 def _yn_prompt(output: CLIOutput, prompt: str, _default: str = "y") -> bool:
-    """提示 yes/no，默认 Y。"""
+    """提示 yes/no，默认 Y。."""
     while True:
         val = input(f"   {prompt} (推荐: Y): ").strip().lower()
         if val == "":
@@ -669,7 +669,7 @@ def _yn_prompt(output: CLIOutput, prompt: str, _default: str = "y") -> bool:
 
 
 def _duration_prompt(output: CLIOutput) -> int:
-    """提示运行时长（天/小时/无限），返回秒数（0=无限）。"""
+    """提示运行时长（天/小时/无限），返回秒数（0=无限）。."""
     output.print("   运行时长选项:")
     output.print("   1. 无限（默认）")
     output.print("   2. 指定小时")
@@ -701,7 +701,7 @@ def _duration_prompt(output: CLIOutput) -> int:
 
 
 def _quick_start_select_options(compact: bool = False) -> tuple[bool, bool, int]:
-    """步骤3: 选择功能选项。返回 (checkpoint, dedup, duration)"""
+    """步骤3: 选择功能选项。返回 (checkpoint, dedup, duration)."""
     output = CLIOutput.get_instance()
     output.print("\n[bold cyan]【步骤 3/4】[/bold cyan] " + _t("cli.commands.step3_title"))
     if not compact:
@@ -723,7 +723,7 @@ def _quick_start_select_options(compact: bool = False) -> tuple[bool, bool, int]
 
 
 def _detect_gpu_devices() -> list[dict[str, Any]]:
-    """检测可用的GPU设备，失败时返回空列表"""
+    """检测可用的GPU设备，失败时返回空列表."""
     try:
         from src.gpu.device import GPUDeviceDetector
 
@@ -735,7 +735,7 @@ def _detect_gpu_devices() -> list[dict[str, Any]]:
 
 
 def _format_device_label(device: dict[str, Any], index: int) -> str:
-    """格式化设备显示标签，包含名称和显存"""
+    """格式化设备显示标签，包含名称和显存."""
     name = device.get("name", f"GPU #{index}")
     mem_size = device.get("global_mem_size", 0)
     if mem_size and mem_size > 0:
@@ -750,7 +750,7 @@ def _format_device_label(device: dict[str, Any], index: int) -> str:
 
 
 def _detect_gpu_devices_with_timeout(timeout: float = 5.0) -> list[dict[str, Any]]:
-    """带超时的 GPU 检测，超时返回空列表"""
+    """带超时的 GPU 检测，超时返回空列表."""
     output = CLIOutput.get_instance()
     with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
         future = executor.submit(_detect_gpu_devices)
@@ -766,7 +766,7 @@ def _gpu_no_devices_confirm(
     mode_label: str,
     arg: str,
 ) -> list[str]:
-    """无GPU设备时的确认交互。"""
+    """无GPU设备时的确认交互。."""
     output.warning("未检测到可用 GPU 设备（可能缺少 OpenCL 驱动）")
     output.print("   [INFO] GPU 模式需要安装 pyopencl 和相应的驱动")
     output.print("   [INFO] 请参考文档安装 GPU 驱动和依赖")
@@ -779,7 +779,7 @@ def _gpu_no_devices_confirm(
 
 
 def _single_gpu_select(output: CLIOutput, devices: list[dict[str, Any]]) -> list[str]:
-    """单GPU模式设备选择。"""
+    """单GPU模式设备选择。."""
     if not devices:
         return _gpu_no_devices_confirm(output, "GPU 模式", "--use-gpu")
     if len(devices) == 1:
@@ -804,7 +804,7 @@ def _single_gpu_select(output: CLIOutput, devices: list[dict[str, Any]]) -> list
 
 
 def _multi_gpu_select(output: CLIOutput, devices: list[dict[str, Any]]) -> list[str]:
-    """多GPU模式设备选择。"""
+    """多GPU模式设备选择。."""
     if not devices:
         return _gpu_no_devices_confirm(output, "多GPU模式", "--multi-gpu")
     if len(devices) == 1:
@@ -844,7 +844,7 @@ def _multi_gpu_select(output: CLIOutput, devices: list[dict[str, Any]]) -> list[
 
 
 def _quick_start_select_gpu() -> list[str]:
-    """步骤4: 选择GPU加速模式。返回额外的命令行参数列表"""
+    """步骤4: 选择GPU加速模式。返回额外的命令行参数列表."""
     output = CLIOutput.get_instance()
     output.print("\n[bold cyan]【步骤 4/4】[/bold cyan] " + _t("cli.commands.step4_title"))
     output.print("   [INFO] 正在检测可用 GPU 设备（最多等待 5 秒）...")
@@ -883,7 +883,7 @@ def _quick_run_scan_target(
     target_file: str,
     output: CLIOutput,
 ) -> tuple[int, list[str]] | None:
-    """扫描目标文件获取地址预览。返回 (count, preview_list) 或 None (失败/无数据)"""
+    """扫描目标文件获取地址预览。返回 (count, preview_list) 或 None (失败/无数据)."""
     address_count = 0
     preview_addresses: list[str] = []
     max_preview = PREVIEW_CONFIG["max_preview_addresses"]
@@ -907,7 +907,7 @@ def _quick_run_scan_target(
 
 
 def _quick_run_config_summary(target_file: str) -> dict[str, str]:
-    """构建默认配置摘要。"""
+    """构建默认配置摘要。."""
     return {
         "目标文件": target_file,
         "碰撞模式": (
@@ -923,7 +923,7 @@ def _quick_run_config_summary(target_file: str) -> dict[str, str]:
 
 
 def _cmd_quick_run(executor: Callable[[], None] | None = None) -> None:
-    """--quick-run 命令实现：快速模式，跳过向导直接使用默认配置运行"""
+    """--quick-run 命令实现：快速模式，跳过向导直接使用默认配置运行."""
     PlatformUtils.ensure_utf8_output()
     output = CLIOutput.get_instance()
     output.header("BTC碰撞引擎 - 快速模式")
@@ -950,7 +950,7 @@ def _cmd_quick_run(executor: Callable[[], None] | None = None) -> None:
                         f"  ... 及其他 {address_count - PREVIEW_CONFIG['max_preview_addresses']} 个地址",
                     )
                 output.print("")
-            cmd_parts: list[str] = ["python", "-m", "src.cli", "-f", target_file]
+            cmd_parts: list[str] = ["python", "key_collision_cli.py", "-f", target_file]
         else:
             output.warning(f"未找到 {target_file}，请使用 -t 或 -f 指定目标")
             output.print("\n[TIP] 快速模式示例:")
@@ -1002,7 +1002,7 @@ def _quick_start_build_and_run(
     executor: Callable[[], None] | None,
     config_summary: dict[str, str] | None = None,
 ) -> None:
-    """构建并（可选）执行生成的命令"""
+    """构建并（可选）执行生成的命令."""
     output = CLIOutput.get_instance()
 
     cmd_str = " ".join(cmd_parts)
@@ -1048,7 +1048,7 @@ def _quick_start_build_and_run(
 
 
 def _cmd_quick_start(executor: Callable[[], None] | None = None, compact: bool = False) -> None:
-    """--quick-start 命令实现：交互式快速引导
+    """--quick-start 命令实现：交互式快速引导.
 
     Args:
         executor: 执行器函数（可选）
@@ -1081,8 +1081,8 @@ def _cmd_quick_start(executor: Callable[[], None] | None = None, compact: bool =
         # 步骤4: GPU加速
         gpu_args = _quick_start_select_gpu()
 
-        # 构建命令（使用入口模块名，兼容 pip install -e . 安装方式）
-        cmd_parts = ["python", "-m", "src.cli"]
+        # 构建命令（使用 key_collision_cli.py 入口脚本）
+        cmd_parts = ["python", "key_collision_cli.py"]
         if target_file:
             cmd_parts.extend(["-f", target_file])
         elif targets:
@@ -1141,7 +1141,7 @@ def _cmd_quick_start(executor: Callable[[], None] | None = None, compact: bool =
 
 
 def _handle_info_commands(args: argparse.Namespace) -> bool:
-    """处理信息类工具命令：--examples, --config-check, --template, --recommend"""
+    """处理信息类工具命令：--examples, --config-check, --template, --recommend."""
     from src.cli.advanced_features import apply_template, recommend_parameters
 
     # --examples
@@ -1180,10 +1180,11 @@ def _handle_info_commands(args: argparse.Namespace) -> bool:
     return False
 
 
-def _handle_wizard_and_quickstart(  # noqa: E501
-    args: argparse.Namespace, run_main_fn: Callable[[], None] | None = None
+def _handle_wizard_and_quickstart(
+    args: argparse.Namespace,
+    run_main_fn: Callable[[], None] | None = None,
 ) -> bool:
-    """处理向导和快速启动：--quick-start, --quick-run, 首次运行检测"""
+    """处理向导和快速启动：--quick-start, --quick-run, 首次运行检测."""
     # --quick-run (快速模式)
     if getattr(args, "quick_run", False):
         _cmd_quick_run(executor=run_main_fn)
@@ -1233,7 +1234,7 @@ def _handle_wizard_and_quickstart(  # noqa: E501
 
 
 def _handle_system_commands(args: argparse.Namespace) -> bool:
-    """处理系统工具命令：--health-check, --platform-check, --cleanup, --validate-addresses"""
+    """处理系统工具命令：--health-check, --platform-check, --cleanup, --validate-addresses."""
     # --health-check
     if getattr(args, "health_check", False):
         from ..utils.health_check import HealthChecker
@@ -1332,10 +1333,11 @@ def _handle_system_commands(args: argparse.Namespace) -> bool:
     return False
 
 
-def dispatch_utility_commands(  # noqa: E501
-    args: argparse.Namespace, run_main_fn: Callable[[], None] | None = None
+def dispatch_utility_commands(
+    args: argparse.Namespace,
+    run_main_fn: Callable[[], None] | None = None,
 ) -> bool:
-    """处理所有实用工具命令（不启动碰撞引擎的独立命令）。"""
+    """处理所有实用工具命令（不启动碰撞引擎的独立命令）。."""
     return (
         _handle_info_commands(args)
         or _handle_wizard_and_quickstart(args, run_main_fn)

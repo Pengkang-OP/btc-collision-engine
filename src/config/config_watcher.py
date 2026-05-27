@@ -1,4 +1,4 @@
-"""P2-4: 配置热重载 — 文件监听器
+"""P2-4: 配置热重载 — 文件监听器.
 
 支持两种后端（自动选择）:
 1. watchdog (优先): 事件驱动，响应快
@@ -23,7 +23,7 @@ try:
     from watchdog.observers import Observer
 
     class _WatchdogHandler(FileSystemEventHandler):
-        """watchdog 文件变更处理器"""
+        """watchdog 文件变更处理器."""
 
         def __init__(self, callback: Callable[[], None], watched_path: str):
             super().__init__()
@@ -44,7 +44,7 @@ except ImportError:
 
 
 class ConfigWatcher:
-    """配置文件监听器 — P2-4 配置热重载
+    """配置文件监听器 — P2-4 配置热重载.
 
     自动选择最佳后端:
     - watchdog (事件驱动, 响应 <1s)
@@ -64,7 +64,7 @@ class ConfigWatcher:
         debounce_seconds: float = 2.0,
         poll_interval: float = 2.0,
     ) -> None:
-        """初始化配置监听器
+        """初始化配置监听器.
 
         Args:
             config_path: 要监听的配置文件绝对路径
@@ -102,7 +102,7 @@ class ConfigWatcher:
     # ── 公共接口 ─────────────────────────────────────────────────
 
     def start(self) -> bool:
-        """启动文件监听
+        """启动文件监听.
 
         Returns:
             True 如果启动成功，False 如果已在运行中
@@ -124,7 +124,7 @@ class ConfigWatcher:
         return started
 
     def stop(self) -> None:
-        """停止文件监听"""
+        """停止文件监听."""
         with self._lock:
             if self._stop_event.is_set():
                 return
@@ -148,18 +148,18 @@ class ConfigWatcher:
 
     @property
     def backend(self) -> str:
-        """返回当前使用的后端名称"""
+        """返回当前使用的后端名称."""
         return "watchdog" if HAS_WATCHDOG else "polling"
 
     @property
     def is_running(self) -> bool:
-        """是否正在运行"""
+        """是否正在运行."""
         return not self._stop_event.is_set()
 
     # ── watchdog 后端 ─────────────────────────────────────────────
 
     def _start_watchdog(self) -> bool:
-        """启动 watchdog 监听"""
+        """启动 watchdog 监听."""
         try:
             watch_dir = os.path.dirname(self._config_path)
             handler = _WatchdogHandler(self._on_file_changed, self._config_path)
@@ -180,7 +180,7 @@ class ConfigWatcher:
     # ── Polling 后端 ──────────────────────────────────────────────
 
     def _start_polling(self) -> bool:
-        """启动轮询监听"""
+        """启动轮询监听."""
         self._poll_thread = threading.Thread(
             target=self._poll_loop,
             name="ConfigWatcher-Poll",
@@ -196,7 +196,7 @@ class ConfigWatcher:
         return True
 
     def _poll_loop(self) -> None:
-        """轮询主循环"""
+        """轮询主循环."""
         while not self._stop_event.is_set():
             try:
                 current_mtime = pathlib.Path(self._config_path).stat().st_mtime
@@ -221,7 +221,7 @@ class ConfigWatcher:
     # ── 变更处理 (防抖) ──────────────────────────────────────────
 
     def _on_file_changed(self) -> None:
-        """文件变更回调入口 (防抖)"""
+        """文件变更回调入口 (防抖)."""
         now = time.time()
         if now - self._last_reload_time < self._debounce_seconds:
             logger.debug("配置变更被防抖忽略 (距上次 %.2fs)", now - self._last_reload_time)
@@ -235,7 +235,7 @@ class ConfigWatcher:
             logger.error("配置重载回调执行失败: %s", e)
 
     def __del__(self) -> None:
-        """析构时自动停止监听
+        """析构时自动停止监听.
 
         W14修复: 改进析构逻辑，避免在析构期间因锁状态不一致导致的死锁或异常
         - 只清理核心资源，不调用可能产生竞态的 stop() 方法

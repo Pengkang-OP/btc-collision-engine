@@ -1,4 +1,4 @@
-"""GPU设备选择器
+"""GPU设备选择器.
 
 提供GPU设备评分、自动选择和手动指定功能。
 支持多厂商GPU(NVIDIA/AMD/Intel)的智能评估。
@@ -15,7 +15,7 @@ logger = get_configured_logger("GPUSelector")
 
 
 class GPUDeviceSelector:
-    """GPU设备选择器
+    """GPU设备选择器.
 
     负责检测、评分和选择GPU设备。
 
@@ -32,10 +32,10 @@ class GPUDeviceSelector:
         device = selector.get_device_info(0)
     """
 
-    __slots__ = ("_scorer", "_devices_cache", "_scores_cache")
+    __slots__ = ("_devices_cache", "_scorer", "_scores_cache")
 
     def __init__(self, scorer: GPUDeviceScorer | None = None) -> None:
-        """初始化GPU设备选择器
+        """初始化GPU设备选择器.
 
         Args:
             scorer: GPU设备评分器，为None时使用全局单例
@@ -46,7 +46,7 @@ class GPUDeviceSelector:
         self._scores_cache: dict[int, float] = {}
 
     def detect_all_devices(self, force_refresh: bool = False) -> list[dict]:
-        """检测所有GPU设备
+        """检测所有GPU设备.
 
         Args:
             force_refresh: 是否强制刷新缓存
@@ -92,7 +92,7 @@ class GPUDeviceSelector:
             return []
 
     def score_device(self, device: dict) -> float:
-        """计算GPU设备评分
+        """计算GPU设备评分.
 
         委托给统一的 GPUDeviceScorer 进行评分。
 
@@ -109,7 +109,7 @@ class GPUDeviceSelector:
         self,
         devices: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any] | None:
-        """自动选择评分最高的GPU设备
+        """自动选择评分最高的GPU设备.
 
         Args:
             devices: 设备列表(为None时自动检测)
@@ -133,7 +133,7 @@ class GPUDeviceSelector:
         return best_device
 
     def get_device_info(self, device_idx: int) -> dict | None:
-        """获取指定索引的设备信息
+        """获取指定索引的设备信息.
 
         Args:
             device_idx: 设备全局索引
@@ -152,7 +152,7 @@ class GPUDeviceSelector:
         return None
 
     def format_device_info(self, device: dict, detailed: bool = False) -> str:
-        """格式化设备信息用于展示
+        """格式化设备信息用于展示.
 
         Args:
             device: 设备信息字典
@@ -199,7 +199,7 @@ class GPUDeviceSelector:
         return "\n".join(lines)
 
     def format_all_devices(self, devices: list[dict[str, Any]] | None = None) -> str:
-        """格式化所有设备信息
+        """格式化所有设备信息.
 
         Args:
             devices: 设备列表(为None时自动检测)
@@ -229,7 +229,7 @@ class GPUDeviceSelector:
         return "\n".join(lines)
 
     def select_devices_by_indices(self, indices: list[int]) -> list[dict]:
-        """根据索引列表选择设备
+        """根据索引列表选择设备.
 
         Args:
             indices: 设备索引列表
@@ -266,7 +266,7 @@ class GPUDeviceSelector:
         return selected
 
     def recommend_batch_size(self, device: dict) -> int:
-        """推荐批次大小
+        """推荐批次大小.
 
         基于显存大小计算合适的批次大小。
 
@@ -301,7 +301,7 @@ class GPUDeviceSelector:
         return base_batch
 
     def recommend_work_group_size(self, device: dict) -> int:
-        """推荐工作组大小
+        """推荐工作组大小.
 
         Args:
             device: 设备信息
@@ -322,7 +322,7 @@ class GPUDeviceSelector:
         return int(min(256, max_work_group))
 
     def _enrich_device_info(self, raw_device: dict, global_idx: int) -> dict:
-        """增强设备信息,添加评分所需的字段
+        """增强设备信息,添加评分所需的字段.
 
         Args:
             raw_device: 原始设备信息
@@ -368,7 +368,7 @@ class GPUDeviceSelector:
         return enriched
 
     def clear_cache(self) -> None:
-        """清除设备缓存"""
+        """清除设备缓存."""
         self._devices_cache = None
         self._scores_cache = {}
         logger.debug("GPU设备选择器缓存已清除")
@@ -380,7 +380,7 @@ _selector_lock = threading.Lock()
 
 
 def get_gpu_selector() -> GPUDeviceSelector:
-    """获取GPU设备选择器单例（线程安全）
+    """获取GPU设备选择器单例（线程安全）.
 
     Returns:
         GPUDeviceSelector实例
@@ -398,7 +398,7 @@ def get_gpu_selector() -> GPUDeviceSelector:
 
 
 def reset_gpu_selector() -> None:
-    """重置GPU设备选择器单例(用于测试)"""
+    """重置GPU设备选择器单例(用于测试)."""
     global _selector_instance
     with _selector_lock:
         _selector_instance = None

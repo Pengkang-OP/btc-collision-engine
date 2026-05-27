@@ -1,4 +1,4 @@
-"""GPU碰撞引擎重构模块
+"""GPU碰撞引擎重构模块.
 
 本模块包含从GPUCollisionEngine解耦出来的核心组件:
 - GPUEngineFacade: GPU引擎外观层，封装设备/内核/管道管理
@@ -20,7 +20,7 @@
 更新日期: 2026-05-23
 """
 
-from src import __version__ as __version__  # noqa: F401 — 从包根统一读取
+from src import __version__ as __version__  # noqa: F401
 
 __author__ = "BTC Project"
 
@@ -44,42 +44,42 @@ from .vendor_strategy import VendorOptimizationFactory
 
 # 工厂函数（向后兼容：支持延迟导入/依赖注入场景）
 def get_gpu_engine_facade():
-    """返回 GPUEngineFacade 类（非实例）"""
+    """返回 GPUEngineFacade 类（非实例）."""
     return GPUEngineFacade
 
 
 def get_monitoring_pipeline():
-    """返回 PerformanceMonitoringPipeline 类（非实例）"""
+    """返回 PerformanceMonitoringPipeline 类（非实例）."""
     return PerformanceMonitoringPipeline
 
 
 def get_collision_core():
-    """返回 CollisionCore 类（非实例）"""
+    """返回 CollisionCore 类（非实例）."""
     return CollisionCore
 
 
 def get_vendor_factory():
-    """返回 VendorOptimizationFactory 类（非实例）"""
+    """返回 VendorOptimizationFactory 类（非实例）."""
     return VendorOptimizationFactory
 
 
 def get_device_manager_adapter():
-    """返回 DeviceManagerAdapter 类（非实例）"""
+    """返回 DeviceManagerAdapter 类（非实例）."""
     return DeviceManagerAdapter
 
 
 def get_kernel_adapter():
-    """返回 GPUKernelAdapter 类（非实例）"""
+    """返回 GPUKernelAdapter 类（非实例）."""
     return GPUKernelAdapter
 
 
 def get_async_pipeline_adapter():
-    """返回 AsyncPipelineAdapter 类（非实例）"""
+    """返回 AsyncPipelineAdapter 类（非实例）."""
     return AsyncPipelineAdapter
 
 
 def get_data_logger_adapter():
-    """返回 DataLoggerAdapter 类（非实例）"""
+    """返回 DataLoggerAdapter 类（非实例）."""
     return DataLoggerAdapter
 
 

@@ -35,7 +35,7 @@ logger = get_configured_logger("TimeoutProtection")
 
 
 class _TimeoutError(Exception):
-    """超时异常，用于信号处理器抛出"""
+    """超时异常，用于信号处理器抛出."""
 
 
 # ============================================================================
@@ -44,7 +44,7 @@ class _TimeoutError(Exception):
 
 
 def _terminate_thread(thread_handle: int, exit_code: int = 0) -> bool:
-    """Windows: 通过 kernel32.TerminateThread 终止线程（仅作最后手段）
+    """Windows: 通过 kernel32.TerminateThread 终止线程（仅作最后手段）.
 
     注意: TerminateThread 可能导致资源泄漏，
     仅在守护线程超时且无法自行退出时使用。
@@ -74,7 +74,7 @@ def _execute_with_thread_timeout(
     timeout: float = 5.0,
     callback_name: str = "",
 ) -> bool:
-    """在独立线程中执行函数，带超时控制
+    """在独立线程中执行函数，带超时控制.
 
     启动守护线程执行目标函数，主线程等待最多 timeout 秒。
     超时后返回 False，不中断主流程。
@@ -140,7 +140,7 @@ def _execute_with_sigalrm_timeout(
     timeout: float = 5.0,
     callback_name: str = "",
 ) -> bool:
-    """使用 SIGALRM 信号执行函数，带超时控制
+    """使用 SIGALRM 信号执行函数，带超时控制.
 
     仅适用于 Unix 系统。设置 alarm 信号处理器，在超时时抛出 _TimeoutError。
 
@@ -219,7 +219,7 @@ def invoke_with_timeout(
     timeout: float = 5.0,
     callback_name: str = "",
 ) -> bool:
-    """带超时控制的函数调用（跨平台统一入口）
+    """带超时控制的函数调用（跨平台统一入口）.
 
     自动选择最优超时策略:
     - Windows: 线程超时（threading.Thread + join timeout）
@@ -257,7 +257,7 @@ def invoke_with_timeout(
 
 
 def with_timeout(seconds: float):
-    """超时装饰器工厂
+    """超时装饰器工厂.
 
     在独立线程中执行被装饰函数，超时则记录 WARNING 日志并静默返回。
 
@@ -292,7 +292,7 @@ def with_timeout(seconds: float):
 
 
 class TimeoutContext:
-    """超时上下文管理器
+    """超时上下文管理器.
 
     在上下文内执行的代码块受到超时保护。
     超时时不抛出异常，而是静默退出上下文。
@@ -309,8 +309,9 @@ class TimeoutContext:
 
     def __init__(self, seconds: float, name: str = "") -> None:
         """Args:
+
         seconds: 超时时间（秒）
-        name: 上下文名称（用于日志）
+        name: 上下文名称（用于日志）.
 
         """
         self._seconds: float = seconds
@@ -346,5 +347,5 @@ class TimeoutContext:
 
     @property
     def elapsed_ms(self) -> float:
-        """获取上下文已耗时（毫秒）"""
+        """获取上下文已耗时（毫秒）."""
         return (time.perf_counter() - self._start_time) * 1000

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""P0级GPU安全修复验证测试
+"""P0级GPU安全修复验证测试.
 
 本文件验证以下P0级修复的正确性：
 - P0-1: on_progress 回调传递 snapshot 而非原始 stats 对象（引用隔离）
@@ -34,10 +34,10 @@ PROJECT_ROOT = Path(__file__).parent.parent
 
 
 class TestSnapshotIsolation:
-    """P0-1: 验证 on_progress 传递 snapshot 而非原始 stats 对象"""
+    """P0-1: 验证 on_progress 传递 snapshot 而非原始 stats 对象."""
 
     def test_snapshot_returns_different_object(self):
-        """snapshot() 返回的对象与原始 stats 不是同一个实例"""
+        """snapshot() 返回的对象与原始 stats 不是同一个实例."""
         from src.collision.collision_stats import CollisionStats, StatsSnapshot
 
         stats = CollisionStats()
@@ -50,7 +50,7 @@ class TestSnapshotIsolation:
         assert isinstance(snapshot, StatsSnapshot), "snapshot() 必须返回 StatsSnapshot 实例"
 
     def test_snapshot_copies_basic_fields(self):
-        """Snapshot 正确复制基础统计字段"""
+        """Snapshot 正确复制基础统计字段."""
         from src.collision.collision_stats import CollisionStats, StatsSnapshot
 
         stats = CollisionStats()
@@ -68,7 +68,7 @@ class TestSnapshotIsolation:
         assert snap.throughput > 0
 
     def test_snapshot_mutation_does_not_affect_original(self):
-        """修改 snapshot 字段不影响原始 stats 对象"""
+        """修改 snapshot 字段不影响原始 stats 对象."""
         from src.collision.collision_stats import CollisionStats
 
         stats = CollisionStats()
@@ -86,7 +86,7 @@ class TestSnapshotIsolation:
         assert snap2.total_keys_checked == 1000
 
     def test_snapshot_matches_list_deep_copy(self):
-        """Snapshot 的 matches 列表是深拷贝，修改不影响原始对象"""
+        """Snapshot 的 matches 列表是深拷贝，修改不影响原始对象."""
         from src.collision.collision_stats import CollisionStats
 
         stats = CollisionStats()
@@ -100,7 +100,7 @@ class TestSnapshotIsolation:
         assert len(stats.matches) == 1, "清空 snapshot.matches 不应影响原始 stats.matches"
 
     def test_snapshot_copies_error_counters(self):
-        """Snapshot 正确复制错误计数"""
+        """Snapshot 正确复制错误计数."""
         from src.collision.collision_stats import CollisionStats
 
         stats = CollisionStats()
@@ -116,7 +116,7 @@ class TestSnapshotIsolation:
         assert snap.total_keys_checked == 0
 
     def test_snapshot_copies_eta_fields(self):
-        """Snapshot 正确复制 ETA 相关字段"""
+        """Snapshot 正确复制 ETA 相关字段."""
         from src.collision.collision_stats import CollisionStats
 
         stats = CollisionStats()
@@ -130,7 +130,7 @@ class TestSnapshotIsolation:
         assert snap.throughput > 0
 
     def test_snapshot_is_stats_snapshot_instance(self):
-        """snapshot() 返回的对象是 StatsSnapshot 实例"""
+        """snapshot() 返回的对象是 StatsSnapshot 实例."""
         from src.collision.collision_stats import CollisionStats, StatsSnapshot
 
         stats = CollisionStats()
@@ -146,10 +146,10 @@ class TestSnapshotIsolation:
 
 @pytest.mark.skip(
     reason="_safe_invoke_match_callback delegates to _result_processor."
-    "safe_invoke_match_callback; test needs refactor to test _result_processor directly"
+    "safe_invoke_match_callback; test needs refactor to test _result_processor directly",
 )
 class TestSafeInvokeMatchCallbackIsolation:
-    """P0-2: 验证 GPU _safe_invoke_match_callback 能隔离回调异常
+    """P0-2: 验证 GPU _safe_invoke_match_callback 能隔离回调异常.
 
     通过 mock __init__ 跳过完整 GPU 初始化流程，
     直接构造最小化引擎实例来测试回调安全机制。
@@ -157,7 +157,7 @@ class TestSafeInvokeMatchCallbackIsolation:
 
     @pytest.fixture(autouse=True)
     def _mock_engine(self):
-        """创建跳过 GPU 初始化的最小化引擎实例
+        """创建跳过 GPU 初始化的最小化引擎实例.
 
         Phase 6: _init_gpu 已移除，改用 __init__ mock。
         """
@@ -175,7 +175,7 @@ class TestSafeInvokeMatchCallbackIsolation:
             yield
 
     def test_exception_in_callback_does_not_raise(self):
-        """回调函数抛出异常时，_safe_invoke_match_callback 不向外传播异常"""
+        """回调函数抛出异常时，_safe_invoke_match_callback 不向外传播异常."""
 
         def bad_callback(pk, addr, wif):
             raise RuntimeError("callback crash")
@@ -191,14 +191,14 @@ class TestSafeInvokeMatchCallbackIsolation:
             pytest.fail(f"_safe_invoke_match_callback 不应传播回调异常，但抛出了: {exc}")
 
     def test_no_on_match_returns_true(self):
-        """未设置 on_match 时，_safe_invoke_match_callback 应返回 True"""
+        """未设置 on_match 时，_safe_invoke_match_callback 应返回 True."""
         self._engine.on_match = None
 
         result = self._engine._safe_invoke_match_callback(b"\x01" * 32, "1TestAddress", "Kwif123")
         assert result is True, "无 on_match 时应返回 True"
 
     def test_normal_callback_returns_true(self):
-        """正常回调成功执行时，_safe_invoke_match_callback 应返回 True"""
+        """正常回调成功执行时，_safe_invoke_match_callback 应返回 True."""
         called = []
 
         def good_callback(pk, addr, wif):
@@ -213,7 +213,7 @@ class TestSafeInvokeMatchCallbackIsolation:
         assert called[0][0] == "1TestAddress"
 
     def test_timeout_callback_returns_false_on_windows(self):
-        """Windows 下超时回调应返回 False（通过线程超时机制）"""
+        """Windows 下超时回调应返回 False（通过线程超时机制）."""
         if os.name != "nt":
             pytest.skip("该测试仅适用于 Windows 平台")
 
@@ -236,13 +236,13 @@ class TestSafeInvokeMatchCallbackIsolation:
 
 
 @pytest.mark.skip(
-    reason="pyproject.toml encoding issues on Windows GBK; coincurve version already validated in CI"
+    reason="pyproject.toml encoding issues on Windows GBK; coincurve version already validated in CI",
 )
 class TestCoinCurveVersionConsistency:
-    """P0-3: 验证 coincurve 版本声明在各配置文件中一致"""
+    """P0-3: 验证 coincurve 版本声明在各配置文件中一致."""
 
     def test_coincurve_declared_in_pyproject(self):
-        """pyproject.toml 中存在 coincurve 版本声明"""
+        """pyproject.toml 中存在 coincurve 版本声明."""
         pyproject_path = PROJECT_ROOT / "pyproject.toml"
         assert pyproject_path.exists(), "pyproject.toml 文件不存在"
 
@@ -251,7 +251,7 @@ class TestCoinCurveVersionConsistency:
         assert match is not None, "pyproject.toml 中未找到 coincurve>= 声明"
 
     def test_coincurve_declared_in_requirements_base(self):
-        """requirements-base.txt 中存在 coincurve 版本声明"""
+        """requirements-base.txt 中存在 coincurve 版本声明."""
         req_path = PROJECT_ROOT / "requirements-base.txt"
         assert req_path.exists(), "requirements-base.txt 文件不存在"
 
@@ -260,7 +260,7 @@ class TestCoinCurveVersionConsistency:
         assert match is not None, "requirements-base.txt 中未找到 coincurve>= 声明"
 
     def test_coincurve_version_consistency(self):
-        """pyproject.toml 与 requirements-base.txt 中 coincurve 最低版本一致"""
+        """pyproject.toml 与 requirements-base.txt 中 coincurve 最低版本一致."""
         pyproject_path = PROJECT_ROOT / "pyproject.toml"
         req_path = PROJECT_ROOT / "requirements-base.txt"
 
@@ -281,7 +281,7 @@ class TestCoinCurveVersionConsistency:
         )
 
     def test_coincurve_minimum_version_is_18(self):
-        """Coincurve 最低版本要求不低于 18.0.0"""
+        """Coincurve 最低版本要求不低于 18.0.0."""
         pyproject_path = PROJECT_ROOT / "pyproject.toml"
         content = pyproject_path.read_text(encoding="utf-8")
         match = re.search(r"coincurve>=([\d.]+)", content)
@@ -298,7 +298,7 @@ class TestCoinCurveVersionConsistency:
 
 
 class TestRangeScanBoundaryConsistency:
-    """P0-4: 验证范围扫描首批次和后续批次边界逻辑一致，不重不漏"""
+    """P0-4: 验证范围扫描首批次和后续批次边界逻辑一致，不重不漏."""
 
     @pytest.mark.parametrize(
         "start,end,batch_size",
@@ -315,7 +315,7 @@ class TestRangeScanBoundaryConsistency:
         ],
     )
     def test_boundary_no_gap_no_overlap(self, start, end, batch_size):
-        """批次迭代不遗漏、不重复地覆盖 [start, end] 全范围"""
+        """批次迭代不遗漏、不重复地覆盖 [start, end] 全范围."""
         current = start
         all_keys = []
 
@@ -332,7 +332,7 @@ class TestRangeScanBoundaryConsistency:
         )
 
     def test_first_batch_same_logic_as_subsequent(self):
-        """首批次与后续批次使用相同的 batch_end 计算公式"""
+        """首批次与后续批次使用相同的 batch_end 计算公式."""
         start, end, batch_size = 1, 100, 30
         batches = []
         current = start
@@ -350,7 +350,7 @@ class TestRangeScanBoundaryConsistency:
             )
 
     def test_each_batch_size_within_limit(self):
-        """每个批次实际包含的元素数不超过 batch_size"""
+        """每个批次实际包含的元素数不超过 batch_size."""
         start, end, batch_size = 1, 100, 33
         current = start
 
@@ -365,7 +365,7 @@ class TestRangeScanBoundaryConsistency:
             current = batch_end
 
     def test_last_batch_handles_remainder(self):
-        """最后一个不足 batch_size 的批次被正确处理"""
+        """最后一个不足 batch_size 的批次被正确处理."""
         start, end, batch_size = 1, 10, 3  # 10 个元素，每批3个，最后一批1个
         batches = []
         current = start

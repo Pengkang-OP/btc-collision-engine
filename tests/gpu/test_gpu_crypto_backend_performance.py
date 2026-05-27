@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GPU实际性能测试 - 验证crypto_backend迁移效果
+"""GPU实际性能测试 - 验证crypto_backend迁移效果.
 
 测试目标:
 1. 验证coincurve后端在GPU环境中的性能
@@ -16,7 +16,7 @@ pytestmark = pytest.mark.gpu
 
 
 def test_crypto_backend_in_gpu():
-    """测试GPU引擎中的crypto_backend使用情况"""
+    """测试GPU引擎中的crypto_backend使用情况."""
     print("=" * 70)
     print("GPU引擎 crypto_backend 验证测试")
     print("=" * 70)
@@ -95,7 +95,7 @@ def test_crypto_backend_in_gpu():
 
         # Mock GPU环境 (Phase 6 engine)
         with (
-            patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True),
+            patch("src.gpu._availability.PYOPENCL_AVAILABLE", True),
             patch("pyopencl.Buffer"),
             patch("src.collision.gpu.engine.GPUDeviceManager") as mock_device_mgr,
             patch("src.collision.gpu.engine.CollisionCore"),
@@ -143,7 +143,7 @@ def test_crypto_backend_in_gpu():
 
 
 def test_cpu_engine_performance():
-    """测试CPU引擎使用crypto_backend的性能"""
+    """测试CPU引擎使用crypto_backend的性能."""
     print("\n" + "=" * 70)
     print("CPU引擎 crypto_backend 性能测试")
     print("=" * 70)
@@ -179,7 +179,7 @@ def test_cpu_engine_performance():
 
 
 def generate_performance_report():
-    """生成性能报告"""
+    """生成性能报告."""
     print("\n" + "=" * 70)
     print("📊 性能报告总结")
     print("=" * 70)

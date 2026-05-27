@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GPU加速模式快速测试脚本
+"""GPU加速模式快速测试脚本.
 
 直接启动GPU碰撞引擎进行性能测试
 """
@@ -12,7 +12,7 @@ from src.collision.gpu.engine import GPUCollisionEngine
 
 
 def main():
-    """主函数"""
+    """主函数."""
     print("=" * 70)
     print("[GPU] GPU加速碰撞测试")
     print("=" * 70)
@@ -24,7 +24,7 @@ def main():
     stats_data = {"total_checked": 0, "speed": 0.0, "elapsed": 0.0, "matches": 0}
 
     def on_progress(stats: CollisionStats):
-        """进度回调"""
+        """进度回调."""
         stats_data["total_checked"] = stats.total_checked
         stats_data["speed"] = stats.speed
         stats_data["elapsed"] = stats.elapsed
@@ -40,7 +40,7 @@ def main():
         )
 
     def on_match(private_key: bytes, address: str, wif: str):
-        """匹配回调"""
+        """匹配回调."""
         print(f"[MATCH] 发现匹配: {address}")
         print(f"   私钥: {private_key.hex()}")
         print(f"   WIF: {wif}")

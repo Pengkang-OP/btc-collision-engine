@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Intel Arc A770 GPU自动选择和配置工具
+"""Intel Arc A770 GPU自动选择和配置工具.
 
 功能:
 1. 自动检测所有GPU设备
@@ -15,14 +15,14 @@ from src.gpu.device import GPUDeviceDetector
 
 
 def print_header(title: str):
-    """打印标题"""
+    """打印标题."""
     print(f"\n{'=' * 80}")
     print(f"  {title}")
     print(f"{'=' * 80}\n")
 
 
 def detect_gpus():
-    """检测所有GPU设备"""
+    """检测所有GPU设备."""
     print_header("GPU设备检测")
 
     devices = GPUDeviceDetector.detect_devices()
@@ -64,7 +64,7 @@ def detect_gpus():
 
 
 def generate_config(device_index: int) -> dict:
-    """生成优化配置"""
+    """生成优化配置."""
     config = {
         "collision": {
             "mode": "random",
@@ -100,7 +100,7 @@ def generate_config(device_index: int) -> dict:
 
 
 def save_config(config: dict, filename: str = "config.intel_arc.json"):
-    """保存配置文件"""
+    """保存配置文件."""
     config_path = Path(__file__).parent.parent / filename
 
     with open(config_path, "w", encoding="utf-8") as f:
@@ -111,7 +111,7 @@ def save_config(config: dict, filename: str = "config.intel_arc.json"):
 
 
 def verify_config(config: dict):
-    """验证配置"""
+    """验证配置."""
     print_header("配置验证")
 
     checks = {
@@ -141,7 +141,7 @@ def verify_config(config: dict):
 
 
 def print_usage(config_path: Path, config: dict) -> None:
-    """打印使用说明"""
+    """打印使用说明."""
     print_header("使用说明")
 
     print("  方法1: 替换现有配置")
@@ -161,7 +161,7 @@ def print_usage(config_path: Path, config: dict) -> None:
 
 
 def main():
-    """主函数"""
+    """主函数."""
     print_header("Intel Arc A770 GPU自动配置工具")
 
     # 1. 检测GPU

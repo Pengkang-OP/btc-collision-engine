@@ -17,4 +17,4 @@ pyopencl>=2022.1,<2026.0    # OpenCL GPU 计算支持（必需, 与 pyproject.to
 
 # GPU 监控 (C-13: 替代已弃用的 pynvml)
 # nvidia-ml-py 安装后导入名称仍为 pynvml，与原 API 完全兼容
-nvidia-ml-py>=12.0.0         # NVIDIA GPU 监控（推荐）或 pip install nvidia-ml-py
+nvidia-ml-py>=12.0.0,<14.0.0 # NVIDIA GPU 监控（推荐）或 pip install nvidia-ml-py

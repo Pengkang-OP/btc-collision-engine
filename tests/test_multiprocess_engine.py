@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""多进程碰撞引擎 (MultiProcessCollisionEngine) 单元测试
+"""多进程碰撞引擎 (MultiProcessCollisionEngine) 单元测试.
 
 覆盖:
 - MultiProcessCollisionEngine 初始化与参数
@@ -16,7 +16,7 @@ import pytest
 
 @pytest.mark.unit
 class TestMultiProcessEngineInit:
-    """初始化测试"""
+    """初始化测试."""
 
     def test_init_defaults(self):
         from src.collision.multiprocess_engine import MultiProcessCollisionEngine
@@ -45,7 +45,7 @@ class TestMultiProcessEngineInit:
 
 @pytest.mark.unit
 class TestMultiProcessEngineStart:
-    """启动测试"""
+    """启动测试."""
 
     @patch("multiprocessing.Process")
     @patch("multiprocessing.Queue")
@@ -80,7 +80,7 @@ class TestMultiProcessEngineStart:
 
 @pytest.mark.unit
 class TestMultiProcessEngineStop:
-    """停止测试"""
+    """停止测试."""
 
     def test_stop_not_started(self):
         from src.collision.multiprocess_engine import MultiProcessCollisionEngine
@@ -125,7 +125,7 @@ class TestMultiProcessEngineStop:
 
 @pytest.mark.unit
 class TestMultiProcessEngineGetStats:
-    """统计信息测试"""
+    """统计信息测试."""
 
     def test_get_stats_empty(self):
         from src.collision.multiprocess_engine import MultiProcessCollisionEngine
@@ -150,7 +150,7 @@ class TestMultiProcessEngineGetStats:
 
 @pytest.mark.unit
 class TestMultiProcessEngineWorkerLoop:
-    """Worker 循环测试"""
+    """Worker 循环测试."""
 
     def test_worker_loop_exists(self):
         from src.collision.multiprocess_engine import MultiProcessCollisionEngine

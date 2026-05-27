@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 @pytest.mark.unit
 class TestLogWindowInit:
-    """LogWindow.__init__ 测试"""
+    """LogWindow.__init__ 测试."""
 
     def test_default_max_lines(self):
         window = LogWindow()
@@ -49,7 +49,7 @@ class TestLogWindowInit:
 
 @pytest.mark.unit
 class TestLogWindowAddLine:
-    """LogWindow.add_line() 测试"""
+    """LogWindow.add_line() 测试."""
 
     def test_add_single_line(self):
         window = LogWindow()
@@ -64,7 +64,7 @@ class TestLogWindowAddLine:
         assert window._lines == [f"line {i}" for i in range(5)]
 
     def test_respects_max_lines(self):
-        """超出 max_lines 时丢弃最早的旧行"""
+        """超出 max_lines 时丢弃最早的旧行."""
         window = LogWindow(max_lines=3)
         window.add_line("a")
         window.add_line("b")
@@ -74,7 +74,7 @@ class TestLogWindowAddLine:
         assert len(window._lines) == 3
 
     def test_max_lines_zero_discards_all(self):
-        """max_lines=0 时所有行立即被丢弃"""
+        """max_lines=0 时所有行立即被丢弃."""
         window = LogWindow(max_lines=0)
         window.add_line("hello")
         assert window._lines == []
@@ -99,7 +99,7 @@ class TestLogWindowAddLine:
 
 @pytest.mark.unit
 class TestLogWindowRender:
-    """LogWindow.render() 测试"""
+    """LogWindow.render() 测试."""
 
     def test_render_empty(self):
         window = LogWindow()
@@ -117,7 +117,7 @@ class TestLogWindowRender:
         assert window.render() == "first\nsecond"
 
     def test_render_respects_last_20(self):
-        """render() 只返回最近 20 行"""
+        """render() 只返回最近 20 行."""
         window = LogWindow(max_lines=100)
         for i in range(30):
             window.add_line(f"line {i:02d}")
@@ -128,7 +128,7 @@ class TestLogWindowRender:
         assert lines[-1] == "line 29"
 
     def test_render_when_total_less_than_20(self):
-        """总行数 < 20 时返回所有行"""
+        """总行数 < 20 时返回所有行."""
         window = LogWindow()
         for i in range(5):
             window.add_line(f"line {i}")
@@ -144,7 +144,7 @@ class TestLogWindowRender:
         assert result.startswith("line 0")
 
     def test_render_not_affected_by_max_lines(self):
-        """render() 取 _lines[-20:] 而非 _max_lines"""
+        """render() 取 _lines[-20:] 而非 _max_lines."""
         window = LogWindow(max_lines=200)
         for i in range(30):
             window.add_line(f"line {i:02d}")
@@ -161,7 +161,7 @@ class TestLogWindowRender:
 
 @pytest.mark.unit
 class TestLogWindowIntegration:
-    """add_line + render 组合测试"""
+    """add_line + render 组合测试."""
 
     def test_add_and_render_cycle(self):
         window = LogWindow(max_lines=10)
@@ -171,7 +171,7 @@ class TestLogWindowIntegration:
         assert window.render() == "start\nend"
 
     def test_log_simulation(self):
-        """模拟真实日志场景"""
+        """模拟真实日志场景."""
         window = LogWindow(max_lines=50)
         messages = [
             "2024-01-01 10:00:00 [INFO] Engine started",
@@ -188,7 +188,7 @@ class TestLogWindowIntegration:
         assert len(result.split("\n")) == 5
 
     def test_overflow_then_render(self):
-        """溢出后 render 只取最近 20 行"""
+        """溢出后 render 只取最近 20 行."""
         window = LogWindow(max_lines=100)
         for i in range(100):
             window.add_line(f"msg {i}")

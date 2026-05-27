@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GPU 碰撞引擎 Mock 测试
+"""GPU 碰撞引擎 Mock 测试.
 
 使用新的GPU Mock基础设施，完全Mock pyopencl模块，
 避免真实GPU调用导致的测试失败。
@@ -18,7 +18,7 @@ pytestmark = pytest.mark.gpu
 
 @pytest.fixture
 def mock_gpu_setup():
-    """提供预配置的GPU引擎Mock环境（使用新Mock基础设施）
+    """提供预配置的GPU引擎Mock环境（使用新Mock基础设施）.
 
     这个fixture使用完全Mock的pyopencl模块，避免真实GPU调用。
     替代了旧的混合Mock方式（真实pyopencl + Mock对象）。
@@ -80,7 +80,7 @@ def mock_gpu_setup():
     mock_buffer.size = 1024
 
     with (
-        patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True),
+        patch("src.gpu._availability.PYOPENCL_AVAILABLE", True),
         patch(
             "src.gpu.device.GPUDeviceDetector.is_gpu_available",
             return_value=True,
@@ -111,14 +111,14 @@ def mock_gpu_setup():
 
 
 class TestGPUCollisionEngine:
-    """GPU 碰撞引擎测试类"""
+    """GPU 碰撞引擎测试类."""
 
     def setup_method(self):
-        """设置测试环境"""
+        """设置测试环境."""
         self.test_targets = {"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH"}
 
     def test_is_gpu_available(self):
-        """测试 GPU 可用性检测"""
+        """测试 GPU 可用性检测."""
         try:
             available = GPUCollisionEngine.is_gpu_available()
             assert isinstance(available, bool)
@@ -126,7 +126,7 @@ class TestGPUCollisionEngine:
             pass
 
     def test_gpu_device_detection(self):
-        """测试 GPU 设备检测"""
+        """测试 GPU 设备检测."""
         try:
             devices = GPUDeviceDetector.detect_devices()
             assert isinstance(devices, list)
@@ -134,15 +134,23 @@ class TestGPUCollisionEngine:
             pass
 
     def test_gpu_engine_initialization_without_gpu(self):
-        """测试在没有 GPU 的情况下初始化 GPU 引擎"""
-        with patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", False):
+        """测试在没有 GPU 的情况下初始化 GPU 引擎.
+
+        P0-9(PYOPENCL单源化): engine.py 通过 ``from src.gpu._availability import
+        PYOPENCL_AVAILABLE`` 导入后会创建模块级本地副本。因此 patch 需同时覆盖
+        源模块 (_availability) 和消费模块 (engine) 的本地变量。
+        """
+        with (
+            patch("src.gpu._availability.PYOPENCL_AVAILABLE", False),
+            patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", False),
+        ):
             with pytest.raises(RuntimeError, match=r"[Pp]y[Oo]pen[Cc][Ll]\s*不可用"):
                 GPUCollisionEngine(self.test_targets)
 
     def test_gpu_engine_mock_initialization(self):
-        """使用 Mock 测试 GPU 引擎初始化 - 无设备情况"""
+        """使用 Mock 测试 GPU 引擎初始化 - 无设备情况."""
         with (
-            patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True),
+            patch("src.gpu._availability.PYOPENCL_AVAILABLE", True),
             patch(
                 "src.gpu.device.GPUDeviceDetector.detect_devices",
                 return_value=[],
@@ -160,7 +168,7 @@ class TestGPUCollisionEngine:
         reason="[GPU-HW-001] 需要真实GPU硬件才能运行此测试",
     )
     def test_gpu_engine_initialization_with_real_device(self):
-        """使用真实 GPU 设备测试引擎初始化
+        """使用真实 GPU 设备测试引擎初始化.
 
         注意: 此测试需要真实GPU硬件，因为pyopencl是C扩展，
         Mock的cl.Device对象在cl.Context()中会被拒绝（bad cast错误）。
@@ -176,7 +184,7 @@ class TestGPUCollisionEngine:
         reason="[GPU-HW-002] 需要真实GPU硬件才能运行此测试",
     )
     def test_gpu_engine_lifecycle_start_stop(self):
-        """测试 GPU 引擎的生命周期（启动和停止）
+        """测试 GPU 引擎的生命周期（启动和停止）.
 
         注意: 此测试需要真实GPU硬件和内核执行。
         """
@@ -187,10 +195,10 @@ class TestGPUCollisionEngine:
         assert engine.is_running() is False
 
     def test_gpu_engine_invalid_mode_raises_error(self):
-        """测试使用无效模式启动 GPU 引擎应抛出 ValueError"""
+        """测试使用无效模式启动 GPU 引擎应抛出 ValueError."""
         with (
             patch("src.collision.gpu.engine.GPUDeviceManager") as MockDeviceManager,
-            patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True),
+            patch("src.gpu._availability.PYOPENCL_AVAILABLE", True),
         ):
             mock_device_manager = Mock()
             mock_device_manager.initialize = Mock()
@@ -245,7 +253,7 @@ class TestGPUCollisionEngine:
         reason="[GPU-HW-003] 需要真实GPU硬件才能运行此测试",
     )
     def test_gpu_engine_get_device_info(self):
-        """测试获取 GPU 设备信息
+        """测试获取 GPU 设备信息.
 
         注意: 此测试需要真实GPU初始化。
         """

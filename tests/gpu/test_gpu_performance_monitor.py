@@ -1,4 +1,4 @@
-"""GPU性能监控模块单元测试"""
+"""GPU性能监控模块单元测试."""
 
 import time
 
@@ -17,10 +17,10 @@ pytestmark = pytest.mark.gpu
 
 
 class TestGPUKernelMetrics:
-    """GPU内核指标测试"""
+    """GPU内核指标测试."""
 
     def test_creation(self):
-        """测试创建"""
+        """测试创建."""
         metrics = GPUKernelMetrics(
             timestamp=time.time(),
             batch_size=10000,
@@ -36,7 +36,7 @@ class TestGPUKernelMetrics:
         assert metrics.keys_per_second == 200000.0
 
     def test_to_dict(self):
-        """测试转换为字典"""
+        """测试转换为字典."""
         metrics = GPUKernelMetrics(
             timestamp=time.time(),
             batch_size=10000,
@@ -55,10 +55,10 @@ class TestGPUKernelMetrics:
 
 
 class TestGPUMemoryMetrics:
-    """GPU显存指标测试"""
+    """GPU显存指标测试."""
 
     def test_creation(self):
-        """测试创建"""
+        """测试创建."""
         metrics = GPUMemoryMetrics(
             timestamp=time.time(),
             total_memory_mb=8192.0,
@@ -75,7 +75,7 @@ class TestGPUMemoryMetrics:
         assert metrics.usage_percent == 12.5
 
     def test_pool_hit_rate(self):
-        """测试内存池命中率"""
+        """测试内存池命中率."""
         metrics = GPUMemoryMetrics(
             timestamp=time.time(),
             total_memory_mb=8192.0,
@@ -94,25 +94,25 @@ class TestGPUMemoryMetrics:
 
 
 class TestGPUPerformanceMonitor:
-    """GPU性能监控器测试"""
+    """GPU性能监控器测试."""
 
     def setup_method(self):
-        """测试前重置"""
+        """测试前重置."""
         reset_gpu_performance_monitor()
 
     def teardown_method(self):
-        """测试后清理"""
+        """测试后清理."""
         reset_gpu_performance_monitor()
 
     def test_creation(self):
-        """测试创建"""
+        """测试创建."""
         monitor = GPUPerformanceMonitor()
         assert monitor._running is False
         assert monitor._total_batches == 0
         assert monitor._peak_throughput == 0.0
 
     def test_start_stop(self):
-        """测试启动和停止"""
+        """测试启动和停止."""
         monitor = GPUPerformanceMonitor()
         monitor.start()
         assert monitor._running is True
@@ -121,7 +121,7 @@ class TestGPUPerformanceMonitor:
         assert monitor._running is False
 
     def test_record_kernel_metrics(self):
-        """测试记录内核指标"""
+        """测试记录内核指标."""
         monitor = GPUPerformanceMonitor()
 
         monitor.record_kernel_metrics(
@@ -135,7 +135,7 @@ class TestGPUPerformanceMonitor:
         assert monitor._peak_throughput == 200000.0  # 10000/50*1000
 
     def test_record_multiple_metrics(self):
-        """测试记录多个指标"""
+        """测试记录多个指标."""
         monitor = GPUPerformanceMonitor()
 
         # 记录3个批次
@@ -162,7 +162,7 @@ class TestGPUPerformanceMonitor:
         assert monitor._peak_throughput == 250000.0  # 20000/80*1000
 
     def test_get_current_throughput(self):
-        """测试获取当前吞吐量"""
+        """测试获取当前吞吐量."""
         monitor = GPUPerformanceMonitor()
 
         assert monitor.get_current_throughput() == 0.0
@@ -177,7 +177,7 @@ class TestGPUPerformanceMonitor:
         assert throughput == 200000.0
 
     def test_get_average_throughput(self):
-        """测试获取平均吞吐量"""
+        """测试获取平均吞吐量."""
         monitor = GPUPerformanceMonitor()
 
         # 记录多个批次
@@ -192,7 +192,7 @@ class TestGPUPerformanceMonitor:
         assert avg == 200000.0
 
     def test_record_memory_metrics(self):
-        """测试记录显存指标"""
+        """测试记录显存指标."""
         monitor = GPUPerformanceMonitor()
 
         monitor.record_memory_metrics(
@@ -208,7 +208,7 @@ class TestGPUPerformanceMonitor:
         assert memory["pool_hit_rate"] == 100.0
 
     def test_get_performance_report(self):
-        """测试获取性能报告"""
+        """测试获取性能报告."""
         monitor = GPUPerformanceMonitor()
         monitor.start()
 
@@ -231,7 +231,7 @@ class TestGPUPerformanceMonitor:
         monitor.stop()
 
     def test_performance_degradation_detection(self):
-        """测试性能退化检测"""
+        """测试性能退化检测."""
         monitor = GPUPerformanceMonitor(degradation_threshold=0.8)
 
         degradation_detected = [False]
@@ -260,7 +260,7 @@ class TestGPUPerformanceMonitor:
         assert degradation_detected[0] is True
 
     def test_export_metrics_json(self):
-        """测试导出JSON格式"""
+        """测试导出JSON格式."""
         monitor = GPUPerformanceMonitor()
 
         monitor.record_kernel_metrics(
@@ -275,7 +275,7 @@ class TestGPUPerformanceMonitor:
         assert "device_info" in json_data
 
     def test_export_metrics_csv(self):
-        """测试导出CSV格式"""
+        """测试导出CSV格式."""
         monitor = GPUPerformanceMonitor()
 
         monitor.record_kernel_metrics(
@@ -289,14 +289,14 @@ class TestGPUPerformanceMonitor:
         assert "execution_time_ms" in csv_data
 
     def test_global_monitor_singleton(self):
-        """测试全局监控器单例"""
+        """测试全局监控器单例."""
         monitor1 = get_gpu_performance_monitor()
         monitor2 = get_gpu_performance_monitor()
 
         assert monitor1 is monitor2
 
     def test_reset_global_monitor(self):
-        """测试重置全局监控器"""
+        """测试重置全局监控器."""
         monitor1 = get_gpu_performance_monitor()
         reset_gpu_performance_monitor()
         monitor2 = get_gpu_performance_monitor()
@@ -305,10 +305,10 @@ class TestGPUPerformanceMonitor:
 
 
 class TestGPUPerformanceReport:
-    """GPU性能报告测试"""
+    """GPU性能报告测试."""
 
     def test_creation(self):
-        """测试创建"""
+        """测试创建."""
         report = GPUPerformanceReport(
             device_name="Test GPU",
             vendor="Test Vendor",
@@ -332,7 +332,7 @@ class TestGPUPerformanceReport:
         assert report.error_rate_percent == 0.5
 
     def test_to_dict(self):
-        """测试转换为字典"""
+        """测试转换为字典."""
         report = GPUPerformanceReport(
             device_name="Test GPU",
             vendor="Test Vendor",

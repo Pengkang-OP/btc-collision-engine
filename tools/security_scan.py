@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""自动化安全扫描工具
+"""自动化安全扫描工具.
 
 使用bandit扫描代码中的安全问题,生成报告并检查是否通过安全门禁。
 
@@ -24,7 +24,7 @@ from pathlib import Path
 
 
 def run_bandit_scan(severity="medium", format_type="json"):
-    """运行bandit安全扫描"""
+    """运行bandit安全扫描."""
     cmd = [
         sys.executable,
         "-m",
@@ -51,7 +51,7 @@ def run_bandit_scan(severity="medium", format_type="json"):
 
 
 def parse_json_report(json_file="bandit_report.json"):
-    """解析JSON格式的安全报告"""
+    """解析JSON格式的安全报告."""
     report_path = Path(json_file)
     if not report_path.exists():
         return None
@@ -67,7 +67,7 @@ def parse_json_report(json_file="bandit_report.json"):
 
 
 def print_summary(report):
-    """打印安全扫描总结"""
+    """打印安全扫描总结."""
     if not report:
         print("❌ 无报告数据")
         return
@@ -121,7 +121,7 @@ def print_summary(report):
 
 
 def generate_html_report(report, output_file="security_report.html"):
-    """生成HTML格式的安全报告"""
+    """生成HTML格式的安全报告."""
     if not report:
         return
 
@@ -200,14 +200,14 @@ def generate_html_report(report, output_file="security_report.html"):
 
 
 def main():
-    """主函数"""
+    """主函数."""
     import argparse
 
     parser = argparse.ArgumentParser(description="自动化安全扫描工具")
     parser.add_argument("--format", choices=["json", "html", "text"], default="json", help="报告格式")
     parser.add_argument("--output", help="报告输出路径")
     parser.add_argument(
-        "--severity", choices=["low", "medium", "high"], default="medium", help="最低严重性级别"
+        "--severity", choices=["low", "medium", "high"], default="medium", help="最低严重性级别",
     )
     parser.add_argument("--ci-mode", action="store_true", help="CI/CD模式(有高危问题时退出码非0)")
 

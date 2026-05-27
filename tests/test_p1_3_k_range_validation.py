@@ -1,4 +1,4 @@
-"""P1-3 修复验证：GPU内核 batch_check k>=N 验证
+"""P1-3 修复验证：GPU内核 batch_check k>=N 验证.
 
 验证要点：
 1. batch_check 内核包含 uint256_cmp(&k, &n_val) >= 0 检查
@@ -13,10 +13,10 @@ from src.gpu.kernel import OPENCL_KERNEL_SOURCE
 
 
 class TestP1_3_KeyRangeValidation:
-    """P1-3: GPU 内核 k>=N 范围验证"""
+    """P1-3: GPU 内核 k>=N 范围验证."""
 
     def test_kernel_source_contains_n_check_batch_check(self):
-        """P1-3-A: batch_check 包含 k >= N 验证"""
+        """P1-3-A: batch_check 包含 k >= N 验证."""
         source = OPENCL_KERNEL_SOURCE
 
         # 检查包含 SECP256K1_N 的使用
@@ -31,7 +31,7 @@ class TestP1_3_KeyRangeValidation:
         print("\n[P1-3-A ✓] batch_check: k>=N 验证代码存在")
 
     def test_kernel_source_no_old_k_zero_only(self):
-        """P1-3-B: 确认旧代码（仅检查k==0）已被替换"""
+        """P1-3-B: 确认旧代码（仅检查k==0）已被替换."""
         source = OPENCL_KERNEL_SOURCE
 
         lines = source.split("\n")
@@ -65,12 +65,12 @@ class TestP1_3_KeyRangeValidation:
 
         assert len(old_pattern) == 0, (
             f"旧代码 'if (uint256_is_zero(&k)) {{{{' 应已被替换，但仍找到 {len(old_pattern)} 处"
-        )  # noqa: E501
+        )
 
         print("\n[P1-3-B ✓] 旧独占条件已全部替换")
 
     def test_n_val_loaded_from_constant(self):
-        """P1-3-C: n_val 从 SECP256K1_N 常量正确加载"""
+        """P1-3-C: n_val 从 SECP256K1_N 常量正确加载."""
         source = OPENCL_KERNEL_SOURCE
 
         # 检查 n_val 的声明和加载
@@ -91,7 +91,7 @@ class TestP1_3_KeyRangeValidation:
         print(f"\n[P1-3-C ✓] n_val加载正确 (找到{len(load_loops)}处)")
 
     def test_both_kernel_variants_fixed(self):
-        """P1-3-D: batch_check 和 batch_check_local_mem 均已修复"""
+        """P1-3-D: batch_check 和 batch_check_local_mem 均已修复."""
         source = OPENCL_KERNEL_SOURCE
 
         # 找出所有 __kernel void 的定义
@@ -125,7 +125,7 @@ class TestP1_3_KeyRangeValidation:
         print("\n[P1-3-D ✓] 所有batch_check变体均已修复")
 
     def test_n_boundary_values(self):
-        """P1-3-F: 验证 N 常量值正确性"""
+        """P1-3-F: 验证 N 常量值正确性."""
         source = OPENCL_KERNEL_SOURCE
 
         # 提取 SECP256K1_N 的值

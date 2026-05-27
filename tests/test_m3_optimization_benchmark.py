@@ -1,4 +1,4 @@
-"""M3优化性能基准测试 - 量化SecureKeyManager批内复用效果
+"""M3优化性能基准测试 - 量化SecureKeyManager批内复用效果.
 
 CI/本地分级策略:
   - CI 环境 (CI=true): 使用宽松阈值 10x，允许较大波动
@@ -19,13 +19,13 @@ _IS_CI = os.environ.get("CI", "").lower() in ("true", "1")
 
 
 class TestM3OptimizationBenchmark:
-    """测试M3优化（SecureKeyManager批内复用）的性能效果"""
+    """测试M3优化（SecureKeyManager批内复用）的性能效果."""
 
     def test_secure_key_manager_single_use_performance(self, benchmark):
-        """测试单个私钥创建SecureKeyManager的性能（优化前）"""
+        """测试单个私钥创建SecureKeyManager的性能（优化前）."""
 
         def create_single_key():
-            """每次创建新的SecureKeyManager"""
+            """每次创建新的SecureKeyManager."""
             with SecureKeyManager() as key_mgr:
                 key_mgr.generate_key(b"\x01" * 32)
                 private_key = key_mgr.get_key()
@@ -43,10 +43,10 @@ class TestM3OptimizationBenchmark:
         print(f"  OPS: {benchmark.stats.stats.ops:.0f}/s")
 
     def test_secure_key_manager_batch_reuse_performance(self, benchmark):
-        """测试批内复用SecureKeyManager的性能（优化后）"""
+        """测试批内复用SecureKeyManager的性能（优化后）."""
 
         def create_batch_with_reuse():
-            """批内复用SecureKeyManager"""
+            """批内复用SecureKeyManager."""
             batch_size = 100
             keys = []
 
@@ -73,7 +73,7 @@ class TestM3OptimizationBenchmark:
         print(f"  每私钥时间: {benchmark.stats.stats.mean / 100 * 1000:.4f}ms")
 
     def test_secure_key_manager_overhead_comparison(self):
-        """对比优化前后的对象创建开销"""
+        """对比优化前后的对象创建开销."""
         # 优化前：每个私钥创建新实例
         start = time.perf_counter()
         for _ in range(100):
@@ -101,7 +101,7 @@ class TestM3OptimizationBenchmark:
         assert time_after <= time_before * 1.3, "优化后不应该显著更慢"
 
     def test_range_scan_with_m3_optimization(self):
-        """测试范围扫描模式集成M3优化的性能"""
+        """测试范围扫描模式集成M3优化的性能."""
         engine = KeyCollisionEngine(targets=set(), max_workers=1)
 
         start = time.perf_counter()
@@ -121,7 +121,7 @@ class TestM3OptimizationBenchmark:
         print(f"  速度: {speed:.0f} keys/s")
 
     def test_brute_force_with_m3_optimization(self):
-        """测试暴力穷举模式集成M3优化的性能"""
+        """测试暴力穷举模式集成M3优化的性能."""
         import threading
 
         engine = KeyCollisionEngine(targets=set(), max_workers=1)
@@ -145,7 +145,7 @@ class TestM3OptimizationBenchmark:
         print(f"  扫描私钥数: {result}")
 
     def test_m3_optimization_memory_safety(self):
-        """验证M3优化的内存安全性（私钥清零）"""
+        """验证M3优化的内存安全性（私钥清零）."""
         from src.core.secure_key_manager import SecureKeyManager
 
         # 批内复用SecureKeyManager
@@ -174,10 +174,10 @@ class TestM3OptimizationBenchmark:
 
 
 class TestM3OptimizationComparison:
-    """M3优化前后性能对比测试"""
+    """M3优化前后性能对比测试."""
 
     def test_object_creation_overhead_reduction(self):
-        """量化对象创建开销减少"""
+        """量化对象创建开销减少."""
         # 测量优化前的开销
         start = time.perf_counter()
         for _ in range(1000):
@@ -209,7 +209,7 @@ class TestM3OptimizationComparison:
         assert speedup > 1.01, f"优化应有提升，实际加速比{speedup:.2f}x"
 
     def test_batch_size_impact_on_performance(self):
-        """测试不同批量大小对性能的影响"""
+        """测试不同批量大小对性能的影响."""
         batch_sizes = [10, 100, 1000, 5000]
         results = {}
 

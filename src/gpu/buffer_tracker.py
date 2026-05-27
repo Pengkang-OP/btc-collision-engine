@@ -1,4 +1,4 @@
-"""GPU缓冲区追踪器模块
+"""GPU缓冲区追踪器模块.
 
 提供 GPUBufferTracker 类，用于检测和管理 GPU 内存缓冲区泄漏。
 """
@@ -15,7 +15,7 @@ logger = get_configured_logger("GPUBufferTracker")
 
 # ========== GPU缓冲区追踪器 ==========
 class GPUBufferTracker:
-    """P2-2修复: GPU缓冲区跟踪器,用于检测内存泄漏
+    """P2-2修复: GPU缓冲区跟踪器,用于检测内存泄漏.
 
     追踪所有分配的GPU缓冲区,检测超时未释放的缓冲区。
     线程安全,支持多线程并发访问。
@@ -31,13 +31,16 @@ class GPUBufferTracker:
 
     __slots__ = (
         "_allocated_buffers",
-        "_lock",
-        "_timeout",
-        "_memory_threshold",
+        "_check_interval",
         "_cleanup_count",
-        "_leak_detection_count",
-        "_memory_usage_history",
         "_last_check_time",
+        "_leak_detection_count",
+        "_lock",
+        "_memory_threshold",
+        "_memory_usage_history",
+        "_periodic_check_stop",
+        "_periodic_check_thread",
+        "_timeout",
     )
 
     # 类级别配置
@@ -50,6 +53,12 @@ class GPUBufferTracker:
     MEMORY_GROWTH_WARNING_RATIO = 1.5  # 内存增长警告比例（增长超过50%）
 
     def __init__(self, timeout: int | None = None, memory_threshold: int | None = None) -> None:
+        """初始化缓冲区追踪器。.
+
+        Args:
+            timeout: 缓冲区超时时间（秒）。
+            memory_threshold: 内存阈值（MB）。
+        """
         self._allocated_buffers: dict[str, dict[str, Any]] = {}
         self._lock = threading.Lock()
         self._timeout = timeout or self.DEFAULT_TIMEOUT
@@ -67,7 +76,7 @@ class GPUBufferTracker:
         buffer_type: str = "generic",
         context: str = "",
     ) -> None:
-        """注册缓冲区
+        """注册缓冲区.
 
         Args:
             name: 缓冲区名称
@@ -117,7 +126,7 @@ class GPUBufferTracker:
         logger.debug(f"GPU Buffer追踪: 分配 {name} ({size / 1024:.1f} KB, 类型: {buffer_type})")
 
     def is_tracked(self, name: str) -> bool:
-        """检查缓冲区是否已被追踪
+        """检查缓冲区是否已被追踪.
 
         Args:
             name: 缓冲区名称
@@ -130,7 +139,7 @@ class GPUBufferTracker:
             return name in self._allocated_buffers
 
     def release_buffer(self, name: str) -> None:
-        """注销缓冲区
+        """注销缓冲区.
 
         Args:
             name: 缓冲区名称
@@ -152,7 +161,7 @@ class GPUBufferTracker:
                     self._record_memory_usage()
 
     def get_leaked_buffers(self, timeout: int | None = None) -> list[str]:
-        """检测超过timeout未释放的缓冲区
+        """检测超过timeout未释放的缓冲区.
 
         Args:
             timeout: 超时阈值(秒)，None则使用实例默认超时
@@ -176,7 +185,7 @@ class GPUBufferTracker:
         return leaked
 
     def get_stats(self) -> dict[str, Any]:
-        """获取缓冲区统计信息
+        """获取缓冲区统计信息.
 
         Returns:
             统计信息字典
@@ -209,7 +218,7 @@ class GPUBufferTracker:
             }
 
     def cleanup_timed_out_buffers(self) -> list[str]:
-        """自动清理超时的缓冲区
+        """自动清理超时的缓冲区.
 
         审查修复#2: 实际释放GPU资源，而不仅删除追踪记录。
 
@@ -261,7 +270,7 @@ class GPUBufferTracker:
         return cleaned
 
     def _cleanup_sync(self) -> list[str]:
-        """P2-02修复: 同步清理超时缓冲区（在锁内调用）
+        """P2-02修复: 同步清理超时缓冲区（在锁内调用）.
 
         与 cleanup_timed_out_buffers 的区别：
         - 此方法假定调用者已持有 self._lock
@@ -299,7 +308,7 @@ class GPUBufferTracker:
         return cleaned
 
     def cleanup_by_type(self, buffer_type: str) -> list[str]:
-        """按类型清理缓冲区
+        """按类型清理缓冲区.
 
         Args:
             buffer_type: 缓冲区类型
@@ -348,7 +357,7 @@ class GPUBufferTracker:
         return cleaned
 
     def start_periodic_check(self, interval: int = 300) -> None:
-        """启动定期泄漏检查（默认每5分钟）"""
+        """启动定期泄漏检查（默认每5分钟）."""
         self._check_interval = interval
         self._periodic_check_stop = threading.Event()
         self._periodic_check_thread = threading.Thread(
@@ -360,7 +369,7 @@ class GPUBufferTracker:
         logger.info("GPU缓冲区追踪器：定期检查已启动，间隔 %s 秒", interval)
 
     def stop_periodic_check(self) -> None:
-        """停止定期泄漏检查"""
+        """停止定期泄漏检查."""
         if hasattr(self, "_periodic_check_stop") and self._periodic_check_stop:
             self._periodic_check_stop.set()
             if hasattr(self, "_periodic_check_thread") and self._periodic_check_thread:
@@ -368,7 +377,7 @@ class GPUBufferTracker:
             logger.info("GPU缓冲区追踪器：定期检查已停止")
 
     def _periodic_check_loop(self) -> None:
-        """定期检查循环"""
+        """定期检查循环."""
         while not self._periodic_check_stop.is_set():
             self._periodic_check_stop.wait(timeout=self._check_interval)
             if self._periodic_check_stop.is_set():
@@ -394,7 +403,7 @@ class GPUBufferTracker:
                 logger.error("定期泄漏检查失败: %s", e)
 
     def _record_memory_usage(self) -> None:
-        """记录内存使用情况"""
+        """记录内存使用情况."""
         total_size = sum(info["size"] for info in self._allocated_buffers.values())
         self._memory_usage_history.append(
             {
@@ -410,7 +419,7 @@ class GPUBufferTracker:
             self._memory_usage_history = self._memory_usage_history[-self.MAX_MEMORY_HISTORY :]
 
     def _check_memory_trend(self) -> None:
-        """检查内存使用趋势"""
+        """检查内存使用趋势."""
         if len(self._memory_usage_history) < self.MEMORY_TREND_WINDOW:
             return
 
@@ -427,7 +436,7 @@ class GPUBufferTracker:
             self.cleanup_timed_out_buffers()
 
     def force_check_on_shutdown(self) -> dict[str, Any]:
-        """引擎关闭时强制检查内存泄漏
+        """引擎关闭时强制检查内存泄漏.
 
         Returns:
             检查结果字典

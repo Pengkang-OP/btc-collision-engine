@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Performance benchmark utility.
 
 Tests performance improvements of various optimization strategies:
@@ -27,9 +26,15 @@ logger = get_configured_logger("PerformanceBenchmark")
 
 
 class BenchmarkResult:
-    """基准测试结果"""
+    """基准测试结果."""
 
     def __init__(self, name: str, config: dict[str, Any]) -> None:
+        """初始化基准测试结果。.
+
+        Args:
+            name: 测试名称
+            config: 配置字典
+        """
         self.name = name
         self.config = config
         self.start_time: float | None = None
@@ -41,11 +46,11 @@ class BenchmarkResult:
         self.memory_usage_mb = 0.0
 
     def start(self) -> None:
-        """开始测试"""
+        """开始测试."""
         self.start_time = time.time()
 
     def stop(self) -> None:
-        """停止测试"""
+        """停止测试."""
         self.end_time = time.time()
 
         if self.end_time is not None and self.start_time is not None:
@@ -55,7 +60,7 @@ class BenchmarkResult:
         self.avg_speed = self.total_processed / elapsed if elapsed > 0 else 0
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "name": self.name,
             "config": self.config,
@@ -73,14 +78,14 @@ class BenchmarkResult:
 
 
 class PerformanceBenchmark:
-    """性能基准测试器"""
+    """性能基准测试器."""
 
     def __init__(self) -> None:
-        """初始化基准测试器"""
+        """初始化基准测试器."""
         self.results: list[BenchmarkResult] = []
 
     def benchmark_simd_optimization(self, batch_sizes: list[int] | None = None) -> None:
-        """测试SIMD优化性能
+        """测试SIMD优化性能.
 
         Args:
             batch_sizes: 要测试的批次大小列表
@@ -139,7 +144,7 @@ class PerformanceBenchmark:
             self.results.append(result)
 
     def benchmark_multiprocess(self, worker_counts: list[int] | None = None) -> None:
-        """测试多进程性能
+        """测试多进程性能.
 
         Args:
             worker_counts: 要测试的工作进程数量列表
@@ -214,7 +219,7 @@ class PerformanceBenchmark:
             engine.cleanup()
 
     def benchmark_bloom_filter(self, sizes: list[int] | None = None) -> None:
-        """测试Bloom Filter性能
+        """测试Bloom Filter性能.
 
         Args:
             sizes: 要测试的元素数量列表
@@ -228,7 +233,7 @@ class PerformanceBenchmark:
         print("=" * 70)
 
     def benchmark_comparison(self) -> None:
-        """对比测试：优化前 vs 优化后"""
+        """对比测试：优化前 vs 优化后."""
         print("\n" + "=" * 70)
         print("性能对比测试")
         print("=" * 70)
@@ -280,7 +285,7 @@ class PerformanceBenchmark:
         print(f"\n加速比: {speedup:.2f}x")
 
     def run_all_benchmarks(self) -> None:
-        """运行所有基准测试"""
+        """运行所有基准测试."""
         print("=" * 70)
         print("BTC碰撞引擎 - 性能基准测试套件")
         print("=" * 70)
@@ -296,7 +301,7 @@ class PerformanceBenchmark:
         self.print_summary()
 
     def print_summary(self) -> None:
-        """打印测试总结"""
+        """打印测试总结."""
         print("\n" + "=" * 70)
         print("基准测试总结")
         print("=" * 70)
@@ -309,7 +314,7 @@ class PerformanceBenchmark:
             print(f"  处理量: {d['total_processed']:,}")
 
     def save_results(self, filepath: str = "benchmark_results.json") -> None:
-        """保存测试结果到文件
+        """保存测试结果到文件.
 
         Args:
             filepath: 输出文件路径
@@ -327,7 +332,7 @@ class PerformanceBenchmark:
         print(f"\n测试结果已保存到: {filepath}")
 
     def _get_system_info(self) -> dict[str, Any]:
-        """获取系统信息"""
+        """获取系统信息."""
         import multiprocessing as mp
 
         import psutil
@@ -342,7 +347,7 @@ class PerformanceBenchmark:
 
 
 def main() -> None:
-    """主函数"""
+    """主函数."""
     parser = argparse.ArgumentParser(description="性能基准测试工具")
     parser.add_argument(
         "--test",

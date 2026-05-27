@@ -1,4 +1,4 @@
-"""NVIDIA GPU 专有优化模块
+"""NVIDIA GPU 专有优化模块.
 
 封装所有 NVIDIA GPU 特定的优化逻辑，包括：
 - 驱动版本检测与建议
@@ -29,7 +29,7 @@ logger = get_configured_logger("NvidiaOptimizer")
 
 
 class NvidiaDriverDetector:
-    """NVIDIA 驱动版本检测器
+    """NVIDIA 驱动版本检测器.
 
     从设备信息或平台信息中提取驱动版本，
     并给出最低版本建议（OpenCL 1.2 需要 310+，推荐 550+）。
@@ -62,7 +62,7 @@ class NvidiaDriverDetector:
         self._logger = engine_logger or logger
 
     def detect(self) -> dict:
-        """检测驱动版本并返回结果字典
+        """检测驱动版本并返回结果字典.
 
         Returns:
             {
@@ -129,7 +129,7 @@ class NvidiaDriverDetector:
 
     @staticmethod
     def _parse_major_version(version_str: str) -> int | None:
-        """从版本字符串中解析主版本号"""
+        """从版本字符串中解析主版本号."""
         # 匹配形如 "530.41" 或 "390" 的 NVIDIA 驱动版本号
         match = re.search(r"\b(\d{3,4})\b", version_str)
         if match:
@@ -137,7 +137,7 @@ class NvidiaDriverDetector:
         return None
 
     def _try_opencl_platform_version(self) -> str | None:
-        """Fallback: 从 OpenCL 平台信息中提取 NVIDIA 驱动版本
+        """Fallback: 从 OpenCL 平台信息中提取 NVIDIA 驱动版本.
 
         当 nvidia-smi 不可用（未加入 PATH）时，尝试从 pyopencl
         获取平台版本字符串。NVIDIA OpenCL 平台版本通常格式为
@@ -177,7 +177,7 @@ class NvidiaDriverDetector:
 
 
 class NvidiaArchDetector:
-    """NVIDIA GPU 架构代识别器
+    """NVIDIA GPU 架构代识别器.
 
     基于设备名称模式匹配识别架构代，返回架构特性。
     不使用 CUDA 特有 API，仅依赖设备名称字符串。
@@ -402,7 +402,7 @@ class NvidiaArchDetector:
         self._logger = engine_logger or logger
 
     def detect(self) -> dict:
-        """检测 GPU 架构代
+        """检测 GPU 架构代.
 
         Returns:
             {
@@ -429,7 +429,7 @@ class NvidiaArchDetector:
 
 
 class NvidiaMemoryOptimizer:
-    """NVIDIA 显存优化器
+    """NVIDIA 显存优化器.
 
     基于显存大小和类型动态设置 memory_ratio：
     - HBM显存（A100/V100/H100等数据中心卡）→ memory_ratio = 0.80
@@ -464,7 +464,7 @@ class NvidiaMemoryOptimizer:
         self._logger = engine_logger or logger
 
     def compute(self) -> dict:
-        """计算显存优化配置
+        """计算显存优化配置.
 
         Returns:
             {
@@ -504,7 +504,7 @@ class NvidiaMemoryOptimizer:
         }
 
     def _detect_hbm(self, device_name: str) -> bool:
-        """检测设备是否使用HBM显存（数据中心卡）"""
+        """检测设备是否使用HBM显存（数据中心卡）."""
         device_upper = device_name.upper()
         return any(keyword.upper() in device_upper for keyword in self._HBM_KEYWORDS)
 
@@ -515,7 +515,7 @@ class NvidiaMemoryOptimizer:
 
 
 class NvidiaGPUOptimizer:
-    """NVIDIA GPU 专有优化器
+    """NVIDIA GPU 专有优化器.
 
     封装所有 NVIDIA GPU 特定的优化逻辑，提供统一接口供引擎委托调用。
     与 IntelGPUOptimizer 架构对齐，使用防御性初始化模式。
@@ -531,11 +531,11 @@ class NvidiaGPUOptimizer:
     """
 
     __slots__ = (
-        "_device_info",
-        "_config",
-        "_logger",
-        "_driver_info",
         "_arch_info",
+        "_config",
+        "_device_info",
+        "_driver_info",
+        "_logger",
         "_memory_config",
     )
 
@@ -558,7 +558,7 @@ class NvidiaGPUOptimizer:
     # ------------------------------------------------------------------
 
     def apply_optimizations(self) -> dict:
-        """应用 NVIDIA GPU 特定优化
+        """应用 NVIDIA GPU 特定优化.
 
         采用防御性策略：每个检测步骤独立执行，单步失败不影响整体。
 
@@ -678,7 +678,7 @@ class NvidiaGPUOptimizer:
         return result
 
     def get_optimization_report(self) -> dict:
-        """返回优化状态报告
+        """返回优化状态报告.
 
         Returns:
             包含当前优化状态的字典

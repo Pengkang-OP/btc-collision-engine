@@ -1,4 +1,4 @@
-"""GPU引擎监控模块
+"""GPU引擎监控模块.
 
 负责追踪和报告 GPU 碰撞引擎的运行状态，包括：
 - batch_size 调整历史记录
@@ -30,7 +30,7 @@ logger = get_configured_logger("GPUEngineMonitor")
 
 
 class GPUEngineMonitor:
-    """GPU引擎监控器
+    """GPU引擎监控器.
 
     封装 GPU 碰撞引擎的调整历史记录和状态快照逻辑，
     将监控职责从核心引擎中解耦出来。
@@ -51,19 +51,19 @@ class GPUEngineMonitor:
     """
 
     __slots__ = (
-        "_engine",
-        "_adjustment_history",
-        "_adjustment_history_lock",
-        "_performance_window",
-        "_performance_lock",
         "_adaptive_enabled",
         "_adjust_interval",
-        "_last_adjust_time",
+        "_adjustment_history",
+        "_adjustment_history_lock",
+        "_engine",
         "_error_rate_threshold",
+        "_last_adjust_time",
+        "_performance_lock",
+        "_performance_window",
     )
 
     def __init__(self, engine: Optional["GPUCollisionEngine"] = None) -> None:
-        """初始化引擎监控器
+        """初始化引擎监控器.
 
         Args:
             engine: GPU碰撞引擎实例（可选）。传入后可通过
@@ -99,7 +99,7 @@ class GPUEngineMonitor:
         reason: str,
         details: str = "",
     ) -> None:
-        """记录一次 batch_size 调整事件
+        """记录一次 batch_size 调整事件.
 
         Args:
             old_size: 调整前的批次大小
@@ -135,7 +135,7 @@ class GPUEngineMonitor:
         )
 
     def get_adjustment_history(self, limit: int = 10) -> list[dict[str, Any]]:
-        """获取 batch_size 调整历史（按时间倒序）
+        """获取 batch_size 调整历史（按时间倒序）.
 
         Args:
             limit: 返回的记录数量上限
@@ -151,7 +151,7 @@ class GPUEngineMonitor:
         return history[:limit]
 
     def get_adjustment_stats(self) -> dict[str, Any]:
-        """统计调整历史摘要
+        """统计调整历史摘要.
 
         Returns:
             包含总次数、平均变化幅度等的统计字典
@@ -183,7 +183,7 @@ class GPUEngineMonitor:
         }
 
     def get_recent_adjustments(self, seconds: int = 60) -> int:
-        """获取最近N秒内的调整次数
+        """获取最近N秒内的调整次数.
 
         Args:
             seconds: 时间窗口（秒），默认60秒
@@ -197,7 +197,7 @@ class GPUEngineMonitor:
             return sum(1 for adj in self._adjustment_history if adj.get("timestamp", 0) >= cutoff)
 
     def clear_adjustment_history(self) -> None:
-        """清空调整历史（重置统计）"""
+        """清空调整历史（重置统计）."""
         with self._adjustment_history_lock:
             self._adjustment_history.clear()
         logger.debug("调整历史已清空")
@@ -207,7 +207,7 @@ class GPUEngineMonitor:
     # ------------------------------------------------------------------
 
     def get_engine_status(self) -> dict[str, Any]:
-        """获取引擎运行状态快照
+        """获取引擎运行状态快照.
 
         整合引擎基本信息、当前配置和监控统计，供外部组件或 GUI 轮询。
 
@@ -276,7 +276,7 @@ class GPUEngineMonitor:
     # ------------------------------------------------------------------
 
     def record_batch_performance(self, batch_time: float, num_keys: int, success: bool) -> None:
-        """记录批次性能数据
+        """记录批次性能数据.
 
         Args:
             batch_time: 批次执行时间（秒）
@@ -305,7 +305,7 @@ class GPUEngineMonitor:
                 logger.warning("更新引擎统计信息失败: %s", e)
 
     def should_adjust_batch_size(self) -> bool:
-        """判断是否需要调整batch_size
+        """判断是否需要调整batch_size.
 
         Returns:
             True表示需要调整，False表示不需要
@@ -326,7 +326,7 @@ class GPUEngineMonitor:
         return True
 
     def calculate_optimal_batch_size(self) -> tuple[int, str, str]:
-        """计算最优batch_size
+        """计算最优batch_size.
 
         Returns:
             (new_batch_size, reason, details)
@@ -367,7 +367,7 @@ class GPUEngineMonitor:
         return current_batch_size, reason, details
 
     def adjust_batch_size(self) -> bool:
-        """执行batch_size调整
+        """执行batch_size调整.
 
         Returns:
             True表示执行了调整，False表示未调整
@@ -402,7 +402,7 @@ class GPUEngineMonitor:
         return False
 
     def get_performance_stats(self) -> dict[str, Any]:
-        """获取性能统计信息
+        """获取性能统计信息.
 
         Returns:
             性能统计字典
@@ -440,7 +440,7 @@ class GPUEngineMonitor:
         }
 
     def clear_performance_data(self) -> None:
-        """清空性能数据"""
+        """清空性能数据."""
         with self._performance_lock:
             self._performance_window.clear()
         logger.debug("性能数据已清空")

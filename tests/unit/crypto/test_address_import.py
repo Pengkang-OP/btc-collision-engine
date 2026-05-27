@@ -1,4 +1,4 @@
-"""地址导入和自动保存功能测试"""
+"""地址导入和自动保存功能测试."""
 
 import json
 import pathlib
@@ -10,10 +10,10 @@ from src.collision.targets.storage import AddressStorage
 
 
 class TestAddressImport:
-    """地址导入功能测试"""
+    """地址导入功能测试."""
 
     def test_import_from_text_file(self):
-        """测试从文本文件导入地址"""
+        """测试从文本文件导入地址."""
         # 创建临时文本文件
         with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False, encoding="utf-8") as f:
             f.write("# 测试地址文件\n")
@@ -55,7 +55,7 @@ class TestAddressImport:
                 pathlib.Path(temp_txt_path).unlink()
 
     def test_import_from_json_file(self):
-        """测试从JSON文件导入地址"""
+        """测试从JSON文件导入地址."""
         # 创建临时JSON文件
         test_data = {
             "addresses": [
@@ -88,7 +88,7 @@ class TestAddressImport:
                 pathlib.Path(temp_json_path).unlink()
 
     def test_import_from_csv_file(self):
-        """测试从CSV文件导入地址"""
+        """测试从CSV文件导入地址."""
         # 创建临时CSV文件
         with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False, encoding="utf-8") as f:
             f.write("address,name\n")
@@ -116,7 +116,7 @@ class TestAddressImport:
                 pathlib.Path(temp_csv_path).unlink()
 
     def test_import_without_validation(self):
-        """测试不验证直接导入"""
+        """测试不验证直接导入."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False, encoding="utf-8") as f:
             f.write("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\n")
             f.write("invalid_address\n")
@@ -141,7 +141,7 @@ class TestAddressImport:
                 pathlib.Path(temp_txt_path).unlink()
 
     def test_import_nonexistent_file(self):
-        """测试导入不存在的文件"""
+        """测试导入不存在的文件."""
         storage = AddressStorage()
 
         result = storage.import_addresses(
@@ -155,7 +155,7 @@ class TestAddressImport:
         assert "不存在" in result["error"] or "路径超出允许范围" in result["error"]
 
     def test_import_with_progress_callback(self):
-        """测试带进度回调的导入"""
+        """测试带进度回调的导入."""
         progress_calls = []
 
         def progress_callback(imported, total, address):
@@ -185,7 +185,7 @@ class TestAddressImport:
                 pathlib.Path(temp_txt_path).unlink()
 
     def test_import_sqlite_format(self):
-        """测试SQLite格式导入"""
+        """测试SQLite格式导入."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False, encoding="utf-8") as f:
             f.write("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\n")
             f.write("1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2\n")

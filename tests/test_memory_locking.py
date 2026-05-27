@@ -1,4 +1,4 @@
-"""SecureKeyManager内存锁定功能测试
+"""SecureKeyManager内存锁定功能测试.
 
 验证P1-1修复：内存锁定功能完整实现
 """
@@ -11,12 +11,12 @@ from src.core.secure_key_manager import SecureKeyManager, SecureMemoryError
 
 
 class TestMemoryLockingPosix:
-    """POSIX系统内存锁定测试"""
+    """POSIX系统内存锁定测试."""
 
     @patch("src.core.secure_key_manager.os.name", "posix")
     @patch("src.core.secure_key_manager.sys.platform", "linux")
     def test_posix_memory_lock_initialization(self):
-        """测试POSIX内存锁定初始化"""
+        """测试POSIX内存锁定初始化."""
         with patch("ctypes.CDLL") as mock_cdll:
             # Mock libc
             mock_libc = Mock()
@@ -37,7 +37,7 @@ class TestMemoryLockingPosix:
     @patch("src.core.secure_key_manager.os.name", "posix")
     @patch("src.core.secure_key_manager.sys.platform", "darwin")
     def test_macos_memory_lock_initialization(self):
-        """测试macOS内存锁定初始化"""
+        """测试macOS内存锁定初始化."""
         with patch("ctypes.CDLL") as mock_cdll:
             mock_libc = Mock()
             mock_cdll.return_value = mock_libc
@@ -51,7 +51,7 @@ class TestMemoryLockingPosix:
     @patch("src.core.secure_key_manager.os.name", "posix")
     @patch("src.core.secure_key_manager.sys.platform", "linux")
     def test_mlock_key_memory_success(self):
-        """测试mlock锁定密钥内存成功"""
+        """测试mlock锁定密钥内存成功."""
         with patch("ctypes.CDLL") as mock_cdll:
             mock_libc = Mock()
             mock_libc.mlock.return_value = 0  # 成功
@@ -67,7 +67,7 @@ class TestMemoryLockingPosix:
     @patch("src.core.secure_key_manager.os.name", "posix")
     @patch("src.core.secure_key_manager.sys.platform", "linux")
     def test_munlock_key_memory_success(self):
-        """测试munlock解锁密钥内存成功"""
+        """测试munlock解锁密钥内存成功."""
         with patch("ctypes.CDLL") as mock_cdll:
             mock_libc = Mock()
             mock_libc.mlock.return_value = 0
@@ -85,11 +85,11 @@ class TestMemoryLockingPosix:
 
 
 class TestMemoryLockingWindows:
-    """Windows系统内存锁定测试"""
+    """Windows系统内存锁定测试."""
 
     @patch("src.core.secure_key_manager.os.name", "nt")
     def test_windows_memory_lock_initialization(self):
-        """测试Windows内存锁定初始化"""
+        """测试Windows内存锁定初始化."""
         with patch("ctypes.WinDLL") as mock_windll:
             mock_kernel32 = Mock()
             mock_kernel32.VirtualLock.argtypes = None
@@ -107,7 +107,7 @@ class TestMemoryLockingWindows:
 
     @patch("src.core.secure_key_manager.os.name", "nt")
     def test_virtual_lock_key_memory_success(self):
-        """测试VirtualLock锁定密钥内存成功"""
+        """测试VirtualLock锁定密钥内存成功."""
         with patch("ctypes.WinDLL") as mock_windll:
             mock_kernel32 = Mock()
             mock_kernel32.VirtualLock.return_value = True  # 成功
@@ -121,7 +121,7 @@ class TestMemoryLockingWindows:
 
     @patch("src.core.secure_key_manager.os.name", "nt")
     def test_virtual_unlock_key_memory_success(self):
-        """测试VirtualUnlock解锁密钥内存成功"""
+        """测试VirtualUnlock解锁密钥内存成功."""
         with patch("ctypes.WinDLL") as mock_windll:
             mock_kernel32 = Mock()
             mock_kernel32.VirtualLock.return_value = True
@@ -138,10 +138,10 @@ class TestMemoryLockingWindows:
 
 
 class TestMemoryLockingFallback:
-    """内存锁定降级和错误处理测试"""
+    """内存锁定降级和错误处理测试."""
 
     def test_lock_memory_disabled(self):
-        """测试禁用内存锁定"""
+        """测试禁用内存锁定."""
         manager = SecureKeyManager(lock_memory=False)
         manager.generate_key()
 
@@ -151,7 +151,7 @@ class TestMemoryLockingFallback:
     @patch("src.core.secure_key_manager.os.name", "posix")
     @patch("src.core.secure_key_manager.sys.platform", "linux")
     def test_mlock_failure_graceful(self):
-        """测试mlock失败时的优雅降级"""
+        """测试mlock失败时的优雅降级."""
         with patch("ctypes.CDLL") as mock_cdll:
             # Mock mlock失败
             mock_libc = Mock()
@@ -169,7 +169,7 @@ class TestMemoryLockingFallback:
 
     @patch("src.core.secure_key_manager.os.name", "posix")
     def test_unsupported_os(self):
-        """测试不支持的操作系统"""
+        """测试不支持的操作系统."""
         with patch("src.core.secure_key_manager.sys.platform", "unknown"):
             with patch("ctypes.CDLL", side_effect=OSError("Unsupported")):
                 manager = SecureKeyManager(lock_memory=True)
@@ -180,10 +180,10 @@ class TestMemoryLockingFallback:
 
 
 class TestMemoryLockingIntegration:
-    """内存锁定集成测试"""
+    """内存锁定集成测试."""
 
     def test_full_lifecycle_with_locking(self):
-        """测试完整的密钥生命周期（含内存锁定）"""
+        """测试完整的密钥生命周期（含内存锁定）."""
         manager = SecureKeyManager(lock_memory=True)
 
         # 初始化时尝试锁定内存
@@ -210,7 +210,7 @@ class TestMemoryLockingIntegration:
             manager.get_key()
 
     def test_context_manager_with_locking(self):
-        """测试上下文管理器中的内存锁定"""
+        """测试上下文管理器中的内存锁定."""
         from src.core.secure_key_manager import secure_key_context
 
         # Mock内存锁定
@@ -224,7 +224,7 @@ class TestMemoryLockingIntegration:
                 # (无法直接测试，因为key是引用)
 
     def test_multiple_keys_sequential(self):
-        """测试连续生成多个密钥"""
+        """测试连续生成多个密钥."""
         manager = SecureKeyManager(lock_memory=True)
         manager._try_lock_memory()
 
@@ -236,7 +236,7 @@ class TestMemoryLockingIntegration:
             assert manager.is_cleared
 
     def test_statistics_tracking(self):
-        """测试清零统计跟踪"""
+        """测试清零统计跟踪."""
         SecureKeyManager.reset_clear_stats()
 
         manager = SecureKeyManager(lock_memory=True)
@@ -251,10 +251,10 @@ class TestMemoryLockingIntegration:
 
 
 class TestMemoryLockingSecurity:
-    """内存锁定安全性测试"""
+    """内存锁定安全性测试."""
 
     def test_key_cleared_with_random_first(self):
-        """测试清零时先用随机数据覆盖"""
+        """测试清零时先用随机数据覆盖."""
         manager = SecureKeyManager()
         manager.generate_key()
         key = manager.get_key()
@@ -269,7 +269,7 @@ class TestMemoryLockingSecurity:
         assert bytes(key) == b"\x00" * 32
 
     def test_no_key_duplication(self):
-        """测试密钥不会被意外复制"""
+        """测试密钥不会被意外复制."""
         manager = SecureKeyManager()
         manager.generate_key()
 
@@ -284,7 +284,7 @@ class TestMemoryLockingSecurity:
     @patch("src.core.secure_key_manager.os.name", "posix")
     @patch("src.core.secure_key_manager.sys.platform", "linux")
     def test_munlock_on_clear(self):
-        """测试清零时会解锁内存"""
+        """测试清零时会解锁内存."""
         with patch("ctypes.CDLL") as mock_cdll:
             mock_libc = Mock()
             mock_libc.mlock.return_value = 0

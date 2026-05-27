@@ -7,10 +7,10 @@ from pathlib import Path
 
 from ._i18n import _t
 from ._shared import (
-    _has_rich,
     _PROJECT_ROOT,
     _PYTHON_EXE,
     _console,
+    _has_rich,
     _RichPanel,
     _RichText,
 )
@@ -263,7 +263,7 @@ def monitoring_menu() -> bool:
 def _show_banner() -> None:
     _clear_screen()
     venv_ok = os.path.isfile(
-        os.path.join(_PROJECT_ROOT, "venv", "Scripts", "activate.bat")
+        os.path.join(_PROJECT_ROOT, "venv", "Scripts", "activate.bat"),
     ) or os.path.isfile(os.path.join(_PROJECT_ROOT, "venv", "bin", "activate"))
     targets_ok = os.path.isfile(os.path.join(_PROJECT_ROOT, "targets.txt"))
     if _has_rich and _console is not None:
@@ -309,7 +309,7 @@ def _show_banner_rich(venv_ok: bool, targets_ok: bool) -> None:
         if recommended:
             lines.append(
                 f"  [bold]{num}.[/bold] [{color} bold]{label}[/{color} bold] "
-                "[dim italic][Recommended][/dim italic]"
+                "[dim italic][Recommended][/dim italic]",
             )
         else:
             lines.append(f"  [bold]{num}.[/bold] [{color}]{label}[/{color}]")
@@ -367,7 +367,7 @@ def _run_cli(args: list[str], label: str = "") -> int:
                 title="[bold cyan]BTC Collision Engine[/bold cyan]",
                 border_style="dim",
                 width=_term_width(),
-            )
+            ),
         )
         _console.print()
     try:

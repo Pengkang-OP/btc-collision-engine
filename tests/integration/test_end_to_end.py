@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""端到端测试：从地址导入到碰撞检测"""
+"""端到端测试：从地址导入到碰撞检测."""
 
 import json
 import logging
@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.CRITICAL)
 
 
 def test_end_to_end_address_import():
-    """端到端测试：地址导入 + 碰撞检测"""
+    """端到端测试：地址导入 + 碰撞检测."""
     print("=== 端到端测试：地址导入模式 ===")
     print()
 

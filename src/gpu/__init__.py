@@ -12,6 +12,8 @@
 v4.2.2 S1: 统一模块说明，移除重复 docstring。
 """
 
+from src import __version__ as __version__  # noqa: F401
+
 from .amd_optimizer import AmdGPUOptimizer
 from .auto_config import (
     GPUAutoConfigurator,
@@ -74,8 +76,6 @@ from .scorer import GPUDeviceScorer, get_gpu_scorer, reset_gpu_scorer
 # 多GPU支持模块
 from .selector import GPUDeviceSelector, get_gpu_selector, reset_gpu_selector
 from .worker import SingleGPUWorker
-
-from src import __version__ as __version__  # noqa: F401 — 从包根统一读取
 
 __all__ = [
     "GPUDeviceDetector",

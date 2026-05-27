@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Base collision engine providing core collision detection framework.
 
 Supports random and sequential search modes with configurable
@@ -7,7 +6,8 @@ targets, workers, and event hooks.
 
 import threading
 from abc import ABC, abstractmethod
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from ..utils import get_configured_logger
 

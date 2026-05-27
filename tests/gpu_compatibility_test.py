@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GPU兼容性测试脚本
+"""GPU兼容性测试脚本.
 
 测试系统在不同厂商和型号的GPU上的兼容性和性能。
 """
@@ -17,7 +17,7 @@ pytestmark = [
 
 @pytest.fixture
 def mock_pyopencl():
-    """Fixture to mock pyopencl module and GPUDeviceDetector.detect_devices"""
+    """Fixture to mock pyopencl module and GPUDeviceDetector.detect_devices."""
     mock_cl = Mock()
 
     # Create mock platform and device
@@ -60,13 +60,13 @@ def mock_pyopencl():
 
 
 class TestGPUCompatibility:
-    """GPU兼容性测试"""
+    """GPU兼容性测试."""
 
     def test_gpu_device_detection(self, mock_pyopencl):
-        """测试GPU设备检测功能"""
+        """测试GPU设备检测功能."""
         # 先patch，再import
         with patch.dict("sys.modules", {"pyopencl": mock_pyopencl}):
-            with patch("src.gpu.device.PYOPENCL_AVAILABLE", True):
+            with patch("src.gpu._availability.PYOPENCL_AVAILABLE", True):
                 # 清除已经可能已导入的模块，强制重新导入
                 import sys
 
@@ -89,7 +89,7 @@ class TestGPUCompatibility:
 
     @pytest.mark.usefixtures("mock_gpu_chain")
     def test_gpu_initialization(self, mock_gpu_chain):
-        """测试GPU设备初始化"""
+        """测试GPU设备初始化."""
         from src.collision.gpu.engine import GPUCollisionEngine
 
         targets = {

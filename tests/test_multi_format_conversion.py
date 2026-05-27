@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""比特币多格式地址转换验证测试"""
+"""比特币多格式地址转换验证测试."""
 
 # 此文件是独立脚本（无 pytest 测试函数），标记排除 pytest 收集
 __test__ = False
 
 
 def main():
-    """运行多格式地址转换测试"""
+    """运行多格式地址转换测试."""
     import secrets
 
     from src.core.address_generator import P2PKHAddressGenerator
@@ -104,7 +104,7 @@ def main():
         print("  ↓ Convert")
         print(f"Bech32: {wrapped_to_native}")
         print(
-            f"\nRound-trip conversion: {'✓ PASS' if bech32_address == wrapped_to_native else '✗ FAIL'}"
+            f"\nRound-trip conversion: {'✓ PASS' if bech32_address == wrapped_to_native else '✗ FAIL'}",
         )
     except Exception as e:
         print(f"❌ Bech32 <-> P2SH-P2WPKH conversion failed: {e}")

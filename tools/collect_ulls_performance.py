@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""快速收集ULLS优化后的性能数据"""
+"""快速收集ULLS优化后的性能数据."""
 
 import sys
 from pathlib import Path

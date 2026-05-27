@@ -1,4 +1,4 @@
-"""KeyCollisionEngine 回调测试 (MAINT-1拆分)
+"""KeyCollisionEngine 回调测试 (MAINT-1拆分).
 
 原 file: test_key_collision_engine.py
 抽取类: TestKeyCollisionEngineCallbacks, TestKeyCollisionEngineSafeCallback
@@ -14,10 +14,10 @@ from tests.conftest_engine import get_known_target
 
 
 class TestKeyCollisionEngineCallbacks:
-    """回调函数测试"""
+    """回调函数测试."""
 
     def test_progress_callback_called(self):
-        """进度回调在运行期间被调用"""
+        """进度回调在运行期间被调用."""
         progress_events = []
 
         def on_progress(stats: CollisionStats):
@@ -35,7 +35,7 @@ class TestKeyCollisionEngineCallbacks:
         assert len(progress_events) > 0, "进度回调应至少被调用一次"
 
     def test_complete_callback_called(self):
-        """完成回调在停止后被调用"""
+        """完成回调在停止后被调用."""
         complete_called = threading.Event()
 
         def on_complete(stats: CollisionStats):
@@ -53,7 +53,7 @@ class TestKeyCollisionEngineCallbacks:
         assert complete_called.is_set(), "完成回调应在stop后触发"
 
     def test_match_callback_called_for_known_key(self):
-        """使用已知私钥-地址对，range 扫描找到匹配后触发回调"""
+        """使用已知私钥-地址对，range 扫描找到匹配后触发回调."""
         _, known_addr = get_known_target()
         match_event = threading.Event()
         match_results = []
@@ -79,10 +79,10 @@ class TestKeyCollisionEngineCallbacks:
 
 
 class TestKeyCollisionEngineSafeCallback:
-    """安全回调 _safe_invoke_match_callback 异常/超时路径"""
+    """安全回调 _safe_invoke_match_callback 异常/超时路径."""
 
     def test_match_callback_exception_isolation(self):
-        """匹配回调抛出异常不影响引擎运行"""
+        """匹配回调抛出异常不影响引擎运行."""
         _, known_addr = get_known_target()
         exception_raised = threading.Event()
 
@@ -104,7 +104,7 @@ class TestKeyCollisionEngineSafeCallback:
         engine.stop()
 
     def test_match_callback_slow_isolation(self):
-        """慢速匹配回调由 _safe_invoke_match_callback 超时保护"""
+        """慢速匹配回调由 _safe_invoke_match_callback 超时保护."""
         _, known_addr = get_known_target()
         callback_started = threading.Event()
         callback_completed = threading.Event()
@@ -129,7 +129,7 @@ class TestKeyCollisionEngineSafeCallback:
         engine.stop()
 
     def test_safe_invoke_callback_no_handler(self):
-        """on_match=None 时 _safe_invoke_match_callback 返回 True"""
+        """on_match=None 时 _safe_invoke_match_callback 返回 True."""
         engine = KeyCollisionEngine(
             targets={"1TestAddr"},
             on_match=None,
@@ -141,7 +141,7 @@ class TestKeyCollisionEngineSafeCallback:
         engine.stop()
 
     def test_safe_invoke_callback_outer_exception(self):
-        """_safe_invoke_match_callback 外层异常隔离"""
+        """_safe_invoke_match_callback 外层异常隔离."""
         _, known_addr = get_known_target()
 
         def on_match(pk, addr, wif):

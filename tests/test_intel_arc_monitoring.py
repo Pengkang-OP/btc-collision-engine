@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Intel Arc资源监控功能验证脚本
+"""Intel Arc资源监控功能验证脚本.
 
 验证以下功能：
 1. IntelMemoryMonitor - 显存监控
@@ -19,7 +19,7 @@ logger = logging.getLogger("IntelArcMonitorTest")
 
 
 def test_memory_monitor():
-    """测试显存监控功能"""
+    """测试显存监控功能."""
     print("\n" + "=" * 80)
     print("测试1: Intel Arc显存监控器 (IntelMemoryMonitor)")
     print("=" * 80)
@@ -89,7 +89,7 @@ def test_memory_monitor():
 
 
 def test_timeout_manager():
-    """测试超时管理功能"""
+    """测试超时管理功能."""
     print("\n" + "=" * 80)
     print("测试2: Intel Arc自适应超时管理器 (AdaptiveTimeoutManager)")
     print("=" * 80)
@@ -138,7 +138,7 @@ def test_timeout_manager():
 
 
 def test_performance_monitor():
-    """测试GPU性能监控功能"""
+    """测试GPU性能监控功能."""
     print("\n" + "=" * 80)
     print("测试3: GPU性能监控器 (GPUPerformanceMonitor)")
     print("=" * 80)
@@ -180,7 +180,7 @@ def test_performance_monitor():
 
 
 def test_data_monitor():
-    """测试数据质量监控功能"""
+    """测试数据质量监控功能."""
     print("\n" + "=" * 80)
     print("测试4: 数据质量监控器 (DataMonitor)")
     print("=" * 80)
@@ -234,7 +234,7 @@ def test_data_monitor():
 
 
 def test_integration():
-    """测试集成工作流"""
+    """测试集成工作流."""
     print("\n" + "=" * 80)
     print("测试5: Intel Arc资源监控集成工作流")
     print("=" * 80)
@@ -299,7 +299,7 @@ def test_integration():
 
 
 def main():
-    """主测试函数"""
+    """主测试函数."""
     print("\n" + "=" * 80)
     print("Intel Arc资源监控功能验证")
     print("=" * 80)

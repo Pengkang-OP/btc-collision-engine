@@ -45,7 +45,7 @@ def _ensure_random_seed() -> None:
 
 
 class RecoverableErrorCategory(Enum):
-    """可恢复错误类别"""
+    """可恢复错误类别."""
 
     TEMPORARY_IO = "temporary_io"
     GPU_RESOURCE = "gpu_resource"
@@ -57,7 +57,7 @@ class RecoverableErrorCategory(Enum):
 
 
 class RecoveryAction(Enum):
-    """恢复动作"""
+    """恢复动作."""
 
     RETRY = "retry"
     FALLBACK = "fallback"
@@ -114,7 +114,7 @@ ERROR_KEYWORD_CATEGORY: list[tuple[list[str], RecoverableErrorCategory]] = [
 
 
 def _sanitize_error_message(message: str) -> str:
-    """对错误消息进行脱敏处理
+    """对错误消息进行脱敏处理.
 
     移除可能泄漏的敏感信息（私钥、WIF、完整地址等），
     同时截断过长消息以避免日志膨胀。
@@ -144,7 +144,7 @@ def _sanitize_error_message(message: str) -> str:
 
 
 def classify_recoverable_error(error: Exception) -> RecoverableErrorCategory | None:
-    """分类可恢复的错误
+    """分类可恢复的错误.
 
     先按错误消息关键字匹配（细粒度），再按异常类型匹配（粗粒度兜底）。
 
@@ -181,7 +181,7 @@ def retry_on_error(
     recoverable_only: bool = True,
     on_retry: Callable[[Exception, int, float], None] | None = None,
 ) -> Callable[[F], F]:
-    """带指数退避和抖动的函数重试装饰器
+    """带指数退避和抖动的函数重试装饰器.
 
     Args:
         max_retries: 最大重试次数（不含首次调用）
@@ -255,7 +255,7 @@ def retry_on_error(
 
 @dataclass
 class RetryRecord:
-    """重试记录"""
+    """重试记录."""
 
     error_type: str
     error_message: str
@@ -266,7 +266,7 @@ class RetryRecord:
 
 @dataclass
 class RecoveryStats:
-    """恢复统计"""
+    """恢复统计."""
 
     total_errors: int = 0
     total_retries: int = 0
@@ -284,7 +284,7 @@ class RecoveryStats:
 
 
 class FallbackStrategy:
-    """降级策略定义
+    """降级策略定义.
 
     提供分层降级方案，当前方案失败后自动切换到下一层。
 
@@ -304,7 +304,7 @@ class FallbackStrategy:
         return self
 
     def execute(self) -> tuple[bool, str | None]:
-        """顺序执行降级方案，直到某个成功
+        """顺序执行降级方案，直到某个成功.
 
         Returns:
             (是否成功, 最终执行的方案标签)
@@ -328,7 +328,7 @@ class FallbackStrategy:
 
 
 class ErrorRecoveryManager:
-    """统一错误恢复管理器
+    """统一错误恢复管理器.
 
     管理重试状态、降级策略执行和统计信息。
     线程安全：所有状态操作使用锁保护。
@@ -504,7 +504,7 @@ class ErrorRecoveryManager:
         max_delay: float = 60.0,
         category: RecoverableErrorCategory | None = None,
     ) -> Callable[[F], F]:
-        """实例方法的装饰器：为函数添加重试和降级能力
+        """实例方法的装饰器：为函数添加重试和降级能力.
 
         与 @retry_on_error 的区别：
         - 自动记录重试历史到管理器
@@ -614,7 +614,7 @@ _default_recovery_lock = threading.Lock()
 
 
 def get_default_recovery_manager() -> ErrorRecoveryManager:
-    """获取全局默认恢复管理器（懒初始化，线程安全）"""
+    """获取全局默认恢复管理器（懒初始化，线程安全）."""
     global _default_recovery_manager
     if _default_recovery_manager is None:
         with _default_recovery_lock:

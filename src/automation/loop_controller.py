@@ -1,4 +1,5 @@
-"""闭环控制器
+"""闭环控制器.
+
 ==========
 协调各模块，异常自动触发反馈回路，形成严格的闭环管控
 """
@@ -24,8 +25,9 @@ from .models import (
 
 class LoopController:
     """闭环控制器
+
     协调分析->测试->审核的完整流程
-    异常自动触发反馈回路
+    异常自动触发反馈回路.
 
     v4.3.1: 阶段失败不再硬中断整个循环，而是继续下一轮迭代。
     """
@@ -65,7 +67,8 @@ class LoopController:
 
     def run(self) -> AuditResult:
         """执行完整的闭环流程
-        分析 -> 测试 -> 审核 -> (异常则反馈回路)
+
+        分析 -> 测试 -> 审核 -> (异常则反馈回路).
 
         v4.3.1: 阶段失败不再硬中断，而是重试下一轮迭代。
         """
@@ -155,7 +158,7 @@ class LoopController:
         return final_audit_result or self._create_failed_result()
 
     def _run_analysis_phase(self) -> AnalysisReport | None:
-        """执行分析阶段"""
+        """执行分析阶段."""
         print("\n[Phase 1] Data Analysis Module")
         print("-" * 40)
 
@@ -189,7 +192,7 @@ class LoopController:
             return None
 
     def _run_test_phase(self, analysis_report: AnalysisReport) -> TestSuiteResult | None:
-        """执行测试阶段"""
+        """执行测试阶段."""
         print("\n[Phase 2] Auto Test Module")
         print("-" * 40)
 
@@ -223,7 +226,7 @@ class LoopController:
         test_results: TestSuiteResult,
         analysis_report: AnalysisReport,
     ) -> AuditResult | None:
-        """执行审核阶段"""
+        """执行审核阶段."""
         print("\n[Phase 3] Audit Module")
         print("-" * 40)
 
@@ -254,7 +257,7 @@ class LoopController:
             return None
 
     def _execute_feedback_loop(self, audit_result: AuditResult):
-        """执行反馈回路"""
+        """执行反馈回路."""
         print("\n[Feedback Loop] Preparing re-analysis...")
 
         all_issues = list(self.state.issues_found)
@@ -276,7 +279,7 @@ class LoopController:
                 self.on_issue_found(violation)
 
     def _set_phase(self, phase: SystemStatus):
-        """设置当前阶段"""
+        """设置当前阶段."""
         with self._lock:
             self.state.previous_phase = self.state.current_phase
             self.state.current_phase = phase
@@ -285,7 +288,7 @@ class LoopController:
             self.on_phase_change(phase)
 
     def _create_failed_result(self) -> AuditResult:
-        """创建失败结果"""
+        """创建失败结果."""
         return AuditResult(
             audit_id="failed",
             timestamp=datetime.now(),
@@ -297,7 +300,7 @@ class LoopController:
         )
 
     def get_summary(self) -> dict[str, Any]:
-        """获取执行摘要"""
+        """获取执行摘要."""
         duration = None
         if self.start_time and self.end_time:
             duration = (self.end_time - self.start_time).total_seconds()
@@ -314,7 +317,7 @@ class LoopController:
         }
 
     def save_report(self, filepath: str):
-        """保存完整报告"""
+        """保存完整报告."""
         summary = self.get_summary()
 
         report = {
@@ -336,6 +339,6 @@ def run_automation_loop(
     project_root: Path | None = None,
     max_iterations: int = 3,
 ) -> AuditResult:
-    """便捷函数: 运行自动化闭环"""
+    """便捷函数: 运行自动化闭环."""
     controller = LoopController(project_root, max_iterations)
     return controller.run()

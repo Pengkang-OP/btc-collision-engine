@@ -1,4 +1,4 @@
-"""AMD GPU 专有优化模块
+"""AMD GPU 专有优化模块.
 
 封装所有 AMD GPU 特定的优化逻辑，包括：
 - 驱动版本检测（Adrenalin/ROCm）
@@ -29,7 +29,7 @@ logger = get_configured_logger("AMDOptimizer")
 
 
 class AmdDriverDetector:
-    """AMD 驱动版本检测器
+    """AMD 驱动版本检测器.
 
     从设备信息中提取驱动版本，支持 Adrenalin 和 ROCm 两种驱动。
     - Adrenalin（消费级）：最低 22.10，推荐 25.x
@@ -52,7 +52,7 @@ class AmdDriverDetector:
         self._logger = engine_logger or logger
 
     def detect(self) -> dict:
-        """检测驱动版本并返回结果字典
+        """检测驱动版本并返回结果字典.
 
         Returns:
             {
@@ -129,7 +129,7 @@ class AmdDriverDetector:
 
     @staticmethod
     def _parse_rocm_version(version_str: str) -> tuple:
-        """从 ROCm 版本字符串中解析主次版本号，返回(major, minor)"""
+        """从 ROCm 版本字符串中解析主次版本号，返回(major, minor)."""
         match = re.search(r"(\d+)\.(\d+)", version_str)
         if match:
             return int(match.group(1)), int(match.group(2))
@@ -141,7 +141,7 @@ class AmdDriverDetector:
 
     @staticmethod
     def _parse_rocm_major(version_str: str) -> int | None:
-        """从 ROCm 版本字符串中解析主版本号（常规调用）"""
+        """从 ROCm 版本字符串中解析主版本号（常规调用）."""
         match = re.search(r"(\d+)\.\d+", version_str)
         if match:
             return int(match.group(1))
@@ -149,7 +149,7 @@ class AmdDriverDetector:
 
     @staticmethod
     def _parse_adrenalin_version(version_str: str) -> tuple:
-        """从 Adrenalin 版本字符串中解析 (年份, 次版本)"""
+        """从 Adrenalin 版本字符串中解析 (年份, 次版本)."""
         match = re.search(r"(\d{2})\.(\d{1,2})", version_str)
         if match:
             return int(match.group(1)), int(match.group(2))
@@ -157,7 +157,7 @@ class AmdDriverDetector:
 
 
 class AmdArchDetector:
-    """AMD GPU 架构代识别器
+    """AMD GPU 架构代识别器.
 
     基于设备名称模式匹配识别架构代，返回架构特性。
     匹配顺序重要：更新/更具体的型号优先，避免误匹配。
@@ -452,7 +452,7 @@ class AmdArchDetector:
         self._logger = engine_logger or logger
 
     def detect(self) -> dict:
-        """检测 GPU 架构代
+        """检测 GPU 架构代.
 
         Returns:
             {
@@ -493,7 +493,7 @@ class AmdArchDetector:
 
 
 class AmdWavefrontValidator:
-    """AMD Wavefront 大小验证器
+    """AMD Wavefront 大小验证器.
 
     验证 work_group_size 是否为 Wavefront 大小的整数倍。
     - GCN 架构（包括CDNA）：Wavefront=64
@@ -511,7 +511,7 @@ class AmdWavefrontValidator:
         self._wavefront_size = arch_info.get("wavefront_size", 64)
 
     def validate(self, work_group_size: int) -> dict:
-        """验证 work_group_size 对齐情况
+        """验证 work_group_size 对齐情况.
 
         Args:
             work_group_size: 当前 OpenCL work_group_size
@@ -559,7 +559,7 @@ class AmdWavefrontValidator:
 
 
 class AmdMemoryOptimizer:
-    """AMD 显存优化器
+    """AMD 显存优化器.
 
     基于显存类型和架构特性设置 memory_ratio（基于AMD官方技术规格）：
     - HBM 显存（Vega/CDNA 系列） → 0.70（高带宽，但爆发传输系数较大）
@@ -604,7 +604,7 @@ class AmdMemoryOptimizer:
         self._logger = engine_logger or logger
 
     def compute(self) -> dict:
-        """计算显存优化配置
+        """计算显存优化配置.
 
         Returns:
             {
@@ -654,7 +654,7 @@ class AmdMemoryOptimizer:
         }
 
     def _detect_memory_type(self, device_name: str) -> str:
-        """根据设备名称和架构推断显存类型（回退逻辑）"""
+        """根据设备名称和架构推断显存类型（回退逻辑）."""
         device_upper = device_name.upper()
         arch = self._arch_info.get("arch", "")
 
@@ -680,7 +680,7 @@ class AmdMemoryOptimizer:
 
 
 class AmdGPUOptimizer:
-    """AMD GPU 专有优化器
+    """AMD GPU 专有优化器.
 
     封装所有 AMD GPU 特定的优化逻辑，提供统一接口供引擎委托调用。
     与 IntelGPUOptimizer 架构对齐，使用防御性初始化模式。
@@ -696,13 +696,13 @@ class AmdGPUOptimizer:
     """
 
     __slots__ = (
-        "_device_info",
-        "_config",
-        "_logger",
-        "_driver_info",
         "_arch_info",
-        "_wavefront_result",
+        "_config",
+        "_device_info",
+        "_driver_info",
+        "_logger",
         "_memory_config",
+        "_wavefront_result",
     )
 
     def __init__(
@@ -725,7 +725,7 @@ class AmdGPUOptimizer:
     # ------------------------------------------------------------------
 
     def apply_optimizations(self) -> dict:
-        """应用 AMD GPU 特定优化
+        """应用 AMD GPU 特定优化.
 
         采用防御性策略：每个检测步骤独立执行，单步失败不影响整体。
 
@@ -928,7 +928,7 @@ class AmdGPUOptimizer:
         return result
 
     def get_optimization_report(self) -> dict:
-        """返回优化状态报告
+        """返回优化状态报告.
 
         Returns:
             包含当前优化状态的字典

@@ -1,4 +1,4 @@
-"""配置协调器 - 统一管理多个配置管理器
+"""配置协调器 - 统一管理多个配置管理器.
 
 提供统一的配置访问接口,协调ConfigManager、CryptoConfig和GPUConfig之间的配置同步。
 """
@@ -14,7 +14,7 @@ logger = get_configured_logger(__name__)
 
 
 class ConfigCoordinator:
-    """配置协调器 - 统一管理多个配置管理器
+    """配置协调器 - 统一管理多个配置管理器.
 
     职责:
     1. 初始化并协调所有配置管理器
@@ -24,7 +24,7 @@ class ConfigCoordinator:
     """
 
     def __init__(self, config_file: str = "config.json") -> None:
-        """初始化配置协调器
+        """初始化配置协调器.
 
         Args:
             config_file: 配置文件路径
@@ -53,7 +53,7 @@ class ConfigCoordinator:
         logger.info("配置协调器初始化完成")
 
     def _sync_configs(self) -> None:
-        """同步各配置管理器的配置（线程安全）"""
+        """同步各配置管理器的配置（线程安全）."""
         # W13修复: 使用锁保护配置同步操作，避免多线程竞态条件
         with self._sync_lock:
             try:
@@ -68,7 +68,7 @@ class ConfigCoordinator:
                 logger.warning("配置同步失败: %s", e)
 
     def _sync_gpu_config(self) -> None:
-        """同步GPU配置到GPUConfig"""
+        """同步GPU配置到GPUConfig."""
         try:
             gpu_config = {
                 "use_gpu": self.config_manager.get("gpu.use_gpu", True),
@@ -91,7 +91,7 @@ class ConfigCoordinator:
             logger.warning("GPU配置同步失败: %s", e)
 
     def _sync_crypto_config(self) -> None:
-        """同步Crypto配置到CryptoConfig"""
+        """同步Crypto配置到CryptoConfig."""
         try:
             crypto_backend = self.config_manager.get("crypto.backend", "auto")
             constant_time = self.config_manager.get("crypto.constant_time", False)
@@ -109,7 +109,7 @@ class ConfigCoordinator:
             logger.warning("Crypto配置同步失败: %s", e)
 
     def get_unified_config(self) -> dict[str, Any]:
-        """获取统一的配置视图（线程安全）
+        """获取统一的配置视图（线程安全）.
 
         Returns:
             包含所有配置的统一字典
@@ -125,7 +125,7 @@ class ConfigCoordinator:
             }
 
     def get(self, key: str, default: Any = None) -> Any:
-        """获取配置值(统一接口，线程安全)
+        """获取配置值(统一接口，线程安全).
 
         Args:
             key: 配置键,支持点号分隔的路径,如 "gpu.batch_size"
@@ -149,7 +149,7 @@ class ConfigCoordinator:
             return default
 
     def set(self, key: str, value: Any) -> bool:
-        """设置配置值(统一接口，线程安全)
+        """设置配置值(统一接口，线程安全).
 
         Args:
             key: 配置键,支持点号分隔的路径
@@ -167,7 +167,7 @@ class ConfigCoordinator:
             return self.config_manager.set(key, value)
 
     def validate_all(self) -> dict[str, Any]:
-        """验证所有配置
+        """验证所有配置.
 
         Returns:
             验证错误字典,key为配置管理器名称,value为错误列表
@@ -193,7 +193,7 @@ class ConfigCoordinator:
         return errors
 
     def save_all(self) -> bool:
-        """保存所有配置到文件
+        """保存所有配置到文件.
 
         Returns:
             保存成功返回True
@@ -209,13 +209,13 @@ class ConfigCoordinator:
         return success
 
     def get_gpu_config(self) -> dict[str, Any]:
-        """获取GPU配置"""
+        """获取GPU配置."""
         return self.gpu_config.get_gpu_config()
 
     def get_crypto_config(self) -> dict[str, Any]:
-        """获取Crypto配置"""
+        """获取Crypto配置."""
         return self.crypto_config.to_dict()
 
     def apply_crypto_config(self) -> bool:
-        """应用Crypto配置到加密管理器"""
+        """应用Crypto配置到加密管理器."""
         return self.crypto_config.apply_to_crypto_manager()

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""长时间运行稳定性测试脚本
+"""长时间运行稳定性测试脚本.
 
 用于验证引擎长时间运行的稳定性和性能衰减情况。
 
@@ -16,7 +16,7 @@ import json
 import os
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 # 设置 stdout 编码
 if sys.stdout.encoding.lower() in ("gbk", "gb2312", "cp936"):
@@ -26,7 +26,7 @@ if sys.stdout.encoding.lower() in ("gbk", "gb2312", "cp936"):
 
 
 def get_memory_mb():
-    """获取当前进程内存使用 (MB)"""
+    """获取当前进程内存使用 (MB)."""
     try:
         import psutil
 
@@ -121,7 +121,7 @@ def main():
         "test_type": "long_running_stability_test",
         "duration_seconds": args.duration,
         "sample_count": sample_count,
-        "start_time": datetime.now(timezone.utc).isoformat(),
+        "start_time": datetime.now(UTC).isoformat(),
         "gpu_devices": devices,
         "initial_memory_mb": initial_mem,
         "final_memory_mb": final_mem,

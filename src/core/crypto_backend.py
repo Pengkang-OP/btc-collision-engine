@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Cryptographic backend abstraction layer.
 
 Provides unified elliptic curve operation interface with support for
@@ -36,7 +35,7 @@ logger = get_configured_logger("CryptoBackend")
 
 
 class BackendType(Enum):
-    """Cryptographic backend types"""
+    """Cryptographic backend types."""
 
     PURE_PYTHON = auto()  # Pure Python implementation
     OPENSSL = auto()  # OpenSSL (cryptography)
@@ -53,12 +52,12 @@ class CryptoBackend(ABC):
     @property
     @abstractmethod
     def name(self) -> str:
-        """Backend name"""
+        """Backend name."""
 
     @property
     @abstractmethod
     def is_available(self) -> bool:
-        """Check if backend is available"""
+        """Check if backend is available."""
 
     @abstractmethod
     def generate_public_key(
@@ -107,7 +106,7 @@ class CryptoBackend(ABC):
 
 
 class PurePythonBackend(CryptoBackend):
-    """Pure Python backend - uses existing secp256k1.py implementation
+    """Pure Python backend - uses existing secp256k1.py implementation.
 
     ⚠️ 安全警告 (SEC-1):
     - 本后端仅用于教育和研究目的
@@ -175,7 +174,7 @@ class PurePythonBackend(CryptoBackend):
 
 
 class OpenSSLBackend(CryptoBackend):
-    """OpenSSL backend - uses cryptography library"""
+    """OpenSSL backend - uses cryptography library."""
 
     def __init__(self) -> None:
         self._available = self._check_availability()
@@ -247,6 +246,7 @@ class OpenSSLBackend(CryptoBackend):
         point_y: int,
     ) -> tuple[int, int]:
         """Note: cryptography library does not directly expose point
+
         multiplication, we implement it by creating temporary
         private keys.
 
@@ -325,7 +325,7 @@ class OpenSSLBackend(CryptoBackend):
 
 
 class CoincurveBackend(CryptoBackend):
-    """coincurve backend - uses libsecp256k1"""
+    """coincurve backend - uses libsecp256k1."""
 
     def __init__(self) -> None:
         self._available = self._check_availability()
@@ -429,7 +429,7 @@ class CoincurveBackend(CryptoBackend):
 
 
 class ECDSABackend(CryptoBackend):
-    """ecdsa library backend"""
+    """ecdsa library backend."""
 
     def __init__(self) -> None:
         self._available = self._check_availability()
@@ -529,7 +529,7 @@ class CryptoBackendManager:
         return cls._instance
 
     def _init_backends(self) -> None:
-        """Initialize all backends"""
+        """Initialize all backends."""
         # Instance-level lock, protects runtime state
         self._instance_lock = threading.RLock()
 
@@ -555,7 +555,8 @@ class CryptoBackendManager:
 
     def _select_best_backend(self) -> None:
         """Select best available backend (internal method, caller must
-        hold lock)
+
+        hold lock).
         """
         # Priority: coincurve > OpenSSL > ecdsa > Pure Python
         priority_order = [
@@ -649,7 +650,7 @@ class CryptoBackendManager:
         return True
 
     def get_available_backends(self) -> list[tuple[BackendType, str]]:
-        """Get list of all available backends (thread-safe)"""
+        """Get list of all available backends (thread-safe)."""
         with self._instance_lock:
             backends_copy = dict(self._backends)
         return [(bt, b.name) for bt, b in backends_copy.items() if b.is_available]
@@ -687,7 +688,7 @@ class CryptoBackendManager:
         return backend.generate_public_key(private_key, compressed)
 
     def is_constant_time(self) -> bool:
-        """Check if current backend uses constant-time algorithm"""
+        """Check if current backend uses constant-time algorithm."""
         backend = self.current_backend  # Get reference inside lock
         return backend.is_constant_time()
 
@@ -774,12 +775,13 @@ def set_crypto_backend(
 
 
 def get_available_backends() -> list[tuple[BackendType, str]]:
-    """Get all available backends"""
+    """Get all available backends."""
     return crypto_manager.get_available_backends()
 
 
 def is_secure_backend_available() -> bool:
     """Check if secure crypto backend is available (required for
+
     production).
 
     Secure backend definition:
@@ -858,7 +860,7 @@ def get_backend_security_info() -> dict:
 
 
 def _get_security_recommendation(security_level: str) -> str:
-    """Get security recommendation"""
+    """Get security recommendation."""
     recommendations = {
         "secure": ("Current backend is secure, suitable for production use"),
         "partial": (
@@ -873,6 +875,7 @@ def _get_security_recommendation(security_level: str) -> str:
 
 def verify_production_ready() -> tuple[bool, str]:
     """Verify system meets production environment security
+
     requirements.
 
     Returns:

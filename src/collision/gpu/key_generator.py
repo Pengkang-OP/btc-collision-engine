@@ -1,4 +1,4 @@
-"""GPU引擎私钥生成器
+"""GPU引擎私钥生成器.
 
 提供多种私钥生成策略，支持安全的私钥管理。
 
@@ -16,9 +16,9 @@ import secrets
 import threading
 from collections.abc import Callable
 from enum import Enum
-from typing import Optional, cast
+from typing import cast
 
-from ...core.secp256k1 import Secp256k1  # v4.2.2: 统一从 secp256k1 获取曲线参数
+from src.core.secp256k1 import Secp256k1  # v4.2.2: 统一从 secp256k1 获取曲线参数
 
 # Secp256k1 曲线参数
 SECP256K1_N = Secp256k1.N
@@ -26,7 +26,7 @@ SECP256K1_N_BYTES = SECP256K1_N.to_bytes(32, "big")
 
 
 class KeyGenerationStrategy(Enum):
-    """私钥生成策略枚举"""
+    """私钥生成策略枚举."""
 
     PRNG_SEED = "prng_seed"
     AES_CTR = "aes_ctr"
@@ -36,7 +36,7 @@ class KeyGenerationStrategy(Enum):
 
 
 class KeyGenerator:
-    """增强版私钥生成器
+    """增强版私钥生成器.
 
     提供多种安全的私钥生成策略，支持：
     - 多种PRNG算法
@@ -46,7 +46,7 @@ class KeyGenerator:
     """
 
     def __init__(self, strategy: KeyGenerationStrategy = KeyGenerationStrategy.PRNG_SEED):
-        """初始化私钥生成器
+        """初始化私钥生成器.
 
         Args:
             strategy: 私钥生成策略
@@ -64,23 +64,23 @@ class KeyGenerator:
 
     @property
     def strategy(self) -> KeyGenerationStrategy:
-        """当前生成策略"""
+        """当前生成策略."""
         return self._strategy
 
     @strategy.setter
     def strategy(self, strategy: KeyGenerationStrategy) -> None:
-        """设置生成策略"""
+        """设置生成策略."""
         with self._lock:
             self._strategy = strategy
             self._reset_crypto_contexts()
 
     def _reset_crypto_contexts(self) -> None:
-        """重置加密上下文"""
+        """重置加密上下文."""
         self._aes_ctx = None
         self._chacha_ctx = None
 
     def generate_private_key(self, seed: bytes, index: int) -> bytes:
-        """生成单个私钥
+        """生成单个私钥.
 
         Args:
             seed: 32字节种子
@@ -141,7 +141,7 @@ class KeyGenerator:
             raise ValueError("无法在1000次重试内为种子生成有效私钥")
 
     def generate_private_keys(self, seed: bytes, count: int, start_index: int = 0) -> list[bytes]:
-        """批量生成私钥
+        """批量生成私钥.
 
         Args:
             seed: 32字节种子
@@ -158,7 +158,7 @@ class KeyGenerator:
         return keys
 
     def _generate_prng_seed(self, seed: bytes, index: int) -> bytes:
-        """基于种子的线性确定性私钥生成（默认策略）
+        """基于种子的线性确定性私钥生成（默认策略）.
 
         算法: key = (seed + index) mod 2^256，与 GPU 内核 batch_check.cl 中的
         generate_private_key() 行为一致（256 位自然溢出）。
@@ -175,7 +175,7 @@ class KeyGenerator:
         return key_int.to_bytes(32, "big")
 
     def _generate_aes_ctr(self, seed: bytes, index: int) -> bytes:
-        """使用AES-CTR生成私钥
+        """使用AES-CTR生成私钥.
 
         S1修复: 改进CTR模式安全性，使用唯一IV加密每个计数器值
         原实现使用固定IV加密多个计数器值，可能产生相同密文。
@@ -206,7 +206,7 @@ class KeyGenerator:
         return key_int.to_bytes(32, "big")
 
     def _generate_chacha20(self, seed: bytes, index: int) -> bytes:
-        """使用ChaCha20生成私钥
+        """使用ChaCha20生成私钥.
 
         G4修复: 将index纳入nonce生成，确保每个索引产生唯一输出
         原实现index参数未使用，导致相同seed产生相同序列。
@@ -239,7 +239,7 @@ class KeyGenerator:
             return self._generate_prng_seed(seed, index)
 
     def _generate_random(self) -> bytes:
-        """纯随机生成（最高安全性）
+        """纯随机生成（最高安全性）.
 
         使用操作系统提供的安全随机数生成器
         """
@@ -249,7 +249,7 @@ class KeyGenerator:
                 return key
 
     def _generate_deterministic(self, seed: bytes, index: int) -> bytes:
-        """确定性生成（可重现）
+        """确定性生成（可重现）.
 
         使用双重哈希确保确定性和安全性
         """
@@ -264,7 +264,7 @@ class KeyGenerator:
         return key_int.to_bytes(32, "big")
 
     def _is_valid_private_key(self, key: bytes) -> bool:
-        """验证私钥是否在有效范围内
+        """验证私钥是否在有效范围内.
 
         Secp256k1私钥必须满足: 1 <= key < SECP256K1_N
 
@@ -282,7 +282,7 @@ class KeyGenerator:
         return 1 <= key_int < SECP256K1_N
 
     def secure_clear(self, key: bytes | bytearray) -> None:
-        """安全清零私钥数据
+        """安全清零私钥数据.
 
         Args:
             key: 需要清零的私钥数据
@@ -295,7 +295,7 @@ class KeyGenerator:
             key[:] = b"\x00" * len(key)
 
     def get_stats(self) -> dict[str, int]:
-        """获取生成器统计信息
+        """获取生成器统计信息.
 
         Returns:
             统计信息字典
@@ -308,7 +308,7 @@ class KeyGenerator:
         }
 
     def reset_stats(self) -> None:
-        """重置统计信息"""
+        """重置统计信息."""
         with self._lock:
             self._generated_count = 0
             self._valid_count = 0
@@ -316,7 +316,7 @@ class KeyGenerator:
 
 
 class BatchKeyGenerator:
-    """批量私钥生成器
+    """批量私钥生成器.
 
     优化批量生成性能，支持并行生成。
     """
@@ -327,7 +327,7 @@ class BatchKeyGenerator:
         parallel_enabled: bool = True,
         max_workers: int | None = None,
     ):
-        """初始化批量生成器
+        """初始化批量生成器.
 
         Args:
             strategy: 生成策略
@@ -346,7 +346,7 @@ class BatchKeyGenerator:
         start_index: int = 0,
         progress_callback: Callable[[int], None] | None = None,
     ) -> list[bytes]:
-        """批量生成私钥
+        """批量生成私钥.
 
         Args:
             seed: 32字节种子
@@ -369,7 +369,7 @@ class BatchKeyGenerator:
         start_index: int,
         progress_callback: Callable[[int], None] | None,
     ) -> list[bytes]:
-        """串行生成私钥"""
+        """串行生成私钥."""
         keys = []
         for i in range(batch_size):
             keys.append(self._generator.generate_private_key(seed, start_index + i))
@@ -384,10 +384,10 @@ class BatchKeyGenerator:
         start_index: int,
         progress_callback: Callable[[int], None] | None,
     ) -> list[bytes]:
-        """并行生成私钥"""
+        """并行生成私钥."""
         import concurrent.futures
 
-        keys: list[Optional[bytes]] = [None] * batch_size
+        keys: list[bytes | None] = [None] * batch_size
         completed = 0
 
         def generate_chunk(chunk_start: int, chunk_end: int, chunk_index: int) -> None:
@@ -429,16 +429,16 @@ class BatchKeyGenerator:
 
     @property
     def strategy(self) -> KeyGenerationStrategy:
-        """当前生成策略"""
+        """当前生成策略."""
         return self._generator.strategy
 
     @strategy.setter
     def strategy(self, strategy: KeyGenerationStrategy) -> None:
-        """设置生成策略"""
+        """设置生成策略."""
         self._generator.strategy = strategy
 
     def get_stats(self) -> dict[str, int]:
-        """获取统计信息"""
+        """获取统计信息."""
         return self._generator.get_stats()
 
 
@@ -450,7 +450,7 @@ _global_key_generator_lock = threading.Lock()
 def get_key_generator(
     strategy: KeyGenerationStrategy = KeyGenerationStrategy.PRNG_SEED,
 ) -> KeyGenerator:
-    """获取全局私钥生成器（单例）
+    """获取全局私钥生成器（单例）.
 
     Args:
         strategy: 生成策略（仅在首次调用时有效）
@@ -470,7 +470,7 @@ def get_key_generator(
 
 
 def generate_private_key(seed: bytes, index: int) -> bytes:
-    """便捷函数：生成单个私钥
+    """便捷函数：生成单个私钥.
 
     Args:
         seed: 32字节种子
@@ -485,7 +485,7 @@ def generate_private_key(seed: bytes, index: int) -> bytes:
 
 
 def generate_private_keys(seed: bytes, count: int, start_index: int = 0) -> list[bytes]:
-    """便捷函数：批量生成私钥
+    """便捷函数：批量生成私钥.
 
     Args:
         seed: 32字节种子

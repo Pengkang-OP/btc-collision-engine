@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Checkpoint manager for saving and restoring collision engine state.
 
 Provides crash recovery by periodically saving progress to JSON
@@ -9,10 +8,9 @@ import json
 import threading
 import time
 import zlib
-from typing import Any
-
 from contextlib import suppress
 from pathlib import Path
+from typing import Any
 
 from ..utils import get_configured_logger
 from ..utils.fast_json import fast_dumps, fast_loads
@@ -102,7 +100,7 @@ class CheckpointManager:
         with self._lock:
             self._buffer = state
             self._dirty = True
-            if kwargs.get("force", False) or self._dirty and self._last_save == 0.0:
+            if kwargs.get("force", False) or (self._dirty and self._last_save == 0.0):
                 self._flush_buffer()
 
     def load(self) -> dict[str, Any] | None:

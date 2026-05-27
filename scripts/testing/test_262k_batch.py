@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""测试262K批次大小性能（Intel Arc推荐值）"""
+"""测试262K批次大小性能（Intel Arc推荐值）."""
 
 import os
 import time
@@ -10,7 +10,7 @@ from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
 
 
 def test_262k_batch():
-    """测试262K批次大小"""
+    """测试262K批次大小."""
     print("=" * 80)
     print("  GPU碰撞引擎 - 262K批次大小测试")
     print("=" * 80)
@@ -30,7 +30,7 @@ def test_262k_batch():
                 "total_checked": stats.total_checked,
                 "speed": stats.speed,
                 "matches": (len(stats.matches) if hasattr(stats.matches, "__len__") else stats.matches),
-            }
+            },
         )
 
     def on_match(match_info):
@@ -81,7 +81,7 @@ def test_262k_batch():
                 elapsed = time.time() - start_time
                 print(
                     f"  [{elapsed:5.1f}s] {latest['total_checked']:>12,} keys | "
-                    f"{latest['speed']:>10.2f} keys/s"
+                    f"{latest['speed']:>10.2f} keys/s",
                 )
 
         engine.stop()
@@ -119,7 +119,7 @@ def test_262k_batch():
             print("    65K批次:    44,096 keys/s (基线)")
             print("    131K批次:   46,333 keys/s (+5.1%)")
             print(
-                f"    262K批次:   {avg_speed:,.2f} keys/s ({((avg_speed - 44096) / 44096 * 100):+.1f}%)"
+                f"    262K批次:   {avg_speed:,.2f} keys/s ({((avg_speed - 44096) / 44096 * 100):+.1f}%)",
             )
             print()
 

@@ -1,13 +1,12 @@
-"""address_generator.py 边界与错误路径覆盖测试
+"""address_generator.py 边界与错误路径覆盖测试.
 
 覆盖缺失行: 61-76, 165-191, 236-250, 272-275
 """
 
+import unittest
 from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
-
-import unittest
 
 from src.core.address_generator import (
     P2PKHAddressGenerator,
@@ -21,28 +20,28 @@ from src.core.address_generator import (
 
 
 class TestSecureClearBytearray:
-    """secure_clear_bytearray 边界测试"""
+    """secure_clear_bytearray 边界测试."""
 
     def test_non_bytearray_raises_typeerror(self):
-        """传入 bytes 触发 TypeError → lines 61-65"""
+        """传入 bytes 触发 TypeError → lines 61-65."""
         with pytest.raises(TypeError) as ctx:
             secure_clear_bytearray(b"\x00" * 32)
         assert "bytearray" in str(ctx.value)
 
     def test_non_bytearray_list_raises_typeerror(self):
-        """传入 list 触发 TypeError"""
+        """传入 list 触发 TypeError."""
         with pytest.raises(TypeError):
             secure_clear_bytearray([0] * 32)
 
     def test_successful_clear(self):
-        """成功清零 bytearray → lines 67-69"""
+        """成功清零 bytearray → lines 67-69."""
         buf = bytearray(b"\xff" * 32)
         secure_clear_bytearray(buf)
         # 所有字节应被清零
         assert buf == bytearray(b"\x00" * 32)
 
     def test_exception_handler(self):
-        """ctypes.memset 异常处理 → lines 70-76"""
+        """ctypes.memset 异常处理 → lines 70-76."""
         buf = bytearray(b"\xff" * 32)
         with patch("ctypes.memset", side_effect=OSError("模拟异常")):
             # 不应抛出异常（静默失败）
@@ -57,13 +56,13 @@ class TestSecureClearBytearray:
 
 
 class TestGeneratePrivateKeyEdge:
-    """generate_private_key 异常处理与重试耗尽"""
+    """generate_private_key 异常处理与重试耗尽."""
 
     def setup_method(self, method):
         self.gen = P2PKHAddressGenerator()
 
     def test_generate_private_key_max_retries_exceeded(self):
-        """重试耗尽抛出 KeyGenerationError → line 191"""
+        """重试耗尽抛出 KeyGenerationError → line 191."""
         with patch("secrets.token_bytes", return_value=b"\x00" * 32):
             # 零私钥始终无效, 耗尽 max_retries
             with self.assertRaises(Exception) as ctx:
@@ -71,13 +70,13 @@ class TestGeneratePrivateKeyEdge:
             assert "Cannot generate valid private key within 3 attempts" in str(ctx.value)
 
     def test_generate_private_key_valueerror_handler(self):
-        """secrets.token_bytes 抛 ValueError → lines 173-179"""
+        """secrets.token_bytes 抛 ValueError → lines 173-179."""
         with patch("secrets.token_bytes", side_effect=ValueError("模拟")):
-            with pytest.raises(Exception):  # noqa: B017
+            with pytest.raises(Exception):
                 self.gen.generate_private_key(max_retries=2)
 
     def test_generate_private_key_keygenerror_handler(self):
-        """secrets.token_bytes 抛 KeyGenerationError → lines 166-172"""
+        """secrets.token_bytes 抛 KeyGenerationError → lines 166-172."""
         from src.utils.exceptions import KeyGenerationError
 
         with (
@@ -90,9 +89,9 @@ class TestGeneratePrivateKeyEdge:
             self.gen.generate_private_key(max_retries=2)
 
     def test_generate_private_key_other_exception_handler(self):
-        """secrets.token_bytes 抛其他异常 → lines 180-188"""
+        """secrets.token_bytes 抛其他异常 → lines 180-188."""
         with patch("secrets.token_bytes", side_effect=RuntimeError("未知错误")):
-            with pytest.raises(Exception):  # noqa: B017
+            with pytest.raises(Exception):
                 self.gen.generate_private_key(max_retries=2)
 
 
@@ -102,10 +101,10 @@ class TestGeneratePrivateKeyEdge:
 
 
 class TestCryptoBackendPerformance:
-    """_check_crypto_backend_performance 路径"""
+    """_check_crypto_backend_performance 路径."""
 
     def test_pure_python_backend_warns(self):
-        """PURE_PYTHON 后端触发性能警告 → lines 236-246"""
+        """PURE_PYTHON 后端触发性能警告 → lines 236-246."""
         mock_manager = MagicMock()
         mock_backend = MagicMock()
         mock_backend.name = "PURE_PYTHON"
@@ -119,7 +118,7 @@ class TestCryptoBackendPerformance:
                 P2PKHAddressGenerator()
 
     def test_import_error_silent(self):
-        """导入 crypto_backend 失败时静默处理 → line 250"""
+        """导入 crypto_backend 失败时静默处理 → line 250."""
 
         # 在 crypto_backend 导入前, 让 _check_crypto_backend_performance
         # 中的 import 失败
@@ -140,10 +139,10 @@ class TestCryptoBackendPerformance:
 
 
 class TestPubKeyFallback:
-    """private_key_to_public_key 纯 Python 回退"""
+    """private_key_to_public_key 纯 Python 回退."""
 
     def test_fallback_to_pure_python(self):
-        """导入 crypto_manager 失败时回退到纯 Python → lines 272-275"""
+        """导入 crypto_manager 失败时回退到纯 Python → lines 272-275."""
         gen = P2PKHAddressGenerator()
 
         # Mock crypto_manager import 失败

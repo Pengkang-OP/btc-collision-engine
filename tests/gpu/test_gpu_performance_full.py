@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GPU碰撞引擎综合性能测试
+"""GPU碰撞引擎综合性能测试.
 
 测试内容：
 1. GPU设备信息和配置
@@ -22,10 +22,10 @@ from src.collision.targets.resolver import TargetResolver
 
 
 class GPUPerformanceTester:
-    """GPU性能测试器"""
+    """GPU性能测试器."""
 
     def __init__(self, test_duration_benchmark=30, test_duration_stress=60):
-        """初始化测试器
+        """初始化测试器.
 
         Args:
             test_duration_benchmark: 基准测试时长（秒）
@@ -44,7 +44,7 @@ class GPUPerformanceTester:
         }
 
     def load_test_addresses(self, count=10):
-        """加载测试地址"""
+        """加载测试地址."""
         print("\n" + "=" * 80)
         print("  步骤1: 加载测试地址")
         print("=" * 80)
@@ -67,7 +67,7 @@ class GPUPerformanceTester:
         return test_addresses
 
     def initialize_gpu_engine(self, targets, batch_size=None):
-        """初始化GPU引擎"""
+        """初始化GPU引擎."""
         print("\n" + "=" * 80)
         print("  步骤2: 初始化GPU引擎")
         print("=" * 80)
@@ -125,7 +125,7 @@ class GPUPerformanceTester:
         return engine, stats_history
 
     def run_benchmark_test(self, engine, stats_history):
-        """运行基准性能测试"""
+        """运行基准性能测试."""
         print("\n" + "=" * 80)
         print(f"  步骤3: 基准性能测试 ({self.test_duration_benchmark}秒)")
         print("=" * 80)
@@ -180,7 +180,7 @@ class GPUPerformanceTester:
             print(f"    稳定性: {stability:.2f}% (越低越稳定)")
 
     def run_stress_test(self, engine, stats_history):
-        """运行压力测试"""
+        """运行压力测试."""
         print("\n" + "=" * 80)
         print(f"  步骤4: 压力测试 ({self.test_duration_stress}秒)")
         print("=" * 80)
@@ -250,7 +250,7 @@ class GPUPerformanceTester:
             print(f"    峰值内存: {max_memory:,.1f} MB")
 
     def run_stability_test(self, engine, stats_history):
-        """运行稳定性测试（短周期多次）"""
+        """运行稳定性测试（短周期多次）."""
         print("\n" + "=" * 80)
         print("  步骤5: 稳定性测试 (5次×10秒)")
         print("=" * 80)
@@ -309,7 +309,7 @@ class GPUPerformanceTester:
             print(f"    变异系数: {cv:.2f}% (越低越稳定)")
 
     def generate_report(self):
-        """生成测试报告"""
+        """生成测试报告."""
         print("\n" + "=" * 80)
         print("  GPU性能测试报告")
         print("=" * 80)
@@ -397,7 +397,7 @@ class GPUPerformanceTester:
         print("=" * 80)
 
     def run_all_tests(self):
-        """运行所有测试"""
+        """运行所有测试."""
         print("\n" + "=" * 80)
         print("  GPU碰撞引擎综合性能测试")
         print("=" * 80)
@@ -442,7 +442,7 @@ class GPUPerformanceTester:
 
 
 def main():
-    """主函数"""
+    """主函数."""
     tester = GPUPerformanceTester(
         test_duration_benchmark=30,
         test_duration_stress=60,  # 基准测试30秒  # 压力测试60秒

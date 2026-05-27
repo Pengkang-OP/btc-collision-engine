@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""运行关键测试验证无回归 - 使用pytest API"""
+"""运行关键测试验证无回归 - 使用pytest API."""
 
 import os
 import sys
@@ -11,7 +11,7 @@ os.environ["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = ""
 
 
 def main():
-    """运行关键测试"""
+    """运行关键测试."""
     print("=" * 80)
     print("GPU修复后无回归验证测试")
     print("=" * 80)

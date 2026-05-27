@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Bitcoin private key collision engine monitoring system.
 
 该模块负责监控对撞引擎的运行状态、性能指标和异常情况，
@@ -20,10 +18,10 @@ from typing import TYPE_CHECKING, Any
 
 import psutil
 
-from .storage_config import DataStorageConfig
 from ..utils import get_configured_logger
 from ..utils.fast_json import fast_dump, fast_dumps, fast_load, fast_loads
 from ..utils.trend_utils import calculate_trend
+from .storage_config import DataStorageConfig
 
 if TYPE_CHECKING:
     from .log_monitoring_integrator import LogMonitoringIntegrator
@@ -32,7 +30,7 @@ logger = get_configured_logger("MonitoringSystem")
 
 
 class MonitoringData:
-    """监控数据结构"""
+    """监控数据结构."""
 
     def __init__(self) -> None:
         self.timestamp: float = time.time()
@@ -61,7 +59,7 @@ class MonitoringData:
         self.errors: list[dict[str, Any]] = []  # 错误记录
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典格式"""
+        """转换为字典格式."""
         return {
             "timestamp": self.timestamp,
             "performance": self.performance,
@@ -72,7 +70,7 @@ class MonitoringData:
 
 
 class DataCollector:
-    """数据采集器"""
+    """数据采集器."""
 
     def __init__(self, engine: Any | None = None) -> None:
         self.engine: Any | None = engine
@@ -92,7 +90,7 @@ class DataCollector:
         logger.debug("后台CPU采样线程已启动")
 
     def _background_cpu_sampling(self):
-        """后台持续采样CPU使用率，避免阻塞主线程"""
+        """后台持续采样CPU使用率，避免阻塞主线程."""
         process = psutil.Process(os.getpid())
         while self._cpu_sample_running:
             try:
@@ -104,16 +102,16 @@ class DataCollector:
             time.sleep(0.5)
 
     def _get_cpu_usage(self) -> float:
-        """非阻塞获取CPU使用率"""
+        """非阻塞获取CPU使用率."""
         with self._cpu_sample_lock:
             return self._cpu_usage_value
 
     def stop(self) -> None:
-        """停止后台CPU采样线程"""
+        """停止后台CPU采样线程."""
         self._cpu_sample_running = False
 
     def collect_performance_data(self) -> dict[str, Any]:
-        """收集性能数据"""
+        """收集性能数据."""
         try:
             cpu_usage = (
                 self._get_cpu_usage()
@@ -148,7 +146,7 @@ class DataCollector:
             }
 
     def collect_system_data(self) -> dict[str, Any]:
-        """收集系统数据"""
+        """收集系统数据."""
         uptime = time.time() - self.start_time
         return {
             "os": os.name,
@@ -160,7 +158,7 @@ class DataCollector:
         }
 
     def collect_engine_data(self) -> dict[str, Any]:
-        """收集引擎数据"""
+        """收集引擎数据."""
         engine_data = {"mode": "", "target_count": 0, "is_running": False, "current_position": 0}
 
         if self.engine:
@@ -177,7 +175,7 @@ class DataCollector:
         return engine_data
 
     def collect_all_data(self) -> MonitoringData:
-        """收集所有数据"""
+        """收集所有数据."""
         data = MonitoringData()
         data.performance.update(self.collect_performance_data())
         data.system.update(self.collect_system_data())
@@ -186,7 +184,7 @@ class DataCollector:
 
 
 class DataStorage:
-    """数据存储管理
+    """数据存储管理.
 
     P0统一数据源: 支持委托给DataLogger作为唯一持久化层。
     当 data_logger 参数提供时，所有写入委托给 DataLogger，
@@ -226,7 +224,7 @@ class DataStorage:
                     fast_dump([], f)
 
     def save_current_data(self, data: MonitoringData) -> None:
-        """保存当前数据（P0委托DataLogger或原子写入 + 安全权限）"""
+        """保存当前数据（P0委托DataLogger或原子写入 + 安全权限）."""
         # P0统一数据源: 委托给DataLogger
         if self._data_logger is not None:
             # 线程安全地委托 DataLogger 更新 _current_data
@@ -273,7 +271,7 @@ class DataStorage:
                 logger.debug("清理临时文件失败（可忽略）: %s", cleanup_error)
 
     def save_history_data(self, data: MonitoringData) -> None:
-        """保存历史数据（P0委托DataLogger或原子写入 + 数据恢复）"""
+        """保存历史数据（P0委托DataLogger或原子写入 + 数据恢复）."""
         # P0统一数据源: 委托给DataLogger的缓冲区
         if self._data_logger is not None:
             try:
@@ -323,7 +321,7 @@ class DataStorage:
                 logger.debug("清理临时文件失败（可忽略）: %s", cleanup_error)
 
     def compress_old_data(self, days_threshold: int = 7, sample_rate: float = 0.1) -> None:
-        """P2-3修复: 压缩超过threshold天的历史数据
+        """P2-3修复: 压缩超过threshold天的历史数据.
 
         Args:
             days_threshold: 超过多少天的数据需要压缩（默认7天）
@@ -413,7 +411,7 @@ class DataStorage:
                     logger.debug("清理临时文件失败（可忽略）: %s", cleanup_error)
 
     def _sample_data(self, data: list[Any], sample_rate: float) -> list[Any]:
-        """P2-3修复: 数据采样
+        """P2-3修复: 数据采样.
 
         Args:
             data: 原始数据列表
@@ -450,7 +448,7 @@ class DataStorage:
         return sampled
 
     def save_error(self, error: dict[str, Any]) -> None:
-        """保存错误记录（P0委托DataLogger或原子写入）"""
+        """保存错误记录（P0委托DataLogger或原子写入）."""
         # P0统一数据源: 委托给DataLogger
         if self._data_logger is not None:
             try:
@@ -513,7 +511,7 @@ class DataStorage:
                 logger.debug("清理临时文件失败（可忽略）: %s", cleanup_error)
 
     def get_current_data(self) -> dict[str, Any] | None:
-        """获取当前数据
+        """获取当前数据.
 
         自 v4.3.1: 若委托给 DataLogger，从其获取数据。
         """
@@ -531,7 +529,7 @@ class DataStorage:
         return None
 
     def _load_history_with_recovery(self) -> list[Any]:
-        """加载历史数据，带损坏恢复机制
+        """加载历史数据，带损坏恢复机制.
 
         P0统一数据源: DataLogger可用时委托其更强的括号匹配恢复算法。
         """
@@ -579,7 +577,7 @@ class DataStorage:
             return []
 
     def _recover_history_data(self) -> list[Any]:
-        """尝试从损坏的JSON文件中恢复数据"""
+        """尝试从损坏的JSON文件中恢复数据."""
         try:
             content = pathlib.Path(self.history_data_file).read_text(encoding="utf-8")
 
@@ -606,7 +604,7 @@ class DataStorage:
             return []
 
     def get_history_data(self) -> list[dict[str, Any]]:
-        """获取历史数据
+        """获取历史数据.
 
         自 v4.3.1: 若委托给 DataLogger，从其获取数据。
         默认使用 JSONL 逐行解析，兼容传统 JSON array 格式。
@@ -619,7 +617,7 @@ class DataStorage:
         return self._load_history_with_recovery()
 
     def get_error_logs(self) -> list[dict[str, Any]]:
-        """获取错误日志
+        """获取错误日志.
 
         自 v4.3.1: 若委托给 DataLogger，从其获取数据。
         """
@@ -637,7 +635,7 @@ class DataStorage:
 
 
 class AnomalyDetector:
-    """异常检测器
+    """异常检测器.
 
     使用示例:
         # 完整功能（推荐）
@@ -649,7 +647,7 @@ class AnomalyDetector:
     """
 
     def __init__(self, storage: DataStorage | None = None) -> None:
-        """初始化异常检测器
+        """初始化异常检测器.
 
         Args:
             storage: 数据存储实例（可选），用于保存异常记录
@@ -665,7 +663,7 @@ class AnomalyDetector:
         }
 
     def detect_anomalies(self, current_data: MonitoringData) -> list[dict[str, Any]]:
-        """检测异常
+        """检测异常.
 
         Args:
             current_data: 当前监控数据
@@ -748,7 +746,7 @@ class AnomalyDetector:
         return anomalies
 
     def analyze_trends(self, history_data: list[dict[str, Any]]) -> dict[str, Any]:
-        """分析趋势
+        """分析趋势.
 
         自 v4.3.1: 优化为单次遍历，减少不必要的列表推导开销。
 
@@ -830,7 +828,7 @@ class AnomalyDetector:
 
 
 class MonitoringAlertAdapter:
-    """监控系统告警适配器
+    """监控系统告警适配器.
 
     将监控系统的异常检测结果适配到全局 AlertSystem，
     统一项目中的告警处理逻辑。
@@ -845,7 +843,7 @@ class MonitoringAlertAdapter:
     """
 
     def __init__(self, storage: DataStorage | None = None) -> None:
-        """初始化告警适配器
+        """初始化告警适配器.
 
         Args:
             storage: 数据存储实例（可选），用于保存告警记录
@@ -859,7 +857,7 @@ class MonitoringAlertAdapter:
         self._alert_system: Any = get_alert_system()
 
     def generate_alert(self, anomaly: dict[str, Any]) -> None:
-        """从异常记录生成告警
+        """从异常记录生成告警.
 
         Args:
             anomaly: 异常信息字典
@@ -906,17 +904,17 @@ class MonitoringAlertAdapter:
                 logger.error("保存告警记录失败: %s", e)
 
     def process_anomalies(self, anomalies: list[dict[str, Any]]) -> None:
-        """处理异常列表并生成告警"""
+        """处理异常列表并生成告警."""
         for anomaly in anomalies:
             self.generate_alert(anomaly)
 
     def get_alert_history(self) -> list[dict[str, Any]]:
-        """获取告警历史"""
+        """获取告警历史."""
         return list(self.alert_history)
 
     @staticmethod
     def _anomaly_to_metrics(anomaly: dict[str, Any]) -> dict[str, Any]:
-        """将异常记录转换为性能指标格式"""
+        """将异常记录转换为性能指标格式."""
         metrics: dict[str, float] = {}
         mapping = {
             "speed": "throughput",
@@ -931,7 +929,7 @@ class MonitoringAlertAdapter:
 
 
 class ReportGenerator:
-    """报告生成器
+    """报告生成器.
 
     使用示例:
         # 完整功能（推荐）
@@ -951,7 +949,7 @@ class ReportGenerator:
         storage: DataStorage | None = None,
         detector: AnomalyDetector | None = None,
     ) -> None:
-        """初始化报告生成器
+        """初始化报告生成器.
 
         Args:
             storage: 数据存储实例（可选），用于读取历史数据和保存报告
@@ -963,7 +961,7 @@ class ReportGenerator:
         self.detector: AnomalyDetector | None = detector
 
     def generate_daily_report(self) -> dict[str, Any]:
-        """生成每日报告
+        """生成每日报告.
 
         Returns:
             报告数据字典，如果依赖未初始化则返回错误信息
@@ -1060,9 +1058,11 @@ class ReportGenerator:
         return report
 
     def _generate_recommendations(
-        self, trends: dict[str, Any], _data: list[dict[str, Any]]
+        self,
+        trends: dict[str, Any],
+        _data: list[dict[str, Any]],
     ) -> list[str]:
-        """生成优化建议"""
+        """生成优化建议."""
         recommendations: list[str] = []
 
         # 基于速度趋势的建议
@@ -1089,7 +1089,7 @@ class ReportGenerator:
 
     @staticmethod
     def _calculate_trend(values: list[float]) -> str:
-        """计算趋势方向
+        """计算趋势方向.
 
         使用 trend_utils.calculate_trend 计算斜率，然后映射为趋势描述。
 
@@ -1108,7 +1108,7 @@ class ReportGenerator:
         return "stable"
 
     def _simple_trend_analysis(self, data: list[dict[str, Any]]) -> dict[str, Any]:
-        """简单的趋势分析（detector未初始化时的降级方案）
+        """简单的趋势分析（detector未初始化时的降级方案）.
 
         自 v4.3.1: 优化为单次遍历。
 
@@ -1162,10 +1162,10 @@ class ReportGenerator:
 
 
 class MonitoringSystem:
-    """监控系统主类"""
+    """监控系统主类."""
 
     def __init__(self, engine: Any | None = None, collection_interval: int = 5) -> None:
-        """初始化监控系统
+        """初始化监控系统.
 
         Args:
             engine: 对撞引擎实例
@@ -1219,7 +1219,7 @@ class MonitoringSystem:
         self._flush_interval: int = 60
 
     def register_component(self, name: str, component: Any) -> None:
-        """注册组件
+        """注册组件.
 
         Args:
             name: 组件名称
@@ -1230,7 +1230,7 @@ class MonitoringSystem:
         logger.info("组件 '%s' 已注册到监控系统", name)
 
     def start(self) -> None:
-        """启动监控系统"""
+        """启动监控系统."""
         if self._running:
             return
 
@@ -1241,7 +1241,7 @@ class MonitoringSystem:
         logger.info("监控系统已启动")
 
     def stop(self) -> None:
-        """停止监控系统"""
+        """停止监控系统."""
         if not self._running:
             return
 
@@ -1261,19 +1261,19 @@ class MonitoringSystem:
         logger.info("监控系统已停止")
 
     def _buffer_data_point(self, data: MonitoringData):
-        """缓冲数据点，达到阈值时批量写入"""
+        """缓冲数据点，达到阈值时批量写入."""
         with self._buffer_lock:
             self._data_buffer.append(data.to_dict())
             if len(self._data_buffer) >= self._buffer_flush_size:
                 self._flush_buffer_unlocked()
 
     def _flush_buffer(self):
-        """批量写入缓冲数据（线程安全版本，供外部调用）"""
+        """批量写入缓冲数据（线程安全版本，供外部调用）."""
         with self._buffer_lock:
             self._flush_buffer_unlocked()
 
     def _flush_buffer_unlocked(self):
-        """批量写入缓冲数据（内部方法，调用方必须已持有 _buffer_lock）
+        """批量写入缓冲数据（内部方法，调用方必须已持有 _buffer_lock）.
 
         自 v4.3.1: 当 DataLogger 可用时，委托给它处理持久化，消除双写竞争。
         """
@@ -1317,7 +1317,7 @@ class MonitoringSystem:
                 logger.debug("清理临时文件失败: %s", e)
 
     def _monitoring_loop(self):
-        """监控循环
+        """监控循环.
 
         P2修复: 优化I/O操作,降低历史数据保存频率
         优化: 利用批量缓冲将历史数据批量写入，进一步减少I/O
@@ -1365,11 +1365,11 @@ class MonitoringSystem:
             time.sleep(self.collection_interval)
 
     def is_running(self) -> bool:
-        """检查监控系统是否运行"""
+        """检查监控系统是否运行."""
         return self._running
 
     def get_current_status(self) -> dict[str, Any]:
-        """获取当前状态"""
+        """获取当前状态."""
         current_data = self.storage.get_current_data()
         if not current_data:
             return {"message": "暂无数据"}
@@ -1388,5 +1388,5 @@ class MonitoringSystem:
         }
 
     def generate_report(self) -> dict[str, Any]:
-        """生成报告"""
+        """生成报告."""
         return self.report_generator.generate_daily_report()

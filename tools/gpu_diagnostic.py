@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Intel Arc A770 GPU诊断工具
+"""Intel Arc A770 GPU诊断工具.
 
 功能:
 1. 检测GPU硬件状态
@@ -14,19 +14,19 @@ import time
 
 
 def print_header(title: str):
-    """打印标题"""
+    """打印标题."""
     print(f"\n{'=' * 80}")
     print(f"  {title}")
     print(f"{'=' * 80}\n")
 
 
 def print_section(title: str):
-    """打印小节"""
+    """打印小节."""
     print(f"\n--- {title} ---")
 
 
 def check_system_info():
-    """检查系统信息"""
+    """检查系统信息."""
     print_section("系统信息")
 
     print(f"  操作系统: {platform.system()} {platform.release()}")
@@ -36,7 +36,7 @@ def check_system_info():
 
 
 def check_gpu_hardware():
-    """检查GPU硬件"""
+    """检查GPU硬件."""
     print_section("GPU硬件检测")
 
     try:
@@ -77,7 +77,7 @@ def check_gpu_hardware():
 
 
 def check_gpu_driver():
-    """检查GPU驱动"""
+    """检查GPU驱动."""
     print_section("GPU驱动检测")
 
     try:
@@ -88,7 +88,7 @@ def check_gpu_driver():
             # 尝试检查Intel驱动
             try:
                 result = subprocess.run(
-                    ["driverquery", "/v", "/fo", "csv"], capture_output=True, text=True, timeout=10
+                    ["driverquery", "/v", "/fo", "csv"], capture_output=True, text=True, timeout=10,
                 )
 
                 if "intel" in result.stdout.lower():
@@ -116,7 +116,7 @@ def check_gpu_driver():
             # 检查Intel GPU工具
             try:
                 result = subprocess.run(
-                    ["intel_gpu_top", "-L"], capture_output=True, text=True, timeout=5
+                    ["intel_gpu_top", "-L"], capture_output=True, text=True, timeout=5,
                 )
                 print("  [PASS] intel_gpu_top可用")
             except FileNotFoundError:
@@ -138,7 +138,7 @@ def check_gpu_driver():
         print("\n  [建议] Intel Arc驱动下载:")
         print(
             "  https://www.intel.com/content/www/us/en/download/785597/"
-            "intel-arc-iris-xe-graphics-windows.html"
+            "intel-arc-iris-xe-graphics-windows.html",
         )
 
         return True
@@ -149,7 +149,7 @@ def check_gpu_driver():
 
 
 def check_opencl_availability():
-    """检查OpenCL可用性"""
+    """检查OpenCL可用性."""
     print_section("OpenCL检测")
 
     try:
@@ -186,7 +186,7 @@ def check_opencl_availability():
 
 
 def test_gpu_stability():
-    """测试GPU稳定性"""
+    """测试GPU稳定性."""
     print_section("GPU稳定性测试")
 
     try:
@@ -222,7 +222,7 @@ def test_gpu_stability():
             print(
                 f"  [{(i + 1) * 6}s] 吞吐量: {report.avg_throughput_keys_per_sec:>10,.0f} keys/s | "
                 f"错误率: {report.error_rate_percent:>6.2f}% | "
-                f"显存: {report.memory_usage_avg_mb:>8.2f} MB"
+                f"显存: {report.memory_usage_avg_mb:>8.2f} MB",
             )
 
         # 停止引擎
@@ -249,7 +249,7 @@ def test_gpu_stability():
 
 
 def check_intel_arc_workarounds():
-    """检查Intel Arc workaround状态"""
+    """检查Intel Arc workaround状态."""
     print_section("Intel Arc Workaround检测")
 
     try:
@@ -298,7 +298,7 @@ def check_intel_arc_workarounds():
 
 
 def provide_recommendations():
-    """提供修复建议"""
+    """提供修复建议."""
     print_section("修复建议")
 
     print("  针对Intel Arc A770间歇性问题,建议:")
@@ -331,7 +331,7 @@ def provide_recommendations():
 
 
 def main():
-    """主函数"""
+    """主函数."""
     print_header("Intel Arc A770 GPU诊断工具")
 
     results = {}

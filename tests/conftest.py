@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pytest配置文件 - 提供全局Fixture和测试配置
+"""Pytest配置文件 - 提供全局Fixture和测试配置.
 
 本文件包含:
 - GPU引擎测试的统一Mock链Fixture
@@ -33,15 +33,13 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-# 导入GPU Mock修复补丁
-
 # ============================================================================
 # GPU测试常量定义
 # ============================================================================
 
 
 class GPUConstants:
-    """GPU测试相关常量
+    """GPU测试相关常量.
 
     集中管理GPU测试中的硬编码值,提高可维护性
     """
@@ -79,7 +77,7 @@ def _create_mock_gpu_objects(
     vendor_str=GPUConstants.VENDOR_NVIDIA,
     global_mem_size=GPUConstants.DEFAULT_MEM_SIZE,
 ):
-    """创建标准GPU Mock对象集(内部辅助函数)
+    """创建标准GPU Mock对象集(内部辅助函数).
 
     Args:
         batch_size: 批次大小
@@ -126,7 +124,7 @@ def _create_mock_gpu_objects(
 
 
 def _apply_gpu_patches(mock_device, mock_context, mock_kernel, vendor="nvidia"):
-    """应用7层GPU Mock链(内部辅助函数)
+    """应用7层GPU Mock链(内部辅助函数).
 
     Args:
         mock_device: GPU设备Mock
@@ -156,7 +154,7 @@ def _apply_gpu_patches(mock_device, mock_context, mock_kernel, vendor="nvidia"):
 
         with ExitStack() as stack:
             # 应用7层Mock
-            stack.enter_context(patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True))
+            stack.enter_context(patch("src.gpu._availability.PYOPENCL_AVAILABLE", True))
             stack.enter_context(
                 patch(
                     "src.gpu.device.GPUDeviceDetector.is_gpu_available",
@@ -199,7 +197,7 @@ def _apply_gpu_patches(mock_device, mock_context, mock_kernel, vendor="nvidia"):
 
 @pytest.fixture
 def mock_gpu_chain():
-    """提供完整的GPU Mock链,用于GPU碰撞引擎测试
+    """提供完整的GPU Mock链,用于GPU碰撞引擎测试.
 
     这个fixture封装了7层Mock,避免在每个测试中重复编写:
     1. PYOPENCL_AVAILABLE
@@ -229,7 +227,7 @@ def mock_gpu_chain():
 
 @pytest.fixture
 def mock_gpu_chain_custom_batch():
-    """提供可自定义batch_size的GPU Mock链
+    """提供可自定义batch_size的GPU Mock链.
 
     返回上下文管理器,需要使用with语句
 
@@ -249,7 +247,7 @@ def mock_gpu_chain_custom_batch():
 
 @pytest.fixture
 def mock_gpu_chain_with_batch():
-    """提供可直接使用的自定义batch_size GPU Mock链
+    """提供可直接使用的自定义batch_size GPU Mock链.
 
     与mock_gpu_chain_custom_batch不同,这个fixture直接yield mocks,
     不需要with语句,但需要参数化测试使用pytest.mark.parametrize
@@ -271,7 +269,7 @@ def mock_gpu_chain_with_batch():
 
 @pytest.fixture
 def mock_gpu_device():
-    """仅提供GPU设备Mock(不包含完整链)
+    """仅提供GPU设备Mock(不包含完整链).
 
     用于不需要完整引擎初始化的测试
 
@@ -296,7 +294,7 @@ def mock_gpu_device():
 
 @pytest.fixture(scope="module")
 def mock_gpu_device_module():
-    """模块级别的GPU设备Mock(多个测试共享)
+    """模块级别的GPU设备Mock(多个测试共享).
 
     ⚠️ 注意: 此fixture在模块内共享,不适合修改Mock状态的测试!
 
@@ -343,7 +341,7 @@ def mock_gpu_device_module():
 
 @pytest.fixture(scope="module")
 def mock_gpu_chain_module():
-    """模块级别的完整GPU Mock链
+    """模块级别的完整GPU Mock链.
 
     ⚠️ 注意: 此fixture在模块内共享7层Mock链!
 
@@ -380,7 +378,7 @@ def mock_gpu_chain_module():
 
 @pytest.fixture
 def clear_gpu_detector_cache():
-    """清除GPUDeviceDetector的所有缓存
+    """清除GPUDeviceDetector的所有缓存.
 
     ⚠️ 警告: 此fixture修改类级别缓存,不建议在并发测试中使用!
 
@@ -447,7 +445,7 @@ def clear_gpu_detector_cache():
 
 @pytest.fixture
 def mock_gpu_chain_nvidia(mock_gpu_chain):
-    """NVIDIA GPU预设(默认)
+    """NVIDIA GPU预设(默认).
 
     使用示例:
         def test_nvidia_optimizations(mock_gpu_chain_nvidia):
@@ -459,7 +457,7 @@ def mock_gpu_chain_nvidia(mock_gpu_chain):
 
 @pytest.fixture
 def mock_gpu_chain_amd():
-    """AMD GPU预设
+    """AMD GPU预设.
 
     使用示例:
         def test_amd_optimizations(mock_gpu_chain_amd):
@@ -479,7 +477,7 @@ def mock_gpu_chain_amd():
 
 @pytest.fixture
 def mock_gpu_chain_intel():
-    """Intel GPU预设(包含uint32 workaround)
+    """Intel GPU预设(包含uint32 workaround).
 
     使用示例:
         def test_intel_workaround(mock_gpu_chain_intel):
@@ -507,7 +505,7 @@ def mock_gpu_chain_intel():
 
 
 def pytest_configure(config):
-    """配置pytest环境,注册自定义marker"""
+    """配置pytest环境,注册自定义marker."""
     # GPU测试相关marker
     config.addinivalue_line("markers", "gpu_hardware: 需要真实GPU硬件的测试")
     config.addinivalue_line("markers", "gpu_unit: GPU单元测试（可Mock）")
@@ -528,7 +526,7 @@ def pytest_configure(config):
 
 
 def pytest_collection_modifyitems(config, items):
-    """修改测试项集合
+    """修改测试项集合.
 
     根据marker对测试进行分类和排序
 
@@ -550,16 +548,18 @@ def pytest_collection_modifyitems(config, items):
         if _coincurve_available is not None:
             return
         try:
-            from src.core.crypto_backend import crypto_manager
+            from src.core.crypto_backend import BackendType, crypto_manager
 
+            _coincurve_backend = crypto_manager._backends.get(BackendType.COINCURVE)
             _coincurve_available = (
-                crypto_manager._backends.get(crypto_manager.BackendType.COINCURVE).is_available
-                if hasattr(crypto_manager.BackendType, "COINCURVE")
+                _coincurve_backend.is_available
+                if hasattr(BackendType, "COINCURVE") and _coincurve_backend is not None
                 else False
             )
+            _openssl_backend = crypto_manager._backends.get(BackendType.OPENSSL)
             _openssl_available = (
-                crypto_manager._backends.get(crypto_manager.BackendType.OPENSSL).is_available
-                if hasattr(crypto_manager.BackendType, "OPENSSL")
+                _openssl_backend.is_available
+                if hasattr(BackendType, "OPENSSL") and _openssl_backend is not None
                 else False
             )
         except Exception:
@@ -644,7 +644,7 @@ def pytest_collection_modifyitems(config, items):
 
 @pytest.fixture(autouse=True)
 def reset_cli_output_singleton():
-    """每个测试前重置 CLIOutput 单例，避免跨测试 sys.stdout 污染。
+    """每个测试前重置 CLIOutput 单例，避免跨测试 sys.stdout 污染。.
 
     问题背景：test_cli_advanced_features.py 等测试会替换 sys.stdout 为 StringIO，
     若 CLIOutput 单例在替换前已创建，其内部 Console 持有旧的 sys.stdout 引用，
@@ -667,7 +667,7 @@ def reset_cli_output_singleton():
 
 
 def pytest_sessionfinish(session, exitstatus):
-    """测试会话结束时强制清理所有监控后台线程，防止进程退出挂起。
+    """测试会话结束时强制清理所有监控后台线程，防止进程退出挂起。.
 
     问题背景：
     - DataCollector 的后台 CPU 采样线程调用 psutil.cpu_percent(interval=0.5)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Intel Arc ULLS优化效果验证工具
+"""Intel Arc ULLS优化效果验证工具.
 
 验证禁用ULLS(Ultra Low Latency Submission)后的性能提升效果。
 预期Compute性能提升14-31%。
@@ -16,7 +16,7 @@ from pathlib import Path
 
 
 def run_ulls_verification_test(duration=60):
-    """运行ULLS优化验证测试
+    """运行ULLS优化验证测试.
 
     Args:
         duration: 测试持续时间(秒),默认60秒
@@ -96,7 +96,7 @@ def run_ulls_verification_test(duration=60):
 
 
 def compare_performance(before_data, after_data):
-    """对比优化前后的性能数据
+    """对比优化前后的性能数据.
 
     Args:
         before_data: 优化前性能数据
@@ -133,7 +133,7 @@ def compare_performance(before_data, after_data):
 
 
 def generate_verification_report(performance_data, comparison):
-    """生成验证报告
+    """生成验证报告.
 
     Args:
         performance_data: 性能测试数据
@@ -209,7 +209,7 @@ def generate_verification_report(performance_data, comparison):
 
 
 def save_report(performance_data, comparison):
-    """保存验证报告到文件
+    """保存验证报告到文件.
 
     Args:
         performance_data: 性能测试数据

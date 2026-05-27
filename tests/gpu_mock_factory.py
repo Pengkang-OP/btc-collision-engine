@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GPU Mock 测试基础设施 - 统一的 Mock 工厂
+"""GPU Mock 测试基础设施 - 统一的 Mock 工厂.
 
 提供标准化、可复用的 GPU Mock 对象，覆盖所有 GPU 测试场景：
 - OpenCL 设备 / 平台 / 上下文
@@ -86,7 +86,7 @@ PRESET_CPU = dict(
 # GPUMockFactory
 # ---------------------------------------------------------------------------
 class GPUMockFactory:
-    """提供标准化的 GPU Mock 对象，供所有 GPU 测试文件复用。"""
+    """提供标准化的 GPU Mock 对象，供所有 GPU 测试文件复用。."""
 
     # ------------------------------------------------------------------
     # OpenCL 底层 Mock
@@ -100,7 +100,7 @@ class GPUMockFactory:
         compute_units: int = 32,
         device_type: int = _CL_DEVICE_TYPE_GPU,
     ) -> Mock:
-        """创建标准 Mock OpenCL 设备（cl.Device 替代品）。
+        """创建标准 Mock OpenCL 设备（cl.Device 替代品）。.
 
         设备属性同时作为直接属性 *和* ``get_info()`` 响应暴露，
         兼容不同源码读取方式。
@@ -143,7 +143,7 @@ class GPUMockFactory:
         name: str = "Mock Platform",
         devices: list[Mock] | None = None,
     ) -> Mock:
-        """创建标准 Mock OpenCL 平台（cl.Platform 替代品）。
+        """创建标准 Mock OpenCL 平台（cl.Platform 替代品）。.
 
         Args:
             name:    平台名称
@@ -164,7 +164,7 @@ class GPUMockFactory:
 
     @staticmethod
     def create_cl_context(device: Mock | None = None) -> Mock:
-        """创建标准 Mock OpenCL 上下文（cl.Context 替代品）。
+        """创建标准 Mock OpenCL 上下文（cl.Context 替代品）。.
 
         Args:
             device: 绑定的设备（为 None 时自动创建）
@@ -183,7 +183,7 @@ class GPUMockFactory:
 
     @staticmethod
     def create_cl_buffer(size: int = 1024) -> Mock:
-        """创建标准 Mock OpenCL Buffer（cl.Buffer 替代品）。
+        """创建标准 Mock OpenCL Buffer（cl.Buffer 替代品）。.
 
         重要: pyopencl.Buffer 的构造函数签名为:
             Buffer(context, flags, size=0, hostbuf=None)
@@ -209,7 +209,7 @@ class GPUMockFactory:
 
     @staticmethod
     def create_cl_queue(context: Mock | None = None) -> Mock:
-        """创建标准 Mock OpenCL 命令队列（cl.CommandQueue 替代品）。"""
+        """创建标准 Mock OpenCL 命令队列（cl.CommandQueue 替代品）。."""
         queue = Mock()
         queue.context = context or GPUMockFactory.create_cl_context()
         queue.finish = Mock()
@@ -218,7 +218,7 @@ class GPUMockFactory:
 
     @staticmethod
     def create_cl_program(build_success: bool = True) -> Mock:
-        """创建标准 Mock OpenCL Program。
+        """创建标准 Mock OpenCL Program。.
 
         Args:
             build_success: 若为 False，``build()`` 将抛出 ``Exception``
@@ -244,7 +244,7 @@ class GPUMockFactory:
         vendor: str = "Mock Vendor",
         mem_size: int = 8 * 1024**3,
     ) -> Mock:
-        """创建标准 Mock ``GPUDevice`` 包装对象。
+        """创建标准 Mock ``GPUDevice`` 包装对象。.
 
         该对象模拟 ``src.collision.gpu_collision_engine.GPUDevice``
         或 ``src.gpu.device.GPUDevice`` 的公开接口。
@@ -282,7 +282,7 @@ class GPUMockFactory:
 
     @staticmethod
     def create_gpu_context(batch_size: int = 100) -> Mock:
-        """创建标准 Mock ``GPUContext`` 包装对象。
+        """创建标准 Mock ``GPUContext`` 包装对象。.
 
         Args:
             batch_size: ``calculate_batch_size()`` 的返回值
@@ -305,7 +305,7 @@ class GPUMockFactory:
         run_batch_result=None,
         run_batch_side_effect=None,
     ) -> Mock:
-        """创建标准 Mock ``GPUKernel`` 包装对象。
+        """创建标准 Mock ``GPUKernel`` 包装对象。.
 
         Args:
             batch_size:            ``max_batch_size`` 属性值
@@ -342,7 +342,7 @@ class GPUMockFactory:
 
     @staticmethod
     def create_mock_cl_module() -> Mock:
-        """创建完整的 Mock ``pyopencl`` 模块。
+        """创建完整的 Mock ``pyopencl`` 模块。.
 
         包含 ``device_type``、``device_info``、``platform_info``、
         ``command_queue_properties`` 等常量类，以及常用函数桩。
@@ -408,7 +408,7 @@ class GPUMockFactory:
     @staticmethod
     @contextmanager
     def patch_pyopencl_buffer():
-        """对 ``pyopencl.Buffer`` 打 patch，避免真实 OpenCL 调用。
+        """对 ``pyopencl.Buffer`` 打 patch，避免真实 OpenCL 调用。.
 
         用法::
 
@@ -425,7 +425,7 @@ class GPUMockFactory:
         batch_size: int = 100,
         run_batch_side_effect=None,
     ):
-        """一站式 patch GPUCollisionEngine 所需的全部依赖。
+        """一站式 patch GPUCollisionEngine 所需的全部依赖。.
 
         同时 patch：
         - ``PYOPENCL_AVAILABLE`` → True
@@ -452,7 +452,7 @@ class GPUMockFactory:
         mock_buffer = GPUMockFactory.create_cl_buffer()
 
         with (
-            patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True),
+            patch("src.gpu._availability.PYOPENCL_AVAILABLE", True),
             patch("src.gpu.device_manager.GPUDevice", return_value=mock_device),
             patch("src.gpu.device_manager.GPUContext", return_value=mock_context),
             patch("src.gpu.device_manager.GPUKernel", return_value=mock_kernel),
@@ -483,34 +483,34 @@ class GPUMockFactory:
 
     @classmethod
     def nvidia_device(cls) -> Mock:
-        """返回预置的 NVIDIA RTX 3080 Mock 设备（cl.Device 级别）。"""
+        """返回预置的 NVIDIA RTX 3080 Mock 设备（cl.Device 级别）。."""
         return cls.create_cl_device(**PRESET_NVIDIA)
 
     @classmethod
     def amd_device(cls) -> Mock:
-        """返回预置的 AMD RX 6800 XT Mock 设备（cl.Device 级别）。"""
+        """返回预置的 AMD RX 6800 XT Mock 设备（cl.Device 级别）。."""
         return cls.create_cl_device(**PRESET_AMD)
 
     @classmethod
     def intel_arc_device(cls) -> Mock:
-        """返回预置的 Intel Arc A770 Mock 设备（cl.Device 级别）。"""
+        """返回预置的 Intel Arc A770 Mock 设备（cl.Device 级别）。."""
         return cls.create_cl_device(**PRESET_INTEL_ARC)
 
     @classmethod
     def intel_uhd_device(cls) -> Mock:
-        """返回预置的 Intel UHD 630 核显 Mock 设备（cl.Device 级别）。"""
+        """返回预置的 Intel UHD 630 核显 Mock 设备（cl.Device 级别）。."""
         return cls.create_cl_device(**PRESET_INTEL_UHD)
 
     @classmethod
     def cpu_device(cls) -> Mock:
-        """返回预置的 CPU Mock 设备（cl.Device 级别，type=CPU）。"""
+        """返回预置的 CPU Mock 设备（cl.Device 级别，type=CPU）。."""
         p = dict(PRESET_CPU)
         device_type = p.pop("device_type")
         return cls.create_cl_device(**p, device_type=device_type)
 
     @classmethod
     def multi_vendor_platforms(cls) -> list[Mock]:
-        """返回包含 NVIDIA / AMD / Intel Arc 三种设备的多平台列表。"""
+        """返回包含 NVIDIA / AMD / Intel Arc 三种设备的多平台列表。."""
         platform1 = cls.create_cl_platform("Platform NVIDIA", [cls.nvidia_device()])
         platform2 = cls.create_cl_platform(
             "Platform AMD-Intel",

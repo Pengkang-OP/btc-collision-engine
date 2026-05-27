@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""安全合规测试 - 验证密码学安全性和数据保护"""
+"""安全合规测试 - 验证密码学安全性和数据保护."""
 
 import os
 import pathlib
@@ -16,10 +16,10 @@ from src.core.secp256k1 import Secp256k1
 
 
 class TestCryptographicSecurity:
-    """密码学安全测试"""
+    """密码学安全测试."""
 
     def test_private_key_randomness(self):
-        """测试私钥随机性"""
+        """测试私钥随机性."""
         generator = P2PKHAddressGenerator()
 
         # 生成多个私钥
@@ -53,7 +53,7 @@ class TestCryptographicSecurity:
         print(f"   分布: 低={low_count}, 高={high_count}")
 
     def test_private_key_unpredictability(self):
-        """测试私钥不可预测性"""
+        """测试私钥不可预测性."""
         generator = P2PKHAddressGenerator()
 
         # 多次测试，至少一次通过即可
@@ -81,7 +81,7 @@ class TestCryptographicSecurity:
         raise AssertionError(f"私钥差异过小，{max_attempts}次尝试都未通过")
 
     def test_no_hardcoded_private_keys(self):
-        """测试没有硬编码的私钥"""
+        """测试没有硬编码的私钥."""
         generator = P2PKHAddressGenerator()
 
         # 验证生成的私钥不在常见的弱私钥列表中
@@ -93,7 +93,7 @@ class TestCryptographicSecurity:
             assert pk_int not in weak_keys, f"生成了弱私钥: {pk_int}"
 
     def test_secure_random_source(self):
-        """测试使用安全的随机数源"""
+        """测试使用安全的随机数源."""
         # Python的secrets模块使用系统安全随机源
         # 验证secrets可用
         random_bytes = secrets.token_bytes(32)
@@ -104,7 +104,7 @@ class TestCryptographicSecurity:
         assert len(set(random_values)) == 100, "安全随机数应该唯一"
 
     def test_constant_time_comparison(self):
-        """测试恒定时间比较（防止时序攻击）"""
+        """测试恒定时间比较（防止时序攻击）."""
         # CryptoBackend应该提供恒定时间比较
         data1 = b"test data 12345678901234567890"
         data2 = b"test data 12345678901234567890"
@@ -121,10 +121,10 @@ class TestCryptographicSecurity:
 
 
 class TestAddressSecurity:
-    """地址安全测试"""
+    """地址安全测试."""
 
     def test_address_format_validation(self):
-        """测试地址格式验证"""
+        """测试地址格式验证."""
         resolver = TargetResolver()
 
         # 有效地址
@@ -148,7 +148,7 @@ class TestAddressSecurity:
             # 注意：某些无效地址可能通过Base58解码但校验和失败
 
     def test_checksum_validation(self):
-        """测试地址校验和验证"""
+        """测试地址校验和验证."""
         from src.core.base58 import Base58
 
         # 有效地址
@@ -167,7 +167,7 @@ class TestAddressSecurity:
             pass  # 期望的行为 — 校验和/格式不匹配应抛异常
 
     def test_no_address_collision(self):
-        """测试地址不会意外碰撞"""
+        """测试地址不会意外碰撞."""
         generator = P2PKHAddressGenerator()
 
         # 生成多个地址
@@ -180,10 +180,10 @@ class TestAddressSecurity:
 
 
 class TestDataProtection:
-    """数据保护测试"""
+    """数据保护测试."""
 
     def test_address_not_logged(self):
-        """测试私钥不会被记录到日志"""
+        """测试私钥不会被记录到日志."""
         import logging
         from io import StringIO
 
@@ -210,7 +210,7 @@ class TestDataProtection:
         print("✅ 私钥未泄露到日志")
 
     def test_secure_file_permissions(self):
-        """测试文件权限安全"""
+        """测试文件权限安全."""
         # 如果项目创建文件，应该设置适当的权限
         # 这里检查配置文件（如果存在）
         config_files = ["config.json", "config.example.json"]
@@ -226,10 +226,10 @@ class TestDataProtection:
 
 
 class TestDeduplicationSecurity:
-    """去重过滤器安全测试"""
+    """去重过滤器安全测试."""
 
     def test_dedup_does_not_leak_keys(self):
-        """测试去重过滤器不会泄露私钥"""
+        """测试去重过滤器不会泄露私钥."""
         dedup = DeduplicationFilter(max_size=1000, enabled=True)
 
         # 添加私钥
@@ -243,7 +243,7 @@ class TestDeduplicationSecurity:
         # 如果实现使用了安全的存储方式，则通过
 
     def test_dedup_memory_cleanup(self):
-        """测试去重过滤器内存管理"""
+        """测试去重过滤器内存管理."""
         dedup = DeduplicationFilter(max_size=100, enabled=True)
 
         # 填满过滤器
@@ -267,10 +267,10 @@ class TestDeduplicationSecurity:
 
 
 class TestInputValidation:
-    """输入验证测试"""
+    """输入验证测试."""
 
     def test_invalid_private_key_handling(self):
-        """测试无效私钥处理"""
+        """测试无效私钥处理."""
         generator = P2PKHAddressGenerator()
 
         # 测试有效私钥
@@ -290,7 +290,7 @@ class TestInputValidation:
                 pass  # 期望的行为
 
     def test_target_address_validation(self):
-        """测试目标地址验证"""
+        """测试目标地址验证."""
         resolver = TargetResolver()
 
         # 有效地址
@@ -313,7 +313,7 @@ class TestInputValidation:
                 pass  # 期望的行为
 
     def test_buffer_overflow_protection(self):
-        """测试缓冲区溢出保护"""
+        """测试缓冲区溢出保护."""
         # 测试大输入
         large_address = "1" * 10000
 
@@ -326,10 +326,10 @@ class TestInputValidation:
 
 
 class TestEngineSecurity:
-    """引擎安全测试"""
+    """引擎安全测试."""
 
     def test_engine_does_not_expose_keys(self):
-        """测试引擎不会暴露私钥"""
+        """测试引擎不会暴露私钥."""
         engine = KeyCollisionEngine(
             targets={"1TestAddress123456789012345678"},
             max_workers=1,
@@ -353,7 +353,7 @@ class TestEngineSecurity:
         print("✅ 引擎统计信息未泄露私钥")
 
     def test_engine_thread_safety(self):
-        """测试引擎线程安全"""
+        """测试引擎线程安全."""
         engine = KeyCollisionEngine(
             targets={"1TestAddress123456789012345678"},
             max_workers=4,
@@ -374,10 +374,10 @@ class TestEngineSecurity:
 
 
 class TestComplianceChecklist:
-    """合规检查清单"""
+    """合规检查清单."""
 
     def test_security_checklist(self):
-        """运行安全合规检查清单"""
+        """运行安全合规检查清单."""
         generator = P2PKHAddressGenerator()
 
         checklist = {

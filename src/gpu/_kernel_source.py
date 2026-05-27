@@ -3,7 +3,7 @@
 
 This file contains ONLY the embedded OpenCL C source string.
 The runtime logic remains in kernel.py which imports from this module.
-"""  # noqa: E501
+"""
 
 OPENCL_KERNEL_SOURCE = """
 // ============================================================================

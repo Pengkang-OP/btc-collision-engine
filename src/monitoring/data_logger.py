@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Bitcoin key collision detection data logging system.
 
 Provides comprehensive data logging including performance data,
@@ -22,16 +21,16 @@ from datetime import datetime
 from typing import Any
 
 from ..log_engine.log_rotator import LogRotator
-from .storage_config import DataStorageConfig
 
 # 导入现有日志系统
 from ..utils import get_configured_logger
 from ..utils.fast_json import fast_dump, fast_load, fast_loads
 from ..utils.logging_config import LOG_DEFAULT_MAX_BYTES
+from .storage_config import DataStorageConfig
 
 
 class DataLogger:
-    """数据日志记录器
+    """数据日志记录器.
 
     注意：已统一使用data_logs作为唯一数据源，
     monitoring_data目录已废弃。
@@ -60,7 +59,7 @@ class DataLogger:
     _REC_MEM_THRESHOLD_MEDIUM_MB: int = 512
 
     def __init__(self, storage_dir: str | None = None) -> None:
-        """初始化数据日志记录器
+        """初始化数据日志记录器.
 
         Args:
             storage_dir: 数据存储目录（可选，默认使用data_logs）
@@ -70,24 +69,22 @@ class DataLogger:
         if isinstance(storage_dir, list):
             storage_dir = str(storage_dir[0]) if storage_dir else None
 
+        # 初始化日志记录器（必须在任何日志调用之前初始化）
+        # v5.2.4: 移至防御性类型检查之前，避免 self.logger.warning() 时 logger 未初始化
+        # v4.2.1: Python的logging.Logger本身是线程安全的，无需ThreadSafeLogger包装
+        self.logger = get_configured_logger("DataLogger")
+
         # 使用统一配置
         self.storage_dir = DataStorageConfig.ensure_storage_dir(storage_dir)
 
         # 防御性检查：确保 storage_dir 是字符串
         if not isinstance(self.storage_dir, str):
-            # 记录错误并使用默认目录
-            import sys
-
-            print(
-                f"WARNING: storage_dir is {type(self.storage_dir)}, expected str",
-                file=sys.stderr,
-            )  # noqa: T201
+            self.logger.warning(
+                "storage_dir is %s, expected str, using default 'data_logs'",
+                type(self.storage_dir),
+            )
             self.storage_dir = "data_logs"
             pathlib.Path(self.storage_dir).mkdir(exist_ok=True, parents=True)
-
-        # 初始化日志记录器
-        # v4.2.1修复: Python的logging.Logger本身是线程安全的，无需ThreadSafeLogger包装
-        self.logger = get_configured_logger("DataLogger")
 
         # 数据文件路径
         self.current_data_file = os.path.join(self.storage_dir, "current_data.json")
@@ -104,7 +101,7 @@ class DataLogger:
         # 数据缓存
         self._current_data: dict[str, Any] = {}
         self._history_buffer: deque[dict[str, float | int | str]] = deque(
-            maxlen=1000
+            maxlen=1000,
         )  # 限制历史数据数量
         self._error_buffer: deque[dict[str, Any]] = deque(maxlen=500)  # 限制错误日志数量
 
@@ -141,7 +138,7 @@ class DataLogger:
         self.logger.debug("数据日志系统初始化完成")
 
     def _atomic_write_json(self, filepath: str, data: Any) -> None:
-        """原子写入JSON文件
+        """原子写入JSON文件.
 
         使用临时文件+重命名的方式确保数据完整性，
         避免写入中断导致文件损坏。
@@ -188,7 +185,7 @@ class DataLogger:
                     pathlib.Path(temp_file).unlink()
 
     def _initialize_files(self) -> None:
-        """初始化数据文件"""
+        """初始化数据文件."""
         try:
             # 初始化当前数据文件
             if not pathlib.Path(self.current_data_file).exists():
@@ -240,7 +237,7 @@ class DataLogger:
         gpu_memory_usage: float = 0.0,
         gpu_utilization: float = 0.0,
     ) -> None:
-        """记录性能数据（添加数据验证）
+        """记录性能数据（添加数据验证）.
 
         Args:
             speed: 每秒检测速率
@@ -346,7 +343,7 @@ class DataLogger:
     # ==== v4.3.1: 性能日志批量化写入 ====
 
     def _buffered_perf_write(self, csv_line: str) -> None:
-        """缓冲性能日志行，累积到阈值后批量写入
+        """缓冲性能日志行，累积到阈值后批量写入.
 
         设计目标：将 0.5s/次的文件打开+写入 降低为 ~5s/次
         """
@@ -362,13 +359,13 @@ class DataLogger:
             self._flush_perf_buffer()
 
     def _direct_perf_write(self, csv_line: str) -> None:
-        """直接写入性能日志（非批量化模式）"""
+        """直接写入性能日志（非批量化模式）."""
         self._rotate_perf_log_if_needed()
         with pathlib.Path(self.performance_log_file).open("a", encoding="utf-8") as f:
             f.write(csv_line)
 
     def _flush_perf_buffer(self) -> None:
-        """将缓冲的性能日志行批量写入文件"""
+        """将缓冲的性能日志行批量写入文件."""
         lines_to_write: list[str] = []
         with self._perf_buffer_lock:
             if not self._perf_line_buffer:
@@ -398,7 +395,7 @@ class DataLogger:
         pid: int = 0,
         uptime: float = 0.0,
     ) -> None:
-        """记录系统数据
+        """记录系统数据.
 
         Args:
             os_name: 操作系统名称
@@ -438,7 +435,7 @@ class DataLogger:
         current_position: int = 0,
         additional_info: dict[str, Any] | None = None,
     ) -> None:
-        """记录引擎状态数据
+        """记录引擎状态数据.
 
         Args:
             mode: 对撞模式
@@ -481,7 +478,7 @@ class DataLogger:
 
     # P2-3: 在engine_data中记录去重效率
     def set_dedup_stats(self, skipped: int = 0, hit_rate: float = 0.0) -> None:
-        """P2-3: 设置去重/过滤统计指标
+        """P2-3: 设置去重/过滤统计指标.
 
         Args:
             skipped: 去重跳过的密钥数量
@@ -516,7 +513,7 @@ class DataLogger:
         collision_mode: str = "",
         match_type: str = "address",
     ) -> None:
-        """P1-1: 记录碰撞匹配详情
+        """P1-1: 记录碰撞匹配详情.
 
         记录脱敏后的匹配地址和碰撞时间，不存储私钥原文。
         私钥过滤由SecurityLogFilter在日志层防护。
@@ -568,7 +565,7 @@ class DataLogger:
         exception: Exception | None = None,
         context: dict[str, Any] | None = None,
     ) -> None:
-        """记录错误信息
+        """记录错误信息.
 
         Args:
             error_type: 错误类型
@@ -633,7 +630,7 @@ class DataLogger:
         system: dict[str, Any] | None = None,
         engine: dict[str, Any] | None = None,
     ) -> None:
-        """v4.2.2: 线程安全地更新 _current_data 的子区域
+        """v4.2.2: 线程安全地更新 _current_data 的子区域.
 
         替代外部直接访问 _current_data["performance"]/["system"]/["engine"]，
         内部使用 self._lock 保护，避免竞态和覆盖风险。
@@ -653,7 +650,7 @@ class DataLogger:
                 self._current_data["engine"] = engine
 
     def save_current_data(self) -> None:
-        """保存当前数据到文件
+        """保存当前数据到文件.
 
         使用原子写入（临时文件 + os.replace），
         _safe_file_replace 内部包含完整的重试+回退机制，
@@ -695,7 +692,7 @@ class DataLogger:
                     pathlib.Path(temp_file).unlink()
 
     def _cleanup_stale_temp_files(self, max_age_seconds: int = 3600) -> None:
-        """清理上次会话遗留的过期 .tmp 临时文件
+        """清理上次会话遗留的过期 .tmp 临时文件.
 
         原子写入操作（save_current_data/save_history_data/_safe_file_replace）
         在正常流程中会清理临时文件，但进程崩溃或杀毒软件锁定可能导致遗
@@ -729,7 +726,7 @@ class DataLogger:
             self.logger.debug("清理过期临时文件时出错（非致命）: %s", e)
 
     def _rotate_perf_log_if_needed(self) -> None:
-        """检查 performance.log 大小，超过阈值时自动轮转
+        """检查 performance.log 大小，超过阈值时自动轮转.
 
         轮转策略:
         - 超过 _PERF_LOG_MAX_SIZE 时轮转
@@ -777,7 +774,7 @@ class DataLogger:
             self.logger.warning("performance.log 轮转失败（非致命）: %s", e)
 
     def _safe_file_replace(self, src: str, dst: str, max_retries: int = 3) -> bool:
-        """安全的原子文件替换，带指数退避重试和回退机制
+        """安全的原子文件替换，带指数退避重试和回退机制.
 
         Windows 上 os.replace() 可能因杀毒软件/文件索引服务
         临时锁定目标文件而失败 (WinError 5)。此方法先尝试
@@ -846,7 +843,7 @@ class DataLogger:
         return False
 
     def _fallback_direct_write(self, src: str, dst: str) -> bool:
-        """回退方案：通过读取源文件内容然后直接写入目标文件
+        """回退方案：通过读取源文件内容然后直接写入目标文件.
 
         当 os.replace() 因外部锁定失败时使用此方法。
         虽然非原子操作，但可以绕过文件替换权限问题。
@@ -929,7 +926,7 @@ class DataLogger:
             return False
 
     def save_history_data(self) -> None:
-        """保存历史数据到文件
+        """保存历史数据到文件.
 
         P0: 使用 {schema_version, data} 版本化 JSON 格式存储（与 flush() 一致）。
         P1: 写入失败累计计数，超过阈值触发告警。
@@ -967,7 +964,7 @@ class DataLogger:
                 self._history_buffer.extendleft(reversed(new_data))
 
     def _compact_history_if_needed(self) -> None:
-        """压缩历史数据：超过 1200 条时保留最近 1000 条
+        """压缩历史数据：超过 1200 条时保留最近 1000 条.
 
         阈值设为 1200（超过目标 20%）以减少频繁压缩。
         支持版本化 JSON 格式（{schema_version, data}），
@@ -1008,7 +1005,7 @@ class DataLogger:
                     pathlib.Path(temp_file).unlink()
 
     def _load_history_with_recovery(self) -> list[dict[str, Any]]:
-        """加载历史数据，带损坏恢复机制
+        """加载历史数据，带损坏恢复机制.
 
         P0: 支持新旧两种格式：
         - 旧格式（无版本号）: 直接返回JSON数组
@@ -1039,7 +1036,7 @@ class DataLogger:
 
     @staticmethod
     def _scan_bracket_pairs(content: str) -> list[dict[str, Any]]:
-        """从损坏的 JSON 文本中扫描匹配括号的完整对象。
+        """从损坏的 JSON 文本中扫描匹配括号的完整对象。.
 
         使用字符级状态机提取所有顶层 JSON 对象，跳过无法解析的片段。
         """
@@ -1086,7 +1083,7 @@ class DataLogger:
         return recovered
 
     def _recover_history_data(self) -> list[dict[str, Any]]:
-        """尝试从损坏的JSON文件中恢复数据（健壮的逐行解析）"""
+        """尝试从损坏的JSON文件中恢复数据（健壮的逐行解析）."""
         recovered = []
 
         try:
@@ -1121,16 +1118,16 @@ class DataLogger:
             return []
 
     def get_current_data(self) -> dict[str, Any]:
-        """获取当前数据"""
+        """获取当前数据."""
         with self._lock:
             return self._current_data.copy()
 
     def get_history_data(self) -> list[dict[str, Any]]:
-        """获取历史数据（从文件读取，支持 JSONL 格式）"""
+        """获取历史数据（从文件读取，支持 JSONL 格式）."""
         return self._load_history_with_recovery()
 
     def get_error_logs(self) -> list[dict[str, Any]]:
-        """获取错误日志（从文件读取）"""
+        """获取错误日志（从文件读取）."""
         try:
             if pathlib.Path(self.error_log_file).exists():
                 with pathlib.Path(self.error_log_file).open("rb") as f:
@@ -1141,11 +1138,11 @@ class DataLogger:
 
     @property
     def storage_dir_prop(self) -> str:
-        """公开存储目录路径"""
+        """公开存储目录路径."""
         return self.storage_dir
 
     def get_statistics(self) -> dict[str, Any]:
-        """获取统计信息"""
+        """获取统计信息."""
         with self._lock:
             if not self._speed_samples:
                 return {
@@ -1170,7 +1167,7 @@ class DataLogger:
             }
 
     def generate_report(self, report_type: str = "daily") -> dict[str, Any]:
-        """生成报告
+        """生成报告.
 
         Args:
             report_type: 报告类型 (daily, weekly, monthly)
@@ -1260,7 +1257,7 @@ class DataLogger:
             return {"error": str(e)}
 
     def _analyze_trends(self, data: list[dict[str, Any]]) -> dict[str, Any]:
-        """分析数据趋势
+        """分析数据趋势.
 
         P1-3: 使用线性回归替代简单的前半/后半均值比较，
         提高趋势判断的准确性和灵敏度（阈值2%）。
@@ -1333,7 +1330,7 @@ class DataLogger:
         cpu_usages: list[float],
         memory_usages: list[float],
     ) -> list[str]:
-        """生成优化建议"""
+        """生成优化建议."""
         recommendations = []
 
         # 基于速度的建议
@@ -1363,7 +1360,7 @@ class DataLogger:
         return recommendations
 
     def _load_auto_cleanup_config(self) -> tuple[bool, int]:
-        """从 ConfigManager 读取 monitoring.auto_cleanup 配置
+        """从 ConfigManager 读取 monitoring.auto_cleanup 配置.
 
         Returns:
             (enabled: bool, max_age_days: int) 元组，读取失败时返回默认值 (True, 7)
@@ -1410,7 +1407,7 @@ class DataLogger:
             return default_enabled, default_max_age_days
 
     def _auto_cleanup_if_needed(self):
-        """自动清理过期报告文件（每24小时最多执行一次）
+        """自动清理过期报告文件（每24小时最多执行一次）.
 
         从 config.json 的 monitoring.auto_cleanup 读取：
           - enabled: 是否启用自动清理（默认 True）
@@ -1464,7 +1461,7 @@ class DataLogger:
             self.logger.warning("自动清理报告文件时出错: %s", e)
 
     def cleanup_old_data(self, max_age_days: int = 30) -> None:
-        """清理旧数据
+        """清理旧数据.
 
         Args:
             max_age_days: 数据最大保存天数
@@ -1513,7 +1510,7 @@ class DataLogger:
         error: str = "",
         extra: dict[str, Any] | None = None,
     ) -> None:
-        """记录管道运营指标 (v4.3.1)
+        """记录管道运营指标 (v4.3.1).
 
         追踪每次数据持久化操作的关键指标，支持延迟、吞吐量分析。
 
@@ -1547,7 +1544,7 @@ class DataLogger:
             self._pipeline_metrics.append(metric_entry)
 
     def get_observability_stats(self) -> dict[str, Any]:
-        """获取数据管道可观测性统计 (v4.3.1)
+        """获取数据管道可观测性统计 (v4.3.1).
 
         返回数据管道的完整运营指标，包括保存次数、最后保存时间、
         缓冲区大小、错误计数等。用于监控面板和告警系统。
@@ -1600,7 +1597,7 @@ class DataLogger:
         }
 
     def flush(self) -> None:
-        """刷写所有缓冲数据到磁盘
+        """刷写所有缓冲数据到磁盘.
 
         自 v4.3.1: 使用版本化 JSON 格式（{schema_version, data}），与 save_history_data() 一致。
         """
@@ -1664,7 +1661,7 @@ class DataLogger:
                     self._error_buffer.extendleft(reversed(pending_errors))
 
     def _count_write_failure(self) -> None:
-        """P1-4: 累计写入失败次数，超过阈值告警（线程安全）"""
+        """P1-4: 累计写入失败次数，超过阈值告警（线程安全）."""
         with self._write_failure_lock:
             self._write_failure_count += 1
 
@@ -1681,7 +1678,7 @@ class DataLogger:
                 )
 
     def stop(self) -> None:
-        """停止数据记录器，确保所有数据已写入"""
+        """停止数据记录器，确保所有数据已写入."""
         try:
             self._flush_perf_buffer()
             self.flush()

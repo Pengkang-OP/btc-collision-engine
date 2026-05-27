@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""验证datetime.fromisoformat()的异常类型"""
+"""验证datetime.fromisoformat()的异常类型."""
 
 import datetime
 

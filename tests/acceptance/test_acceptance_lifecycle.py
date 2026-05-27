@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""生命周期验收测试 - 组件完整生命周期
+"""生命周期验收测试 - 组件完整生命周期.
 
 本模块测试所有核心组件的完整生命周期，确保：
 1. 初始化 → 运行 → 暂停 → 恢复 → 停止 → 清理的完整流程
@@ -31,7 +31,7 @@ from tests.acceptance.conftest import (
 
 
 class TestKeyCollisionEngineLifecycle:
-    """KeyCollisionEngine 生命周期测试
+    """KeyCollisionEngine 生命周期测试.
 
     测试 KeyCollisionEngine 的完整生命周期：
     1. 初始化（initialized）
@@ -43,7 +43,7 @@ class TestKeyCollisionEngineLifecycle:
     """
 
     def test_lifecycle_initialization(self, mock_event_bus):
-        """生命周期测试：初始化阶段"""
+        """生命周期测试：初始化阶段."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 生命周期：初始化阶段
@@ -55,7 +55,7 @@ class TestKeyCollisionEngineLifecycle:
         assert engine.is_running() is False, "生命周期测试失败：初始化后 is_running() 应返回 False"
 
     def test_lifecycle_running(self, mock_event_bus):
-        """生命周期测试：运行阶段"""
+        """生命周期测试：运行阶段."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 生命周期：运行阶段
@@ -84,7 +84,7 @@ class TestKeyCollisionEngineLifecycle:
         engine.stop(timeout=2.0)
 
     def test_lifecycle_stopping(self, mock_event_bus):
-        """生命周期测试：停止阶段"""
+        """生命周期测试：停止阶段."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 生命周期：停止阶段
@@ -106,7 +106,7 @@ class TestKeyCollisionEngineLifecycle:
         assert engine.is_running() is False, "生命周期测试失败：停止后 is_running() 应返回 False"
 
     def test_lifecycle_cleanup(self, mock_event_bus):
-        """生命周期测试：清理阶段"""
+        """生命周期测试：清理阶段."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 生命周期：清理阶段
@@ -125,7 +125,7 @@ class TestKeyCollisionEngineLifecycle:
         assert engine.is_running() is False, "生命周期测试失败：清理阶段引擎应已停止"
 
     def test_lifecycle_error_recovery(self, mock_event_bus):
-        """生命周期测试：错误恢复"""
+        """生命周期测试：错误恢复."""
         from src.collision.key_collision_engine import KeyCollisionEngine
 
         # 生命周期：错误恢复
@@ -153,7 +153,7 @@ class TestKeyCollisionEngineLifecycle:
 @pytest.mark.acceptance
 @pytest.mark.lifecycle
 class TestCryptoBackendManagerLifecycle:
-    """CryptoBackendManager 生命周期测试
+    """CryptoBackendManager 生命周期测试.
 
     测试 CryptoBackendManager 的完整生命周期：
     1. 初始化（initialized）
@@ -163,7 +163,7 @@ class TestCryptoBackendManagerLifecycle:
     """
 
     def test_lifecycle_initialization(self, monkeypatch):
-        """生命周期测试：初始化阶段"""
+        """生命周期测试：初始化阶段."""
         from src.core.crypto_backend import CryptoBackendManager
 
         # 生命周期：初始化阶段
@@ -176,7 +176,7 @@ class TestCryptoBackendManagerLifecycle:
         )
 
     def test_lifecycle_backend_selection(self, monkeypatch):
-        """生命周期测试：后端选择阶段"""
+        """生命周期测试：后端选择阶段."""
         from src.core.crypto_backend import CryptoBackendManager
 
         # 生命周期：后端选择阶段
@@ -190,7 +190,7 @@ class TestCryptoBackendManagerLifecycle:
         )
 
     def test_lifecycle_backend_switching(self, monkeypatch):
-        """生命周期测试：后端切换阶段"""
+        """生命周期测试：后端切换阶段."""
         from src.core.crypto_backend import CryptoBackendManager
 
         # 生命周期：后端切换阶段
@@ -203,7 +203,7 @@ class TestCryptoBackendManagerLifecycle:
         assert original_backend is not None, "生命周期测试失败：原始后端不应为 None"
 
     def test_lifecycle_cleanup(self, monkeypatch):
-        """生命周期测试：清理阶段"""
+        """生命周期测试：清理阶段."""
         from src.core.crypto_backend import CryptoBackendManager
 
         # 生命周期：清理阶段
@@ -223,7 +223,7 @@ class TestCryptoBackendManagerLifecycle:
 @pytest.mark.acceptance
 @pytest.mark.lifecycle
 class TestAsyncGPUExecutorLifecycle:
-    """AsyncGPUExecutor 生命周期测试
+    """AsyncGPUExecutor 生命周期测试.
 
     测试 AsyncGPUExecutor 的完整生命周期：
     1. 初始化（initialized）
@@ -234,7 +234,7 @@ class TestAsyncGPUExecutorLifecycle:
     """
 
     def test_lifecycle_initialization(self, mock_gpu_chain):
-        """生命周期测试：初始化阶段"""
+        """生命周期测试：初始化阶段."""
         from src.gpu.async_executor import AsyncGPUExecutor
 
         # 生命周期：初始化阶段
@@ -250,7 +250,7 @@ class TestAsyncGPUExecutorLifecycle:
         assert executor.is_async_ready is False, "生命周期测试失败：初始化后 is_async_ready 应返回 False"
 
     def test_lifecycle_starting(self, mock_gpu_chain):
-        """生命周期测试：启动阶段"""
+        """生命周期测试：启动阶段."""
         from src.gpu.async_executor import AsyncGPUExecutor
 
         # 生命周期：启动阶段
@@ -272,7 +272,7 @@ class TestAsyncGPUExecutorLifecycle:
             pass
 
     def test_lifecycle_executing(self, mock_gpu_chain):
-        """生命周期测试：执行阶段"""
+        """生命周期测试：执行阶段."""
         from src.gpu.async_executor import AsyncGPUExecutor
 
         # 生命周期：执行阶段
@@ -296,7 +296,7 @@ class TestAsyncGPUExecutorLifecycle:
             pass
 
     def test_lifecycle_stopping(self, mock_gpu_chain):
-        """生命周期测试：停止阶段"""
+        """生命周期测试：停止阶段."""
         from src.gpu.async_executor import AsyncGPUExecutor
 
         # 生命周期：停止阶段
@@ -319,7 +319,7 @@ class TestAsyncGPUExecutorLifecycle:
             pass
 
     def test_lifecycle_cleanup(self, mock_gpu_chain):
-        """生命周期测试：清理阶段"""
+        """生命周期测试：清理阶段."""
         from src.gpu.async_executor import AsyncGPUExecutor
 
         # 生命周期：清理阶段
@@ -344,7 +344,7 @@ class TestAsyncGPUExecutorLifecycle:
 @pytest.mark.acceptance
 @pytest.mark.lifecycle
 class TestCheckpointManagerLifecycle:
-    """CheckpointManager 生命周期测试
+    """CheckpointManager 生命周期测试.
 
     测试 CheckpointManager 的完整生命周期：
     1. 初始化（initialized）
@@ -355,7 +355,7 @@ class TestCheckpointManagerLifecycle:
     """
 
     def test_lifecycle_initialization(self, temp_dir):
-        """生命周期测试：初始化阶段"""
+        """生命周期测试：初始化阶段."""
         from src.collision.checkpoint_manager import CheckpointManager
 
         # 生命周期：初始化阶段
@@ -367,7 +367,7 @@ class TestCheckpointManagerLifecycle:
         assert manager.exists is False, "生命周期测试失败：初始化后 exists 应返回 False"
 
     def test_lifecycle_saving(self, temp_dir):
-        """生命周期测试：保存阶段"""
+        """生命周期测试：保存阶段."""
         from src.collision.checkpoint_manager import CheckpointManager
 
         # 生命周期：保存阶段
@@ -383,7 +383,7 @@ class TestCheckpointManagerLifecycle:
         assert checkpoint_path.exists(), "生命周期测试失败：保存后检查点文件应存在"
 
     def test_lifecycle_loading(self, temp_dir):
-        """生命周期测试：加载阶段"""
+        """生命周期测试：加载阶段."""
         from src.collision.checkpoint_manager import CheckpointManager
 
         # 生命周期：加载阶段
@@ -405,7 +405,7 @@ class TestCheckpointManagerLifecycle:
         )
 
     def test_lifecycle_deleting(self, temp_dir):
-        """生命周期测试：删除阶段"""
+        """生命周期测试：删除阶段."""
         from src.collision.checkpoint_manager import CheckpointManager
 
         # 生命周期：删除阶段
@@ -424,7 +424,7 @@ class TestCheckpointManagerLifecycle:
         assert not checkpoint_path.exists(), "生命周期测试失败：删除后检查点文件不应存在"
 
     def test_lifecycle_cleanup(self, temp_dir):
-        """生命周期测试：清理阶段"""
+        """生命周期测试：清理阶段."""
         from src.collision.checkpoint_manager import CheckpointManager
 
         # 生命周期：清理阶段
@@ -443,7 +443,7 @@ class TestCheckpointManagerLifecycle:
 
 
 class TestDeduplicationFilterLifecycle:
-    """DeduplicationFilter 生命周期测试
+    """DeduplicationFilter 生命周期测试.
 
     测试 DeduplicationFilter 的完整生命周期：
     1. 初始化（initialized）
@@ -454,7 +454,7 @@ class TestDeduplicationFilterLifecycle:
     """
 
     def test_lifecycle_initialization(self):
-        """生命周期测试：初始化阶段"""
+        """生命周期测试：初始化阶段."""
         from src.collision.deduplication_filter import DeduplicationFilter
 
         # 生命周期：初始化阶段
@@ -465,7 +465,7 @@ class TestDeduplicationFilterLifecycle:
         assert dedup_filter.get_stats()["unique_keys"] == 0, "生命周期测试失败：初始化后 size() 应返回 0"
 
     def test_lifecycle_adding(self):
-        """生命周期测试：添加阶段"""
+        """生命周期测试：添加阶段."""
         from src.collision.deduplication_filter import DeduplicationFilter
 
         # 生命周期：添加阶段
@@ -480,7 +480,7 @@ class TestDeduplicationFilterLifecycle:
         assert dedup_filter.get_stats()["unique_keys"] == 1, "生命周期测试失败：添加后 size() 应返回 1"
 
     def test_lifecycle_checking(self):
-        """生命周期测试：检查阶段"""
+        """生命周期测试：检查阶段."""
         from src.collision.deduplication_filter import DeduplicationFilter
 
         # 生命周期：检查阶段
@@ -497,7 +497,7 @@ class TestDeduplicationFilterLifecycle:
         assert result is True, "生命周期测试失败：检查已添加的私钥应返回 True"
 
     def test_lifecycle_resetting(self):
-        """生命周期测试：重置阶段"""
+        """生命周期测试：重置阶段."""
         from src.collision.deduplication_filter import DeduplicationFilter
 
         # 生命周期：重置阶段
@@ -514,7 +514,7 @@ class TestDeduplicationFilterLifecycle:
         assert dedup_filter.get_stats()["unique_keys"] == 0, "生命周期测试失败：重置后 size() 应返回 0"
 
     def test_lifecycle_cleanup(self):
-        """生命周期测试：清理阶段"""
+        """生命周期测试：清理阶段."""
         from src.collision.deduplication_filter import DeduplicationFilter
 
         # 生命周期：清理阶段
@@ -534,7 +534,7 @@ class TestDeduplicationFilterLifecycle:
 @pytest.mark.acceptance
 @pytest.mark.lifecycle
 class TestEventBusLifecycle:
-    """EventBus 生命周期测试
+    """EventBus 生命周期测试.
 
     测试 EventBus 的完整生命周期：
     1. 初始化（initialized）
@@ -545,7 +545,7 @@ class TestEventBusLifecycle:
     """
 
     def test_lifecycle_initialization(self):
-        """生命周期测试：初始化阶段"""
+        """生命周期测试：初始化阶段."""
         from src.collision.event_bus import EventBus
 
         # 生命周期：初始化阶段
@@ -555,7 +555,7 @@ class TestEventBusLifecycle:
         assert event_bus is not None, "生命周期测试失败：EventBus 初始化失败"
 
     def test_lifecycle_subscribing(self):
-        """生命周期测试：订阅阶段"""
+        """生命周期测试：订阅阶段."""
         from src.collision.event_bus import EventBus
 
         # 生命周期：订阅阶段
@@ -579,7 +579,7 @@ class TestEventBusLifecycle:
         assert event_bus is not None, "生命周期测试失败：订阅阶段 event_bus 不应为 None"
 
     def test_lifecycle_publishing(self):
-        """生命周期测试：发布阶段"""
+        """生命周期测试：发布阶段."""
         from src.collision.event_bus import EventBus
 
         # 生命周期：发布阶段
@@ -606,7 +606,7 @@ class TestEventBusLifecycle:
         # 这里主要验证代码路径的覆盖
 
     def test_lifecycle_unsubscribing(self):
-        """生命周期测试：取消订阅阶段"""
+        """生命周期测试：取消订阅阶段."""
         from src.collision.event_bus import EventBus
 
         # 生命周期：取消订阅阶段
@@ -632,7 +632,7 @@ class TestEventBusLifecycle:
         # 这里主要验证代码路径的覆盖
 
     def test_lifecycle_cleanup(self):
-        """生命周期测试：清理阶段"""
+        """生命周期测试：清理阶段."""
         from src.collision.event_bus import EventBus
 
         # 生命周期：清理阶段

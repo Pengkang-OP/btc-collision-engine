@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""性能基线测试工具
+"""性能基线测试工具.
 
 建立性能基线,检测性能回归。
 
@@ -35,7 +35,7 @@ from pathlib import Path
 
 
 class PerformanceBaseline:
-    """性能基线管理器"""
+    """性能基线管理器."""
 
     BASELINE_FILE = Path("performance_baseline.json")
 
@@ -44,7 +44,7 @@ class PerformanceBaseline:
         self.results = {}
 
     def load_baseline(self) -> dict:
-        """加载性能基线"""
+        """加载性能基线."""
         if self.BASELINE_FILE.exists():
             try:
                 with open(self.BASELINE_FILE, encoding="utf-8") as f:
@@ -54,13 +54,13 @@ class PerformanceBaseline:
         return {}
 
     def save_baseline(self):
-        """保存性能基线"""
+        """保存性能基线."""
         with open(self.BASELINE_FILE, "w", encoding="utf-8") as f:
             json.dump(self.results, f, indent=2, ensure_ascii=False)
         print(f"✅ 基线已保存: {self.BASELINE_FILE}")
 
     def compare_with_baseline(self) -> dict:
-        """与基线对比"""
+        """与基线对比."""
         if not self.baseline:
             print("⚠️  无基线数据,请先运行 --save-baseline")
             return {}
@@ -83,7 +83,7 @@ class PerformanceBaseline:
         return comparison
 
     def test_cpu_address_generation(self, iterations=10000) -> dict:
-        """测试CPU地址生成性能"""
+        """测试CPU地址生成性能."""
         from src.core.optimized_address_generator import OptimizedP2PKHAddressGenerator
 
         print("\n🔍 测试CPU地址生成性能...")
@@ -115,7 +115,7 @@ class PerformanceBaseline:
         return result
 
     def test_memory_pool_performance(self, iterations=50000) -> dict:
-        """测试内存池性能"""
+        """测试内存池性能."""
         from src.core.memory_pool import get_pool_manager
 
         print("\n🔍 测试内存池性能...")
@@ -153,7 +153,7 @@ class PerformanceBaseline:
         return result
 
     def test_precomputed_table_performance(self, iterations=5000) -> dict:
-        """测试预计算表性能"""
+        """测试预计算表性能."""
         from src.core.precomputed_table import get_precomputed_table
         from src.core.secp256k1 import ECPoint, EllipticCurve, Secp256k1
 
@@ -191,7 +191,7 @@ class PerformanceBaseline:
         return result
 
     def test_gpu_performance(self, batch_size=10000, duration=10) -> dict | None:
-        """测试GPU性能"""
+        """测试GPU性能."""
         try:
             from src.gpu.collision_engine import GPUCollisionEngine
 
@@ -245,7 +245,7 @@ class PerformanceBaseline:
             return None
 
     def run_all_tests(self, cpu_only=False, gpu_only=False):
-        """运行所有测试"""
+        """运行所有测试."""
         print("=" * 80)
         print("🚀 性能基线测试")
         print("=" * 80)
@@ -266,7 +266,7 @@ class PerformanceBaseline:
         self.print_summary()
 
     def print_summary(self):
-        """打印测试总结"""
+        """打印测试总结."""
         print("\n" + "=" * 80)
         print("📊 性能测试总结")
         print("=" * 80)
@@ -292,7 +292,7 @@ class PerformanceBaseline:
 
 
 def main():
-    """主函数"""
+    """主函数."""
     import argparse
 
     parser = argparse.ArgumentParser(description="性能基线测试工具")

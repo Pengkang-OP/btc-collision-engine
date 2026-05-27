@@ -36,7 +36,7 @@ logger = get_configured_logger("FirstRunWizard")
 
 
 class FirstRunWizard:
-    """首次运行交互式向导"""
+    """首次运行交互式向导."""
 
     # 已有 config.json 且不为空则认为不是首次运行
     CONFIG_FILE = "config.json"
@@ -63,6 +63,7 @@ class FirstRunWizard:
     }
 
     def __init__(self, project_root: str | None = None) -> None:
+        """初始化首次运行向导。."""
         if project_root is None:
             project_root = str(Path(__file__).resolve().parent.parent.parent)
         self.project_root = Path(project_root)
@@ -75,7 +76,7 @@ class FirstRunWizard:
     # -------------------------------------------------------------------------
 
     def should_run(self) -> bool:
-        """判断是否应该运行向导"""
+        """判断是否应该运行向导."""
         # 非交互式环境（pytest、CI 管道等）不弹出向导
         if not sys.stdin.isatty():
             return False
@@ -98,7 +99,7 @@ class FirstRunWizard:
 
     @staticmethod
     def _prompt(message: str, default: str = "") -> str:
-        """获取用户输入，支持默认值"""
+        """获取用户输入，支持默认值."""
         full_msg = f"{message} [{default}]: " if default else f"{message}: "
         try:
             val = input(full_msg).strip()
@@ -109,7 +110,7 @@ class FirstRunWizard:
 
     @staticmethod
     def _choose(message: str, options: list, default_idx: int = 0) -> str:
-        """让用户从选项列表中选择"""
+        """让用户从选项列表中选择."""
         print(f"\n{message}")
         for i, opt in enumerate(options, 1):
             marker = " (默认)" if i - 1 == default_idx else ""
@@ -124,7 +125,7 @@ class FirstRunWizard:
 
     @staticmethod
     def _yes_no(message: str, default: bool = True) -> bool:
-        """是/否提问"""
+        """是/否提问."""
         default_str = "Y/n" if default else "y/N"
         raw = FirstRunWizard._prompt(f"{message} [{default_str}]", "").lower()
         if raw in ("y", "yes", "是"):
@@ -138,7 +139,7 @@ class FirstRunWizard:
     # -------------------------------------------------------------------------
 
     def _welcome(self) -> None:
-        """显示欢迎页面"""
+        """显示欢迎页面."""
         print("\n" + "=" * 65)
         print("  欢迎使用 BTC 碰撞引擎 v4.2.3")
         print("  欢迎使用 BTC 碰撞引擎 v4.2.2")
@@ -157,7 +158,7 @@ class FirstRunWizard:
         input("  按 Enter 继续...")
 
     def _step_mode(self, config: dict) -> None:
-        """步骤1：选择碰撞模式"""
+        """步骤1：选择碰撞模式."""
         print("\n[步骤 1/4] 选择碰撞模式")
         mode_options = [
             "random   - 随机碰撞（推荐入门）",
@@ -170,7 +171,7 @@ class FirstRunWizard:
         print(f"  已设置模式: {mode}")
 
     def _step_target(self, config: dict) -> str | None:
-        """步骤2：设置目标地址"""
+        """步骤2：设置目标地址."""
         print("\n[步骤 2/4] 设置目标地址")
 
         # 检查是否有示例地址文件
@@ -230,7 +231,7 @@ class FirstRunWizard:
 
     @staticmethod
     def _try_resolve_path(path: str) -> str | None:
-        """尝试自动修正常见路径问题，返回修正后的路径或 None
+        """尝试自动修正常见路径问题，返回修正后的路径或 None.
 
         处理场景：
         1. Windows 双重扩展名：xxx.txt.txt → xxx.txt
@@ -250,7 +251,7 @@ class FirstRunWizard:
         return None
 
     def _step_gpu(self, config: dict) -> None:
-        """步骤3：GPU 设置"""
+        """步骤3：GPU 设置."""
         print("\n[步骤 3/4] GPU 加速设置")
 
         # 检查 PyOpenCL 是否可用
@@ -275,7 +276,7 @@ class FirstRunWizard:
             print("  已选择 CPU 模式")
 
     def _step_workers(self, config: dict, use_gpu: bool = False) -> None:
-        """步骤4：CPU 工作线程数"""
+        """步骤4：CPU 工作线程数."""
         print("\n[步骤 4/4] 性能设置")
         cpu_count = os.cpu_count() or 4
         print(f"  检测到 {cpu_count} 个 CPU 核心")
@@ -302,7 +303,7 @@ class FirstRunWizard:
     # -------------------------------------------------------------------------
 
     def _write_config(self, config: dict) -> bool:
-        """写入配置文件"""
+        """写入配置文件."""
         try:
             # 如果有 example 配置，先复制
             if self.example_path.exists():
@@ -324,7 +325,7 @@ class FirstRunWizard:
 
     @staticmethod
     def _deep_merge(base: dict, override: dict) -> None:
-        """递归合并字典"""
+        """递归合并字典."""
         for k, v in override.items():
             if k in base and isinstance(base[k], dict) and isinstance(v, dict):
                 FirstRunWizard._deep_merge(base[k], v)
@@ -332,7 +333,7 @@ class FirstRunWizard:
                 base[k] = v
 
     def _mark_completed(self) -> None:
-        """写入向导完成标记"""
+        """写入向导完成标记."""
         with suppress(OSError):
             self.marker_path.parent.mkdir(parents=True, exist_ok=True)
             self.marker_path.write_text("wizard_completed\n")
@@ -342,7 +343,7 @@ class FirstRunWizard:
     # -------------------------------------------------------------------------
 
     def run(self) -> dict[str, Any]:
-        """运行完整向导，返回最终配置"""
+        """运行完整向导，返回最终配置."""
         import copy
 
         config = copy.deepcopy(self.DEFAULT_CONFIG)
@@ -395,7 +396,7 @@ class FirstRunWizard:
 
 
 def main() -> None:
-    """命令行入口：强制运行向导（忽略已完成标记）"""
+    """命令行入口：强制运行向导（忽略已完成标记）."""
     wizard = FirstRunWizard()
     wizard.run()
 

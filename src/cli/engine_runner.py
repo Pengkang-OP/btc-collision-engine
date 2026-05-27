@@ -13,7 +13,7 @@ logger = get_configured_logger("EngineRunner")
 
 
 def _mask_private_key(key: str, mode: str = "masked") -> str:
-    """根据 sensitive_mode 对私钥进行脱敏处理。
+    """根据 sensitive_mode 对私钥进行脱敏处理。.
 
     Args:
         key: 原始私钥十六进制字符串
@@ -37,7 +37,7 @@ def _mask_private_key(key: str, mode: str = "masked") -> str:
 
 
 def _compute_range(args: Any) -> tuple:
-    """阶段4: 计算搜索范围参数。
+    """阶段4: 计算搜索范围参数。.
 
     Args:
         args: 解析后的命令行参数
@@ -65,7 +65,7 @@ def _print_config_info(
     end_val: str | None,
     total_range: int | None,
 ) -> None:
-    """阶段5: 显示运行配置摘要。"""
+    """阶段5: 显示运行配置摘要。."""
     from ..cli.output import CLIOutput
 
     output = CLIOutput.get_instance()
@@ -88,7 +88,8 @@ def _print_config_info(
         (
             "私钥显示",
             {"full": "完整", "masked": "脱敏", "hash_only": "仅哈希"}.get(
-                sensitive_mode, sensitive_mode
+                sensitive_mode,
+                sensitive_mode,
             ),
         ),
     ]
@@ -115,7 +116,7 @@ def _setup_and_start_engine(
     start_val: str | None,
     end_val: str | None,
 ) -> tuple:
-    """阶段6: 构建引擎、初始化告警、注册信号、启动引擎。
+    """阶段6: 构建引擎、初始化告警、注册信号、启动引擎。.
 
     Returns:
         (engine, engine_type, alert_system, stop_event)
@@ -223,7 +224,7 @@ def _run_collision_loop(
     alert_system: AlertSystem,
     stop_event: threading.Event,
 ) -> None:
-    """阶段7: 主运行循环，使用 Rich Live 动态显示实时进度。"""
+    """阶段7: 主运行循环，使用 Rich Live 动态显示实时进度。."""
     from ..cli.keyboard_listener import check_key
     from ..cli.output import CLIOutput
     from ..cli.progress import LiveStatsDisplay
@@ -322,7 +323,7 @@ def _run_collision_loop(
 
 
 def _format_match_detail(match: dict, sensitive_mode: str) -> str:
-    """格式化单条匹配结果，应用脱敏模式。
+    """格式化单条匹配结果，应用脱敏模式。.
 
     Args:
         match: 匹配结果字典，可能包含 address, private_key 等字段

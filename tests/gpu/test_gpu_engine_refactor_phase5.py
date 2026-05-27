@@ -1,4 +1,4 @@
-"""GPU引擎重构 Phase 5 测试套件 - 厂商优化实现
+"""GPU引擎重构 Phase 5 测试套件 - 厂商优化实现.
 
 测试范围:
 - IntelOptimizationStrategy (导入路径修复验证)
@@ -27,7 +27,7 @@ pytestmark = pytest.mark.gpu
 
 @pytest.fixture
 def mock_context():
-    """创建 Mock GPUExecutionContext"""
+    """创建 Mock GPUExecutionContext."""
     device = GPUDevice(
         device_id=0,
         vendor="unknown",
@@ -45,7 +45,7 @@ def mock_context():
 
 @pytest.fixture
 def mock_context_nvidia():
-    """NVIDIA GPU 上下文"""
+    """NVIDIA GPU 上下文."""
     device = GPUDevice(
         device_id=0,
         vendor="nvidia",
@@ -63,7 +63,7 @@ def mock_context_nvidia():
 
 @pytest.fixture
 def mock_context_amd():
-    """AMD GPU 上下文"""
+    """AMD GPU 上下文."""
     device = GPUDevice(
         device_id=0,
         vendor="amd",
@@ -81,7 +81,7 @@ def mock_context_amd():
 
 @pytest.fixture
 def mock_context_intel():
-    """Intel GPU 上下文"""
+    """Intel GPU 上下文."""
     device = GPUDevice(
         device_id=0,
         vendor="intel",
@@ -101,17 +101,17 @@ def mock_context_intel():
 
 
 class TestIntelOptimizationStrategy:
-    """测试 Intel 优化策略"""
+    """测试 Intel 优化策略."""
 
     def test_strategy_creation(self):
-        """策略创建"""
+        """策略创建."""
         from src.collision.gpu.vendor_strategy import IntelOptimizationStrategy
 
         strategy = IntelOptimizationStrategy()
         assert strategy is not None
 
     def test_apply_optimizations_empty_context(self):
-        """空上下文时应安全返回"""
+        """空上下文时应安全返回."""
         from src.collision.gpu.vendor_strategy import IntelOptimizationStrategy
 
         strategy = IntelOptimizationStrategy()
@@ -120,7 +120,7 @@ class TestIntelOptimizationStrategy:
         assert isinstance(components, dict)
 
     def test_get_monitoring_components(self):
-        """获取监控组件列表"""
+        """获取监控组件列表."""
         from src.collision.gpu.vendor_strategy import IntelOptimizationStrategy
 
         strategy = IntelOptimizationStrategy()
@@ -133,17 +133,17 @@ class TestIntelOptimizationStrategy:
 
 
 class TestNvidiaOptimizationStrategy:
-    """测试 NVIDIA 优化策略"""
+    """测试 NVIDIA 优化策略."""
 
     def test_strategy_creation(self):
-        """策略创建"""
+        """策略创建."""
         from src.collision.gpu.vendor_strategy import NvidiaOptimizationStrategy
 
         strategy = NvidiaOptimizationStrategy()
         assert strategy is not None
 
     def test_apply_optimizations_with_nvidia_context(self, mock_context_nvidia):
-        """NVIDIA 上下文应用优化 (Mock NvidiaGPUOptimizer)"""
+        """NVIDIA 上下文应用优化 (Mock NvidiaGPUOptimizer)."""
         from src.collision.gpu.vendor_strategy import NvidiaOptimizationStrategy
 
         mock_optimizer = MagicMock()
@@ -166,7 +166,7 @@ class TestNvidiaOptimizationStrategy:
         assert components["optimization_result"]["recommended_memory_ratio"] == 0.75
 
     def test_apply_optimizations_with_empty_context(self):
-        """空上下文安全返回"""
+        """空上下文安全返回."""
         from src.collision.gpu.vendor_strategy import NvidiaOptimizationStrategy
 
         strategy = NvidiaOptimizationStrategy()
@@ -175,7 +175,7 @@ class TestNvidiaOptimizationStrategy:
         assert isinstance(components, dict)
 
     def test_apply_optimizations_handles_import_error(self, mock_context_nvidia):
-        """导入失败时安全处理"""
+        """导入失败时安全处理."""
         from src.collision.gpu.vendor_strategy import NvidiaOptimizationStrategy
 
         strategy = NvidiaOptimizationStrategy()
@@ -190,7 +190,7 @@ class TestNvidiaOptimizationStrategy:
         assert "nvidia_optimizer" not in components
 
     def test_get_monitoring_components(self):
-        """获取 NVIDIA 监控组件"""
+        """获取 NVIDIA 监控组件."""
         from src.collision.gpu.vendor_strategy import NvidiaOptimizationStrategy
 
         strategy = NvidiaOptimizationStrategy()
@@ -200,7 +200,7 @@ class TestNvidiaOptimizationStrategy:
         assert "memory_optimizer" in components
 
     def test_extract_device_info(self, mock_context_nvidia):
-        """设备信息提取"""
+        """设备信息提取."""
         from src.collision.gpu.vendor_strategy import NvidiaOptimizationStrategy
 
         strategy = NvidiaOptimizationStrategy()
@@ -210,7 +210,7 @@ class TestNvidiaOptimizationStrategy:
         assert info["global_mem_size"] > 0
 
     def test_extract_device_info_empty_context(self):
-        """空上下文时设备信息提取"""
+        """空上下文时设备信息提取."""
         from src.collision.gpu.vendor_strategy import NvidiaOptimizationStrategy
 
         strategy = NvidiaOptimizationStrategy()
@@ -224,17 +224,17 @@ class TestNvidiaOptimizationStrategy:
 
 
 class TestAMDOptimizationStrategy:
-    """测试 AMD 优化策略"""
+    """测试 AMD 优化策略."""
 
     def test_strategy_creation(self):
-        """策略创建"""
+        """策略创建."""
         from src.collision.gpu.vendor_strategy import AMDOptimizationStrategy
 
         strategy = AMDOptimizationStrategy()
         assert strategy is not None
 
     def test_apply_optimizations_with_amd_context(self, mock_context_amd):
-        """AMD 上下文应用优化 (Mock AmdGPUOptimizer)"""
+        """AMD 上下文应用优化 (Mock AmdGPUOptimizer)."""
         from src.collision.gpu.vendor_strategy import AMDOptimizationStrategy
 
         mock_optimizer = MagicMock()
@@ -257,7 +257,7 @@ class TestAMDOptimizationStrategy:
         assert components["optimization_result"]["recommended_wavefront_size"] == 32
 
     def test_apply_optimizations_with_empty_context(self):
-        """空上下文安全返回"""
+        """空上下文安全返回."""
         from src.collision.gpu.vendor_strategy import AMDOptimizationStrategy
 
         strategy = AMDOptimizationStrategy()
@@ -266,7 +266,7 @@ class TestAMDOptimizationStrategy:
         assert isinstance(components, dict)
 
     def test_apply_optimizations_handles_import_error(self, mock_context_amd):
-        """导入失败时安全处理"""
+        """导入失败时安全处理."""
         from src.collision.gpu.vendor_strategy import AMDOptimizationStrategy
 
         strategy = AMDOptimizationStrategy()
@@ -280,7 +280,7 @@ class TestAMDOptimizationStrategy:
         assert "amd_optimizer" not in components
 
     def test_get_monitoring_components(self):
-        """获取 AMD 监控组件"""
+        """获取 AMD 监控组件."""
         from src.collision.gpu.vendor_strategy import AMDOptimizationStrategy
 
         strategy = AMDOptimizationStrategy()
@@ -291,7 +291,7 @@ class TestAMDOptimizationStrategy:
         assert "memory_optimizer" in components
 
     def test_extract_device_info(self, mock_context_amd):
-        """设备信息提取"""
+        """设备信息提取."""
         from src.collision.gpu.vendor_strategy import AMDOptimizationStrategy
 
         strategy = AMDOptimizationStrategy()
@@ -301,7 +301,7 @@ class TestAMDOptimizationStrategy:
         assert info["global_mem_size"] > 0
 
     def test_extract_device_info_empty_context(self):
-        """空上下文时设备信息提取"""
+        """空上下文时设备信息提取."""
         from src.collision.gpu.vendor_strategy import AMDOptimizationStrategy
 
         strategy = AMDOptimizationStrategy()
@@ -315,17 +315,17 @@ class TestAMDOptimizationStrategy:
 
 
 class TestDefaultOptimizationStrategy:
-    """测试默认优化策略"""
+    """测试默认优化策略."""
 
     def test_strategy_creation(self):
-        """策略创建"""
+        """策略创建."""
         from src.collision.gpu.vendor_strategy import DefaultOptimizationStrategy
 
         strategy = DefaultOptimizationStrategy()
         assert strategy is not None
 
     def test_apply_optimizations_returns_empty(self, mock_context):
-        """默认策略返回空字典"""
+        """默认策略返回空字典."""
         from src.collision.gpu.vendor_strategy import DefaultOptimizationStrategy
 
         strategy = DefaultOptimizationStrategy()
@@ -333,7 +333,7 @@ class TestDefaultOptimizationStrategy:
         assert components == {}
 
     def test_get_monitoring_components_empty(self):
-        """默认策略无监控组件"""
+        """默认策略无监控组件."""
         from src.collision.gpu.vendor_strategy import DefaultOptimizationStrategy
 
         strategy = DefaultOptimizationStrategy()
@@ -345,10 +345,10 @@ class TestDefaultOptimizationStrategy:
 
 
 class TestVendorOptimizationFactory:
-    """测试厂商优化策略工厂"""
+    """测试厂商优化策略工厂."""
 
     def test_create_intel_strategy(self):
-        """创建 Intel 策略"""
+        """创建 Intel 策略."""
         from src.collision.gpu.vendor_strategy import (
             IntelOptimizationStrategy,
             VendorOptimizationFactory,
@@ -358,7 +358,7 @@ class TestVendorOptimizationFactory:
         assert isinstance(strategy, IntelOptimizationStrategy)
 
     def test_create_nvidia_strategy(self):
-        """创建 NVIDIA 策略"""
+        """创建 NVIDIA 策略."""
         from src.collision.gpu.vendor_strategy import (
             NvidiaOptimizationStrategy,
             VendorOptimizationFactory,
@@ -368,7 +368,7 @@ class TestVendorOptimizationFactory:
         assert isinstance(strategy, NvidiaOptimizationStrategy)
 
     def test_create_amd_strategy(self):
-        """创建 AMD 策略"""
+        """创建 AMD 策略."""
         from src.collision.gpu.vendor_strategy import (
             AMDOptimizationStrategy,
             VendorOptimizationFactory,
@@ -378,7 +378,7 @@ class TestVendorOptimizationFactory:
         assert isinstance(strategy, AMDOptimizationStrategy)
 
     def test_create_case_insensitive(self):
-        """厂商名大小写不敏感"""
+        """厂商名大小写不敏感."""
         from src.collision.gpu.vendor_strategy import (
             NvidiaOptimizationStrategy,
             VendorOptimizationFactory,
@@ -388,7 +388,7 @@ class TestVendorOptimizationFactory:
         assert isinstance(strategy, NvidiaOptimizationStrategy)
 
     def test_create_unknown_vendor_returns_default(self):
-        """未知厂商返回默认策略"""
+        """未知厂商返回默认策略."""
         from src.collision.gpu.vendor_strategy import (
             DefaultOptimizationStrategy,
             VendorOptimizationFactory,
@@ -398,7 +398,7 @@ class TestVendorOptimizationFactory:
         assert isinstance(strategy, DefaultOptimizationStrategy)
 
     def test_create_empty_vendor_returns_default(self):
-        """空厂商名返回默认策略"""
+        """空厂商名返回默认策略."""
         from src.collision.gpu.vendor_strategy import (
             DefaultOptimizationStrategy,
             VendorOptimizationFactory,
@@ -408,7 +408,7 @@ class TestVendorOptimizationFactory:
         assert isinstance(strategy, DefaultOptimizationStrategy)
 
     def test_get_supported_vendors(self):
-        """获取支持的厂商列表"""
+        """获取支持的厂商列表."""
         from src.collision.gpu.vendor_strategy import VendorOptimizationFactory
 
         vendors = VendorOptimizationFactory.get_supported_vendors()
@@ -417,7 +417,7 @@ class TestVendorOptimizationFactory:
         assert "amd" in vendors
 
     def test_register_new_vendor(self):
-        """注册新厂商策略"""
+        """注册新厂商策略."""
         from src.collision.gpu.vendor_strategy import VendorOptimizationFactory
 
         class MockStrategy:
@@ -438,7 +438,7 @@ class TestVendorOptimizationFactory:
         VendorOptimizationFactory._strategies.pop("testvendor", None)
 
     def test_create_strategy_applies_optimizations(self, mock_context_nvidia):
-        """通过工厂创建的策略可正常工作"""
+        """通过工厂创建的策略可正常工作."""
         from src.collision.gpu.vendor_strategy import VendorOptimizationFactory
 
         mock_optimizer = MagicMock()
@@ -459,10 +459,10 @@ class TestVendorOptimizationFactory:
 
 @pytest.mark.skip(reason="TODO checks no longer relevant after Phase 6 completion")
 class TestModuleImports:
-    """测试模块导入和版本"""
+    """测试模块导入和版本."""
 
     def test_import_all_strategies(self):
-        """验证所有策略可导入"""
+        """验证所有策略可导入."""
         from src.collision.gpu.vendor_strategy import (
             AMDOptimizationStrategy,
             DefaultOptimizationStrategy,
@@ -478,25 +478,25 @@ class TestModuleImports:
         assert VendorOptimizationFactory is not None
 
     def test_import_from_gpu_package(self):
-        """从 gpu 包导入"""
+        """从 gpu 包导入."""
         from src.collision.gpu import VendorOptimizationFactory
 
         assert VendorOptimizationFactory is not None
 
     def test_module_version(self):
-        """测试模块版本号 v4.2.1"""
+        """测试模块版本号 v4.2.1."""
         from src.collision import gpu
 
         assert gpu.__version__ == "5.0.0"
 
     def test_vendor_factory_in_all(self):
-        """验证 VendorOptimizationFactory 在 __all__ 中"""
+        """验证 VendorOptimizationFactory 在 __all__ 中."""
         from src.collision.gpu import __all__ as gpu_all
 
         assert "VendorOptimizationFactory" in gpu_all
 
     def test_no_phase5_todos_in_vendor_strategy(self):
-        """验证 vendor_strategy.py 中无 Phase 5 TODO"""
+        """验证 vendor_strategy.py 中无 Phase 5 TODO."""
         import os
 
         file_path = os.path.join(
@@ -517,10 +517,10 @@ class TestModuleImports:
 
 
 class TestVendorStrategyIntegration:
-    """厂商优化策略集成测试"""
+    """厂商优化策略集成测试."""
 
     def test_factory_to_strategy_flow(self, mock_context_nvidia):
-        """完整工厂→策略→优化流程 (NVIDIA)"""
+        """完整工厂→策略→优化流程 (NVIDIA)."""
         from src.collision.gpu.vendor_strategy import VendorOptimizationFactory
 
         mock_optimizer = MagicMock()
@@ -543,7 +543,7 @@ class TestVendorStrategyIntegration:
         assert len(monitoring) > 0
 
     def test_factory_to_strategy_flow_amd(self, mock_context_amd):
-        """完整工厂→策略→优化流程 (AMD)"""
+        """完整工厂→策略→优化流程 (AMD)."""
         from src.collision.gpu.vendor_strategy import VendorOptimizationFactory
 
         mock_optimizer = MagicMock()
@@ -566,7 +566,7 @@ class TestVendorStrategyIntegration:
         assert len(monitoring) > 0
 
     def test_all_vendors_have_optimization(self):
-        """所有注册厂商的策略都实现了 apply_optimizations"""
+        """所有注册厂商的策略都实现了 apply_optimizations."""
         from src.collision.gpu.vendor_strategy import VendorOptimizationFactory
 
         for vendor in VendorOptimizationFactory.get_supported_vendors():
@@ -575,7 +575,7 @@ class TestVendorStrategyIntegration:
             assert callable(strategy.apply_optimizations)
 
     def test_all_vendors_have_monitoring_components(self):
-        """所有注册厂商的策略都实现了 get_monitoring_components"""
+        """所有注册厂商的策略都实现了 get_monitoring_components."""
         from src.collision.gpu.vendor_strategy import VendorOptimizationFactory
 
         for vendor in VendorOptimizationFactory.get_supported_vendors():
@@ -584,7 +584,7 @@ class TestVendorStrategyIntegration:
             assert callable(strategy.get_monitoring_components)
 
     def test_default_fallback_for_all_vendors(self):
-        """未知厂商回退到默认策略"""
+        """未知厂商回退到默认策略."""
         from src.collision.gpu.vendor_strategy import (
             DefaultOptimizationStrategy,
             VendorOptimizationFactory,

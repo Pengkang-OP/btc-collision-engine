@@ -1,4 +1,4 @@
-"""GPU数据生成监控器
+"""GPU数据生成监控器.
 
 实时监控和验证GPU生成的碰撞数据,确保数据完整性、准确性和一致性。
 在独立线程中运行,不影响GPU碰撞性能。
@@ -25,16 +25,16 @@ logger = get_configured_logger("GPUDataMonitor")
 
 
 class DataQualityIssue:
-    """数据质量问题"""
+    """数据质量问题."""
 
     __slots__ = (
-        "issue_type",
-        "severity",
-        "message",
-        "device_idx",
-        "details",
-        "timestamp",
         "datetime",
+        "details",
+        "device_idx",
+        "issue_type",
+        "message",
+        "severity",
+        "timestamp",
     )
 
     # 问题类型
@@ -55,7 +55,7 @@ class DataQualityIssue:
         device_idx: int,
         details: dict[str, Any] | None = None,
     ) -> None:
-        """初始化质量问题
+        """初始化质量问题.
 
         Args:
             issue_type: 问题类型
@@ -74,7 +74,7 @@ class DataQualityIssue:
         self.datetime = datetime.now().isoformat()
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "issue_type": self.issue_type,
             "severity": self.severity,
@@ -87,7 +87,7 @@ class DataQualityIssue:
 
 
 class DataMonitor:
-    """数据生成监控器
+    """数据生成监控器.
 
     在独立线程中监控GPU数据生成,验证数据质量和完整性。
 
@@ -106,29 +106,29 @@ class DataMonitor:
     """
 
     __slots__ = (
-        "config",
-        "check_interval",
-        "throughput_threshold",
-        "error_rate_threshold",
-        "stale_data_timeout",
-        "max_issues_per_minute",
-        "max_seen_keys",
-        "max_seen_addresses",
-        "_running",
-        "_monitor_thread",
-        "_stop_event",
-        "_lock",
+        "_anomaly_callback",
         "_device_stats",
         "_issues",
-        "_issues_by_type",
         "_issues_by_device",
+        "_issues_by_type",
         "_issues_last_minute",
+        "_lock",
+        "_monitor_thread",
+        "_running",
         "_stats",
-        "_anomaly_callback",
+        "_stop_event",
+        "check_interval",
+        "config",
+        "error_rate_threshold",
+        "max_issues_per_minute",
+        "max_seen_addresses",
+        "max_seen_keys",
+        "stale_data_timeout",
+        "throughput_threshold",
     )
 
     def __init__(self, config: dict[str, Any] | None = None) -> None:
-        """初始化数据监控器
+        """初始化数据监控器.
 
         Args:
             config: 监控配置
@@ -193,7 +193,7 @@ class DataMonitor:
         logger.info("数据监控器已创建")
 
     def start(self, anomaly_callback: Any | None = None) -> None:
-        """启动监控
+        """启动监控.
 
         Args:
             anomaly_callback: 异常检测回调(device_idx, issue)
@@ -218,7 +218,7 @@ class DataMonitor:
         logger.info("数据监控器已启动")
 
     def stop(self) -> None:
-        """停止监控"""
+        """停止监控."""
         if not self._running:
             return
 
@@ -238,7 +238,7 @@ class DataMonitor:
         count: int,
         key_range: tuple[int, int] | None = None,
     ) -> None:
-        """报告生成的私钥数据
+        """报告生成的私钥数据.
 
         Args:
             device_idx: GPU设备索引
@@ -270,7 +270,7 @@ class DataMonitor:
             logger.error("报告私钥生成失败 [GPU %s]: %s", device_idx, e)
 
     def report_match(self, device_idx: int, match_data: dict) -> None:
-        """报告匹配结果
+        """报告匹配结果.
 
         Args:
             device_idx: GPU设备索引
@@ -301,7 +301,7 @@ class DataMonitor:
             logger.error("报告匹配结果失败 [GPU %s]: %s", device_idx, e)
 
     def report_error(self, device_idx: int, error_msg: str, error_type: str | None = None) -> None:
-        """报告错误
+        """报告错误.
 
         Args:
             device_idx: GPU设备索引
@@ -335,7 +335,7 @@ class DataMonitor:
         passed: bool,
         validation_type: str | None = None,
     ) -> None:
-        """报告验证结果
+        """报告验证结果.
 
         Args:
             device_idx: GPU设备索引
@@ -359,7 +359,7 @@ class DataMonitor:
             logger.error("报告验证结果失败 [GPU %s]: %s", device_idx, e)
 
     def get_stats(self) -> dict[str, Any]:
-        """获取监控统计
+        """获取监控统计.
 
         Returns:
             监控统计字典
@@ -394,7 +394,7 @@ class DataMonitor:
         device_idx: int | None = None,
         limit: int = 100,
     ) -> list[dict[str, Any]]:
-        """获取检测到的问题
+        """获取检测到的问题.
 
         Args:
             severity: 过滤严重程度
@@ -417,7 +417,7 @@ class DataMonitor:
         return issues[-limit:]
 
     def _monitor_loop(self) -> None:
-        """监控循环(在独立线程中运行)"""
+        """监控循环(在独立线程中运行)."""
         logger.info("数据监控循环已启动")
 
         while not self._stop_event.is_set():
@@ -433,7 +433,7 @@ class DataMonitor:
         logger.info("数据监控循环已停止")
 
     def _perform_checks(self) -> None:
-        """执行所有检查"""
+        """执行所有检查."""
         current_time = time.time()
 
         # 使用快照避免遍历时修改
@@ -451,7 +451,7 @@ class DataMonitor:
             self._check_error_rate(device_idx)
 
     def _validate_key_range(self, device_idx: int, key_range: tuple[int, int]) -> None:
-        """验证私钥范围
+        """验证私钥范围.
 
         Args:
             device_idx: GPU设备索引
@@ -482,7 +482,7 @@ class DataMonitor:
             self._record_issue(issue)
 
     def _validate_match(self, device_idx: int, match_data: dict) -> None:
-        """验证匹配数据
+        """验证匹配数据.
 
         Args:
             device_idx: GPU设备索引
@@ -564,7 +564,7 @@ class DataMonitor:
             stats["seen_addresses"].add(address)
 
     def _check_stale_data(self, device_idx: int, current_time: float) -> None:
-        """检查数据是否过期
+        """检查数据是否过期.
 
         Args:
             device_idx: GPU设备索引
@@ -585,7 +585,7 @@ class DataMonitor:
             self._record_issue(issue)
 
     def _check_throughput_drop(self, device_idx: int) -> None:
-        """检查吞吐量下降
+        """检查吞吐量下降.
 
         Args:
             device_idx: GPU设备索引
@@ -618,7 +618,7 @@ class DataMonitor:
                 self._record_issue(issue)
 
     def _check_error_rate(self, device_idx: int) -> None:
-        """检查错误率
+        """检查错误率.
 
         Args:
             device_idx: GPU设备索引
@@ -646,7 +646,7 @@ class DataMonitor:
                 self._record_issue(issue)
 
     def _detect_error_spike(self, device_idx: int) -> None:
-        """检测错误率激增
+        """检测错误率激增.
 
         Args:
             device_idx: GPU设备索引
@@ -673,7 +673,7 @@ class DataMonitor:
             self._record_issue(issue)
 
     def _calculate_avg_throughput(self, device_idx: int) -> float:
-        """计算平均吞吐量
+        """计算平均吞吐量.
 
         Args:
             device_idx: GPU设备索引
@@ -697,7 +697,7 @@ class DataMonitor:
         return 0.0
 
     def _record_issue(self, issue: DataQualityIssue) -> None:
-        """记录问题
+        """记录问题.
 
         Args:
             issue: 数据质量问题

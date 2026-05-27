@@ -1,4 +1,4 @@
-"""验收测试共享配置文件 - 提供全局 Fixture 和测试配置
+"""验收测试共享配置文件 - 提供全局 Fixture 和测试配置.
 
 本文件包含:
 - 验收测试共享的 pytest fixtures
@@ -18,7 +18,7 @@ import tempfile
 import time
 from collections.abc import Generator
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 from unittest.mock import Mock, patch
 
 import pytest
@@ -29,7 +29,7 @@ import pytest
 
 
 class AcceptanceTestConstants:
-    """验收测试常量集合
+    """验收测试常量集合.
 
     集中管理测试中的硬编码值，提高可维护性
     """
@@ -79,7 +79,7 @@ def create_mock_gpu_device(
     global_mem_size: int = AcceptanceTestConstants.DEFAULT_GPU_MEM_SIZE,
     batch_size: int = AcceptanceTestConstants.DEFAULT_GPU_BATCH_SIZE,
 ) -> Mock:
-    """创建标准 GPU Mock 设备
+    """创建标准 GPU Mock 设备.
 
     Args:
         device_name: GPU 设备名称
@@ -115,17 +115,17 @@ def create_mock_gpu_device(
             "vendor": vendor,
             "global_mem_size": global_mem_size,
             "max_compute_units": 40,
-        }
+        },
     )
 
     return mock_device
 
 
 def create_mock_gpu_context(
-    device: Optional[Mock] = None,
+    device: Mock | None = None,
     batch_size: int = AcceptanceTestConstants.DEFAULT_GPU_BATCH_SIZE,
 ) -> Mock:
-    """创建标准 GPU Mock 上下文
+    """创建标准 GPU Mock 上下文.
 
     Args:
         device: GPU 设备 Mock 对象（如果为 None，则自动创建）
@@ -154,7 +154,7 @@ def create_mock_gpu_context(
 def create_mock_gpu_kernel(
     batch_size: int = AcceptanceTestConstants.DEFAULT_GPU_BATCH_SIZE,
 ) -> Mock:
-    """创建标准 GPU Mock 内核
+    """创建标准 GPU Mock 内核.
 
     Args:
         batch_size: 批次大小
@@ -175,7 +175,7 @@ def create_mock_gpu_kernel(
         return_value={
             "keys_per_second": 1000000,
             "batch_time_ms": 10.0,
-        }
+        },
     )
 
     return mock_kernel
@@ -186,7 +186,7 @@ def create_mock_checkpoint_data(
     total_keys_checked: int = 1000000,
     matches_found: int = 2,
 ) -> dict[str, Any]:
-    """创建模拟的检查点数据
+    """创建模拟的检查点数据.
 
     Args:
         version: 检查点版本号
@@ -228,7 +228,7 @@ def create_mock_checkpoint_data(
 
 @pytest.fixture(scope="session")
 def test_data_dir() -> Path:
-    """获取测试数据目录路径
+    """获取测试数据目录路径.
 
     Returns:
         Path: 测试数据目录的 Path 对象
@@ -254,7 +254,7 @@ _mock_test_logger.propagate = False
 
 
 def _mock_get_configured_logger(name: str) -> logging.Logger:
-    """Mock get_configured_logger 返回内存 logger"""
+    """Mock get_configured_logger 返回内存 logger."""
     return _mock_test_logger
 
 
@@ -269,13 +269,13 @@ _patch_get_configured_logger.start()
 
 @pytest.fixture(scope="function", autouse=True)
 def setup_test_logging() -> Generator[None, None, None]:
-    """为测试配置临时日志目录
+    """为测试配置临时日志目录.
 
     这个 fixture 自动应用于每个测试函数，将日志系统配置为使用内存 logger，
     避免日志文件被其他进程占用导致的超时问题。
     """
     # get_configured_logger 已经被 patch 了，这里只需要 yield
-    yield
+    return
 
 
 # ============================================================================
@@ -285,7 +285,7 @@ def setup_test_logging() -> Generator[None, None, None]:
 
 @pytest.fixture(scope="function")
 def temp_dir() -> Generator[Path, None, None]:
-    """创建临时目录用于测试
+    """创建临时目录用于测试.
 
     Yields:
         Path: 临时目录的 Path 对象
@@ -303,7 +303,7 @@ def temp_dir() -> Generator[Path, None, None]:
 
 @pytest.fixture(scope="function")
 def mock_gpu_chain() -> Generator[tuple[Mock, Mock, Mock], None, None]:
-    """提供完整的 GPU Mock 链，用于 GPU 碰撞引擎测试
+    """提供完整的 GPU Mock 链，用于 GPU 碰撞引擎测试.
 
     这个 fixture 封装了 GPU 设备、上下文和内核的 Mock 对象，
     避免在每个测试中重复编写 Mock 代码。
@@ -326,7 +326,7 @@ def mock_gpu_chain() -> Generator[tuple[Mock, Mock, Mock], None, None]:
         patch("src.gpu.device.GPUDevice", return_value=mock_device),
         patch("src.gpu.context.GPUContext", return_value=mock_context),
         patch("src.gpu.kernel_impl.GPUKernel", return_value=mock_kernel),
-        patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True),
+        patch("src.gpu._availability.PYOPENCL_AVAILABLE", True),
         patch("src.gpu.device.GPUDeviceDetector.is_gpu_available", return_value=True),
     ):
         yield mock_device, mock_context, mock_kernel
@@ -334,7 +334,7 @@ def mock_gpu_chain() -> Generator[tuple[Mock, Mock, Mock], None, None]:
 
 @pytest.fixture(scope="function")
 def mock_checkpoint_manager(temp_dir: Path) -> Any:
-    """创建模拟的 CheckpointManager 实例
+    """创建模拟的 CheckpointManager 实例.
 
     Args:
         temp_dir: 临时目录 fixture
@@ -360,7 +360,7 @@ def mock_checkpoint_manager(temp_dir: Path) -> Any:
 
 @pytest.fixture(scope="function")
 def mock_event_bus() -> Any:
-    """创建模拟的 EventBus 实例
+    """创建模拟的 EventBus 实例.
 
     Returns:
         EventBus: 配置好的 EventBus 实例
@@ -375,7 +375,7 @@ def mock_event_bus() -> Any:
 
 @pytest.fixture(scope="function")
 def mock_target_resolver() -> Any:
-    """创建模拟的 TargetResolver 实例
+    """创建模拟的 TargetResolver 实例.
 
     Returns:
         TargetResolver: 配置好的 TargetResolver 实例
@@ -384,12 +384,12 @@ def mock_target_resolver() -> Any:
     from src.collision.targets.resolver import TargetResolver
 
     resolver = TargetResolver()
-    yield resolver
+    return resolver
 
 
 @pytest.fixture(scope="function")
 def sample_target_addresses() -> set[str]:
-    """提供样本目标地址集合
+    """提供样本目标地址集合.
 
     Returns:
         Set[str]: 目标地址集合
@@ -404,7 +404,7 @@ def sample_target_addresses() -> set[str]:
 
 @pytest.fixture(scope="function")
 def mock_collision_stats() -> Any:
-    """创建模拟的 CollisionStats 实例
+    """创建模拟的 CollisionStats 实例.
 
     Returns:
         CollisionStats: 配置好的 CollisionStats 实例
@@ -413,12 +413,12 @@ def mock_collision_stats() -> Any:
     from src.collision.collision_stats import CollisionStats
 
     stats = CollisionStats()
-    yield stats
+    return stats
 
 
 @pytest.fixture(scope="function")
 def mock_deduplication_filter() -> Any:
-    """创建模拟的 DeduplicationFilter 实例
+    """创建模拟的 DeduplicationFilter 实例.
 
     Returns:
         DeduplicationFilter: 配置好的 DeduplicationFilter 实例
@@ -427,12 +427,12 @@ def mock_deduplication_filter() -> Any:
     from src.collision.deduplication_filter import DeduplicationFilter
 
     filter_instance = DeduplicationFilter(max_size=10000)
-    yield filter_instance
+    return filter_instance
 
 
 @pytest.fixture(scope="function", autouse=True)
 def mock_crypto_backend_autouse() -> Generator[None, None, None]:
-    """自动 Mock 加密后端管理器，使所有引擎测试可用
+    """自动 Mock 加密后端管理器，使所有引擎测试可用.
 
     修补 CryptoBackendManager.current_backend 属性，确保测试环境中
     引擎初始化时始终有可用的后端，避免 RuntimeError。
@@ -465,7 +465,7 @@ def mock_crypto_backend_autouse() -> Generator[None, None, None]:
 
 @pytest.fixture(scope="function")
 def mock_crypto_backend() -> Any:
-    """创建模拟的 CryptoBackendManager 实例
+    """创建模拟的 CryptoBackendManager 实例.
 
     Returns:
         Mock: 配置好的 CryptoBackendManager Mock 对象
@@ -479,14 +479,14 @@ def mock_crypto_backend() -> Any:
     mock_backend.initialize = Mock(return_value=True)
     mock_backend.cleanup = Mock(return_value=True)
     mock_backend.get_available_backends = Mock(
-        return_value=["pure_python", "openssl", "coincurve", "ecdsa"]
+        return_value=["pure_python", "openssl", "coincurve", "ecdsa"],
     )
     mock_backend.get_current_backend = Mock(return_value="pure_python")
     mock_backend.switch_backend = Mock(return_value=True)
 
     # 模拟密码学方法
     mock_backend.generate_public_key = Mock(
-        return_value=b"\x02" + b"\x11" * 32  # 压缩公钥格式
+        return_value=b"\x02" + b"\x11" * 32,  # 压缩公钥格式
     )
     mock_backend.scalar_multiply = Mock(return_value=b"\x02" + b"\x22" * 32)
     mock_backend.verify_signature = Mock(return_value=True)
@@ -497,15 +497,15 @@ def mock_crypto_backend() -> Any:
             "keys_per_second": 100000,
             "backend": "pure_python",
             "memory_usage_mb": 10.5,
-        }
+        },
     )
 
-    yield mock_backend
+    return mock_backend
 
 
 @pytest.fixture(scope="function")
 def valid_addresses(test_data_dir: Path) -> list[str]:
-    """加载有效地址列表
+    """加载有效地址列表.
 
     Args:
         test_data_dir: 测试数据目录 fixture
@@ -525,7 +525,7 @@ def valid_addresses(test_data_dir: Path) -> list[str]:
 
 @pytest.fixture(scope="function")
 def invalid_addresses(test_data_dir: Path) -> list[str]:
-    """加载无效地址列表
+    """加载无效地址列表.
 
     Args:
         test_data_dir: 测试数据目录 fixture
@@ -548,8 +548,8 @@ def invalid_addresses(test_data_dir: Path) -> list[str]:
 # ============================================================================
 
 
-def assert_valid_bitcoin_address(address: str, message: Optional[str] = None) -> None:
-    """断言给定的字符串是有效的 Bitcoin 地址
+def assert_valid_bitcoin_address(address: str, message: str | None = None) -> None:
+    """断言给定的字符串是有效的 Bitcoin 地址.
 
     Args:
         address: 要验证的地址字符串
@@ -569,8 +569,8 @@ def assert_valid_bitcoin_address(address: str, message: Optional[str] = None) ->
     )
 
 
-def assert_valid_private_key(private_key: bytes, message: Optional[str] = None) -> None:
-    """断言给定的字节串是有效的私钥
+def assert_valid_private_key(private_key: bytes, message: str | None = None) -> None:
+    """断言给定的字节串是有效的私钥.
 
     Args:
         private_key: 要验证的私钥字节串
@@ -595,9 +595,9 @@ def assert_valid_private_key(private_key: bytes, message: Optional[str] = None) 
 def assert_engine_state(
     engine: Any,
     expected_state: str,
-    message: Optional[str] = None,
+    message: str | None = None,
 ) -> None:
-    """断言引擎处于预期状态
+    """断言引擎处于预期状态.
 
     Args:
         engine: 要检查的引擎实例
@@ -623,10 +623,10 @@ def assert_engine_state(
 def assert_pipeline_stage_complete(
     stage_name: str,
     stage_result: Any,
-    expected_type: Optional[type] = None,
-    message: Optional[str] = None,
+    expected_type: type | None = None,
+    message: str | None = None,
 ) -> None:
-    """断言 Pipeline 阶段完成且结果有效
+    """断言 Pipeline 阶段完成且结果有效.
 
     Args:
         stage_name: Pipeline 阶段名称
@@ -653,7 +653,7 @@ def assert_pipeline_stage_complete(
 
 
 def pytest_configure(config: Any) -> None:
-    """配置 pytest 环境，注册自定义 marker
+    """配置 pytest 环境，注册自定义 marker.
 
     Args:
         config: pytest 配置对象
@@ -679,7 +679,7 @@ def pytest_configure(config: Any) -> None:
 
 
 def pytest_collection_modifyitems(config: Any, items: list[Any]) -> None:
-    """修改测试项集合，根据 marker 对测试进行分类
+    """修改测试项集合，根据 marker 对测试进行分类.
 
     Args:
         config: pytest 配置对象
@@ -698,7 +698,7 @@ def pytest_collection_modifyitems(config: Any, items: list[Any]) -> None:
         if "pipeline" in item.keywords:
             # Pipeline 测试通常需要更多时间
             pipeline_timeout_marker = pytest.mark.timeout(
-                AcceptanceTestConstants.MAX_ACCEPTABLE_TIME_SEC * 2
+                AcceptanceTestConstants.MAX_ACCEPTABLE_TIME_SEC * 2,
             )
             item.add_marker(pipeline_timeout_marker)
 
@@ -710,7 +710,7 @@ def pytest_collection_modifyitems(config: Any, items: list[Any]) -> None:
 
 @pytest.fixture(scope="session", autouse=True)
 def cleanup_after_all_tests() -> Generator[None, None, None]:
-    """所有测试结束后执行全局清理
+    """所有测试结束后执行全局清理.
 
     Yields:
         None

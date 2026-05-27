@@ -1,4 +1,4 @@
-"""Intel GPU 自适应超时管理器
+"""Intel GPU 自适应超时管理器.
 
 根据历史执行时间动态调整超时阈值，避免：
 1. 固定超时导致的误判（正常执行被中断）
@@ -21,7 +21,7 @@ logger = get_configured_logger("IntelTimeoutManager")
 
 
 class AdaptiveTimeoutManager:
-    """自适应超时管理器
+    """自适应超时管理器.
 
     根据 GPU 执行历史动态计算最优超时阈值。
 
@@ -35,15 +35,15 @@ class AdaptiveTimeoutManager:
     """
 
     __slots__ = (
+        "_execution_times",
+        "_last_timeout",
+        "_timeout_adjustments",
+        "_total_records",
         "base_timeout",
         "history_size",
-        "safety_factor",
-        "min_timeout",
         "max_timeout",
-        "_execution_times",
-        "_total_records",
-        "_timeout_adjustments",
-        "_last_timeout",
+        "min_timeout",
+        "safety_factor",
     )
 
     def __init__(
@@ -54,7 +54,7 @@ class AdaptiveTimeoutManager:
         min_timeout: float = 10.0,
         max_timeout: float = 120.0,
     ) -> None:
-        """初始化自适应超时管理器
+        """初始化自适应超时管理器.
 
         Args:
             base_timeout: 基础超时时间（秒），用于数据不足时
@@ -88,7 +88,7 @@ class AdaptiveTimeoutManager:
         )
 
     def record_execution_time(self, time_ms: float) -> None:
-        """记录执行时间
+        """记录执行时间.
 
         Args:
             time_ms: 执行时间（毫秒）
@@ -107,7 +107,7 @@ class AdaptiveTimeoutManager:
         logger.debug(f"记录执行时间: {time_ms:.0f}ms (历史记录: {len(self._execution_times)})")
 
     def get_timeout(self) -> float:
-        """获取动态超时阈值
+        """获取动态超时阈值.
 
         计算策略:
         1. 数据不足（< 3 条）: 返回 base_timeout
@@ -154,7 +154,7 @@ class AdaptiveTimeoutManager:
         return final_timeout
 
     def get_statistics(self) -> dict[str, Any]:
-        """获取统计信息
+        """获取统计信息.
 
         Returns:
             包含统计信息的字典
@@ -194,7 +194,7 @@ class AdaptiveTimeoutManager:
         return stats
 
     def reset(self) -> None:
-        """重置管理器状态"""
+        """重置管理器状态."""
         self._execution_times.clear()
         self._total_records = 0
         self._timeout_adjustments = 0
@@ -202,7 +202,7 @@ class AdaptiveTimeoutManager:
         logger.info("自适应超时管理器已重置")
 
     def should_warn(self, execution_time_ms: float) -> bool:
-        """判断是否应该发出警告
+        """判断是否应该发出警告.
 
         Args:
             execution_time_ms: 执行时间（毫秒）

@@ -1,4 +1,4 @@
-"""高效地址匹配引擎
+"""高效地址匹配引擎.
 
 提供多种匹配策略优化地址匹配性能:
 - Hash集合匹配(默认,O(1)查找)
@@ -13,7 +13,7 @@ import threading
 from typing import TYPE_CHECKING, Any
 
 # 导入日志配置
-from ...utils import get_configured_logger
+from src.utils import get_configured_logger
 
 if TYPE_CHECKING:
     from pybloom_live import BloomFilter
@@ -23,7 +23,7 @@ logger = get_configured_logger("AddressMatcher")
 
 
 class AddressMatcher:
-    """高效地址匹配引擎
+    """高效地址匹配引擎.
 
     根据目标地址集合的规模选择最优匹配策略。
 
@@ -47,7 +47,7 @@ class AddressMatcher:
         bloom_capacity: int = 100000,
         bloom_error_rate: float = 0.001,
     ) -> None:
-        """初始化地址匹配引擎
+        """初始化地址匹配引擎.
 
         Args:
             strategy: 匹配策略,可选 'hash_set', 'bloom_filter', 'trie'
@@ -76,12 +76,12 @@ class AddressMatcher:
         logger.info(f"AddressMatcher 初始化: 策略={strategy}, 目标数={len(self.targets)}")
 
     def _init_hash_set(self):
-        """初始化Hash集合策略"""
+        """初始化Hash集合策略."""
         self._hash_set = set(self.targets)
         logger.debug(f"Hash集合初始化完成: {len(self._hash_set)} 个目标")
 
     def _init_bloom_filter(self, capacity: int, error_rate: float):
-        """初始化布隆过滤器策略"""
+        """初始化布隆过滤器策略."""
         try:
             self._bloom = BloomFilter(capacity=capacity, error_rate=error_rate)
             for addr in self.targets:
@@ -100,7 +100,7 @@ class AddressMatcher:
             self._init_hash_set()
 
     def _init_trie(self):
-        """初始化前缀树策略"""
+        """初始化前缀树策略."""
         try:
             self._trie = {}
             for addr in self.targets:
@@ -112,7 +112,7 @@ class AddressMatcher:
             self._init_hash_set()
 
     def _insert_trie(self, address: str):
-        """插入地址到前缀树"""
+        """插入地址到前缀树."""
         node = self._trie
         for char in address:
             if char not in node:
@@ -121,7 +121,7 @@ class AddressMatcher:
         node["$"] = True  # 标记地址结束
 
     def is_match(self, address: str) -> bool:
-        """检查地址是否匹配目标集
+        """检查地址是否匹配目标集.
 
         Args:
             address: 待检查的地址
@@ -155,7 +155,7 @@ class AddressMatcher:
                 return False
 
     def _search_trie(self, address: str) -> bool:
-        """在前缀树中搜索地址"""
+        """在前缀树中搜索地址."""
         node = self._trie
         for char in address:
             if char not in node:
@@ -164,7 +164,7 @@ class AddressMatcher:
         return "$" in node
 
     def add_target(self, address: str) -> None:
-        """添加单个目标地址
+        """添加单个目标地址.
 
         Args:
             address: 目标地址
@@ -195,7 +195,7 @@ class AddressMatcher:
                 logger.error("添加目标地址失败: %s, 错误=%s", address, e)
 
     def add_targets(self, addresses: set[str]) -> None:
-        """批量添加目标地址
+        """批量添加目标地址.
 
         Args:
             addresses: 目标地址集合
@@ -230,7 +230,7 @@ class AddressMatcher:
                 logger.error("批量添加目标地址失败: 错误=%s", e)
 
     def remove_target(self, address: str) -> bool:
-        """移除目标地址
+        """移除目标地址.
 
         注意: 布隆过滤器不支持删除操作
 
@@ -263,7 +263,7 @@ class AddressMatcher:
             return True
 
     def get_stats(self) -> dict[str, Any]:
-        """获取匹配引擎统计信息
+        """获取匹配引擎统计信息.
 
         Returns:
             包含统计信息的字典
@@ -284,7 +284,7 @@ class AddressMatcher:
             return stats
 
     def clear(self) -> None:
-        """清空所有目标地址"""
+        """清空所有目标地址."""
         with self._lock:
             self.targets.clear()
 
@@ -299,12 +299,13 @@ class AddressMatcher:
             logger.info("匹配引擎已清空")
 
     def __len__(self) -> int:
-        """返回目标地址数量"""
+        """返回目标地址数量."""
         return len(self.targets)
 
     def __contains__(self, address: str) -> bool:
-        """支持 in 操作符"""
+        """支持 in 操作符."""
         return self.is_match(address)
 
     def __repr__(self) -> str:
+        """返回地址匹配器的字符串表示。."""
         return f"AddressMatcher(strategy={self.strategy}, targets={len(self.targets)})"

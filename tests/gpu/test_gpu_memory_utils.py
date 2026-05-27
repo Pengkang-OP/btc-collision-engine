@@ -1,4 +1,4 @@
-"""GPU内存优化工具函数单元测试
+"""GPU内存优化工具函数单元测试.
 
 测试src/utils/gpu_memory_utils.py中的所有功能和边界情况。
 """
@@ -16,14 +16,14 @@ pytestmark = pytest.mark.gpu
 
 
 class MockDeviceObj:
-    """模拟GPU设备对象"""
+    """模拟GPU设备对象."""
 
     def __init__(self, global_mem_size):
         self.global_mem_size = global_mem_size
 
 
 class MockGPUDevice:
-    """模拟GPU设备"""
+    """模拟GPU设备."""
 
     def __init__(self, global_mem_size, has_device_info=True):
         self.device = MockDeviceObj(global_mem_size)
@@ -39,24 +39,24 @@ class MockGPUDevice:
 
 
 class TestNormalPath:
-    """正常路径测试"""
+    """正常路径测试."""
 
     def test_6gb_gpu_no_targets(self):
-        """测试6GB显存，无目标地址"""
+        """测试6GB显存，无目标地址."""
         device = MockGPUDevice(6 * 1024**3)
         batch_size = calculate_optimal_batch_size(device)
 
         assert batch_size == 8388608  # 应该达到最大值8M
 
     def test_16gb_gpu_no_targets(self):
-        """测试16GB显存，无目标地址"""
+        """测试16GB显存，无目标地址."""
         device = MockGPUDevice(16 * 1024**3)
         batch_size = calculate_optimal_batch_size(device)
 
         assert batch_size == 8388608  # 应该达到最大值8M
 
     def test_128mb_gpu_no_targets(self):
-        """测试128MB显存，无目标地址"""
+        """测试128MB显存，无目标地址."""
         device = MockGPUDevice(128 * 1024**2)
         batch_size = calculate_optimal_batch_size(device)
 
@@ -66,7 +66,7 @@ class TestNormalPath:
         assert batch_size % 1024 == 0  # 应该对齐到1024
 
     def test_with_target_buffer(self):
-        """测试带目标地址缓冲区"""
+        """测试带目标地址缓冲区."""
         device = MockGPUDevice(6 * 1024**3)
         target_buffer_size = 10000 * 20  # 10000个目标地址，200KB
 
@@ -77,7 +77,7 @@ class TestNormalPath:
         assert batch_size >= 1024
 
     def test_custom_memory_usage_ratio(self):
-        """测试自定义显存使用比例"""
+        """测试自定义显存使用比例."""
         device = MockGPUDevice(6 * 1024**3)
 
         # 使用70%显存
@@ -88,7 +88,7 @@ class TestNormalPath:
         assert batch_size >= 1024
 
     def test_custom_batch_size_range(self):
-        """测试自定义batch_size范围"""
+        """测试自定义batch_size范围."""
         device = MockGPUDevice(6 * 1024**3)
 
         config = BatchSizeConfig(min_batch_size=2048, max_batch_size=4194304)  # 4M
@@ -98,7 +98,7 @@ class TestNormalPath:
         assert batch_size >= 2048
 
     def test_memory_alignment(self):
-        """测试内存对齐"""
+        """测试内存对齐."""
         device = MockGPUDevice(128 * 1024**2)
 
         config = BatchSizeConfig(memory_alignment=2048)
@@ -113,66 +113,66 @@ class TestNormalPath:
 
 
 class TestBoundaryConditions:
-    """边界条件测试"""
+    """边界条件测试."""
 
     def test_zero_memory(self):
-        """测试显存为0"""
+        """测试显存为0."""
         device = MockGPUDevice(0)
         batch_size = calculate_optimal_batch_size(device)
 
         assert batch_size == 1024  # 应该返回最小值
 
     def test_negative_memory(self):
-        """测试显存为负数"""
+        """测试显存为负数."""
         device = MockGPUDevice(-1)
         batch_size = calculate_optimal_batch_size(device)
 
         assert batch_size == 1024  # 应该返回最小值
 
     def test_very_small_memory_1_byte(self):
-        """测试极小显存（1字节）"""
+        """测试极小显存（1字节）."""
         device = MockGPUDevice(1)
         batch_size = calculate_optimal_batch_size(device)
 
         assert batch_size == 1024  # 应该返回最小值
 
     def test_very_small_memory_1kb(self):
-        """测试极小显存（1KB）"""
+        """测试极小显存（1KB）."""
         device = MockGPUDevice(1024)
         batch_size = calculate_optimal_batch_size(device)
 
         assert batch_size == 1024  # 应该返回最小值
 
     def test_min_memory_threshold(self):
-        """测试最小显存阈值（1MB）"""
+        """测试最小显存阈值（1MB）."""
         device = MockGPUDevice(MIN_GPU_MEMORY - 1)  # 略小于1MB
         batch_size = calculate_optimal_batch_size(device)
 
         assert batch_size == 1024  # 应该返回最小值
 
     def test_just_above_min_memory(self):
-        """测试略大于最小显存阈值"""
+        """测试略大于最小显存阈值."""
         device = MockGPUDevice(MIN_GPU_MEMORY + 1)  # 略大于1MB
         batch_size = calculate_optimal_batch_size(device)
 
         assert batch_size >= 1024
 
     def test_very_large_memory_100gb(self):
-        """测试超大显存（100GB）"""
+        """测试超大显存（100GB）."""
         device = MockGPUDevice(100 * 1024**3)
         batch_size = calculate_optimal_batch_size(device)
 
         assert batch_size == 8388608  # 应该达到最大值8M
 
     def test_zero_target_buffer(self):
-        """测试目标缓冲区为0"""
+        """测试目标缓冲区为0."""
         device = MockGPUDevice(6 * 1024**3)
         batch_size = calculate_optimal_batch_size(device, target_buffer_size=0)
 
         assert batch_size == 8388608
 
     def test_large_target_buffer(self):
-        """测试大目标缓冲区（100万个目标地址）"""
+        """测试大目标缓冲区（100万个目标地址）."""
         device = MockGPUDevice(6 * 1024**3)
         target_buffer_size = 1_000_000 * 20  # 100万个目标地址，~19MB
 
@@ -182,7 +182,7 @@ class TestBoundaryConditions:
         assert batch_size >= 8000000  # 仍然接近8M
 
     def test_target_buffer_exceeds_available(self):
-        """测试目标缓冲区超过可用内存"""
+        """测试目标缓冲区超过可用内存."""
         device = MockGPUDevice(128 * 1024**2)  # 128MB
         target_buffer_size = 100 * 1024**2  # 100MB（超过50%可用内存）
 
@@ -198,10 +198,10 @@ class TestBoundaryConditions:
 
 
 class TestExceptionPaths:
-    """异常路径测试"""
+    """异常路径测试."""
 
     def test_negative_target_buffer_size(self):
-        """测试负数目标缓冲区大小"""
+        """测试负数目标缓冲区大小."""
         device = MockGPUDevice(6 * 1024**3)
 
         with pytest.raises(ValueError) as exc_info:
@@ -210,7 +210,7 @@ class TestExceptionPaths:
         assert "target_buffer_size不能为负数" in str(exc_info.value)
 
     def test_zero_memory_usage_ratio(self):
-        """测试显存使用比例为0"""
+        """测试显存使用比例为0."""
         device = MockGPUDevice(6 * 1024**3)
 
         with pytest.raises(ValueError) as exc_info:
@@ -220,7 +220,7 @@ class TestExceptionPaths:
         assert "memory_usage_ratio必须在(0, 1]范围内" in str(exc_info.value)
 
     def test_negative_memory_usage_ratio(self):
-        """测试显存使用比例为负数"""
+        """测试显存使用比例为负数."""
         device = MockGPUDevice(6 * 1024**3)
 
         with pytest.raises(ValueError) as exc_info:
@@ -230,7 +230,7 @@ class TestExceptionPaths:
         assert "memory_usage_ratio必须在(0, 1]范围内" in str(exc_info.value)
 
     def test_memory_usage_ratio_greater_than_one(self):
-        """测试显存使用比例大于1"""
+        """测试显存使用比例大于1."""
         device = MockGPUDevice(6 * 1024**3)
 
         with pytest.raises(ValueError) as exc_info:
@@ -240,7 +240,7 @@ class TestExceptionPaths:
         assert "memory_usage_ratio必须在(0, 1]范围内" in str(exc_info.value)
 
     def test_zero_min_batch_size(self):
-        """测试最小batch_size为0"""
+        """测试最小batch_size为0."""
         device = MockGPUDevice(6 * 1024**3)
 
         with pytest.raises(ValueError) as exc_info:
@@ -250,7 +250,7 @@ class TestExceptionPaths:
         assert "min_batch_size必须为正数" in str(exc_info.value)
 
     def test_negative_min_batch_size(self):
-        """测试最小batch_size为负数"""
+        """测试最小batch_size为负数."""
         device = MockGPUDevice(6 * 1024**3)
 
         with pytest.raises(ValueError) as exc_info:
@@ -260,7 +260,7 @@ class TestExceptionPaths:
         assert "min_batch_size必须为正数" in str(exc_info.value)
 
     def test_max_batch_size_less_than_min(self):
-        """测试最大batch_size小于最小batch_size"""
+        """测试最大batch_size小于最小batch_size."""
         device = MockGPUDevice(6 * 1024**3)
 
         with pytest.raises(ValueError) as exc_info:
@@ -271,7 +271,7 @@ class TestExceptionPaths:
         assert "min_batch_size" in str(exc_info.value)
 
     def test_device_without_device_attribute(self):
-        """测试设备对象缺少device属性"""
+        """测试设备对象缺少device属性."""
 
         class BadDevice:
             pass
@@ -283,7 +283,7 @@ class TestExceptionPaths:
         assert batch_size == DEFAULT_BATCH_SIZE
 
     def test_device_without_global_mem_size(self):
-        """测试设备对象缺少global_mem_size属性"""
+        """测试设备对象缺少global_mem_size属性."""
 
         class BadDevice:
             def __init__(self):
@@ -302,15 +302,15 @@ class TestExceptionPaths:
 
 
 class TestConstants:
-    """常量测试"""
+    """常量测试."""
 
     def test_min_gpu_memory_value(self):
-        """测试最小显存常量值"""
+        """测试最小显存常量值."""
         assert MIN_GPU_MEMORY == 1 * 1024 * 1024  # 1MB
         assert MIN_GPU_MEMORY == 1048576
 
     def test_default_batch_size_value(self):
-        """测试默认batch_size常量值"""
+        """测试默认batch_size常量值."""
         assert DEFAULT_BATCH_SIZE == 65536
         assert DEFAULT_BATCH_SIZE == 64 * 1024
 
@@ -321,7 +321,7 @@ class TestConstants:
 
 
 class TestParameterized:
-    """参数化测试"""
+    """参数化测试."""
 
     @pytest.mark.parametrize(
         "mem_size,expected_range",
@@ -339,7 +339,7 @@ class TestParameterized:
         ],
     )
     def test_various_gpu_memory_sizes(self, mem_size, expected_range):
-        """测试各种GPU显存大小"""
+        """测试各种GPU显存大小."""
         device = MockGPUDevice(mem_size)
         batch_size = calculate_optimal_batch_size(device)
 
@@ -349,7 +349,7 @@ class TestParameterized:
 
     @pytest.mark.parametrize("target_count", [0, 100, 1000, 10000, 100000])
     def test_various_target_counts(self, target_count):
-        """测试不同数量的目标地址"""
+        """测试不同数量的目标地址."""
         device = MockGPUDevice(6 * 1024**3)
         target_buffer_size = target_count * 20  # 每个Hash160是20字节
 
@@ -365,10 +365,10 @@ class TestParameterized:
 
 
 class TestPerformance:
-    """性能测试（简单验证，非基准测试）"""
+    """性能测试（简单验证，非基准测试）."""
 
     def test_calculation_speed(self):
-        """测试计算速度（应该在1ms内完成）"""
+        """测试计算速度（应该在1ms内完成）."""
         import time
 
         device = MockGPUDevice(6 * 1024**3)
@@ -391,10 +391,10 @@ class TestPerformance:
 
 
 class TestBatchSizeConfig:
-    """BatchSizeConfig配置对象独立测试"""
+    """BatchSizeConfig配置对象独立测试."""
 
     def test_default_values(self):
-        """测试默认配置值"""
+        """测试默认配置值."""
         config = BatchSizeConfig()
 
         assert config.memory_usage_ratio == 0.5
@@ -404,7 +404,7 @@ class TestBatchSizeConfig:
         assert config.per_key_memory == 36
 
     def test_custom_values(self):
-        """测试自定义配置值"""
+        """测试自定义配置值."""
         config = BatchSizeConfig(
             memory_usage_ratio=0.7,
             min_batch_size=2048,
@@ -420,7 +420,7 @@ class TestBatchSizeConfig:
         assert config.per_key_memory == 40
 
     def test_partial_custom_values(self):
-        """测试部分自定义配置值"""
+        """测试部分自定义配置值."""
         config = BatchSizeConfig(memory_usage_ratio=0.8, min_batch_size=4096)
 
         # 自定义值
@@ -433,7 +433,7 @@ class TestBatchSizeConfig:
         assert config.per_key_memory == 36
 
     def test_config_equality(self):
-        """测试配置对象相等性"""
+        """测试配置对象相等性."""
         config1 = BatchSizeConfig()
         config2 = BatchSizeConfig()
 
@@ -444,7 +444,7 @@ class TestBatchSizeConfig:
         assert config1 != config3
 
     def test_config_repr(self):
-        """测试配置对象字符串表示"""
+        """测试配置对象字符串表示."""
         config = BatchSizeConfig()
         repr_str = repr(config)
 
@@ -454,7 +454,7 @@ class TestBatchSizeConfig:
         assert "min_batch_size=1024" in repr_str
 
     def test_config_immutability_option(self):
-        """测试配置对象可变性（当前为可变）"""
+        """测试配置对象可变性（当前为可变）."""
         config = BatchSizeConfig()
 
         # 当前实现是可变的
@@ -462,7 +462,7 @@ class TestBatchSizeConfig:
         assert config.memory_usage_ratio == 0.7
 
     def test_config_validation_method(self):
-        """测试配置验证方法"""
+        """测试配置验证方法."""
         # 有效配置
         config1 = BatchSizeConfig()
         config1.validate()  # 不应抛出异常
@@ -517,7 +517,7 @@ class TestBatchSizeConfig:
             BatchSizeConfig(per_key_memory=-36)
 
     def test_post_init_auto_validation(self):
-        """测试__post_init__自动验证"""
+        """测试__post_init__自动验证."""
         # 有效配置 - 自动验证通过
         BatchSizeConfig()
         # 如果验证失败，会在创建时抛出异常
@@ -540,7 +540,7 @@ class TestBatchSizeConfig:
             BatchSizeConfig(per_key_memory=0)
 
     def test_config_serialization(self):
-        """测试配置对象序列化"""
+        """测试配置对象序列化."""
         import json
         from dataclasses import asdict
 
@@ -562,7 +562,7 @@ class TestBatchSizeConfig:
         assert restored_config == config
 
     def test_config_reuse(self):
-        """测试配置对象复用"""
+        """测试配置对象复用."""
         config = BatchSizeConfig(memory_usage_ratio=0.7)
 
         device1 = MockGPUDevice(6 * 1024**3)

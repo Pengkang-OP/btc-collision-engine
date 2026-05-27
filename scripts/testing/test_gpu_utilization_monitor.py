@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GPU利用率监控测试 - v3.3.1
+"""GPU利用率监控测试 - v3.3.1.
 
 测试目标:
 1. 验证异步模式是否真正提升GPU利用率
@@ -23,7 +23,7 @@ from src.collision.gpu.engine import GPUCollisionEngine
 
 
 class GPUMonitor:
-    """GPU利用率监控器"""
+    """GPU利用率监控器."""
 
     def __init__(self):
         self.metrics_history = []
@@ -31,7 +31,7 @@ class GPUMonitor:
         self._monitor_thread = None
 
     def start(self, engine: GPUCollisionEngine, interval: float = 1.0):
-        """启动监控
+        """启动监控.
 
         Args:
             engine: GPU引擎实例
@@ -40,20 +40,20 @@ class GPUMonitor:
         """
         self._running = True
         self._monitor_thread = threading.Thread(
-            target=self._monitor_loop, args=(engine, interval), daemon=True
+            target=self._monitor_loop, args=(engine, interval), daemon=True,
         )
         self._monitor_thread.start()
         print(f"  [监控] GPU利用率监控已启动 (间隔: {interval}s)")
 
     def stop(self):
-        """停止监控"""
+        """停止监控."""
         self._running = False
         if self._monitor_thread:
             self._monitor_thread.join(timeout=5)
         print("  [监控] GPU利用率监控已停止")
 
     def _monitor_loop(self, engine: GPUCollisionEngine, interval: float):
-        """监控循环"""
+        """监控循环."""
         while self._running:
             try:
                 stats = engine.get_stats()
@@ -73,7 +73,7 @@ class GPUMonitor:
             time.sleep(interval)
 
     def _estimate_gpu_utilization(self, stats: CollisionStats) -> float:
-        """估算GPU利用率
+        """估算GPU利用率.
 
         基于速度和时间间隔估算GPU实际工作时间占比
         """
@@ -86,7 +86,7 @@ class GPUMonitor:
         return utilization
 
     def get_summary(self) -> dict[str, Any]:
-        """获取监控摘要"""
+        """获取监控摘要."""
         if not self.metrics_history:
             return {"error": "无监控数据"}
 
@@ -105,7 +105,7 @@ class GPUMonitor:
 
 
 def test_gpu_utilization(mode: str = "async", duration: int = 60):
-    """测试GPU利用率
+    """测试GPU利用率.
 
     Args:
         mode: 测试模式 ('sync' 或 'async')
@@ -127,12 +127,12 @@ def test_gpu_utilization(mode: str = "async", duration: int = 60):
     start_time = time.time()
 
     def on_progress(stats: CollisionStats):
-        """进度回调"""
+        """进度回调."""
         elapsed = time.time() - start_time
         if int(elapsed) % 10 == 0:
             print(
                 f"  [{elapsed:5.1f}s] 速度: {stats.speed:,.0f} keys/s | "
-                f"总计: {stats.total_checked:,} | 匹配: {len(stats.matches)}"
+                f"总计: {stats.total_checked:,} | 匹配: {len(stats.matches)}",
             )
 
     try:
@@ -154,13 +154,12 @@ def test_gpu_utilization(mode: str = "async", duration: int = 60):
             if hasattr(engine, "_async_executor") and engine._async_executor:
                 engine._async_executor = None
                 print("  [配置] ✓ 异步执行器已禁用(同步模式)")
+        elif hasattr(engine, "_async_executor") and engine._async_executor:
+            queue_depth = getattr(engine._async_executor, "queue_depth", "N/A")
+            print(f"  [配置] ✓ 异步执行器已启用 (队列深度: {queue_depth})")
         else:
-            if hasattr(engine, "_async_executor") and engine._async_executor:
-                queue_depth = getattr(engine._async_executor, "queue_depth", "N/A")
-                print(f"  [配置] ✓ 异步执行器已启用 (队列深度: {queue_depth})")
-            else:
-                print("  [错误] ✗ 异步执行器未启用!")
-                return
+            print("  [错误] ✗ 异步执行器未启用!")
+            return
 
         init_time = time.time() - init_start
         device_name = (
@@ -249,7 +248,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="GPU利用率监控测试")
     parser.add_argument(
-        "--mode", choices=["sync", "async"], default="async", help="测试模式 (默认: async)"
+        "--mode", choices=["sync", "async"], default="async", help="测试模式 (默认: async)",
     )
     parser.add_argument("--duration", type=int, default=60, help="测试时长(秒, 默认: 60)")
 

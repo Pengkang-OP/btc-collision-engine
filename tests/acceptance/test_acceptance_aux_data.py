@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""辅助数据验收测试 - 数据辅助工具和转换
+"""辅助数据验收测试 - 数据辅助工具和转换.
 
 本模块测试 `src.utils` 和 `src.core` 中的数据辅助功能，
 确保：
@@ -28,7 +28,7 @@ import pytest
 @pytest.mark.functional
 @pytest.mark.data_layer
 class TestFastJsonWhiteBox:
-    """fast_json 白盒测试
+    """fast_json 白盒测试.
 
     基于内部代码结构的测试，验证：
     1. 内部状态转换的正确性
@@ -38,7 +38,7 @@ class TestFastJsonWhiteBox:
     """
 
     def test_fast_dumps_logic(self):
-        """白盒测试：验证 fast_dumps 的逻辑分支"""
+        """白盒测试：验证 fast_dumps 的逻辑分支."""
         from src.utils.fast_json import fast_dumps
 
         # 白盒验证：不同数据类型的处理
@@ -62,7 +62,7 @@ class TestFastJsonWhiteBox:
         assert parsed["number"] == 123, "fast_dumps 逻辑不正确：数字序列化失败"
 
     def test_fast_loads_logic(self):
-        """白盒测试：验证 fast_loads 的逻辑分支"""
+        """白盒测试：验证 fast_loads 的逻辑分支."""
         from src.utils.fast_json import fast_loads
 
         # 白盒验证：JSON 字符串解析
@@ -77,7 +77,7 @@ class TestFastJsonWhiteBox:
         assert result["number"] == 123, "fast_loads 逻辑不正确：数字解析失败"
 
     def test_fast_json_error_handling(self):
-        """白盒测试：验证 fast_json 的错误处理路径"""
+        """白盒测试：验证 fast_json 的错误处理路径."""
         from src.utils.fast_json import fast_loads
 
         # 白盒验证：无效 JSON 的错误处理
@@ -99,10 +99,10 @@ class TestFastJsonWhiteBox:
 @pytest.mark.functional
 @pytest.mark.data_layer
 class TestHashUtilsWhiteBox:
-    """hash_utils 白盒测试"""
+    """hash_utils 白盒测试."""
 
     def test_hash160_logic(self):
-        """白盒测试：验证 hash160 的逻辑分支"""
+        """白盒测试：验证 hash160 的逻辑分支."""
         from src.core.hash_utils import HashUtils
 
         # 白盒验证：Hash160 计算
@@ -114,7 +114,7 @@ class TestHashUtilsWhiteBox:
         assert len(hash160) == 20, f"hash160 逻辑不正确：长度应为 20 字节，实际为 {len(hash160)} 字节"
 
     def test_double_sha256_logic(self):
-        """白盒测试：验证 double_sha256 的逻辑分支"""
+        """白盒测试：验证 double_sha256 的逻辑分支."""
         from src.core.hash_utils import HashUtils
 
         # 白盒验证：Double SHA256 计算
@@ -138,10 +138,10 @@ class TestHashUtilsWhiteBox:
 @pytest.mark.functional
 @pytest.mark.data_layer
 class TestFastJsonBlackBox:
-    """fast_json 黑盒测试"""
+    """fast_json 黑盒测试."""
 
     def test_black_box_fast_dumps_valid_input(self):
-        """黑盒测试：使用有效输入调用 fast_dumps"""
+        """黑盒测试：使用有效输入调用 fast_dumps."""
         from src.utils.fast_json import fast_dumps
 
         # 黑盒验证：有效输入
@@ -156,7 +156,7 @@ class TestFastJsonBlackBox:
         assert parsed["key"] == "value", "黑盒测试失败：序列化结果不正确"
 
     def test_black_box_fast_loads_valid_input(self):
-        """黑盒测试：使用有效输入调用 fast_loads"""
+        """黑盒测试：使用有效输入调用 fast_loads."""
         from src.utils.fast_json import fast_loads
 
         # 黑盒验证：有效输入
@@ -170,7 +170,7 @@ class TestFastJsonBlackBox:
         assert result["key"] == "value", "黑盒测试失败：解析结果不正确"
 
     def test_black_box_fast_dumps_invalid_input(self):
-        """黑盒测试：使用无效输入调用 fast_dumps"""
+        """黑盒测试：使用无效输入调用 fast_dumps."""
         from src.utils.fast_json import fast_dumps
 
         # 黑盒验证：无效输入
@@ -185,7 +185,7 @@ class TestFastJsonBlackBox:
             pass
 
     def test_black_box_fast_loads_invalid_input(self):
-        """黑盒测试：使用无效输入调用 fast_loads"""
+        """黑盒测试：使用无效输入调用 fast_loads."""
         from src.utils.fast_json import fast_loads
 
         # 黑盒验证：无效输入
@@ -205,10 +205,10 @@ class TestFastJsonBlackBox:
 @pytest.mark.functional
 @pytest.mark.data_layer
 class TestHashUtilsBlackBox:
-    """hash_utils 黑盒测试"""
+    """hash_utils 黑盒测试."""
 
     def test_black_box_hash160_valid_input(self):
-        """黑盒测试：使用有效输入调用 hash160"""
+        """黑盒测试：使用有效输入调用 hash160."""
         from src.core.hash_utils import HashUtils
 
         # 黑盒验证：有效输入
@@ -220,7 +220,7 @@ class TestHashUtilsBlackBox:
         assert len(result) == 20, f"黑盒测试失败：Hash160 长度应为 20 字节，实际为 {len(result)} 字节"
 
     def test_black_box_double_sha256_valid_input(self):
-        """黑盒测试：使用有效输入调用 double_sha256"""
+        """黑盒测试：使用有效输入调用 double_sha256."""
         from src.core.hash_utils import HashUtils
 
         # 黑盒验证：有效输入
@@ -243,10 +243,10 @@ class TestHashUtilsBlackBox:
 @pytest.mark.functional
 @pytest.mark.data_layer
 class TestDataAuxiliaryFunctionalLayer:
-    """辅助数据功能层测试"""
+    """辅助数据功能层测试."""
 
     def test_functional_fast_json_dumps(self):
-        """功能层测试：fast_dumps 功能正确性"""
+        """功能层测试：fast_dumps 功能正确性."""
         from src.utils.fast_json import fast_dumps
 
         # 功能正确性：fast_dumps
@@ -261,7 +261,7 @@ class TestDataAuxiliaryFunctionalLayer:
         assert parsed["key"] == "value", "功能层测试失败：序列化结果不正确"
 
     def test_functional_fast_json_loads(self):
-        """功能层测试：fast_loads 功能正确性"""
+        """功能层测试：fast_loads 功能正确性."""
         from src.utils.fast_json import fast_loads
 
         # 功能正确性：fast_loads
@@ -275,7 +275,7 @@ class TestDataAuxiliaryFunctionalLayer:
         assert result["key"] == "value", "功能层测试失败：解析结果不正确"
 
     def test_functional_hash_utils_hash160(self):
-        """功能层测试：hash160 功能正确性"""
+        """功能层测试：hash160 功能正确性."""
         from src.core.hash_utils import HashUtils
 
         # 功能正确性：hash160
@@ -287,7 +287,7 @@ class TestDataAuxiliaryFunctionalLayer:
         assert len(result) == 20, f"功能层测试失败：Hash160 长度应为 20 字节，实际为 {len(result)} 字节"
 
     def test_functional_hash_utils_double_sha256(self):
-        """功能层测试：double_sha256 功能正确性"""
+        """功能层测试：double_sha256 功能正确性."""
         from src.core.hash_utils import HashUtils
 
         # 功能正确性：double_sha256
@@ -310,10 +310,10 @@ class TestDataAuxiliaryFunctionalLayer:
 @pytest.mark.logic_layer
 @pytest.mark.data_layer
 class TestDataAuxiliaryLogicLayer:
-    """辅助数据逻辑层测试"""
+    """辅助数据逻辑层测试."""
 
     def test_logic_fast_json_dumps_branch_coverage(self):
-        """逻辑层测试：fast_dumps 分支覆盖"""
+        """逻辑层测试：fast_dumps 分支覆盖."""
         from src.utils.fast_json import fast_dumps
 
         # 逻辑判断：不同数据类型的处理
@@ -334,7 +334,7 @@ class TestDataAuxiliaryLogicLayer:
             assert isinstance(result, str), f"逻辑层测试失败：数据类型 {type(test_data)} 应返回 str"
 
     def test_logic_fast_json_loads_branch_coverage(self):
-        """逻辑层测试：fast_loads 分支覆盖"""
+        """逻辑层测试：fast_loads 分支覆盖."""
         from src.utils.fast_json import fast_loads
 
         # 逻辑判断：不同 JSON 字符串的解析
@@ -361,7 +361,7 @@ class TestDataAuxiliaryLogicLayer:
             )
 
     def test_logic_hash_utils_hash160_branch_coverage(self):
-        """逻辑层测试：hash160 分支覆盖"""
+        """逻辑层测试：hash160 分支覆盖."""
         from src.core.hash_utils import HashUtils
 
         # 逻辑判断：不同输入数据的处理
@@ -383,7 +383,7 @@ class TestDataAuxiliaryLogicLayer:
             )
 
     def test_logic_hash_utils_double_sha256_branch_coverage(self):
-        """逻辑层测试：double_sha256 分支覆盖"""
+        """逻辑层测试：double_sha256 分支覆盖."""
         from src.core.hash_utils import HashUtils
 
         # 逻辑判断：不同输入数据的处理
@@ -413,10 +413,10 @@ class TestDataAuxiliaryLogicLayer:
 @pytest.mark.acceptance
 @pytest.mark.data_layer
 class TestDataAuxiliaryDataLayer:
-    """辅助数据数据层测试"""
+    """辅助数据数据层测试."""
 
     def test_data_format_and_values_fast_json(self):
-        """数据层测试：fast_json 数据格式和值"""
+        """数据层测试：fast_json 数据格式和值."""
         from src.utils.fast_json import fast_dumps, fast_loads
 
         # 数据：序列化格式
@@ -433,7 +433,7 @@ class TestDataAuxiliaryDataLayer:
         assert parsed["key"] == "value", "数据值不正确：解析结果值不匹配"
 
     def test_data_format_and_values_hash_utils(self):
-        """数据层测试：hash_utils 数据格式和值"""
+        """数据层测试：hash_utils 数据格式和值."""
         from src.core.hash_utils import HashUtils
 
         # 数据：Hash160 格式
@@ -454,7 +454,7 @@ class TestDataAuxiliaryDataLayer:
         )
 
     def test_data_flow_integrity_fast_json(self):
-        """数据层测试：fast_json 数据流完整性"""
+        """数据层测试：fast_json 数据流完整性."""
         from src.utils.fast_json import fast_dumps, fast_loads
 
         # 数据流：输入 → 序列化 → 解析 → 输出
@@ -472,7 +472,7 @@ class TestDataAuxiliaryDataLayer:
         assert input_data == output_data, "数据流完整性验证失败：输入和输出数据不匹配"
 
     def test_data_flow_integrity_hash_utils(self):
-        """数据层测试：hash_utils 数据流完整性"""
+        """数据层测试：hash_utils 数据流完整性."""
         from src.core.hash_utils import HashUtils
 
         # 数据流：输入 → Hash160 → 输出
@@ -495,7 +495,7 @@ class TestDataAuxiliaryDataLayer:
         assert len(double_hash) == 32, "数据流完整性验证失败：Double SHA256 长度不正确"
 
     def test_data_type_conversion_fast_json(self):
-        """数据层测试：fast_json 数据类型转换"""
+        """数据层测试：fast_json 数据类型转换."""
         from src.utils.fast_json import fast_dumps, fast_loads
 
         # 数据类型转换：dict → str → dict
@@ -513,7 +513,7 @@ class TestDataAuxiliaryDataLayer:
         assert input_data == output_data, "数据类型转换不正确：转换后数据不匹配"
 
     def test_data_type_conversion_hash_utils(self):
-        """数据层测试：hash_utils 数据类型转换"""
+        """数据层测试：hash_utils 数据类型转换."""
         from src.core.hash_utils import HashUtils
 
         # 数据类型转换：bytes → Hash160 (bytes)
@@ -530,7 +530,7 @@ class TestDataAuxiliaryDataLayer:
         )
 
     def test_data_invocation_fast_json(self):
-        """数据层测试：fast_json 数据调用接口"""
+        """数据层测试：fast_json 数据调用接口."""
         from src.utils.fast_json import fast_dumps, fast_loads
 
         # 数据调用：fast_dumps 接口
@@ -550,7 +550,7 @@ class TestDataAuxiliaryDataLayer:
         assert isinstance(result, dict), "数据调用接口验证失败：fast_loads 应返回 dict 类型"
 
     def test_data_invocation_hash_utils(self):
-        """数据层测试：hash_utils 数据调用接口"""
+        """数据层测试：hash_utils 数据调用接口."""
         from src.core.hash_utils import HashUtils
 
         # 数据调用：hash160 接口
@@ -581,10 +581,10 @@ class TestDataAuxiliaryDataLayer:
     ids=["fast_json", "hash_utils"],
 )
 class TestDataAuxiliaryMultiTool:
-    """辅助数据多工具测试"""
+    """辅助数据多工具测试."""
 
     def test_multi_tool_import(self, tool_name):
-        """多工具测试：工具导入"""
+        """多工具测试：工具导入."""
         # 多工具验证：工具导入
         if tool_name == "fast_json":
             from src.utils.fast_json import fast_dumps, fast_loads
@@ -598,7 +598,7 @@ class TestDataAuxiliaryMultiTool:
             assert HashUtils is not None, f"多工具测试失败：{tool_name} 导入失败"
 
     def test_multi_tool_functionality(self, tool_name):
-        """多工具测试：工具功能"""
+        """多工具测试：工具功能."""
         # 多工具验证：工具功能
         if tool_name == "fast_json":
             from src.utils.fast_json import fast_dumps, fast_loads
@@ -640,10 +640,10 @@ class TestDataAuxiliaryMultiTool:
     ids=["string", "integer", "float", "boolean", "null", "array", "object"],
 )
 class TestDataAuxiliaryMultiData:
-    """辅助数据多数据组合测试"""
+    """辅助数据多数据组合测试."""
 
     def test_multi_data_fast_dumps(self, data_type, test_data):
-        """多数据组合测试：使用不同数据类型调用 fast_dumps"""
+        """多数据组合测试：使用不同数据类型调用 fast_dumps."""
         from src.utils.fast_json import fast_dumps
 
         # 多数据验证：fast_dumps
@@ -652,7 +652,7 @@ class TestDataAuxiliaryMultiData:
         assert isinstance(result, str), f"多数据组合测试失败：数据类型 {data_type} 应返回 str"
 
     def test_multi_data_fast_loads(self, data_type, test_data):
-        """多数据组合测试：使用不同数据类型调用 fast_loads"""
+        """多数据组合测试：使用不同数据类型调用 fast_loads."""
         from src.utils.fast_json import fast_dumps, fast_loads
 
         # 多数据验证：fast_loads
@@ -675,10 +675,10 @@ class TestDataAuxiliaryMultiData:
 @pytest.mark.acceptance
 @pytest.mark.edge_cases
 class TestDataAuxiliaryEdgeCases:
-    """辅助数据边界条件测试"""
+    """辅助数据边界条件测试."""
 
     def test_edge_case_empty_string(self):
-        """边界条件测试：空字符串"""
+        """边界条件测试：空字符串."""
         from src.utils.fast_json import fast_dumps, fast_loads
 
         # 边界条件：空字符串
@@ -693,7 +693,7 @@ class TestDataAuxiliaryEdgeCases:
         assert parsed == "", "边界条件测试失败：空字符串解析结果不正确"
 
     def test_edge_case_empty_object(self):
-        """边界条件测试：空对象"""
+        """边界条件测试：空对象."""
         from src.utils.fast_json import fast_dumps, fast_loads
 
         # 边界条件：空对象
@@ -708,7 +708,7 @@ class TestDataAuxiliaryEdgeCases:
         assert parsed == {}, "边界条件测试失败：空对象解析结果不正确"
 
     def test_edge_case_empty_array(self):
-        """边界条件测试：空数组"""
+        """边界条件测试：空数组."""
         from src.utils.fast_json import fast_dumps, fast_loads
 
         # 边界条件：空数组
@@ -723,7 +723,7 @@ class TestDataAuxiliaryEdgeCases:
         assert parsed == [], "边界条件测试失败：空数组解析结果不正确"
 
     def test_edge_case_large_data(self):
-        """边界条件测试：大数据"""
+        """边界条件测试：大数据."""
         from src.utils.fast_json import fast_dumps, fast_loads
 
         # 边界条件：大数据
@@ -738,7 +738,7 @@ class TestDataAuxiliaryEdgeCases:
         assert parsed == test_data, "边界条件测试失败：大数据解析结果不正确"
 
     def test_edge_case_empty_bytes(self):
-        """边界条件测试：空字节串"""
+        """边界条件测试：空字节串."""
         from src.core.hash_utils import HashUtils
 
         # 边界条件：空字节串
@@ -753,7 +753,7 @@ class TestDataAuxiliaryEdgeCases:
         )
 
     def test_edge_case_large_bytes(self):
-        """边界条件测试：大字节串"""
+        """边界条件测试：大字节串."""
         from src.core.hash_utils import HashUtils
 
         # 边界条件：大字节串

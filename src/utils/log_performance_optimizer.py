@@ -23,7 +23,7 @@ from .logging_config import get_configured_logger
 
 @dataclass
 class LogPerformanceConfig:
-    """日志性能配置"""
+    """日志性能配置."""
 
     async_enabled: bool = True  # 是否启用异步日志
     buffer_size: int = 10000  # 日志缓冲区大小
@@ -36,10 +36,10 @@ class LogPerformanceConfig:
 
 
 class AsyncLogBuffer:
-    """异步日志缓冲区"""
+    """异步日志缓冲区."""
 
     def __init__(self, config: LogPerformanceConfig) -> None:
-        """初始化异步日志缓冲区
+        """初始化异步日志缓冲区.
 
         Args:
             config: 性能配置
@@ -65,16 +65,16 @@ class AsyncLogBuffer:
         )
 
     def add_handler(self, handler: logging.Handler) -> None:
-        """添加日志处理器"""
+        """添加日志处理器."""
         self._handlers.append(handler)
 
     def remove_handler(self, handler: logging.Handler) -> None:
-        """移除日志处理器"""
+        """移除日志处理器."""
         if handler in self._handlers:
             self._handlers.remove(handler)
 
     def emit(self, record: logging.LogRecord) -> None:
-        """异步发出日志记录"""
+        """异步发出日志记录."""
         try:
             self.queue.put_nowait(record)
         except queue.Full:
@@ -85,7 +85,7 @@ class AsyncLogBuffer:
                 _warn_logger.warning("日志缓冲区已满，已丢弃 %d 条记录", self._dropped_count)
 
     def _flush_loop(self) -> None:
-        """后台刷新循环"""
+        """后台刷新循环."""
         while not self._stop_event.is_set():
             try:
                 # 批量获取日志记录
@@ -106,7 +106,7 @@ class AsyncLogBuffer:
                 _flush_logger.error("日志刷新循环错误: %s", e)
 
     def _batch_write(self, records: list[logging.LogRecord]) -> None:
-        """批量写入日志记录"""
+        """批量写入日志记录."""
         for handler in self._handlers:
             try:
                 for record in records:
@@ -116,7 +116,7 @@ class AsyncLogBuffer:
                 _batch_logger.error("批量写入错误: %s", e)
 
     def flush(self) -> None:
-        """手动刷新缓冲区"""
+        """手动刷新缓冲区."""
         records = []
         while not self.queue.empty():
             try:
@@ -130,7 +130,7 @@ class AsyncLogBuffer:
             self._batch_write(records)
 
     def close(self) -> None:
-        """关闭缓冲区"""
+        """关闭缓冲区."""
         _logger = get_configured_logger(__name__)
         _logger.info(
             f"AsyncLogBuffer 正在关闭: queue_size={self.queue.qsize()}, "
@@ -143,7 +143,7 @@ class AsyncLogBuffer:
         _logger.info("AsyncLogBuffer 已关闭")
 
     def get_stats(self) -> dict[str, Any]:
-        """获取统计信息"""
+        """获取统计信息."""
         return {
             "queue_size": self.queue.qsize(),
             "dropped_count": self._dropped_count,
@@ -152,10 +152,10 @@ class AsyncLogBuffer:
 
 
 class LogPerformanceOptimizer:
-    """日志性能优化器"""
+    """日志性能优化器."""
 
     def __init__(self, config: LogPerformanceConfig | None = None) -> None:
-        """初始化性能优化器
+        """初始化性能优化器.
 
         Args:
             config: 性能配置
@@ -166,14 +166,14 @@ class LogPerformanceOptimizer:
         self._initialized = False
 
     def initialize(self) -> None:
-        """初始化优化器"""
+        """初始化优化器."""
         if not self._initialized:
             if self.config.async_enabled:
                 self.async_buffer = AsyncLogBuffer(self.config)
             self._initialized = True
 
     def optimize_handler(self, handler: logging.Handler) -> logging.Handler:
-        """优化日志处理器
+        """优化日志处理器.
 
         Args:
             handler: 原始日志处理器
@@ -206,7 +206,7 @@ class LogPerformanceOptimizer:
         return handler
 
     def optimize_logger(self, logger: logging.Logger) -> logging.Logger:
-        """优化日志记录器
+        """优化日志记录器.
 
         Args:
             logger: 原始日志记录器
@@ -228,7 +228,7 @@ class LogPerformanceOptimizer:
         return logger
 
     def get_platform_optimizations(self) -> dict[str, Any]:
-        """获取平台特定的优化策略
+        """获取平台特定的优化策略.
 
         Returns:
             平台优化策略
@@ -249,7 +249,7 @@ class LogPerformanceOptimizer:
         return optimizations
 
     def get_memory_usage(self) -> float:
-        """获取当前内存使用情况
+        """获取当前内存使用情况.
 
         Returns:
             内存使用量（MB）
@@ -265,7 +265,7 @@ class LogPerformanceOptimizer:
             return 0.0
 
     def should_throttle(self) -> bool:
-        """判断是否应该节流
+        """判断是否应该节流.
 
         Returns:
             是否应该节流
@@ -275,12 +275,12 @@ class LogPerformanceOptimizer:
         return memory_usage > self.config.memory_threshold
 
     def close(self) -> None:
-        """关闭优化器"""
+        """关闭优化器."""
         if self.async_buffer:
             self.async_buffer.close()
 
     def get_stats(self) -> dict[str, Any]:
-        """获取优化器统计信息
+        """获取优化器统计信息.
 
         Returns:
             统计信息
@@ -301,10 +301,10 @@ class LogPerformanceOptimizer:
 
 
 class LogThrottler:
-    """日志节流器"""
+    """日志节流器."""
 
     def __init__(self, max_logs_per_second: float = 100.0) -> None:
-        """初始化日志节流器
+        """初始化日志节流器.
 
         Args:
             max_logs_per_second: 每秒最大日志数
@@ -316,7 +316,7 @@ class LogThrottler:
         self._lock = threading.Lock()
 
     def should_log(self) -> bool:
-        """判断是否应该记录日志
+        """判断是否应该记录日志.
 
         Returns:
             是否应该记录日志
@@ -339,7 +339,7 @@ class LogThrottler:
 
 
 def log_performance_decorator(logger: logging.Logger, operation: str, level: str = "DEBUG") -> Callable:
-    """性能监控装饰器
+    """性能监控装饰器.
 
     Args:
         logger: 日志记录器
@@ -376,7 +376,7 @@ _performance_optimizer: LogPerformanceOptimizer | None = None
 def get_performance_optimizer(
     config: LogPerformanceConfig | None = None,
 ) -> LogPerformanceOptimizer:
-    """获取性能优化器实例
+    """获取性能优化器实例.
 
     Args:
         config: 性能配置
@@ -392,7 +392,7 @@ def get_performance_optimizer(
 
 
 def optimize_logger(logger: logging.Logger) -> logging.Logger:
-    """优化日志记录器
+    """优化日志记录器.
 
     Args:
         logger: 日志记录器
@@ -406,7 +406,7 @@ def optimize_logger(logger: logging.Logger) -> logging.Logger:
 
 
 def optimize_handler(handler: logging.Handler) -> logging.Handler:
-    """优化日志处理器
+    """优化日志处理器.
 
     Args:
         handler: 日志处理器
@@ -420,7 +420,7 @@ def optimize_handler(handler: logging.Handler) -> logging.Handler:
 
 
 def get_log_stats() -> dict[str, Any]:
-    """获取日志系统统计信息
+    """获取日志系统统计信息.
 
     Returns:
         统计信息

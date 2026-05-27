@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GPU自适应性能优化器测试"""
+"""GPU自适应性能优化器测试."""
 
 import pytest
 
@@ -13,14 +13,14 @@ from src.gpu.performance_optimizer import (
 
 @pytest.mark.skip(reason="Optimizer API changed in Phase 6 refactor")
 class TestGPUPerformanceOptimizer:
-    """测试GPU性能优化器"""
+    """测试GPU性能优化器."""
 
     def setup_method(self, method):
-        """设置测试环境"""
+        """设置测试环境."""
         self.optimizer = GPUPerformanceOptimizer()
 
     def test_vendor_detection(self):
-        """测试GPU厂商检测"""
+        """测试GPU厂商检测."""
         # NVIDIA
         self.assertEqual(
             self.optimizer.detect_vendor("NVIDIA GeForce RTX 3080", "NVIDIA Corporation"),
@@ -44,7 +44,7 @@ class TestGPUPerformanceOptimizer:
         assert self.optimizer.detect_vendor("Unknown GPU" == "Unknown", GPUVendor.UNKNOWN)
 
     def test_create_optimized_profile_nvidia(self):
-        """测试NVIDIA GPU配置优化"""
+        """测试NVIDIA GPU配置优化."""
         profile = self.optimizer.create_optimized_profile(
             device_name="NVIDIA GeForce RTX 3080",
             vendor_str="NVIDIA Corporation",
@@ -59,7 +59,7 @@ class TestGPUPerformanceOptimizer:
         assert profile.enable_async_execution
 
     def test_create_optimized_profile_intel(self):
-        """测试Intel GPU配置优化"""
+        """测试Intel GPU配置优化."""
         profile = self.optimizer.create_optimized_profile(
             device_name="Intel Arc A770",
             vendor_str="Intel Corporation",
@@ -73,7 +73,7 @@ class TestGPUPerformanceOptimizer:
         assert profile.preferred_mode == "range_scan"
 
     def test_create_optimized_profile_amd(self):
-        """测试AMD GPU配置优化"""
+        """测试AMD GPU配置优化."""
         profile = self.optimizer.create_optimized_profile(
             device_name="AMD Radeon RX 6800 XT",
             vendor_str="Advanced Micro Devices",
@@ -86,7 +86,7 @@ class TestGPUPerformanceOptimizer:
         assert profile.memory_usage_ratio >= 0.6
 
     def test_record_performance(self):
-        """测试性能指标记录"""
+        """测试性能指标记录."""
         metrics = PerformanceMetrics(
             kernel_compile_time_ms=15000,
             batch_execution_time_ms=50,
@@ -102,7 +102,7 @@ class TestGPUPerformanceOptimizer:
         assert self.optimizer._metrics_history[0].keys_per_second == 100000
 
     def test_analyze_and_adjust_error_rate_too_high(self):
-        """测试错误率过高时的调整"""
+        """测试错误率过高时的调整."""
         # 先记录一些性能数据
         for _i in range(10):
             self.optimizer.record_performance(
@@ -127,7 +127,7 @@ class TestGPUPerformanceOptimizer:
         assert "error_rate_too_high" in adjustments
 
     def test_analyze_and_adjust_execution_too_slow(self):
-        """测试执行时间过长时的调整"""
+        """测试执行时间过长时的调整."""
         # 记录慢速性能数据
         for _i in range(10):
             self.optimizer.record_performance(
@@ -156,7 +156,7 @@ class TestGPUPerformanceOptimizer:
         assert "execution_too_slow" in adjustments
 
     def test_analyze_and_adjust_performance_good(self):
-        """测试性能良好时的调整"""
+        """测试性能良好时的调整."""
         # 记录快速性能数据
         for _i in range(10):
             self.optimizer.record_performance(
@@ -185,7 +185,7 @@ class TestGPUPerformanceOptimizer:
         assert "performance_good" in adjustments
 
     def test_get_optimization_report(self):
-        """测试优化报告生成"""
+        """测试优化报告生成."""
         # 创建配置并记录数据
         self.optimizer.create_optimized_profile(
             device_name="NVIDIA RTX 3080",
@@ -207,7 +207,7 @@ class TestGPUPerformanceOptimizer:
         assert report["profile"]["vendor"] == "nvidia"
 
     def test_singleton_pattern(self):
-        """测试单例模式"""
+        """测试单例模式."""
         optimizer1 = get_gpu_optimizer()
         optimizer2 = get_gpu_optimizer()
 
@@ -215,7 +215,7 @@ class TestGPUPerformanceOptimizer:
         assert optimizer1 is optimizer2
 
     def test_reset(self):
-        """测试重置功能"""
+        """测试重置功能."""
         # 添加一些数据
         self.optimizer.record_performance(PerformanceMetrics())
         self.optimizer.create_optimized_profile("Test", "Test", 8 * 1024**3)
@@ -229,7 +229,7 @@ class TestGPUPerformanceOptimizer:
         assert self.optimizer._adjustment_count == 0
 
     def test_memory_based_batch_adjustment(self):
-        """测试基于显存的batch_size调整"""
+        """测试基于显存的batch_size调整."""
         # 小显存（1GB）
         profile_small = self.optimizer.create_optimized_profile(
             device_name="Test GPU",
@@ -248,7 +248,7 @@ class TestGPUPerformanceOptimizer:
         assert profile_large.max_batch_size > profile_small.max_batch_size
 
     def test_compile_time_based_adjustment(self):
-        """测试基于编译时间的调整"""
+        """测试基于编译时间的调整."""
         # 快速编译
         profile_fast = self.optimizer.create_optimized_profile(
             device_name="Test GPU",

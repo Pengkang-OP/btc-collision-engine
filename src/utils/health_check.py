@@ -32,7 +32,7 @@ logger = get_configured_logger(__name__)
 
 
 class HealthChecker:
-    """系统健康检查器
+    """系统健康检查器.
 
     检查项:
     - Python版本兼容性
@@ -49,7 +49,7 @@ class HealthChecker:
     """
 
     def __init__(self, project_root: str | None = None) -> None:
-        """初始化健康检查器
+        """初始化健康检查器.
 
         Args:
             project_root: 项目根目录路径
@@ -62,11 +62,11 @@ class HealthChecker:
         self.required_configs = ["config.json", "config.production.json"]
 
     def check_python_version(self) -> tuple[bool, str]:
-        """检查Python版本兼容性"""
+        """检查Python版本兼容性."""
         return True, f"Python版本: {sys.version}"
 
     def check_dependencies(self) -> tuple[bool, str]:
-        """检查关键依赖是否安装"""
+        """检查关键依赖是否安装."""
         required_deps = {
             "coincurve": "椭圆曲线运算",
             "gmpy2": "大整数优化",
@@ -91,7 +91,7 @@ class HealthChecker:
         return True, f"所有依赖已安装: {', '.join(available)}"
 
     def check_config_file(self) -> tuple[bool, str]:
-        """检查配置文件"""
+        """检查配置文件."""
         config_path = os.path.join(self.project_root, "config.json")
 
         if not pathlib.Path(config_path).exists():
@@ -111,7 +111,7 @@ class HealthChecker:
             return False, f"配置文件检查失败: {e}"
 
     def check_disk_space(self, min_mb: int = 100) -> tuple[bool, str]:
-        """检查磁盘空间
+        """检查磁盘空间.
 
         Args:
             min_mb: 最小可用空间要求（MB）
@@ -129,7 +129,7 @@ class HealthChecker:
             return False, f"磁盘空间检查失败: {e}"
 
     def check_directories(self) -> tuple[bool, str]:
-        """检查必要目录是否存在且有权限"""
+        """检查必要目录是否存在且有权限."""
         required_dirs = ["logs", "data_logs"]
         missing = []
         no_permission = []
@@ -162,7 +162,7 @@ class HealthChecker:
         return True, f"所有必要目录正常: {', '.join(required_dirs)}"
 
     def check_gpu_availability(self) -> tuple[bool, str]:
-        """检查GPU设备可用性"""
+        """检查GPU设备可用性."""
         try:
             import pyopencl as cl
 
@@ -186,7 +186,7 @@ class HealthChecker:
             return False, f"GPU检查失败: {e}"
 
     def check_monitoring_system(self) -> tuple[bool, str]:
-        """检查监控系统状态"""
+        """检查监控系统状态."""
         try:
             from src.monitoring.monitoring_system import DataStorage
 
@@ -214,7 +214,7 @@ class HealthChecker:
             return False, f"监控系统检查失败: {e}"
 
     def check_config_files(self) -> tuple[bool, str]:
-        """检查所有必需的配置文件"""
+        """检查所有必需的配置文件."""
         missing = []
         invalid = []
 
@@ -245,7 +245,7 @@ class HealthChecker:
         return True, f"所有配置文件正常: {', '.join(self.required_configs)}"
 
     def check_config_permissions(self) -> tuple[bool, str]:
-        """检查配置文件权限
+        """检查配置文件权限.
 
         v5.0.1: Windows 上跳过 Unix 权限位检查
         (Windows 不使用 POSIX 权限模型，st_mode 位无意义)。
@@ -277,7 +277,7 @@ class HealthChecker:
         return True, "配置文件权限安全"
 
     def check_network_connectivity(self) -> tuple[bool, str]:
-        """检查网络连通性"""
+        """检查网络连通性."""
         test_hosts = [
             ("www.google.com", 443),
             ("api.github.com", 443),
@@ -306,7 +306,7 @@ class HealthChecker:
         return True, f"网络连接正常: {', '.join(succeeded)}"
 
     def check_port_availability(self, ports: list[int] | None = None) -> tuple[bool, str]:
-        """检查端口占用情况"""
+        """检查端口占用情况."""
         ports = ports or [9090, 3000, 9100]
         used_ports = []
 
@@ -321,7 +321,7 @@ class HealthChecker:
         return True, f"所有端口可用: {', '.join(map(str, ports))}"
 
     def check_process_status(self) -> tuple[bool, str]:
-        """检查进程状态"""
+        """检查进程状态."""
         try:
             import psutil
 
@@ -345,7 +345,7 @@ class HealthChecker:
             return False, f"进程检查失败: {e}"
 
     def check_dependency_versions(self) -> tuple[bool, str]:
-        """检查依赖版本兼容性"""
+        """检查依赖版本兼容性."""
         version_requirements = {
             "coincurve": (18, 0, 0),
             "gmpy2": (2, 1, 0),
@@ -382,7 +382,7 @@ class HealthChecker:
         include_gpu: bool = False,
         include_network: bool = False,
     ) -> dict[str, tuple[bool, str]]:
-        """运行所有健康检查
+        """运行所有健康检查.
 
         Args:
             include_gpu: 是否包含GPU检查
@@ -443,7 +443,7 @@ class HealthChecker:
         return self.results
 
     def generate_report(self) -> str:
-        """生成健康检查报告"""
+        """生成健康检查报告."""
         lines = ["系统健康检查报告", "=" * 70, ""]
 
         for check_name, (passed, message) in self.results.items():
@@ -456,7 +456,7 @@ class HealthChecker:
 
 
 def main() -> None:
-    """健康检查CLI入口"""
+    """健康检查CLI入口."""
     import argparse
 
     parser = argparse.ArgumentParser(description="BTC碰撞引擎系统健康检查")

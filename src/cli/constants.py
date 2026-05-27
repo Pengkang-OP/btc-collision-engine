@@ -1,33 +1,17 @@
-"""CLI constants and defaults."""
+"""CLI constants — re-exported from src.constants for backward compatibility."""
 
-# Exit codes
-EXIT_SUCCESS = 0
-EXIT_ERROR = 1
-EXIT_INVALID_CONFIG = 2
-EXIT_GPU_ERROR = 3
-
-# Output formatting
-PROGRESS_BAR_WIDTH = 40
-DEFAULT_PAGE_SIZE = 20
-
-# Config file paths
-CONFIG_FILE_NAME = "config.json"
-CONFIG_EXAMPLE_FILE = "config.example.json"
-# 向导标记文件路径（相对项目根目录；调用方需解析为绝对路径）
-WIZARD_MARKER_PATH = ".wizard_completed"
-
-# Required config sections
-REQUIRED_CONFIG_SECTIONS = [
-    "collision",
-    "engine",
-    "logging",
-    "monitoring",
-    "gpu",
-    "crypto",
-    "security",
-]
-
-# Separator lines for CLI output
-SEPARATOR_EQUAL = "=" * 64
-SEPARATOR_DASHED = "-" * 64
-SEPARATOR_DASHED_SHORT = "-" * 40
+from src.constants import (  # noqa: F401, E402
+    CONFIG_EXAMPLE_FILE,
+    CONFIG_FILE_NAME,
+    DEFAULT_PAGE_SIZE,
+    EXIT_ERROR,
+    EXIT_GPU_ERROR,
+    EXIT_INVALID_CONFIG,
+    EXIT_SUCCESS,
+    PROGRESS_BAR_WIDTH,
+    REQUIRED_CONFIG_SECTIONS,
+    SEPARATOR_DASHED,
+    SEPARATOR_DASHED_SHORT,
+    SEPARATOR_EQUAL,
+    WIZARD_MARKER_PATH,
+)

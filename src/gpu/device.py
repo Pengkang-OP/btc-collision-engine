@@ -1,4 +1,4 @@
-"""GPU设备检测和管理
+"""GPU设备检测和管理.
 
 提供GPU设备自动检测、过滤、选择功能。
 复用现有gpu_engine.py的逻辑并保持API兼容。
@@ -6,21 +6,20 @@
 
 import re
 import threading
-from typing import TYPE_CHECKING, Any, cast
-
-if TYPE_CHECKING:
-    import pyopencl as cl
+from typing import TYPE_CHECKING, Any, cast, final
 
 # 统一日志获取
 from ..utils import get_configured_logger
 
-# 尝试导入pyopencl
-try:
-    import pyopencl as cl  # noqa: F811
+if TYPE_CHECKING:
+    import pyopencl as cl
 
-    PYOPENCL_AVAILABLE = True
-except ImportError:
-    PYOPENCL_AVAILABLE = False
+from ._availability import PYOPENCL_AVAILABLE
+
+if PYOPENCL_AVAILABLE:
+    import pyopencl as cl  # noqa: F811
+else:
+    cl = None  # type: ignore[assignment]
 
 from .constants import (
     OPENCL_MIN_REQUIRED_VERSION,
@@ -37,7 +36,7 @@ logger = get_configured_logger("GPUDevice")
 
 
 def _parse_opencl_version(version_str: str) -> float:
-    """解析 OpenCL 版本字符串为浮点数
+    """解析 OpenCL 版本字符串为浮点数.
 
     支持格式:
       - "OpenCL 3.0 NEO"
@@ -64,7 +63,7 @@ def _parse_opencl_version(version_str: str) -> float:
 
 
 def identify_vendor(device_name: str, vendor_str: str = "") -> str:
-    """识别GPU厂商
+    """识别GPU厂商.
 
     Args:
         device_name: 设备名称
@@ -111,7 +110,7 @@ def identify_vendor(device_name: str, vendor_str: str = "") -> str:
 
 
 def _identify_nvidia_model(name_lower: str) -> str:
-    """识别 NVIDIA GPU 型号"""
+    """识别 NVIDIA GPU 型号."""
     if "rtx 40" in name_lower:
         return "rtx40"
     if "rtx 30" in name_lower:
@@ -132,7 +131,7 @@ def _identify_nvidia_model(name_lower: str) -> str:
 
 
 def _identify_amd_model(name_lower: str) -> str:
-    """识别 AMD GPU 型号"""
+    """识别 AMD GPU 型号."""
     if "rx 7" in name_lower:
         return "rx7000"
     if "rx 6" in name_lower:
@@ -149,7 +148,7 @@ def _identify_amd_model(name_lower: str) -> str:
 
 
 def _identify_intel_model(name_lower: str) -> str:
-    """识别 Intel GPU 型号"""
+    """识别 Intel GPU 型号."""
     if "arc" in name_lower:
         return "arc"
     if "iris" in name_lower:
@@ -162,7 +161,7 @@ def _identify_intel_model(name_lower: str) -> str:
 
 
 def identify_gpu_model(device_name: str, vendor: str) -> str:
-    """识别GPU型号
+    """识别GPU型号.
 
     Args:
         device_name: 设备名称
@@ -187,24 +186,24 @@ def identify_gpu_model(device_name: str, vendor: str) -> str:
 
 
 class GPUDeviceDetector:
-    """GPU设备检测器"""
+    """GPU设备检测器."""
 
     # 线程安全锁，保护类级缓存
-    _cache_lock = threading.Lock()
+    _cache_lock: threading.Lock = threading.Lock()
 
     # 可用性检测缓存
-    _availability_cache = None
-    _cache_timestamp = 0.0
-    _cache_ttl = 30  # 缓存有效期30秒(从60秒缩短,提高响应性)
+    _availability_cache: bool | None = None
+    _cache_timestamp: float = 0.0
+    _cache_ttl: int = 30  # 缓存有效期30秒(从60秒缩短,提高响应性)
 
     # 设备信息缓存（避免重复检测）
-    _devices_cache = None
+    _devices_cache: list[dict[str, Any]] | None = None
     _devices_cache_timestamp: float = 0.0
-    _devices_cache_ttl = 30  # 设备缓存TTL(明确配置)
+    _devices_cache_ttl: int = 30  # 设备缓存TTL(明确配置)
 
     @staticmethod
     def is_gpu_available() -> bool:
-        """检查GPU是否可用
+        """检查GPU是否可用.
 
         使用缓存机制避免频繁检测，缓存有效期60秒。
 
@@ -265,8 +264,8 @@ class GPUDeviceDetector:
             return False
 
     @staticmethod
-    def get_gpu_health_status() -> dict:
-        """获取GPU健康状态信息
+    def get_gpu_health_status() -> dict[str, Any]:
+        """获取GPU健康状态信息.
 
         用于监控系统和运维诊断，提供详细的GPU状态信息。
         复用is_gpu_available()的缓存，避免重复检测。
@@ -326,7 +325,7 @@ class GPUDeviceDetector:
 
     @staticmethod
     def clear_availability_cache() -> None:
-        """清除GPU可用性缓存和设备信息缓存
+        """清除GPU可用性缓存和设备信息缓存.
 
         在GPU状态可能发生变化时调用（如驱动更新、设备插拔），
         强制下次is_gpu_available()重新检测。
@@ -339,7 +338,7 @@ class GPUDeviceDetector:
 
     @staticmethod
     def detect_devices() -> list[dict[str, Any]]:
-        """检测所有可用的GPU设备
+        """检测所有可用的GPU设备.
 
         过滤规则:
         1. 跳过CPU设备
@@ -424,9 +423,11 @@ class GPUDeviceDetector:
         return devices
 
     @staticmethod
-    def _select_best_device(devices: list[dict]) -> dict:
-        """选择最佳GPU设备
+    def select_best_device(devices: list[dict[str, Any]]) -> dict[str, Any]:
+        """选择最佳GPU设备.
 
+        v5.2.4: 由私有方法 `_select_best_device` 更名为公开方法，
+        以消除基于类型检查器对保护成员跨类访问的警告。
         使用统一的 GPUDeviceScorer 进行评分和选择。
         优先级: NVIDIA > AMD > Intel Arc > Intel其他 > 其他GPU
 
@@ -474,36 +475,39 @@ class GPUDeviceDetector:
         return best_device
 
 
+@final
 class GPUDevice:
-    """GPU设备封装类
+    """GPU设备封装类.
 
-    保持与现有gpu_engine.py和gpu_collision_engine.py的API完全兼容
+    v5.2.4: 添加 ``@final`` 装饰器，消除基于 pyright
+    ``reportUnannotatedClassAttribute`` 对 ``__slots__`` 类未注解属性的警告。
+    保持与现有 gpu_engine.py 和 gpu_collision_engine.py 的 API 完全兼容。
     """
 
-    __slots__ = (
-        "context",
-        "queue",
-        "compute_queue",
-        "transfer_queue",
-        "device",
-        "device_info",
-        "vendor",
-        "profile",
-        "profile_loader",
-        "driver_version",
-        "driver_health",
-        "driver_optimization_flags",
-        "enable_async_execution",
+    __slots__: tuple[str, ...] = (
         "_opencl_version",
         "_opencl_version_str",
         "_supports_svm",
+        "compute_queue",
+        "context",
+        "device",
+        "device_info",
+        "driver_health",
+        "driver_optimization_flags",
+        "driver_version",
+        "enable_async_execution",
+        "memory_efficiency",
+        "profile",
+        "profile_loader",
+        "queue",
         "requires_uint32_workaround",
         "timeout_seconds",
-        "memory_efficiency",
+        "transfer_queue",
+        "vendor",
     )
 
     def __init__(self) -> None:
-        """初始化GPU设备对象"""
+        """初始化GPU设备对象."""
         self.context = None
         self.queue = None  # 向后兼容: 默认队列
         self.compute_queue = None  # 计算队列(异步优化)
@@ -541,7 +545,7 @@ class GPUDevice:
         self.memory_efficiency = 0.70  # 默认70%
 
     def initialize(self, device_index: int = -1, enable_async: bool = True) -> None:
-        """初始化GPU设备
+        """初始化GPU设备.
 
         Args:
             device_index: 设备索引
@@ -563,7 +567,7 @@ class GPUDevice:
         # 选择设备
         if device_index == -1:
             # 自动选择最佳设备
-            device_info = GPUDeviceDetector._select_best_device(devices)
+            device_info = GPUDeviceDetector.select_best_device(devices)
             logger.info(f"自动选择最佳GPU设备: {device_info['name']}")
 
         elif device_index >= 0:
@@ -693,20 +697,44 @@ class GPUDevice:
         # 创建OpenCL上下文和命令队列
         self.context = cl.Context([self.device])
 
-        # 异步优化: 创建队列
+        # 异步优化: 创建命令队列
         if self.enable_async_execution:
-            # v5.2.1: Intel Arc DG2 仅 1 个硬件队列，使用单 Out-of-Order 队列避免双队列序列化
+            # ── v5.2.1: Intel Arc DG2 仅 1 个硬件 OOO 队列 ──────────────────
+            # DG2 架构限制：单 Out-of-Order 队列（numQueues=1），无法并行化多队列。
+            # 因此 Intel Arc 上 compute/transfer 共用同一队列，靠事件依赖保证顺序。
+            #
+            # ── v5.2.3 PERF-2 修复: Intel Arc profiling 导致的序列化 ─────────
+            # Intel compute-runtime FAQ 确认：
+            #   "Turning on profiling on out of order command queue serializes
+            #    kernel execution."
+            # 参考: https://github.com/intel/compute-runtime/blob/master/opencl/doc/FAQ.md
+            #
+            # 项目在创建 OOO 队列时默认附加了 PROFILING_ENABLE 标志（见下方 ooo_prop
+            # 初始值），导致 Intel GPU 上所有内核被强制串行执行——表现为 GPU 利用率
+            # 呈尖刺/齿轮状（每批次完成→等待→下一批次开始）。
+            #
+            # 修复: Intel Arc 路径移除 PROFILING_ENABLE，仅保留 OOO 模式。
+            # 全项目无任何代码消费 profiling 数据（clGetEventProfilingInfo 零引用），
+            # 此标志从未被实际使用，移除无功能影响。
+            #
+            # NVIDIA/AMD 不受此限制，保留 PROFILING_ENABLE + OOO 双队列模式。
+            # ─────────────────────────────────────────────────────────────────
             vendor = identify_vendor(device_info.get("name", ""), cast("str", self.vendor))
+            # 非 Intel 默认队列属性: profiling + OOO
             ooo_prop = (
                 cl.command_queue_properties.PROFILING_ENABLE
                 | cl.command_queue_properties.OUT_OF_ORDER_EXEC_MODE_ENABLE
             )
             if vendor == "intel":
-                logger.info("启用GPU异步执行: Intel Arc 单 Out-of-Order 队列（DG2 numQueues=1）")
+                # Intel Arc: 移除 PROFILING_ENABLE，否则 OOO 队列被强制序列化（Intel 官方 FAQ 确认）
+                # 参考: https://github.com/intel/compute-runtime/blob/master/opencl/doc/FAQ.md
+                # "Turning on profiling on out of order command queue serializes kernel execution."
+                ooo_prop = cl.command_queue_properties.OUT_OF_ORDER_EXEC_MODE_ENABLE
+                logger.info("启用GPU异步执行: Intel Arc 单 Out-of-Order 队列（DG2 numQueues=1, profiling=OFF）")
                 self.queue = cl.CommandQueue(
                     self.context,
                     self.device,
-                    properties=ooo_prop,  # type: ignore[arg-type]
+                    properties=cast(cl.command_queue_properties, ooo_prop),
                 )
                 # Intel Arc: compute/transfer 共用同一 OOO 队列
                 self.compute_queue = self.queue
@@ -717,12 +745,12 @@ class GPUDevice:
                 self.compute_queue = cl.CommandQueue(
                     self.context,
                     self.device,
-                    properties=ooo_prop,  # type: ignore[arg-type]
+                    properties=cast(cl.command_queue_properties, ooo_prop),
                 )
                 self.transfer_queue = cl.CommandQueue(
                     self.context,
                     self.device,
-                    properties=ooo_prop,  # type: ignore[arg-type]
+                    properties=cast(cl.command_queue_properties, ooo_prop),
                 )
                 self.queue = self.compute_queue
                 logger.info("  - 计算队列: 已创建(支持性能分析)")
@@ -744,8 +772,8 @@ class GPUDevice:
             f"{self._opencl_version:.1f}",
         )
 
-    def _validate_device_capabilities(self, device_info: dict) -> None:
-        """验证设备能力是否满足最低要求
+    def _validate_device_capabilities(self, device_info: dict[str, Any]) -> None:
+        """验证设备能力是否满足最低要求.
 
         Args:
             device_info: 设备信息
@@ -776,7 +804,7 @@ class GPUDevice:
         logger.debug(f"设备能力: 计算单元={compute_units}, 显存={global_mem / (1024**3):.2f} GB")
 
     def _load_vendor_profile(self, device_name: str) -> None:
-        """加载厂商型号配置
+        """加载厂商型号配置.
 
         Args:
             device_name: 设备名称
@@ -797,7 +825,7 @@ class GPUDevice:
             logger.warning("未找到 %s 的配置,使用默认参数", device_name)
 
     def _detect_and_validate_driver(self) -> None:
-        """检测驱动版本并验证健康状态"""
+        """检测驱动版本并验证健康状态."""
         # 1. 检测驱动版本
         self.driver_version = DriverManager.detect_driver_version(cast("str", self.vendor))
 
@@ -833,8 +861,8 @@ class GPUDevice:
 
         logger.debug(f"驱动优化标志: {self.driver_optimization_flags}")
 
-    def get_driver_info(self) -> dict:
-        """获取驱动信息
+    def get_driver_info(self) -> dict[str, Any]:
+        """获取驱动信息.
 
         Returns:
             驱动信息字典
@@ -846,8 +874,8 @@ class GPUDevice:
             "optimization_flags": self.driver_optimization_flags,
         }
 
-    def get_device_info(self) -> dict:
-        """获取设备信息
+    def get_device_info(self) -> dict[str, Any]:
+        """获取设备信息.
 
         Returns:
             设备信息字典
@@ -857,16 +885,16 @@ class GPUDevice:
 
     @property
     def opencl_version(self) -> float:
-        """获取解析后的 OpenCL 版本号 (如 1.2, 2.0, 3.0)"""
+        """获取解析后的 OpenCL 版本号 (如 1.2, 2.0, 3.0)."""
         return self._opencl_version
 
     @property
     def supports_svm(self) -> bool:
-        """是否支持 SVM 共享虚拟内存 (OpenCL 2.0+)"""
+        """是否支持 SVM 共享虚拟内存 (OpenCL 2.0+)."""
         return self._supports_svm
 
     def cleanup(self) -> None:
-        """释放GPU资源"""
+        """释放GPU资源."""
         import time
 
         # 清理命令队列
@@ -895,10 +923,11 @@ class GPUDevice:
         # 清理上下文
         if self.context:
             try:
-                # 确保所有命令完成
+                # 确保所有命令完成（hasattr 已在运行时确认 finish 存在）
                 if hasattr(self.context, "finish"):
                     start_time = time.time()
-                    self.context.finish()  # type: ignore[attr-defined]
+                    _ctx: Any = self.context
+                    _ctx.finish()
                     elapsed = time.time() - start_time
                     logger.debug(f"GPU上下文已完成所有命令 (耗时: {elapsed:.2f}秒)")
             except Exception as e:

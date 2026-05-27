@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""文档质量智能告警系统
+"""文档质量智能告警系统.
 
 监控文档质量变化，在质量下降时发出告警
 
@@ -19,13 +19,13 @@ from tools.quality_trend import QualityTrendAnalyzer  # noqa: E402
 
 
 class QualityAlertSystem:
-    """质量告警系统"""
+    """质量告警系统."""
 
     def __init__(self, history_file: str = "quality_history.json"):
         self.analyzer = QualityTrendAnalyzer(history_file)
 
     def check_alerts(self, current_score: float, threshold: float = 8.0) -> list[dict]:
-        """检查是否需要告警
+        """检查是否需要告警.
 
         Args:
             current_score: 当前平均评分
@@ -45,7 +45,7 @@ class QualityAlertSystem:
                     "message": f"文档质量评分低于阈值: {current_score:.1f} < {threshold}",
                     "score": current_score,
                     "threshold": threshold,
-                }
+                },
             )
 
         # 2. 趋势告警
@@ -61,7 +61,7 @@ class QualityAlertSystem:
                     "severity": "WARNING",
                     "message": f"文档质量持续下降: {trend['trend']:+.2f}",
                     "trend": trend["trend"],
-                }
+                },
             )
 
         # 3. 新文档告警(低分文档)
@@ -76,13 +76,13 @@ class QualityAlertSystem:
                             "severity": "WARNING",
                             "message": f"发现 {new_low} 个需要改进的文档",
                             "count": new_low,
-                        }
+                        },
                     )
 
         return alerts
 
     def print_alerts(self, alerts: list[dict]):
-        """打印告警信息"""
+        """打印告警信息."""
         if not alerts:
             print("\n✅ 无告警 - 文档质量良好")
             return
@@ -113,7 +113,7 @@ class QualityAlertSystem:
         print(f"{'=' * 60}")
 
     def should_fail_ci(self, alerts: list[dict]) -> bool:
-        """CI是否应该失败
+        """CI是否应该失败.
 
         Args:
             alerts: 告警列表
@@ -126,7 +126,7 @@ class QualityAlertSystem:
 
 
 def main():
-    """主函数"""
+    """主函数."""
     import argparse
 
     parser = argparse.ArgumentParser(description="文档质量智能告警系统")

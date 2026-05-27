@@ -1,4 +1,4 @@
-"""单GPU工作器
+"""单GPU工作器.
 
 封装单个GPU的碰撞引擎,在线程中独立运行私钥搜索任务。
 提供线程安全的状态管理和结果收集。
@@ -36,7 +36,7 @@ logger = get_configured_logger("GPUWorker")
 
 
 class SingleGPUWorker(threading.Thread):
-    """单GPU工作器线程
+    """单GPU工作器线程.
 
     在独立线程中运行单个GPU的私钥碰撞搜索。
 
@@ -94,7 +94,7 @@ class SingleGPUWorker(threading.Thread):
         range_start: int | None = None,  # range/brute_force 起始私钥
         range_end: int | None = None,  # range 结束私钥
     ):
-        """初始化GPU工作器
+        """初始化GPU工作器.
 
         Args:
             device_idx: GPU设备索引
@@ -163,7 +163,7 @@ class SingleGPUWorker(threading.Thread):
         logger.info(f"GPU工作器已创建: 设备={device_idx}, 范围={key_range[0]:,}-{key_range[1]:,}")
 
     def run(self) -> None:
-        """线程主循环"""
+        """线程主循环."""
         try:
             self._initialize_gpu_engine()
             with self._lock:
@@ -215,7 +215,7 @@ class SingleGPUWorker(threading.Thread):
             logger.info(f"GPU {self.device_idx} 工作器已停止")
 
     def _initialize_gpu_engine(self):
-        """初始化GPU碰撞引擎"""
+        """初始化GPU碰撞引擎."""
         try:
             # 导入GPU碰撞引擎
             from ..collision.gpu.engine import GPUCollisionEngine
@@ -247,7 +247,7 @@ class SingleGPUWorker(threading.Thread):
             raise
 
     def _run_monitor_loop(self, total_keys: int) -> None:
-        """监控循环：持续更新统计、检测完成条件。"""
+        """监控循环：持续更新统计、检测完成条件。."""
         _base_interval = 0.5
         _min_interval = 0.2
         _max_interval = 1.0
@@ -276,7 +276,7 @@ class SingleGPUWorker(threading.Thread):
             time.sleep(_adaptive_interval)
 
     def _handle_memory_error_retry(self, _depth: int = 0) -> None:
-        """处理 MemoryError：batch_size 减半后重试。
+        """处理 MemoryError：batch_size 减半后重试。.
 
         最多递归重试 3 次，防止 batch_size 已降至下限后仍 MemoryError 导致无限递归。
         """
@@ -308,14 +308,14 @@ class SingleGPUWorker(threading.Thread):
             logger.error(f"GPU {self.device_idx} 降批重试失败: {retry_err}")
 
     def _record_search_error(self, error: Exception, error_type: str) -> None:
-        """记录搜索错误到统计。"""
+        """记录搜索错误到统计。."""
         logger.error(f"GPU {self.device_idx} 搜索{error_type}错误: {error}")
         with self._lock:
             self._stats["error_count"] += 1
             self._stats["last_error"] = f"{type(error).__name__}: {error}"
 
     def _execute_search(self, _retry_depth: int = 0):
-        """执行私钥搜索（支持 random / range / brute_force 三种模式）。
+        """执行私钥搜索（支持 random / range / brute_force 三种模式）。.
 
         _retry_depth: 内部参数，由 _handle_memory_error_retry 传递，外部调用方不应使用。
         """
@@ -368,12 +368,12 @@ class SingleGPUWorker(threading.Thread):
             raise
 
     def _compute_throughput(self) -> None:
-        """计算并更新吞吐量统计（需在锁内调用）。"""
+        """计算并更新吞吐量统计（需在锁内调用）。."""
         if self._stats["elapsed_time"] > 0:
             self._stats["throughput"] = self._stats["keys_checked"] / self._stats["elapsed_time"]
 
     def _report_new_matches(self, matches: list, current_count: int) -> None:
-        """上报新增匹配结果（需在锁内调用）。"""
+        """上报新增匹配结果（需在锁内调用）。."""
         if current_count <= self._last_reported_match_count:
             return
         for i in range(self._last_reported_match_count, current_count):
@@ -404,7 +404,7 @@ class SingleGPUWorker(threading.Thread):
         self._last_reported_match_count = current_count
 
     def _update_stats(self):
-        """更新统计信息"""
+        """更新统计信息."""
         if not self._gpu_engine:
             return
 
@@ -466,7 +466,7 @@ class SingleGPUWorker(threading.Thread):
         _update_stats = profile_stats_update(_update_stats)
 
     def _cleanup(self) -> None:
-        """清理资源"""
+        """清理资源."""
         try:
             if self._gpu_engine:
                 self._gpu_engine.stop()  # stop() 内部已完整清理 GPU 资源
@@ -479,26 +479,26 @@ class SingleGPUWorker(threading.Thread):
             logger.error(f"GPU {self.device_idx} 清理失败: {type(e).__name__}: {e}")
 
     def stop_search(self) -> None:
-        """停止搜索"""
+        """停止搜索."""
         logger.info(f"GPU {self.device_idx} 收到停止信号")
         self._stop_event.set()
 
     def pause_search(self) -> None:
-        """暂停搜索"""
+        """暂停搜索."""
         logger.info(f"GPU {self.device_idx} 暂停")
         self._pause_event.clear()
         with self._lock:
             self._stats["status"] = "paused"
 
     def resume_search(self) -> None:
-        """恢复搜索"""
+        """恢复搜索."""
         logger.info(f"GPU {self.device_idx} 恢复")
         self._pause_event.set()
         with self._lock:
             self._stats["status"] = "running"
 
     def get_stats(self) -> dict:
-        """获取统计信息(线程安全)
+        """获取统计信息(线程安全).
 
         Returns:
             统计信息字典
@@ -508,7 +508,7 @@ class SingleGPUWorker(threading.Thread):
             return self._stats.copy()
 
     def get_results(self, max_results: int = 100) -> list:
-        """获取搜索结果
+        """获取搜索结果.
 
         Args:
             max_results: 最大返回数量
@@ -526,7 +526,7 @@ class SingleGPUWorker(threading.Thread):
         return results
 
     def is_running(self) -> bool:
-        """检查是否正在运行
+        """检查是否正在运行.
 
         Returns:
             True表示正在运行
@@ -536,7 +536,7 @@ class SingleGPUWorker(threading.Thread):
             return cast("bool", self._stats["status"] == "running")
 
     def is_alive(self) -> bool:
-        """检查线程是否存活
+        """检查线程是否存活.
 
         Returns:
             True表示线程存活
@@ -545,7 +545,7 @@ class SingleGPUWorker(threading.Thread):
         return threading.Thread.is_alive(self)
 
     def get_device_idx(self) -> int:
-        """获取设备索引
+        """获取设备索引.
 
         Returns:
             GPU设备索引
@@ -554,7 +554,7 @@ class SingleGPUWorker(threading.Thread):
         return self.device_idx
 
     def get_key_range(self) -> tuple[int, int]:
-        """获取私钥搜索范围
+        """获取私钥搜索范围.
 
         Returns:
             (start, end) 范围
@@ -563,6 +563,7 @@ class SingleGPUWorker(threading.Thread):
         return self.key_range
 
     def __repr__(self) -> str:
+        """返回工作线程的字符串表示。."""
         return (
             f"<SingleGPUWorker device={self.device_idx} "
             f"status={self._stats['status']} "

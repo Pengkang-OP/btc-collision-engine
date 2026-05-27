@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GPU测试Mock修复补丁
+"""GPU测试Mock修复补丁.
 
 修复归档测试中 pyopencl.Buffer Mock 不兼容问题。
 
@@ -21,7 +21,7 @@ from tests.gpu_mock_factory import GPUMockFactory  # noqa: E402
 
 
 def patch_pyopencl_buffer_for_test(test_func):
-    """装饰器: 为测试函数添加pyopencl.Buffer的正确Mock
+    """装饰器: 为测试函数添加pyopencl.Buffer的正确Mock.
 
     用法:
         @patch_pyopencl_buffer_for_test
@@ -46,7 +46,7 @@ def patch_pyopencl_buffer_for_test(test_func):
 
 @pytest.fixture
 def mock_pyopencl_buffer():
-    """Fixture: 提供正确的pyopencl.Buffer Mock
+    """Fixture: 提供正确的pyopencl.Buffer Mock.
 
     用法:
         def test_something(self, mock_pyopencl_buffer):
@@ -64,7 +64,7 @@ def mock_pyopencl_buffer():
 
 @pytest.fixture
 def mock_pyopencl_full():
-    """Fixture: 提供完整的pyopencl模块Mock
+    """Fixture: 提供完整的pyopencl模块Mock.
 
     包含:
         - cl.Buffer
@@ -85,7 +85,7 @@ def mock_pyopencl_full():
 
 @pytest.fixture
 def mock_gpu_collision_engine_full():
-    """Fixture: 一站式Mock GPUCollisionEngine的所有GPU依赖
+    """Fixture: 一站式Mock GPUCollisionEngine的所有GPU依赖.
 
     这是最完整的Mock，适用于测试GPU碰撞引擎初始化。
     """
@@ -104,7 +104,7 @@ def mock_gpu_collision_engine_full():
     }
 
     patches = [
-        patch("src.collision.gpu.engine.PYOPENCL_AVAILABLE", True),
+        patch("src.gpu._availability.PYOPENCL_AVAILABLE", True),
         patch(
             "src.gpu.device.GPUDeviceDetector.is_gpu_available",
             return_value=True,
@@ -134,7 +134,7 @@ def mock_gpu_collision_engine_full():
 
 
 def apply_buffer_patch():
-    """全局应用Buffer补丁（用于pytest configure）
+    """全局应用Buffer补丁（用于pytest configure）.
 
     在conftest.py中调用此函数可以为所有测试应用补丁。
     """

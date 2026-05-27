@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""验证 secp256k1.py 和 logger.py 的修复
+"""验证 secp256k1.py 和 logger.py 的修复.
 
 测试内容:
 1. secp256k1.py 的弃用警告和文档
@@ -22,7 +22,7 @@ from src.utils.logger import (
 
 
 def test_secp256k1_deprecation_warning():
-    """测试 secp256k1 的弃用警告"""
+    """测试 secp256k1 的弃用警告."""
     print("\n" + "=" * 60)
     print("测试 1: secp256k1.py 弃用警告")
     print("=" * 60)
@@ -63,7 +63,7 @@ def test_secp256k1_deprecation_warning():
 
 
 def test_sampled_logger_counter_overflow():
-    """测试 SampledLogger 计数器溢出保护"""
+    """测试 SampledLogger 计数器溢出保护."""
     print("\n" + "=" * 60)
     print("测试 2: SampledLogger 计数器溢出保护")
     print("=" * 60)
@@ -88,7 +88,7 @@ def test_sampled_logger_counter_overflow():
 
 
 def test_async_logger():
-    """测试异步日志功能"""
+    """测试异步日志功能."""
     print("\n" + "=" * 60)
     print("测试 3: 异步日志功能")
     print("=" * 60)
@@ -138,7 +138,7 @@ def test_async_logger():
 
 
 def test_secp256k1_documentation():
-    """测试 secp256k1 的文档字符串"""
+    """测试 secp256k1 的文档字符串."""
     print("\n" + "=" * 60)
     print("测试 4: secp256k1.py 文档完善")
     print("=" * 60)
@@ -171,7 +171,7 @@ def test_secp256k1_documentation():
 
 
 def main():
-    """运行所有测试"""
+    """运行所有测试."""
     print("\n" + "=" * 60)
     print("BTC碰撞引擎核心模块修复验证")
     print("=" * 60)

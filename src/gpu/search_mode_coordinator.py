@@ -1,4 +1,4 @@
-"""搜索模式协调器
+"""搜索模式协调器.
 
 负责管理所有搜索模式的创建、切换和执行。
 """
@@ -18,7 +18,7 @@ _logger = get_configured_logger("SearchModeCoordinator")
 
 
 class SearchModeCoordinator:
-    """搜索模式协调器
+    """搜索模式协调器.
 
     负责管理所有搜索模式的创建、切换和执行。
     """
@@ -28,13 +28,14 @@ class SearchModeCoordinator:
     MODE_BRUTE_FORCE = "brute_force"
     MODE_RANGE_SCAN = "range_scan"
 
-    __slots__ = ("engine", "logger", "_current_mode", "_modes")
+    __slots__ = ("_current_mode", "_modes", "engine", "logger")
 
     def __init__(self, engine: "GPUCollisionEngine", logger: Any | None = None) -> None:
-        """Args:
-        engine: GPUCollisionEngine实例
-        logger: 日志记录器
+        """初始化搜索模式协调器。.
 
+        Args:
+            engine: GPUCollisionEngine实例
+            logger: 日志记录器
         """
         self.engine = engine
         self.logger = logger or _logger
@@ -46,7 +47,7 @@ class SearchModeCoordinator:
         self._init_modes()
 
     def _init_modes(self):
-        """初始化所有搜索模式"""
+        """初始化所有搜索模式."""
         # v5.1: 从模块级常量获取默认值（而非硬编码 5）
         from .search_modes.random_search import SEED_PREFETCH_SIZE
 
@@ -84,11 +85,11 @@ class SearchModeCoordinator:
         self.logger.info(f"已初始化搜索模式: {list(self._modes.keys())}")
 
     def get_available_modes(self) -> list[str]:
-        """获取可用的搜索模式列表"""
+        """获取可用的搜索模式列表."""
         return list(self._modes.keys())
 
     def start(self, mode: str, resume: bool = False, **kwargs) -> None:
-        """启动指定的搜索模式
+        """启动指定的搜索模式.
 
         Args:
             mode: 搜索模式名称
@@ -121,14 +122,14 @@ class SearchModeCoordinator:
             search_mode.execute(start, end)
 
     def _execute_random_search(self, search_mode: RandomSearchMode, **kwargs):
-        """执行随机搜索"""
+        """执行随机搜索."""
         kwargs.get("resume", False)
 
         # 调用RandomSearchMode的execute方法，它会自动选择同步或异步模式
         search_mode.execute()
 
     def _resume_from_checkpoint(self):
-        """从检查点恢复"""
+        """从检查点恢复."""
         if self.engine.checkpoint_mgr:
             checkpoint = self.engine.checkpoint_mgr.load()
             if checkpoint:
@@ -141,7 +142,7 @@ class SearchModeCoordinator:
             self.logger.warning("检查点管理器未启用，无法恢复")
 
     def switch_mode(self, new_mode: str, **kwargs) -> None:
-        """切换到新的搜索模式
+        """切换到新的搜索模式.
 
         Args:
             new_mode: 新的搜索模式
@@ -163,7 +164,7 @@ class SearchModeCoordinator:
         self.start(new_mode, resume=False, **kwargs)
 
     def _save_current_state(self) -> None:
-        """保存当前模式的状态"""
+        """保存当前模式的状态."""
         if self.engine.checkpoint_mgr:
             try:
                 cast("Any", self.engine)._save_checkpoint(self.engine.stats.total_keys)
@@ -172,7 +173,7 @@ class SearchModeCoordinator:
                 self.logger.error("保存检查点失败: %s", e)
 
     def stop(self) -> None:
-        """停止当前搜索模式"""
+        """停止当前搜索模式."""
         if self._current_mode:
             self.logger.info(f"停止搜索模式: {self._current_mode}")
             # 保存当前状态
@@ -186,11 +187,11 @@ class SearchModeCoordinator:
             self._current_mode = None
 
     def get_current_mode(self) -> str | None:
-        """获取当前搜索模式"""
+        """获取当前搜索模式."""
         return self._current_mode
 
     def get_mode_instance(self, mode: str) -> Any | None:
-        """获取指定搜索模式的实例
+        """获取指定搜索模式的实例.
 
         Args:
             mode: 搜索模式名称
@@ -202,7 +203,7 @@ class SearchModeCoordinator:
         return self._modes.get(mode)
 
     def get_mode_status(self, mode: str) -> dict[str, Any]:
-        """获取指定搜索模式的状态
+        """获取指定搜索模式的状态.
 
         Args:
             mode: 搜索模式名称
@@ -231,7 +232,7 @@ class SearchModeCoordinator:
             return {"error": str(e)}
 
     def get_all_modes_status(self) -> dict[str, dict[str, Any]]:
-        """获取所有搜索模式的状态
+        """获取所有搜索模式的状态.
 
         Returns:
             状态字典，键为模式名称，值为状态字典

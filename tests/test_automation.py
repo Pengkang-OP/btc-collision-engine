@@ -1,4 +1,4 @@
-"""src/automation 模块测试"""
+"""src/automation 模块测试."""
 
 from datetime import datetime
 
@@ -17,7 +17,7 @@ from src.automation.models import (
 
 
 class TestSystemStatus:
-    """SystemStatus 枚举测试"""
+    """SystemStatus 枚举测试."""
 
     def test_status_values(self):
         assert SystemStatus.IDLE.value == "idle"
@@ -34,7 +34,7 @@ class TestSystemStatus:
 
 
 class TestSeverity:
-    """Severity 枚举测试"""
+    """Severity 枚举测试."""
 
     def test_severity_values(self):
         assert Severity.CRITICAL.value == "critical"
@@ -48,7 +48,7 @@ class TestSeverity:
 
 
 class TestIssue:
-    """Issue 数据类测试"""
+    """Issue 数据类测试."""
 
     def test_issue_creation(self):
         issue = Issue(
@@ -91,7 +91,7 @@ class TestIssue:
 
 
 class TestAnalysisReport:
-    """AnalysisReport 数据类测试"""
+    """AnalysisReport 数据类测试."""
 
     def test_report_creation(self):
         report = AnalysisReport(
@@ -164,7 +164,7 @@ class TestAnalysisReport:
 
 
 class TestTestCase:
-    """TestCase 数据类测试"""
+    """TestCase 数据类测试."""
 
     def test_testcase_creation(self):
         tc = TestCase(
@@ -193,7 +193,7 @@ class TestTestCase:
 
 
 class TestTestResult:
-    """TestResult 数据类测试"""
+    """TestResult 数据类测试."""
 
     def test_result_creation(self):
         result = TestResult(
@@ -231,7 +231,7 @@ class TestTestResult:
 
 
 class TestTestSuiteResult:
-    """TestSuiteResult 数据类测试"""
+    """TestSuiteResult 数据类测试."""
 
     def test_suite_creation(self):
         suite = TestSuiteResult(
@@ -270,7 +270,7 @@ class TestTestSuiteResult:
 
 
 class TestAuditRule:
-    """AuditRule 数据类测试"""
+    """AuditRule 数据类测试."""
 
     def test_rule_creation(self):
         rule = AuditRule(
@@ -287,7 +287,7 @@ class TestAuditRule:
 
 
 class TestAuditResult:
-    """AuditResult 数据类测试"""
+    """AuditResult 数据类测试."""
 
     def test_audit_approved(self):
         result = AuditResult(
@@ -355,7 +355,7 @@ class TestAuditResult:
 
 
 class TestLoopState:
-    """LoopState 数据类测试"""
+    """LoopState 数据类测试."""
 
     def test_loop_state_creation(self):
         state = LoopState(

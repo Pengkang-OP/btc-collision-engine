@@ -1,4 +1,4 @@
-"""GPU 批次调度与性能管理器
+"""GPU 批次调度与性能管理器.
 
 从 GPUCollisionEngine 中提取 GPU 批次执行、自适应调整、
 进度报告和性能监控逻辑。
@@ -21,13 +21,13 @@ import secrets
 import time
 from typing import TYPE_CHECKING
 
-from ...gpu.memory_calculator import GPUMemoryCalculator
-from ...utils import get_configured_logger
-from ...utils.error_recovery import (
+from src.gpu.memory_calculator import GPUMemoryCalculator
+from src.utils import get_configured_logger
+from src.utils.error_recovery import (
     classify_recoverable_error,
     get_default_recovery_manager,
 )
-from ...utils.timeout import invoke_with_timeout
+from src.utils.timeout import invoke_with_timeout
 
 if TYPE_CHECKING:
     from .engine import GPUCollisionEngine
@@ -47,14 +47,14 @@ GPU_BATCH_RETRY_MAX_DELAY = 2.0
 
 
 class GPUBatchScheduler:
-    """GPU 批次调度器
+    """GPU 批次调度器.
 
     封装 GPU 批次执行、性能监控和自适应调整逻辑。
     通过 engine 引用访问所有引擎状态，不复制状态。
     """
 
     def __init__(self, engine: "GPUCollisionEngine") -> None:
-        """初始化批次调度器
+        """初始化批次调度器.
 
         Args:
             engine: GPUCollisionEngine 实例引用
@@ -65,7 +65,7 @@ class GPUBatchScheduler:
     # ========== GPU 显存用量计算 ==========
 
     def calculate_gpu_memory_usage(self, num_keys: int) -> float:
-        """计算 GPU 显存使用(MB)"""
+        """计算 GPU 显存使用(MB)."""
         engine = self._engine
         return GPUMemoryCalculator.calculate_from_hash160_bytes(
             num_keys=num_keys,
@@ -75,7 +75,7 @@ class GPUBatchScheduler:
     # ========== 性能基准 ==========
 
     def calculate_dynamic_benchmark(self) -> None:
-        """计算动态性能基准值
+        """计算动态性能基准值.
 
         运行一个小型测试批次，测量实际 GPU 吞吐量，
         基于实测性能的80%设置动态基准值。
@@ -101,7 +101,7 @@ class GPUBatchScheduler:
     # ========== 内存泄漏检查 ==========
 
     def check_memory_leaks(self) -> None:
-        """定期检查内存泄漏"""
+        """定期检查内存泄漏."""
         engine = self._engine
         current_time = time.time()
         if current_time - engine._last_memory_check_time >= engine._memory_check_interval:
@@ -121,7 +121,7 @@ class GPUBatchScheduler:
         batch_size: int,
         batch_num: int,
     ) -> tuple[list[dict[str, int]], float]:
-        """执行 GPU batch 计算
+        """执行 GPU batch 计算.
 
         P2-3.2修复: 对瞬态 OpenCL 错误（资源不足、超时）进行本地指数退避重试，
         避免瞬态错误传递到搜索模式层的高开销退避逻辑。
@@ -196,7 +196,7 @@ class GPUBatchScheduler:
         batch_size: int,
         batch_num: int,
     ) -> tuple[list[dict[str, int]], float]:
-        """单次 GPU batch 执行（由 execute_batch 调用）
+        """单次 GPU batch 执行（由 execute_batch 调用）.
 
         Args:
             seed: 32 字节随机种子
@@ -268,7 +268,7 @@ class GPUBatchScheduler:
     # ========== 性能指标 ==========
 
     def update_performance_metrics(self, batch_size: int, execution_time_ms: float) -> None:
-        """记录 GPU 性能指标"""
+        """记录 GPU 性能指标."""
         engine = self._engine
         if not engine.gpu_performance_monitor:
             return
@@ -283,7 +283,7 @@ class GPUBatchScheduler:
             logger.debug("记录GPU性能指标失败: %s", e)
 
     def record_adjustment(self, old_size: int, new_size: int, reason: str, details: str = "") -> None:
-        """记录调整历史"""
+        """记录调整历史."""
         engine = self._engine
         engine._engine_monitor.record_adjustment(
             old_size=old_size,
@@ -295,7 +295,7 @@ class GPUBatchScheduler:
     # ========== 自适应批大小 ==========
 
     def maybe_adjust_batch_size(self) -> None:
-        """根据运行时状态自适应调整 batch_size"""
+        """根据运行时状态自适应调整 batch_size."""
         engine = self._engine
         if not engine._adaptive_batch_enabled:
             return
@@ -339,7 +339,7 @@ class GPUBatchScheduler:
     # ========== 进度与断点 ==========
 
     def check_and_report_progress(self, batch_count: int, current_batch_size: int) -> None:
-        """检查并报告进度"""
+        """检查并报告进度."""
         engine = self._engine
         current_time = time.time()
         if current_time - engine._last_progress_time < engine._progress_interval_sec:
@@ -401,7 +401,7 @@ class GPUBatchScheduler:
         self.maybe_adjust_batch_size()
 
     def save_checkpoint(self, count: int) -> None:
-        """保存断点"""
+        """保存断点."""
         engine = self._engine
         if engine.checkpoint_mgr and engine.checkpoint_mgr.should_auto_save:
             matches_list = [
@@ -420,13 +420,13 @@ class GPUBatchScheduler:
                     "matches": matches_list,
                     "range_start": engine._range_start,
                     "range_end": engine._range_end,
-                }
+                },
             )
 
     # ========== GPU 缓冲区调整 ==========
 
     def resize_gpu_buffers(self, new_batch_size: int) -> None:
-        """动态调整 GPU 缓冲区大小
+        """动态调整 GPU 缓冲区大小.
 
         注意: 缓冲区生命周期管理分布于两处:
         - 本方法: 运行时 resize (mid-operation)

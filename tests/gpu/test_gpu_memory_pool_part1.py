@@ -1,4 +1,4 @@
-"""GPU 内存池 (src/gpu/memory_pool.py) 全覆盖测试 — Part 1: GPUMemoryPool 核心
+"""GPU 内存池 (src/gpu/memory_pool.py) 全覆盖测试 — Part 1: GPUMemoryPool 核心.
 
 覆盖: __init__, allocate, release, preallocate_buffers, _evict_lru_locked,
       _evict_lru, _adjust_pool_size, _record_*, adapt_capacity, get_stats,
@@ -19,8 +19,8 @@ _mock_context_mod = MagicMock()
 _mock_context_mod.GPUContext = MagicMock()
 sys.modules["src.gpu.context"] = _mock_context_mod
 
-from src.gpu.memory_pool import GPUMemoryPool  # noqa: E402  # 架构必要：sys.modules mock 注入后立即导入
-from src.gpu.memory_pool import logger as pool_logger  # noqa: E402  # 架构必要：同上
+from src.gpu.memory_pool import GPUMemoryPool  # 架构必要：sys.modules mock 注入后立即导入  # noqa: E402
+from src.gpu.memory_pool import logger as pool_logger  # 架构必要：同上  # noqa: E402
 
 
 def _make_mock_buf(size=256, buf_id=42):
@@ -50,7 +50,7 @@ def _make_mock_cl():
 
 
 class TestInit:
-    """GPUMemoryPool 初始化"""
+    """GPUMemoryPool 初始化."""
 
     def test_basic_init(self):
         ctx = object()
@@ -91,7 +91,7 @@ class TestInit:
 
 
 class TestAllocate:
-    """allocate 测试"""
+    """allocate 测试."""
 
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -172,7 +172,7 @@ class TestAllocate:
         assert 512 in pool._allocation_patterns
 
     def test_type_pool_miss_then_generic_hit(self):
-        """类型池未命中再查通用池"""
+        """类型池未命中再查通用池."""
         pool = self._pool()
         buf1 = _make_mock_buf(256, 300)
         pool._pool[256] = [buf1]
@@ -184,7 +184,7 @@ class TestAllocate:
         assert pool._total_reused == 1
 
     def test_pool_key_exists_but_empty_list_generic(self):
-        """通用池键存在但列表为空 → fallthrough 到新建"""
+        """通用池键存在但列表为空 → fallthrough 到新建."""
         pool = self._pool()
         pool._pool[256] = []  # key exists, list empty
         mc = _make_mock_cl()
@@ -194,7 +194,7 @@ class TestAllocate:
         assert pool._total_reused == 0
 
     def test_pool_key_exists_but_empty_list_type(self):
-        """类型池键存在但列表为空 → fallthrough 到通用池/新建"""
+        """类型池键存在但列表为空 → fallthrough 到通用池/新建."""
         pool = self._pool()
         pool._type_pools["input"][256] = []  # key exists, list empty
         mc = _make_mock_cl()
@@ -205,7 +205,7 @@ class TestAllocate:
         assert pool._total_reused == 0
 
     def test_allocate_with_explicit_flags(self):
-        """allocate() 传入显式 flags，验证透传到 cl.Buffer"""
+        """allocate() 传入显式 flags，验证透传到 cl.Buffer."""
         pool = self._pool()
         mc = _make_mock_cl()
         with patch.dict(sys.modules, {"pyopencl": mc}):
@@ -220,7 +220,7 @@ class TestAllocate:
 
 
 class TestRelease:
-    """release 测试"""
+    """release 测试."""
 
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -292,7 +292,7 @@ class TestRelease:
         assert len(pool._memory_usage_history) > old_len
 
     def test_release_capacity_warning_logged(self):
-        """S8: 池容量 ≥ 90% 时记录 warning 日志"""
+        """S8: 池容量 ≥ 90% 时记录 warning 日志."""
         pool = self._pool(max_buffers=10)
         # 填充 9 个 → 90%
         for i in range(9):
@@ -312,7 +312,7 @@ class TestRelease:
 
 
 class TestPreallocate:
-    """preallocate_buffers 测试"""
+    """preallocate_buffers 测试."""
 
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -365,7 +365,7 @@ class TestPreallocate:
 
 
 class TestEvictLRU:
-    """LRU 淘汰测试"""
+    """LRU 淘汰测试."""
 
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -447,7 +447,7 @@ class TestEvictLRU:
 
 
 class TestAdjustPoolSize:
-    """动态调整测试"""
+    """动态调整测试."""
 
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -540,7 +540,7 @@ class TestAdjustPoolSize:
 
 
 class TestRecordPatterns:
-    """_record_allocation_pattern / _record_memory_usage"""
+    """_record_allocation_pattern / _record_memory_usage."""
 
     def _pool(self):
         return GPUMemoryPool(object())
@@ -579,7 +579,7 @@ class TestRecordPatterns:
 
 
 class TestAdaptCapacity:
-    """adapt_capacity 测试"""
+    """adapt_capacity 测试."""
 
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -631,7 +631,7 @@ class TestAdaptCapacity:
             mev.assert_called_once()
 
     def test_expand_noop_at_max_500(self):
-        """S5: 已在 max_buffers=500 时扩展为无操作"""
+        """S5: 已在 max_buffers=500 时扩展为无操作."""
         pool = self._pool(max_buffers=500)
         with patch.dict(sys.modules, {"pyopencl": self.mock_cl}):
             pool.adapt_capacity(context=object())
@@ -639,7 +639,7 @@ class TestAdaptCapacity:
         assert pool._max_buffers == 500
 
     def test_shrink_noop_at_min_20(self):
-        """S5: 已在 max_buffers=20 时收缩为无操作"""
+        """S5: 已在 max_buffers=20 时收缩为无操作."""
         pool = self._pool(max_buffers=20)
         mc = _make_mock_cl()
         mc.Buffer.side_effect = MemoryError("OOM")
@@ -655,7 +655,7 @@ class TestAdaptCapacity:
 
 
 class TestStats:
-    """统计方法测试"""
+    """统计方法测试."""
 
     def _pool(self, **kw):
         return GPUMemoryPool(object(), **kw)
@@ -710,7 +710,7 @@ class TestStats:
         assert first_key == 512  # 最大 count
 
     def test_get_pool_stats_truncates_top_10(self):
-        """S7: allocation_patterns > 10 时截断为 top 10"""
+        """S7: allocation_patterns > 10 时截断为 top 10."""
         pool = self._pool()
         # 创建 15 个不同大小的 pattern
         for i in range(15):
@@ -729,7 +729,7 @@ class TestStats:
 
 
 class TestClear:
-    """clear 测试"""
+    """clear 测试."""
 
     def _pool(self, **kw):
         return GPUMemoryPool(object(), **kw)
@@ -782,7 +782,7 @@ class TestClear:
 
 
 class TestProportionalPools:
-    """create_proportional_pools 类方法测试"""
+    """create_proportional_pools 类方法测试."""
 
     def test_empty_devices_returns_empty(self):
         pools = GPUMemoryPool.create_proportional_pools([])
@@ -832,7 +832,7 @@ class TestProportionalPools:
         assert pools[1]._context is ctx1
 
     def test_contexts_shorter_than_devices(self):
-        """Contexts 列表比 devices 短时，多余的用 None"""
+        """Contexts 列表比 devices 短时，多余的用 None."""
         devices = [{"global_mem_size": 2 * 1024**3}, {"global_mem_size": 2 * 1024**3}]
         pools = GPUMemoryPool.create_proportional_pools(devices, contexts=[object()])
         assert pools[0]._context is not None

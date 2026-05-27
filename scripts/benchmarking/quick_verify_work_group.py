@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""快速验证work_group_size优化是否生效"""
+"""快速验证work_group_size优化是否生效."""
 
 from src.gpu.auto_config import GPUAutoConfigurator
 

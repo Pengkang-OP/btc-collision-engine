@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""测试 Windows 权限错误重试机制"""
+"""测试 Windows 权限错误重试机制."""
 
 import json
 import os
@@ -11,23 +11,23 @@ from src.monitoring.data_logger import DataLogger
 
 
 class TestWindowsPermissionRetry:
-    """测试 Windows 权限错误重试机制"""
+    """测试 Windows 权限错误重试机制."""
 
     def setup_method(self, method):
-        """设置测试环境"""
+        """设置测试环境."""
         # 创建临时目录
         self.test_dir = tempfile.mkdtemp()
         self.data_logger = DataLogger(storage_dir=self.test_dir)
 
     def teardown_method(self, method):
-        """清理测试环境"""
+        """清理测试环境."""
         import shutil
 
         if pathlib.Path(self.test_dir).exists():
             shutil.rmtree(self.test_dir)
 
     def test_save_history_data_with_permission_error(self):
-        """测试保存历史数据时遇到权限错误的重试机制"""
+        """测试保存历史数据时遇到权限错误的重试机制."""
         # 添加一些历史数据
         self.data_logger.record_performance_data(
             speed=100.0,
@@ -65,7 +65,7 @@ class TestWindowsPermissionRetry:
         assert history[0]["speed"] == 100.0
 
     def test_save_current_data_with_permission_error(self):
-        """测试保存当前数据时遇到权限错误的重试机制"""
+        """测试保存当前数据时遇到权限错误的重试机制."""
         # 添加一些性能数据
         self.data_logger.record_performance_data(
             speed=200.0,
@@ -102,7 +102,7 @@ class TestWindowsPermissionRetry:
         assert data["performance"]["speed"] == 200.0
 
     def test_retry_exhausted_returns_data_to_buffer(self):
-        """测试重试耗尽后数据返回缓冲区"""
+        """测试重试耗尽后数据返回缓冲区."""
         # 添加一些历史数据
         self.data_logger.record_performance_data(
             speed=300.0,

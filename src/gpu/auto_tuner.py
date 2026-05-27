@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GPU 自动调优器 — v5.0.1 轻量实现。
+"""GPU 自动调优器 — v5.0.1 轻量实现。.
 
 根据设备硬件规格和基准测试结果，自动推荐最优的内核参数配置。
 """
@@ -12,7 +12,7 @@ logger = get_configured_logger(__name__)
 
 
 class GPUAutoTuner:
-    """GPU 内核参数自动调优器。
+    """GPU 内核参数自动调优器。.
 
     分析 GPU 硬件特性，推荐最优的 work_group_size、batch_size
     和 memory_usage_ratio 等参数。
@@ -25,8 +25,15 @@ class GPUAutoTuner:
         "amd": {"work_group_size": 256, "memory_ratio": 0.70, "queue_depth": 8},
     }
 
+    # 显存阈值分档 (GB → batch_size)
+    _MEMORY_TIERS = (
+        (16, 16777216),
+        (8, 8388608),
+        (4, 4194304),
+    )
+
     def __init__(self, device: Any) -> None:
-        """初始化自动调优器。
+        """初始化自动调优器。.
 
         Args:
             device: GPU 设备对象
@@ -37,7 +44,7 @@ class GPUAutoTuner:
         self._tuned = False
 
     def auto_tune(self, benchmark_results: dict | None = None) -> dict[str, Any]:
-        """自动调优 GPU 参数。
+        """自动调优 GPU 参数。.
 
         Args:
             benchmark_results: 可选，GPUBenchmarkSuite.run_benchmark() 的结果
@@ -67,14 +74,7 @@ class GPUAutoTuner:
 
         # 基于显存大小调整 batch_size
         mem_gb = device_info.get("global_mem_size", 0) / (1024**3)
-        if mem_gb >= 16:
-            batch_size = 16777216
-        elif mem_gb >= 8:
-            batch_size = 8388608
-        elif mem_gb >= 4:
-            batch_size = 4194304
-        else:
-            batch_size = 2097152
+        batch_size = self._compute_hardware_batch_size(mem_gb)
 
         self._tuned_params = {
             "work_group_size": wgs,
@@ -86,7 +86,60 @@ class GPUAutoTuner:
         logger.info("GPU auto-tuning complete: %s", self._tuned_params)
         return self._tuned_params
 
+    @staticmethod
+    def _compute_hardware_batch_size(mem_gb: float) -> int:
+        """根据显存大小计算硬件推荐的 batch_size.
+
+        v5.2.4: 从 ``auto_tune`` 中提取为独立静态方法，
+        供新增的 ``suggest_batch_size`` 和 ``start_tuning`` 复用。
+
+        Args:
+            mem_gb: 显存大小（GB）
+
+        Returns:
+            硬件推荐的 batch_size
+
+        """
+        for threshold, size in GPUAutoTuner._MEMORY_TIERS:
+            if mem_gb >= threshold:
+                return size
+        return 2097152
+
+    def suggest_batch_size(
+        self,
+        current_size: int,
+        metrics: dict[str, Any] | None = None,
+    ) -> int:
+        """根据硬件规格和当前运行指标推荐 batch_size.
+
+        优先使用硬件推荐的 batch_size；若当前运行指标（如 keys_per_second）
+        显示当前大小性能更优，则保留当前值。
+
+        Args:
+            current_size: 当前使用的 batch_size
+            metrics:      可选，当前性能指标字典（至少包含 keys_per_second）
+
+        Returns:
+            推荐的 batch_size
+
+        """
+        # 确保已调优
+        if not self._tuned:
+            self.auto_tune()
+
+        hw_size = self._tuned_params.get("batch_size", 2097152)
+
+        # 若提供性能指标且当前值小于硬件推荐，检查当前值是否明显更优
+        if metrics and current_size < hw_size:
+            cur_kps = metrics.get("keys_per_second", 0)
+            hw_kps = metrics.get("hw_keys_per_second", 0)
+            # 当前 batch_size 吞吐量不低于硬件推荐的 90%，保留当前值避免抖动
+            if hw_kps and cur_kps and cur_kps >= hw_kps * 0.9:
+                return current_size
+
+        return hw_size
+
     @property
     def tuned_params(self) -> dict[str, Any] | None:
-        """获取当前调优结果。"""
+        """获取当前调优结果。."""
         return self._tuned_params if self._tuned else None

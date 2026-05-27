@@ -33,7 +33,7 @@ _rollover_lock = threading.RLock()
 
 
 class SafeRotatingFileHandler(RotatingFileHandler):
-    """Windows 安全的日志轮转处理器，处理多线程文件锁冲突（WinError 32）
+    """Windows 安全的日志轮转处理器，处理多线程文件锁冲突（WinError 32）.
 
     仅在 Windows 平台启用重试逻辑；Linux/macOS 行为与原生 RotatingFileHandler 完全相同。
     """
@@ -45,7 +45,7 @@ class SafeRotatingFileHandler(RotatingFileHandler):
         super().__init__(*args, **kwargs)
 
     def doRollover(self) -> None:  # noqa: N802 — 继承父类 camelCase 方法
-        """带重试机制的日志轮转（Windows 专用），加全局锁防止并发冲突
+        """带重试机制的日志轮转（Windows 专用），加全局锁防止并发冲突.
 
         sleep 在锁外执行，避免持有锁期间阻塞其他 handler 的 rollover。
         """
@@ -70,7 +70,7 @@ _security_filter_initialized: bool = False
 
 
 class LoggingConfig:
-    """日志配置管理器"""
+    """日志配置管理器."""
 
     # 默认配置
     DEFAULT_CONFIG = {
@@ -97,7 +97,7 @@ class LoggingConfig:
         return cls._instance
 
     def init(self, config: dict[str, Any] | None = None) -> None:
-        """初始化日志配置
+        """初始化日志配置.
 
         Args:
             config: 自定义配置字典，None则使用默认配置
@@ -123,7 +123,7 @@ class LoggingConfig:
         self._setup_root_logger()
 
     def _load_from_config_file(self) -> dict[str, Any] | None:
-        """从配置文件加载日志设置"""
+        """从配置文件加载日志设置."""
         try:
             from ..config.config_manager import ConfigManager
 
@@ -151,7 +151,7 @@ class LoggingConfig:
             return None
 
     def _ensure_log_directory(self) -> None:
-        """确保日志目录存在（相对路径基于项目根目录）"""
+        """确保日志目录存在（相对路径基于项目根目录）."""
         if self._config is None:
             raise RuntimeError("LoggingConfig._ensure_log_directory(): self._config is None")
         log_file = self._config.get("file")
@@ -170,7 +170,7 @@ class LoggingConfig:
             pathlib.Path(log_dir).mkdir(mode=0o750, exist_ok=True, parents=True)
 
     def _resolve_log_path(self, log_file: str) -> str:
-        """将日志路径解析为绝对路径（相对路径基于项目根目录）
+        """将日志路径解析为绝对路径（相对路径基于项目根目录）.
 
         Args:
             log_file: 配置中的日志文件路径（可能为相对路径）
@@ -185,7 +185,7 @@ class LoggingConfig:
         return os.path.join(_PROJECT_ROOT, log_file)
 
     def check_disk_space(self, min_free_mb: int = 200) -> bool:
-        """主动检查日志目录所在磁盘的可用空间
+        """主动检查日志目录所在磁盘的可用空间.
 
         Args:
             min_free_mb: 最小可用空间（MB），低于此值发出 WARNING
@@ -218,7 +218,7 @@ class LoggingConfig:
             return True
 
     def _setup_root_logger(self) -> None:
-        """配置根日志记录器"""
+        """配置根日志记录器."""
         if self._config is None:
             raise RuntimeError("LoggingConfig._setup_root_logger(): self._config is None")
         level = self._config.get("level", "INFO")
@@ -255,7 +255,7 @@ class LoggingConfig:
         log_file: str,
         format_str: str,
     ) -> logging.Handler | None:
-        """创建文件处理器"""
+        """创建文件处理器."""
         if self._config is None:
             raise RuntimeError("LoggingConfig._create_file_handler(): self._config is None")
         rotation_type = self._config.get("rotation_type", "size")
@@ -286,7 +286,7 @@ class LoggingConfig:
 
             # M10: 包装文件处理器，捕获磁盘满 OSError 和 NFS stale handle
             class _DiskSafeHandler(logging.Handler):
-                """OSError（磁盘满/NFS stale handle）安全包装层
+                """OSError（磁盘满/NFS stale handle）安全包装层.
 
                 v4.5.1: 添加 ESTALE（NFS 陈旧文件句柄）检测与自动恢复。
                 """
@@ -306,7 +306,7 @@ class LoggingConfig:
                     self._format_str = fmt
 
                 def bind_params(self, log_file: str, rotation_type: str, config: dict[str, Any]) -> None:
-                    """绑定创建参数，用于 NFS stale handle 后重建处理器"""
+                    """绑定创建参数，用于 NFS stale handle 后重建处理器."""
                     self._log_file = log_file
                     self._rotation_type = rotation_type
                     self._config_snapshot = config.copy()
@@ -344,7 +344,7 @@ class LoggingConfig:
                                 )
 
                 def _recover_stale_handle(self) -> None:
-                    """尝试从 NFS stale file handle 中恢复
+                    """尝试从 NFS stale file handle 中恢复.
 
                     关闭旧的文件句柄，重新创建文件处理器。
                     """
@@ -404,7 +404,7 @@ class LoggingConfig:
             return None
 
     def get_config(self) -> dict[str, Any]:
-        """获取当前配置"""
+        """获取当前配置."""
         if not self._initialized:
             self.init()
         if self._config is None:
@@ -412,7 +412,7 @@ class LoggingConfig:
         return self._config.copy()
 
     def get_logger(self, name: str) -> logging.Logger:
-        """获取配置好的日志记录器
+        """获取配置好的日志记录器.
 
         Args:
             name: 日志记录器名称
@@ -432,7 +432,7 @@ logging_config = LoggingConfig()
 
 
 def init_logging(config: dict[str, Any] | None = None) -> None:
-    """初始化日志系统
+    """初始化日志系统.
 
     Args:
         config: 自定义配置字典
@@ -445,7 +445,7 @@ def init_logging(config: dict[str, Any] | None = None) -> None:
 
 
 def _setup_security_filter() -> None:
-    """设置日志安全过滤器（敏感信息遮蔽）
+    """设置日志安全过滤器（敏感信息遮蔽）.
 
     自动检测并屏蔽日志中的敏感信息：
     - 比特币私钥（64位十六进制）
@@ -529,7 +529,7 @@ def _setup_security_filter() -> None:
 
 
 def get_configured_logger(name: str) -> logging.Logger:
-    """获取统一配置的日志记录器
+    """获取统一配置的日志记录器.
 
     Args:
         name: 日志记录器名称

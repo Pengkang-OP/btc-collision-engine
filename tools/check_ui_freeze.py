@@ -1,4 +1,4 @@
-"""GPU对撞UI卡死检测工具
+"""GPU对撞UI卡死检测工具.
 
 功能:
 1. 检测GUI进程是否在运行
@@ -15,7 +15,7 @@ import psutil
 
 
 def check_gui_process():
-    """检查GUI进程状态"""
+    """检查GUI进程状态."""
     print("=" * 60)
     print("GPU对撞UI卡死检测工具")
     print("=" * 60)
@@ -34,7 +34,7 @@ def check_gui_process():
                         "pid": proc.info["pid"],
                         "create_time": datetime.fromtimestamp(proc.info["create_time"]),
                         "cmdline": cmdline,
-                    }
+                    },
                 )
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             pass
@@ -138,7 +138,7 @@ def check_gui_process():
             print("   2. 日志输出间隔较大（正常）")
             print("   3. 性能监控正在后台运行")
             return True
-        elif time_ago.total_seconds() < 300:
+        if time_ago.total_seconds() < 300:
             print("⚠️ 程序可能卡顿")
             print(f"   最新文件: {most_recent_log}")
             print(f"   更新时间: {time_ago}")
@@ -148,16 +148,15 @@ def check_gui_process():
             print("   2. 检查任务管理器中的CPU/GPU使用率")
             print("   3. 如果持续无响应，考虑重启程序")
             return False
-        else:
-            print("❌ 程序可能已卡死")
-            print(f"   最新文件: {most_recent_log}")
-            print(f"   更新时间: {time_ago}")
-            print()
-            print("💡 建议:")
-            print("   1. 强制关闭程序")
-            print("   2. 检查日志文件中的错误信息")
-            print("   3. 重新启动程序")
-            return False
+        print("❌ 程序可能已卡死")
+        print(f"   最新文件: {most_recent_log}")
+        print(f"   更新时间: {time_ago}")
+        print()
+        print("💡 建议:")
+        print("   1. 强制关闭程序")
+        print("   2. 检查日志文件中的错误信息")
+        print("   3. 重新启动程序")
+        return False
 
     return False
 

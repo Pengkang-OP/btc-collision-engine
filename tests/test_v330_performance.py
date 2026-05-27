@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""v3.3.0性能优化测试 (历史版本，仅供参考)
+"""v3.3.0性能优化测试 (历史版本，仅供参考).
 
 测试内容:
 1. 内存标志优化效果
@@ -18,7 +18,7 @@ from src.collision.gpu.engine import GPUCollisionEngine
 
 
 def _benchmark_batch_size(batch_size: int, test_duration: int = 30):
-    """测试特定批次大小的性能（内部函数，不作为 pytest 测试收集）"""
+    """测试特定批次大小的性能（内部函数，不作为 pytest 测试收集）."""
     print(f"\n{'=' * 80}")
     print(f"测试批次大小: {batch_size:,} ({batch_size / 1024 / 1024:.2f}M)")
     print(f"测试时长: {test_duration}秒")
@@ -124,7 +124,7 @@ def _benchmark_batch_size(batch_size: int, test_duration: int = 30):
 
 
 def main():
-    """主测试流程"""
+    """主测试流程."""
     print("=" * 80)
     print("GPU性能优化测试 - v3.3.0 (历史版本，仅供参考)")
     print("目标: 突破600K keys/s")

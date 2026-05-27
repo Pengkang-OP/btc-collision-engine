@@ -1,4 +1,4 @@
-"""GPU引擎重构 Phase 4 测试套件 - 碰撞核心实现
+"""GPU引擎重构 Phase 4 测试套件 - 碰撞核心实现.
 
 测试范围:
 - CollisionCore 初始化 (含 engine 注入)
@@ -53,7 +53,7 @@ def sample_config_full() -> dict[str, Any]:
 
 @pytest.fixture
 def mock_stats():
-    """Mock CollisionStats"""
+    """Mock CollisionStats."""
     stats = MagicMock()
     stats.total_checked = 0
     stats.speed = 0.0
@@ -74,7 +74,7 @@ def mock_stats():
 
 @pytest.fixture
 def mock_checkpoint():
-    """Mock CheckpointManager"""
+    """Mock CheckpointManager."""
     cp = MagicMock()
     cp.load.return_value = None
     return cp
@@ -82,7 +82,7 @@ def mock_checkpoint():
 
 @pytest.fixture
 def mock_dedup():
-    """Mock DeduplicationFilter"""
+    """Mock DeduplicationFilter."""
     dedup = MagicMock()
     dedup.check_and_add.return_value = True
     return dedup
@@ -92,10 +92,10 @@ def mock_dedup():
 
 
 class TestCollisionCoreInit:
-    """测试 CollisionCore 初始化"""
+    """测试 CollisionCore 初始化."""
 
     def test_basic_init(self, sample_targets, sample_config):
-        """基本初始化"""
+        """基本初始化."""
         from src.collision.gpu.core import CollisionCore
 
         core = CollisionCore(targets=sample_targets, config=sample_config)
@@ -109,7 +109,7 @@ class TestCollisionCoreInit:
         assert core.search_coordinator is None
 
     def test_init_with_engine(self, sample_targets):
-        """带引擎引用初始化"""
+        """带引擎引用初始化."""
         from src.collision.gpu.core import CollisionCore
 
         mock_engine = MagicMock()
@@ -117,7 +117,7 @@ class TestCollisionCoreInit:
         assert core._engine is mock_engine
 
     def test_init_with_callbacks(self, sample_targets):
-        """带回调和配置的初始化"""
+        """带回调和配置的初始化."""
         from src.collision.gpu.core import CollisionCore
 
         def on_progress(stats):
@@ -135,7 +135,7 @@ class TestCollisionCoreInit:
         assert core.on_match is on_match
 
     def test_init_with_factories(self, sample_targets):
-        """带依赖注入工厂的初始化"""
+        """带依赖注入工厂的初始化."""
         from src.collision.gpu.core import CollisionCore
 
         stats_factory = MagicMock(return_value=MagicMock())
@@ -153,7 +153,7 @@ class TestCollisionCoreInit:
         assert core._dedup_factory is dedup_factory
 
     def test_init_config_defaults(self, sample_targets):
-        """验证配置默认值"""
+        """验证配置默认值."""
         from src.collision.gpu.core import CollisionCore
 
         core = CollisionCore(targets=sample_targets)
@@ -163,7 +163,7 @@ class TestCollisionCoreInit:
         assert core.progress_interval == 1.0
 
     def test_init_config_custom(self, sample_targets, sample_config_full):
-        """自定义配置参数"""
+        """自定义配置参数."""
         from src.collision.gpu.core import CollisionCore
 
         core = CollisionCore(targets=sample_targets, config=sample_config_full)
@@ -173,7 +173,7 @@ class TestCollisionCoreInit:
         assert core.progress_interval == 0.1
 
     def test_init_progress_tracking_vars(self, sample_targets):
-        """验证进度追踪变量初始化"""
+        """验证进度追踪变量初始化."""
         from src.collision.gpu.core import CollisionCore
 
         core = CollisionCore(targets=sample_targets)
@@ -185,10 +185,10 @@ class TestCollisionCoreInit:
 
 
 class TestCheckpointRestore:
-    """测试 _restore_checkpoint 断点恢复"""
+    """测试 _restore_checkpoint 断点恢复."""
 
     def test_restore_with_valid_data(self, sample_targets, sample_config_full):
-        """从有效断点数据恢复"""
+        """从有效断点数据恢复."""
         from src.collision.gpu.core import CollisionCore
 
         checkpoint_data = {
@@ -215,7 +215,7 @@ class TestCheckpointRestore:
         assert core.stats.total_checked == 50000
 
     def test_restore_when_no_checkpoint_data(self, sample_targets, sample_config_full):
-        """无断点数据时不报错"""
+        """无断点数据时不报错."""
         from src.collision.gpu.core import CollisionCore
 
         cp = MagicMock()
@@ -232,7 +232,7 @@ class TestCheckpointRestore:
         assert core.stats.total_checked == 0
 
     def test_restore_when_checkpoint_is_none(self, sample_targets, sample_config):
-        """Checkpoint 为 None 时不报错"""
+        """Checkpoint 为 None 时不报错."""
         from src.collision.gpu.core import CollisionCore
 
         core = CollisionCore(targets=sample_targets, config=sample_config)
@@ -240,7 +240,7 @@ class TestCheckpointRestore:
         core._restore_checkpoint()  # 不应抛出异常
 
     def test_restore_updates_config_mode(self, sample_targets, sample_config_full):
-        """恢复时更新 config mode"""
+        """恢复时更新 config mode."""
         from src.collision.gpu.core import CollisionCore
 
         checkpoint_data = {
@@ -263,7 +263,7 @@ class TestCheckpointRestore:
         assert core.config["mode"] == "brute_force"
 
     def test_restore_error_logged(self, sample_targets, sample_config):
-        """恢复异常时记录错误"""
+        """恢复异常时记录错误."""
         from src.collision.gpu.core import CollisionCore
 
         cp = MagicMock()
@@ -282,10 +282,10 @@ class TestCheckpointRestore:
 
 
 class TestCheckpointSave:
-    """测试 _save_checkpoint 断点保存"""
+    """测试 _save_checkpoint 断点保存."""
 
     def test_save_with_valid_state(self, sample_targets, sample_config_full):
-        """在有效状态下保存断点"""
+        """在有效状态下保存断点."""
         from src.collision.gpu.core import CollisionCore
 
         saved_data = {}
@@ -307,7 +307,7 @@ class TestCheckpointSave:
         assert "total_checked" in saved_data
 
     def test_save_when_no_checkpoint(self, sample_targets, sample_config):
-        """Checkpoint 为 None 时不保存"""
+        """Checkpoint 为 None 时不保存."""
         from src.collision.gpu.core import CollisionCore
 
         core = CollisionCore(targets=sample_targets, config=sample_config)
@@ -315,7 +315,7 @@ class TestCheckpointSave:
         core._save_checkpoint()  # 不应抛出
 
     def test_save_when_no_stats(self, sample_targets, sample_config_full):
-        """Stats 为 None 时不保存"""
+        """Stats 为 None 时不保存."""
         from src.collision.gpu.core import CollisionCore
 
         core = CollisionCore(
@@ -332,10 +332,10 @@ class TestCheckpointSave:
 
 
 class TestGetStats:
-    """测试 get_stats"""
+    """测试 get_stats."""
 
     def test_get_stats_returns_dict(self, sample_targets, sample_config):
-        """返回字典类型的统计信息"""
+        """返回字典类型的统计信息."""
         from src.collision.gpu.core import CollisionCore
 
         core = CollisionCore(targets=sample_targets, config=sample_config)
@@ -344,14 +344,14 @@ class TestGetStats:
         assert isinstance(stats, dict)
 
     def test_get_stats_when_not_started(self, sample_targets):
-        """未初始化时返回空字典"""
+        """未初始化时返回空字典."""
         from src.collision.gpu.core import CollisionCore
 
         core = CollisionCore(targets=sample_targets)
         assert core.get_stats() == {}
 
     def test_get_stats_includes_running_status(self, sample_targets, sample_config):
-        """包含 running 状态"""
+        """包含 running 状态."""
         from src.collision.gpu.core import CollisionCore
 
         core = CollisionCore(targets=sample_targets, config=sample_config)
@@ -360,7 +360,7 @@ class TestGetStats:
         assert "elapsed_time" in stats
 
     def test_get_stats_includes_elapsed_time(self, sample_targets, sample_config):
-        """包含已运行时间"""
+        """包含已运行时间."""
         from src.collision.gpu.core import CollisionCore
 
         core = CollisionCore(targets=sample_targets, config=sample_config)
@@ -370,7 +370,7 @@ class TestGetStats:
         assert "elapsed_time" in stats
 
     def test_is_running_initial_state(self, sample_targets):
-        """初始未运行"""
+        """初始未运行."""
         from src.collision.gpu.core import CollisionCore
 
         core = CollisionCore(targets=sample_targets)
@@ -381,10 +381,10 @@ class TestGetStats:
 
 
 class TestPrivateInitMethods:
-    """测试 _init_stats / _init_checkpoint / _init_dedup_filter"""
+    """测试 _init_stats / _init_checkpoint / _init_dedup_filter."""
 
     def test_init_stats_default(self, sample_targets):
-        """_init_stats 默认创建 CollisionStats"""
+        """_init_stats 默认创建 CollisionStats."""
         from src.collision.gpu.core import CollisionCore
 
         core = CollisionCore(targets=sample_targets)
@@ -392,7 +392,7 @@ class TestPrivateInitMethods:
         assert core.stats is not None
 
     def test_init_stats_with_factory(self, sample_targets):
-        """_init_stats 使用注入工厂"""
+        """_init_stats 使用注入工厂."""
         from src.collision.gpu.core import CollisionCore
 
         mock_stats_obj = MagicMock()
@@ -401,7 +401,7 @@ class TestPrivateInitMethods:
         assert core.stats is mock_stats_obj
 
     def test_init_checkpoint_default(self, sample_targets, sample_config):
-        """_init_checkpoint 使用默认 CheckpointManager"""
+        """_init_checkpoint 使用默认 CheckpointManager."""
         from src.collision.gpu.core import CollisionCore
 
         core = CollisionCore(targets=sample_targets, config=sample_config)
@@ -410,7 +410,7 @@ class TestPrivateInitMethods:
         assert core.checkpoint is not None
 
     def test_init_checkpoint_with_factory(self, sample_targets):
-        """_init_checkpoint 使用注入工厂"""
+        """_init_checkpoint 使用注入工厂."""
         from src.collision.gpu.core import CollisionCore
 
         mock_cp = MagicMock()
@@ -420,7 +420,7 @@ class TestPrivateInitMethods:
         assert core.checkpoint is mock_cp
 
     def test_init_dedup_default(self, sample_targets, sample_config):
-        """_init_dedup_filter 使用默认 DeduplicationFilter"""
+        """_init_dedup_filter 使用默认 DeduplicationFilter."""
         from src.collision.gpu.core import CollisionCore
 
         core = CollisionCore(targets=sample_targets, config=sample_config)
@@ -429,7 +429,7 @@ class TestPrivateInitMethods:
         assert core.dedup_filter is not None
 
     def test_init_dedup_with_factory(self, sample_targets):
-        """_init_dedup_filter 使用注入工厂"""
+        """_init_dedup_filter 使用注入工厂."""
         from src.collision.gpu.core import CollisionCore
 
         mock_dedup = MagicMock()
@@ -444,41 +444,41 @@ class TestPrivateInitMethods:
 
 @pytest.mark.skip(reason="Deprecated method checks no longer relevant")
 class TestModuleImports:
-    """测试模块导入和版本"""
+    """测试模块导入和版本."""
 
     def test_import_collision_core(self):
-        """测试导入 CollisionCore"""
+        """测试导入 CollisionCore."""
         from src.collision.gpu.core import CollisionCore
 
         assert CollisionCore is not None
 
     def test_import_from_gpu_package(self):
-        """测试从 gpu 包导入"""
+        """测试从 gpu 包导入."""
         from src.collision.gpu import CollisionCore
 
         assert CollisionCore is not None
 
     def test_module_version(self):
-        """测试模块版本号"""
+        """测试模块版本号."""
         from src.collision import gpu
 
         assert gpu.__version__ == "5.0.0"
 
     def test_collision_core_in_all(self):
-        """验证 CollisionCore 在 __all__ 中"""
+        """验证 CollisionCore 在 __all__ 中."""
         from src.collision.gpu import __all__ as gpu_all
 
         assert "CollisionCore" in gpu_all
 
     def test_factory_get_collision_core(self):
-        """测试工厂函数"""
+        """测试工厂函数."""
         from src.collision.gpu import get_collision_core
         from src.collision.gpu.core import CollisionCore
 
         assert get_collision_core() is CollisionCore
 
     def test_no_deprecated_methods_in_core(self):
-        """验证 core.py 中已无弃用方法"""
+        """验证 core.py 中已无弃用方法."""
         import os
 
         core_path = os.path.join(
@@ -494,7 +494,7 @@ class TestModuleImports:
         assert "[DEPRECATED]" not in content, "core.py 中仍有 [DEPRECATED] 标记"
 
     def test_types_import(self):
-        """测试类型别名"""
+        """测试类型别名."""
         from src.collision.types import CompleteCallback, MatchCallback, ProgressCallback
 
         assert MatchCallback is not None
@@ -502,11 +502,11 @@ class TestModuleImports:
         assert CompleteCallback is not None
 
     def test_threading_import(self):
-        """测试 threading 模块可用"""
+        """测试 threading 模块可用."""
         assert threading is not None
 
     def test_no_deprecated_imports(self):
-        """验证未导入弃用方法需要的 warnings 模块 (已移除)"""
+        """验证未导入弃用方法需要的 warnings 模块 (已移除)."""
         import os
 
         core_path = os.path.join(

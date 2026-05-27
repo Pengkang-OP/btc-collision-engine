@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Intel Arc A770 GPU深度优化工具
+"""Intel Arc A770 GPU深度优化工具.
 
 针对: 驱动已更新、温度正常、电源正常情况下的间歇性问题
 优化方向:
@@ -21,7 +21,7 @@ from src.gpu.device import GPUDeviceDetector
 
 
 class IntelArcOptimizer:
-    """Intel Arc A770深度优化器"""
+    """Intel Arc A770深度优化器."""
 
     def __init__(self):
         self.optimizations = []
@@ -29,17 +29,17 @@ class IntelArcOptimizer:
         self.recommendations = []
 
     def print_header(self, title: str):
-        """打印标题"""
+        """打印标题."""
         print(f"\n{'=' * 80}")
         print(f"  {title}")
         print(f"{'=' * 80}\n")
 
     def print_section(self, title: str):
-        """打印小节"""
+        """打印小节."""
         print(f"\n--- {title} ---")
 
     def check_pcie_bandwidth(self) -> dict[str, Any]:
-        """检查PCIe带宽"""
+        """检查PCIe带宽."""
         self.print_section("PCIe带宽检测")
 
         try:
@@ -82,7 +82,7 @@ class IntelArcOptimizer:
             return {"status": "fail", "message": str(e)}
 
     def test_batch_sizes(self) -> dict[str, Any]:
-        """测试不同批次大小的性能"""
+        """测试不同批次大小的性能."""
         self.print_section("批次大小性能测试")
 
         test_targets = ["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"]
@@ -94,7 +94,7 @@ class IntelArcOptimizer:
 
             try:
                 engine = GPUCollisionEngine(
-                    targets=test_targets, batch_size=batch_size, use_gpu_memory_pool=True
+                    targets=test_targets, batch_size=batch_size, use_gpu_memory_pool=True,
                 )
 
                 import threading
@@ -146,7 +146,7 @@ class IntelArcOptimizer:
 
         # 找出最佳批次大小
         best_batch = max(
-            results.items(), key=lambda x: x[1]["throughput"] if x[1]["status"] == "pass" else 0
+            results.items(), key=lambda x: x[1]["throughput"] if x[1]["status"] == "pass" else 0,
         )
 
         print(f"\n  [INFO] 最佳批次大小: {best_batch[0]:,}")
@@ -157,7 +157,7 @@ class IntelArcOptimizer:
         return {"status": "pass", "results": results, "best_batch_size": best_batch[0]}
 
     def optimize_memory_pool(self) -> dict[str, Any]:
-        """优化内存池配置"""
+        """优化内存池配置."""
         self.print_section("内存池配置优化")
 
         # 推荐配置
@@ -195,7 +195,7 @@ class IntelArcOptimizer:
         return {"status": "pass", "recommendations": recommendations}
 
     def optimize_timeout_settings(self) -> dict[str, Any]:
-        """优化超时设置"""
+        """优化超时设置."""
         self.print_section("超时参数优化")
 
         timeout_configs = {
@@ -235,7 +235,7 @@ class IntelArcOptimizer:
         return {"status": "pass", "recommendations": timeout_configs}
 
     def generate_optimized_config(self, batch_size: int = 131072) -> dict[str, Any]:
-        """生成优化后的配置文件"""
+        """生成优化后的配置文件."""
         self.print_section("生成优化配置")
 
         config = {
@@ -289,7 +289,7 @@ class IntelArcOptimizer:
         return {"status": "pass", "config": config, "config_path": str(config_path)}
 
     def run_full_optimization(self):
-        """运行完整优化流程"""
+        """运行完整优化流程."""
         self.print_header("Intel Arc A770 GPU深度优化工具")
 
         print("前提条件检查:")
@@ -356,7 +356,7 @@ class IntelArcOptimizer:
 
 
 def main():
-    """主函数"""
+    """主函数."""
     optimizer = IntelArcOptimizer()
     optimizer.run_full_optimization()
 

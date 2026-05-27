@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""实时监控GPU碰撞引擎 - 持续监控模式"""
+"""实时监控GPU碰撞引擎 - 持续监控模式."""
 
 import time
 from datetime import datetime
@@ -7,7 +7,7 @@ from pathlib import Path
 
 
 def get_current_program_info():
-    """获取当前运行程序的信息"""
+    """获取当前运行程序的信息."""
     import json
     import subprocess
 
@@ -43,7 +43,7 @@ def get_current_program_info():
 
 
 def check_recent_errors(log_file, since_time):
-    """检查指定时间之后的错误"""
+    """检查指定时间之后的错误."""
     try:
         with open(log_file, encoding="utf-8", errors="ignore") as f:
             lines = f.readlines()
@@ -67,7 +67,7 @@ def check_recent_errors(log_file, since_time):
 
 
 def check_gpu_status():
-    """检查GPU状态"""
+    """检查GPU状态."""
     import subprocess
 
     try:

@@ -78,7 +78,7 @@ def main() -> None:
 
 
 def _check_python_version() -> None:  # pyright: ignore[reportUnusedFunction]
-    """检查 Python 版本并在不满足时退出。"""
+    """检查 Python 版本并在不满足时退出。."""
     print("[ERROR] Python 3.12+ 是必需的，当前版本: " + sys.version)
     print("请升级 Python: https://www.python.org/downloads/")
     _ = input("按回车键退出...")

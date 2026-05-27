@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Multi-process collision engine for CPU-parallel collision detection.
 
 Distributes key generation and address matching across multiple CPU
@@ -8,7 +7,6 @@ processes for improved throughput.
 import multiprocessing
 import queue
 import time
-
 from typing import Any
 
 from ..utils import get_configured_logger

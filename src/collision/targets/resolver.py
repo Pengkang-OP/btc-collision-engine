@@ -1,4 +1,4 @@
-"""增强版目标地址解析器
+"""增强版目标地址解析器.
 
 支持多种比特币地址和密钥格式的自动识别与转换:
 - P2PKH地址(以'1'开头的标准比特币地址)
@@ -27,22 +27,23 @@ P2SH/Bech32(P2WSH)/Taproot等非P2PKH目标必然无法匹配。
 import os
 import pathlib
 
-from ...core.address_generator import P2PKHAddressGenerator
-from ...core.base58 import Base58
+from src.core.address_generator import P2PKHAddressGenerator
+from src.core.base58 import Base58
 
 # 导入日志配置
-from ...utils import get_configured_logger
+from src.utils import get_configured_logger
 
 # v4.2.1修复: Python的logging.Logger本身是线程安全的，无需ThreadSafeLogger包装
-from ...utils.bech32_codec import decode_segwit_address
-from ...utils.encoding_utils import EncodingUtils
+from src.utils.bech32_codec import decode_segwit_address
+from src.utils.encoding_utils import EncodingUtils
+
 from .cache import AddressCache
 
 logger = get_configured_logger("TargetResolver")
 
 
 class TargetResolver:
-    """增强版目标地址解析器
+    """增强版目标地址解析器.
 
     解析多种格式的目标:
     - 地址格式(P2PKH/P2SH): 保持原始大小写（Base58 校验和大小写敏感，小写化会破坏校验和）
@@ -74,7 +75,7 @@ class TargetResolver:
         max_lines: int = MAX_LINES,
         batch_size: int = BATCH_SIZE,
     ) -> None:
-        """初始化目标地址解析器
+        """初始化目标地址解析器.
 
         Args:
             enable_cache: 是否启用缓存,默认True
@@ -106,7 +107,7 @@ class TargetResolver:
 
     @staticmethod
     def detect_format(input_str: str) -> str:
-        """自动检测输入格式
+        """自动检测输入格式.
 
         Args:
             input_str: 输入字符串
@@ -189,7 +190,7 @@ class TargetResolver:
         return "unknown"
 
     def resolve_multiple(self, inputs: list[str]) -> dict[str, str | None]:
-        """resolve_batch的别名方法,保持向后兼容
+        """resolve_batch的别名方法,保持向后兼容.
 
         注意: 此方法只返回有效结果(过滤掉None)
         """
@@ -202,7 +203,7 @@ class TargetResolver:
     # ========================================================================
 
     def _resolve_p2pkh_address(self, input_str: str) -> str | None:
-        """解析P2PKH地址 — 仅格式验证,保留原始大小写"""
+        """解析P2PKH地址 — 仅格式验证,保留原始大小写."""
         try:
             version, payload = Base58.check_decode(input_str)
             if version == 0x00:
@@ -217,7 +218,7 @@ class TargetResolver:
             return None
 
     def _resolve_p2sh_address(self, input_str: str) -> str | None:
-        """解析P2SH地址
+        """解析P2SH地址.
 
         P2SH 地址的 payload 是 hash160(redeemScript)，而非 hash160(pubkey)。
         碰撞引擎通过随机私钥 → 公钥 → hash160(pubkey) → P2PKH地址 进行匹配，
@@ -242,7 +243,7 @@ class TargetResolver:
             return None
 
     def _resolve_bech32_address(self, input_str: str) -> str | None:
-        """解析Bech32地址 (SegWit v0)
+        """解析Bech32地址 (SegWit v0).
 
         P2WPKH (20字节 witness): witness_program = hash160(pubkey)，
         与引擎生成的 hash160(pubkey) 路径相同 → 可匹配 [OK]
@@ -262,7 +263,7 @@ class TargetResolver:
             if prog_len == 20:
                 # P2WPKH (v0, 20字节): witness program = pubkey_hash (Hash160)
                 # 转换为 Legacy P2PKH 地址以便引擎进行碰撞匹配
-                from ...core.base58 import Base58
+                from src.core.base58 import Base58
 
                 p2pkh_addr = Base58.check_encode(0x00, witness_program)
                 if self.cache:
@@ -285,7 +286,7 @@ class TargetResolver:
             return None
 
     def _resolve_taproot_address(self, input_str: str) -> str | None:
-        """解析Taproot地址 (P2TR, BIP-0341)
+        """解析Taproot地址 (P2TR, BIP-0341).
 
         Taproot 的 witness program 是 32字节 x-only 公钥（Schnorr签名用），
         而非 hash160(pubkey)。碰撞引擎通过 hash160(pubkey) → P2PKH地址 匹配，
@@ -314,9 +315,9 @@ class TargetResolver:
             return None
 
     def _resolve_wif(self, input_str: str) -> str | None:
-        """解析WIF私钥"""
+        """解析WIF私钥."""
         try:
-            from ...core.wif import WIF
+            from src.core.wif import WIF
 
             private_key, compressed = WIF.decode(input_str)
             public_key = self.generator.private_key_to_public_key(
@@ -333,7 +334,7 @@ class TargetResolver:
             return None
 
     def _resolve_pubkey(self, input_str: str) -> str | None:
-        """解析公钥"""
+        """解析公钥."""
         try:
             public_key = bytes.fromhex(input_str)
             address = self.generator.public_key_to_address(public_key)
@@ -346,9 +347,9 @@ class TargetResolver:
             return None
 
     def _resolve_hash160(self, input_str: str) -> str | None:
-        """解析Hash160"""
+        """解析Hash160."""
         try:
-            from ...core.base58 import Base58
+            from src.core.base58 import Base58
 
             hash160 = bytes.fromhex(input_str)
             address = Base58.check_encode(0x00, hash160)
@@ -361,7 +362,7 @@ class TargetResolver:
             return None
 
     def resolve(self, input_str: str) -> str | None:
-        """将任意格式输入解析为地址字符串,解析失败返回 None
+        """将任意格式输入解析为地址字符串,解析失败返回 None.
 
         - 地址格式(P2PKH/P2SH): 保持原始大小写,Base58校验和大小写敏感
         - Bech32/Taproot: 小写标准化
@@ -402,7 +403,7 @@ class TargetResolver:
         return None
 
     def resolve_batch(self, inputs: list[str]) -> dict[str, str | None]:
-        """批量解析多个输入字符串
+        """批量解析多个输入字符串.
 
         Args:
             inputs: 输入字符串列表
@@ -466,7 +467,7 @@ class TargetResolver:
         valid_count: int,
         invalid_count: int,
     ) -> tuple[int, int]:
-        """处理一批目标输入，返回 (valid_count, invalid_count)"""
+        """处理一批目标输入，返回 (valid_count, invalid_count)."""
         batch_results = self.resolve_batch(batch_inputs)
         for _inp, addr in batch_results.items():
             if addr:
@@ -477,7 +478,7 @@ class TargetResolver:
         return valid_count, invalid_count
 
     def load_from_file(self, filepath: str) -> set[str]:
-        """从文件加载目标地址集合
+        """从文件加载目标地址集合.
 
         Args:
             filepath: 文件路径
@@ -579,7 +580,7 @@ class TargetResolver:
 
     @staticmethod
     def analyze_target_formats(targets: set[str]) -> dict[str, int]:
-        """分析目标地址集的格式分布
+        """分析目标地址集的格式分布.
 
         按地址前缀识别格式并统计数量,用于启动时向用户展示
         目标格式兼容性信息。
@@ -621,7 +622,7 @@ class TargetResolver:
         return counts
 
     def get_cache_stats(self) -> dict | None:
-        """获取缓存统计信息
+        """获取缓存统计信息.
 
         Returns:
             缓存统计信息字典,未启用缓存返回空字典
@@ -634,7 +635,7 @@ class TargetResolver:
         return {}
 
     def get_unsupported_types(self) -> dict[str, int]:
-        """获取密码学上不支持匹配的输入类型统计
+        """获取密码学上不支持匹配的输入类型统计.
 
         Returns:
             字典 {类型名: 计数}，例如 {'p2sh_address': 3, 'taproot_address': 1}
@@ -647,11 +648,11 @@ class TargetResolver:
         return dict(Counter(self._unsupported_types))
 
     def clear_unsupported_stats(self) -> None:
-        """清空不支持类型统计"""
+        """清空不支持类型统计."""
         self._unsupported_types.clear()
 
     def clear_cache(self) -> None:
-        """清空缓存"""
+        """清空缓存."""
         if self.cache:
             self.cache.clear()
             logger.info("缓存已清空")

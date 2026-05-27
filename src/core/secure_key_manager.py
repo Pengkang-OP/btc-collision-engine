@@ -13,29 +13,31 @@ import sys
 import threading  # L3 fix: add thread lock support
 import warnings
 from contextlib import contextmanager, suppress
-from logging import getLogger
 from typing import Any
 
-logger = getLogger(__name__)
+# v5.2.4: 统一使用 get_configured_logger（之前使用标准 logging.getLogger）
+from ..utils import get_configured_logger
+
+logger = get_configured_logger(__name__)
 
 # Attempt to import cryptography libraries
 try:
-    import cryptography  # noqa: F401
+    import cryptography  # noqa: F401  # pyright: ignore[reportUnusedImport]
 
-    HAS_CRYPTOGRAPHY = True
+    HAS_CRYPTOGRAPHY: bool = True
 except ImportError:
-    HAS_CRYPTOGRAPHY = False
+    HAS_CRYPTOGRAPHY: bool = False
 
 try:
-    import nacl.secret  # noqa: F401 — import availability check
+    import nacl.secret  # noqa: F401  # pyright: ignore[reportUnusedImport]
 
-    HAS_PYNACL = True
+    HAS_PYNACL: bool = True
 except ImportError:
-    HAS_PYNACL = False
+    HAS_PYNACL: bool = False
 
 
 class SecureMemoryError(Exception):
-    """Secure memory operation exception"""
+    """Secure memory operation exception."""
 
 
 class SecureKeyManager:
@@ -99,10 +101,12 @@ class SecureKeyManager:
 
         """
         self._key: bytearray | None = None
-        self._locked = False
-        self._cleared = False
-        self._memory_locked = False
-        self._lock_memory_enabled = lock_memory
+        self._locked: bool = False
+        self._cleared: bool = False
+        self._memory_locked: bool = False
+        self._lock_memory_enabled: bool = lock_memory
+        self._libc: Any = None  # ctypes.CDLL reference (set in _lock_memory_posix)
+        self._kernel32: Any = None  # ctypes.WinDLL reference (set in _lock_memory_windows)
 
         # Select backend
         if HAS_CRYPTOGRAPHY:
@@ -110,18 +114,17 @@ class SecureKeyManager:
         elif HAS_PYNACL:
             self._backend = "pynacl"
         else:
-            self._backend = "ctypes"
+            self._backend: str = "ctypes"
             warnings.warn(
                 "cryptography or PyNaCl not installed, "
-                "using ctypes fallback. "
-                "Install: pip install cryptography",
+                + "using ctypes fallback. "
+                + "Install: pip install cryptography",
                 UserWarning,
                 stacklevel=2,
             )
 
     def _try_lock_memory(self) -> bool:
-        """Attempt to lock memory to prevent sensitive data from being
-        swapped to disk.
+        """尝试锁定内存以防止敏感数据被交换到磁盘。.
 
         Linux/macOS: uses mlock() system call
         Windows: uses VirtualLock() API
@@ -267,10 +270,7 @@ class SecureKeyManager:
             return False
 
         try:
-            if os.name == "nt" and hasattr(
-                self,
-                "_kernel32",
-            ):
+            if os.name == "nt" and self._kernel32 is not None:
                 # Windows: VirtualLock
                 addr = ctypes.addressof(
                     ctypes.c_char.from_buffer(self._key),
@@ -291,10 +291,7 @@ class SecureKeyManager:
                 )
                 return False
 
-            if os.name == "posix" and hasattr(
-                self,
-                "_libc",
-            ):
+            if os.name == "posix" and self._libc is not None:
                 # Linux/macOS: mlock
                 addr = ctypes.addressof(
                     ctypes.c_char.from_buffer(self._key),
@@ -423,7 +420,7 @@ class SecureKeyManager:
 
         # Attempt memory locking
         if self._lock_memory_enabled:
-            self._lock_key_memory()
+            _ = self._lock_key_memory()
 
     def get_key(self) -> memoryview:
         """Get read-only view of private key.
@@ -496,7 +493,7 @@ class SecureKeyManager:
         try:
             # Unlock memory first (unlock before clear)
             if self._memory_locked:
-                self._unlock_key_memory()
+                _ = self._unlock_key_memory()
 
             if self._backend == "cryptography":
                 self._clear_secure()
@@ -548,7 +545,7 @@ class SecureKeyManager:
                 ctypes.c_char.from_buffer(self._key),
             )
             size = len(self._key)
-            ctypes.memset(addr, 0, size)
+            _ = ctypes.memset(addr, 0, size)
             if any(self._key):
                 logger.error(
                     "Secure clear failed, memory not zeroed",
@@ -576,7 +573,7 @@ class SecureKeyManager:
 
             # Use ctypes.memset for secure clearing
             try:
-                ctypes.memset(
+                _ = ctypes.memset(
                     ctypes.addressof(
                         ctypes.c_char.from_buffer(
                             self._key,
@@ -594,10 +591,10 @@ class SecureKeyManager:
                     self._key[i] = 0x00
 
     def _clear_with_ctypes(self) -> None:
-        """Clear using ctypes memset (fallback scheme)"""
+        """Clear using ctypes memset (fallback scheme)."""
         if self._key:
             try:
-                ctypes.memset(
+                _ = ctypes.memset(
                     ctypes.addressof(
                         ctypes.c_char.from_buffer(
                             self._key,
@@ -612,7 +609,7 @@ class SecureKeyManager:
                     self._key[i] = 0
 
     def __enter__(self) -> "SecureKeyManager":
-        """Context manager entry"""
+        """Context manager entry."""
         return self
 
     def __exit__(
@@ -621,11 +618,11 @@ class SecureKeyManager:
         exc_val: BaseException | None,
         exc_tb: Any | None,
     ) -> None:
-        """Context manager exit - auto-clear"""
+        """Context manager exit - auto-clear."""
         self.clear()
 
     def __del__(self) -> None:
-        """Destructor - ensure clearing"""
+        """Destructor - ensure clearing."""
         if self._key is not None and not self._cleared:
             # Silent failure acceptable in destructor
             # AttributeError: ctypes may be unloaded before __del__
@@ -642,21 +639,21 @@ class SecureKeyManager:
 
     @property
     def is_cleared(self) -> bool:
-        """Whether key has been cleared"""
+        """Whether key has been cleared."""
         return self._cleared
 
     @property
     def backend(self) -> str:
-        """Current security backend"""
+        """Current security backend."""
         return self._backend
 
     @property
     def is_memory_locked(self) -> bool:
-        """Whether memory is locked"""
+        """Whether memory is locked."""
         return self._memory_locked
 
     @staticmethod
-    def get_clear_stats() -> dict:
+    def get_clear_stats() -> dict[str, Any]:
         """Get clear statistics.
 
         Returns:
@@ -689,7 +686,7 @@ class SecureKeyManager:
 
     @staticmethod
     def reset_clear_stats() -> None:
-        """Reset clear statistics"""
+        """Reset clear statistics."""
         # L3 fix: use lock for thread-safe stats reset
         with SecureKeyManager._stats_lock:
             SecureKeyManager._total_clears = 0
@@ -750,8 +747,8 @@ def validate_private_key(private_key: bytes) -> None:
         ValueError: If private_key is not exactly 32 bytes
 
     """
-    if not isinstance(private_key, bytes):
-        raise TypeError(
+    if not isinstance(private_key, bytes):  # pyright: ignore[reportUnnecessaryIsInstance]
+        raise TypeError(  # pyright: ignore[reportUnreachable]
             f"Private key must be bytes type, got {type(private_key).__name__}",
         )
     if len(private_key) != 32:

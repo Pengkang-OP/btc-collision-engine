@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GPU内存池缓冲区归还验证测试
+"""GPU内存池缓冲区归还验证测试.
 
 验证v3.2.1修复 (历史版本):
 1. 缓冲区释放时归还到内存池
@@ -22,7 +22,7 @@ from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
 
 
 def test_buffer_return_to_pool():
-    """测试缓冲区归还到内存池"""
+    """测试缓冲区归还到内存池."""
     print("=" * 80)
     print("GPU内存池缓冲区归还验证测试")
     print("=" * 80)

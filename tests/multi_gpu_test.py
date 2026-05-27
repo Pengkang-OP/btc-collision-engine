@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""多GPU测试脚本
+"""多GPU测试脚本.
 
 此脚本用于测试多GPU的功能，包括初始化、碰撞检测和资源释放等。
 """
@@ -19,7 +19,7 @@ logger = get_configured_logger("MultiGPUTest")
 
 
 def test_multi_gpu_initialization():
-    """测试多GPU初始化"""
+    """测试多GPU初始化."""
     logger.info("开始测试多GPU初始化")
 
     # 初始化多GPU碰撞引擎
@@ -61,7 +61,7 @@ def test_multi_gpu_initialization():
 
 
 def test_multi_gpu_collision_detection():
-    """测试多GPU碰撞检测"""
+    """测试多GPU碰撞检测."""
     logger.info("开始测试多GPU碰撞检测")
 
     # 创建一个测试目标地址集合
@@ -121,7 +121,7 @@ def test_multi_gpu_collision_detection():
 
 
 def test_multi_gpu_resource_release():
-    """测试多GPU资源释放"""
+    """测试多GPU资源释放."""
     logger.info("开始测试多GPU资源释放")
 
     # 创建一个测试目标地址集合
@@ -174,7 +174,7 @@ def test_multi_gpu_resource_release():
 
 
 def main():
-    """主函数"""
+    """主函数."""
     try:
         # 测试多GPU初始化
         init_result = test_multi_gpu_initialization()

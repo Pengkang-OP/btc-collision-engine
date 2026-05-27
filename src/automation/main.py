@@ -1,5 +1,6 @@
 """端到端自动化闭环管理系统 - 主入口
-提供命令行接口和API接口
+
+提供命令行接口和API接口.
 """
 
 import argparse
@@ -25,7 +26,7 @@ _os_chdir_done = False
 
 
 def _ensure_cwd() -> None:
-    """确保工作目录为项目根目录（延迟执行）。"""
+    """确保工作目录为项目根目录（延迟执行）。."""
     global _os_chdir_done
     if not _os_chdir_done:
         os.chdir(str(_project_root))
@@ -51,8 +52,8 @@ def print_banner() -> None:
 
 
 def run_analysis_only(args: argparse.Namespace) -> "AnalysisReport":
-    project_root: str | None = cast(str | None, args.project_root)
-    output: str | None = cast(str | None, args.output)
+    project_root: str | None = cast("str | None", args.project_root)
+    output: str | None = cast("str | None", args.output)
 
     print("\n[1/4] 运行数据分析模块...")
     module = DataAnalysisModule(Path(project_root) if project_root else None)
@@ -70,8 +71,8 @@ def run_analysis_only(args: argparse.Namespace) -> "AnalysisReport":
 
 
 def run_tests_only(args: argparse.Namespace) -> "TestSuiteResult":
-    project_root: str | None = cast(str | None, args.project_root)
-    output: str | None = cast(str | None, args.output)
+    project_root: str | None = cast("str | None", args.project_root)
+    output: str | None = cast("str | None", args.output)
 
     print("\n[2/4] 运行自动化测试模块...")
     module = AutoTestModule(Path(project_root) if project_root else None)
@@ -102,8 +103,8 @@ def run_tests_only(args: argparse.Namespace) -> "TestSuiteResult":
 
 
 def run_audit_only(args: argparse.Namespace) -> "AuditResult":
-    project_root: str | None = cast(str | None, args.project_root)
-    output: str | None = cast(str | None, args.output)
+    project_root: str | None = cast("str | None", args.project_root)
+    output: str | None = cast("str | None", args.output)
 
     print("\n[3/4] 运行智能审核模块...")
 
@@ -126,10 +127,10 @@ def run_audit_only(args: argparse.Namespace) -> "AuditResult":
 
 
 def run_full_loop(args: argparse.Namespace) -> "AuditResult":
-    project_root: str | None = cast(str | None, args.project_root)
-    output: str | None = cast(str | None, args.output)
-    max_iterations: int = cast(int, args.max_iterations)
-    auto_fix: bool = cast(bool, args.auto_fix)
+    project_root: str | None = cast("str | None", args.project_root)
+    output: str | None = cast("str | None", args.output)
+    max_iterations: int = cast("int", args.max_iterations)
+    auto_fix: bool = cast("bool", args.auto_fix)
 
     print_banner()
     print("\n启动端到端自动化闭环系统...")
@@ -178,11 +179,11 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    full: bool = cast(bool, args.full)
-    analyze: bool = cast(bool, args.analyze)
-    test: bool = cast(bool, args.test)
-    audit: bool = cast(bool, args.audit)
-    verbose: bool = cast(bool, args.verbose)
+    full: bool = cast("bool", args.full)
+    analyze: bool = cast("bool", args.analyze)
+    test: bool = cast("bool", args.test)
+    audit: bool = cast("bool", args.audit)
+    verbose: bool = cast("bool", args.verbose)
 
     if not any([full, analyze, test, audit]):
         args.full = True

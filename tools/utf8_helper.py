@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Windows 控制台 UTF-8 编码修复工具
+"""Windows 控制台 UTF-8 编码修复工具.
 
 在 Windows 平台上，默认控制台编码通常是 GBK/CP936，
 导致中文输出显示为乱码。此模块通过调用 Windows API
@@ -21,7 +21,7 @@ __date__ = "2025-05-17"
 
 
 def is_utf8_setup_needed() -> bool:
-    """检查是否需要设置 UTF-8 编码。
+    """检查是否需要设置 UTF-8 编码。.
 
     Returns:
         True 如果在 Windows 平台且控制台编码不是 UTF-8
@@ -36,7 +36,7 @@ def is_utf8_setup_needed() -> bool:
 
 
 def get_console_encoding() -> str:
-    """获取当前控制台编码。
+    """获取当前控制台编码。.
 
     Returns:
         当前控制台编码字符串，如 'cp936'、'utf-8'
@@ -57,7 +57,7 @@ def get_console_encoding() -> str:
 
 
 def setup_windows_utf8() -> bool:
-    """在 Windows 平台上设置控制台为 UTF-8 编码。
+    """在 Windows 平台上设置控制台为 UTF-8 编码。.
 
     通过调用 Windows API SetConsoleOutputCP(65001) 和
     SetConsoleCP(65001) 将控制台编码切换为 UTF-8。

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Event types and event bus integration for collision detection."""
 
 from __future__ import annotations
@@ -28,15 +27,15 @@ class EngineEvent:
         """Convert event to dictionary representation."""
         from dataclasses import asdict
 
-        # All concrete subclasses are @dataclass; EngineEvent is just a base
-        return asdict(self)  # type: ignore[call-overload]
+        # All concrete subclasses are @dataclass; asdict overloads confuse mypy
+        return asdict(self)  # pyright: ignore[reportArgumentType]
 
 
 @dataclass
 class EngineStartEvent(EngineEvent):
     """Event emitted when engine starts."""
 
-    config: dict | None = None
+    config: dict[str, Any] | None = None
     mode: str = ""
     target_count: int = 0
     batch_size: int = 0
@@ -48,7 +47,7 @@ class EngineStopEvent(EngineEvent):
     """Event emitted when engine stops."""
 
     reason: str = ""
-    stats: dict | None = None
+    stats: dict[str, Any] | None = None
     total_checked: int = 0
     source: str = ""
 
@@ -62,7 +61,7 @@ class EngineCompleteEvent(EngineEvent):
     elapsed_time: float = 0.0
     avg_speed: float = 0.0
     stop_reason: str = ""
-    stats: dict | None = None
+    stats: dict[str, Any] | None = None
     duration: float = 0.0
     source: str = ""
 
@@ -81,13 +80,14 @@ class EngineMatchEvent(EngineEvent):
     target_address: str = ""
     device_idx: int = 0
     worker_id: int = 0
+    _raw_wif: str = ""
     extra: dict[str, Any] = field(default_factory=dict)
     source: str = ""
 
     def __post_init__(self):
         """Mask WIF for security – prevent accidental secrets in logs."""
         if self.wif and len(self.wif) > 10:
-            self._raw_wif: str = self.wif
+            self._raw_wif = self.wif
             self.wif = f"{self.wif[:6]}...{self.wif[-4:]}"
 
     @property

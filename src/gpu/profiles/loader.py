@@ -1,4 +1,4 @@
-"""GPU型号数据库加载器
+"""GPU型号数据库加载器.
 
 负责加载和管理GPU型号配置数据库。
 """
@@ -9,18 +9,18 @@ import pathlib
 from typing import Any
 
 # 统一日志获取
-from ...utils import get_configured_logger
+from src.utils import get_configured_logger
 
 logger = get_configured_logger("GPUProfileLoader")
 
 
 class GPUProfileLoader:
-    """GPU型号配置加载器"""
+    """GPU型号配置加载器."""
 
     __slots__ = ("profile_file", "profiles")
 
     def __init__(self, profile_file: str | None = None) -> None:
-        """初始化加载器
+        """初始化加载器.
 
         Args:
             profile_file: JSON配置文件路径,None则使用默认路径
@@ -35,7 +35,7 @@ class GPUProfileLoader:
         self._load_profiles()
 
     def _load_profiles(self) -> None:
-        """加载JSON配置文件"""
+        """加载JSON配置文件."""
         try:
             if not pathlib.Path(self.profile_file).exists():
                 logger.warning(f"GPU配置文件不存在: {self.profile_file}")
@@ -66,7 +66,7 @@ class GPUProfileLoader:
             self.profiles = {}
 
     def get_profile(self, vendor: str, model_name: str) -> dict[str, Any] | None:
-        """根据厂商和型号获取配置
+        """根据厂商和型号获取配置.
 
         Args:
             vendor: 厂商名称(nvidia/amd/intel)
@@ -136,7 +136,7 @@ class GPUProfileLoader:
         return self.get_default_profile(vendor)
 
     def _match_model(self, model_name: str, model_list: list[str]) -> bool:
-        """模糊匹配型号名称
+        """模糊匹配型号名称.
 
         Args:
             model_name: 要匹配的型号名称
@@ -199,7 +199,7 @@ class GPUProfileLoader:
 
     @staticmethod
     def _validate_profile_models(profile: dict[str, Any], errors: list[str]) -> None:
-        """验证 models 字段"""
+        """验证 models 字段."""
         if not isinstance(profile["models"], list):
             errors.append("models必须为列表")
         elif len(profile["models"]) == 0:
@@ -209,7 +209,7 @@ class GPUProfileLoader:
 
     @staticmethod
     def _validate_profile_batch_sizes(profile: dict[str, Any], errors: list[str]) -> None:
-        """验证 batch_size 字段"""
+        """验证 batch_size 字段."""
         for key in ["recommended_batch_size", "max_batch_size"]:
             value = profile[key]
             if not isinstance(value, (int, float)):
@@ -232,7 +232,7 @@ class GPUProfileLoader:
         errors: list[str],
         warnings: list[str],
     ) -> None:
-        """验证 optimizations 字段（如果存在）"""
+        """验证 optimizations 字段（如果存在）."""
         if "optimizations" not in profile:
             return
         if not isinstance(profile["optimizations"], list):
@@ -252,7 +252,7 @@ class GPUProfileLoader:
         errors: list[str],
         warnings: list[str],
     ) -> None:
-        """验证可选字段：compute_capability, memory_efficiency"""
+        """验证可选字段：compute_capability, memory_efficiency."""
         if "compute_capability" in profile:
             cc = profile["compute_capability"]
             if not isinstance(cc, (str, int, float)):
@@ -272,7 +272,7 @@ class GPUProfileLoader:
         profile: dict[str, Any],
         errors: list[str],
     ) -> None:
-        """验证 queue_depth 可选字段"""
+        """验证 queue_depth 可选字段."""
         if "queue_depth" not in profile:
             return
         qd = profile["queue_depth"]
@@ -286,7 +286,7 @@ class GPUProfileLoader:
         profile: dict[str, Any],
         errors: list[str],
     ) -> None:
-        """验证 timeout_seconds 可选字段"""
+        """验证 timeout_seconds 可选字段."""
         if "timeout_seconds" not in profile:
             return
         ts = profile["timeout_seconds"]
@@ -301,7 +301,7 @@ class GPUProfileLoader:
         errors: list[str],
         warnings: list[str],
     ) -> None:
-        """验证 known_issues 可选字段"""
+        """验证 known_issues 可选字段."""
         if "known_issues" not in profile:
             return
         ki = profile["known_issues"]
@@ -322,7 +322,7 @@ class GPUProfileLoader:
         errors: list[str],
         warnings: list[str],
     ) -> None:
-        """验证 min_driver_version / recommended_driver_version 可选字段"""
+        """验证 min_driver_version / recommended_driver_version 可选字段."""
         import re
 
         def _check_drv(key: str) -> str | None:
@@ -358,7 +358,7 @@ class GPUProfileLoader:
                 pass  # 格式错误已由 _check_drv 报告
 
     def _validate_profile(self, profile: dict[str, Any], profile_path: str) -> bool:
-        """验证GPU配置文件的合法性
+        """验证GPU配置文件的合法性.
 
         验证内容包括:
         - 必需字段存在性 (models, recommended_batch_size, max_batch_size)
@@ -417,7 +417,7 @@ class GPUProfileLoader:
         return True
 
     def _clean_model_name(self, name: str) -> str:
-        """清理型号名称,移除常见前缀和后缀"""
+        """清理型号名称,移除常见前缀和后缀."""
         # 移除常见前缀
         prefixes = ["nvidia ", "amd ", "intel ", "geforce ", "radeon ", "arc "]
         for prefix in prefixes:
@@ -431,7 +431,7 @@ class GPUProfileLoader:
         return name.strip()
 
     def get_default_profile(self, vendor: str) -> dict[str, Any] | None:
-        """获取厂商的默认配置
+        """获取厂商的默认配置.
 
         Args:
             vendor: 厂商名称
@@ -454,11 +454,11 @@ class GPUProfileLoader:
         return None
 
     def get_all_vendors(self) -> list[str]:
-        """获取所有支持的厂商列表"""
+        """获取所有支持的厂商列表."""
         return [k for k in self.profiles if not k.startswith("_")]
 
     def get_vendor_architectures(self, vendor: str) -> list[str]:
-        """获取厂商的所有架构世代
+        """获取厂商的所有架构世代.
 
         Args:
             vendor: 厂商名称
@@ -476,6 +476,6 @@ class GPUProfileLoader:
         return [k for k in vendor_data if not k.startswith("_") and k != "default"]
 
     def reload(self) -> None:
-        """重新加载配置文件"""
+        """重新加载配置文件."""
         logger.info("重新加载GPU型号数据库...")
         self._load_profiles()

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Intel GPU 显存监控器 (IntelMemoryMonitor) 单元测试
+"""Intel GPU 显存监控器 (IntelMemoryMonitor) 单元测试.
 
 覆盖：
 - IntelMemoryMonitor 初始化与阈值计算
@@ -22,7 +22,7 @@ import pytest
 
 @pytest.mark.unit
 class TestMemoryStatus:
-    """MemoryStatus 枚举测试"""
+    """MemoryStatus 枚举测试."""
 
     def test_all_status_values(self):
         from src.gpu.intel_memory_monitor import MemoryStatus
@@ -40,7 +40,7 @@ class TestMemoryStatus:
 
 @pytest.mark.unit
 class TestMemorySnapshot:
-    """MemorySnapshot 数据类测试"""
+    """MemorySnapshot 数据类测试."""
 
     def test_creates_snapshot(self):
         from src.gpu.intel_memory_monitor import MemorySnapshot, MemoryStatus
@@ -74,7 +74,7 @@ class TestMemorySnapshot:
 
 @pytest.mark.unit
 class TestIntelMemoryMonitorInit:
-    """初始化测试"""
+    """初始化测试."""
 
     def test_init_defaults(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
@@ -112,7 +112,7 @@ class TestIntelMemoryMonitorInit:
 
 @pytest.mark.unit
 class TestTrackAllocation:
-    """显存分配跟踪测试"""
+    """显存分配跟踪测试."""
 
     def test_track_valid_allocation(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
@@ -176,7 +176,7 @@ class TestTrackAllocation:
 
 @pytest.mark.unit
 class TestTrackDeallocation:
-    """显存释放跟踪测试"""
+    """显存释放跟踪测试."""
 
     def test_track_valid_deallocation(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
@@ -220,7 +220,7 @@ class TestTrackDeallocation:
 
 @pytest.mark.unit
 class TestGetStatus:
-    """状态查询测试"""
+    """状态查询测试."""
 
     def test_normal_status(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor, MemoryStatus
@@ -277,7 +277,7 @@ class TestGetStatus:
 
 @pytest.mark.unit
 class TestCheckWarnings:
-    """警告检测测试"""
+    """警告检测测试."""
 
     def test_no_warnings_normal(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
@@ -313,7 +313,7 @@ class TestCheckWarnings:
 
 @pytest.mark.unit
 class TestBatchReduction:
-    """批次缩减建议测试"""
+    """批次缩减建议测试."""
 
     def test_normal_no_reduction(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
@@ -358,7 +358,7 @@ class TestBatchReduction:
 
 @pytest.mark.unit
 class TestDetectMemoryLeak:
-    """泄漏检测测试"""
+    """泄漏检测测试."""
 
     def test_no_leak_with_few_allocations(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor
@@ -401,7 +401,7 @@ class TestDetectMemoryLeak:
 
 @pytest.mark.unit
 class TestHistoryAndReset:
-    """历史记录与重置测试"""
+    """历史记录与重置测试."""
 
     def test_history_limited_to_max(self):
         from src.gpu.intel_memory_monitor import IntelMemoryMonitor

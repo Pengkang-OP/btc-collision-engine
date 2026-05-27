@@ -8,14 +8,13 @@ anomaly alerting.
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any, cast
 
-from ..utils.fast_json import fast_dump, fast_load
-
 from ..utils import get_configured_logger
+from ..utils.fast_json import fast_dump, fast_load
 
 logger = get_configured_logger(__name__)
 
@@ -25,7 +24,7 @@ ALERT_DEDUP_LOOKBACK = 10  # 告警去重回溯数量
 
 
 class AlertLevel(Enum):
-    """告警级别"""
+    """告警级别."""
 
     INFO = "info"  # 信息
     WARNING = "warning"  # 警告
@@ -34,7 +33,7 @@ class AlertLevel(Enum):
 
 
 class AlertType(Enum):
-    """告警类型"""
+    """告警类型."""
 
     PERFORMANCE_DEGRADATION = "performance_degradation"  # 性能退化
     MEMORY_OVERFLOW = "memory_overflow"  # 内存溢出
@@ -57,7 +56,7 @@ DEFAULT_COOLDOWNS = {
 
 @dataclass
 class AlertRule:
-    """告警规则"""
+    """告警规则."""
 
     name: str  # 规则名称
     alert_type: AlertType  # 告警类型
@@ -68,7 +67,7 @@ class AlertRule:
     enabled: bool = True  # 是否启用
 
     def get_cooldown(self) -> int:
-        """获取冷却时间
+        """获取冷却时间.
 
         Returns:
             冷却时间(秒)
@@ -81,7 +80,7 @@ class AlertRule:
 
 @dataclass
 class AlertRecord:
-    """告警记录"""
+    """告警记录."""
 
     timestamp: str  # 时间戳
     alert_type: AlertType  # 告警类型
@@ -93,7 +92,7 @@ class AlertRecord:
 
 
 class AlertSystem:
-    """性能监控告警系统
+    """性能监控告警系统.
 
     功能:
     - 实时监控GPU性能指标
@@ -116,7 +115,7 @@ class AlertSystem:
     """
 
     def __init__(self, alert_log_file: str | None = None) -> None:
-        """初始化告警系统
+        """初始化告警系统.
 
         Args:
             alert_log_file: 告警日志文件路径
@@ -146,7 +145,7 @@ class AlertSystem:
         logger.debug("告警系统初始化完成: %d 条规则", len(self.rules))
 
     def add_rule(self, rule: AlertRule) -> None:
-        """添加告警规则
+        """添加告警规则.
 
         Args:
             rule: 告警规则对象
@@ -156,7 +155,7 @@ class AlertSystem:
         logger.info(f"添加告警规则: {rule.name} ({rule.level.value})")
 
     def remove_rule(self, rule_name: str) -> bool:
-        """移除告警规则
+        """移除告警规则.
 
         Args:
             rule_name: 规则名称
@@ -175,7 +174,7 @@ class AlertSystem:
         return removed
 
     def add_alert_callback(self, callback: Callable) -> None:
-        """添加告警回调函数
+        """添加告警回调函数.
 
         Args:
             callback: 回调函数,接收AlertRecord参数
@@ -186,7 +185,7 @@ class AlertSystem:
 
     # ── 多渠道通知支持 ──
     def add_notification_channel(self, channel) -> None:
-        """添加告警通知渠道
+        """添加告警通知渠道.
 
         渠道对象只需实现 send(alert: AlertRecord) 方法即可（鸭子类型）。
 
@@ -199,7 +198,7 @@ class AlertSystem:
         logger.info("添加告警通知渠道: %s", channel_name)
 
     def remove_notification_channel(self, channel) -> bool:
-        """移除告警通知渠道
+        """移除告警通知渠道.
 
         Args:
             channel: 要移除的通知渠道
@@ -217,7 +216,7 @@ class AlertSystem:
             return False
 
     def setup_default_rules(self) -> None:
-        """设置默认告警规则"""
+        """设置默认告警规则."""
 
         # 规则1: 性能退化>20%
         def check_performance_degradation(metrics: dict) -> bool:
@@ -315,7 +314,7 @@ class AlertSystem:
     BURST_DEDUP_WINDOW = 2.0
 
     def _sanitize_metrics(self, metrics: dict[str, Any]) -> dict[str, Any]:
-        """对输入指标进行数据清洗和范围检查
+        """对输入指标进行数据清洗和范围检查.
 
         确保内存使用百分比、温度等指标在合理范围内，
         防止异常值导致误报。
@@ -350,7 +349,7 @@ class AlertSystem:
         return sanitized
 
     def check_metrics(self, metrics: dict[str, Any]) -> list[AlertRecord]:
-        """检查性能指标并触发告警
+        """检查性能指标并触发告警.
 
         Args:
             metrics: 性能指标字典
@@ -400,7 +399,7 @@ class AlertSystem:
                 if rule.condition(metrics):
                     # 创建告警记录
                     alert = AlertRecord(
-                        timestamp=datetime.now(timezone.utc).isoformat(),
+                        timestamp=datetime.now(UTC).isoformat(),
                         alert_type=rule.alert_type,
                         level=rule.level,
                         message=rule.message,
@@ -431,7 +430,7 @@ class AlertSystem:
         return triggered_alerts
 
     def _check_global_rate_limit(self, current_time: float) -> bool:
-        """检查全局速率限制（#11修复）
+        """检查全局速率限制（#11修复）.
 
         防止告警泛滥，限制单位时间内的告警数量。
 
@@ -450,7 +449,7 @@ class AlertSystem:
         return len(self._recent_alerts) < self._global_rate_limit_max
 
     def get_rate_limit_stats(self) -> dict:
-        """获取速率限制统计"""
+        """获取速率限制统计."""
         current_time = time.time()
         window_start = current_time - self._global_rate_limit_window
         recent_count = len([t for t in self._recent_alerts if t > window_start])
@@ -464,7 +463,7 @@ class AlertSystem:
         }
 
     def _is_duplicate_alert(self, alert: AlertRecord, lookback: int = ALERT_DEDUP_LOOKBACK) -> bool:
-        """检查是否是重复告警
+        """检查是否是重复告警.
 
         Args:
             alert: 当前告警
@@ -489,7 +488,7 @@ class AlertSystem:
         return False
 
     def _trigger_alert(self, alert: AlertRecord):
-        """触发告警 (P2-7: 多渠道通知)
+        """触发告警 (P2-7: 多渠道通知).
 
         Args:
             alert: 告警记录
@@ -514,7 +513,7 @@ class AlertSystem:
         self._save_alert_history()
 
     def resolve_alert(self, alert_index: int) -> None:
-        """标记告警已解决
+        """标记告警已解决.
 
         Args:
             alert_index: 告警记录索引
@@ -528,7 +527,7 @@ class AlertSystem:
             self._save_alert_history()
 
     def get_active_alerts(self) -> list[AlertRecord]:
-        """获取未解决的告警
+        """获取未解决的告警.
 
         Returns:
             未解决的告警记录列表
@@ -537,7 +536,7 @@ class AlertSystem:
         return [a for a in self.alert_history if not a.resolved]
 
     def get_alert_statistics(self) -> dict[str, Any]:
-        """获取告警统计信息
+        """获取告警统计信息.
 
         Returns:
             统计信息字典
@@ -575,7 +574,7 @@ class AlertSystem:
         return stats
 
     def _save_alert_history(self, max_records: int = MAX_ALERT_HISTORY):
-        """保存告警历史到文件
+        """保存告警历史到文件.
 
         Args:
             max_records: 最大保存记录数,避免文件过大
@@ -606,7 +605,7 @@ class AlertSystem:
             logger.error("保存告警历史失败: %s", e)
 
     def _load_alert_history(self):
-        """从文件加载告警历史"""
+        """从文件加载告警历史."""
         if not self.alert_log_file.exists():
             return
 
@@ -632,7 +631,7 @@ class AlertSystem:
             logger.error("加载告警历史失败: %s", e)
 
     def clear_history(self) -> None:
-        """清空告警历史"""
+        """清空告警历史."""
         self.alert_history.clear()
         self.last_alert_time.clear()
         self._save_alert_history()
@@ -644,7 +643,7 @@ _alert_system: AlertSystem | None = None
 
 
 def get_alert_system() -> AlertSystem:
-    """获取全局告警系统实例
+    """获取全局告警系统实例.
 
     Returns:
         AlertSystem实例

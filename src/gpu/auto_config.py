@@ -1,4 +1,4 @@
-"""GPU参数自动调优器
+"""GPU参数自动调优器.
 
 根据不同厂商和型号的GPU自动配置最优参数。
 支持NVIDIA、AMD、Intel Arc的特定优化。
@@ -61,7 +61,7 @@ _RATIO_CONSERVATIVE = 0.5  # 未知 / Intel Arc A380
 
 
 def _align_work_group_size(recommended: int, max_wgs: int, alignment: int) -> int:
-    """将work_group_size对齐到厂商最优值，且不超过设备限制"""
+    """将work_group_size对齐到厂商最优值，且不超过设备限制."""
     if max_wgs <= 0:
         return 1
 
@@ -78,7 +78,7 @@ def _align_work_group_size(recommended: int, max_wgs: int, alignment: int) -> in
 
 
 def _get_memory_gb(device: dict) -> float:
-    """获取GPU显存大小(GB)
+    """获取GPU显存大小(GB).
 
     v4.2.1修复: 兼容global_mem_size(字节)和global_mem_gb两种格式
 
@@ -117,7 +117,7 @@ def _get_memory_gb(device: dict) -> float:
 
 
 class GPUAutoConfigurator:
-    """GPU参数自动调优器
+    """GPU参数自动调优器.
 
     根据GPU厂商、型号、显存等参数自动生成最优配置。
 
@@ -178,13 +178,13 @@ class GPUAutoConfigurator:
     }
 
     def __init__(self) -> None:
-        """初始化自动调优器"""
+        """初始化自动调优器."""
         self._config_cache: dict[str, dict[str, Any]] = {}
 
         logger.info("GPUAutoConfigurator已初始化")
 
     def configure_for_device(self, device: dict[str, Any]) -> dict[str, Any]:
-        """为指定设备生成优化配置
+        """为指定设备生成优化配置.
 
         Args:
             device: 设备信息字典(包含vendor, name, global_mem_gb等)
@@ -225,7 +225,7 @@ class GPUAutoConfigurator:
         return config
 
     def get_nvidia_config(self, device: dict[str, Any]) -> dict[str, Any]:
-        """生成NVIDIA GPU配置
+        """生成NVIDIA GPU配置.
 
         NVIDIA特点:
         - 适合大批次处理
@@ -270,7 +270,7 @@ class GPUAutoConfigurator:
         return config
 
     def get_amd_config(self, device: dict[str, Any]) -> dict[str, Any]:
-        """生成AMD GPU配置
+        """生成AMD GPU配置.
 
         AMD特点:
         - 中等批次大小
@@ -301,7 +301,7 @@ class GPUAutoConfigurator:
         return config
 
     def get_intel_config(self, device: dict[str, Any]) -> dict[str, Any]:
-        """生成Intel Arc GPU配置
+        """生成Intel Arc GPU配置.
 
         Intel Arc特点:
         - 需要uint32 workarounds(溢出问题)
@@ -344,7 +344,7 @@ class GPUAutoConfigurator:
         return config
 
     def get_unknown_config(self, device: dict[str, Any]) -> dict[str, Any]:
-        """生成未知GPU的保守配置
+        """生成未知GPU的保守配置.
 
         对于未知厂商,使用最保守的配置以确保稳定性。
         """
@@ -375,7 +375,7 @@ class GPUAutoConfigurator:
         return config
 
     def _adjust_for_memory(self, device: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
-        """根据实际显存调整配置
+        """根据实际显存调整配置.
 
         Args:
             device: 设备信息
@@ -422,7 +422,7 @@ class GPUAutoConfigurator:
         return config
 
     def validate_config(self, config: dict[str, Any], device: dict[str, Any]) -> tuple[bool, list[str]]:
-        """验证配置是否合理
+        """验证配置是否合理.
 
         Args:
             config: 配置字典
@@ -459,7 +459,7 @@ class GPUAutoConfigurator:
         return is_valid, warnings
 
     def get_config_summary(self, config: dict[str, Any]) -> str:
-        """获取配置摘要
+        """获取配置摘要.
 
         Args:
             config: 配置字典
@@ -482,7 +482,7 @@ class GPUAutoConfigurator:
         return "\n".join(lines)
 
     def clear_cache(self) -> None:
-        """清除配置缓存"""
+        """清除配置缓存."""
         self._config_cache.clear()
         logger.debug("配置缓存已清除")
 
@@ -493,7 +493,7 @@ _configurator_lock = threading.Lock()
 
 
 def get_gpu_configurator() -> GPUAutoConfigurator:
-    """获取GPU自动调优器单例（线程安全）
+    """获取GPU自动调优器单例（线程安全）.
 
     Returns:
         GPUAutoConfigurator实例
@@ -511,7 +511,7 @@ def get_gpu_configurator() -> GPUAutoConfigurator:
 
 
 def reset_gpu_configurator() -> None:
-    """重置GPU自动调优器单例(用于测试)"""
+    """重置GPU自动调优器单例(用于测试)."""
     global _configurator_instance
     with _configurator_lock:
         _configurator_instance = None

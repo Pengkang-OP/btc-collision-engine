@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GPU碰撞引擎实时监控工具"""
+"""GPU碰撞引擎实时监控工具."""
 
 import json
 import subprocess
@@ -7,7 +7,7 @@ from pathlib import Path
 
 
 def read_monitoring_data():
-    """读取监控数据文件（优先 data_logs，兼容旧 monitoring_data）"""
+    """读取监控数据文件（优先 data_logs，兼容旧 monitoring_data）."""
     candidates = [
         Path("data_logs/current_data.json"),
         Path("monitoring_data/current_data.json"),
@@ -38,7 +38,7 @@ def read_monitoring_data():
 
 
 def read_error_log():
-    """读取错误日志"""
+    """读取错误日志."""
     error_file = Path("monitoring_data/error_log.json")
 
     if not error_file.exists():
@@ -52,7 +52,7 @@ def read_error_log():
 
 
 def analyze_logs():
-    """分析日志文件"""
+    """分析日志文件."""
     log_file = Path("logs/collision.log")
 
     if not log_file.exists():
@@ -81,8 +81,8 @@ def analyze_logs():
         return {"status": f"分析失败: {e}"}
 
 
-def _check_processes():  # noqa: D401 (描述性函数名)
-    """── 检查 Python 进程 ──"""
+def _check_processes():
+    """── 检查 Python 进程 ──."""
     print("[1/5] 检查程序运行状态")
     print("-" * 80)
     try:
@@ -114,7 +114,7 @@ def _check_processes():  # noqa: D401 (描述性函数名)
 
 
 def _read_monitoring_section():
-    """── 读取性能监控数据 ──"""
+    """── 读取性能监控数据 ──."""
     print("[2/5] 读取性能监控数据")
     print("-" * 80)
     monitoring_data = read_monitoring_data()
@@ -133,7 +133,7 @@ def _read_monitoring_section():
 
 
 def _check_errors_section():
-    """── 检查错误日志 ──"""
+    """── 检查错误日志 ──."""
     print("[3/5] 检查错误日志")
     print("-" * 80)
     errors = read_error_log()
@@ -143,7 +143,7 @@ def _check_errors_section():
             print(
                 f"  [{error.get('timestamp', 'Unknown')}] "
                 f"{error.get('error_type', 'Unknown')}: "
-                f"{error.get('message', '')}"
+                f"{error.get('message', '')}",
             )
     else:
         print("[PASS] 无错误记录")
@@ -151,7 +151,7 @@ def _check_errors_section():
 
 
 def _analyze_logs_section():
-    """── 分析运行日志 ──"""
+    """── 分析运行日志 ──."""
     print("[4/5] 分析运行日志")
     print("-" * 80)
     log_analysis = analyze_logs()
@@ -160,7 +160,7 @@ def _analyze_logs_section():
         print(
             f"INFO: {log_analysis['info_count']} | "
             f"WARNING: {log_analysis['warning_count']} | "
-            f"ERROR: {log_analysis['error_count']}"
+            f"ERROR: {log_analysis['error_count']}",
         )
         print()
         print("最新日志(最后10行):")
@@ -184,7 +184,7 @@ def _analyze_logs_section():
 
 
 def _health_check_section(monitoring_data, log_analysis):
-    """── 健康状态评估 ──"""
+    """── 健康状态评估 ──."""
     print("[5/5] 健康状态评估")
     print("-" * 80)
     health_checks = []
@@ -210,7 +210,7 @@ def _health_check_section(monitoring_data, log_analysis):
         health_checks.append(("吞吐量", True, f"{monitoring_data['keys_per_second']:,.0f} keys/s"))
     elif monitoring_data:
         health_checks.append(
-            ("吞吐量", False, f"{monitoring_data.get('keys_per_second', 0):,.0f} keys/s(偏低)")
+            ("吞吐量", False, f"{monitoring_data.get('keys_per_second', 0):,.0f} keys/s(偏低)"),
         )
     else:
         health_checks.append(("吞吐量", None, "暂无数据"))
@@ -227,7 +227,7 @@ def _health_check_section(monitoring_data, log_analysis):
 
 
 def _print_summary(health_checks, monitoring_data):
-    """打印监控总结。"""
+    """打印监控总结。."""
     print("=" * 80)
     print("  监控总结")
     print("=" * 80)
@@ -252,7 +252,7 @@ def _print_summary(health_checks, monitoring_data):
 
 
 def main():
-    """GPU碰撞引擎实时监控入口。"""
+    """GPU碰撞引擎实时监控入口。."""
     print("=" * 80)
     print("  GPU碰撞引擎实时监控")
     print("=" * 80)

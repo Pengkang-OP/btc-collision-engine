@@ -1,4 +1,4 @@
-"""Windows特定环境测试 - 原子操作和内存锁定"""
+"""Windows特定环境测试 - 原子操作和内存锁定."""
 
 import logging
 import os
@@ -15,10 +15,10 @@ logger = logging.getLogger(__name__)
 
 @pytest.mark.skipunless(IS_WINDOWS, "仅在Windows环境运行")
 class TestWindowsAtomicOperations:
-    """Windows原子操作测试"""
+    """Windows原子操作测试."""
 
     def test_file_atomic_write(self):
-        """测试Windows文件原子写入操作"""
+        """测试Windows文件原子写入操作."""
         import shutil
         import tempfile
 
@@ -47,7 +47,7 @@ class TestWindowsAtomicOperations:
             shutil.rmtree(test_dir, ignore_errors=True)
 
     def test_file_atomic_write_with_concurrent_access(self):
-        """测试并发访问下的原子写入"""
+        """测试并发访问下的原子写入."""
         import shutil
         import tempfile
         import threading
@@ -98,7 +98,7 @@ class TestWindowsAtomicOperations:
         shutil.rmtree(test_dir, ignore_errors=True)
 
     def test_checkpoint_atomic_write(self):
-        """测试断点文件的原子写入"""
+        """测试断点文件的原子写入."""
         import shutil
         import tempfile
 
@@ -137,10 +137,10 @@ class TestWindowsAtomicOperations:
 
 @pytest.mark.skipunless(IS_WINDOWS, "仅在Windows环境运行")
 class TestWindowsMemoryLocking:
-    """Windows内存锁定测试"""
+    """Windows内存锁定测试."""
 
     def test_memory_locking_availability(self):
-        """测试内存锁定功能的可用性"""
+        """测试内存锁定功能的可用性."""
         try:
             import ctypes
 
@@ -170,7 +170,7 @@ class TestWindowsMemoryLocking:
             pytest.skip(f"无法测试内存锁定: {e}")
 
     def test_secure_key_manager_memory_protection(self):
-        """测试SecureKeyManager的内存保护功能"""
+        """测试SecureKeyManager的内存保护功能."""
         from src.core.secure_key_manager import SecureKeyManager
 
         # 测试SecureKeyManager是否正确处理内存保护
@@ -189,7 +189,7 @@ class TestWindowsMemoryLocking:
         key_manager.clear()
 
     def test_memory_view_operations(self):
-        """测试内存视图操作的安全性"""
+        """测试内存视图操作的安全性."""
         # 测试内存视图的基本操作
         data = bytearray(1024)
 
@@ -208,10 +208,10 @@ class TestWindowsMemoryLocking:
 
 @pytest.mark.skipunless(IS_WINDOWS, "仅在Windows环境运行")
 class TestWindowsACL:
-    """Windows ACL权限测试"""
+    """Windows ACL权限测试."""
 
     def test_file_permissions(self):
-        """测试文件权限设置"""
+        """测试文件权限设置."""
         import shutil
         import tempfile
 
@@ -233,17 +233,17 @@ class TestWindowsACL:
             with pathlib.Path(test_file).open("a", encoding="utf-8") as f:
                 f.write("追加内容")
             content = pathlib.Path(test_file).read_text(encoding="utf-8")
-            assert content in "追加内容"
+            assert "追加内容" in content
 
         finally:
             shutil.rmtree(test_dir, ignore_errors=True)
 
 
 class TestPlatformDetection:
-    """平台检测测试（跨平台）"""
+    """平台检测测试（跨平台）."""
 
     def test_windows_detection(self):
-        """测试Windows平台检测"""
+        """测试Windows平台检测."""
         if IS_WINDOWS:
             assert sys.platform.startswith("win")
             assert os.name == "nt"
@@ -251,7 +251,7 @@ class TestPlatformDetection:
             pytest.skip("非Windows平台")
 
     def test_checkpoint_manager_platform_handling(self):
-        """测试CheckpointManager的平台特定处理"""
+        """测试CheckpointManager的平台特定处理."""
         import shutil
 
         # CheckpointManager应该能正确处理Windows环境

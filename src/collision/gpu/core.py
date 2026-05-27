@@ -1,4 +1,4 @@
-"""碰撞核心逻辑
+"""碰撞核心逻辑.
 
 管理碰撞统计、断点续传、去重过滤、搜索模式协调，
 是碰撞引擎的核心业务逻辑层。
@@ -24,7 +24,7 @@ import time
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, Optional
 
-from ...utils import get_configured_logger
+from src.utils import get_configured_logger
 
 # 统一回调类型别名
 from ..types import MatchCallback, ProgressCallback
@@ -37,7 +37,7 @@ logger = get_configured_logger(__name__)
 
 
 class CollisionCore(ICollisionCore):
-    """碰撞核心逻辑
+    """碰撞核心逻辑.
 
     职责:
     - 管理碰撞统计数据
@@ -64,7 +64,7 @@ class CollisionCore(ICollisionCore):
         checkpoint_factory: Callable | None = None,
         dedup_factory: Callable | None = None,
     ) -> None:
-        """初始化碰撞核心
+        """初始化碰撞核心.
 
         Args:
             targets: 目标地址集合
@@ -115,7 +115,7 @@ class CollisionCore(ICollisionCore):
         logger.debug("CollisionCore 初始化完成")
 
     def get_stats(self) -> dict[str, Any]:
-        """获取碰撞统计
+        """获取碰撞统计.
 
         Returns:
             统计信息字典
@@ -141,14 +141,14 @@ class CollisionCore(ICollisionCore):
         return stats_dict
 
     def is_running(self) -> bool:
-        """检查是否正在运行（线程安全）"""
+        """检查是否正在运行（线程安全）."""
         with self._state_lock:
             return self._running
 
     # ========== 私有方法 ==========
 
     def _init_stats(self):
-        """初始化碰撞统计
+        """初始化碰撞统计.
 
         初始化 CollisionStats 实例，用于跟踪引擎运行时的统计数据。
         优先使用依赖注入的工厂；工厂失败时回退到默认实现。
@@ -172,7 +172,7 @@ class CollisionCore(ICollisionCore):
             raise
 
     def _init_checkpoint(self):
-        """初始化断点管理器"""
+        """初始化断点管理器."""
         # 优先使用依赖注入的工厂
         if self._checkpoint_factory:
             try:
@@ -192,7 +192,7 @@ class CollisionCore(ICollisionCore):
             raise
 
     def _init_dedup_filter(self):
-        """初始化去重过滤器"""
+        """初始化去重过滤器."""
         # 优先使用依赖注入的工厂
         if self._dedup_factory:
             try:
@@ -213,7 +213,7 @@ class CollisionCore(ICollisionCore):
             raise
 
     def _restore_checkpoint(self):
-        """恢复断点
+        """恢复断点.
 
         Phase 4实现:
         - 从断点数据恢复 total_checked 和 mode 到统计对象
@@ -265,7 +265,7 @@ class CollisionCore(ICollisionCore):
             logger.error("恢复断点失败: %s", e)
 
     def _save_checkpoint(self):
-        """保存断点"""
+        """保存断点."""
         if not self.checkpoint or not self.stats:
             return
 
@@ -278,7 +278,7 @@ class CollisionCore(ICollisionCore):
                     "current_position": getattr(self.stats, "total_checked", 0),
                     "total_checked": getattr(self.stats, "total_checked", 0),
                     "matches": [],  # 匹配数据通过回调单独处理
-                }
+                },
             )
             logger.debug("断点已保存")
         except Exception as e:

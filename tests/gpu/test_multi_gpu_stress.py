@@ -1,4 +1,4 @@
-"""多GPU锁机制压力测试
+"""多GPU锁机制压力测试.
 
 验证高并发场景下锁机制的性能和正确性。
 """
@@ -12,10 +12,10 @@ pytestmark = pytest.mark.gpu
 
 
 class TestLockPerformance:
-    """测试锁性能"""
+    """测试锁性能."""
 
     def test_state_lock_throughput(self):
-        """测试状态锁吞吐量"""
+        """测试状态锁吞吐量."""
         from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
 
         engine = MultiGPUCollisionEngine()
@@ -23,7 +23,7 @@ class TestLockPerformance:
         lock = threading.Lock()
 
         def stress_test():
-            """压力测试"""
+            """压力测试."""
             local_count = 0
             for _ in range(1000):
                 with engine._state_lock:
@@ -51,7 +51,7 @@ class TestLockPerformance:
         assert elapsed < 5.0, f"锁吞吐量过低: {elapsed:.2f}s"
 
     def test_workers_lock_throughput(self):
-        """测试工作器锁吞吐量"""
+        """测试工作器锁吞吐量."""
         from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
 
         engine = MultiGPUCollisionEngine()
@@ -59,7 +59,7 @@ class TestLockPerformance:
         lock = threading.Lock()
 
         def stress_test():
-            """压力测试"""
+            """压力测试."""
             local_count = 0
             for i in range(500):
                 with engine._workers_lock:
@@ -89,10 +89,10 @@ class TestLockPerformance:
 
 
 class TestLockFairness:
-    """测试锁公平性"""
+    """测试锁公平性."""
 
     def test_no_thread_starvation(self):
-        """测试无线程饥饿"""
+        """测试无线程饥饿."""
         from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
 
         engine = MultiGPUCollisionEngine()
@@ -100,7 +100,7 @@ class TestLockFairness:
         lock = threading.Lock()
 
         def access_state(thread_id, count):
-            """访问状态"""
+            """访问状态."""
             local_count = 0
             for _ in range(count):
                 with engine._state_lock:
@@ -131,10 +131,10 @@ class TestLockFairness:
 
 
 class TestLockContention:
-    """测试锁竞争"""
+    """测试锁竞争."""
 
     def test_high_contention_scenario(self):
-        """测试高竞争场景"""
+        """测试高竞争场景."""
         from unittest.mock import Mock
 
         from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
@@ -149,7 +149,7 @@ class TestLockContention:
         lock = threading.Lock()
 
         def try_start_stop():
-            """尝试启动停止"""
+            """尝试启动停止."""
             for _ in range(50):
                 result = engine.start(targets=set(), mode="random", total_keys=100)
                 if result:
@@ -180,11 +180,11 @@ class TestLockContention:
 
 
 class TestScalability:
-    """测试可扩展性"""
+    """测试可扩展性."""
 
     @pytest.mark.skip(reason="ZeroDivisionError: 压测时序中 sequential_time 为零，依赖真实硬件负载")
     def test_lock_scales_with_threads(self):
-        """测试锁随线程数扩展"""
+        """测试锁随线程数扩展."""
         from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
 
         results = {}
@@ -195,7 +195,7 @@ class TestScalability:
             lock = threading.Lock()
 
             def stress_test(eng=engine, lk=lock, ops=operations):
-                """压力测试"""
+                """压力测试."""
                 local_count = 0
                 for _ in range(500):
                     with eng._state_lock:

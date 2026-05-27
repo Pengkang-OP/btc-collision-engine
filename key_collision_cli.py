@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""比特币私钥对撞工具 - 统一命令行入口
+"""比特币私钥对撞工具 - 统一命令行入口.
 
 此为项目的**唯一根级 CLI 入口**。逻辑委托至 src/cli/main.py。
 安装后也可通过 `btc-collision` 命令直接调用。
@@ -16,7 +16,7 @@ import sys
 # 确保项目根目录在路径中（必须在 src 导入之前执行）
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from src.cli.main import main  # noqa: E402  # 架构必要：sys.path.insert 后立即导入
+from src.cli.main import main  # 架构必要：sys.path.insert 后立即导入  # noqa: E402
 
 if __name__ == "__main__":
     main()

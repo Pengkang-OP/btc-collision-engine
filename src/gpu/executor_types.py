@@ -1,6 +1,8 @@
 """异步GPU执行器的类型、常量和配置定义.
 
 从 async_executor.py 拆分，提高模块可维护性.
+
+v5.2.4: _PendingBatch.__init__ 初始化 batch_num 属性，消除外部赋值的 type: ignore[attr-defined]。
 """
 
 import types
@@ -75,7 +77,7 @@ GPU_SPECIFIC_CONFIG = types.MappingProxyType(
             "max_batch_size": 262144,
             "memory_factor": 0.6,
         },
-    }
+    },
 )  # MappingProxyType
 
 
@@ -97,6 +99,7 @@ class _PendingBatch:
         self.buf = buf
         self.num_keys = num_keys
         self.seed = seed
+        self.batch_num = 0  # 在 __slots__ 中声明，后续由调用方赋值
 
 
 class _SyncFallbackError(Exception):

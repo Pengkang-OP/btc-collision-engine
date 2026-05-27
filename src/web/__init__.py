@@ -8,8 +8,7 @@ from __future__ import annotations
 from pathlib import Path
 
 # pyright: reportImportCycles=false
-
-from src import __version__ as __version__  # noqa: F401 — 从包根统一读取
+from src import __version__ as __version__  # noqa: F401
 
 
 def create_app(data_dir: Path | None = None, debug: bool = False) -> object:

@@ -1,4 +1,4 @@
-"""GPU 可观测性模块
+"""GPU 可观测性模块.
 
 提供结构化 metrics 收集和 Prometheus 格式导出。
 在关键 GPU 执行路径收集性能指标，支持监控系统集成。
@@ -27,7 +27,7 @@ from collections import defaultdict
 
 
 class GPUMetricsCollector:
-    """GPU 指标收集器
+    """GPU 指标收集器.
 
     线程安全的指标收集单例，在关键执行路径记录性能数据。
     支持 Prometheus 文本格式导出。
@@ -54,23 +54,24 @@ class GPUMetricsCollector:
     )
 
     __slots__ = (
-        "_lock",
         "_created_at",
-        "_keys_checked_total",
-        "_matches_found_total",
-        "_errors_total",
-        "_recovery_events_total",
-        "_throughput",
-        "_memory_usage_bytes",
         "_device_active",
+        "_errors_total",
         "_kernel_latency_buckets",
-        "_kernel_latency_sum",
         "_kernel_latency_count",
+        "_kernel_latency_sum",
+        "_keys_checked_total",
+        "_lock",
+        "_matches_found_total",
+        "_memory_usage_bytes",
         "_pool_hits",
         "_pool_misses",
+        "_recovery_events_total",
+        "_throughput",
     )
 
     def __init__(self) -> None:
+        """初始化性能指标收集器。."""
         self._lock = threading.RLock()
         self._created_at = time.time()
 
@@ -102,42 +103,42 @@ class GPUMetricsCollector:
     # ========================================================================
 
     def record_keys_checked(self, device_idx: int, count: int) -> None:
-        """记录已检查私钥数"""
+        """记录已检查私钥数."""
         with self._lock:
             self._keys_checked_total[device_idx] += count
 
     def record_match_found(self, device_idx: int) -> None:
-        """记录发现的匹配"""
+        """记录发现的匹配."""
         with self._lock:
             self._matches_found_total[device_idx] += 1
 
     def record_error(self, device_idx: int, error_type: str = "") -> None:
-        """记录错误事件"""
+        """记录错误事件."""
         with self._lock:
             self._errors_total[device_idx] += 1
 
     def record_recovery_event(self, device_idx: int) -> None:
-        """记录 GPU 恢复事件"""
+        """记录 GPU 恢复事件."""
         with self._lock:
             self._recovery_events_total[device_idx] += 1
 
     def record_throughput(self, device_idx: int, keys_per_sec: float) -> None:
-        """记录当前吞吐量"""
+        """记录当前吞吐量."""
         with self._lock:
             self._throughput[device_idx] = keys_per_sec
 
     def record_memory_usage(self, device_idx: int, bytes_used: int) -> None:
-        """记录 GPU 内存使用"""
+        """记录 GPU 内存使用."""
         with self._lock:
             self._memory_usage_bytes[device_idx] = bytes_used
 
     def record_device_status(self, device_idx: int, active: bool) -> None:
-        """记录设备活跃状态"""
+        """记录设备活跃状态."""
         with self._lock:
             self._device_active[device_idx] = active
 
     def record_kernel_latency(self, device_idx: int, latency_sec: float) -> None:
-        """记录内核执行延迟（直方图）
+        """记录内核执行延迟（直方图）.
 
         Args:
             device_idx: GPU 设备索引
@@ -155,7 +156,7 @@ class GPUMetricsCollector:
                     break
 
     def record_pool_access(self, device_idx: int, hit: bool) -> None:
-        """记录内存池访问（命中/未命中）
+        """记录内存池访问（命中/未命中）.
 
         Args:
             device_idx: GPU 设备索引
@@ -173,22 +174,22 @@ class GPUMetricsCollector:
     # ========================================================================
 
     def get_total_keys_checked(self) -> int:
-        """获取所有设备的总检查数"""
+        """获取所有设备的总检查数."""
         with self._lock:
             return sum(self._keys_checked_total.values())
 
     def get_total_matches(self) -> int:
-        """获取所有设备的总匹配数"""
+        """获取所有设备的总匹配数."""
         with self._lock:
             return sum(self._matches_found_total.values())
 
     def get_combined_throughput(self) -> float:
-        """获取所有设备的组合吞吐量"""
+        """获取所有设备的组合吞吐量."""
         with self._lock:
             return sum(self._throughput.values())
 
     def get_pool_hit_ratio(self, device_idx: int) -> float | None:
-        """获取内存池命中率"""
+        """获取内存池命中率."""
         with self._lock:
             total = self._pool_hits[device_idx] + self._pool_misses[device_idx]
             if total == 0:
@@ -196,7 +197,7 @@ class GPUMetricsCollector:
             return self._pool_hits[device_idx] / total
 
     def get_kernel_latency_stats(self, device_idx: int) -> dict:
-        """获取内核延迟统计"""
+        """获取内核延迟统计."""
         with self._lock:
             count = self._kernel_latency_count[device_idx]
             if count == 0:
@@ -227,7 +228,7 @@ class GPUMetricsCollector:
     # ========================================================================
 
     def export_prometheus(self) -> str:
-        """导出 Prometheus 格式文本
+        """导出 Prometheus 格式文本.
 
         Returns:
             Prometheus text exposition format 字符串
@@ -306,7 +307,7 @@ class GPUMetricsCollector:
             return "\n".join(lines)
 
     def export_json(self) -> dict:
-        """导出 JSON 格式指标摘要
+        """导出 JSON 格式指标摘要.
 
         Returns:
             结构化指标字典，适合日志/API 使用
@@ -334,7 +335,7 @@ class GPUMetricsCollector:
             }
 
     def reset(self) -> None:
-        """重置所有指标（用于测试）"""
+        """重置所有指标（用于测试）."""
         with self._lock:
             self._keys_checked_total.clear()
             self._matches_found_total.clear()
@@ -357,7 +358,7 @@ _global_metrics_lock = threading.Lock()
 
 
 def get_metrics_collector() -> GPUMetricsCollector:
-    """获取全局指标收集器实例（线程安全）"""
+    """获取全局指标收集器实例（线程安全）."""
     global _global_metrics_collector
     if _global_metrics_collector is None:
         with _global_metrics_lock:
@@ -367,7 +368,7 @@ def get_metrics_collector() -> GPUMetricsCollector:
 
 
 def reset_metrics_collector() -> None:
-    """重置全局指标收集器"""
+    """重置全局指标收集器."""
     global _global_metrics_collector
     if _global_metrics_collector is not None:
         _global_metrics_collector.reset()

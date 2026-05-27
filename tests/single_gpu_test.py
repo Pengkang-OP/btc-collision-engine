@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""单GPU测试脚本
+"""单GPU测试脚本.
 
 此脚本用于测试单GPU的功能，包括初始化、碰撞检测和资源释放等。
 """
@@ -19,7 +19,7 @@ logger = get_configured_logger("SingleGPUTest")
 
 
 def _run_gpu_engine_test(test_targets, test_name: str) -> None:
-    """内部辅助：初始化 GPU 引擎并返回 engine 实例用于后续测试。"""
+    """内部辅助：初始化 GPU 引擎并返回 engine 实例用于后续测试。."""
     try:
         engine = GPUCollisionEngine(device_index=0, batch_size=1024, targets=test_targets)
         return engine
@@ -29,7 +29,7 @@ def _run_gpu_engine_test(test_targets, test_name: str) -> None:
 
 
 def test_single_gpu_initialization():
-    """测试单GPU初始化"""
+    """测试单GPU初始化."""
     logger.info("开始测试单GPU初始化")
 
     test_targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
@@ -51,7 +51,7 @@ def test_single_gpu_initialization():
 
 
 def test_single_gpu_collision_detection():
-    """测试单GPU碰撞检测"""
+    """测试单GPU碰撞检测."""
     logger.info("开始测试单GPU碰撞检测")
 
     test_targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
@@ -75,7 +75,7 @@ def test_single_gpu_collision_detection():
 
 
 def test_single_gpu_resource_release():
-    """测试单GPU资源释放"""
+    """测试单GPU资源释放."""
     logger.info("开始测试单GPU资源释放")
 
     test_targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
@@ -103,7 +103,7 @@ def test_single_gpu_resource_release():
 
 
 def main():
-    """主函数"""
+    """主函数."""
     tests = [
         ("单GPU初始化", test_single_gpu_initialization),
         ("单GPU碰撞检测", test_single_gpu_collision_detection),

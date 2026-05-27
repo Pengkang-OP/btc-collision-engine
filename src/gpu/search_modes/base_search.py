@@ -1,4 +1,4 @@
-"""基础搜索模式 - BaseSearchMode
+"""基础搜索模式 - BaseSearchMode.
 
 定义所有搜索模式的基类，包含通用的 _execute_batch_loop 批处理循环。
 搜索模式通过引擎引用（engine reference）访问引擎状态，不复制状态。
@@ -16,31 +16,32 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 # v4.2.2 S4: 将循环内 WIF 导入提升到模块级别
-from ...core.wif import WIF
+from src.core.wif import WIF
 
 # 统一日志获取 + 修复缺失导入
-from ...utils import get_configured_logger
-from ...utils.exception_handler import ExceptionHandler
-from ...utils.timeout import invoke_with_timeout
+from src.utils import get_configured_logger
+from src.utils.exception_handler import ExceptionHandler
+from src.utils.timeout import invoke_with_timeout
 
 if TYPE_CHECKING:
     # ROADMAP #13: 使用协议接口替代直接引用，消除反向依赖
-    from ...gpu._engine_protocol import GPUEngineProtocol as GPUCollisionEngine
+    from src.gpu._engine_protocol import GPUEngineProtocol as GPUCollisionEngine
 
 logger = get_configured_logger("BaseSearchMode")
 
 
 class BaseSearchMode:
-    """所有搜索模式的基类
+    """所有搜索模式的基类.
 
     构造函数接收引擎实例引用，通过 self.engine 访问所有引擎属性，
     避免在模块间复制状态。
     """
 
     def __init__(self, engine: "GPUCollisionEngine") -> None:
-        """Args:
-        engine: GPUCollisionEngine 实例引用
+        """初始化基础搜索模式。.
 
+        Args:
+            engine: GPUCollisionEngine 实例引用
         """
         self.engine = engine
 
@@ -57,7 +58,7 @@ class BaseSearchMode:
         key_extractor_fn,
         mode_name: str,
     ) -> None:
-        """处理一批 GPU 匹配结果：提取私钥、WIF 编码、触发回调。"""
+        """处理一批 GPU 匹配结果：提取私钥、WIF 编码、触发回调。."""
         engine = self.engine
         # v5.2.2: 获取 target_list 引用，避免每次匹配重复访问
         target_list = engine._device_manager.target_list
@@ -90,7 +91,7 @@ class BaseSearchMode:
             engine.stats.add_match(private_key, address)
             # v5.2.2: 发布匹配事件到事件总线
             if hasattr(engine, "event_bus") and engine.event_bus:
-                from ...collision.events import EngineMatchEvent
+                from src.collision.events import EngineMatchEvent
 
                 engine.event_bus.publish(
                     EngineMatchEvent(
@@ -113,7 +114,7 @@ class BaseSearchMode:
                 )
 
     def _handle_batch_error(self, error: Exception, mode_name: str) -> int | None:
-        """处理批量执行中的 GPU 异常，返回 batch_count 或 None（继续）。
+        """处理批量执行中的 GPU 异常，返回 batch_count 或 None（继续）。.
 
         Returns:
             int: 应返回的 batch_count（发生致命错误时）。
@@ -154,7 +155,7 @@ class BaseSearchMode:
             # 恢复失败 → 停止引擎
             try:
                 if hasattr(engine, "event_bus") and engine.event_bus:
-                    from ...collision.events import EngineErrorEvent
+                    from src.collision.events import EngineErrorEvent
 
                     engine.event_bus.publish(
                         EngineErrorEvent(
@@ -187,7 +188,7 @@ class BaseSearchMode:
         stop_condition_fn: Callable[[], bool] | None = None,
         key_extractor_fn: Callable[[bytes, int], bytes] | None = None,
     ) -> int:
-        """通用批处理执行循环。"""
+        """通用批处理执行循环。."""
         engine = self.engine
         if engine.stats is None:
             raise RuntimeError("BaseSearchMode: engine.stats is None, 引擎未正确初始化")
@@ -218,7 +219,7 @@ class BaseSearchMode:
                 if current_time - engine._last_progress_time >= engine._progress_interval_sec:
                     # v5.2.2: 发布进度事件到事件总线
                     if hasattr(engine, "event_bus") and engine.event_bus and engine.stats:
-                        from ...collision.events import EngineProgressEvent
+                        from src.collision.events import EngineProgressEvent
 
                         stats_snapshot = engine.stats.snapshot()
                         engine.event_bus.publish(
@@ -255,7 +256,7 @@ class BaseSearchMode:
     # ------------------------------------------------------------------
 
     def _generate_sequential_keys(self, start: int, count: int) -> bytes:
-        """高效生成连续序列的私钥字节串
+        """高效生成连续序列的私钥字节串.
 
         使用预分配 bytearray + struct.pack_into 替代
         逐个 int.to_bytes() + b''.join()，减少中间列表/生成器的内存分配开销。

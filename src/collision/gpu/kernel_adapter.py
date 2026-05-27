@@ -1,4 +1,4 @@
-"""GPU内核适配器
+"""GPU内核适配器.
 
 将现有GPUKernel适配为IKernelExecutor接口。
 通过 DeviceManagerAdapter 获取底层 GPUDevice 和 GPUContext，
@@ -13,14 +13,15 @@ import hashlib
 import time
 from typing import Any, cast
 
-from ...utils import get_configured_logger
+from src.utils import get_configured_logger
+
 from .protocols import GPUContext, GPUDevice, GPUKernel, IKernelExecutor, MatchResult
 
 logger = get_configured_logger(__name__)
 
 
 class GPUKernelAdapter(IKernelExecutor):
-    """GPU内核适配器
+    """GPU内核适配器.
 
     适配现有 GPUKernel (kernel_impl) 到 IKernelExecutor 接口。
     利用 DeviceManagerAdapter 提供的底层 GPUDevice 实例
@@ -28,7 +29,7 @@ class GPUKernelAdapter(IKernelExecutor):
     """
 
     def __init__(self, config: dict[str, Any] | None = None) -> None:
-        """初始化适配器
+        """初始化适配器.
 
         Args:
             config: 配置字典
@@ -37,7 +38,7 @@ class GPUKernelAdapter(IKernelExecutor):
         self.config = config or {}
 
     def compile_kernel(self, device: GPUDevice, context: GPUContext) -> GPUKernel:
-        """编译GPU内核
+        """编译GPU内核.
 
         通过底层 GPUContext 编译 OpenCL 内核，然后使用 GPUKernelImpl
         创建持久化的内核实例。
@@ -54,8 +55,8 @@ class GPUKernelAdapter(IKernelExecutor):
 
         """
         try:
-            from ...gpu.kernel import OPENCL_KERNEL_SOURCE
-            from ...gpu.kernel_impl import GPUKernel as GPUKernelImpl
+            from src.gpu.kernel import OPENCL_KERNEL_SOURCE
+            from src.gpu.kernel_impl import GPUKernel as GPUKernelImpl
 
             logger.debug(f"开始编译GPU内核: device={device.name}, vendor={device.vendor}")
 
@@ -105,7 +106,7 @@ class GPUKernelAdapter(IKernelExecutor):
         batch_size: int,
         stop_event: Any = None,
     ) -> tuple[list[MatchResult], float]:
-        """执行单个批次
+        """执行单个批次.
 
         Args:
             kernel: GPU内核
@@ -153,7 +154,7 @@ class GPUKernelAdapter(IKernelExecutor):
             raise RuntimeError(f"GPU批次执行失败: {e}") from e
 
     def _convert_matches(self, raw_matches: list[dict]) -> list[MatchResult]:
-        """转换匹配结果格式
+        """转换匹配结果格式.
 
         Args:
             raw_matches: 原始匹配结果列表
@@ -166,7 +167,7 @@ class GPUKernelAdapter(IKernelExecutor):
 
         for match in raw_matches:
             match_result = cast(
-                MatchResult,
+                "MatchResult",
                 {
                     "address": match.get("address", ""),
                     "private_key": match.get("private_key", ""),

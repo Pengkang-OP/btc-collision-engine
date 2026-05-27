@@ -1,4 +1,4 @@
-"""P1-5 修复验证：_live_range_count 双重计数BUG
+"""P1-5 修复验证：_live_range_count 双重计数BUG.
 
 验证要点：
 1. _live_range_count 不被批次结束重复提交（L808-812 已删除）
@@ -16,20 +16,20 @@ from src.collision.key_collision_engine import KeyCollisionEngine
 
 
 class TestLiveRangeCountFix:
-    """P1-5: _live_range_count 双重计数修复验证"""
+    """P1-5: _live_range_count 双重计数修复验证."""
 
     def setup_method(self, method):
-        """每个测试创建独立的引擎实例"""
+        """每个测试创建独立的引擎实例."""
         self.engine = None
 
     def teardown_method(self, method):
-        """清理"""
+        """清理."""
         if self.engine and hasattr(self.engine, "_executor") and self.engine._executor:
             self.engine.stop()
             time.sleep(0.3)
 
     def test_live_range_count_reset_after_random_search(self):
-        """P1-5-A: random_search结束后 _live_range_count 应为0"""
+        """P1-5-A: random_search结束后 _live_range_count 应为0."""
         complete_event = threading.Event()
 
         def on_complete(stats):
@@ -64,7 +64,7 @@ class TestLiveRangeCountFix:
         print(f"\n[P1-5-A ✓] _live_range_count 已正确重置: {final_live}")
 
     def test_final_count_not_doubled_random_search(self):
-        """P1-5-B: random_search 最终计数不翻倍（核心验证）"""
+        """P1-5-B: random_search 最终计数不翻倍（核心验证）."""
         complete_event = threading.Event()
         final_stats = []
 
@@ -99,7 +99,7 @@ class TestLiveRangeCountFix:
             print(f"\n[P1-5-B ✓] 最终计数: {final_count} (在合理范围内)")
 
     def test_live_count_not_double_accumulated(self):
-        """P1-5-C: _live_range_count 内部机制验证（直接访问内部状态）"""
+        """P1-5-C: _live_range_count 内部机制验证（直接访问内部状态）."""
         self.engine = KeyCollisionEngine(
             targets={"1NonExistentTestAddress12345"},
             max_workers=1,
@@ -130,15 +130,15 @@ class TestLiveRangeCountFix:
         stats = self.engine.get_stats()
         assert stats.total_checked < 100000, (
             f"total_checked={stats.total_checked} 异常偏高，可能存在 batch_end 重复提交"
-        )  # noqa: E501
+        )
 
         print(
             f"\n[P1-5-C ✓] 引擎停止后 _live_range_count={final_live}, "
-            f"total_checked={stats.total_checked}"
+            f"total_checked={stats.total_checked}",
         )
 
     def test_range_scan_live_count_reset(self):
-        """P1-5-D: range_scan 结束后 _live_range_count 正确"""
+        """P1-5-D: range_scan 结束后 _live_range_count 正确."""
         complete_event = threading.Event()
         final_stats = []
 
@@ -174,11 +174,11 @@ class TestLiveRangeCountFix:
 
         print(
             f"\n[P1-5-D ✓] range_scan 最终计数: {final_count} (范围1-500), "
-            f"_live_range_count={live_after}"
+            f"_live_range_count={live_after}",
         )
 
     def test_no_batch_end_double_count_in_worker(self):
-        """P1-5-E: 确认 _random_search_worker 中不存在批次结束重复提交"""
+        """P1-5-E: 确认 _random_search_worker 中不存在批次结束重复提交."""
         # 通过代码检查：确认旧的双重计数bug已被修复
         import inspect
 
@@ -201,12 +201,12 @@ class TestLiveRangeCountFix:
         )
         assert "self._live_range_count = 0" in finalize_source, (
             "缺少 _random_search_finalize 中的 live 计数重置代码"
-        )  # noqa: E501
+        )
 
         print("\n[P1-5-E ✓] 代码中无重复提交，余数提交和计数合并代码均存在")
 
     def test_progress_callback_counts_monotonic(self):
-        """P1-5-F: 进度回调中的total_checked单调递增（不翻倍）"""
+        """P1-5-F: 进度回调中的total_checked单调递增（不翻倍）."""
         progress_counts = []
 
         def on_progress(stats):

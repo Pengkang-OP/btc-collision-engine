@@ -1,4 +1,4 @@
-"""锁性能监控器
+"""锁性能监控器.
 
 监控多GPU引擎中锁的等待时间、竞争频率等指标。
 用于诊断性能瓶颈和锁竞争问题。
@@ -11,7 +11,7 @@ from typing import Any
 
 
 class LockMonitor:
-    """锁性能监控器
+    """锁性能监控器.
 
     功能:
     - 记录锁等待时间
@@ -21,14 +21,14 @@ class LockMonitor:
     """
 
     __slots__ = (
-        "slow_threshold_ms",
+        "_enabled",
         "_lock",
         "_lock_stats",
-        "_enabled",
+        "slow_threshold_ms",
     )
 
     def __init__(self, slow_threshold_ms: float = 10.0) -> None:
-        """初始化监控器
+        """初始化监控器.
 
         Args:
             slow_threshold_ms: 慢锁阈值(毫秒),超过此时间视为慢锁
@@ -53,15 +53,15 @@ class LockMonitor:
         self._enabled = True
 
     def enable(self) -> None:
-        """启用监控"""
+        """启用监控."""
         self._enabled = True
 
     def disable(self) -> None:
-        """禁用监控"""
+        """禁用监控."""
         self._enabled = False
 
     def record_lock_acquire(self, lock_name: str, wait_time_ms: float) -> None:
-        """记录锁获取
+        """记录锁获取.
 
         Args:
             lock_name: 锁名称
@@ -81,7 +81,7 @@ class LockMonitor:
                 stats["slow_acquisitions"] += 1
 
     def record_lock_release(self, lock_name: str, hold_time_ms: float) -> None:
-        """记录锁释放
+        """记录锁释放.
 
         Args:
             lock_name: 锁名称
@@ -97,7 +97,7 @@ class LockMonitor:
             stats["max_hold_ms"] = max(stats["max_hold_ms"], hold_time_ms)
 
     def get_stats(self, lock_name: str) -> dict:
-        """获取锁统计信息
+        """获取锁统计信息.
 
         Args:
             lock_name: 锁名称
@@ -123,7 +123,7 @@ class LockMonitor:
             return stats
 
     def get_all_stats(self) -> dict[str, dict]:
-        """获取所有锁统计信息
+        """获取所有锁统计信息.
 
         Returns:
             所有锁的统计信息
@@ -136,7 +136,7 @@ class LockMonitor:
             return result
 
     def generate_report(self) -> str:
-        """生成性能报告
+        """生成性能报告.
 
         Returns:
             格式化的报告字符串
@@ -167,26 +167,26 @@ class LockMonitor:
         return "\n".join(report)
 
     def reset(self) -> None:
-        """重置统计数据"""
+        """重置统计数据."""
         with self._lock:
             self._lock_stats.clear()
 
 
 class MonitoredLock:
-    """带监控的锁
+    """带监控的锁.
 
     包装threading.Lock,自动记录性能指标。
     """
 
     __slots__ = (
+        "_acquire_time",
         "_lock",
         "_monitor",
         "_name",
-        "_acquire_time",
     )
 
     def __init__(self, monitor: LockMonitor, name: str) -> None:
-        """初始化
+        """初始化.
 
         Args:
             monitor: 锁监控器
@@ -199,7 +199,7 @@ class MonitoredLock:
         self._acquire_time: float | None = None
 
     def acquire(self, blocking: bool = True, timeout: float = -1) -> bool:
-        """获取锁"""
+        """获取锁."""
         start_time = time.time()
         result = self._lock.acquire(blocking, timeout)
         wait_time_ms = (time.time() - start_time) * 1000
@@ -212,7 +212,7 @@ class MonitoredLock:
         return result
 
     def release(self) -> None:
-        """释放锁"""
+        """释放锁."""
         if self._acquire_time:
             hold_time_ms = (time.time() - self._acquire_time) * 1000
             self._monitor.record_lock_release(self._name, hold_time_ms)
@@ -233,7 +233,7 @@ _lock_monitor = LockMonitor()
 
 
 def get_lock_monitor() -> LockMonitor:
-    """获取全局锁监控器
+    """获取全局锁监控器.
 
     Returns:
         LockMonitor实例
@@ -243,7 +243,7 @@ def get_lock_monitor() -> LockMonitor:
 
 
 def create_monitored_lock(name: str) -> MonitoredLock:
-    """创建带监控的锁
+    """创建带监控的锁.
 
     Args:
         name: 锁名称

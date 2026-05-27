@@ -1,4 +1,4 @@
-"""CollisionStats 单元测试 — 对齐 src/collision/collision_stats.py 真实 API"""
+"""CollisionStats 单元测试 — 对齐 src/collision/collision_stats.py 真实 API."""
 
 import hashlib
 import threading
@@ -9,7 +9,7 @@ from src.collision.collision_stats import CollisionStats, StatsSnapshot
 
 
 class TestCollisionStatsInit:
-    """初始化测试"""
+    """初始化测试."""
 
     def test_initial_state(self):
         stats = CollisionStats()
@@ -25,7 +25,7 @@ class TestCollisionStatsInit:
 
 
 class TestCollisionStatsRecordKey:
-    """record_key / record_keys 测试"""
+    """record_key / record_keys 测试."""
 
     def setup_method(self):
         self.stats = CollisionStats()
@@ -45,7 +45,7 @@ class TestCollisionStatsRecordKey:
 
 
 class TestCollisionStatsAddMatch:
-    """add_match 测试 — 不存储私钥明文"""
+    """add_match 测试 — 不存储私钥明文."""
 
     def setup_method(self):
         self.stats = CollisionStats()
@@ -87,7 +87,7 @@ class TestCollisionStatsAddMatch:
 
 
 class TestCollisionStatsUpdate:
-    """update() 测试"""
+    """update() 测试."""
 
     def setup_method(self):
         self.stats = CollisionStats()
@@ -106,7 +106,7 @@ class TestCollisionStatsUpdate:
 
 
 class TestCollisionStatsSnapshot:
-    """snapshot() 测试 — 返回 StatsSnapshot dataclass"""
+    """snapshot() 测试 — 返回 StatsSnapshot dataclass."""
 
     def test_snapshot_returns_dataclass(self):
         stats = CollisionStats()
@@ -139,7 +139,7 @@ class TestCollisionStatsSnapshot:
 
 
 class TestCollisionStatsToDict:
-    """to_dict() 测试"""
+    """to_dict() 测试."""
 
     def test_to_dict_basic(self):
         stats = CollisionStats()
@@ -157,7 +157,7 @@ class TestCollisionStatsToDict:
 
 
 class TestCollisionStatsAvgSpeed:
-    """avg_speed / get_throughput 测试"""
+    """avg_speed / get_throughput 测试."""
 
     def test_avg_speed_initial_zero(self):
         stats = CollisionStats()
@@ -169,7 +169,7 @@ class TestCollisionStatsAvgSpeed:
 
 
 class TestCollisionStatsGet:
-    """dict-like get() 兼容访问"""
+    """dict-like get() 兼容访问."""
 
     def setup_method(self):
         self.stats = CollisionStats()
@@ -195,7 +195,7 @@ class TestCollisionStatsGet:
 
 
 class TestCollisionStatsRecordMatch:
-    """record_match 测试"""
+    """record_match 测试."""
 
     def test_record_match_increments(self):
         stats = CollisionStats()
@@ -205,10 +205,10 @@ class TestCollisionStatsRecordMatch:
 
 
 class TestCollisionStatsReset:
-    """reset() 测试"""
+    """reset() 测试."""
 
     def test_reset_clears_counters(self):
-        """reset() 清零所有内部计数器包括 matches 列表"""
+        """reset() 清零所有内部计数器包括 matches 列表."""
         stats = CollisionStats()
         stats.record_keys(500)
         stats.record_match()
@@ -240,7 +240,7 @@ class TestCollisionStatsReset:
 
 
 class TestCollisionStatsRecordError:
-    """record_error 测试"""
+    """record_error 测试."""
 
     def test_record_error_increments(self):
         stats = CollisionStats()
@@ -250,7 +250,7 @@ class TestCollisionStatsRecordError:
 
 
 class TestCollisionStatsThreadSafety:
-    """多线程并发测试"""
+    """多线程并发测试."""
 
     def test_concurrent_add_match(self):
         stats = CollisionStats()

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""批量地址验证器 (validator) 单元测试
+"""批量地址验证器 (validator) 单元测试.
 
 覆盖：
 - ValidationResult 数据类
@@ -19,7 +19,7 @@ import pytest
 
 @pytest.mark.unit
 class TestValidationResult:
-    """ValidationResult 数据类测试"""
+    """ValidationResult 数据类测试."""
 
     def test_valid_result(self):
         from src.collision.targets.validator import ValidationResult
@@ -75,7 +75,7 @@ class TestValidationResult:
 
 @pytest.mark.unit
 class TestValidatorInit:
-    """初始化测试"""
+    """初始化测试."""
 
     def test_default_max_workers(self):
         from src.collision.targets.validator import AddressBatchValidator
@@ -98,7 +98,7 @@ class TestValidatorInit:
 
 @pytest.mark.unit
 class TestValidateBatch:
-    """批量验证测试"""
+    """批量验证测试."""
 
     def test_invalid_strategy_raises(self):
         from src.collision.targets.validator import AddressBatchValidator
@@ -162,7 +162,7 @@ class TestValidateBatch:
         assert len(results) >= 1
 
     def test_loose_mode_converts(self):
-        """宽松模式自动转换非字符串"""
+        """宽松模式自动转换非字符串."""
         from src.collision.targets.validator import AddressBatchValidator
 
         validator = AddressBatchValidator(max_workers=1)
@@ -186,7 +186,7 @@ class TestValidateBatch:
 
 @pytest.mark.unit
 class TestFilterValid:
-    """过滤有效地址测试"""
+    """过滤有效地址测试."""
 
     def test_filters_only_valid(self):
         from src.collision.targets.validator import AddressBatchValidator
@@ -205,7 +205,7 @@ class TestFilterValid:
 
 @pytest.mark.unit
 class TestSummary:
-    """统计摘要测试"""
+    """统计摘要测试."""
 
     def test_get_summary_initially_zero(self):
         from src.collision.targets.validator import AddressBatchValidator

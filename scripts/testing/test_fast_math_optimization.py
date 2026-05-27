@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """验证Intel Arc快速数学优化效果
-对比启用/禁用fast-math的性能差异
+对比启用/禁用fast-math的性能差异.
 """
 
 import os
@@ -12,7 +12,7 @@ from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
 
 
 def test_fast_math_optimization(test_duration=30):
-    """测试快速数学优化效果"""
+    """测试快速数学优化效果."""
     print("=" * 80)
     print("  Intel Arc 快速数学优化验证测试")
     print("=" * 80)
@@ -33,7 +33,7 @@ def test_fast_math_optimization(test_duration=30):
                 "total_checked": stats.total_checked,
                 "speed": stats.speed,
                 "matches": (len(stats.matches) if hasattr(stats.matches, "__len__") else stats.matches),
-            }
+            },
         )
 
     def on_match(match_info):
@@ -81,7 +81,7 @@ def test_fast_math_optimization(test_duration=30):
                 elapsed = time.time() - start_time
                 print(
                     f"  [{elapsed:5.1f}s] {latest['total_checked']:>12,} keys | "
-                    f"{latest['speed']:>10.2f} keys/s"
+                    f"{latest['speed']:>10.2f} keys/s",
                 )
 
         engine.stop()
@@ -119,7 +119,7 @@ def test_fast_math_optimization(test_duration=30):
             print("    优化前(65K):     44,096 keys/s (基线)")
             print("    优化1(262K):     47,799 keys/s (+8.4%)")
             print(
-                f"    快速数学(262K):  {avg_speed:,.2f} keys/s ({((avg_speed - 47799) / 47799 * 100):+.1f}%)"
+                f"    快速数学(262K):  {avg_speed:,.2f} keys/s ({((avg_speed - 47799) / 47799 * 100):+.1f}%)",  # noqa: E501
             )
             print()
 

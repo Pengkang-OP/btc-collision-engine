@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""真实GPU环境碰撞测试 - 验证异常处理和锁保护修复
+"""真实GPU环境碰撞测试 - 验证异常处理和锁保护修复.
 
 测试场景:
 1. GPU引擎初始化验证
@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 @pytest.fixture
 def engine():
-    """提供 GPUCollisionEngine 实例，若无 GPU 则跳过测试"""
+    """提供 GPUCollisionEngine 实例，若无 GPU 则跳过测试."""
     try:
         targets = {"1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH", "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
         eng = GPUCollisionEngine(targets, batch_size=10000, device_index=0)
@@ -80,7 +80,7 @@ def test_gpu_initialization():
 
 
 def test_collision_flow(engine):
-    """测试2: 正常碰撞流程（3秒短时运行）"""
+    """测试2: 正常碰撞流程（3秒短时运行）."""
     logger.info("")
     logger.info("=" * 60)
     logger.info("测试2: 正常碰撞流程（3秒）")
@@ -156,7 +156,7 @@ def test_collision_flow(engine):
 
 
 def test_error_counter_behavior(engine):
-    """测试3: 错误计数器行为验证"""
+    """测试3: 错误计数器行为验证."""
     logger.info("")
     logger.info("=" * 60)
     logger.info("测试3: 错误计数器行为验证")
@@ -208,7 +208,7 @@ def test_error_counter_behavior(engine):
 
 
 def test_callback_snapshot_safety(engine):
-    """测试4: 回调快照安全性验证"""
+    """测试4: 回调快照安全性验证."""
     logger.info("")
     logger.info("=" * 60)
     logger.info("测试4: 回调快照安全性验证")
@@ -258,7 +258,7 @@ def test_callback_snapshot_safety(engine):
 
 
 def test_config_loading():
-    """测试5: 配置加载验证"""
+    """测试5: 配置加载验证."""
     logger.info("")
     logger.info("=" * 60)
     logger.info("测试5: 配置加载验证")
@@ -296,7 +296,7 @@ def test_config_loading():
 
 
 def main():
-    """主测试流程"""
+    """主测试流程."""
     logger.info("🚀 真实GPU环境碰撞测试 - 验证异常处理和锁保护修复")
     logger.info("")
 

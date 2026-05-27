@@ -1,4 +1,4 @@
-"""CryptoConfig 单元测试
+"""CryptoConfig 单元测试.
 
 覆盖 src/config/crypto_config.py 中未直接测试的路径：
 - save() 文件写入
@@ -17,7 +17,7 @@ from src.config.crypto_config import CryptoBackendType, CryptoConfig
 
 
 class TestCryptoConfig:
-    """CryptoConfig 核心方法测试"""
+    """CryptoConfig 核心方法测试."""
 
     def setup_method(self, method):
         self.cfg = CryptoConfig()
@@ -25,7 +25,7 @@ class TestCryptoConfig:
     # ── save() ─────────────────────────────────────────────────
 
     def test_save_success(self):
-        """save() 将 config 写入 JSON 文件"""
+        """save() 将 config 写入 JSON 文件."""
         tmpdir = tempfile.mkdtemp()
         try:
             tmpfile = os.path.join(tmpdir, "crypto.json")
@@ -42,14 +42,14 @@ class TestCryptoConfig:
             shutil.rmtree(tmpdir, ignore_errors=True)
 
     def test_save_no_config_file(self):
-        """无 config_file 时 save() 返回 False"""
+        """无 config_file 时 save() 返回 False."""
         result = self.cfg.save()
         assert not result
 
     # ── load() ─────────────────────────────────────────────────
 
     def test_load_exception(self):
-        """load() 读取无效 JSON 时捕获异常返回 False"""
+        """load() 读取无效 JSON 时捕获异常返回 False."""
         tmpdir = tempfile.mkdtemp()
         try:
             tmpfile = os.path.join(tmpdir, "bad.json")
@@ -63,19 +63,19 @@ class TestCryptoConfig:
             shutil.rmtree(tmpdir, ignore_errors=True)
 
     def test_load_no_config_file(self):
-        """无 config_file 时 load() 返回 False"""
+        """无 config_file 时 load() 返回 False."""
         result = self.cfg.load()
         assert not result
 
     # ── get_backend_type() ─────────────────────────────────────
 
     def test_get_backend_type_valid(self):
-        """get_backend_type() 返回有效的后端类型"""
+        """get_backend_type() 返回有效的后端类型."""
         self.cfg.set("backend", "coincurve")
         assert self.cfg.get_backend_type() == CryptoBackendType.COINCURVE
 
     def test_get_backend_type_invalid_fallback(self):
-        """get_backend_type() 无效值时回退到 AUTO"""
+        """get_backend_type() 无效值时回退到 AUTO."""
         self.cfg.set("backend", "invalid_backend")
         result = self.cfg.get_backend_type()
         assert result == CryptoBackendType.AUTO
@@ -83,14 +83,14 @@ class TestCryptoConfig:
     # ── reset / to_dict ────────────────────────────────────────
 
     def test_reset_to_defaults(self):
-        """reset_to_defaults() 恢复为 DEFAULT_CONFIG"""
+        """reset_to_defaults() 恢复为 DEFAULT_CONFIG."""
         self.cfg.set("backend", "coincurve")
         self.cfg.set("constant_time", True)
         self.cfg.reset_to_defaults()
         assert self.cfg.config == CryptoConfig.DEFAULT_CONFIG
 
     def test_to_dict(self):
-        """to_dict() 返回 config 副本"""
+        """to_dict() 返回 config 副本."""
         self.cfg.set("backend", "ecdsa")
         d = self.cfg.to_dict()
         assert d["backend"] == "ecdsa"
@@ -99,13 +99,13 @@ class TestCryptoConfig:
     # ── set / get ──────────────────────────────────────────────
 
     def test_set_and_get(self):
-        """set()/get() 设置和获取配置值"""
+        """set()/get() 设置和获取配置值."""
         self.cfg.set("constant_time", True)
         assert self.cfg.get("constant_time")
         assert self.cfg.get("nonexistent", 42) == 42
 
     def test_set_backend_type(self):
-        """set_backend_type() 设置后端类型"""
+        """set_backend_type() 设置后端类型."""
         result = self.cfg.set_backend_type(CryptoBackendType.ECDSA)
         assert result
         assert self.cfg.get("backend") == "ecdsa"
@@ -113,18 +113,18 @@ class TestCryptoConfig:
     # ── validate ──────────────────────────────────────────────
 
     def test_validate_valid_config(self):
-        """validate() 有效配置返回空列表"""
+        """validate() 有效配置返回空列表."""
         errors = self.cfg.validate()
         assert errors == []
 
     def test_validate_invalid_backend(self):
-        """validate() 检测无效后端类型"""
+        """validate() 检测无效后端类型."""
         self.cfg.set("backend", "bitcoinj")
         errors = self.cfg.validate()
         assert errors[0] in "无效的后端类型"
 
     def test_validate_non_bool_fields(self):
-        """validate() 检测非布尔字段"""
+        """validate() 检测非布尔字段."""
         self.cfg.set("constant_time", "yes")
         errors = self.cfg.validate()
         assert any("constant_time" in e for e in errors)

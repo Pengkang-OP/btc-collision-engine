@@ -1,4 +1,4 @@
-"""CLI 命令行接口测试 - 高优先级
+"""CLI 命令行接口测试 - 高优先级.
 
 覆盖范围：
 - 命令行参数解析
@@ -24,15 +24,15 @@ import pytest
 
 @pytest.mark.unit
 class TestCLIEntryPoint:
-    """CLI 入口点测试"""
+    """CLI 入口点测试."""
 
     def test_key_collision_script_exists(self):
-        """测试：key_collision.py 脚本存在"""
+        """测试：key_collision.py 脚本存在."""
         assert pathlib.Path("key_collision.py").exists()
         assert pathlib.Path("key_collision_cli.py").exists()
 
     def test_key_collision_has_main_function(self):
-        """v5.0.0: 验证 key_collision_cli.py 包含入口函数（key_collision.py 已移除 __main__）"""
+        """v5.0.0: 验证 key_collision_cli.py 包含入口函数（key_collision.py 已移除 __main__）."""
         import ast
 
         # key_collision_cli.py 应有 __main__ 入口
@@ -62,7 +62,7 @@ class TestCLIEntryPoint:
         assert not has_main_block, "key_collision.py v5.0.0 不应包含 __main__ 入口"
 
     def test_ast_syntax_validity(self):
-        """测试：CLI 脚本 AST 语法有效"""
+        """测试：CLI 脚本 AST 语法有效."""
         import ast
 
         files_to_check = ["key_collision.py", "key_collision_cli.py"]
@@ -81,16 +81,16 @@ class TestCLIEntryPoint:
 
 @pytest.mark.unit
 class TestCLIModeArguments:
-    """CLI 模式参数测试"""
+    """CLI 模式参数测试."""
 
     def test_mode_random_valid(self):
-        """测试：random 模式参数有效"""
+        """测试：random 模式参数有效."""
         valid_modes = ["random", "range", "brute_force"]
         for mode in valid_modes:
             assert mode in valid_modes
 
     def test_mode_invalid_rejected(self):
-        """测试：无效模式被拒绝"""
+        """测试：无效模式被拒绝."""
         valid_modes = {"random", "range", "brute_force"}
         invalid_modes = ["invalid", "", "123", "random2"]
 
@@ -99,7 +99,7 @@ class TestCLIModeArguments:
                 assert mode not in valid_modes, f"'{mode}' 不应是有效模式"
 
     def test_help_argument(self):
-        """测试：帮助参数"""
+        """测试：帮助参数."""
         help_flags = ["-h", "--help"]
         for flag in help_flags:
             assert flag.startswith("-")
@@ -112,10 +112,10 @@ class TestCLIModeArguments:
 
 @pytest.mark.unit
 class TestCLIArgumentCombinations:
-    """CLI 参数组合测试"""
+    """CLI 参数组合测试."""
 
     def test_threads_positive_integer(self):
-        """测试：threads 参数必须是正整数"""
+        """测试：threads 参数必须是正整数."""
         valid = [1, 2, 4, 8, 16, 32]
         invalid = [0, -1, -8, 1.5, "abc", None]
 
@@ -127,7 +127,7 @@ class TestCLIArgumentCombinations:
             assert not is_valid, f"{v} 不应通过校验"
 
     def test_batch_size_positive_integer(self):
-        """测试：batch_size 参数必须是正整数"""
+        """测试：batch_size 参数必须是正整数."""
         valid = [1024, 65536, 1048576]
         invalid = [0, -1, 1024.5, "large"]
 

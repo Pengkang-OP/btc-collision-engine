@@ -1,5 +1,4 @@
-"""
-Configuration management package for BTC Collision Engine.
+"""Configuration management package for BTC Collision Engine.
 
 Provides configuration loading, validation, hot-reloading (ConfigWatcher),
 migration between config versions, crypto backend selection (CryptoConfig),
@@ -17,15 +16,15 @@ from .optimization_config import OptimizationConfig, is_feature_enabled
 from .performance_config import PerformanceConfig
 
 __all__ = [
-    "ConfigManager",
     "ConfigCoordinator",
+    "ConfigManager",
     "ConfigWatcher",
-    "migrate_config_file",
-    "CryptoConfig",
     "CryptoBackendType",
+    "CryptoConfig",
+    "OptimizationConfig",
+    "PerformanceConfig",
     "get_crypto_config",
     "init_crypto_from_config",
-    "OptimizationConfig",
     "is_feature_enabled",
-    "PerformanceConfig",
+    "migrate_config_file",
 ]

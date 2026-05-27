@@ -1,4 +1,4 @@
-"""批量地址验证器
+"""批量地址验证器.
 
 提供高效的地址批量验证功能:
 - 并行验证多个地址
@@ -14,7 +14,7 @@ from decimal import Decimal
 from typing import Any
 
 # 导入日志配置
-from ...utils import get_configured_logger
+from src.utils import get_configured_logger
 
 # v4.2.1修复: Python的logging.Logger本身是线程安全的，无需ThreadSafeLogger包装
 logger = get_configured_logger("AddressValidator")
@@ -22,7 +22,7 @@ logger = get_configured_logger("AddressValidator")
 
 @dataclass
 class ValidationResult:
-    """地址验证结果
+    """地址验证结果.
 
     Fields:
         address: 被验证的比特币地址
@@ -57,6 +57,7 @@ class ValidationResult:
     error: str | None = None
 
     def __repr__(self) -> str:
+        """返回验证结果的字符串表示。."""
         if self.valid:
             return f"ValidationResult({self.address[:10]}..., valid=True, format={self.format_type})"
         if not self.validated:
@@ -65,7 +66,7 @@ class ValidationResult:
 
 
 class AddressBatchValidator:
-    """批量地址验证器
+    """批量地址验证器.
 
     使用线程池并行验证多个比特币地址,提供详细的验证结果。
 
@@ -78,7 +79,7 @@ class AddressBatchValidator:
     """
 
     def __init__(self, max_workers: int = 4) -> None:
-        """初始化批量地址验证器
+        """初始化批量地址验证器.
 
         Args:
             max_workers: 最大工作线程数,默认4
@@ -100,7 +101,7 @@ class AddressBatchValidator:
         strict_mode: bool,
         on_type_error: str,
     ) -> tuple[list[str], int, dict[str, ValidationResult] | None]:
-        """将输入地址列表规范化为纯字符串列表。
+        """将输入地址列表规范化为纯字符串列表。.
 
         Returns:
             (str_addresses, skipped_count, abort_results):
@@ -178,7 +179,7 @@ class AddressBatchValidator:
 
     @staticmethod
     def _log_validation_summary(results: dict) -> None:
-        """记录批量验证结果摘要。"""
+        """记录批量验证结果摘要。."""
         valid_count = sum(1 for r in results.values() if r.valid)
         invalid_count = len(results) - valid_count
         pct = (valid_count / len(results) * 100) if len(results) > 0 else 0
@@ -193,7 +194,7 @@ class AddressBatchValidator:
         strict_mode: bool = False,
         on_type_error: str = "abort",
     ) -> dict[str, ValidationResult]:
-        """批量验证地址。"""
+        """批量验证地址。."""
         valid_strategies = {"abort", "skip", "convert"}
         if on_type_error not in valid_strategies:
             raise ValueError(f"无效的策略 '{on_type_error}',必须是 {valid_strategies} 之一")
@@ -235,7 +236,7 @@ class AddressBatchValidator:
         return results
 
     def _validate_single(self, address: str) -> ValidationResult:
-        """验证单个地址
+        """验证单个地址.
 
         Args:
             address: 待验证的地址
@@ -245,7 +246,7 @@ class AddressBatchValidator:
 
         """
         try:
-            from ...core.base58 import Base58
+            from src.core.base58 import Base58
 
             # 检测地址格式
             if address.startswith("1"):
@@ -314,7 +315,7 @@ class AddressBatchValidator:
             return ValidationResult(address=address, valid=False, error=str(e))
 
     def filter_valid(self, addresses: list[str | Any]) -> list[str]:
-        """过滤出有效地址
+        """过滤出有效地址.
 
         Args:
             addresses: 待过滤的地址列表
@@ -333,7 +334,7 @@ class AddressBatchValidator:
         return valid_addresses
 
     def get_summary(self) -> dict[str, float | int]:
-        """获取验证统计摘要
+        """获取验证统计摘要.
 
         Returns:
             统计信息字典
@@ -353,7 +354,7 @@ class AddressBatchValidator:
             return summary
 
     def get_validation_summary(self, results: dict[str, ValidationResult]) -> dict[str, Any]:
-        """获取验证结果摘要(别名方法,保持向后兼容)
+        """获取验证结果摘要(别名方法,保持向后兼容).
 
         Args:
             results: validate_batch返回的结果字典
@@ -376,7 +377,7 @@ class AddressBatchValidator:
         return summary
 
     def get_validation_coverage(self, results: dict[str, ValidationResult]) -> dict[str, Any]:
-        """获取验证覆盖率统计
+        """获取验证覆盖率统计.
 
         用于分析批量验证的执行情况,特别是在严格模式下区分
         "已验证"和"未验证"的地址。

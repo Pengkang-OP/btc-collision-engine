@@ -1,4 +1,5 @@
-"""自动化测试模块
+"""自动化测试模块.
+
 ===============
 基于分析结果执行全面的测试用例，确保功能与性能达标
 """
@@ -17,7 +18,7 @@ from .models import AnalysisReport, TestCase, TestResult, TestSuiteResult
 
 
 class AutoTestModule:
-    """自动化测试模块"""
+    """自动化测试模块."""
 
     def __init__(self, project_root: Path | None = None, max_workers: int = 4):
         self.project_root = project_root or Path(__file__).parent.parent.parent.parent
@@ -29,7 +30,7 @@ class AutoTestModule:
         self._discover_test_cases()
 
     def _discover_test_cases(self):
-        """自动发现测试用例"""
+        """自动发现测试用例."""
         self.test_cases = [
             # 核心功能测试
             TestCase(
@@ -117,7 +118,7 @@ class AutoTestModule:
         ]
 
     def run_all_tests(self, analysis_report: AnalysisReport | None = None) -> TestSuiteResult:
-        """运行所有测试"""
+        """运行所有测试."""
         suite_id = f"suite_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
         suite = TestSuiteResult(
@@ -170,7 +171,7 @@ class AutoTestModule:
         return suite
 
     def _run_single_test(self, test_case: TestCase) -> TestResult:
-        """运行单个测试"""
+        """运行单个测试."""
         start_time = time.time()
 
         try:
@@ -229,7 +230,7 @@ class AutoTestModule:
     # ========== 测试函数实现 ==========
 
     def test_config_validation(self, config_path: str) -> dict:
-        """测试配置验证"""
+        """测试配置验证."""
         import json
 
         try:
@@ -258,7 +259,7 @@ class AutoTestModule:
             }
 
     def test_cli_help(self) -> dict:
-        """测试CLI帮助信息"""
+        """测试CLI帮助信息."""
         try:
             result = subprocess.run(  # nosec B603
                 [sys.executable, "key_collision_cli.py", "--help"],
@@ -287,7 +288,7 @@ class AutoTestModule:
             }
 
     def test_crypto_backend_init(self) -> dict:
-        """测试加密后端初始化"""
+        """测试加密后端初始化."""
         try:
             from src.core.crypto_backend import BackendProto, CryptoBackend
 
@@ -313,7 +314,7 @@ class AutoTestModule:
             }
 
     def test_logging_system(self) -> dict:
-        """测试日志系统"""
+        """测试日志系统."""
         try:
             log_dir = self.project_root / "logs"
             if not log_dir.exists():
@@ -334,7 +335,7 @@ class AutoTestModule:
             }
 
     def test_module_imports(self) -> dict:
-        """测试模块导入"""
+        """测试模块导入."""
         modules_to_test = [
             "src.core.secp256k1",
             "src.core.secure_key_manager",
@@ -366,7 +367,7 @@ class AutoTestModule:
         }
 
     def test_bigint_performance(self, iterations: int = 1000) -> dict:
-        """测试大整数运算性能"""
+        """测试大整数运算性能."""
         try:
             import time
 
@@ -399,7 +400,7 @@ class AutoTestModule:
             }
 
     def test_hash_performance(self, iterations: int = 10000) -> dict:
-        """测试哈希计算性能"""
+        """测试哈希计算性能."""
         try:
             import hashlib
             import time
@@ -431,7 +432,7 @@ class AutoTestModule:
             }
 
     def test_e2e_workflow(self, duration: int = 5) -> dict:
-        """测试端到端工作流"""
+        """测试端到端工作流."""
         try:
             result = subprocess.run(  # nosec B603
                 [sys.executable, "key_collision_cli.py", "--version"],
@@ -460,7 +461,7 @@ class AutoTestModule:
             }
 
     def test_checkpoint_feature(self) -> dict:
-        """测试断点续传功能"""
+        """测试断点续传功能."""
         try:
             # 验证断点续传模块存在
             import src.collision.checkpoint_manager as cp_module
@@ -483,7 +484,7 @@ class AutoTestModule:
             }
 
     def test_i18n_support(self, languages: list[str] | None = None) -> dict:
-        """测试多语言支持"""
+        """测试多语言支持."""
         languages = languages or ["zh_CN", "en_US"]
 
         try:
@@ -514,6 +515,6 @@ class AutoTestModule:
 
 
 def run_tests(project_root: Path | None = None, analysis_report=None) -> TestSuiteResult:
-    """运行所有测试"""
+    """运行所有测试."""
     module = AutoTestModule(project_root)
     return module.run_all_tests(analysis_report)

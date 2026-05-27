@@ -1,4 +1,4 @@
-"""端到端闭环测试（CPU 引擎）
+"""端到端闭环测试（CPU 引擎）.
 
 闭环(Closed-Loop)概念: 使用已知密钥对(已知 private_key → 必定生成已知 address),
 将地址设为 target, 通过 range_scan 扫描包含该密钥的范围,
@@ -42,7 +42,7 @@ from src.utils.bech32_codec import bech32_encode
 
 
 def _derive_known_keypair(k: int):
-    """从整数 k 推导完整密钥对 (private_key, address, wif)"""
+    """从整数 k 推导完整密钥对 (private_key, address, wif)."""
     private_key = k.to_bytes(32, "big")
     gen = P2PKHAddressGenerator()
     address, _, _ = gen.generate_address(private_key)
@@ -76,7 +76,7 @@ KNOWN_KEYPAIRS = [_derive_known_keypair(i) for i in range(1, 11)]
 
 @pytest.fixture(autouse=True)
 def reset_global_state():
-    """每个测试前后重置全局事件总线"""
+    """每个测试前后重置全局事件总线."""
     reset_event_bus()
     yield
     reset_event_bus()
@@ -84,19 +84,19 @@ def reset_global_state():
 
 @pytest.fixture
 def known_targets():
-    """返回已知密钥对的地址集合: k=1, k=2, k=3"""
+    """返回已知密钥对的地址集合: k=1, k=2, k=3."""
     return {_K1_ADDR, _K2_ADDR, _K3_ADDR}
 
 
 @pytest.fixture
 def known_targets_10():
-    """返回 10 个已知密钥对的地址集合"""
+    """返回 10 个已知密钥对的地址集合."""
     return {addr for _, addr, _ in KNOWN_KEYPAIRS}
 
 
 @pytest.fixture
 def temp_checkpoint_dir():
-    """临时断点目录"""
+    """临时断点目录."""
     with tempfile.TemporaryDirectory() as tmpdir:
         yield tmpdir
 
@@ -108,11 +108,11 @@ def temp_checkpoint_dir():
 
 @pytest.mark.integration
 class TestRangeScanClosedLoop:
-    """核心闭环测试: range_scan 已知密钥匹配"""
+    """核心闭环测试: range_scan 已知密钥匹配."""
 
     @pytest.mark.parametrize("max_workers", [1, 2, 4])
     def test_range_scan_finds_known_key(self, max_workers):
-        """已知 k=1 → 地址设为 target → range_scan[1,100] → 验证 match 回调"""
+        """已知 k=1 → 地址设为 target → range_scan[1,100] → 验证 match 回调."""
         match_results = []
 
         def on_match(pk, addr, wif):
@@ -136,7 +136,7 @@ class TestRangeScanClosedLoop:
         assert len(match_results) >= 1, f"on_match 应至少被调用一次，实际: {len(match_results)}"
 
     def test_lifecycle_complete_callback(self):
-        """验证 on_complete 在 stop 后被调用"""
+        """验证 on_complete 在 stop 后被调用."""
         complete_called = []
 
         def on_complete(stats):
@@ -157,7 +157,7 @@ class TestRangeScanClosedLoop:
         assert len(complete_called) == 1, "on_complete 应被调用一次"
 
     def test_stop_restart_cycle(self):
-        """Stop → 重新 start → 验证引擎可复用"""
+        """Stop → 重新 start → 验证引擎可复用."""
         engine = KeyCollisionEngine(
             targets={_K1_ADDR},
             max_workers=1,
@@ -193,10 +193,10 @@ class TestRangeScanClosedLoop:
 
 @pytest.mark.integration
 class TestCheckpointClosedLoop:
-    """断点闭环: checkpoint save → resume"""
+    """断点闭环: checkpoint save → resume."""
 
     def test_checkpoint_save_after_scan(self, temp_checkpoint_dir):
-        """扫描后 checkpoint 文件应存在（需 on_match 避免提前停止）"""
+        """扫描后 checkpoint 文件应存在（需 on_match 避免提前停止）."""
         cp_file = os.path.join(temp_checkpoint_dir, "checkpoint.json")
         cp_mgr = CheckpointManager(
             filepath=cp_file,
@@ -232,7 +232,7 @@ class TestCheckpointClosedLoop:
         assert data.get("total_checked", 0) > 0
 
     def test_checkpoint_resume_after_match(self, temp_checkpoint_dir):
-        """保存 checkpoint → 新引擎 resume → 验证恢复"""
+        """保存 checkpoint → 新引擎 resume → 验证恢复."""
         cp_file = os.path.join(temp_checkpoint_dir, "checkpoint.json")
         cp_mgr = CheckpointManager(
             filepath=cp_file,
@@ -275,10 +275,10 @@ class TestCheckpointClosedLoop:
 
 @pytest.mark.integration
 class TestMultiTargetClosedLoop:
-    """多目标闭环测试"""
+    """多目标闭环测试."""
 
     def test_ten_targets_range_scan(self, known_targets_10):
-        """10 个派生地址 → range_scan 全覆盖 → 验证匹配数"""
+        """10 个派生地址 → range_scan 全覆盖 → 验证匹配数."""
         match_addrs = []
 
         def on_match(pk, addr, wif):
@@ -310,7 +310,7 @@ class TestMultiTargetClosedLoop:
 
 @pytest.mark.integration
 class TestMultiFormatClosedLoop:
-    """多格式地址闭环: P2PKH/P2SH/Bech32
+    """多格式地址闭环: P2PKH/P2SH/Bech32.
 
     闭环原理:
     1. 从已知私钥派生 Bech32 地址
@@ -324,7 +324,7 @@ class TestMultiFormatClosedLoop:
     """
 
     def test_p2sh_resolver_correctness(self):
-        """P2SH → Resolver → 保持原格式 (payload=script_hash, 无法转为 P2PKH)"""
+        """P2SH → Resolver → 保持原格式 (payload=script_hash, 无法转为 P2PKH)."""
         pk = _K2_PK
         gen = P2PKHAddressGenerator()
         _, compressed_pk, _ = gen.generate_address(pk)
@@ -344,7 +344,7 @@ class TestMultiFormatClosedLoop:
         # 这是预期行为 — 非 P2PKH 目标需在外部预先转换
 
     def test_bech32_engine_closed_loop(self):
-        """从已知私钥派生 Bech32 → Resolver 转 P2PKH → 引擎匹配 → 验证私钥"""
+        """从已知私钥派生 Bech32 → Resolver 转 P2PKH → 引擎匹配 → 验证私钥."""
         pk = _K3_PK
         gen = P2PKHAddressGenerator()
         _, compressed_pk, _ = gen.generate_address(pk)
@@ -382,10 +382,10 @@ class TestMultiFormatClosedLoop:
 
 @pytest.mark.integration
 class TestResolverPipelineClosedLoop:
-    """TargetResolver 集成管线: P2PKH/P2SH/Bech32/Bech32m → P2PKH 转换验证"""
+    """TargetResolver 集成管线: P2PKH/P2SH/Bech32/Bech32m → P2PKH 转换验证."""
 
     def test_resolver_converts_p2sh_to_p2pkh(self):
-        """P2SH → Resolver → 保持原格式（载荷为 script_hash，无法转 P2PKH）"""
+        """P2SH → Resolver → 保持原格式（载荷为 script_hash，无法转 P2PKH）."""
         pk = _K2_PK
         gen = P2PKHAddressGenerator()
         p2pkh_addr, compressed_pk, _ = gen.generate_address(pk)
@@ -400,7 +400,7 @@ class TestResolverPipelineClosedLoop:
         )
 
     def test_resolver_converts_bech32_to_p2pkh(self):
-        """Bech32 → Resolver → 正确的 P2PKH（载荷为 pubkey_hash）"""
+        """Bech32 → Resolver → 正确的 P2PKH（载荷为 pubkey_hash）."""
         pk = _K3_PK
         gen = P2PKHAddressGenerator()
         p2pkh_addr, compressed_pk, _ = gen.generate_address(pk)
@@ -417,7 +417,7 @@ class TestResolverPipelineClosedLoop:
         )
 
     def test_resolver_converts_taproot_to_p2pkh(self):
-        """Taproot (Bech32m) → Resolver → 返回 None（x-only pubkey 无法用于 P2PKH 碰撞）"""
+        """Taproot (Bech32m) → Resolver → 返回 None（x-only pubkey 无法用于 P2PKH 碰撞）."""
         pk = _K4_PK
         gen = P2PKHAddressGenerator()
         _, compressed_pk, _ = gen.generate_address(pk)
@@ -436,7 +436,7 @@ class TestResolverPipelineClosedLoop:
         )
 
     def test_resolver_mixed_formats_same_pubkey(self):
-        """同一公钥 → 四种格式 → Resolver 行为验证（P2SH/Taproot 返回 None）"""
+        """同一公钥 → 四种格式 → Resolver 行为验证（P2SH/Taproot 返回 None）."""
         pk = _K5_PK
         gen = P2PKHAddressGenerator()
         p2pkh_addr, compressed_pk, _ = gen.generate_address(pk)
@@ -471,10 +471,10 @@ class TestResolverPipelineClosedLoop:
 
 @pytest.mark.integration
 class TestTaprootClosedLoop:
-    """Bech32m (Taproot) 格式验证"""
+    """Bech32m (Taproot) 格式验证."""
 
     def test_taproot_address_format(self):
-        """x-only pubkey → bech32m 编码 → 格式正确"""
+        """x-only pubkey → bech32m 编码 → 格式正确."""
         pk = _K5_PK
         gen = P2PKHAddressGenerator()
         _, compressed_pk, _ = gen.generate_address(pk)
@@ -488,7 +488,7 @@ class TestTaprootClosedLoop:
         # Bech32 字符 '1' 仅作为分隔符出现，数据部分不应包含
 
     def test_taproot_vs_p2pkh_different(self):
-        """同一公钥 → Legacy P2PKH vs Taproot Bech32m 互不相同"""
+        """同一公钥 → Legacy P2PKH vs Taproot Bech32m 互不相同."""
         pk = _K1_PK
         gen = P2PKHAddressGenerator()
         p2pkh_addr, compressed_pk, _ = gen.generate_address(pk)
@@ -501,7 +501,7 @@ class TestTaprootClosedLoop:
         assert p2pkh_addr.startswith("1")
 
     def test_taproot_bech32m_encoding_uses_correct_constant(self):
-        """Bech32m 编码使用 BECH32M_CONST (0x2BC830A3) 而非 BECH32_CONST (1)"""
+        """Bech32m 编码使用 BECH32M_CONST (0x2BC830A3) 而非 BECH32_CONST (1)."""
         from src.utils.bech32_codec import BECH32_CONST, BECH32M_CONST
 
         # BECH32M_CONST 应不同于 BECH32_CONST
@@ -529,10 +529,10 @@ class TestTaprootClosedLoop:
 
 @pytest.mark.integration
 class TestFileLoadingClosedLoop:
-    """混格式文件加载闭环: targets.txt 含 P2PKH/P2SH/Bech32/Bech32m"""
+    """混格式文件加载闭环: targets.txt 含 P2PKH/P2SH/Bech32/Bech32m."""
 
     def test_load_mixed_formats_from_file(self, tmp_path):
-        """四种格式混排文件 → Resolver 加载 → 引擎匹配"""
+        """四种格式混排文件 → Resolver 加载 → 引擎匹配."""
         gen = P2PKHAddressGenerator()
         lines = []
         expected_legacy_p2pkh = set()
@@ -626,7 +626,7 @@ class TestFileLoadingClosedLoop:
         assert all(addr.startswith("1") for addr in match_results)
 
     def test_multi_worker_range_scan_all_matches(self):
-        """max_workers=4 range_scan[1,100] → k=1/2/3 全部找到"""
+        """max_workers=4 range_scan[1,100] → k=1/2/3 全部找到."""
         match_results = []
 
         def on_match(pk, addr, wif):
@@ -657,10 +657,10 @@ class TestFileLoadingClosedLoop:
 
 @pytest.mark.integration
 class TestRandomModeClosedLoop:
-    """Random 模式引擎闭环: 验证引擎生命周期和统计累积"""
+    """Random 模式引擎闭环: 验证引擎生命周期和统计累积."""
 
     def test_random_mode_starts_stops(self):
-        """start(random) → is_running → stop → is_running False"""
+        """start(random) → is_running → stop → is_running False."""
         engine = KeyCollisionEngine(
             targets=set(),
             max_workers=1,
@@ -678,7 +678,7 @@ class TestRandomModeClosedLoop:
         assert not engine.is_running(), "stop 后应 not running"
 
     def test_random_mode_progress_increases(self):
-        """Random search → 等待 2 秒 → total_checked > 0"""
+        """Random search → 等待 2 秒 → total_checked > 0."""
         engine = KeyCollisionEngine(
             targets=set(),
             max_workers=1,
@@ -695,7 +695,7 @@ class TestRandomModeClosedLoop:
         assert stats.speed >= 0, "speed 应 >= 0"
 
     def test_random_mode_on_progress_called(self):
-        """Random search → on_progress 回调被触发"""
+        """Random search → on_progress 回调被触发."""
         progress_calls = []
 
         def on_progress(stats):
@@ -723,10 +723,10 @@ class TestRandomModeClosedLoop:
 
 @pytest.mark.integration
 class TestDataLoggingClosedLoop:
-    """Data Logging 集成闭环: data_logging_enabled=True 路径验证"""
+    """Data Logging 集成闭环: data_logging_enabled=True 路径验证."""
 
     def test_data_logging_runs_without_crash(self):
-        """data_logging_enabled=True → range_scan 正常完成不崩溃"""
+        """data_logging_enabled=True → range_scan 正常完成不崩溃."""
         match_results = []
 
         def on_match(pk, addr, wif):
@@ -748,7 +748,7 @@ class TestDataLoggingClosedLoop:
         assert match_results[0] == _K1_ADDR
 
     def test_data_logging_random_mode(self):
-        """data_logging_enabled=True + random mode → 正常启停"""
+        """data_logging_enabled=True + random mode → 正常启停."""
         engine = KeyCollisionEngine(
             targets=set(),
             max_workers=1,

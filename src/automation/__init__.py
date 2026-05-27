@@ -9,13 +9,13 @@
 4. 闭环控制器 - 协调各模块，异常自动触发反馈回路
 """
 
+from src import __version__ as __version__  # noqa: F401
+
 from .audit import AuditModule
 from .auto_test import AutoTestModule
 from .data_analysis import DataAnalysisModule
 from .loop_controller import LoopController
 from .models import AnalysisReport, AuditResult, SystemStatus, TestResult, TestSuiteResult
-
-from src import __version__ as __version__  # noqa: F401 — 从包根统一读取
 
 __all__ = [
     "AnalysisReport",

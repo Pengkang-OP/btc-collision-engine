@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Bitcoin key generation and address matching full validation system.
 
 Strictly validates against Bitcoin Core specification:
@@ -21,7 +20,7 @@ from .wif import WIF
 
 
 class KeyValidationConstants:
-    """Key validation constants"""
+    """Key validation constants."""
 
     PRIVATE_KEY_LENGTH = 32
     COMPRESSED_PUBLIC_KEY_LENGTH = 33
@@ -36,7 +35,7 @@ class KeyValidationConstants:
 
 
 class AddressType(Enum):
-    """Bitcoin address type"""
+    """Bitcoin address type."""
 
     P2PKH = "p2pkh"  # '1' prefix
     P2SH = "p2sh"  # '3' prefix
@@ -45,7 +44,7 @@ class AddressType(Enum):
 
 
 class KeyValidationResult:
-    """Key validation result"""
+    """Key validation result."""
 
     def __init__(self) -> None:
         self.success = True
@@ -74,7 +73,7 @@ class KeyValidationResult:
 
 
 class BitcoinKeyValidator:
-    """Bitcoin key and address full validator"""
+    """Bitcoin key and address full validator."""
 
     def __init__(self, secure_mode: bool = True) -> None:
         """Initialize validator.

@@ -1,4 +1,4 @@
-"""P2-2修复: GPU缓冲区追踪器单元测试
+"""P2-2修复: GPU缓冲区追踪器单元测试.
 
 测试GPUBufferTracker类的功能,包括缓冲区注册、释放、泄漏检测和统计。
 """
@@ -17,15 +17,15 @@ from src.gpu.buffer_tracker import GPUBufferTracker
 @pytest.mark.thread_safety
 @pytest.mark.p2_medium
 class TestGPUBufferTracker:
-    """测试GPU缓冲区追踪器"""
+    """测试GPU缓冲区追踪器."""
 
     def setup_method(self, method):
-        """测试前准备"""
+        """测试前准备."""
         self.tracker = GPUBufferTracker()
         self.mock_buffer = MagicMock()  # Mock OpenCL Buffer对象
 
     def test_track_buffer(self):
-        """测试缓冲区注册"""
+        """测试缓冲区注册."""
         self.tracker.track_buffer("test_buf", self.mock_buffer, 1024)
 
         stats = self.tracker.get_stats()
@@ -34,7 +34,7 @@ class TestGPUBufferTracker:
         assert "test_buf" in stats["buffers"]
 
     def test_track_multiple_buffers(self):
-        """测试多个缓冲区注册"""
+        """测试多个缓冲区注册."""
         self.tracker.track_buffer("buf1", self.mock_buffer, 1024)
         self.tracker.track_buffer("buf2", self.mock_buffer, 2048)
         self.tracker.track_buffer("buf3", self.mock_buffer, 4096)
@@ -45,7 +45,7 @@ class TestGPUBufferTracker:
         assert len(stats["buffers"]) == 3
 
     def test_release_buffer(self):
-        """测试缓冲区释放"""
+        """测试缓冲区释放."""
         self.tracker.track_buffer("test_buf", self.mock_buffer, 1024)
         self.tracker.release_buffer("test_buf")
 
@@ -54,7 +54,7 @@ class TestGPUBufferTracker:
         assert stats["total_size_bytes"] == 0
 
     def test_release_nonexistent_buffer(self):
-        """测试释放不存在的缓冲区(应不报错)"""
+        """测试释放不存在的缓冲区(应不报错)."""
         # 不应抛出异常
         self.tracker.release_buffer("nonexistent_buf")
 
@@ -62,7 +62,7 @@ class TestGPUBufferTracker:
         assert stats["count"] == 0
 
     def test_track_and_release_lifecycle(self):
-        """测试完整的分配-释放生命周期"""
+        """测试完整的分配-释放生命周期."""
         # 分配3个缓冲区
         self.tracker.track_buffer("keys_buf", self.mock_buffer, 32000000)
         self.tracker.track_buffer("match_buf", self.mock_buffer, 4000000)
@@ -70,7 +70,7 @@ class TestGPUBufferTracker:
 
         stats = self.tracker.get_stats()
         assert stats["count"] == 3
-        assert stats["total_size_mb"] == pytest.approx(34.34, places=2)
+        assert stats["total_size_mb"] == pytest.approx(34.34, abs=0.005)
 
         # 释放2个
         self.tracker.release_buffer("keys_buf")
@@ -81,7 +81,7 @@ class TestGPUBufferTracker:
         assert "targets_buf" in stats["buffers"]
 
     def test_get_leaked_buffers_no_leak(self):
-        """测试无泄漏场景"""
+        """测试无泄漏场景."""
         self.tracker.track_buffer("recent_buf", self.mock_buffer, 1024)
 
         # 刚分配的缓冲区不应被检测为泄漏
@@ -89,7 +89,7 @@ class TestGPUBufferTracker:
         assert len(leaked) == 0
 
     def test_get_leaked_buffers_with_leak(self):
-        """测试泄漏检测"""
+        """测试泄漏检测."""
         # 手动设置旧时间戳
         self.tracker.track_buffer("old_buf", self.mock_buffer, 1024)
 
@@ -103,7 +103,7 @@ class TestGPUBufferTracker:
         assert "old_buf" in leaked
 
     def test_get_leaked_buffers_custom_timeout(self):
-        """测试自定义超时阈值"""
+        """测试自定义超时阈值."""
         self.tracker.track_buffer("buf1", self.mock_buffer, 1024)
 
         # 设置为60秒前
@@ -119,7 +119,7 @@ class TestGPUBufferTracker:
         assert len(leaked) == 0
 
     def test_get_stats_empty(self):
-        """测试空统计信息"""
+        """测试空统计信息."""
         stats = self.tracker.get_stats()
 
         assert stats["count"] == 0
@@ -128,7 +128,7 @@ class TestGPUBufferTracker:
         assert len(stats["buffers"]) == 0
 
     def test_get_stats_with_buffers(self):
-        """测试有缓冲区时的统计信息"""
+        """测试有缓冲区时的统计信息."""
         self.tracker.track_buffer("buf1", self.mock_buffer, 1024 * 1024)  # 1MB
         self.tracker.track_buffer("buf2", self.mock_buffer, 2 * 1024 * 1024)  # 2MB
 
@@ -136,11 +136,11 @@ class TestGPUBufferTracker:
 
         assert stats["count"] == 2
         assert stats["total_size_bytes"] == 3 * 1024 * 1024
-        assert stats["total_size_mb"] == pytest.approx(3.0, places=2)
+        assert stats["total_size_mb"] == pytest.approx(3.0, abs=0.005)
         assert len(stats["buffers"]) == 2
 
     def test_thread_safety(self):
-        """测试线程安全性"""
+        """测试线程安全性."""
         errors = []
         import threading
 
@@ -177,7 +177,7 @@ class TestGPUBufferTracker:
         assert stats["count"] == 1000
 
     def test_thread_safety_release(self):
-        """测试线程安全的释放操作"""
+        """测试线程安全的释放操作."""
         # 先注册100个缓冲区
         for i in range(100):
             self.tracker.track_buffer(f"buf_{i}", self.mock_buffer, 1024)
@@ -205,7 +205,7 @@ class TestGPUBufferTracker:
         assert len(errors) == 0
 
     def test_large_buffer_tracking(self):
-        """测试大容量缓冲区追踪"""
+        """测试大容量缓冲区追踪."""
         # 模拟真实GPU缓冲区大小
         self.tracker.track_buffer(
             "keys_buf",
@@ -221,10 +221,10 @@ class TestGPUBufferTracker:
         stats = self.tracker.get_stats()
         assert stats["count"] == 2
         # 修复: 使用更宽松的精度比较
-        assert stats["total_size_mb"] == pytest.approx(34.34, places=1)
+        assert stats["total_size_mb"] == pytest.approx(34.34, abs=0.05)
 
     def test_buffer_timestamp_accuracy(self):
-        """测试时间戳准确性"""
+        """测试时间戳准确性."""
         before = time.time()
         self.tracker.track_buffer("test_buf", self.mock_buffer, 1024)
         after = time.time()
@@ -237,7 +237,7 @@ class TestGPUBufferTracker:
         assert timestamp <= after
 
     def test_duplicate_buffer_name_overwrite(self):
-        """测试重复名称覆盖"""
+        """测试重复名称覆盖."""
         self.tracker.track_buffer("buf", self.mock_buffer, 1024)
 
         # 再次注册同名缓冲区

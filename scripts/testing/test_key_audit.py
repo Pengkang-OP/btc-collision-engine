@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""密钥审计功能测试"""
+"""密钥审计功能测试."""
 
 import os
 import sys
@@ -16,7 +16,7 @@ from src.utils.key_audit import (  # noqa: E402
 
 
 def test_key_audit_logger():
-    """测试密钥审计日志器"""
+    """测试密钥审计日志器."""
     print("=" * 70)
     print("密钥审计功能测试")
     print("=" * 70)

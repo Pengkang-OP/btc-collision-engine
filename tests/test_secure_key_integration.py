@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SecureKeyManager集成到碰撞引擎的验证测试"""
+"""SecureKeyManager集成到碰撞引擎的验证测试."""
 
 import sys
 import time
@@ -13,7 +13,7 @@ from src.core.address_generator import P2PKHAddressGenerator
 @pytest.mark.integration
 @pytest.mark.timeout(30)
 def test_secure_integration():
-    """测试SecureKeyManager集成"""
+    """测试SecureKeyManager集成."""
     print("=" * 70)
     print("测试1: SecureKeyManager集成验证")
     print("=" * 70)
@@ -88,7 +88,7 @@ def test_secure_integration():
 @pytest.mark.integration
 @pytest.mark.timeout(30)
 def test_performance_impact():
-    """测试性能影响"""
+    """测试性能影响."""
     print("\n" + "=" * 70)
     print("测试2: 性能影响评估")
     print("=" * 70)
@@ -145,7 +145,7 @@ def test_performance_impact():
 
 
 def test_memory_safety():
-    """测试内存安全性"""
+    """测试内存安全性."""
     print("\n" + "=" * 70)
     print("测试3: 内存安全验证")
     print("=" * 70)
@@ -173,7 +173,7 @@ def test_memory_safety():
 
 
 def main():
-    """主测试函数"""
+    """主测试函数."""
     print("\n" + "=" * 70)
     print("SecureKeyManager集成到碰撞引擎 - 验证测试")
     print("=" * 70)

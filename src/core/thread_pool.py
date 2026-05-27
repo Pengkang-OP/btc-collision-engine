@@ -153,7 +153,7 @@ class WorkStealingThreadPool:
         )
 
     def start(self) -> None:
-        """Start the thread pool"""
+        """Start the thread pool."""
         self._stop_event.clear()
         self._start_time = time.time()
 
@@ -228,7 +228,7 @@ class WorkStealingThreadPool:
         return future
 
     def _worker(self, thread_id: int) -> None:
-        """Worker thread main loop"""
+        """Worker thread main loop."""
         while not self._stop_event.is_set():
             task = self._get_task(thread_id)
 
@@ -428,7 +428,7 @@ class TaskBatch:
         *args,
         **kwargs,
     ) -> None:
-        """Submit a task to the batch"""
+        """Submit a task to the batch."""
         future = self._pool.submit(fn, *args, **kwargs)
         self._futures.append(future)
 
@@ -483,6 +483,7 @@ class GlobalThreadPoolManager:
         num_threads: int | None = None,
     ) -> None:
         """P3-8 enhanced: Initialize global thread pool
+
         (supports config input).
 
         Args:
@@ -508,13 +509,14 @@ class GlobalThreadPoolManager:
     def get_pool(
         self,
     ) -> WorkStealingThreadPool | None:
-        """Get global thread pool"""
+        """Get global thread pool."""
         if not self._initialized:
             self.initialize()
         return self._pool
 
     def shutdown(self) -> None:
         """P3-8 enhanced: Shutdown global thread pool
+
         (with statistics output).
         """
         if self._pool and not self._shutdown_complete:
@@ -534,6 +536,7 @@ class GlobalThreadPoolManager:
         new_num_threads: int,
     ) -> bool:
         """P3-8 new: Adjust thread count at runtime
+
         (scale down only, does not kill active threads).
 
         Current implementation is simplified: records new
@@ -590,7 +593,7 @@ thread_pool_manager = GlobalThreadPoolManager()
 
 
 def get_thread_pool() -> WorkStealingThreadPool:
-    """Get global thread pool instance"""
+    """Get global thread pool instance."""
     pool = thread_pool_manager.get_pool()
     if pool is None:
         thread_pool_manager.initialize()

@@ -1,4 +1,4 @@
-"""CPU-GPU 双缓冲优化模块 (PERF-1)
+"""CPU-GPU 双缓冲优化模块 (PERF-1).
 
 实现 CPU-GPU 双缓冲机制,通过读写两个缓冲区交替使用,
 消除 CPU 准备数据和 GPU 计算之间的等待时间。
@@ -36,7 +36,7 @@ ENV_DOUBLE_BUFFER = "BTC_GPU_DOUBLE_BUFFER"
 
 
 class DoubleBuffer:
-    """CPU-GPU 双缓冲管理器
+    """CPU-GPU 双缓冲管理器.
 
     管理 OpenCL 缓冲区对,实现前端(读)/后端(写)交替切换:
 
@@ -74,7 +74,7 @@ class DoubleBuffer:
         num_keys: int,
         enabled: bool | None = None,
     ) -> None:
-        """初始化双缓冲
+        """初始化双缓冲.
 
         Args:
             context: OpenCL 上下文
@@ -116,7 +116,7 @@ class DoubleBuffer:
 
     @staticmethod
     def _read_env_config() -> bool:
-        """从环境变量读取双缓冲配置
+        """从环境变量读取双缓冲配置.
 
         BTC_GPU_DOUBLE_BUFFER:
           "0" / "false" / "no" / "off" / "disable" / "disabled" → 禁用
@@ -127,7 +127,7 @@ class DoubleBuffer:
 
     @staticmethod
     def is_double_buffer_enabled() -> bool:
-        """查询环境变量当前是否启用了双缓冲 (静态便捷方法)"""
+        """查询环境变量当前是否启用了双缓冲 (静态便捷方法)."""
         return DoubleBuffer._read_env_config()
 
     # ------------------------------------------------------------------
@@ -136,17 +136,17 @@ class DoubleBuffer:
 
     @property
     def enabled(self) -> bool:
-        """是否启用双缓冲"""
+        """是否启用双缓冲."""
         return self._enabled
 
     @property
     def buffer_count(self) -> int:
-        """缓冲区数量 (双缓冲=2, 单缓冲=1)"""
+        """缓冲区数量 (双缓冲=2, 单缓冲=1)."""
         return len(self._buffers)
 
     @property
     def num_keys(self) -> int:
-        """每个缓冲区管理的密钥数量"""
+        """每个缓冲区管理的密钥数量."""
         return self._num_keys
 
     # ------------------------------------------------------------------
@@ -154,7 +154,7 @@ class DoubleBuffer:
     # ------------------------------------------------------------------
 
     def get_front(self) -> dict[str, Any]:
-        """获取前端缓冲区 (GPU 读取端)
+        """获取前端缓冲区 (GPU 读取端).
 
         GPU 可以安全地从此缓冲区读取数据。
         单缓冲模式下返回唯一缓冲区。
@@ -167,7 +167,7 @@ class DoubleBuffer:
             return self._buffers[self._front_idx]
 
     def get_back(self) -> dict[str, Any]:
-        """获取后端缓冲区 (CPU 写入端)
+        """获取后端缓冲区 (CPU 写入端).
 
         CPU 可以安全地向此缓冲区写入数据。
         单缓冲模式下返回唯一缓冲区 (与 front 相同)。
@@ -180,7 +180,7 @@ class DoubleBuffer:
             return self._buffers[self._back_idx]
 
     def swap(self) -> None:
-        """交换前后端缓冲区
+        """交换前后端缓冲区.
 
         双缓冲模式: 将后端切换为前端,前端切换为后端。
         单缓冲模式: 无操作 (静默跳过)。
@@ -196,7 +196,7 @@ class DoubleBuffer:
                 self._front_idx, self._back_idx = self._back_idx, self._front_idx
 
     def reset_flags(self, buf: dict[str, Any] | None = None) -> None:
-        """重置匹配标志数组 (清零)
+        """重置匹配标志数组 (清零).
 
         用于在 GPU 内核启动前清除上一轮的匹配标志。
 
@@ -211,7 +211,7 @@ class DoubleBuffer:
             flags.fill(0)
 
     def release(self) -> None:
-        """释放所有 OpenCL 缓冲区资源
+        """释放所有 OpenCL 缓冲区资源.
 
         应在不再需要双缓冲时调用,释放 GPU 显存。
         调用后对象不可再使用。
@@ -231,7 +231,7 @@ class DoubleBuffer:
     # ------------------------------------------------------------------
 
     def _create_buffers(self) -> None:
-        """创建 OpenCL 缓冲区 (内部方法)"""
+        """创建 OpenCL 缓冲区 (内部方法)."""
         import pyopencl as cl
 
         num_bufs = 2 if self._enabled else 1
@@ -252,7 +252,7 @@ class DoubleBuffer:
     # ------------------------------------------------------------------
 
     def get_stats(self) -> dict:
-        """获取双缓冲状态统计
+        """获取双缓冲状态统计.
 
         Returns:
             dict with keys: enabled, buffer_count, front_index, back_index, num_keys
@@ -267,6 +267,7 @@ class DoubleBuffer:
         }
 
     def __repr__(self) -> str:
+        """返回双缓冲区的字符串表示。."""
         mode = "DOUBLE" if self._enabled else "SINGLE"
         return (
             f"DoubleBuffer(mode={mode}, buffers={len(self._buffers)}, "

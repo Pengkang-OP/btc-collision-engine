@@ -1,4 +1,4 @@
-"""线程安全验证测试
+"""线程安全验证测试.
 
 验证多线程环境下的锁顺序和竞态条件防护。
 """
@@ -12,10 +12,10 @@ from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
 
 
 class TestLockOrder:
-    """验证锁顺序约定：_state_lock → _workers_lock → _matches_lock"""
+    """验证锁顺序约定：_state_lock → _workers_lock → _matches_lock."""
 
     def test_lock_order_compliance(self):
-        """测试锁获取顺序是否符合约定"""
+        """测试锁获取顺序是否符合约定."""
         config = {"worker_join_timeout": 5, "workload_monitor_interval": 1}
         engine = MultiGPUCollisionEngine(config=config)
 
@@ -39,10 +39,10 @@ class TestLockOrder:
 
 
 class TestConcurrentAccess:
-    """验证并发访问的安全性"""
+    """验证并发访问的安全性."""
 
     def test_concurrent_stats_access(self):
-        """测试并发读取统计信息是否线程安全"""
+        """测试并发读取统计信息是否线程安全."""
         config = {"worker_join_timeout": 5}
         engine = MultiGPUCollisionEngine(config=config)
 
@@ -75,7 +75,7 @@ class TestConcurrentAccess:
         engine.stop()
 
     def test_concurrent_match_add(self):
-        """测试并发添加匹配结果的线程安全性"""
+        """测试并发添加匹配结果的线程安全性."""
         config = {"worker_join_timeout": 5}
         engine = MultiGPUCollisionEngine(config=config)
         engine._initialized = True
@@ -112,10 +112,10 @@ class TestConcurrentAccess:
 
 
 class TestPerformanceHistory:
-    """验证性能历史数据的线程安全性"""
+    """验证性能历史数据的线程安全性."""
 
     def test_history_append_thread_safe(self):
-        """测试性能历史追加是否线程安全"""
+        """测试性能历史追加是否线程安全."""
         config = {"worker_join_timeout": 5, "performance_history_max_size": 10}
         engine = MultiGPUCollisionEngine(config=config)
 

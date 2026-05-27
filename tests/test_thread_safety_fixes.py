@@ -1,4 +1,4 @@
-"""线程安全修复验证测试"""
+"""线程安全修复验证测试."""
 
 import pathlib
 import threading
@@ -12,10 +12,10 @@ from src.config.config_manager import ConfigManager
 
 
 class TestThreadSafetyFixes:
-    """测试线程安全修复"""
+    """测试线程安全修复."""
 
     def test_config_manager_concurrent_access(self):
-        """测试配置管理器的并发访问"""
+        """测试配置管理器的并发访问."""
         config = ConfigManager()
         errors = []
 
@@ -52,7 +52,7 @@ class TestThreadSafetyFixes:
         assert len(errors) == 0, f"并发访问错误: {errors}"
 
     def test_config_manager_concurrent_save_load(self):
-        """测试配置管理器的并发保存和加载"""
+        """测试配置管理器的并发保存和加载."""
         import tempfile
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
@@ -94,7 +94,7 @@ class TestThreadSafetyFixes:
                 pathlib.Path(config_file).unlink()
 
     def test_collision_engine_single_lock(self):
-        """测试碰撞引擎使用单锁设计"""
+        """测试碰撞引擎使用单锁设计."""
         targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
         engine = KeyCollisionEngine(targets=targets)
 
@@ -108,7 +108,7 @@ class TestThreadSafetyFixes:
         assert isinstance(engine._state_lock, type(threading.Lock()))
 
     def test_collision_engine_no_deadlock_risk(self):
-        """测试碰撞引擎不存在死锁风险"""
+        """测试碰撞引擎不存在死锁风险."""
         targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
         engine = KeyCollisionEngine(targets=targets)
 
@@ -122,7 +122,7 @@ class TestThreadSafetyFixes:
         assert lock_count == 1, f"应该有1个锁，但找到{lock_count}个"
 
     def test_config_manager_thread_safety_stress_test(self):
-        """配置管理器线程安全压力测试"""
+        """配置管理器线程安全压力测试."""
         config = ConfigManager()
         iterations = 1000
         thread_count = 10
@@ -163,14 +163,14 @@ class TestThreadSafetyFixes:
         print(f"吞吐量: {thread_count * iterations / elapsed:.0f} 操作/秒")
 
     def test_record_worker_error_concurrent(self):
-        """测试record_worker_error的多线程并发安全性（M1修复验证）"""
+        """测试record_worker_error的多线程并发安全性（M1修复验证）."""
         stats = CollisionStats()
         thread_count = 20
         iterations = 1000
         errors = []
 
         def worker_error_generator(thread_id):
-            """模拟工作线程记录错误"""
+            """模拟工作线程记录错误."""
             try:
                 for _i in range(iterations):
                     # 直接调用record_worker_error（无if检查，验证M1修复）
@@ -216,7 +216,7 @@ class TestThreadSafetyFixes:
         print(f"  计数准确性: {'✓ 通过' if actual_count == expected_count else '✗ 失败'}")
 
     def test_error_log_rate_limit_accuracy(self):
-        """测试错误日志限频准确性（M2修复验证）"""
+        """测试错误日志限频准确性（M2修复验证）."""
         from unittest.mock import MagicMock
 
         from src.collision.key_collision_engine import KeyCollisionEngine

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""测试GPU资源释放功能
+"""测试GPU资源释放功能.
 
 此脚本用于测试修复后的GPU资源释放功能，确保在引擎停止后GPU资源能够被正确释放。
 """
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 def test_resource_release():
-    """测试GPU资源释放功能"""
+    """测试GPU资源释放功能."""
     logger.info("开始测试GPU资源释放功能")
 
     # 初始化GPU碰撞引擎

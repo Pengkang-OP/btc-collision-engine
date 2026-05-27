@@ -22,7 +22,7 @@ from .logging_config import get_configured_logger
 
 @dataclass
 class LogCollectionRule:
-    """日志收集规则"""
+    """日志收集规则."""
 
     name: str  # 规则名称
     module_pattern: str  # 模块匹配模式，支持通配符
@@ -35,7 +35,7 @@ class LogCollectionRule:
     max_logs_per_second: float = 0.0  # 每秒最大日志数，0表示无限制
 
     def __post_init__(self) -> None:
-        """初始化规则"""
+        """初始化规则."""
         # 编译正则表达式模式
         self._module_regex: Pattern | None = None
         self._include_regexes: list[Pattern] = []
@@ -58,13 +58,13 @@ class LogCollectionRule:
                 self._exclude_regexes.append(re.compile(pattern))
 
     def matches_module(self, module_name: str) -> bool:
-        """检查模块是否匹配规则"""
+        """检查模块是否匹配规则."""
         if not self._module_regex:
             return True
         return self._module_regex.match(module_name) is not None
 
     def should_include(self, message: str) -> bool:
-        """检查消息是否应该包含"""
+        """检查消息是否应该包含."""
         # 如果有包含模式，至少需要匹配一个
         if self._include_regexes:
             for regex in self._include_regexes:
@@ -77,7 +77,7 @@ class LogCollectionRule:
         return all(not regex.search(message) for regex in self._exclude_regexes)
 
     def to_dict(self) -> dict[str, Any]:
-        """转换为字典"""
+        """转换为字典."""
         return {
             "name": self.name,
             "module_pattern": self.module_pattern,
@@ -92,7 +92,7 @@ class LogCollectionRule:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "LogCollectionRule":
-        """从字典创建规则"""
+        """从字典创建规则."""
         return cls(
             name=data.get("name", ""),
             module_pattern=data.get("module_pattern", ""),
@@ -107,10 +107,10 @@ class LogCollectionRule:
 
 
 class LogCollectionRuleManager:
-    """日志收集规则管理器"""
+    """日志收集规则管理器."""
 
     def __init__(self, config_file: str | None = None) -> None:
-        """初始化规则管理器
+        """初始化规则管理器.
 
         Args:
             config_file: 规则配置文件路径
@@ -121,7 +121,7 @@ class LogCollectionRuleManager:
         self._load_rules()
 
     def _load_rules(self) -> None:
-        """加载规则配置"""
+        """加载规则配置."""
         if not self.config_file:
             # 使用默认规则
             self._load_default_rules()
@@ -149,7 +149,7 @@ class LogCollectionRuleManager:
             self._load_default_rules()
 
     def _load_default_rules(self) -> None:
-        """加载默认规则"""
+        """加载默认规则."""
         self.rules = [
             LogCollectionRule(
                 name="核心模块详细日志",
@@ -191,7 +191,7 @@ class LogCollectionRuleManager:
         ]
 
     def save_rules(self) -> None:
-        """保存规则到配置文件"""
+        """保存规则到配置文件."""
         if not self.config_file:
             return
 
@@ -210,17 +210,17 @@ class LogCollectionRuleManager:
             _save_logger.warning("保存日志收集规则失败: %s", e)
 
     def add_rule(self, rule: LogCollectionRule) -> None:
-        """添加规则"""
+        """添加规则."""
         self.rules.append(rule)
         self.save_rules()
 
     def remove_rule(self, rule_name: str) -> None:
-        """删除规则"""
+        """删除规则."""
         self.rules = [rule for rule in self.rules if rule.name != rule_name]
         self.save_rules()
 
     def update_rule(self, rule_name: str, **kwargs) -> None:
-        """更新规则"""
+        """更新规则."""
         for rule in self.rules:
             if rule.name == rule_name:
                 for key, value in kwargs.items():
@@ -232,7 +232,7 @@ class LogCollectionRuleManager:
                 break
 
     def get_matching_rules(self, module_name: str, level: str, message: str) -> list[LogCollectionRule]:
-        """获取匹配的规则"""
+        """获取匹配的规则."""
         matching_rules = []
         for rule in self.rules:
             if not rule.enabled:
@@ -257,7 +257,7 @@ class LogCollectionRuleManager:
         return matching_rules
 
     def get_effective_rule(self, module_name: str, level: str, message: str) -> LogCollectionRule | None:
-        """获取最有效的规则（优先级最高）"""
+        """获取最有效的规则（优先级最高）."""
         matching_rules = self.get_matching_rules(module_name, level, message)
         if not matching_rules:
             return None
@@ -271,11 +271,11 @@ class LogCollectionRuleManager:
         return matching_rules[0]
 
     def get_rules(self) -> list[LogCollectionRule]:
-        """获取所有规则"""
+        """获取所有规则."""
         return self.rules
 
     def set_rules(self, rules: list[LogCollectionRule]) -> None:
-        """设置规则"""
+        """设置规则."""
         self.rules = rules
         self.save_rules()
 
@@ -285,7 +285,7 @@ _rule_manager: LogCollectionRuleManager | None = None
 
 
 def get_rule_manager(config_file: str | None = None) -> LogCollectionRuleManager:
-    """获取规则管理器实例
+    """获取规则管理器实例.
 
     Args:
         config_file: 规则配置文件路径
@@ -301,7 +301,7 @@ def get_rule_manager(config_file: str | None = None) -> LogCollectionRuleManager
 
 
 def init_log_collection_rules(config_file: str | None = None) -> None:
-    """初始化日志收集规则
+    """初始化日志收集规则.
 
     Args:
         config_file: 规则配置文件路径
@@ -311,7 +311,7 @@ def init_log_collection_rules(config_file: str | None = None) -> None:
 
 
 def get_matching_rules(module_name: str, level: str, message: str) -> list[LogCollectionRule]:
-    """获取匹配的日志收集规则
+    """获取匹配的日志收集规则.
 
     Args:
         module_name: 模块名称
@@ -327,7 +327,7 @@ def get_matching_rules(module_name: str, level: str, message: str) -> list[LogCo
 
 
 def get_effective_rule(module_name: str, level: str, message: str) -> LogCollectionRule | None:
-    """获取最有效的日志收集规则
+    """获取最有效的日志收集规则.
 
     Args:
         module_name: 模块名称

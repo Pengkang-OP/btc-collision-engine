@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GPU碰撞引擎24小时稳定性测试
+"""GPU碰撞引擎24小时稳定性测试.
 
 测试目标:
 1. 验证长时间运行无内存泄漏
@@ -24,10 +24,10 @@ from src.monitoring.gpu_performance_monitor import GPUPerformanceMonitor  # noqa
 
 
 class StabilityTestRunner:
-    """稳定性测试运行器"""
+    """稳定性测试运行器."""
 
     def __init__(self, duration_hours: int = 24, check_interval: int = 300):
-        """初始化稳定性测试
+        """初始化稳定性测试.
 
         Args:
             duration_hours: 测试时长(小时),默认24小时
@@ -45,13 +45,13 @@ class StabilityTestRunner:
         self._monitor = None  # GPUPerformanceMonitor 实例
 
     def print_header(self, title: str):
-        """打印标题"""
+        """打印标题."""
         print(f"\n{'=' * 80}")
         print(f"  {title}")
         print(f"{'=' * 80}\n")
 
     def log_metrics(self, metrics: dict[str, Any]):
-        """记录性能指标"""
+        """记录性能指标."""
         timestamp = datetime.now().isoformat()
         record = {
             "timestamp": timestamp,
@@ -70,7 +70,7 @@ class StabilityTestRunner:
         )
 
     def save_intermediate_report(self):
-        """保存中间报告"""
+        """保存中间报告."""
         report = {
             "test_start": self.start_time,
             "test_duration_hours": self.duration_hours,
@@ -85,7 +85,7 @@ class StabilityTestRunner:
             json.dump(report, f, indent=2, ensure_ascii=False)
 
     def check_memory_leak(self) -> bool:
-        """检查内存泄漏"""
+        """检查内存泄漏."""
         if len(self.metrics_history) < 2:
             return True
 
@@ -110,7 +110,7 @@ class StabilityTestRunner:
         return not has_leak
 
     def check_performance_stability(self) -> bool:
-        """检查性能稳定性"""
+        """检查性能稳定性."""
         if len(self.metrics_history) < 2:
             return True
 
@@ -133,7 +133,7 @@ class StabilityTestRunner:
         return is_stable
 
     def check_error_rate(self) -> bool:
-        """检查错误率"""
+        """检查错误率."""
         if not self.metrics_history:
             return True
 
@@ -147,7 +147,7 @@ class StabilityTestRunner:
         return is_ok
 
     def generate_final_report(self) -> dict[str, Any]:
-        """生成最终报告"""
+        """生成最终报告."""
         if not self.metrics_history:
             return {}
 
@@ -196,7 +196,7 @@ class StabilityTestRunner:
         return report
 
     def run(self):
-        """运行稳定性测试"""
+        """运行稳定性测试."""
         self.print_header("GPU碰撞引擎24小时稳定性测试")
 
         print("测试配置:")
@@ -377,7 +377,7 @@ class StabilityTestRunner:
 
 
 def main():
-    """主函数"""
+    """主函数."""
     import argparse
 
     parser = argparse.ArgumentParser(description="GPU碰撞引擎24小时稳定性测试")

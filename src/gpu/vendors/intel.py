@@ -1,4 +1,4 @@
-"""Intel GPU特定优化
+"""Intel GPU特定优化.
 
 针对Intel GPU(特别是Arc系列)的优化策略,包括:
 - uint32 workaround避免global char* hang bug
@@ -19,7 +19,8 @@ import tempfile
 from typing import Any
 
 # 统一日志获取
-from ...utils import get_configured_logger
+from src.utils import get_configured_logger
+
 from ..rate_limited_logger import RateLimitedLogger as _RateLimitedLogger  # Task 8/11 refactor
 from .base import GPUVendorBase
 
@@ -30,17 +31,18 @@ _rate_logger = _RateLimitedLogger(logger)
 
 
 class IntelGPUVendor(GPUVendorBase):
-    """Intel GPU优化处理器"""
+    """Intel GPU优化处理器."""
 
     _RECOMMENDED_BATCH: int = 1048576
     _MAX_BATCH: int = 2097152
     _MEMORY_EFFICIENCY: float = 0.70
 
     def get_vendor_name(self) -> str:
+        """获取厂商名称。."""
         return "Intel"
 
     def apply_optimizations(self, device: Any, profile: dict[str, Any]) -> None:
-        """应用Intel特定优化
+        """应用Intel特定优化.
 
         优化策略:
         1. uint32 workaround(避免global char* hang bug)
@@ -124,7 +126,7 @@ class IntelGPUVendor(GPUVendorBase):
         _rate_logger.info(f"[OK] Intel GPU内存效率: {memory_efficiency * 100:.0f}% (v4.2.1优化)")
 
     def _check_driver_version(self, device: Any) -> None:
-        """检查驱动版本并给出建议"""
+        """检查驱动版本并给出建议."""
         driver_version = device.driver_version
         if not driver_version:
             _rate_logger.debug("[WARN] 无法检测Intel驱动版本，使用保守模式")
@@ -156,7 +158,7 @@ class IntelGPUVendor(GPUVendorBase):
             logger.debug("无法解析Intel驱动版本: %s, 错误: %s", driver_version, e)
 
     def handle_errors(self, error: Exception, stats: Any | None = None) -> bool:
-        """处理Intel GPU特定错误
+        """处理Intel GPU特定错误.
 
         Intel Arc容易出现超时和hang错误。资源错误委托给基类处理。
         """
@@ -180,7 +182,7 @@ class IntelGPUVendor(GPUVendorBase):
         return super().handle_errors(error, stats)
 
     def apply_environment_optimizations(self) -> dict[str, str]:
-        """应用环境变量优化 (v4.2.1 新增)
+        """应用环境变量优化 (v4.2.1 新增).
 
         基于互联网研究的应用层优化:
         1. SYCL_DEVICE_FILTER: 强制使用OpenCL而非Level-Zero
@@ -253,7 +255,7 @@ class IntelGPUVendor(GPUVendorBase):
         return applied
 
     def restore_environment_optimizations(self) -> None:
-        """恢复环境变量原始值 (v4.2.4 新增)
+        """恢复环境变量原始值 (v4.2.4 新增).
 
         将 apply_environment_optimizations() 修改的环境变量恢复为原始值，
         防止全局状态污染和跨组件交叉污染。
@@ -271,7 +273,7 @@ class IntelGPUVendor(GPUVendorBase):
         self._env_originals = {}
 
     def get_optimization_report(self) -> str:
-        """生成 Intel Arc 优化报告
+        """生成 Intel Arc 优化报告.
 
         Returns:
             str: 格式化的优化报告

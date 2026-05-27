@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""多GPU选择命令行工具
+"""多GPU选择命令行工具.
 
 提供GPU设备列表、选择和配置生成功能。
 
@@ -25,7 +25,7 @@ from pathlib import Path
 
 
 def cmd_list_devices(args):
-    """列出所有GPU设备"""
+    """列出所有GPU设备."""
     from src.gpu.selector import get_gpu_selector
 
     selector = get_gpu_selector()
@@ -46,7 +46,7 @@ def cmd_list_devices(args):
 
 
 def cmd_auto_select(args):
-    """自动选择最佳GPU"""
+    """自动选择最佳GPU."""
     from src.gpu.selector import get_gpu_selector
 
     selector = get_gpu_selector()
@@ -71,7 +71,7 @@ def cmd_auto_select(args):
 
 
 def cmd_test_multi(args):
-    """测试多GPU模式"""
+    """测试多GPU模式."""
     from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
     from src.gpu.selector import get_gpu_selector
 
@@ -125,7 +125,7 @@ def cmd_test_multi(args):
 
 
 def cmd_generate_config(args):
-    """生成配置文件"""
+    """生成配置文件."""
     from src.gpu.selector import get_gpu_selector
 
     selector = get_gpu_selector()
@@ -172,7 +172,7 @@ def cmd_generate_config(args):
 
 
 def main():
-    """主函数"""
+    """主函数."""
     parser = argparse.ArgumentParser(
         description="BTC碰撞引擎 - 多GPU选择工具",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -210,10 +210,10 @@ def main():
     # generate-config命令
     gen_parser = subparsers.add_parser("generate-config", help="生成配置文件")
     gen_parser.add_argument(
-        "--mode", choices=["auto", "single", "multi"], default="auto", help="GPU模式(默认auto)"
+        "--mode", choices=["auto", "single", "multi"], default="auto", help="GPU模式(默认auto)",
     )
     gen_parser.add_argument(
-        "--output", default="config.gpu.json", help="输出文件路径(默认config.gpu.json)"
+        "--output", default="config.gpu.json", help="输出文件路径(默认config.gpu.json)",
     )
     gen_parser.set_defaults(func=cmd_generate_config)
 

@@ -1,4 +1,4 @@
-"""多GPU碰撞引擎
+"""多GPU碰撞引擎.
 
 协调多个GPU工作器进行并行私钥碰撞搜索。
 采用任务分割策略,每个GPU独立搜索不同的私钥范围。
@@ -27,7 +27,7 @@ from ..utils import get_configured_logger
 # 本模块内部导入
 from .data_monitor import DataMonitor
 from .gpu_config import MultiGPUConfig, WorkerConfig
-from .gpu_recovery_manager import GPURecoveryManager  # noqa: F401
+from .gpu_recovery_manager import GPURecoveryManager
 from .load_balancer import GPULoadBalancer
 from .memory_pool import GPUMemoryPool
 from .metrics import get_metrics_collector
@@ -44,7 +44,7 @@ logger = get_configured_logger("MultiGPUEngine")
 
 
 class MultiGPUCollisionEngine:
-    """多GPU碰撞引擎
+    """多GPU碰撞引擎.
 
     协调多个GPU并行工作,自动分配任务和汇总结果。
 
@@ -108,7 +108,7 @@ class MultiGPUCollisionEngine:
     )
 
     def __init__(self, config: dict | MultiGPUConfig | None = None) -> None:
-        """初始化多GPU引擎
+        """初始化多GPU引擎.
 
         Args:
             config: 配置字典（兼容旧接口）或 MultiGPUConfig 实例
@@ -213,7 +213,7 @@ class MultiGPUCollisionEngine:
         device_count: int = -1,
         strategy: str = "performance",
     ) -> bool:
-        """初始化GPU设备
+        """初始化GPU设备.
 
         Args:
             device_indices: 指定GPU索引列表(为None时自动选择)
@@ -296,7 +296,7 @@ class MultiGPUCollisionEngine:
             return False
 
     def _validate_config_values(self, config: dict) -> dict:
-        """M-3修复: 验证配置值边界
+        """M-3修复: 验证配置值边界.
 
         配置值边界验证说明:
         1. 检查数值类型配置参数是否在合理范围内
@@ -345,7 +345,7 @@ class MultiGPUCollisionEngine:
 
     @staticmethod
     def _validate_config_object(config: "MultiGPUConfig") -> None:
-        """M-3修复: 验证 MultiGPUConfig 对象参数边界
+        """M-3修复: 验证 MultiGPUConfig 对象参数边界.
 
         检查配置对象中数值类型字段的合理性，超出范围时重置为默认值。
         此方法直接修改 config 对象属性。
@@ -391,7 +391,7 @@ class MultiGPUCollisionEngine:
             rc.batch_size_reduction_factor = 0.5
 
     def _check_system_memory_limit(self, total_allocated_mb: int, device_count: int) -> None:
-        """P2修复: 检查系统内存限制
+        """P2修复: 检查系统内存限制.
 
         多GPU场景下，内存池总分配量需在系统可用RAM范围内。
         OpenCL 驱动需要使用系统RAM作为GPU显存的后备缓冲区，
@@ -439,7 +439,7 @@ class MultiGPUCollisionEngine:
 
     @staticmethod
     def _get_system_total_memory_mb() -> int:
-        """获取系统总内存 (MB)，跨平台实现
+        """获取系统总内存 (MB)，跨平台实现.
 
         Returns:
             系统总内存 (MB)，获取失败返回 -1
@@ -496,7 +496,7 @@ class MultiGPUCollisionEngine:
         range_start: int | None = None,  # range/brute_force 的起始私钥
         range_end: int | None = None,  # range 的结束私钥
     ) -> bool:
-        """启动多GPU碰撞搜索
+        """启动多GPU碰撞搜索.
 
         Args:
             targets: 目标地址集合
@@ -596,7 +596,7 @@ class MultiGPUCollisionEngine:
             return False
 
     def stop(self) -> None:
-        """停止所有GPU工作器
+        """停止所有GPU工作器.
 
         线程安全：使用 _stopping 标志 + _state_lock 防止重入。
         cleanup() 在调用此方法前已确保不存在并发 stop()。
@@ -620,7 +620,7 @@ class MultiGPUCollisionEngine:
                 self._stopping = False
 
     def _do_stop(self) -> None:
-        """执行停止逻辑（内部方法，调用者需持有 _stopping 标志）"""
+        """执行停止逻辑（内部方法，调用者需持有 _stopping 标志）."""
         logger.info("停止多GPU碰撞...")
 
         # 停止工作负载监控
@@ -659,7 +659,7 @@ class MultiGPUCollisionEngine:
         logger.info("多GPU碰撞已停止")
 
     def pause(self) -> None:
-        """暂停所有GPU工作器"""
+        """暂停所有GPU工作器."""
         with self._workers_lock:
             workers_snapshot = dict(self.workers)
 
@@ -672,7 +672,7 @@ class MultiGPUCollisionEngine:
         logger.info("所有GPU工作器已暂停")
 
     def resume(self) -> None:
-        """恢复所有GPU工作器"""
+        """恢复所有GPU工作器."""
         with self._workers_lock:
             workers_snapshot = dict(self.workers)
 
@@ -685,7 +685,7 @@ class MultiGPUCollisionEngine:
         logger.info("所有GPU工作器已恢复")
 
     def get_combined_stats(self) -> dict:
-        """获取汇总统计信息
+        """获取汇总统计信息.
 
         Returns:
             汇总统计字典
@@ -746,13 +746,13 @@ class MultiGPUCollisionEngine:
         return stats
 
     def _get_elapsed_time(self) -> float:
-        """获取运行时间"""
+        """获取运行时间."""
         if self._start_time:
             return time.time() - self._start_time
         return 0.0
 
     def get_per_device_stats(self) -> dict[int, dict]:
-        """获取每个GPU的独立统计
+        """获取每个GPU的独立统计.
 
         Returns:
             设备索引 -> 统计信息映射
@@ -769,7 +769,7 @@ class MultiGPUCollisionEngine:
         return stats
 
     def get_matches(self) -> list[dict]:
-        """获取所有匹配结果
+        """获取所有匹配结果.
 
         Returns:
             匹配结果列表
@@ -780,7 +780,7 @@ class MultiGPUCollisionEngine:
             return self._all_matches.copy()
 
     def is_running(self) -> bool:
-        """检查引擎是否在运行
+        """检查引擎是否在运行.
 
         Returns:
             True表示正在运行
@@ -791,7 +791,7 @@ class MultiGPUCollisionEngine:
             return self._running
 
     def is_initialized(self) -> bool:
-        """检查引擎是否已初始化
+        """检查引擎是否已初始化.
 
         Returns:
             True表示已初始化
@@ -802,7 +802,7 @@ class MultiGPUCollisionEngine:
             return self._initialized
 
     def get_devices(self) -> list[dict]:
-        """获取当前使用的GPU设备列表
+        """获取当前使用的GPU设备列表.
 
         Returns:
             设备信息列表
@@ -813,7 +813,7 @@ class MultiGPUCollisionEngine:
             return self._devices.copy()
 
     def get_load_balancer(self) -> GPULoadBalancer | None:
-        """获取负载均衡器
+        """获取负载均衡器.
 
         Returns:
             GPULoadBalancer实例
@@ -822,7 +822,7 @@ class MultiGPUCollisionEngine:
         return self.load_balancer
 
     def _on_match_found(self, device_idx: int, match: dict) -> None:
-        """处理匹配结果(回调)
+        """处理匹配结果(回调).
 
         Args:
             device_idx: 发现匹配的设备索引
@@ -857,7 +857,7 @@ class MultiGPUCollisionEngine:
                 logger.error("匹配回调异常: %s", e)
 
     def _on_anomaly_detected(self, device_idx: int, issue: dict) -> None:
-        """处理数据异常检测回调
+        """处理数据异常检测回调.
 
         Args:
             device_idx: GPU设备索引
@@ -886,7 +886,7 @@ class MultiGPUCollisionEngine:
             logger.debug("GPU %s 低级别数据异常: %s", device_idx, message)
 
     def _pause_device(self, device_idx: int) -> None:
-        """暂停指定GPU工作器
+        """暂停指定GPU工作器.
 
         Args:
             device_idx: GPU设备索引
@@ -901,7 +901,7 @@ class MultiGPUCollisionEngine:
                     logger.error("暂停GPU %s 失败: %s", device_idx, e)
 
     def get_monitor_stats(self) -> dict:
-        """获取数据监控统计
+        """获取数据监控统计.
 
         Returns:
             监控统计字典
@@ -917,7 +917,7 @@ class MultiGPUCollisionEngine:
         device_idx: int | None = None,
         limit: int = 100,
     ) -> list[dict]:
-        """获取数据质量问题
+        """获取数据质量问题.
 
         Args:
             severity: 过滤严重程度
@@ -936,7 +936,7 @@ class MultiGPUCollisionEngine:
         return []
 
     def _get_device_config(self, device: dict) -> WorkerConfig:
-        """获取设备特定配置
+        """获取设备特定配置.
 
         Args:
             device: 设备信息
@@ -971,7 +971,7 @@ class MultiGPUCollisionEngine:
         return config
 
     def _get_vendor_key(self, device: dict) -> str:
-        """生成厂商+平台的唯一键，用于同厂商内核编译配置共享
+        """生成厂商+平台的唯一键，用于同厂商内核编译配置共享.
 
         Args:
             device: 设备信息字典
@@ -993,7 +993,7 @@ class MultiGPUCollisionEngine:
         kernel_source: str,
         build_options: str,
     ) -> dict:
-        """获取或缓存内核编译配置（同厂商GPU共享编译配置）
+        """获取或缓存内核编译配置（同厂商GPU共享编译配置）.
 
         OpenCL Program 不能跨 context 共享，但同厂商 GPU 可共享相同的
         编译选项和源码，避免重复预处理。每个 GPUContext 负责自身 context
@@ -1026,7 +1026,7 @@ class MultiGPUCollisionEngine:
         return compile_config
 
     def _handle_gpu_worker_failure(self, gpu_id: int, error: Exception) -> None:
-        """处理GPU工作器失败
+        """处理GPU工作器失败.
 
         Args:
             gpu_id: GPU设备ID
@@ -1044,7 +1044,7 @@ class MultiGPUCollisionEngine:
         )
 
     def _redistribute_workload(self, failed_gpu_id: int) -> None:
-        """重新分配工作负载
+        """重新分配工作负载.
 
         Args:
             failed_gpu_id: 失败的GPU ID
@@ -1109,7 +1109,7 @@ class MultiGPUCollisionEngine:
         logger.info("工作负载重新分配完成")
 
     def _send_failure_alert(self, gpu_id: int, failure_type, error: Exception):
-        """发送失败告警
+        """发送失败告警.
 
         Args:
             gpu_id: GPU ID
@@ -1131,7 +1131,7 @@ class MultiGPUCollisionEngine:
         # self.alert_system.send_alert(alert_message)
 
     def _check_worker_health(self) -> None:
-        """检查所有worker线程健康状态，检测崩溃的worker并触发故障恢复。
+        """检查所有worker线程健康状态，检测崩溃的worker并触发故障恢复。.
 
         由工作量监控循环周期性调用。
         """
@@ -1147,7 +1147,7 @@ class MultiGPUCollisionEngine:
                 logger.debug("检查GPU %s worker健康状态时出错: %s", idx, e)
 
     def _update_combined_stats(self) -> None:
-        """更新汇总统计"""
+        """更新汇总统计."""
         # 使用锁保护workers访问
         with self._workers_lock:
             workers_snapshot = dict(self.workers)
@@ -1162,7 +1162,7 @@ class MultiGPUCollisionEngine:
             self._total_keys_checked = total_keys
 
     def cleanup(self) -> None:
-        """清理所有资源
+        """清理所有资源.
 
         安全设计：仅在引擎非运行状态或已停止时执行清理。
         如果 stop() 正在执行中，等待其完成后再清理。
@@ -1200,7 +1200,7 @@ class MultiGPUCollisionEngine:
         logger.info("多GPU引擎资源已清理")
 
     def __enter__(self) -> "MultiGPUCollisionEngine":
-        """上下文管理器入口"""
+        """上下文管理器入口."""
         return self
 
     def __exit__(
@@ -1209,11 +1209,11 @@ class MultiGPUCollisionEngine:
         exc_val: BaseException | None,
         exc_tb: Any | None,
     ) -> None:
-        """上下文管理器出口"""
+        """上下文管理器出口."""
         self.cleanup()
 
     def _start_workload_monitor(self) -> None:
-        """启动工作负载监控线程"""
+        """启动工作负载监控线程."""
         if self._monitor_thread and self._monitor_thread.is_alive():
             logger.warning("工作负载监控线程已在运行")
             return
@@ -1224,7 +1224,7 @@ class MultiGPUCollisionEngine:
         logger.info("工作负载监控线程已启动")
 
     def _stop_workload_monitor(self) -> None:
-        """停止工作负载监控线程"""
+        """停止工作负载监控线程."""
         if self._monitor_thread and self._monitor_thread.is_alive():
             # 等待线程结束
             try:
@@ -1239,7 +1239,7 @@ class MultiGPUCollisionEngine:
                 self._monitor_thread = None
 
     def _workload_monitor_loop(self) -> None:
-        """工作负载监控循环"""
+        """工作负载监控循环."""
         while True:
             try:
                 # 检查引擎是否运行
@@ -1266,7 +1266,7 @@ class MultiGPUCollisionEngine:
                 time.sleep(1)
 
     def _collect_performance_data(self):
-        """收集性能数据"""
+        """收集性能数据."""
         try:
             # 获取当前统计
             stats = self.get_combined_stats()
@@ -1324,7 +1324,7 @@ class MultiGPUCollisionEngine:
             logger.error("收集性能数据失败: %s", e)
 
     def _check_auto_rebalance(self) -> None:
-        """检查是否需要自动重平衡"""
+        """检查是否需要自动重平衡."""
         try:
             if not self.load_balancer:
                 return
@@ -1341,7 +1341,7 @@ class MultiGPUCollisionEngine:
             logger.error("自动重平衡检查失败: %s", e)
 
     def get_metrics(self) -> "dict":
-        """获取结构化性能指标（Prometheus/JSON格式）
+        """获取结构化性能指标（Prometheus/JSON格式）.
 
         Returns:
             GPUMetricsCollector 的导出数据
@@ -1350,7 +1350,7 @@ class MultiGPUCollisionEngine:
         return self._metrics.export_json()
 
     def export_prometheus_metrics(self) -> str:
-        """导出 Prometheus 格式指标
+        """导出 Prometheus 格式指标.
 
         Returns:
             Prometheus text exposition format 字符串
@@ -1359,7 +1359,7 @@ class MultiGPUCollisionEngine:
         return self._metrics.export_prometheus()
 
     def get_performance_history(self) -> list[dict]:
-        """获取性能历史数据
+        """获取性能历史数据.
 
         Returns:
             性能历史数据列表
@@ -1369,7 +1369,7 @@ class MultiGPUCollisionEngine:
             return self._performance_history.copy()
 
     def get_workload_stats(self) -> dict:
-        """获取工作负载统计信息
+        """获取工作负载统计信息.
 
         Returns:
             工作负载统计字典
@@ -1390,7 +1390,7 @@ class MultiGPUCollisionEngine:
         return stats
 
     def __del__(self) -> None:
-        """析构函数
+        """析构函数.
 
         注意：建议使用上下文管理器或显式调用cleanup()方法，
         以确保资源能够被正确释放。

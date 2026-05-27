@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Fix MD012: 修复版本行后和文件开头附近的多个连续空行问题。"""
+"""Fix MD012: 修复版本行后和文件开头附近的多个连续空行问题。."""
 
 import os
 
 
 def fix_md012(content: str):
-    """将 3 个连续空行缩减为 1 个连续空行。"""
+    """将 3 个连续空行缩减为 1 个连续空行。."""
     lines = content.split("\n")
     result = []
     blank_count = 0
@@ -24,7 +24,7 @@ def fix_md012(content: str):
 
 
 def collect_md_files(root: str):
-    """递归收集 root 下所有 .md 文件。"""
+    """递归收集 root 下所有 .md 文件。."""
     files = []
     for dirpath, _, filenames in os.walk(root):
         for fn in filenames:
@@ -39,7 +39,7 @@ def main():
     total = 0
     fixed_count = 0
     for fp in files_to_fix:
-        with open(fp, "r", encoding="utf-8") as f:
+        with open(fp, encoding="utf-8") as f:
             content = f.read()
         new_content, c = fix_md012(content)
         if c > 0:

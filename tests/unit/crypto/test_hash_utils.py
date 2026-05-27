@@ -1,4 +1,4 @@
-"""HashUtils 全面测试"""
+"""HashUtils 全面测试."""
 
 import hashlib
 
@@ -6,49 +6,49 @@ from src.core.hash_utils import HashUtils
 
 
 class TestHashUtilsSha256:
-    """sha256 测试"""
+    """sha256 测试."""
 
     def test_sha256_known_vector(self):
-        """已知向量验证"""
+        """已知向量验证."""
         result = HashUtils.sha256(b"hello")
         expected = hashlib.sha256(b"hello").digest()
         assert result == expected
         assert len(result) == 32
 
     def test_sha256_empty(self):
-        """空输入"""
+        """空输入."""
         result = HashUtils.sha256(b"")
         assert len(result) == 32
 
 
 class TestHashUtilsRipemd160:
-    """ripemd160 测试"""
+    """ripemd160 测试."""
 
     def test_ripemd160_known_vector(self):
-        """已知向量验证"""
+        """已知向量验证."""
         result = HashUtils.ripemd160(b"test")
         expected = hashlib.new("ripemd160", b"test").digest()
         assert result == expected
         assert len(result) == 20
 
     def test_ripemd160_empty(self):
-        """空输入"""
+        """空输入."""
         result = HashUtils.ripemd160(b"")
         assert len(result) == 20
 
 
 class TestHashUtilsHash160:
-    """hash160 / double_sha256 测试"""
+    """hash160 / double_sha256 测试."""
 
     def test_hash160_known(self):
-        """hash160 = ripemd160(sha256(data))"""
+        """hash160 = ripemd160(sha256(data))."""
         result = HashUtils.hash160(b"data")
         expected = hashlib.new("ripemd160", hashlib.sha256(b"data").digest()).digest()
         assert result == expected
         assert len(result) == 20
 
     def test_double_sha256_known(self):
-        """double_sha256 = sha256(sha256(data))"""
+        """double_sha256 = sha256(sha256(data))."""
         result = HashUtils.double_sha256(b"block")
         expected = hashlib.sha256(hashlib.sha256(b"block").digest()).digest()
         assert result == expected

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""运行完整测试套件验证无回归"""
+"""运行完整测试套件验证无回归."""
 
 import subprocess
 import sys
 
 
 def run_tests():
-    """运行pytest并返回结果"""
+    """运行pytest并返回结果."""
     print("=" * 80)
     print("运行完整测试套件验证无回归")
     print("=" * 80)
