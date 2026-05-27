@@ -131,7 +131,7 @@ class CryptoConfig:
             CryptoBackendType枚举值
 
         """
-        backend_str = self.config.get("backend", "auto")
+        backend_str: str = self.config.get("backend", "auto")  # type: ignore[assignment]
         try:
             return CryptoBackendType(backend_str)
         except ValueError:

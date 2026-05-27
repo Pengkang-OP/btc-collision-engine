@@ -7,10 +7,12 @@
 创建日期: 2026-05-28
 """
 
+PYOPENCL_AVAILABLE: bool
+
 try:
     import pyopencl as cl  # noqa: F401
 
-    PYOPENCL_AVAILABLE: bool = True
+    PYOPENCL_AVAILABLE = True
 except ImportError:
-    PYOPENCL_AVAILABLE: bool = False
+    PYOPENCL_AVAILABLE = False
     cl = None  # type: ignore[assignment]

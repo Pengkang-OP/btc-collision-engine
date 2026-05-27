@@ -9,7 +9,7 @@ v5.2.4: 新增 _SyncFallbackHost(Protocol) 接口，消除 4 处 # type: ignore[
 import functools
 from collections.abc import Callable
 from contextlib import suppress
-from typing import Any, Protocol, TypeVar
+from typing import Any, Protocol, TypeVar, cast
 
 from src.utils import get_configured_logger
 
@@ -19,7 +19,7 @@ F = TypeVar("F", bound=Callable[..., Any])
 
 
 class _SyncFallbackHost(Protocol):
-    """Sync fallback 装饰器宿主需要满足的接口协议。
+    """Sync fallback 装饰器宿主需要满足的接口协议。.
 
     声明 with_sync_fallback 装饰器通过 self 访问的所有属性/方法，
     使 mypy 能正确推断类型，无需 type: ignore。
@@ -67,7 +67,7 @@ def with_sync_fallback(
         error_types: 要捕获的异常类型元组（默认 RuntimeError, MemoryError）
 
     """
-    SyncFallback = _get_sync_fallback_error_type()
+    SyncFallback = _get_sync_fallback_error_type()  # noqa: N806
 
     def decorator(func: F) -> F:
         @functools.wraps(func)
@@ -94,7 +94,7 @@ def with_sync_fallback(
                     num_targets,
                 )
 
-        return wrapper
+        return cast(F, wrapper)
 
     return decorator
 

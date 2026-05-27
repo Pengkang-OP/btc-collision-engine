@@ -376,10 +376,7 @@ class AdaptivePipelineController:
         """Get pipeline performance statistics."""
         with self._metrics_lock:
             recent = self._metrics_window[-self.EVAL_INTERVAL_BATCHES :]
-            if recent:
-                avg_queue = sum(m.queue_occupancy for m in recent) / len(recent)
-            else:
-                avg_queue = 0
+            avg_queue = sum(m.queue_occupancy for m in recent) / len(recent) if recent else 0
             avg_exec = (
                 (
                     sum(m.exec_time_ms for m in recent if m.exec_time_ms > 0)

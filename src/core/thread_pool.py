@@ -485,8 +485,9 @@ class GlobalThreadPoolManager:
         self,
         num_threads: int | None = None,
     ) -> None:
-        """P3-8 enhanced: Initialize global thread pool
-        (supports config input)..
+        """P3-8 enhanced: Initialize global thread pool.
+
+        (supports config input).
 
         Args:
             num_threads: Thread count, None for auto-detect.
@@ -517,7 +518,8 @@ class GlobalThreadPoolManager:
         return self._pool
 
     def shutdown(self) -> None:
-        """P3-8 enhanced: Shutdown global thread pool
+        """P3-8 enhanced: Shutdown global thread pool.
+
         (with statistics output).
         """
         if self._pool and not self._shutdown_complete:
@@ -536,7 +538,8 @@ class GlobalThreadPoolManager:
         self,
         new_num_threads: int,
     ) -> bool:
-        """P3-8 enhanced: Adjust thread count at runtime
+        """P3-8 enhanced: Adjust thread count at runtime.
+
         (scale down only, does not kill active threads).
 
         Current implementation is simplified: records new

@@ -331,8 +331,7 @@ class LoggingConfig:
                     self._rotation_type: str | None = None
                     self._config_snapshot: dict[str, Any] | None = None
 
-                # noqa: N802 — 继承父类 camelCase 方法
-                def setFormatter(self, fmt) -> None:
+                def setFormatter(self, fmt) -> None:  # noqa: N802 — 继承父类 camelCase 方法
                     self._inner.setFormatter(fmt)
                     self._format_str = fmt
 
@@ -427,13 +426,11 @@ class LoggingConfig:
                             )
                             self._inner = handler
                             sys.stderr.write(
-                                "[日志] NFS 文件句柄已恢复: %s\n",
-                                self._log_file,
+                                f"[日志] NFS 文件句柄已恢复: {self._log_file}\n",
                             )
                         except Exception as rebuild_err:
                             sys.stderr.write(
-                                "[日志警告] NFS 句柄恢复失败: %s\n",
-                                rebuild_err,
+                                f"[日志警告] NFS 句柄恢复失败: {rebuild_err}\n",
                             )
                     except Exception as close_err:
                         sys.stderr.write(f"[日志警告] 关闭旧日志句柄失败: {close_err}\n")

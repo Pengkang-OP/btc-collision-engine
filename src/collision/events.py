@@ -28,7 +28,7 @@ class EngineEvent:
         from dataclasses import asdict
 
         # All concrete subclasses are @dataclass; asdict overloads confuse mypy
-        return asdict(self)  # pyright: ignore[reportArgumentType]
+        return asdict(self)  # type: ignore[call-overload]  # pyright: ignore[reportArgumentType]
 
 
 @dataclass

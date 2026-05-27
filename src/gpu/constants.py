@@ -4,6 +4,7 @@ from src.constants import (  # noqa: F401, E402
     BATCH_SIZE_ALIGNMENT,
     BYTES_PER_MB,
     DEFAULT_MEMORY_EFFICIENCY,
+    GPU_DEFAULT_BATCH_SIZE,
     MAX_BATCH_SIZE,
     MEMORY_EFFICIENCY_MAX,
     MEMORY_EFFICIENCY_MIN,
@@ -18,3 +19,5 @@ from src.constants import (  # noqa: F401, E402
     align_batch_size,
     clamp_batch_size,
 )
+
+DEFAULT_BATCH_SIZE = GPU_DEFAULT_BATCH_SIZE
