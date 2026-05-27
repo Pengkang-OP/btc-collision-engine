@@ -103,7 +103,9 @@ class DataLogger:
 
         # 数据缓存
         self._current_data: dict[str, Any] = {}
-        self._history_buffer: deque[dict[str, float | int | str]] = deque(maxlen=1000)  # 限制历史数据数量
+        self._history_buffer: deque[dict[str, float | int | str]] = deque(
+            maxlen=1000
+        )  # 限制历史数据数量
         self._error_buffer: deque[dict[str, Any]] = deque(maxlen=500)  # 限制错误日志数量
 
         # 线程锁

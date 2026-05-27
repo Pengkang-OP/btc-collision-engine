@@ -1,4 +1,5 @@
 """启动菜单 UI 组件 — 渲染、子菜单、横幅."""
+
 import os
 import shutil
 import subprocess
@@ -133,8 +134,13 @@ def cleanup_menu() -> bool:
             deleted = 0
             for pattern in ("*.ckpt", "*.checkpoint", "*.pkl"):
                 for f in Path(_PROJECT_ROOT).rglob(pattern):
-                    if f.name in ("config.json", "config.example.json", "config.schema.json",
-                                  "package.json", "pyproject.toml"):
+                    if f.name in (
+                        "config.json",
+                        "config.example.json",
+                        "config.schema.json",
+                        "package.json",
+                        "pyproject.toml",
+                    ):
                         continue
                     try:
                         f.unlink()
@@ -223,21 +229,24 @@ def monitoring_menu() -> bool:
             print(_t("menu.monitor_starting_cpu"))
             subprocess.run(
                 [_PYTHON_EXE, "start_monitoring.py", "--mode", "cpu"],
-                cwd=_PROJECT_ROOT, check=False,
+                cwd=_PROJECT_ROOT,
+                check=False,
             )
             _wait_key()
         elif choice == "2":
             print(_t("menu.monitor_starting_gpu"))
             subprocess.run(
                 [_PYTHON_EXE, "start_monitoring.py", "--mode", "gpu"],
-                cwd=_PROJECT_ROOT, check=False,
+                cwd=_PROJECT_ROOT,
+                check=False,
             )
             _wait_key()
         elif choice == "3":
             print(_t("menu.monitor_starting_report"))
             subprocess.run(
                 [_PYTHON_EXE, "start_monitoring.py", "--mode", "cpu", "--report"],
-                cwd=_PROJECT_ROOT, check=False,
+                cwd=_PROJECT_ROOT,
+                check=False,
             )
             _wait_key()
         elif choice == "0":
@@ -253,8 +262,9 @@ def monitoring_menu() -> bool:
 
 def _show_banner() -> None:
     _clear_screen()
-    venv_ok = os.path.isfile(os.path.join(_PROJECT_ROOT, "venv", "Scripts", "activate.bat")) or \
-        os.path.isfile(os.path.join(_PROJECT_ROOT, "venv", "bin", "activate"))
+    venv_ok = os.path.isfile(
+        os.path.join(_PROJECT_ROOT, "venv", "Scripts", "activate.bat")
+    ) or os.path.isfile(os.path.join(_PROJECT_ROOT, "venv", "bin", "activate"))
     targets_ok = os.path.isfile(os.path.join(_PROJECT_ROOT, "targets.txt"))
     if _has_rich and _console is not None:
         _show_banner_rich(venv_ok, targets_ok)
@@ -363,7 +373,8 @@ def _run_cli(args: list[str], label: str = "") -> int:
     try:
         result = subprocess.run(
             [_PYTHON_EXE, "key_collision_cli.py", *args],
-            cwd=_PROJECT_ROOT, check=False,
+            cwd=_PROJECT_ROOT,
+            check=False,
         )
         return result.returncode
     except KeyboardInterrupt:

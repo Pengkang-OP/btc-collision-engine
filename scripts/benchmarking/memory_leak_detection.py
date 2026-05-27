@@ -72,9 +72,7 @@ def test_gpu_collision_engine_memory_leak():
 
         engine = None
         try:
-            engine = GPUCollisionEngine(
-                device_index=0, batch_size=65536, targets=test_targets
-            )
+            engine = GPUCollisionEngine(device_index=0, batch_size=65536, targets=test_targets)
             logger.info("GPU碰撞引擎初始化成功")
 
             engine.start(mode="random")
@@ -89,6 +87,7 @@ def test_gpu_collision_engine_memory_leak():
         except Exception as e:
             logger.error(f"测试过程中出现错误: {e}")
             import traceback
+
             traceback.print_exc()
         finally:
             if engine:
@@ -149,9 +148,7 @@ def test_multi_gpu_engine_memory_leak():
 
             start_time = time.time()
 
-            start_result = engine.start(
-                targets=test_targets, mode="random", total_keys=10000000
-            )
+            start_result = engine.start(targets=test_targets, mode="random", total_keys=10000000)
             if not start_result:
                 logger.error("多GPU碰撞检测启动失败")
                 continue
@@ -165,6 +162,7 @@ def test_multi_gpu_engine_memory_leak():
         except Exception as e:
             logger.error(f"测试过程中出现错误: {e}")
             import traceback
+
             traceback.print_exc()
         finally:
             if engine:
@@ -209,6 +207,7 @@ def main():
     except Exception as e:
         logger.error(f"检测过程中出现错误: {e}")
         import traceback
+
         traceback.print_exc()
 
 

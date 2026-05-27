@@ -1,4 +1,5 @@
 """启动菜单工具函数 — 清屏、等待按键、终端宽度、GPU 检测、统计收集."""
+
 from typing import Any
 
 import concurrent.futures
@@ -49,6 +50,7 @@ def _detect_gpu_quick() -> str | None:
     def _probe():
         try:
             from src.gpu.device import GPUDeviceDetector
+
             devs = GPUDeviceDetector.detect_devices()
             if devs:
                 names = [d.get("name", "GPU") for d in devs[:3]]
@@ -56,8 +58,8 @@ def _detect_gpu_quick() -> str | None:
                 for d in devs[:3]:
                     m = d.get("global_mem_size", 0)
                     if m:
-                        gb = m / (1024 ** 3)
-                        mems.append(f"{gb:.0f}G" if gb >= 1 else f"{m / (1024 ** 2):.0f}M")
+                        gb = m / (1024**3)
+                        mems.append(f"{gb:.0f}G" if gb >= 1 else f"{m / (1024**2):.0f}M")
                 parts = []
                 for i, n in enumerate(names):
                     s = n
@@ -71,6 +73,7 @@ def _detect_gpu_quick() -> str | None:
         except Exception:
             pass
         return None
+
     try:
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
             fut = ex.submit(_probe)
@@ -83,8 +86,11 @@ def _collect_dynamic_stats() -> dict[str, Any]:
     stats: dict[str, Any] = {}
     targets_file = os.path.join(_PROJECT_ROOT, "targets.txt")
     alt_targets = os.path.join(_PROJECT_ROOT, "btc_addresses_sorted.txt")
-    tf = targets_file if os.path.isfile(targets_file) else (
-        alt_targets if os.path.isfile(alt_targets) else None)
+    tf = (
+        targets_file
+        if os.path.isfile(targets_file)
+        else (alt_targets if os.path.isfile(alt_targets) else None)
+    )
     if tf:
         try:
             size = os.path.getsize(tf)

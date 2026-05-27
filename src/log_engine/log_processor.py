@@ -55,11 +55,13 @@ class SensitiveDataFilter(logging.Filter):
     # Class-level compiled patterns for address/private key detection
     # 注意：纯 64 字符 hex 可能是 txid 或哈希值，仅在特定上下文标记附近匹配
     SENSITIVE_PATTERNS: list[re.Pattern[str]] = [
-        re.compile(r"(?<![0-9a-fA-F])[0-9a-fA-F]{64}(?![0-9a-fA-F])",
-                   re.IGNORECASE),  # 裸 64-char hex（私钥/哈希）
+        re.compile(
+            r"(?<![0-9a-fA-F])[0-9a-fA-F]{64}(?![0-9a-fA-F])", re.IGNORECASE
+        ),  # 裸 64-char hex（私钥/哈希）
         re.compile(r"PrivateKey\s*[=:]\s*\S+", re.IGNORECASE),  # PrivateKey=...
-        re.compile(r"(?:private_key|privkey|secret)\s*[=:]\s*[0-9a-fA-F]{64}",
-                   re.IGNORECASE),  # 带标记的私钥 hex
+        re.compile(
+            r"(?:private_key|privkey|secret)\s*[=:]\s*[0-9a-fA-F]{64}", re.IGNORECASE
+        ),  # 带标记的私钥 hex
         re.compile(r"[x-z]prv[a-zA-Z0-9]{107,111}", re.IGNORECASE),  # BIP32 extended private keys
         re.compile(r"[13][a-km-zA-HJ-NP-Z1-9]{25,34}"),  # P2PKH + P2SH
         re.compile(r"bc1[ac-hj-np-z02-9]{6,87}", re.IGNORECASE),  # Bech32

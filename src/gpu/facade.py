@@ -80,8 +80,11 @@ class GPUFacade:
         logger.debug("GPUFacade已创建")
 
     def start(
-        self, mode: str = "random", resume: bool = False,
-        max_keys: int | None = None, **kwargs: Any,
+        self,
+        mode: str = "random",
+        resume: bool = False,
+        max_keys: int | None = None,
+        **kwargs: Any,
     ) -> None:
         """启动GPU碰撞（兼容 KeyCollisionEngine.start API）
 

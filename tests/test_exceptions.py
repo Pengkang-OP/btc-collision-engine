@@ -1,6 +1,5 @@
 """异常处理类单元测试 - CollisionError及其子类"""
 
-
 import pytest
 
 from src.utils.exceptions import (

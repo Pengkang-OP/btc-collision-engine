@@ -80,7 +80,9 @@ def _print_final_summary(engine: Any, engine_type: str, args: Any) -> None:
     matches = _get_matches(engine, engine_type)
     if matches:
         output.print()
-        count_str = f"  {len(matches)} 条匹配" if len(matches) <= 20 else f"  {len(matches)} 条匹配 (显示前20条)"
+        count_str = (
+            f"  {len(matches)} 条匹配" if len(matches) <= 20 else f"  {len(matches)} 条匹配 (显示前20条)"
+        )
         output.rule(f"匹配结果 — {count_str}", style="bold yellow")
         mode_labels = {"full": "完整显示", "masked": "部分脱敏", "hash_only": "仅哈希"}
         mode_label = mode_labels.get(sensitive_mode, sensitive_mode)

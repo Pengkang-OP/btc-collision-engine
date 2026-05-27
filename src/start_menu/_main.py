@@ -1,4 +1,5 @@
 """启动菜单主入口 — main() 函数和 __main__ 守卫."""
+
 from __future__ import annotations
 
 import sys

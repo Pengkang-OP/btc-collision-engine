@@ -1141,12 +1141,8 @@ class MultiGPUCollisionEngine:
         for idx, worker in workers_snapshot.items():
             try:
                 if not worker.is_alive() and worker.is_running():
-                    logger.error(
-                        "GPU %s worker线程已终止但状态仍为running，触发故障恢复", idx
-                    )
-                    self._handle_gpu_worker_failure(
-                        idx, RuntimeError(f"GPU {idx} worker线程意外终止")
-                    )
+                    logger.error("GPU %s worker线程已终止但状态仍为running，触发故障恢复", idx)
+                    self._handle_gpu_worker_failure(idx, RuntimeError(f"GPU {idx} worker线程意外终止"))
             except Exception as e:
                 logger.debug("检查GPU %s worker健康状态时出错: %s", idx, e)
 

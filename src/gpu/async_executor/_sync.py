@@ -235,7 +235,11 @@ class _SyncFallbackMixin:
         """统一处理同步回退逻辑。"""
         try:
             sync_matches, sync_time = self._run_batch_sync(
-                seed, num_keys, program, targets_buf, num_targets,
+                seed,
+                num_keys,
+                program,
+                targets_buf,
+                num_targets,
             )
         except Exception as sync_e:
             logger.debug(f"同步回退也失败: {type(sync_e).__name__}: {sync_e}")
@@ -334,7 +338,9 @@ class _SyncFallbackMixin:
                 except RuntimeError as e:
                     self._log_cleanup(logging.WARNING, "完成%s队列命令OpenCL错误: %s", name, e)
                 except Exception as e:
-                    self._log_cleanup(logging.WARNING, f"完成{name}队列命令失败: {type(e).__name__}: {e}")
+                    self._log_cleanup(
+                        logging.WARNING, f"完成{name}队列命令失败: {type(e).__name__}: {e}"
+                    )
 
     def _wait_pending_event(self) -> None:
         """安全地等待待处理事件完成。"""

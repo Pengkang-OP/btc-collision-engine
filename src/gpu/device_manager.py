@@ -376,10 +376,13 @@ class GPUDeviceManager:
                 # Taproot 地址 (bc1p/tb1p): 跳过
                 if address_lower.startswith(("bc1p", "tb1p")):
                     masked = address[:8] + "..." + address[-6:] if len(address) >= 14 else address
-                    skipped_addresses.append((
-                        masked, "Bech32m (Taproot)",
-                        "Taproot的witness_program=x-only公钥，密码学上无法通过hash160(pubkey)匹配",
-                    ))
+                    skipped_addresses.append(
+                        (
+                            masked,
+                            "Bech32m (Taproot)",
+                            "Taproot的witness_program=x-only公钥，密码学上无法通过hash160(pubkey)匹配",
+                        )
+                    )
                     continue
 
                 # 尝试解码 Bech32 地址
@@ -391,10 +394,13 @@ class GPUDeviceManager:
                     # 检查 witness version
                     if witness_version != 0:
                         masked = address[:8] + "..." + address[-6:] if len(address) >= 14 else address
-                        skipped_addresses.append((
-                            masked, f"Bech32 (witness v{witness_version})",
-                            "仅支持 witness v0",
-                        ))
+                        skipped_addresses.append(
+                            (
+                                masked,
+                                f"Bech32 (witness v{witness_version})",
+                                "仅支持 witness v0",
+                            )
+                        )
                         continue
 
                     # P2WPKH: 20字节 witness_program = hash160(pubkey) → 可匹配
@@ -411,18 +417,24 @@ class GPUDeviceManager:
                     # P2WSH: 32字节 witness_program = sha256(redeemScript) → 不可匹配
                     elif len(witness_program) == 32:
                         masked = address[:8] + "..." + address[-6:] if len(address) >= 14 else address
-                        skipped_addresses.append((
-                            masked, "Bech32 (P2WSH)",
-                            "P2WSH的witness_program=sha256(redeemScript)，密码学上无法通过hash160(pubkey)匹配",
-                        ))
+                        skipped_addresses.append(
+                            (
+                                masked,
+                                "Bech32 (P2WSH)",
+                                "P2WSH的witness_program=sha256(redeemScript)，密码学上无法通过hash160(pubkey)匹配",
+                            )
+                        )
                         continue
 
                     else:
                         masked = address[:8] + "..." + address[-6:] if len(address) >= 14 else address
-                        skipped_addresses.append((
-                            masked, "Bech32",
-                            f"不支持的 witness_program 长度: {len(witness_program)}",
-                        ))
+                        skipped_addresses.append(
+                            (
+                                masked,
+                                "Bech32",
+                                f"不支持的 witness_program 长度: {len(witness_program)}",
+                            )
+                        )
                         continue
 
                 except Exception as e:
@@ -443,10 +455,13 @@ class GPUDeviceManager:
                     # P2SH: payload = hash160(redeemScript) ≠ hash160(pubkey) → 不可匹配
                     addr_len = len(address)
                     masked = address[:8] + "..." + address[-6:] if addr_len >= 14 else address
-                    skipped_addresses.append((
-                        masked, "P2SH",
-                        "P2SH的payload=hash160(redeemScript)，密码学上无法通过hash160(pubkey)匹配",
-                    ))
+                    skipped_addresses.append(
+                        (
+                            masked,
+                            "P2SH",
+                            "P2SH的payload=hash160(redeemScript)，密码学上无法通过hash160(pubkey)匹配",
+                        )
+                    )
                 else:
                     fmt = self._classify_address_format(address)
                     addr_len = len(address)

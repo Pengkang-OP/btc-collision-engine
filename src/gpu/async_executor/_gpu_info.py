@@ -102,8 +102,11 @@ class _GPUInfoMixin:
         # 优先从 GPU 设备信息获取（如果设备已初始化）
         device_ws = None
         with suppress(AttributeError):
-            if (hasattr(self, "device") and hasattr(self.device, "device_info")
-                    and self.device.device_info):
+            if (
+                hasattr(self, "device")
+                and hasattr(self.device, "device_info")
+                and self.device.device_info
+            ):
                 device_ws = self.device.device_info.get("work_group_size")
 
         if device_ws and isinstance(device_ws, int) and 64 <= device_ws <= 1024:

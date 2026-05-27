@@ -737,10 +737,10 @@ class GPUDevice:
 
         logger.debug(
             "GPU设备初始化成功: %s (%s) 显存=%.1fGB 计算单元=%d OpenCL=%s",
-            self.device_info['name'],
-            self.device_info['vendor'],
-            self.device_info['global_mem_size'] / (1024**3),
-            self.device_info['max_compute_units'],
+            self.device_info["name"],
+            self.device_info["vendor"],
+            self.device_info["global_mem_size"] / (1024**3),
+            self.device_info["max_compute_units"],
             f"{self._opencl_version:.1f}",
         )
 

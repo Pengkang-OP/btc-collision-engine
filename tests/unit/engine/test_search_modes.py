@@ -1,4 +1,5 @@
 """Tests for GPU search modes (BruteForce, RangeScan, Random)."""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock

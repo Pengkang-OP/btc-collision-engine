@@ -63,7 +63,11 @@ def with_sync_fallback(
                 targets_buf = _arg_or_kw(args, kwargs, 3, "targets_buf")
                 num_targets = _arg_or_kw(args, kwargs, 4, "num_targets")
                 return self._run_batch_sync(  # type: ignore[attr-defined]
-                    seed, num_keys, program, targets_buf, num_targets,
+                    seed,
+                    num_keys,
+                    program,
+                    targets_buf,
+                    num_targets,
                 )
 
         return wrapper  # type: ignore[return-value]

@@ -16,6 +16,7 @@ from .loop_controller import LoopController
 from .models import AnalysisReport, AuditResult, SystemStatus, TestResult, TestSuiteResult
 
 from src import __version__ as __version__  # noqa: F401 — 从包根统一读取
+
 __all__ = [
     "AnalysisReport",
     "AuditModule",

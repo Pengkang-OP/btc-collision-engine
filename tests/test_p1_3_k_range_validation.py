@@ -63,7 +63,9 @@ class TestP1_3_KeyRangeValidation:
 
         old_pattern = re.findall(r"if\s*\(\s*uint256_is_zero\(&k\)\s*\)\s*\{", source)
 
-        assert len(old_pattern) == 0, f"旧代码 'if (uint256_is_zero(&k)) {{{{' 应已被替换，但仍找到 {len(old_pattern)} 处"  # noqa: E501
+        assert len(old_pattern) == 0, (
+            f"旧代码 'if (uint256_is_zero(&k)) {{{{' 应已被替换，但仍找到 {len(old_pattern)} 处"
+        )  # noqa: E501
 
         print("\n[P1-3-B ✓] 旧独占条件已全部替换")
 
@@ -112,7 +114,9 @@ class TestP1_3_KeyRangeValidation:
 
                 kernel_body = source[kernel_pos:next_kernel]
 
-                assert "uint256_cmp(&k, &n_val) >= 0" in kernel_body, f"{kernel_name} 内核应包含 k>=N 验证"
+                assert "uint256_cmp(&k, &n_val) >= 0" in kernel_body, (
+                    f"{kernel_name} 内核应包含 k>=N 验证"
+                )
 
                 assert "SECP256K1_N" in kernel_body, f"{kernel_name} 内核应引用 SECP256K1_N"
 

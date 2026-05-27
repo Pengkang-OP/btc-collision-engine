@@ -85,7 +85,12 @@ def _print_config_info(
         ("模式", mode_display),
         ("目标数", str(len(targets))),
         ("线程", str(getattr(args, "workers", None) or "auto")),
-        ("私钥显示", {"full": "完整", "masked": "脱敏", "hash_only": "仅哈希"}.get(sensitive_mode, sensitive_mode)),
+        (
+            "私钥显示",
+            {"full": "完整", "masked": "脱敏", "hash_only": "仅哈希"}.get(
+                sensitive_mode, sensitive_mode
+            ),
+        ),
     ]
     extras = []
     if getattr(args, "checkpoint", False):

@@ -175,8 +175,9 @@ class CLIOutput:
             if not self.compact:
                 self.print()
 
-    def startup_panel(self, title_or_config: str | dict[str, str],
-                      rows: list[tuple[str, str]] | None = None) -> None:
+    def startup_panel(
+        self, title_or_config: str | dict[str, str], rows: list[tuple[str, str]] | None = None
+    ) -> None:
         """打印启动配置面板 (Rich Panel + Table)，自适应终端宽度。
 
         支持两种调用方式:
@@ -476,18 +477,12 @@ def paginate(
 
         if _con is not None:
             if title:
-                _con.print(
-                    f"[bold dim]-- {title} (Page {current_page}/{total_pages}) --[/bold dim]"
-                )
+                _con.print(f"[bold dim]-- {title} (Page {current_page}/{total_pages}) --[/bold dim]")
             else:
-                _con.print(
-                    f"[bold dim]-- Page {current_page}/{total_pages} --[/bold dim]"
-                )
+                _con.print(f"[bold dim]-- Page {current_page}/{total_pages} --[/bold dim]")
             for line in chunk:
                 _con.print(line)
-            footer = (
-                f"[dim]({total} total lines, press Enter for next, q=quit)[/dim]"
-            )
+            footer = f"[dim]({total} total lines, press Enter for next, q=quit)[/dim]"
             _con.print(footer)
         else:
             if title:

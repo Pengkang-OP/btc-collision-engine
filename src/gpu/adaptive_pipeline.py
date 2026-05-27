@@ -249,7 +249,8 @@ class AdaptivePipelineController:
                 self._queue_depth = new_depth
                 logger.debug(
                     "[自适应] queue_depth ↑ %d -> %d (队列占用率 %.1%% 过低)",
-                    self._queue_depth - self.QUEUE_DEPTH_STEP, new_depth,
+                    self._queue_depth - self.QUEUE_DEPTH_STEP,
+                    new_depth,
                     avg_queue_occ * 100,
                 )
         elif avg_queue_occ > self.TARGET_QUEUE_OCCUPANCY_HIGH:
@@ -262,7 +263,8 @@ class AdaptivePipelineController:
                 self._queue_depth = new_depth
                 logger.debug(
                     "[自适应] queue_depth ↓ %d -> %d (队列占用率 %.1%% 过高)",
-                    self._queue_depth + self.QUEUE_DEPTH_STEP, new_depth,
+                    self._queue_depth + self.QUEUE_DEPTH_STEP,
+                    new_depth,
                     avg_queue_occ * 100,
                 )
 
@@ -281,7 +283,9 @@ class AdaptivePipelineController:
                     self._batch_size = new_bs
                     logger.debug(
                         "[自适应] batch_size ↑ %s -> %s (GPU执行 %.1fms 过短)",
-                        f"{current_bs:,}", f"{new_bs:,}", avg_exec,
+                        f"{current_bs:,}",
+                        f"{new_bs:,}",
+                        avg_exec,
                     )
             elif avg_exec > self.TARGET_EXEC_TIME_MS_HIGH:
                 new_bs = max(
@@ -293,7 +297,9 @@ class AdaptivePipelineController:
                     self._batch_size = new_bs
                     logger.debug(
                         "[自适应] batch_size ↓ %s -> %s (GPU执行 %.1fms 过长)",
-                        f"{current_bs:,}", f"{new_bs:,}", avg_exec,
+                        f"{current_bs:,}",
+                        f"{new_bs:,}",
+                        avg_exec,
                     )
 
         # ── 3. Seed 生成批量调整 ────────────────────────────────────
@@ -311,7 +317,9 @@ class AdaptivePipelineController:
                     self._seed_batch_size = new_sb
                     logger.debug(
                         "[自适应] seed_batch ↑ %d -> %d (seed队列占用 %.1%% 过低)",
-                        current_seed_batch, new_sb, avg_seed_occ * 100,
+                        current_seed_batch,
+                        new_sb,
+                        avg_seed_occ * 100,
                     )
             elif avg_seed_occ > self.TARGET_SEED_OCCUPANCY_HIGH:
                 new_sb = max(
@@ -323,7 +331,9 @@ class AdaptivePipelineController:
                     self._seed_batch_size = new_sb
                     logger.debug(
                         "[自适应] seed_batch ↓ %d -> %d (seed队列占用 %.1%% 过高)",
-                        current_seed_batch, new_sb, avg_seed_occ * 100,
+                        current_seed_batch,
+                        new_sb,
+                        avg_seed_occ * 100,
                     )
 
         # 触发回调

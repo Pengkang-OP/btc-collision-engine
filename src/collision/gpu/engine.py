@@ -323,13 +323,15 @@ class GPUCollisionEngine(BaseCollisionEngine):
         logger.debug(f"GPU引擎：私钥生成策略参数: {key_generation_strategy.value} (GPU路径不使用)")
 
         # 初始化基类（提供 self.config, self._lock 等基础设施）
-        super().__init__(config={
-            "mode": "gpu",
-            "device_index": device_index,
-            "batch_size": batch_size,
-            "checkpoint_enabled": checkpoint_enabled,
-            "dedup_enabled": dedup_enabled,
-        })
+        super().__init__(
+            config={
+                "mode": "gpu",
+                "device_index": device_index,
+                "batch_size": batch_size,
+                "checkpoint_enabled": checkpoint_enabled,
+                "dedup_enabled": dedup_enabled,
+            }
+        )
 
         # v4.2.1: 事件总线初始化
         self.event_bus = event_bus or EventBus()

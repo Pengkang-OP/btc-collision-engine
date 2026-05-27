@@ -324,10 +324,7 @@ def print_report(results: dict[str, Any], as_json: bool = False):
     if not ok_py or not ok_cli or fail_cnt > 0:
         print(f"{RED}{BOLD}  诊断结果: 存在 {fail_cnt} 个严重问题，需要修复{RESET}")
     elif warn_cnt > 0:
-        msg = (
-            f"  诊断结果: 基本可用，{warn_cnt} 个可选依赖未安装"
-            f"（不影响基础功能）"
-        )
+        msg = f"  诊断结果: 基本可用，{warn_cnt} 个可选依赖未安装（不影响基础功能）"
         print(f"{YELLOW}{BOLD}{msg}{RESET}")
     else:
         print(f"{GREEN}{BOLD}  诊断结果: 一切正常，可以正常运行{RESET}")

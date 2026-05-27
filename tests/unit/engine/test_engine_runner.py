@@ -76,8 +76,13 @@ class TestPrintConfigInfo:
 
     def test_random_mode_output(self, capsys):
         args = Mock(
-            mode="random", use_gpu=False, checkpoint=False, dedup=False, workers="auto",
-            duration=None, sensitive_mode="masked",
+            mode="random",
+            use_gpu=False,
+            checkpoint=False,
+            dedup=False,
+            workers="auto",
+            duration=None,
+            sensitive_mode="masked",
         )
         _print_config_info(args, {"addr1", "addr2"}, None, None, None)
         captured = capsys.readouterr().out
@@ -85,8 +90,13 @@ class TestPrintConfigInfo:
 
     def test_range_mode_with_range(self, capsys):
         args = Mock(
-            mode="range", use_gpu=False, checkpoint=True, dedup=False, workers=4,
-            duration=None, sensitive_mode="masked",
+            mode="range",
+            use_gpu=False,
+            checkpoint=True,
+            dedup=False,
+            workers=4,
+            duration=None,
+            sensitive_mode="masked",
         )
         _print_config_info(args, {"addr1"}, "0", "FF", 256)
         captured = capsys.readouterr().out
@@ -94,8 +104,13 @@ class TestPrintConfigInfo:
 
     def test_gpu_mode(self, capsys):
         args = Mock(
-            mode="random", use_gpu=True, checkpoint=False, dedup=False, workers="auto",
-            duration=None, sensitive_mode="masked",
+            mode="random",
+            use_gpu=True,
+            checkpoint=False,
+            dedup=False,
+            workers="auto",
+            duration=None,
+            sensitive_mode="masked",
         )
         _print_config_info(args, {"addr1"}, None, None, None)
         captured = capsys.readouterr().out
@@ -103,8 +118,13 @@ class TestPrintConfigInfo:
 
     def test_duration_output(self, capsys):
         args = Mock(
-            mode="random", use_gpu=False, checkpoint=False, dedup=False, workers="auto",
-            duration=3600, sensitive_mode="masked",
+            mode="random",
+            use_gpu=False,
+            checkpoint=False,
+            dedup=False,
+            workers="auto",
+            duration=3600,
+            sensitive_mode="masked",
         )
         _print_config_info(args, {"addr1"}, None, None, None)
         captured = capsys.readouterr().out

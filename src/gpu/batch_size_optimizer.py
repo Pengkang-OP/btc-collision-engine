@@ -284,7 +284,8 @@ class SmartBatchSizeOptimizer:
                     new_size = max(self._min_batch_size, min(new_size, self._max_batch_size))
                     logger.debug(
                         "批次大小调整: %d -> %d (平滑过渡)",
-                        self._current_batch_size, new_size,
+                        self._current_batch_size,
+                        new_size,
                     )
                     self._current_batch_size = new_size
                 else:

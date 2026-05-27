@@ -129,8 +129,7 @@ class _ResultCollectorMixin:
 
                 # 从预取队列移除
                 with self._prefetch_lock:  # type: ignore[attr-defined]
-                    if (self._prefetch_events
-                            and self._prefetch_events[0] is oldest):  # type: ignore[attr-defined]
+                    if self._prefetch_events and self._prefetch_events[0] is oldest:  # type: ignore[attr-defined]
                         self._prefetch_events.pop(0)  # type: ignore[attr-defined]
 
                 # 放入已完成结果队列

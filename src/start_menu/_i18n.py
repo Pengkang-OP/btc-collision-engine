@@ -109,6 +109,7 @@ try:
             text = _fallback[key]
         return text.format(**kwargs) if kwargs else text
 except Exception:
+
     def _t(key: str, **kwargs) -> str:
         text = _FALLBACK_ZH.get(key, key)
         return text.format(**kwargs) if kwargs else text

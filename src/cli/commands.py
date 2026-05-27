@@ -1237,6 +1237,7 @@ def _handle_system_commands(args: argparse.Namespace) -> bool:
     # --health-check
     if getattr(args, "health_check", False):
         from ..utils.health_check import HealthChecker
+
         checker = HealthChecker()
         results = checker.run_all_checks()
         _ = checker.generate_report()
@@ -1259,6 +1260,7 @@ def _handle_system_commands(args: argparse.Namespace) -> bool:
     # --cleanup
     if getattr(args, "cleanup", False):
         from ..utils.data_cleanup import DataCleaner
+
         cleaner = DataCleaner()
         dry_run = getattr(args, "dry_run", False)
         if dry_run:

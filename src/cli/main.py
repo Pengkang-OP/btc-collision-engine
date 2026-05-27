@@ -344,6 +344,7 @@ def _handle_error(e: Exception) -> None:
         output.error(f"运行时错误 ({error_type}): {e}")
         try:
             from src.i18n import _t
+
             output.print(_t("cli.entry.check_log"))
         except Exception:
             output.print("  详细日志: 请查看 logs/ 目录下的日志文件")

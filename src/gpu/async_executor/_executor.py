@@ -49,28 +49,57 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
 
     __slots__ = (
         # === 核心配置 ===
-        "device", "max_batch_size", "queue_depth", "initial_batch_size",
+        "device",
+        "max_batch_size",
+        "queue_depth",
+        "initial_batch_size",
         # === 缓冲区 ===
-        "precomp_buffer", "_seed_buffer_pool", "seed_buffer",
-        "buffer_a", "buffer_b", "_buffer_pool", "_pool_index", "_actual_batch_size",
+        "precomp_buffer",
+        "_seed_buffer_pool",
+        "seed_buffer",
+        "buffer_a",
+        "buffer_b",
+        "_buffer_pool",
+        "_pool_index",
+        "_actual_batch_size",
         # === 异步状态 ===
-        "current_buffer", "pending_event", "is_async_ready",
-        "_pending_buffer", "_pending_num_keys", "check_uncompressed",
-        "_work_group_size", "_align_global_size",
+        "current_buffer",
+        "pending_event",
+        "is_async_ready",
+        "_pending_buffer",
+        "_pending_num_keys",
+        "check_uncompressed",
+        "_work_group_size",
+        "_align_global_size",
         # === 预取（兼容旧API）===
-        "_prefetch_enabled", "_next_batch_ready", "_next_batch_data", "_next_batch_size",
-        "_prefetch_lock", "_pool_lock",
+        "_prefetch_enabled",
+        "_next_batch_ready",
+        "_next_batch_data",
+        "_next_batch_size",
+        "_prefetch_lock",
+        "_pool_lock",
         # === 统计 ===
-        "async_executions", "sync_fallbacks", "prefetch_hits", "prefetch_misses", "queue_depth_hits",
+        "async_executions",
+        "sync_fallbacks",
+        "prefetch_hits",
+        "prefetch_misses",
+        "queue_depth_hits",
         # === 后台收集器 ===
-        "_completed_results", "_completed_results_lock",
-        "_collector_running", "_collector_thread", "_collector_cycles",
+        "_completed_results",
+        "_completed_results_lock",
+        "_collector_running",
+        "_collector_thread",
+        "_collector_cycles",
         # === 异步恢复 ===
-        "_consecutive_sync_fallbacks", "_async_mode_disabled", "_last_async_attempt_time",
+        "_consecutive_sync_fallbacks",
+        "_async_mode_disabled",
+        "_last_async_attempt_time",
         # === 自适应控制 ===
-        "_batch_counter", "_adaptive_controller",
+        "_batch_counter",
+        "_adaptive_controller",
         # === 缓存 ===
-        "_cached_kernel", "_cached_sync_kernel",
+        "_cached_kernel",
+        "_cached_sync_kernel",
     )
 
     def __init__(
@@ -144,7 +173,9 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
 
         logger.debug(
             "异步GPU执行器已初始化: GPU=%s, batch=%s, queue=%d",
-            gpu_model, self.initial_batch_size, self.queue_depth,
+            gpu_model,
+            self.initial_batch_size,
+            self.queue_depth,
         )
 
     # ------------------------------------------------------------------
@@ -209,9 +240,12 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
 
         if self.precomp_buffer is None:
             from ..precompute import get_precomp_table
+
             precomp_data = get_precomp_table()
             self.precomp_buffer = cl.Buffer(
-                context, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=precomp_data,
+                context,
+                cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR,
+                hostbuf=precomp_data,
             )
 
         self._seed_buffer_pool = []
@@ -222,10 +256,12 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
 
         self._buffer_pool = []
         for _i in range(self.queue_depth):
-            self._buffer_pool.append({
-                "matches": cl.Buffer(context, cl.mem_flags.READ_WRITE, size=num_keys * 4),
-                "match_flags": np.zeros(num_keys, dtype=np.int32),
-            })
+            self._buffer_pool.append(
+                {
+                    "matches": cl.Buffer(context, cl.mem_flags.READ_WRITE, size=num_keys * 4),
+                    "match_flags": np.zeros(num_keys, dtype=np.int32),
+                }
+            )
 
         self.buffer_a = self._buffer_pool[0]
         self.buffer_b = self._buffer_pool[1] if len(self._buffer_pool) > 1 else self._buffer_pool[0]
@@ -304,21 +340,37 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
 
             # 步骤2：传输种子到 seed_buffer（非阻塞）
             transfer_event = self._transfer_seed(
-                seed, seed_buf, num_keys, program, targets_buf, num_targets,
+                seed,
+                seed_buf,
+                num_keys,
+                program,
+                targets_buf,
+                num_targets,
             )
 
             # 步骤3：清空当前缓冲的匹配结果
             fill_event = self._clear_matches_buffer(
-                current_buf, num_keys, seed, program, targets_buf, num_targets,
+                current_buf,
+                num_keys,
+                seed,
+                program,
+                targets_buf,
+                num_targets,
             )
             if fill_event is None:
                 return [], 0.0
 
             # 步骤4-6：执行内核并注册结果
             kernel_event, read_event = self._execute_and_register(
-                current_buf, seed_buf, num_keys, seed,
-                program, targets_buf, num_targets,
-                transfer_event, fill_event,
+                current_buf,
+                seed_buf,
+                num_keys,
+                seed,
+                program,
+                targets_buf,
+                num_targets,
+                transfer_event,
+                fill_event,
             )
             if kernel_event is None or read_event is None:
                 return [], 0.0
@@ -329,10 +381,15 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
             with self._prefetch_lock:
                 queue_occ = len(self._prefetch_events) / max(self.queue_depth, 1)
             self._adaptive_controller.record_batch_submit(
-                batch_num=batch_num, batch_size=num_keys, queue_occupancy=queue_occ,
+                batch_num=batch_num,
+                batch_size=num_keys,
+                queue_occupancy=queue_occ,
             )
             pending_batch = _PendingBatch(
-                read_event=read_event, buf=current_buf, num_keys=num_keys, seed=seed,
+                read_event=read_event,
+                buf=current_buf,
+                num_keys=num_keys,
+                seed=seed,
             )
             pending_batch.batch_num = batch_num  # type: ignore[attr-defined]
             with self._prefetch_lock:
@@ -367,8 +424,11 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
 
     def _allocate_buffer(
         self,
-        seed: bytes, num_keys: int, program: Any,
-        targets_buf: Any, num_targets: int,
+        seed: bytes,
+        num_keys: int,
+        program: Any,
+        targets_buf: Any,
+        num_targets: int,
     ) -> "tuple[dict[str, Any], Any]":
         buf_pool = getattr(self, "_buffer_pool", None)
         if buf_pool is not None:
@@ -382,7 +442,11 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
                 except Exception as e:
                     logger.warning(f"分配缓冲区失败: {type(e).__name__}: {e}")
                     return self._run_batch_sync_fallback(
-                        seed, num_keys, program, targets_buf, num_targets,
+                        seed,
+                        num_keys,
+                        program,
+                        targets_buf,
+                        num_targets,
                     )
         else:
             try:
@@ -398,37 +462,62 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
     # ------------------------------------------------------------------
 
     def _transfer_seed(
-        self, seed: bytes, seed_buf: Any, num_keys: int,
-        program: Any, targets_buf: Any, num_targets: int,
+        self,
+        seed: bytes,
+        seed_buf: Any,
+        num_keys: int,
+        program: Any,
+        targets_buf: Any,
+        num_targets: int,
     ) -> Any:
         try:
             seed_array = _seed_bytes_to_u32_be_array(seed[:32])
         except Exception as e:
             logger.warning(f"准备种子数据失败: {type(e).__name__}: {e}")
             return self._run_batch_sync_fallback_and_return(
-                seed, num_keys, program, targets_buf, num_targets,
+                seed,
+                num_keys,
+                program,
+                targets_buf,
+                num_targets,
             )
 
         if not self._is_buffer_valid():
             return self._run_batch_sync_fallback_and_return(
-                seed, num_keys, program, targets_buf, num_targets,
+                seed,
+                num_keys,
+                program,
+                targets_buf,
+                num_targets,
             )
 
         try:
             import pyopencl as cl
+
             return cl.enqueue_copy(
-                self.device.transfer_queue, seed_buf, seed_array, is_blocking=False,
+                self.device.transfer_queue,
+                seed_buf,
+                seed_array,
+                is_blocking=False,
             )
         except TypeError as e:
             if "host-to-host transfers" in str(e):
                 return self._run_batch_sync_fallback_and_return(
-                    seed, num_keys, program, targets_buf, num_targets,
+                    seed,
+                    num_keys,
+                    program,
+                    targets_buf,
+                    num_targets,
                 )
             raise
         except Exception as e:
             logger.warning(f"写入种子缓冲区失败: {type(e).__name__}: {e}")
             return self._run_batch_sync_fallback_and_return(
-                seed, num_keys, program, targets_buf, num_targets,
+                seed,
+                num_keys,
+                program,
+                targets_buf,
+                num_targets,
             )
 
     # ------------------------------------------------------------------
@@ -436,19 +525,33 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
     # ------------------------------------------------------------------
 
     def _clear_matches_buffer(
-        self, current_buf: dict[str, Any], num_keys: int, seed: bytes,
-        program: Any, targets_buf: Any, num_targets: int,
+        self,
+        current_buf: dict[str, Any],
+        num_keys: int,
+        seed: bytes,
+        program: Any,
+        targets_buf: Any,
+        num_targets: int,
     ) -> Any | None:
         import pyopencl as cl
+
         try:
             buffer_size = current_buf["match_flags"].size
             if buffer_size < num_keys:
                 self._resize_buffer_and_clear(
-                    current_buf, num_keys, seed, program, targets_buf, num_targets,
+                    current_buf,
+                    num_keys,
+                    seed,
+                    program,
+                    targets_buf,
+                    num_targets,
                 )
             return cl.enqueue_fill_buffer(
-                self.device.compute_queue, current_buf["matches"],
-                np.int32(0), 0, num_keys * 4,
+                self.device.compute_queue,
+                current_buf["matches"],
+                np.int32(0),
+                0,
+                num_keys * 4,
             )
         except Exception as e:
             self._handle_sync_fallback(e, seed, num_keys, program, targets_buf, num_targets)
@@ -458,9 +561,16 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
     # ------------------------------------------------------------------
 
     def _execute_and_register(
-        self, current_buf: dict[str, Any], seed_buf: Any, num_keys: int, seed: bytes,
-        program: Any, targets_buf: Any, num_targets: int,
-        transfer_event: Any, fill_event: Any,
+        self,
+        current_buf: dict[str, Any],
+        seed_buf: Any,
+        num_keys: int,
+        seed: bytes,
+        program: Any,
+        targets_buf: Any,
+        num_targets: int,
+        transfer_event: Any,
+        fill_event: Any,
     ) -> "tuple[Any | None, Any | None]":
         import pyopencl as cl
 
@@ -471,7 +581,11 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
                 self._cached_kernel = batch_kernel
             except Exception as e:
                 sync_matches, sync_time = self._run_batch_sync(
-                    seed, num_keys, program, targets_buf, num_targets,
+                    seed,
+                    num_keys,
+                    program,
+                    targets_buf,
+                    num_targets,
                 )
                 self.sync_fallbacks += 1
                 self._track_sync_fallback()
@@ -481,14 +595,28 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
         global_ws = ((num_keys + local_ws - 1) // local_ws) * local_ws
 
         kernel_event = self._execute_kernel(
-            batch_kernel, local_ws, global_ws, seed_buf, current_buf,
-            num_keys, targets_buf, num_targets, transfer_event, fill_event,
+            batch_kernel,
+            local_ws,
+            global_ws,
+            seed_buf,
+            current_buf,
+            num_keys,
+            targets_buf,
+            num_targets,
+            transfer_event,
+            fill_event,
         )
         if kernel_event is None:
             return None, None
 
         read_event = self._enqueue_result_read(
-            current_buf, num_keys, seed, program, targets_buf, num_targets, kernel_event,
+            current_buf,
+            num_keys,
+            seed,
+            program,
+            targets_buf,
+            num_targets,
+            kernel_event,
         )
         if read_event is None:
             return None, None
@@ -497,18 +625,32 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
         return kernel_event, read_event
 
     def _execute_kernel(
-        self, batch_kernel: Any, local_ws: int, global_ws: int,
-        seed_buf: Any, current_buf: dict[str, Any], num_keys: int,
-        targets_buf: Any, num_targets: int,
-        transfer_event: Any, fill_event: Any,
+        self,
+        batch_kernel: Any,
+        local_ws: int,
+        global_ws: int,
+        seed_buf: Any,
+        current_buf: dict[str, Any],
+        num_keys: int,
+        targets_buf: Any,
+        num_targets: int,
+        transfer_event: Any,
+        fill_event: Any,
     ) -> Any | None:
         try:
             wait_list = [e for e in (transfer_event, fill_event) if e is not None]
             return batch_kernel(
-                self.device.compute_queue, (global_ws,), (local_ws,),
-                seed_buf, np.uint32(num_keys), targets_buf, np.uint32(num_targets),
-                current_buf["matches"], np.uint32(getattr(self, "check_uncompressed", 0)),
-                self.precomp_buffer, wait_for=wait_list,
+                self.device.compute_queue,
+                (global_ws,),
+                (local_ws,),
+                seed_buf,
+                np.uint32(num_keys),
+                targets_buf,
+                np.uint32(num_targets),
+                current_buf["matches"],
+                np.uint32(getattr(self, "check_uncompressed", 0)),
+                self.precomp_buffer,
+                wait_for=wait_list,
             )
         except TypeError:
             try:
@@ -516,9 +658,15 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
                     if e is not None:
                         e.wait()
                 return batch_kernel(
-                    self.device.compute_queue, (global_ws,), (local_ws,),
-                    seed_buf, np.uint32(num_keys), targets_buf, np.uint32(num_targets),
-                    current_buf["matches"], np.uint32(getattr(self, "check_uncompressed", 0)),
+                    self.device.compute_queue,
+                    (global_ws,),
+                    (local_ws,),
+                    seed_buf,
+                    np.uint32(num_keys),
+                    targets_buf,
+                    np.uint32(num_targets),
+                    current_buf["matches"],
+                    np.uint32(getattr(self, "check_uncompressed", 0)),
                     self.precomp_buffer,
                 )
             except Exception as e:
@@ -529,20 +677,34 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
             return None
 
     def _enqueue_result_read(
-        self, current_buf: dict[str, Any], num_keys: int, seed: bytes,
-        program: Any, targets_buf: Any, num_targets: int, kernel_event: Any,
+        self,
+        current_buf: dict[str, Any],
+        num_keys: int,
+        seed: bytes,
+        program: Any,
+        targets_buf: Any,
+        num_targets: int,
+        kernel_event: Any,
     ) -> Any:
         import pyopencl as cl
+
         try:
             wait_list = [e for e in (kernel_event,) if e is not None]
             return cl.enqueue_copy(
-                self.device.compute_queue, current_buf["match_flags"],
-                current_buf["matches"], is_blocking=False, wait_for=wait_list,
+                self.device.compute_queue,
+                current_buf["match_flags"],
+                current_buf["matches"],
+                is_blocking=False,
+                wait_for=wait_list,
             )
         except Exception as e:
             logger.warning(f"设置回读操作失败: {type(e).__name__}: {e}")
             sync_matches, sync_time = self._run_batch_sync(
-                seed, num_keys, program, targets_buf, num_targets,
+                seed,
+                num_keys,
+                program,
+                targets_buf,
+                num_targets,
             )
             self.sync_fallbacks += 1
             self._track_sync_fallback()
@@ -562,6 +724,7 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
 
     def _on_adaptive_queue_depth_change(self, new_depth: int) -> None:
         import pyopencl as cl
+
         old_depth = self.queue_depth
         if new_depth == old_depth:
             return
@@ -576,10 +739,12 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
         actual_bs = getattr(self, "_actual_batch_size", self.initial_batch_size)
 
         while len(buf_pool) < new_depth:
-            buf_pool.append({
-                "matches": cl.Buffer(ctx, cl.mem_flags.READ_WRITE, size=actual_bs * 4),
-                "match_flags": np.zeros(actual_bs, dtype=np.int32),
-            })
+            buf_pool.append(
+                {
+                    "matches": cl.Buffer(ctx, cl.mem_flags.READ_WRITE, size=actual_bs * 4),
+                    "match_flags": np.zeros(actual_bs, dtype=np.int32),
+                }
+            )
             seed_pool.append(cl.Buffer(ctx, cl.mem_flags.READ_ONLY, size=32))
 
         if len(buf_pool) > new_depth:
@@ -595,7 +760,9 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
                 seed_pool.pop().release()
 
     def _on_adaptive_batch_size_change(self, new_size: int) -> None:
-        logger.debug("[自适应] 调整 batch_size: %s -> %s", f"{self.initial_batch_size:,}", f"{new_size:,}")
+        logger.debug(
+            "[自适应] 调整 batch_size: %s -> %s", f"{self.initial_batch_size:,}", f"{new_size:,}"
+        )
         self.initial_batch_size = new_size
         self._actual_batch_size = new_size
 

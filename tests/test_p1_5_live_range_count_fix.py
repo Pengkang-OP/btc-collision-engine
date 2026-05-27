@@ -128,7 +128,9 @@ class TestLiveRangeCountFix:
         # 修复前：每批次 batch_count 被重复加入
         # batch_size=32, 1秒大约有多个批次
         stats = self.engine.get_stats()
-        assert stats.total_checked < 100000, f"total_checked={stats.total_checked} 异常偏高，可能存在 batch_end 重复提交"  # noqa: E501
+        assert stats.total_checked < 100000, (
+            f"total_checked={stats.total_checked} 异常偏高，可能存在 batch_end 重复提交"
+        )  # noqa: E501
 
         print(
             f"\n[P1-5-C ✓] 引擎停止后 _live_range_count={final_live}, "
@@ -194,9 +196,12 @@ class TestLiveRangeCountFix:
 
         # CODE-2 重构后：random_search 的 live 计数合并在 _random_search_finalize 中
         finalize_source = inspect.getsource(KeyCollisionEngine._random_search_finalize)
-        assert "final_count = max(total_count, self._live_range_count)" in finalize_source, \
+        assert "final_count = max(total_count, self._live_range_count)" in finalize_source, (
             "缺少 _random_search_finalize 中的 live 计数合并代码"
-        assert "self._live_range_count = 0" in finalize_source, "缺少 _random_search_finalize 中的 live 计数重置代码"  # noqa: E501
+        )
+        assert "self._live_range_count = 0" in finalize_source, (
+            "缺少 _random_search_finalize 中的 live 计数重置代码"
+        )  # noqa: E501
 
         print("\n[P1-5-E ✓] 代码中无重复提交，余数提交和计数合并代码均存在")
 
@@ -222,8 +227,9 @@ class TestLiveRangeCountFix:
         if len(progress_counts) >= 2:
             # 单调递增检查
             for i in range(1, len(progress_counts)):
-                assert progress_counts[i] >= progress_counts[i - 1], \
+                assert progress_counts[i] >= progress_counts[i - 1], (
                     f"进度计数应单调递增: {progress_counts[i - 1]} -> {progress_counts[i]}"
+                )
 
             # 检查没有异常跳跃（翻倍迹象）
             for i in range(1, len(progress_counts)):
@@ -233,8 +239,9 @@ class TestLiveRangeCountFix:
                 if progress_counts[i - 1] == 0:
                     continue
                 # 允许小跳跃（批次完成），但不应该有翻倍
-                assert ratio < 5.0, \
+                assert ratio < 5.0, (
                     f"进度计数跳跃异常 (ratio={ratio:.2f}): {progress_counts[i - 1]} -> {progress_counts[i]}"
+                )
 
             print(f"\n[P1-5-F ✓] 进度计数单调递增: {progress_counts}")
         else:

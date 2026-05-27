@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""测试262K批次大小性能（Intel Arc推荐值）
-"""
+"""测试262K批次大小性能（Intel Arc推荐值）"""
 
 import os
 import time

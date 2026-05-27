@@ -57,9 +57,7 @@ class IntelGPUVendor(GPUVendorBase):
 
         # 1. uint32 workaround - 关键优化
         if "uint32_workaround" in optimizations:
-            _rate_logger.info(
-                "[OK] 启用uint32 workaround(避免Intel Arc global char* hang bug)"
-            )
+            _rate_logger.info("[OK] 启用uint32 workaround(避免Intel Arc global char* hang bug)")
             # 标记设备需要特殊处理
             device.requires_uint32_workaround = True
             # 在GPUKernel中使用uint32*替代uchar*
@@ -88,14 +86,10 @@ class IntelGPUVendor(GPUVendorBase):
                 x in device_name_clean for x in ["arc a770", "arc a750", "arc a580", "arc pro", "arc a3"]
             )
             if not is_high_end:
-                _rate_logger.warning(
-                    "[WARN] Intel GPU: 禁用异步传输以确保稳定性"
-                )
+                _rate_logger.warning("[WARN] Intel GPU: 禁用异步传输以确保稳定性")
                 device.enable_async_execution = False
             else:
-                _rate_logger.info(
-                    f"[OK] Intel Arc 高端型号 ({device_name}): 保持异步执行启用"
-                )
+                _rate_logger.info(f"[OK] Intel Arc 高端型号 ({device_name}): 保持异步执行启用")
 
         # 4. 专业驱动优化
         if "pro_driver_optimization" in optimizations:
@@ -127,17 +121,13 @@ class IntelGPUVendor(GPUVendorBase):
         # 8. 显存效率设置 (v4.2.1优化: 45% -> 70%)
         memory_efficiency = profile.get("memory_efficiency", 0.70)
         device.memory_efficiency = memory_efficiency
-        _rate_logger.info(
-            f"[OK] Intel GPU内存效率: {memory_efficiency * 100:.0f}% (v4.2.1优化)"
-        )
+        _rate_logger.info(f"[OK] Intel GPU内存效率: {memory_efficiency * 100:.0f}% (v4.2.1优化)")
 
     def _check_driver_version(self, device: Any) -> None:
         """检查驱动版本并给出建议"""
         driver_version = device.driver_version
         if not driver_version:
-            _rate_logger.debug(
-                "[WARN] 无法检测Intel驱动版本，使用保守模式"
-            )
+            _rate_logger.debug("[WARN] 无法检测Intel驱动版本，使用保守模式")
             return
 
         try:
@@ -258,9 +248,7 @@ class IntelGPUVendor(GPUVendorBase):
             pathlib.Path(cache_dir).mkdir(exist_ok=True, parents=True)
             os.environ["OCL_CACHE_DIR"] = cache_dir
             applied["OCL_CACHE_DIR"] = cache_dir
-            _rate_logger.info(
-                f"✅ 设置 OCL_CACHE_DIR={cache_dir} (编译缓存)"
-            )
+            _rate_logger.info(f"✅ 设置 OCL_CACHE_DIR={cache_dir} (编译缓存)")
 
         return applied
 

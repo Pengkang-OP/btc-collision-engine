@@ -30,14 +30,14 @@ _UNKNOWN_MID_END_MEMORY_GB = 4
 # ──────────────────────────────────────────
 # 批次大小常量
 # ──────────────────────────────────────────
-_BATCH_SIZE_2M = 2097152       # 2M - Intel Arc A770
-_BATCH_SIZE_256K = 262144      # 256K - NVIDIA 高端 / Intel Arc
-_BATCH_SIZE_128K = 131072      # 128K - NVIDIA 中端 / AMD 高端
-_BATCH_SIZE_64K = 65536        # 64K - NVIDIA 低端 / AMD 中端 / Intel Arc A380
-_BATCH_SIZE_32K = 32768        # 32K - 最低保守值
-_BATCH_SIZE_16K = 16384        # 16K - 未知 GPU 保守配置
-_BATCH_SIZE_MIN = 1024         # 最小批次对齐值
-_BATCH_SIZE_1M = 1048576       # 1M - 批次过大警告阈值
+_BATCH_SIZE_2M = 2097152  # 2M - Intel Arc A770
+_BATCH_SIZE_256K = 262144  # 256K - NVIDIA 高端 / Intel Arc
+_BATCH_SIZE_128K = 131072  # 128K - NVIDIA 中端 / AMD 高端
+_BATCH_SIZE_64K = 65536  # 64K - NVIDIA 低端 / AMD 中端 / Intel Arc A380
+_BATCH_SIZE_32K = 32768  # 32K - 最低保守值
+_BATCH_SIZE_16K = 16384  # 16K - 未知 GPU 保守配置
+_BATCH_SIZE_MIN = 1024  # 最小批次对齐值
+_BATCH_SIZE_1M = 1048576  # 1M - 批次过大警告阈值
 
 # ──────────────────────────────────────────
 # 工作组大小常量
@@ -53,11 +53,11 @@ _WGS_ALIGN_DEFAULT = 32
 # ──────────────────────────────────────────
 # 显存使用率常量
 # ──────────────────────────────────────────
-_RATIO_AGGRESSIVE = 0.8      # NVIDIA 高端
-_RATIO_HIGH = 0.75            # NVIDIA 中端
-_RATIO_MEDIUM = 0.70          # NVIDIA 低端 / Intel Arc
-_RATIO_MODERATE = 0.6         # AMD / Intel Arc A750
-_RATIO_CONSERVATIVE = 0.5     # 未知 / Intel Arc A380
+_RATIO_AGGRESSIVE = 0.8  # NVIDIA 高端
+_RATIO_HIGH = 0.75  # NVIDIA 中端
+_RATIO_MEDIUM = 0.70  # NVIDIA 低端 / Intel Arc
+_RATIO_MODERATE = 0.6  # AMD / Intel Arc A750
+_RATIO_CONSERVATIVE = 0.5  # 未知 / Intel Arc A380
 
 
 def _align_work_group_size(recommended: int, max_wgs: int, alignment: int) -> int:
