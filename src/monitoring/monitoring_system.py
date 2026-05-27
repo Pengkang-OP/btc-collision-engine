@@ -33,6 +33,7 @@ class MonitoringData:
     """监控数据结构."""
 
     def __init__(self) -> None:
+        """Initialize monitoring data structure."""
         self.timestamp: float = time.time()
         self.performance: dict[str, Any] = {
             "speed": 0.0,  # 每秒检测速率
@@ -73,6 +74,12 @@ class DataCollector:
     """数据采集器."""
 
     def __init__(self, engine: Any | None = None) -> None:
+        """Initialize data collector.
+
+        Args:
+            engine: Optional engine instance
+
+        """
         self.engine: Any | None = engine
         self.process: psutil.Process = psutil.Process(os.getpid())
         self.start_time: float = time.time()
@@ -199,6 +206,13 @@ class DataStorage:
     """
 
     def __init__(self, storage_dir: str | None = None, data_logger: Any | None = None) -> None:
+        """Initialize data storage.
+
+        Args:
+            storage_dir: Optional storage directory path
+            data_logger: Optional DataLogger instance for delegation
+
+        """
         # 使用统一配置，默认使用data_logs
         self.storage_dir: str = DataStorageConfig.ensure_storage_dir(storage_dir)
 

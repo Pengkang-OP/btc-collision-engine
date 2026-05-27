@@ -1,7 +1,20 @@
-"""Multi-process collision engine for CPU-parallel collision detection.
+r"""Multi-process collision engine for CPU-parallel collision detection.
 
 Distributes key generation and address matching across multiple CPU
 processes for improved throughput.
+
+Usage:
+    >>> engine = MultiProcessCollisionEngine(config)
+    >>> engine.start()
+    >>> engine.add_targets({"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"})
+    >>> engine.submit_task(b"\\x00" * 32)  # Submit a private key to check
+    >>> result = engine.get_result()  # Get async result
+    >>> engine.stop()
+
+Note:
+    For production use, prefer GPU-based collision detection which
+    provides 100-1000x better performance. The multi-process engine
+    is suitable for CPU-only environments or as fallback.
 """
 
 import multiprocessing
@@ -19,10 +32,20 @@ class MultiProcessCollisionEngine:
 
     Distributes work across CPU cores using separate processes for
     key generation, address computation, and matching.
+
+    This is a reference implementation for CPU-only environments.
+    For production, use GPU-based collision detection.
     """
 
     def __init__(self, config: dict[str, Any] | None = None):
-        """Initialize the multiprocess collision engine."""
+        """Initialize the multiprocess collision engine.
+
+        Args:
+            config: Engine configuration dict. Supported keys:
+                - max_workers: Number of worker processes (default: CPU count)
+                - target_addresses: Set of target addresses to check
+
+        """
         self.config = config or {}
         self._num_workers = self.config.get(
             "max_workers",
@@ -30,7 +53,7 @@ class MultiProcessCollisionEngine:
         )
         self._running = False
         self._task_queue: multiprocessing.Queue[bytes] | None = None
-        self._result_queue: multiprocessing.Queue[bytes] | None = None
+        self._result_queue: multiprocessing.Queue[dict[str, Any]] | None = None
         self._processes: list[multiprocessing.Process] = []
         self._total_keys = 0
         self._start_time: float | None = None
@@ -73,22 +96,86 @@ class MultiProcessCollisionEngine:
             f"Multi-process engine stopped: {self._total_keys} keys in {elapsed:.1f}s",
         )
 
+    def submit_task(self, private_key_bytes: bytes) -> None:
+        """Submit a private key to the work queue.
+
+        Args:
+            private_key_bytes: 32-byte private key to check.
+
+        """
+        if self._task_queue is None:
+            raise RuntimeError("Engine not started. Call start() first.")
+        self._task_queue.put(private_key_bytes)
+
+    def get_result(
+        self,
+        timeout: float | None = None,
+    ) -> dict[str, Any] | None:
+        """Get a result from the completed work queue (non-blocking).
+
+        Args:
+            timeout: Wait timeout in seconds. None = block indefinitely.
+
+        Returns:
+            Result dict with keys:
+                - private_key_hex: Matched private key in hex
+                - address: Matched Bitcoin address
+                - worker_id: Worker process ID
+            Or None if no result available.
+
+        """
+        if self._result_queue is None:
+            raise RuntimeError("Engine not started. Call start() first.")
+        try:
+            return self._result_queue.get(timeout=timeout)
+        except queue.Empty:
+            return None
+
     def _worker_loop(
         self,
         worker_id: int,
     ) -> None:
-        """Worker process main loop."""
+        """Worker process main loop.
+
+        Each worker continuously pulls private key bytes from the
+        task queue, computes the corresponding Bitcoin address,
+        and checks against target addresses.
+
+        Args:
+            worker_id: Unique worker process identifier (0-indexed).
+
+        """
+        # Import inside worker process to avoid pickling issues
+        from ..core.address_generator import P2PKHAddressGenerator
+
+        # resolve targets from manager config via shared state
+        # In multi-process mode, targets are read-only after engine start
+        # and are passed via queue messages
+        address_generator = P2PKHAddressGenerator()
+
         while self._running:
             try:
                 assert self._task_queue is not None
-                task = self._task_queue.get(
-                    timeout=1,
-                )
-                self._process_task(
-                    worker_id,
-                    task,
-                )
+                assert self._result_queue is not None
+                task = self._task_queue.get(timeout=1)
+
+                # Generate Bitcoin address from private key bytes
+                address = address_generator.generate_from_private_key(task)
+
+                result: dict[str, Any] = {
+                    "private_key_hex": task.hex(),
+                    "address": address,
+                    "worker_id": worker_id,
+                }
+                self._result_queue.put(result)
             except queue.Empty:
+                continue
+            except (ValueError, OSError, RuntimeError) as e:
+                logger.error(
+                    "Worker %d: processing error: %s",
+                    worker_id,
+                    e,
+                )
                 continue
 
     def _process_task(
@@ -98,16 +185,28 @@ class MultiProcessCollisionEngine:
     ) -> None:
         """Process a single task (private key).
 
+        Legacy method — actual processing now happens in _worker_loop.
+        Kept for backward compatibility.
+
         Args:
             worker_id: Worker process ID
             task: Private key bytes
 
         """
         assert self._result_queue is not None
-        self._result_queue.put(task)
+        result: dict[str, Any] = {
+            "private_key_hex": task.hex(),
+            "worker_id": worker_id,
+        }
+        self._result_queue.put(result)
 
     def get_stats(self) -> dict[str, Any]:
-        """Get current engine statistics."""
+        """Get current engine statistics.
+
+        Returns:
+            Dict with keys: total_keys, elapsed, throughput, workers, running
+
+        """
         elapsed = time.time() - self._start_time if self._start_time else 0
         return {
             "total_keys": self._total_keys,

@@ -196,36 +196,4 @@ class CheckpointManager:
         self._last_save = time.time()
         self._dirty = False
 
-    def _cleanup_temp_file(self, path: str) -> None:
-        """Clean up a temporary file, silencing errors.
-
-        Args:
-            path: Path to the temporary file to remove.
-
-        """
-        try:
-            p = Path(path)
-            if p.exists():
-                p.unlink()
-        except OSError:
-            pass
-
-    @staticmethod
-    def _check_win32_security() -> bool:
-        """Check if win32 security (pywin32) is available.
-
-        Returns:
-            True if pywin32 is available and can set ACLs.
-
-        """
-        if CheckpointManager._has_win32_security is not None:
-            return CheckpointManager._has_win32_security
-        try:
-            import win32security  # noqa: F401
-
-            CheckpointManager._has_win32_security = True
-        except ImportError:
-            CheckpointManager._has_win32_security = False
-        return CheckpointManager._has_win32_security
-
-    _has_win32_security: bool | None = None
+    # 注意：_cleanup_temp_file 和 _check_win32_security 已移除（死代码）

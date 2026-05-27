@@ -47,23 +47,28 @@ class KeyValidationResult:
     """Key validation result."""
 
     def __init__(self) -> None:
+        """初始化验证结果."""
         self.success = True
         self.errors: list[str] = []
         self.warnings: list[str] = []
         self.details: dict[str, Any] = {}
 
     def add_error(self, error: str) -> "KeyValidationResult":
+        """添加错误."""
         self.success = False
         self.errors.append(error)
         return self  # Supports chaining
 
     def add_warning(self, warning: str) -> None:
+        """添加警告."""
         self.warnings.append(warning)
 
     def add_detail(self, key: str, value: Any) -> None:
+        """添加详细信息."""
         self.details[key] = value
 
     def to_dict(self) -> dict[str, Any]:
+        """将验证结果转换为字典."""
         return {
             "success": self.success,
             "errors": self.errors,

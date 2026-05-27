@@ -15,9 +15,13 @@ class GPUDeviceProtocol(Protocol):
     device_index: int
     context: Any
 
-    def get_memory_info(self) -> dict[str, Any]: ...
+    def get_memory_info(self) -> dict[str, Any]:
+        """Get GPU memory info."""
+        ...
 
-    def cleanup(self) -> None: ...
+    def cleanup(self) -> None:
+        """Cleanup GPU resources."""
+        ...
 
 
 class GPUCollisionEngineInterface(ABC):

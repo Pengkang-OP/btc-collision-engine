@@ -149,7 +149,9 @@ class WorkStealingThreadPool:
         self._start_time: float | None = None
 
         logger.info(
-            f"Thread pool initialized: threads={self.num_threads}, work_stealing={enable_work_stealing}",
+            "Thread pool initialized: threads=%s, work_stealing=%s",
+            self.num_threads,
+            enable_work_stealing,
         )
 
     def start(self) -> None:
@@ -469,6 +471,7 @@ class GlobalThreadPoolManager:
     def __new__(
         cls,
     ) -> "GlobalThreadPoolManager":
+        """创建全局线程池管理器单例."""
         if cls._instance is None:
             with cls._lock:
                 if cls._instance is None:
@@ -483,8 +486,7 @@ class GlobalThreadPoolManager:
         num_threads: int | None = None,
     ) -> None:
         """P3-8 enhanced: Initialize global thread pool
-
-        (supports config input).
+        (supports config input)..
 
         Args:
             num_threads: Thread count, None for auto-detect.
@@ -516,7 +518,6 @@ class GlobalThreadPoolManager:
 
     def shutdown(self) -> None:
         """P3-8 enhanced: Shutdown global thread pool
-
         (with statistics output).
         """
         if self._pool and not self._shutdown_complete:
@@ -535,8 +536,7 @@ class GlobalThreadPoolManager:
         self,
         new_num_threads: int,
     ) -> bool:
-        """P3-8 new: Adjust thread count at runtime
-
+        """P3-8 enhanced: Adjust thread count at runtime
         (scale down only, does not kill active threads).
 
         Current implementation is simplified: records new

@@ -21,6 +21,7 @@ class AutoTestModule:
     """自动化测试模块."""
 
     def __init__(self, project_root: Path | None = None, max_workers: int = 4):
+        """初始化自动化测试模块."""
         self.project_root = project_root or Path(__file__).parent.parent.parent.parent
         self.max_workers = max_workers
         self.test_cases: list[TestCase] = []
@@ -301,7 +302,10 @@ class AutoTestModule:
                 return {
                     "status": "passed",
                     "message": f"加密后端初始化成功: {current}",
-                    "metrics": {"available_backends": available, "current": current},
+                    "metrics": {
+                        "available_backends": available,
+                        "current": current,
+                    },
                 }
             return {
                 "status": "failed",
@@ -357,7 +361,10 @@ class AutoTestModule:
             return {
                 "status": "failed",
                 "message": f"模块导入失败: {len(failed_imports)} 个",
-                "metrics": {"failed": failed_imports, "success": successful_imports},
+                "metrics": {
+                    "failed": failed_imports,
+                    "success": successful_imports,
+                },
             }
 
         return {
@@ -385,13 +392,19 @@ class AutoTestModule:
             if ops_per_sec > 100:
                 return {
                     "status": "passed",
-                    "message": f"大整数运算性能达标: {ops_per_sec:.1f} ops/sec",
-                    "metrics": {"duration": duration, "ops_per_sec": ops_per_sec},
+                    "message": (f"大整数运算性能达标: {ops_per_sec:.1f} ops/sec"),
+                    "metrics": {
+                        "duration": duration,
+                        "ops_per_sec": ops_per_sec,
+                    },
                 }
             return {
                 "status": "failed",
-                "message": f"大整数运算性能不达标: {ops_per_sec:.1f} ops/sec",
-                "metrics": {"duration": duration, "ops_per_sec": ops_per_sec},
+                "message": (f"大整数运算性能不达标: {ops_per_sec:.1f} ops/sec"),
+                "metrics": {
+                    "duration": duration,
+                    "ops_per_sec": ops_per_sec,
+                },
             }
         except Exception as e:
             return {
@@ -417,13 +430,19 @@ class AutoTestModule:
             if ops_per_sec > 5000:
                 return {
                     "status": "passed",
-                    "message": f"哈希计算性能达标: {ops_per_sec:.0f} ops/sec",
-                    "metrics": {"duration": duration, "ops_per_sec": ops_per_sec},
+                    "message": (f"哈希计算性能达标: {ops_per_sec:.0f} ops/sec"),
+                    "metrics": {
+                        "duration": duration,
+                        "ops_per_sec": ops_per_sec,
+                    },
                 }
             return {
                 "status": "warning",
-                "message": f"哈希计算性能偏低: {ops_per_sec:.0f} ops/sec",
-                "metrics": {"duration": duration, "ops_per_sec": ops_per_sec},
+                "message": (f"哈希计算性能偏低: {ops_per_sec:.0f} ops/sec"),
+                "metrics": {
+                    "duration": duration,
+                    "ops_per_sec": ops_per_sec,
+                },
             }
         except Exception as e:
             return {

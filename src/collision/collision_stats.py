@@ -39,7 +39,31 @@ class StatsSnapshot:
 DEFAULT_PROGRESS_INTERVAL_COUNT = 1000  # 每N次检测触发一次进度回调
 DEFAULT_DATA_LOG_SAVE_FREQUENCY = 3  # 每N次记录保存一次数据日志
 DEFAULT_ERROR_LOG_INTERVAL_SEC = 5.0  # 错误日志记录间隔（秒）
-DEFAULT_CPU_CACHE_INTERVAL_SEC = 1.0  # CPU使用率缓存更新间隔（秒）
+DEFAULT_CPU_CACHE_INTERVAL_SEC = 1.0  # GPU使用率缓存更新间隔（秒）
+
+
+class _ErrorCounter:
+    """线程安全的错误计数器，支持 getter/setter 属性访问."""
+
+    def __init__(self, lock: threading.Lock) -> None:
+        """Initialize error counter with shared lock."""
+        self._value: int = 0
+        self._lock = lock
+
+    def get(self) -> int:
+        """Get current counter value (thread-safe)."""
+        with self._lock:
+            return self._value
+
+    def set(self, value: int) -> None:
+        """Set counter value (thread-safe)."""
+        with self._lock:
+            self._value = value
+
+    def increment(self) -> None:
+        """Increment counter by 1 (thread-safe)."""
+        with self._lock:
+            self._value += 1
 
 
 class CollisionStats:
@@ -54,11 +78,11 @@ class CollisionStats:
         self._total_matches: int = 0
         self._total_errors: int = 0
         self.matches: list[dict[str, str]] = []
-        # Error counters by category
-        self._gpu_errors: int = 0
-        self._worker_errors: int = 0
-        self._resource_errors: int = 0
-        self._wif_encode_errors: int = 0
+        # Error counters by category (using _ErrorCounter for consistent getter/setter)
+        self._gpu_errors: _ErrorCounter = _ErrorCounter(self._lock)
+        self._worker_errors: _ErrorCounter = _ErrorCounter(self._lock)
+        self._resource_errors: _ErrorCounter = _ErrorCounter(self._lock)
+        self._wif_encode_errors: _ErrorCounter = _ErrorCounter(self._lock)
         self._total_range: int = 0
 
     def record_key(self) -> None:
@@ -178,35 +202,30 @@ class CollisionStats:
 
         Called by ExceptionHandler.handle_gpu_error() via getattr.
         """
-        with self._lock:
-            self._gpu_errors += 1
-            if is_resource_error:
-                self._resource_errors += 1
+        self._gpu_errors.increment()
+        if is_resource_error:
+            self._resource_errors.increment()
 
     def record_worker_error(self) -> None:
         """Record a worker engine error.
 
         Called by ExceptionHandler.handle_engine_error() via getattr.
         """
-        with self._lock:
-            self._worker_errors += 1
+        self._worker_errors.increment()
 
     def record_wif_encode_error(self) -> None:
         """Record a WIF encoding error."""
-        with self._lock:
-            self._wif_encode_errors += 1
+        self._wif_encode_errors.increment()
 
     @property
     def wif_encode_errors(self) -> int:
         """Get WIF encode error count."""
-        with self._lock:
-            return self._wif_encode_errors
+        return self._wif_encode_errors.get()
 
     @wif_encode_errors.setter
     def wif_encode_errors(self, value: int) -> None:
         """Set WIF encode error count."""
-        with self._lock:
-            self._wif_encode_errors = value
+        self._wif_encode_errors.set(value)
 
     def error_summary(self) -> str:
         """Return a human-readable error summary."""
@@ -297,38 +316,32 @@ class CollisionStats:
     @property
     def gpu_errors(self) -> int:
         """Get GPU error count."""
-        with self._lock:
-            return self._gpu_errors
+        return self._gpu_errors.get()
 
     @gpu_errors.setter
     def gpu_errors(self, value: int) -> None:
         """Set GPU error count."""
-        with self._lock:
-            self._gpu_errors = value
+        self._gpu_errors.set(value)
 
     @property
     def worker_errors(self) -> int:
         """Get worker error count."""
-        with self._lock:
-            return self._worker_errors
+        return self._worker_errors.get()
 
     @worker_errors.setter
     def worker_errors(self, value: int) -> None:
         """Set worker error count."""
-        with self._lock:
-            self._worker_errors = value
+        self._worker_errors.set(value)
 
     @property
     def resource_errors(self) -> int:
         """Get resource error count."""
-        with self._lock:
-            return self._resource_errors
+        return self._resource_errors.get()
 
     @resource_errors.setter
     def resource_errors(self, value: int) -> None:
         """Set resource error count."""
-        with self._lock:
-            self._resource_errors = value
+        self._resource_errors.set(value)
 
     @property
     def avg_speed(self) -> float:
@@ -395,10 +408,10 @@ class CollisionStats:
             self._total_batches = 0
             self._total_matches = 0
             self._total_errors = 0
-            self._gpu_errors = 0
-            self._worker_errors = 0
-            self._resource_errors = 0
-            self._wif_encode_errors = 0
+            self._gpu_errors.set(0)
+            self._worker_errors.set(0)
+            self._resource_errors.set(0)
+            self._wif_encode_errors.set(0)
             self.matches.clear()
             self._start_time = time.time()
 

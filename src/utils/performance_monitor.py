@@ -38,9 +38,10 @@ class PerformanceTracker:
     """
 
     def __init__(self, max_records: int = 10000) -> None:
-        """Args:
+        """Initialize performance tracker.
 
-        max_records: 最大记录数（超过后自动清理旧记录）.
+        Args:
+            max_records: 最大记录数（超过后自动清理旧记录）
 
         """
         self.max_records = max_records
@@ -164,13 +165,22 @@ def _get_tracker_config():
         config_mgr = ConfigManager()
         return {
             "enabled": config_mgr.get("performance_monitoring.enabled", True),
-            "max_records": config_mgr.get("performance_monitoring.max_records", 10000),
-            "slow_threshold_ms": config_mgr.get("performance_monitoring.slow_threshold_ms", 30000),
+            "max_records": config_mgr.get(
+                "performance_monitoring.max_records",
+                10000,
+            ),
+            "slow_threshold_ms": config_mgr.get(
+                "performance_monitoring.slow_threshold_ms",
+                30000,
+            ),
             "track_slow_operations": config_mgr.get(
                 "performance_monitoring.track_slow_operations",
                 True,
             ),
-            "log_level": config_mgr.get("performance_monitoring.log_level", "INFO"),
+            "log_level": config_mgr.get(
+                "performance_monitoring.log_level",
+                "INFO",
+            ),
         }
     except Exception as e:
         # 配置加载失败，使用默认值并记录警告日志
@@ -179,7 +189,7 @@ def _get_tracker_config():
             "enabled": True,
             "max_records": 10000,
             "slow_threshold_ms": 30000,
-            "_comment_slow_threshold_ms": "GPU内核编译通常需要10-30秒，默认30000ms以避免编译期误报",
+            "_comment_slow_threshold_ms": ("GPU内核编译通常需要10-30秒，默认30000ms以避免编译期误报"),
             "track_slow_operations": True,
             "log_level": "INFO",
         }
@@ -199,7 +209,9 @@ def get_performance_tracker() -> PerformanceTracker:
 
         with _tracker_lock:
             if _global_tracker is None:  # 双重检查
-                _global_tracker = PerformanceTracker(max_records=config["max_records"])
+                _global_tracker = PerformanceTracker(
+                    max_records=config["max_records"],
+                )
 
     return _global_tracker
 
@@ -242,15 +254,16 @@ class EnhancedPerformanceMonitor:
         log_result: bool = True,
         track: bool = True,
     ) -> None:
-        """Args:
+        """Initialize enhanced performance monitor.
 
-        logger: 日志记录器
-        operation: 操作名称
-        level: 日志级别
-        log_result: 是否记录日志
-        track: 是否记录到性能追踪器
-            - True: 记录到全局追踪器，支持统计分析（默认）
-            - False: 仅记录日志，不存储到追踪器（适用于调试操作）.
+        Args:
+            logger: 日志记录器
+            operation: 操作名称
+            level: 日志级别
+            log_result: 是否记录日志
+            track: 是否记录到性能追踪器
+                - True: 记录到全局追踪器，支持统计分析（默认）
+                - False: 仅记录日志，不存储到追踪器（适用于调试操作）
 
         """
         self.logger = logger
@@ -263,10 +276,16 @@ class EnhancedPerformanceMonitor:
         self.metadata: dict[str, Any] = {}
 
     def __enter__(self) -> "EnhancedPerformanceMonitor":
+        """Enter performance monitoring context."""
         self.start_time = time.perf_counter()
         return self
 
-    def __exit__(self, exc_type: type | None, exc_val: BaseException | None, exc_tb: Any | None) -> None:
+    def __exit__(
+        self,
+        exc_type: type | None,
+        exc_val: BaseException | None,
+        exc_tb: Any | None,
+    ) -> None:
         """退出上下文时的处理.
 
         注意: 此方法中的所有异常都被捕获，确保监控失败不会影响业务逻辑
@@ -278,7 +297,8 @@ class EnhancedPerformanceMonitor:
 
             self.end_time = time.perf_counter()
             if self.start_time is None:
-                raise RuntimeError("PerformanceMonitor 未正确进入上下文: start_time 为 None")
+                err_msg = "PerformanceMonitor 未正确进入上下文: start_time 为 None"
+                raise RuntimeError(err_msg)
             elapsed_ms = (self.end_time - self.start_time) * 1000
 
             success = exc_type is None
@@ -289,12 +309,17 @@ class EnhancedPerformanceMonitor:
                     if success:
                         self.logger.log(
                             self.level,
-                            f"[Performance] {self.operation}: {elapsed_ms:.2f}ms",
+                            "[Performance] %s: %.2fms",
+                            self.operation,
+                            elapsed_ms,
                         )
                     else:
                         _ms = elapsed_ms
                         self.logger.error(
-                            f"[Performance] {self.operation}: FAILED after {_ms:.2f}ms - {exc_val}",
+                            "[Performance] %s: FAILED after %.2fms - %s",
+                            self.operation,
+                            _ms,
+                            exc_val,
                         )
                 except Exception as log_error:
                     # 日志失败不应影响业务，静默失败
@@ -316,8 +341,10 @@ class EnhancedPerformanceMonitor:
                     config = _get_tracker_config()
                     if config["track_slow_operations"] and elapsed_ms > config["slow_threshold_ms"]:
                         self.logger.warning(
-                            f"[Performance] 慢操作检测: {self.operation} "
-                            f"耗时 {elapsed_ms:.2f}ms > {config['slow_threshold_ms']}ms",
+                            "[Performance] 慢操作检测: %s 耗时 %.2fms > %sms",
+                            self.operation,
+                            elapsed_ms,
+                            config["slow_threshold_ms"],
                         )
                 except Exception as track_error:
                     # 追踪失败不应影响业务，静默失败
@@ -334,13 +361,17 @@ class EnhancedPerformanceMonitor:
     def elapsed_ms(self) -> float:
         """获取已耗时的毫秒数."""
         if self.start_time is None:
-            raise RuntimeError("PerformanceMonitor 未正确进入上下文: start_time 为 None")
+            err_msg = "PerformanceMonitor 未正确进入上下文: start_time 为 None"
+            raise RuntimeError(err_msg)
         if self.end_time is None:
             return (time.perf_counter() - self.start_time) * 1000
         return (self.end_time - self.start_time) * 1000
 
 
-def log_performance_summary(logger: logging.Logger, tracker: PerformanceTracker | None = None) -> None:
+def log_performance_summary(
+    logger: logging.Logger,
+    tracker: PerformanceTracker | None = None,
+) -> None:
     """记录性能统计摘要.
 
     Args:

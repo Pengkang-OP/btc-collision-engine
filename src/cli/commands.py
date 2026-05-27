@@ -111,7 +111,8 @@ def _cmd_validate_addresses(file_path: str) -> None:
     print(f"总地址数  : {len(addresses)}")
     print(f"[OK] 有效    : {len(valid_list)}")
     print(f"[!]  无效    : {len(invalid_list)}")
-    print(f"[--] 跳过    : {len(skipped_list)}")
+    total_skipped = len(skipped_list)
+    print(f"[--] 跳过    : {total_skipped}")
     print(SEPARATOR_DASHED_SHORT)
 
     if valid_list:
@@ -176,7 +177,7 @@ def _cmd_examples() -> None:
         {
             "title": "6. 多GPU模式",
             "desc": "使用所有可用GPU设备",
-            "cmd": "python key_collision_cli.py -f targets.txt -m random --multi-gpu",
+            "cmd": ("python key_collision_cli.py -f targets.txt -m random --multi-gpu"),
         },
         {
             "title": "7. 范围扫描",
@@ -248,7 +249,9 @@ def _validate_config_schema(config: dict[str, Any]) -> list[str]:
     try:
         import jsonschema
     except ImportError:
-        logger.debug("jsonschema not available, skipping schema validation (optional dependency)")
+        logger.debug(
+            "jsonschema not available, skipping schema validation (optional dependency)",
+        )
         return []  # 静默跳过（jsonschema 为可选依赖）
 
     schema_path = Path(_CONFIG_SCHEMA_PATH)
@@ -296,8 +299,9 @@ def _cmd_config_check() -> None:
             missing_sections = [s for s in REQUIRED_CONFIG_SECTIONS if s not in config]
 
             if missing_sections:
+                missing_str = ", ".join(missing_sections)
                 print(
-                    "[WARN] " + _t("cli.commands.missing_sections") + ": " + ", ".join(missing_sections),
+                    "[WARN] " + _t("cli.commands.missing_sections") + ": " + missing_str,
                 )
             else:
                 print("[OK] " + _t("cli.commands.sections_complete"))
@@ -317,13 +321,19 @@ def _cmd_config_check() -> None:
             print("\n[INFO] Key config:")
             collision_cfg = config.get("collision", {})
             engine_cfg = config.get("engine", {})
-            workers = collision_cfg.get("max_workers", engine_cfg.get("max_threads", "auto"))
-            print("   - workers        : " + str(workers))
-            print(
-                "   - perf_optimize  : "
-                + ("enabled" if collision_cfg.get("use_performance_optimization", True) else "disabled"),
+            workers = collision_cfg.get(
+                "max_workers",
+                engine_cfg.get("max_threads", "auto"),
             )
-            chk = collision_cfg.get("checkpoint_interval", engine_cfg.get("checkpoint_interval", 30))
+            print("   - workers        : " + str(workers))
+            perf_opt = collision_cfg.get("use_performance_optimization", True)
+            print(
+                "   - perf_optimize  : " + ("enabled" if perf_opt else "disabled"),
+            )
+            chk = collision_cfg.get(
+                "checkpoint_interval",
+                engine_cfg.get("checkpoint_interval", 30),
+            )
             print("   - checkpoint_int : " + str(chk) + "s")
 
             gpu_cfg = config.get("gpu", {})
@@ -336,26 +346,37 @@ def _cmd_config_check() -> None:
             logger.error(_t("errors.io_error", detail=str(e)))
             print("[ERROR] " + _t("errors.io_error", detail=str(e)))
     else:
-        print("\n[MISS] config.json " + _t("cli.commands.file_not_exist"))
+        print(
+            "\n[MISS] config.json " + _t("cli.commands.file_not_exist"),
+        )
         if example_path.exists():
-            print("[OK]   config.example.json " + _t("cli.commands.file_exists"))
+            print(
+                "[OK]   config.example.json " + _t("cli.commands.file_exists"),
+            )
             print("[TIP]  " + _t("cli.commands.fix_copy_suggestion"))
             print("   Windows: copy config.example.json config.json")
             print("   Linux/Mac: cp config.example.json config.json")
         else:
-            print("[MISS] config.example.json " + _t("cli.commands.also_not_exist"))
+            print(
+                "[MISS] config.example.json " + _t("cli.commands.also_not_exist"),
+            )
             print("[TIP]  " + _t("cli.commands.fix_reacquire"))
 
     # 检查必要目录
-    print("\n[INFO] " + _t("cli.commands.dir_check_title") + ":")
+    print(
+        "\n[INFO] " + _t("cli.commands.dir_check_title") + ":",
+    )
     required_dirs = ["logs", "data_logs"]
     for dir_name in required_dirs:
         dir_path = Path(dir_name)
         if dir_path.exists():
             print("   [OK]  " + dir_name + "/")
         else:
-            print("   [MISS] " + dir_name + "/ (" + _t("cli.commands.dir_not_exist") + ")")
-            print("          " + _t("cli.commands.dir_fix") + ": mkdir " + dir_name)
+            dir_not_exist = _t("cli.commands.dir_not_exist")
+            print("   [MISS] " + dir_name + "/ (" + dir_not_exist + ")")
+            print(
+                "          " + _t("cli.commands.dir_fix") + ": mkdir " + dir_name,
+            )
 
     print("\n" + SEPARATOR_EQUAL)
 
@@ -364,7 +385,7 @@ DEFAULT_TARGETS_FILE = "targets.txt"
 
 
 def _save_address_to_targets_file(address: str, output: CLIOutput) -> None:
-    """将单个地址去重合并写入 targets.txt。
+    """将单个地址去重合并写入 targets.txt。.
 
     - 读取现有地址，若地址已存在则跳过；否则追加到文件末尾。
     - 若文件不存在则自动创建。
@@ -426,8 +447,9 @@ def _save_address_to_targets_file(address: str, output: CLIOutput) -> None:
         # 原子替换
         _ = Path(temp_path).replace(targets_path)
 
+        addr_count = str(len(existing) + 1)
         output.print(
-            "   [green][OK] 地址已保存到 targets.txt（共 " + str(len(existing) + 1) + " 条）[/green]",
+            "   [green][OK] 地址已保存到 targets.txt（共 " + addr_count + " 条）[/green]",
         )
     except OSError as e:
         output.warning("无法写入 targets.txt: " + str(e))
@@ -479,7 +501,7 @@ def _handle_missing_target_file(
     output: CLIOutput,
     target_file: str,
 ) -> tuple[list[str], str | None] | None:
-    """处理目标文件不存在时的菜单交互。
+    """处理目标文件不存在时的菜单交互。.
 
     返回 (targets, target_file) 或 None（需要继续后续流程）。.
     """
@@ -510,7 +532,9 @@ def _handle_missing_target_file(
             return [], target_file
         except Exception as e:
             output.error(f"创建文件失败: {e!s}")
-            output.print("   [TIP] 请检查文件路径是否正确，以及是否有写入权限")
+            output.print(
+                "   [TIP] 请检查文件路径是否正确，以及是否有写入权限",
+            )
             return [], None
     elif choice == "2":
         address = input("   请输入目标地址: ").strip()
@@ -1233,7 +1257,7 @@ def _handle_wizard_and_quickstart(
     return False
 
 
-def _handle_system_commands(args: argparse.Namespace) -> bool:
+def _handle_system_commands(args: argparse.Namespace) -> bool:  # noqa: C901
     """处理系统工具命令：--health-check, --platform-check, --cleanup, --validate-addresses."""
     # --health-check
     if getattr(args, "health_check", False):

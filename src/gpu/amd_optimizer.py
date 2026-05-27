@@ -48,6 +48,13 @@ class AmdDriverDetector:
     __slots__ = ("_device_info", "_logger")
 
     def __init__(self, device_info: dict, engine_logger: Any | None = None) -> None:
+        """Initialize AMD driver version detector.
+
+        Args:
+            device_info: Device information dictionary
+            engine_logger: Optional logger instance
+
+        """
         self._device_info = device_info
         self._logger = engine_logger or logger
 
@@ -448,6 +455,13 @@ class AmdArchDetector:
     __slots__ = ("_device_info", "_logger")
 
     def __init__(self, device_info: dict, engine_logger: Any | None = None) -> None:
+        """Initialize AMD architecture detector.
+
+        Args:
+            device_info: Device information dictionary
+            engine_logger: Optional logger instance
+
+        """
         self._device_info = device_info
         self._logger = engine_logger or logger
 
@@ -506,6 +520,13 @@ class AmdWavefrontValidator:
     __slots__ = ("_arch_info", "_logger", "_wavefront_size")
 
     def __init__(self, arch_info: dict, engine_logger: Any | None = None) -> None:
+        """Initialize AMD workgroup validator.
+
+        Args:
+            arch_info: Architecture information dictionary
+            engine_logger: Optional logger instance
+
+        """
         self._arch_info = arch_info
         self._logger = engine_logger or logger
         self._wavefront_size = arch_info.get("wavefront_size", 64)
@@ -599,6 +620,14 @@ class AmdMemoryOptimizer:
         arch_info: dict,
         engine_logger: Any | None = None,
     ) -> None:
+        """Initialize AMD memory config calculator.
+
+        Args:
+            device_info: Device information dictionary
+            arch_info: Architecture information dictionary
+            engine_logger: Optional logger instance
+
+        """
         self._device_info = device_info
         self._arch_info = arch_info
         self._logger = engine_logger or logger
@@ -711,6 +740,14 @@ class AmdGPUOptimizer:
         config: dict | None = None,
         engine_logger: Any | None = None,
     ) -> None:
+        """Initialize AMD system optimizer.
+
+        Args:
+            device_info: Device information dictionary
+            config: Configuration dictionary
+            engine_logger: Optional logger instance
+
+        """
         self._device_info = device_info if isinstance(device_info, dict) else {}
         self._config = config or {}
         self._logger = engine_logger or logger

@@ -354,7 +354,7 @@ class GPUDeviceManager:
             return "Bech32m (Taproot)"
         return "未知格式"
 
-    def _prepare_targets(self, targets: set[str]):
+    def _prepare_targets(self, targets: set[str]):  # noqa: C901
         """准备目标地址 (支持 P2PKH 和 Bech32 P2WPKH 格式).
 
         GPU 引擎支持以下目标格式:

@@ -121,6 +121,12 @@ class PurePythonBackend(CryptoBackend):
     """
 
     def __init__(self, use_const_time: bool = False) -> None:
+        """Initialize Pure Python cryptographic backend.
+
+        Args:
+            use_const_time: Whether to use constant-time mode
+
+        """
         from .secp256k1 import ECPoint, EllipticCurve, Secp256k1
 
         self.ec = EllipticCurve()
@@ -135,10 +141,12 @@ class PurePythonBackend(CryptoBackend):
 
     @property
     def name(self) -> str:
+        """Get backend name."""
         return "Pure Python" + (" (Constant Time)" if self._use_const_time else "")
 
     @property
     def is_available(self) -> bool:
+        """Check if backend is available."""
         return True
 
     def generate_public_key(
@@ -146,6 +154,16 @@ class PurePythonBackend(CryptoBackend):
         private_key: bytes,
         compressed: bool = True,
     ) -> bytes:
+        """Generate public key from private key.
+
+        Args:
+            private_key: 32-byte private key
+            compressed: Whether to use compressed format
+
+        Returns:
+            Public key bytes
+
+        """
         # v4.2.2 R4: generate_public_key already uses
         # scalar_multiply_const_time internally,
         # both branches are equivalent, simplified to single path
@@ -157,6 +175,17 @@ class PurePythonBackend(CryptoBackend):
         point_x: int,
         point_y: int,
     ) -> tuple[int, int]:
+        """Perform elliptic curve scalar multiplication.
+
+        Args:
+            k: Scalar multiplier
+            point_x: X coordinate of the point
+            point_y: Y coordinate of the point
+
+        Returns:
+            Tuple of (result_x, result_y)
+
+        """
         from .secp256k1 import ECPoint
 
         point = ECPoint(point_x, point_y)
@@ -168,6 +197,7 @@ class PurePythonBackend(CryptoBackend):
         return cast("tuple[int, int]", (result.x, result.y))
 
     def is_constant_time(self) -> bool:
+        """Check if backend uses constant-time algorithm."""
         # v4.2.2 R5: all scalar multiplications now use
         # constant-time implementation
         return True
@@ -177,6 +207,7 @@ class OpenSSLBackend(CryptoBackend):
     """OpenSSL backend - uses cryptography library."""
 
     def __init__(self) -> None:
+        """Initialize OpenSSL cryptographic backend."""
         self._available = self._check_availability()
         if self._available:
             from cryptography.hazmat.backends import default_backend
@@ -187,7 +218,9 @@ class OpenSSLBackend(CryptoBackend):
 
     def _check_availability(self) -> bool:
         try:
-            from cryptography.hazmat.primitives.asymmetric import ec  # noqa: F401
+            from cryptography.hazmat.primitives.asymmetric import (  # noqa: F401
+                ec,
+            )
 
             return True
         except ImportError:
@@ -195,10 +228,12 @@ class OpenSSLBackend(CryptoBackend):
 
     @property
     def name(self) -> str:
+        """Get backend name."""
         return "OpenSSL (cryptography)"
 
     @property
     def is_available(self) -> bool:
+        """Check if backend is available."""
         return self._available
 
     def generate_public_key(
@@ -206,6 +241,16 @@ class OpenSSLBackend(CryptoBackend):
         private_key: bytes,
         compressed: bool = True,
     ) -> bytes:
+        """Generate public key from private key using OpenSSL.
+
+        Args:
+            private_key: 32-byte private key
+            compressed: Whether to use compressed format
+
+        Returns:
+            Public key bytes
+
+        """
         if not self._available:
             raise RuntimeError("OpenSSL backend not available")
 
@@ -245,7 +290,7 @@ class OpenSSLBackend(CryptoBackend):
         point_x: int,
         point_y: int,
     ) -> tuple[int, int]:
-        """Note: cryptography library does not directly expose point
+        """Note: cryptography library does not directly expose point.
 
         multiplication, we implement it by creating temporary
         private keys.
@@ -295,6 +340,7 @@ class OpenSSLBackend(CryptoBackend):
         return cast("tuple[int, int]", (result.x, result.y))
 
     def is_constant_time(self) -> bool:
+        """Check if backend uses constant-time algorithm."""
         # v4.2.2 R9: all code paths use constant-time
         # implementation
         #
@@ -328,6 +374,7 @@ class CoincurveBackend(CryptoBackend):
     """coincurve backend - uses libsecp256k1."""
 
     def __init__(self) -> None:
+        """Initialize coincurve cryptographic backend."""
         self._available = self._check_availability()
 
     def _check_availability(self) -> bool:
@@ -340,10 +387,12 @@ class CoincurveBackend(CryptoBackend):
 
     @property
     def name(self) -> str:
+        """Get backend name."""
         return "coincurve (libsecp256k1)"
 
     @property
     def is_available(self) -> bool:
+        """Check if backend is available."""
         return self._available
 
     def generate_public_key(
@@ -351,6 +400,16 @@ class CoincurveBackend(CryptoBackend):
         private_key: bytes,
         compressed: bool = True,
     ) -> bytes:
+        """Generate public key from private key using coincurve.
+
+        Args:
+            private_key: 32-byte private key
+            compressed: Whether to use compressed format
+
+        Returns:
+            Public key bytes
+
+        """
         if not self._available:
             raise RuntimeError("coincurve backend not available")
 
@@ -424,6 +483,7 @@ class CoincurveBackend(CryptoBackend):
         return cast("tuple[int, int]", (ec_result.x, ec_result.y))
 
     def is_constant_time(self) -> bool:
+        """Check if backend uses constant-time algorithm."""
         # libsecp256k1 uses constant-time algorithm
         return True
 
@@ -432,6 +492,7 @@ class ECDSABackend(CryptoBackend):
     """ecdsa library backend."""
 
     def __init__(self) -> None:
+        """Initialize ecdsa cryptographic backend."""
         self._available = self._check_availability()
 
     def _check_availability(self) -> bool:
@@ -447,10 +508,12 @@ class ECDSABackend(CryptoBackend):
 
     @property
     def name(self) -> str:
+        """Get backend name."""
         return "ecdsa"
 
     @property
     def is_available(self) -> bool:
+        """Check if backend is available."""
         return self._available
 
     def generate_public_key(
@@ -458,6 +521,16 @@ class ECDSABackend(CryptoBackend):
         private_key: bytes,
         compressed: bool = True,
     ) -> bytes:
+        """Generate public key from private key using ecdsa.
+
+        Args:
+            private_key: 32-byte private key
+            compressed: Whether to use compressed format
+
+        Returns:
+            Public key bytes
+
+        """
         if not self._available:
             raise RuntimeError("ecdsa backend not available")
 
@@ -493,6 +566,7 @@ class ECDSABackend(CryptoBackend):
         return cast("tuple[int, int]", (result.x, result.y))
 
     def is_constant_time(self) -> bool:
+        """Check if backend uses constant-time algorithm."""
         # ecdsa library may not use constant-time algorithm
         return False
 
@@ -520,6 +594,7 @@ class CryptoBackendManager:
     _default_backend_type = BackendType.PURE_PYTHON
 
     def __new__(cls) -> "CryptoBackendManager":
+        """Create singleton CryptoBackendManager instance."""
         if cls._instance is None:
             with cls._lock:
                 # Double-checked locking pattern
@@ -554,7 +629,7 @@ class CryptoBackendManager:
         )
 
     def _select_best_backend(self) -> None:
-        """Select best available backend (internal method, caller must
+        """Select best available backend (internal method, caller must.
 
         hold lock).
         """
@@ -780,7 +855,7 @@ def get_available_backends() -> list[tuple[BackendType, str]]:
 
 
 def is_secure_backend_available() -> bool:
-    """Check if secure crypto backend is available (required for
+    """Check if secure crypto backend is available (required for.
 
     production).
 
@@ -874,7 +949,7 @@ def _get_security_recommendation(security_level: str) -> str:
 
 
 def verify_production_ready() -> tuple[bool, str]:
-    """Verify system meets production environment security
+    """Verify system meets production environment security.
 
     requirements.
 
@@ -889,11 +964,12 @@ def verify_production_ready() -> tuple[bool, str]:
 
     backend_info = get_backend_security_info()
     return False, (
-        f"Production environment security check failed\n"
+        "Production environment security check failed\n"
         f"  Current backend: {backend_info.get('backend', 'unknown')}\n"
         f"  Security level: {backend_info.get('security_level', 'unknown')}\n"
         f"  {backend_info.get('recommendation', '')}\n\n"
-        f"Suggestions:\n"
-        f"  pip install coincurve  # Recommended, most secure\n"
-        f"  pip install cryptography  # Alternative, generate_public_key is constant-time\n"
+        "Suggestions:\n"
+        "  pip install coincurve  # Recommended, most secure\n"
+        "  pip install cryptography  # Alternative, key generation is"
+        " constant-time\n"
     )

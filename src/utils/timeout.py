@@ -171,10 +171,17 @@ def _execute_with_sigalrm_timeout(
             setitimer = getattr(signal, "setitimer", None)
             if sigalrm is None or setitimer is None:
                 logger.warning("SIGALRM 超时不可用，回退到线程超时")
-                return _execute_with_thread_timeout(func, args, kwargs, timeout, callback_name)
+                return _execute_with_thread_timeout(
+                    func,
+                    args,
+                    kwargs,
+                    timeout,
+                    callback_name,
+                )
 
             old_handler = signal.signal(sigalrm, _timeout_handler)
-            setitimer(signal.ITIMER_REAL, timeout)  # type: ignore[attr-defined]  # Unix-only
+            # type: ignore[attr-defined]  # Unix-only
+            setitimer(signal.ITIMER_REAL, timeout)
             try:
                 func(*args, **kwargs)
                 return True
@@ -186,12 +193,19 @@ def _execute_with_sigalrm_timeout(
                 return False
             except Exception as e:
                 logger.warning(
-                    f"回调执行异常 - 回调: {callback_name} - 异常: {type(e).__name__}: {e}",
+                    "回调执行异常 - 回调: %s - 异常: %s: %s",
+                    callback_name,
+                    type(e).__name__,
+                    e,
                 )
                 return False
             finally:
-                setitimer(signal.ITIMER_REAL, 0.0)  # type: ignore[attr-defined]  # Unix-only
-                signal.signal(signal.SIGALRM, old_handler)  # type: ignore[attr-defined]  # Unix-only
+                # type: ignore[attr-defined]  # Unix-only
+                setitimer(signal.ITIMER_REAL, 0.0)
+                signal.signal(  # type: ignore[attr-defined]  # Unix-only
+                    signal.SIGALRM,
+                    old_handler,
+                )
         except (ValueError, OSError, AttributeError) as e:
             retry_count += 1
             if retry_count >= max_retries:
@@ -240,15 +254,33 @@ def invoke_with_timeout(
         return False
 
     if os.name == "nt":
-        return _execute_with_thread_timeout(func, args, kwargs, timeout, callback_name)
+        return _execute_with_thread_timeout(
+            func,
+            args,
+            kwargs,
+            timeout,
+            callback_name,
+        )
     # SIGALRM 仅主线程可用；非主线程回退到线程超时
     if (
         hasattr(signal, "SIGALRM")
         and hasattr(signal, "setitimer")
         and threading.current_thread() is threading.main_thread()
     ):
-        return _execute_with_sigalrm_timeout(func, args, kwargs, timeout, callback_name)
-    return _execute_with_thread_timeout(func, args, kwargs, timeout, callback_name)
+        return _execute_with_sigalrm_timeout(
+            func,
+            args,
+            kwargs,
+            timeout,
+            callback_name,
+        )
+    return _execute_with_thread_timeout(
+        func,
+        args,
+        kwargs,
+        timeout,
+        callback_name,
+    )
 
 
 # ============================================================================
@@ -284,7 +316,13 @@ def with_timeout(seconds: float):
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> None:
             callback_name = getattr(func, "__qualname__", func.__name__)
-            _ = invoke_with_timeout(func, args, kwargs, timeout=seconds, callback_name=callback_name)
+            _ = invoke_with_timeout(
+                func,
+                args,
+                kwargs,
+                timeout=seconds,
+                callback_name=callback_name,
+            )
 
         return wrapper
 
@@ -308,10 +346,11 @@ class TimeoutContext:
     """
 
     def __init__(self, seconds: float, name: str = "") -> None:
-        """Args:
+        """Initialize timeout context.
 
-        seconds: 超时时间（秒）
-        name: 上下文名称（用于日志）.
+        Args:
+            seconds: 超时时间（秒）
+            name: 上下文名称（用于日志）
 
         """
         self._seconds: float = seconds
@@ -319,6 +358,7 @@ class TimeoutContext:
         self._start_time: float = 0.0
 
     def __enter__(self) -> "TimeoutContext":
+        """Enter timeout context."""
         self._start_time = time.perf_counter()
         return self
 
@@ -328,6 +368,7 @@ class TimeoutContext:
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> bool:
+        """Exit timeout context."""
         elapsed_ms = (time.perf_counter() - self._start_time) * 1000
 
         if exc_type is not None:

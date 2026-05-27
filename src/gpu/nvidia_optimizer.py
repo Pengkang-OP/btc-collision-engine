@@ -58,6 +58,13 @@ class NvidiaDriverDetector:
     __slots__ = ("_device_info", "_logger")
 
     def __init__(self, device_info: dict, engine_logger: Any | None = None) -> None:
+        """Initialize NVIDIA driver version detector.
+
+        Args:
+            device_info: Device information dictionary
+            engine_logger: Optional logger instance
+
+        """
         self._device_info = device_info
         self._logger = engine_logger or logger
 
@@ -398,6 +405,13 @@ class NvidiaArchDetector:
     __slots__ = ("_device_info", "_logger")
 
     def __init__(self, device_info: dict, engine_logger: Any | None = None) -> None:
+        """Initialize NVIDIA architecture detector.
+
+        Args:
+            device_info: Device information dictionary
+            engine_logger: Optional logger instance
+
+        """
         self._device_info = device_info
         self._logger = engine_logger or logger
 
@@ -459,6 +473,14 @@ class NvidiaMemoryOptimizer:
         arch_features: dict,
         engine_logger: Any | None = None,
     ) -> None:
+        """Initialize NVIDIA workgroup validator.
+
+        Args:
+            device_info: Device information dictionary
+            arch_features: Architecture features dictionary
+            engine_logger: Optional logger instance
+
+        """
         self._device_info = device_info
         self._arch_features = arch_features
         self._logger = engine_logger or logger
@@ -545,6 +567,14 @@ class NvidiaGPUOptimizer:
         config: dict | None = None,
         engine_logger: Any | None = None,
     ) -> None:
+        """Initialize NVIDIA system optimizer.
+
+        Args:
+            device_info: Device information dictionary
+            config: Configuration dictionary
+            engine_logger: Optional logger instance
+
+        """
         self._device_info = device_info if isinstance(device_info, dict) else {}
         self._config = config or {}
         self._logger = engine_logger or logger

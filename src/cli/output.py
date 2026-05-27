@@ -43,7 +43,11 @@ def _get_utf8_console(stderr: bool = False, no_color: bool = False) -> Any:
     # 如果没有安装 rich，返回简单的对象
 
     class SimpleConsole:
-        def __init__(self: "SimpleConsole", no_color: bool = False, stderr: bool = False) -> None:
+        def __init__(
+            self: "SimpleConsole",
+            no_color: bool = False,
+            stderr: bool = False,
+        ) -> None:
             self.no_color: bool = no_color
             self.stderr: bool = stderr
 
@@ -65,6 +69,7 @@ class CLIOutput:
     _adaptive_console: Any | None = None  # 缓存用于自适应宽度的 Console 实例
 
     def __new__(cls, *args: Any, **kwargs: Any) -> "CLIOutput":
+        """创建单例实例。."""
         # __new__ 不抢占锁：get_instance() 已在外层加锁，
         # 若此处再次 acquire 同一把 Lock 会导致死锁。
         if cls._instance is None:
@@ -81,7 +86,12 @@ class CLIOutput:
         return cls._instance
 
     @classmethod
-    def init(cls, quiet: bool = False, no_color: bool = False, compact: bool = False) -> "CLIOutput":
+    def init(
+        cls,
+        quiet: bool = False,
+        no_color: bool = False,
+        compact: bool = False,
+    ) -> "CLIOutput":
         """初始化/重置单例（创建全新实例）。."""
         # v5.2.2: 使用 reset_instance 后通过正常构造创建，避免绕过 __new__
         cls.reset_instance()
@@ -95,6 +105,7 @@ class CLIOutput:
         cls._adaptive_console = None
 
     def __init__(self, quiet: bool = False, no_color: bool = False, compact: bool = False) -> None:
+        """初始化 CLI 输出管理器."""
         if getattr(self, "_initialized", False):
             return  # 单例已初始化，跳过
         self._initialized: bool = True
@@ -137,7 +148,9 @@ class CLIOutput:
     def warning(self, message: str, details: str | None = None) -> None:
         """打印 WARNING 级别消息。."""
         if Text is not None:
-            self.err_console.print(Text.assemble(("[WARN] ", "yellow"), message))
+            self.err_console.print(
+                Text.assemble(("[WARN] ", "yellow"), message),
+            )
         else:
             self.err_console.print(f"[WARN] {message}")
         if details:
@@ -235,7 +248,11 @@ class CLIOutput:
             for k, v in rows:
                 self.console.print(f"    {k}: {v}")
 
-    def dynamic_stats_panel(self, stats: dict[str, str], title: str = "System Status") -> None:
+    def dynamic_stats_panel(
+        self,
+        stats: dict[str, str],
+        title: str = "System Status",
+    ) -> None:
         """打印动态统计面板（自适应宽度）。.
 
         Args:
@@ -297,7 +314,11 @@ class CLIOutput:
         """打印最终摘要（自适应宽度）。."""
         panel_width = self._adaptive_width()
         if Panel is not None and Table is not None:
-            table = Table(show_header=False, box=None, width=panel_width - 8 if panel_width else None)
+            table = Table(
+                show_header=False,
+                box=None,
+                width=panel_width - 8 if panel_width else None,
+            )
             for k, v in stats.items():
                 table.add_row(f"{k}:", str(v))
             panel = Panel(
@@ -312,11 +333,19 @@ class CLIOutput:
             for k, v in stats.items():
                 self.console.print(f"  {k}: {v}")
 
-    def stats_panel(self, title: str, rows: list[tuple[str, str] | tuple[str, str, str]]) -> None:
+    def stats_panel(
+        self,
+        title: str,
+        rows: list[tuple[str, str] | tuple[str, str, str]],
+    ) -> None:
         """打印统计面板（自适应宽度）。."""
         panel_width = self._adaptive_width()
         if Panel is not None and Table is not None:
-            table = Table(show_header=False, box=None, width=panel_width - 8 if panel_width else None)
+            table = Table(
+                show_header=False,
+                box=None,
+                width=panel_width - 8 if panel_width else None,
+            )
             for row in rows:
                 if len(row) == 3:
                     k, v, style = row
@@ -407,7 +436,7 @@ def format_json(data: object) -> str:
     return json.dumps(data, indent=2, default=str)
 
 
-def paginate(
+def paginate(  # noqa: C901
     lines: list[str],
     *,
     title: str = "",
@@ -448,7 +477,7 @@ def paginate(
     _con = console
     if _con is None:
         try:
-            from rich.console import Console as _RC
+            from rich.console import Console as _RC  # noqa: N814
 
             _con = _RC()
         except Exception as e:
@@ -479,9 +508,13 @@ def paginate(
 
         if _con is not None:
             if title:
-                _con.print(f"[bold dim]-- {title} (Page {current_page}/{total_pages}) --[/bold dim]")
+                _con.print(
+                    f"[bold dim]-- {title} (Page {current_page}/{total_pages}) --[/bold dim]",
+                )
             else:
-                _con.print(f"[bold dim]-- Page {current_page}/{total_pages} --[/bold dim]")
+                _con.print(
+                    f"[bold dim]-- Page {current_page}/{total_pages} --[/bold dim]",
+                )
             for line in chunk:
                 _con.print(line)
             footer = f"[dim]({total} total lines, press Enter for next, q=quit)[/dim]"

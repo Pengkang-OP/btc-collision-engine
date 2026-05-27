@@ -65,6 +65,7 @@ class GPUFacade:
             checkpoint_enabled: 是否启用断点续传（兼容参数）
             dedup_enabled: 是否启用去重（兼容参数）
             config: 配置字典，可包含 gpu_device 等键
+            **kwargs: 其他兼容参数
 
         """
         self._driver_manager = None
@@ -92,6 +93,7 @@ class GPUFacade:
             mode: 碰撞模式 (random/sequential)
             resume: 是否从断点恢复（兼容参数）
             max_keys: 最大检查密钥数（兼容参数）
+            **kwargs: 其他兼容参数
 
         """
         if not self._is_initialized:
@@ -190,7 +192,7 @@ class GPUFacade:
             # 创建GPU设备
             from .device import GPUDevice
 
-            self._gpu_device = GPUDevice()  # GPUDevice.__init__() takes no args
+            self._gpu_device = GPUDevice()  # __init__() takes no args
             self._gpu_device.initialize(device_index=device_index)
 
             # 创建碰撞引擎 (使用已保存的 targets)

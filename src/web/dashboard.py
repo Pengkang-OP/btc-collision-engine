@@ -73,6 +73,7 @@ _api_key_required: bool = False
 
 
 def set_api_key(key: str | None) -> None:
+    """Set dashboard API key."""
     global _api_key, _api_key_required
     _api_key = key
     _api_key_required = key is not None and len(key) > 0
@@ -87,6 +88,8 @@ def _validate_api_key() -> bool:
 
 
 def require_auth(f):
+    """Decorator for requiring API authentication."""
+
     @wraps(f)
     def decorated(*args, **kwargs):
         if f.__name__ in UNPROTECTED_ROUTES:
@@ -924,6 +927,7 @@ def run_dashboard(
 
 
 def main():
+    """Dashboard CLI entry point."""
     parser = argparse.ArgumentParser(
         description="BTC 碰撞引擎 - Web 监控仪表板",
         formatter_class=argparse.RawDescriptionHelpFormatter,

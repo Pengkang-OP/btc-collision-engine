@@ -27,7 +27,11 @@ from types import TracebackType
 from typing import Any
 
 
-def _make_rotating_handler(filename: str, max_bytes: int, backup_count: int) -> RotatingFileHandler:
+def _make_rotating_handler(
+    filename: str,
+    max_bytes: int,
+    backup_count: int,
+) -> RotatingFileHandler:
     """工厂函数：Windows 返回 SafeRotatingFileHandler，其他平台返回原生 RotatingFileHandler."""
     if platform.system() == "Windows":
         # 延迟导入避免循环依赖（logging_config 也导入 logger）
@@ -40,7 +44,12 @@ def _make_rotating_handler(filename: str, max_bytes: int, backup_count: int) -> 
                 backupCount=backup_count,
                 encoding="utf-8",
             )
-    return RotatingFileHandler(filename, maxBytes=max_bytes, backupCount=backup_count, encoding="utf-8")
+    return RotatingFileHandler(
+        filename,
+        maxBytes=max_bytes,
+        backupCount=backup_count,
+        encoding="utf-8",
+    )
 
 
 class SafeStreamHandler(logging.StreamHandler):
@@ -51,6 +60,7 @@ class SafeStreamHandler(logging.StreamHandler):
     """
 
     def emit(self, record: logging.LogRecord) -> None:
+        """Emit log record with Windows encoding safety."""
         try:
             msg = self.format(record)
             stream = self.stream
@@ -61,7 +71,10 @@ class SafeStreamHandler(logging.StreamHandler):
             enc = getattr(stream, "encoding", "") or ""
             if enc.lower() not in ("utf-8", "utf8"):
                 # 将无法用目标编码输出的字符替换为 '?'
-                msg = msg.encode(enc, errors="replace").decode(enc, errors="replace")
+                msg = msg.encode(enc, errors="replace").decode(
+                    enc,
+                    errors="replace",
+                )
             stream.write(msg + self.terminator)
             self.flush()
         except RecursionError:
@@ -87,6 +100,7 @@ class ColoredFormatter(logging.Formatter):
     RESET = "\033[0m"
 
     def format(self, record: logging.LogRecord) -> str:
+        """Format log record with ANSI color codes."""
         # 保存原始级别名称
         orig_levelname = record.levelname
 
@@ -103,7 +117,20 @@ class ColoredFormatter(logging.Formatter):
 class PerformanceMonitor:
     """性能监控上下文管理器."""
 
-    def __init__(self, logger: logging.Logger, operation: str, level: str = "DEBUG") -> None:
+    def __init__(
+        self,
+        logger: logging.Logger,
+        operation: str,
+        level: str = "DEBUG",
+    ) -> None:
+        """Initialize performance monitor.
+
+        Args:
+            logger: Logger instance
+            operation: Operation name
+            level: Log level string
+
+        """
         self.logger = logger
         self.operation = operation
         self.level = getattr(logging, level.upper())
@@ -111,6 +138,7 @@ class PerformanceMonitor:
         self.end_time: float | None = None
 
     def __enter__(self) -> "PerformanceMonitor":
+        """Enter performance monitoring context."""
         self.start_time = time.perf_counter()
         return self
 
@@ -120,23 +148,34 @@ class PerformanceMonitor:
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> None:
+        """Exit performance monitoring context."""
         self.end_time = time.perf_counter()
         if self.start_time is None:
-            raise RuntimeError("EnhancedPerformanceMonitor 未正确进入上下文: start_time 为 None")
+            err_msg = "EnhancedPerformanceMonitor 未正确进入上下文: start_time 为 None"
+            raise RuntimeError(err_msg)
         elapsed_ms = (self.end_time - self.start_time) * 1000
 
         if exc_type is None:
-            self.logger.log(self.level, f"[Performance] {self.operation}: {elapsed_ms:.2f}ms")
+            self.logger.log(
+                self.level,
+                "[Performance] %s: %.2fms",
+                self.operation,
+                elapsed_ms,
+            )
         else:
             self.logger.error(
-                f"[Performance] {self.operation}: FAILED after {elapsed_ms:.2f}ms - {exc_val}",
+                "[Performance] %s: FAILED after %.2fms - %s",
+                self.operation,
+                elapsed_ms,
+                exc_val,
             )
 
     @property
     def elapsed_ms(self) -> float:
         """获取已耗时的毫秒数."""
         if self.start_time is None:
-            raise RuntimeError("EnhancedPerformanceMonitor 未正确进入上下文: start_time 为 None")
+            err_msg = "EnhancedPerformanceMonitor 未正确进入上下文: start_time 为 None"
+            raise RuntimeError(err_msg)
         if self.end_time is None:
             return (time.perf_counter() - self.start_time) * 1000
         return (self.end_time - self.start_time) * 1000
@@ -165,11 +204,13 @@ class SampledLogger:
         sample_rate: int = 100,
         max_per_second: float = 0.0,
     ) -> None:
-        """参数:
+        """Initialize rate-limited logger.
 
-        logger: 底层日志记录器
-        sample_rate: 采样率（每N条记录1条，计数采样）
-        max_per_second: 每秒最多记录N条（时间限频），0表示不限制.
+        Args:
+            logger: 底层日志记录器
+            sample_rate: 采样率（每N条记录1条，计数采样）
+            max_per_second: 每秒最多记录N条（时间限频），0表示不限制
+
         """
         self.logger = logger
         self.sample_rate = sample_rate
@@ -206,40 +247,68 @@ class SampledLogger:
         return False
 
     def debug(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Log debug message with rate limiting."""
         with self._lock:
             self._counter += 1
             # 防止计数器无限增长
             if self._counter >= self._COUNTER_MAX:
                 self._counter = 0
             if self._counter % self.sample_rate == 0 and self._should_log_by_time():
-                self.logger.debug(f"[Sampled 1/{self.sample_rate}] {msg}", *args, **kwargs)
+                self.logger.debug(
+                    "[Sampled 1/%s] %s",
+                    self.sample_rate,
+                    msg,
+                    *args,
+                    **kwargs,
+                )
 
     def info(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Log info message with rate limiting."""
         with self._lock:
             self._counter += 1
             # 防止计数器无限增长
             if self._counter >= self._COUNTER_MAX:
                 self._counter = 0
             if self._counter % self.sample_rate == 0 and self._should_log_by_time():
-                self.logger.info(f"[Sampled 1/{self.sample_rate}] {msg}", *args, **kwargs)
+                self.logger.info(
+                    "[Sampled 1/%s] %s",
+                    self.sample_rate,
+                    msg,
+                    *args,
+                    **kwargs,
+                )
 
     def warning(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Log warning message with rate limiting."""
         with self._lock:
             self._counter += 1
             # 防止计数器无限增长
             if self._counter >= self._COUNTER_MAX:
                 self._counter = 0
             if self._counter % self.sample_rate == 0 and self._should_log_by_time():
-                self.logger.warning(f"[Sampled 1/{self.sample_rate}] {msg}", *args, **kwargs)
+                self.logger.warning(
+                    "[Sampled 1/%s] %s",
+                    self.sample_rate,
+                    msg,
+                    *args,
+                    **kwargs,
+                )
 
     def error(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Log error message with rate limiting."""
         with self._lock:
             self._counter += 1
             # 防止计数器无限增长
             if self._counter >= self._COUNTER_MAX:
                 self._counter = 0
             if self._counter % self.sample_rate == 0 and self._should_log_by_time():
-                self.logger.error(f"[Sampled 1/{self.sample_rate}] {msg}", *args, **kwargs)
+                self.logger.error(
+                    "[Sampled 1/%s] %s",
+                    self.sample_rate,
+                    msg,
+                    *args,
+                    **kwargs,
+                )
 
 
 def setup_logger(
@@ -247,7 +316,8 @@ def setup_logger(
     level: str = "INFO",
     log_file: str | None = None,
     format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    max_bytes: int = 10 * 1024 * 1024,  # 10MB (与 logging_config.LOG_DEFAULT_MAX_BYTES 同步)
+    # 10MB (与 logging_config.LOG_DEFAULT_MAX_BYTES 同步)
+    max_bytes: int = 10 * 1024 * 1024,
     backup_count: int = 5,
     use_color: bool = True,
 ) -> logging.Logger:
@@ -290,10 +360,18 @@ def setup_logger(
         # 确保日志目录存在
         log_dir = os.path.dirname(log_file)
         if log_dir and not pathlib.Path(log_dir).exists():
-            pathlib.Path(log_dir).mkdir(mode=0o750, exist_ok=True, parents=True)
+            pathlib.Path(log_dir).mkdir(
+                mode=0o750,
+                exist_ok=True,
+                parents=True,
+            )
 
         # 使用 SafeRotatingFileHandler 自动轮转（Windows 安全）
-        file_handler: logging.FileHandler = _make_rotating_handler(log_file, max_bytes, backup_count)
+        file_handler: logging.FileHandler = _make_rotating_handler(
+            log_file,
+            max_bytes,
+            backup_count,
+        )
         file_handler.setLevel(getattr(logging, level))
         file_handler.setFormatter(logging.Formatter(format))
         logger.addHandler(file_handler)
@@ -319,7 +397,11 @@ def get_logger(name: str) -> logging.Logger:
     return logger
 
 
-def get_sampled_logger(name: str, sample_rate: int = 100, max_per_second: float = 0.0) -> SampledLogger:
+def get_sampled_logger(
+    name: str,
+    sample_rate: int = 100,
+    max_per_second: float = 0.0,
+) -> SampledLogger:
     """获取采样日志记录器（用于高频操作）.
 
     注意: 使用此函数前应先调用 init_logging() 配置全局日志系统，
@@ -340,7 +422,11 @@ def get_sampled_logger(name: str, sample_rate: int = 100, max_per_second: float 
     return SampledLogger(base_logger, sample_rate, max_per_second)
 
 
-def log_performance(logger: logging.Logger, operation: str, level: str = "DEBUG") -> Callable:
+def log_performance(
+    logger: logging.Logger,
+    operation: str,
+    level: str = "DEBUG",
+) -> Callable:
     """性能监控装饰器工厂.
 
     使用示例:
@@ -386,9 +472,11 @@ class AsyncLogger:
     _DROPPED_COUNT_MAX = 10**12
 
     def __init__(self, max_queue_size: int = 10000) -> None:
-        """参数:
+        """Initialize async logger.
 
-        max_queue_size: 队列最大长度，超出时丢弃最旧日志.
+        Args:
+            max_queue_size: 队列最大长度，超出时丢弃最旧日志
+
         """
         self._queue: queue.Queue = queue.Queue(maxsize=max_queue_size)
         self._handler: logging.Handler | None = None
@@ -453,11 +541,22 @@ class AsyncLogger:
         except queue.Full:
             # Q6修复: 添加丢弃计数上限，防止整数溢出
             self._dropped_count += 1
-            self._dropped_count = min(self._DROPPED_COUNT_MAX, self._dropped_count)
+            self._dropped_count = min(
+                self._DROPPED_COUNT_MAX,
+                self._dropped_count,
+            )
             # G5修复 & M-7修复: 简化警告条件，使用更清晰的逻辑
             dropped = self._dropped_count
             # 在关键阈值点警告：1K, 5K, 10K, 50K, 100K, 500K, 1M, 之后每5M警告一次
-            warning_thresholds = [1000, 5000, 10000, 50000, 100000, 500000, 1000000]
+            warning_thresholds = [
+                1000,
+                5000,
+                10000,
+                50000,
+                100000,
+                500000,
+                1000000,
+            ]
             is_threshold = dropped in warning_thresholds
             is_periodic = dropped > 1000000 and (dropped - 1000000) % 5000000 == 0
             if is_threshold or is_periodic:
@@ -509,18 +608,29 @@ class AsyncFileHandler(logging.Handler):
         >>> logger.addHandler(handler)
     """
 
-    def __init__(self, filename: str, max_bytes: int = 0, backup_count: int = 0) -> None:
-        """参数:
+    def __init__(
+        self,
+        filename: str,
+        max_bytes: int = 0,
+        backup_count: int = 0,
+    ) -> None:
+        """Initialize async file handler.
 
-        filename: 日志文件路径
-        max_bytes: 单个文件最大字节数（0表示不轮转）
-        backup_count: 保留的备份文件数.
+        Args:
+            filename: 日志文件路径
+            max_bytes: 单个文件最大字节数（0表示不轮转）
+            backup_count: 保留的备份文件数
+
         """
         super().__init__()
 
         # 创建底层文件处理器
         if max_bytes > 0:
-            self._handler: logging.Handler = _make_rotating_handler(filename, max_bytes, backup_count)
+            self._handler: logging.Handler = _make_rotating_handler(
+                filename,
+                max_bytes,
+                backup_count,
+            )
         else:
             self._handler = logging.FileHandler(filename, encoding="utf-8")
 

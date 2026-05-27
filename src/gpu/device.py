@@ -21,6 +21,22 @@ if PYOPENCL_AVAILABLE:
 else:
     cl = None  # type: ignore[assignment]
 
+
+def _assert_opencl_available() -> None:
+    """运行时检查 pyopencl 是否可用，不可用时抛出明确的 ImportError.
+
+    Raises:
+        ImportError: 当 pyopencl 未安装时
+
+    """
+    if not PYOPENCL_AVAILABLE:
+        raise ImportError(
+            "pyopencl 未安装。GPU 加速功能不可用。\n"
+            "请运行: pip install pyopencl\n"
+            "或在配置中禁用 GPU 加速。",
+        )
+
+
 from .constants import (
     OPENCL_MIN_REQUIRED_VERSION,
     OPENCL_OPTIMAL_VERSION,
@@ -508,6 +524,7 @@ class GPUDevice:
 
     def __init__(self) -> None:
         """初始化GPU设备对象."""
+        _assert_opencl_available()
         self.context = None
         self.queue = None  # 向后兼容: 默认队列
         self.compute_queue = None  # 计算队列(异步优化)
@@ -730,7 +747,9 @@ class GPUDevice:
                 # 参考: https://github.com/intel/compute-runtime/blob/master/opencl/doc/FAQ.md
                 # "Turning on profiling on out of order command queue serializes kernel execution."
                 ooo_prop = cl.command_queue_properties.OUT_OF_ORDER_EXEC_MODE_ENABLE
-                logger.info("启用GPU异步执行: Intel Arc 单 Out-of-Order 队列（DG2 numQueues=1, profiling=OFF）")
+                logger.info(
+                    "启用GPU异步执行: Intel Arc 单 Out-of-Order 队列（DG2 numQueues=1, profiling=OFF）",
+                )
                 self.queue = cl.CommandQueue(
                     self.context,
                     self.device,

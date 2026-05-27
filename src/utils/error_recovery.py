@@ -134,7 +134,8 @@ def _sanitize_error_message(message: str) -> str:
         message = message[:_max_message_length] + "...[truncated]"
 
     # 匹配 base58 WIF 私钥 (以 5/H/K/L 开头, 51-52 字符)
-    message = re.sub(r"\b[5HKL][1-9A-HJ-NP-Za-km-z]{50,51}\b", "[MASKED_WIF]", message)
+    _wif_pattern = r"\b[5HKL][1-9A-HJ-NP-Za-km-z]{50,51}\b"
+    message = re.sub(_wif_pattern, "[MASKED_WIF]", message)
 
     # 匹配 64 字符十六进制私钥
     # 注意: SHA-256 哈希值也是 64 字符 hex，掩码标签需区分以利回溯
@@ -143,7 +144,9 @@ def _sanitize_error_message(message: str) -> str:
     return message
 
 
-def classify_recoverable_error(error: Exception) -> RecoverableErrorCategory | None:
+def classify_recoverable_error(
+    error: Exception,
+) -> RecoverableErrorCategory | None:
     """分类可恢复的错误.
 
     先按错误消息关键字匹配（细粒度），再按异常类型匹配（粗粒度兜底）。
@@ -227,7 +230,8 @@ def retry_on_error(
 
                     sleep_time = min(delay * (backoff**attempt), max_delay)
                     if jitter:
-                        sleep_time *= 0.75 + random.SystemRandom().random() * 0.5  # nosec B311
+                        jitter_factor = 0.75 + random.SystemRandom().random() * 0.5  # nosec B311
+                        sleep_time *= jitter_factor
 
                     logger.warning(
                         f"{func.__name__} 第{attempt + 1}次重试 "
@@ -245,7 +249,9 @@ def retry_on_error(
                     time.sleep(sleep_time)
 
             if last_exception is None:
-                raise RuntimeError("error_recovery: last_exception is None after retry loop")
+                raise RuntimeError(
+                    "error_recovery: last_exception is None after retry loop",
+                )
             raise last_exception
 
         return wrapper
@@ -278,6 +284,7 @@ class RecoveryStats:
 
     @property
     def retry_success_rate(self) -> float:
+        """Get retry success rate as percentage."""
         if self.total_retries == 0:
             return 100.0
         return self.successful_retries / self.total_retries * 100
@@ -296,10 +303,26 @@ class FallbackStrategy:
     """
 
     def __init__(self, name: str) -> None:
+        """Initialize fallback strategy.
+
+        Args:
+            name: Strategy name
+
+        """
         self.name = name
         self._fallbacks: list[tuple[str, Callable[[], Any]]] = []
 
     def add_fallback(self, label: str, action: Callable[[], Any]) -> "FallbackStrategy":
+        """Add a fallback action.
+
+        Args:
+            label: Action label
+            action: Callable action
+
+        Returns:
+            Self for chaining
+
+        """
         self._fallbacks.append((label, action))
         return self
 
@@ -324,6 +347,7 @@ class FallbackStrategy:
 
     @property
     def fallback_count(self) -> int:
+        """Get number of registered fallbacks."""
         return len(self._fallbacks)
 
 
@@ -349,7 +373,9 @@ class ErrorRecoveryManager:
         recovery.register_fallback(RecoverableErrorCategory.GPU_RESOURCE, fs)
 
         # 应用装饰器
-        @recovery.recoverable(max_retries=3, category=RecoverableErrorCategory.GPU_RESOURCE)
+        @recovery.recoverable(
+            max_retries=3, category=RecoverableErrorCategory.GPU_RESOURCE,
+        )
         def run_gpu_batch(seed, batch_size):
             ...
     """
@@ -357,6 +383,12 @@ class ErrorRecoveryManager:
     MAX_HISTORY_PER_CATEGORY = 200
 
     def __init__(self, name: str = "default") -> None:
+        """Initialize error recovery manager.
+
+        Args:
+            name: Manager name
+
+        """
         self.name = name
         self._fallbacks: dict[RecoverableErrorCategory, FallbackStrategy] = {}
         self._lock = threading.RLock()
@@ -364,12 +396,34 @@ class ErrorRecoveryManager:
         self._retry_history: dict[RecoverableErrorCategory, list[RetryRecord]] = {}
         self._disabled_categories: set[RecoverableErrorCategory] = set()
 
-    def register_fallback(self, category: RecoverableErrorCategory, strategy: FallbackStrategy) -> None:
+    def register_fallback(
+        self,
+        category: RecoverableErrorCategory,
+        strategy: FallbackStrategy,
+    ) -> None:
+        """Register a fallback strategy for an error category.
+
+        Args:
+            category: Error category
+            strategy: Fallback strategy
+
+        """
         with self._lock:
             self._fallbacks[category] = strategy
-            logger.debug(f"[{self.name}] 注册 {category.value} 降级策略: {strategy.name}")
+            logger.debug(
+                f"[{self.name}] 注册 {category.value} 降级策略: {strategy.name}",
+            )
 
     def get_fallback(self, category: RecoverableErrorCategory) -> FallbackStrategy | None:
+        """Get fallback strategy for an error category.
+
+        Args:
+            category: Error category
+
+        Returns:
+            FallbackStrategy or None
+
+        """
         with self._lock:
             return self._fallbacks.get(category)
 
@@ -380,6 +434,15 @@ class ErrorRecoveryManager:
         attempt: int,
         success: bool,
     ) -> None:
+        """Record a retry attempt.
+
+        Args:
+            category: Error category
+            error: Exception that occurred
+            attempt: Attempt number
+            success: Whether the attempt succeeded
+
+        """
         record = RetryRecord(
             error_type=type(error).__name__,
             error_message=_sanitize_error_message(str(error)),
@@ -404,6 +467,12 @@ class ErrorRecoveryManager:
                     self._stats.failed_retries += 1
 
     def record_action(self, action: RecoveryAction) -> None:
+        """Record a recovery action.
+
+        Args:
+            action: Recovery action type
+
+        """
         with self._lock:
             if action == RecoveryAction.FALLBACK:
                 self._stats.fallbacks_triggered += 1
@@ -413,6 +482,15 @@ class ErrorRecoveryManager:
                 self._stats.degrades_triggered += 1
 
     def execute_fallback(self, category: RecoverableErrorCategory) -> tuple[bool, str | None]:
+        """Execute fallback strategy for an error category.
+
+        Args:
+            category: Error category
+
+        Returns:
+            (success, label) tuple
+
+        """
         strategy = self.get_fallback(category)
         if strategy is None:
             logger.warning(f"[{self.name}] {category.value} 无已注册的降级策略")
@@ -422,20 +500,47 @@ class ErrorRecoveryManager:
         return strategy.execute()
 
     def disable_category(self, category: RecoverableErrorCategory) -> None:
+        """Disable recovery for an error category.
+
+        Args:
+            category: Error category to disable
+
+        """
         with self._lock:
             self._disabled_categories.add(category)
             logger.info(f"[{self.name}] {category.value} 恢复策略已禁用")
 
     def enable_category(self, category: RecoverableErrorCategory) -> None:
+        """Enable recovery for an error category.
+
+        Args:
+            category: Error category to enable
+
+        """
         with self._lock:
             self._disabled_categories.discard(category)
             logger.info(f"[{self.name}] {category.value} 恢复策略已启用")
 
     def is_category_disabled(self, category: RecoverableErrorCategory) -> bool:
+        """Check if recovery is disabled for a category.
+
+        Args:
+            category: Error category
+
+        Returns:
+            True if disabled
+
+        """
         with self._lock:
             return category in self._disabled_categories
 
     def get_stats(self) -> RecoveryStats:
+        """Get recovery statistics.
+
+        Returns:
+            RecoveryStats instance
+
+        """
         with self._lock:
             return RecoveryStats(
                 total_errors=self._stats.total_errors,
@@ -448,6 +553,15 @@ class ErrorRecoveryManager:
             )
 
     def get_history(self, category: RecoverableErrorCategory | None = None) -> dict:
+        """Get retry history.
+
+        Args:
+            category: Optional category filter
+
+        Returns:
+            History dictionary
+
+        """
         with self._lock:
             if category is not None:
                 records = self._retry_history.get(category, [])
@@ -484,11 +598,18 @@ class ErrorRecoveryManager:
             return result
 
     def reset_stats(self) -> None:
+        """Reset recovery statistics."""
         with self._lock:
             self._stats = RecoveryStats()
             logger.info(f"[{self.name}] 恢复统计已重置")
 
     def reset_history(self, category: RecoverableErrorCategory | None = None) -> None:
+        """Reset retry history.
+
+        Args:
+            category: Optional category to reset (None resets all)
+
+        """
         with self._lock:
             if category is not None:
                 self._retry_history.pop(category, None)
@@ -536,7 +657,9 @@ class ErrorRecoveryManager:
                         result = func(*args, **kwargs)
                         if resolved_category is not None and attempt > 0:
                             if last_exception is None:
-                                raise RuntimeError("last_exception not set for retry recording")
+                                raise RuntimeError(
+                                    "last_exception not set for retry recording",
+                                )
                             manager.record_retry(
                                 resolved_category,
                                 last_exception,
@@ -566,12 +689,18 @@ class ErrorRecoveryManager:
                         if attempt >= max_retries:
                             break
 
-                        sleep_time = min(delay * (backoff**attempt), max_delay)
-                        sleep_time *= 0.75 + random.SystemRandom().random() * 0.5  # nosec B311
+                        sleep_time = min(
+                            delay * (backoff**attempt),
+                            max_delay,
+                        )
+                        jitter_factor = 0.75 + random.SystemRandom().random() * 0.5  # nosec B311
+                        sleep_time *= jitter_factor
 
                         logger.warning(
-                            f"[{manager.name}] {func.__name__} 第{attempt + 1}次重试 "
-                            f"({resolved_category.value}, {type(e).__name__}: "
+                            f"[{manager.name}] {func.__name__} "
+                            f"第{attempt + 1}次重试 "
+                            f"({resolved_category.value}, "
+                            f"{type(e).__name__}: "
                             f"{_sanitize_error_message(str(e))}, "
                             f"延迟: {sleep_time:.2f}s)",
                         )
@@ -579,7 +708,9 @@ class ErrorRecoveryManager:
                         time.sleep(sleep_time)
 
                 if last_exception is None:
-                    raise RuntimeError("error_recovery: last_exception is None after retry loop")
+                    raise RuntimeError(
+                        "error_recovery: last_exception is None after retry loop",
+                    )
                 manager.record_retry(
                     resolved_category,
                     last_exception,
@@ -588,7 +719,9 @@ class ErrorRecoveryManager:
                 )
 
                 if resolved_category is not None:
-                    fallback_ok, fallback_label = manager.execute_fallback(resolved_category)
+                    fallback_ok, fallback_label = manager.execute_fallback(
+                        resolved_category,
+                    )
                     if fallback_ok:
                         try:
                             result = func(*args, **kwargs)
@@ -598,7 +731,9 @@ class ErrorRecoveryManager:
                             )
                             return result
                         except Exception as fb_err:
-                            logger.error(f"[{manager.name}] {func.__name__} 降级后重试也失败: {fb_err}")
+                            logger.error(
+                                f"[{manager.name}] {func.__name__} 降级后重试也失败: {fb_err}",
+                            )
                             raise fb_err
 
                 raise last_exception

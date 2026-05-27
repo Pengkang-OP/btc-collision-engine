@@ -85,8 +85,9 @@ from .core import CollisionCore
 from .key_generator import (
     KeyGenerationStrategy,
 )
-from .monitoring import PerformanceMonitoringPipeline
-from .vendor_strategy import VendorOptimizationFactory  # noqa: F401 # 保留供测试 patch 目标
+from .monitoring import (
+    PerformanceMonitoringPipeline,
+)
 
 logger = get_configured_logger(__name__)
 
@@ -108,7 +109,7 @@ ASYNC_KEY_GEN_BASE_TIMEOUT = 5.0
 ASYNC_KEY_GEN_PER_KEY_TIME = 0.00001
 ASYNC_KEY_GEN_SAFETY_FACTOR = 2.0
 
-from src.gpu._availability import PYOPENCL_AVAILABLE
+from src.gpu._availability import PYOPENCL_AVAILABLE  # noqa: E402
 
 if PYOPENCL_AVAILABLE:
     import pyopencl as cl  # noqa: F401
@@ -169,7 +170,9 @@ class GPUEngineConfig:
     async_log_max_bytes: int = LOG_DEFAULT_MAX_BYTES
     async_log_backup_count: int = 5
     check_uncompressed: bool | None = None
-    key_generation_strategy: KeyGenerationStrategy = field(default=KeyGenerationStrategy.PRNG_SEED)
+    key_generation_strategy: KeyGenerationStrategy = field(
+        default=KeyGenerationStrategy.PRNG_SEED,
+    )
     # Phase 6.1: 依赖注入配置
     device_manager_class: Any | None = None  # 自定义GPUDeviceManager类
     search_coordinator_class: Any | None = None  # 自定义SearchModeCoordinator类
@@ -237,7 +240,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         async_log_max_bytes: int = LOG_DEFAULT_MAX_BYTES,
         async_log_backup_count: int = 5,
         check_uncompressed: bool | None = None,
-        key_generation_strategy: KeyGenerationStrategy = KeyGenerationStrategy.PRNG_SEED,
+        key_generation_strategy: KeyGenerationStrategy = (KeyGenerationStrategy.PRNG_SEED,),
         # v3.2.1: 私钥生成策略
         config: "GPUEngineConfig | None" = None,  # v4.3.1: 配置对象优先
         gpu_config: dict[str, Any] | None = None,  # v5.2.1: GPU 配置段（来自 facade）
@@ -298,7 +301,8 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 "PyOpenCL 不可用，无法使用 GPU 加速。\n"
                 "诊断步骤:\n"
                 "  1. 安装 OpenCL 运行时:\n"
-                "     - NVIDIA: conda install pyopencl nccl-cu* (或 pip install pyopencl)\n"
+                "     - NVIDIA: conda install pyopencl"
+                " nccl-cu* (或 pip install pyopencl)\n"
                 "     - Intel: 下载 Intel OpenCL Runtime\n"
                 "     - AMD: 安装 AMD APP SDK\n"
                 "  2. 验证 GPU 驱动已正确安装\n"
@@ -313,7 +317,9 @@ class GPUCollisionEngine(BaseCollisionEngine):
         # CPU 恢复路径 (_result_processor.py:process_matches_prng) 直接
         # 用 (seed_int + key_idx) % 2^256 重建，均不依赖此 KeyGenerator。
         # key_generation_strategy 参数保留用于未来 CPU 路径集成。
-        logger.debug(f"GPU引擎：私钥生成策略参数: {key_generation_strategy.value} (GPU路径不使用)")
+        logger.debug(
+            f"GPU引擎：私钥生成策略参数: {key_generation_strategy.value} (GPU路径不使用)",
+        )
 
         # 初始化基类（提供 self.config, self._lock 等基础设施）
         super().__init__(
@@ -340,11 +346,20 @@ class GPUCollisionEngine(BaseCollisionEngine):
         self._data_logger_adapter = None
         self._enhanced_monitoring_adapter = None
         if on_progress:
-            self.event_bus.subscribe(EventType.ENGINE_PROGRESS, self._on_progress_callback)
+            self.event_bus.subscribe(
+                EventType.ENGINE_PROGRESS,
+                self._on_progress_callback,
+            )
         if on_match:
-            self.event_bus.subscribe(EventType.ENGINE_MATCH, self._on_match_callback)
+            self.event_bus.subscribe(
+                EventType.ENGINE_MATCH,
+                self._on_match_callback,
+            )
         if on_complete:
-            self.event_bus.subscribe(EventType.ENGINE_COMPLETE, self._on_complete_callback)
+            self.event_bus.subscribe(
+                EventType.ENGINE_COMPLETE,
+                self._on_complete_callback,
+            )
         self._match_callback_timeout = 5.0
         self._stop_event = threading.Event()
         self._running = False
@@ -394,7 +409,11 @@ class GPUCollisionEngine(BaseCollisionEngine):
         # 异步日志
         self._async_log_handler: Any | None = None
         if use_async_logging:
-            self._setup_async_logging(async_log_file, async_log_max_bytes, async_log_backup_count)
+            self._setup_async_logging(
+                async_log_file,
+                async_log_max_bytes,
+                async_log_backup_count,
+            )
 
         # === Phase 2: GPUDeviceManager ===
         # v5.2.1: 合并 gpu_config（来自 facade/config.intel_arc.json）与引擎参数
@@ -687,7 +706,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         )
         self.event_bus.publish(complete_event)
 
-    def _cleanup_stop_components(self) -> None:
+    def _cleanup_stop_components(self) -> None:  # noqa: C901
         """停止后清理所有组件（监控、去重、日志、种子预生成、异步执行器等）。."""
         if self.enhanced_monitoring:
             try:
@@ -789,9 +808,11 @@ class GPUCollisionEngine(BaseCollisionEngine):
     # ========== 上下文管理器 ==========
 
     def __enter__(self) -> "GPUCollisionEngine":
+        """进入上下文管理器."""
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        """退出上下文管理器，停止引擎."""
         self.stop()
 
     def __del__(self) -> None:
@@ -813,10 +834,14 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 return
 
             # Q7增强: 尽力保存断点（仅在引擎完全初始化且有数据时尝试）
-            if hasattr(self, "checkpoint_mgr") and self.checkpoint_mgr is not None:
-                if hasattr(self, "stats") and self.stats is not None:
-                    with contextlib.suppress(Exception):
-                        self._save_checkpoint_on_stop()
+            if (
+                hasattr(self, "checkpoint_mgr")
+                and self.checkpoint_mgr is not None
+                and hasattr(self, "stats")
+                and self.stats is not None
+            ):
+                with contextlib.suppress(Exception):
+                    self._save_checkpoint_on_stop()
 
             # 只设置停止事件，不调用完整的 stop() 方法
             if not self._stop_event.is_set():

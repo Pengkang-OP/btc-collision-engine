@@ -102,14 +102,15 @@ class AdaptivePipelineController:
         on_adjust_batch_size: Callable[[int], None] | None = None,
         on_adjust_seed_batch_size: Callable[[int], None] | None = None,
     ) -> None:
-        """Args:
+        """Initialize the adaptive pipeline.
 
-        initial_queue_depth: 初始队列深度
-        initial_batch_size: 初始批次大小
-        initial_seed_prefetch_size: 初始种子队列容量
-        on_adjust_queue_depth: 队列深度调整回调(新值)
-        on_adjust_batch_size: 批次大小调整回调(新值)
-        on_adjust_seed_batch_size: 种子生成批量调整回调(新值).
+        Args:
+            initial_queue_depth: 初始队列深度
+            initial_batch_size: 初始批次大小
+            initial_seed_prefetch_size: 初始种子队列容量
+            on_adjust_queue_depth: 队列深度调整回调(新值)
+            on_adjust_batch_size: 批次大小调整回调(新值)
+            on_adjust_seed_batch_size: 种子生成批量调整回调(新值)
 
         """
         self._queue_depth = initial_queue_depth
@@ -224,7 +225,8 @@ class AdaptivePipelineController:
         """评估当前管道状态并输出调整指令.
 
         Returns:
-            调整动作字典，如 {"queue_depth": 10, "batch_size": 1310720, "seed_batch": 72}
+            调整动作字典，如 {"queue_depth": 10, "batch_size": 1310720,
+            "seed_batch": 72}
 
         """
         if self._cooldown_remaining > 0:
@@ -357,32 +359,40 @@ class AdaptivePipelineController:
 
     @property
     def queue_depth(self) -> int:
+        """Get current queue depth."""
         return self._queue_depth
 
     @property
     def batch_size(self) -> int:
+        """Get current batch size."""
         return self._batch_size
 
     @property
     def seed_batch_size(self) -> int:
+        """Get current seed batch size."""
         return self._seed_batch_size
 
     def get_stats(self) -> dict[str, Any]:
+        """Get pipeline performance statistics."""
         with self._metrics_lock:
             recent = self._metrics_window[-self.EVAL_INTERVAL_BATCHES :]
-            avg_queue = sum(m.queue_occupancy for m in recent) / len(recent) if recent else 0
+            if recent:
+                avg_queue = sum(m.queue_occupancy for m in recent) / len(recent)
+            else:
+                avg_queue = 0
             avg_exec = (
-                sum(m.exec_time_ms for m in recent if m.exec_time_ms > 0)
-                / len([m for m in recent if m.exec_time_ms > 0])
+                (
+                    sum(m.exec_time_ms for m in recent if m.exec_time_ms > 0)
+                    / len([m for m in recent if m.exec_time_ms > 0])
+                )
                 if recent
                 else 0
             )
-            avg_seed = (
-                sum(m.seed_queue_occupancy for m in recent if m.seed_queue_occupancy > 0)
-                / len([m for m in recent if m.seed_queue_occupancy > 0])
-                if recent
-                else 0
-            )
+            if recent:
+                seed_vals = [m.seed_queue_occupancy for m in recent if m.seed_queue_occupancy > 0]
+                avg_seed = sum(seed_vals) / len(seed_vals) if seed_vals else 0
+            else:
+                avg_seed = 0
 
         return {
             "queue_depth": self._queue_depth,

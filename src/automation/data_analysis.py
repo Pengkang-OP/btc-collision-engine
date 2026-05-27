@@ -24,7 +24,13 @@ class DataAnalysisModule:
     """数据分析模块 - 自动处理输入数据并生成深度分析报告."""
 
     def __init__(self, project_root: Path | None = None):
-        self.project_root = project_root or Path(__file__).parent.parent.parent.parent
+        """初始化数据分析模块."""
+        self.project_root = (
+            project_root
+            or Path(
+                __file__,
+            ).parent.parent.parent.parent
+        )
         self.analysis_cache: dict = {}
 
     def analyze(self, target_path: str | None = None) -> AnalysisReport:
@@ -60,7 +66,10 @@ class DataAnalysisModule:
         """生成唯一报告ID."""
         return f"analysis_{uuid.uuid4().hex[:12]}"
 
-    def _collect_data_summary(self, target_path: str | None = None) -> dict[str, Any]:
+    def _collect_data_summary(
+        self,
+        target_path: str | None = None,
+    ) -> dict[str, Any]:
         """收集数据摘要.
 
         自 v4.3.1: 合并 _analyze_project_structure 和 _analyze_code_metrics
@@ -298,7 +307,10 @@ class DataAnalysisModule:
 
         # 确保分数在合理范围内
         stats["quality_score"] = max(0, min(100, stats["quality_score"]))
-        stats["maintainability_index"] = max(0, min(100, stats["maintainability_index"]))
+        stats["maintainability_index"] = max(
+            0,
+            min(100, stats["maintainability_index"]),
+        )
 
         return stats
 
@@ -402,7 +414,11 @@ class DataAnalysisModule:
 
         return issues
 
-    def _generate_recommendations(self, issues: list[Issue], statistics: dict[str, Any]) -> list[str]:
+    def _generate_recommendations(
+        self,
+        issues: list[Issue],
+        statistics: dict[str, Any],
+    ) -> list[str]:
         """生成建议."""
         recommendations = []
 

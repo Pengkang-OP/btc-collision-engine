@@ -50,6 +50,14 @@ class IntelGPUOptimizer:
     )
 
     def __init__(self, device: Any, config: dict[str, Any], engine_logger: Any = None) -> None:
+        """Initialize Intel GPU optimizer.
+
+        Args:
+            device: GPU device instance
+            config: Configuration dictionary
+            engine_logger: Optional logger instance
+
+        """
         self._device = device
         self._config = config
         self._logger = engine_logger or logger
@@ -129,7 +137,7 @@ class IntelGPUOptimizer:
 
     @staticmethod
     def _lazy_import_components() -> tuple:
-        """延迟导入所有 5 个监控/调优组件类，返回 (Timeout, Memory, Benchmark, Tuner, Reporter)。
+        """延迟导入所有 5 个监控/调优组件类，返回 (Timeout, Memory, Benchmark, Tuner, Reporter)。.
 
         导入失败的组件对应位置为 None。.
         """

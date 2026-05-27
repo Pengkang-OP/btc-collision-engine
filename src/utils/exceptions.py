@@ -1,6 +1,7 @@
 """Custom exception classes for the collision engine.
 
-Provides unified exception base class and error code system with context support.
+Provides unified exception base class and error code system with
+context support.
 """
 
 from __future__ import annotations
@@ -97,7 +98,13 @@ class ConfigError(CollisionError):
         context: dict[str, Any] | None = None,
         original_error: Exception | None = None,
     ) -> None:
-        super().__init__(message, error_code or self.CONFIG_ERROR, context, original_error)
+        """Initialize ConfigError."""
+        super().__init__(
+            message,
+            error_code or self.CONFIG_ERROR,
+            context,
+            original_error,
+        )
 
 
 class ValidationError(CollisionError):
@@ -110,7 +117,13 @@ class ValidationError(CollisionError):
         context: dict[str, Any] | None = None,
         original_error: Exception | None = None,
     ) -> None:
-        super().__init__(message, error_code or self.VALIDATION_ERROR, context, original_error)
+        """Initialize ValidationError."""
+        super().__init__(
+            message,
+            error_code or self.VALIDATION_ERROR,
+            context,
+            original_error,
+        )
 
 
 class KeyGenerationError(CollisionError):
@@ -123,7 +136,13 @@ class KeyGenerationError(CollisionError):
         context: dict[str, Any] | None = None,
         original_error: Exception | None = None,
     ) -> None:
-        super().__init__(message, error_code or self.KEY_GENERATION_ERROR, context, original_error)
+        """Initialize KeyGenerationError."""
+        super().__init__(
+            message,
+            error_code or self.KEY_GENERATION_ERROR,
+            context,
+            original_error,
+        )
 
 
 class AddressGenerationError(CollisionError):
@@ -136,7 +155,13 @@ class AddressGenerationError(CollisionError):
         context: dict[str, Any] | None = None,
         original_error: Exception | None = None,
     ) -> None:
-        super().__init__(message, error_code or self.ADDRESS_GENERATION_ERROR, context, original_error)
+        """Initialize AddressGenerationError."""
+        super().__init__(
+            message,
+            error_code or self.ADDRESS_GENERATION_ERROR,
+            context,
+            original_error,
+        )
 
 
 class CheckpointError(CollisionError):
@@ -149,7 +174,13 @@ class CheckpointError(CollisionError):
         context: dict[str, Any] | None = None,
         original_error: Exception | None = None,
     ) -> None:
-        super().__init__(message, error_code or self.CHECKPOINT_ERROR, context, original_error)
+        """Initialize CheckpointError."""
+        super().__init__(
+            message,
+            error_code or self.CHECKPOINT_ERROR,
+            context,
+            original_error,
+        )
 
 
 class DeduplicationError(CollisionError):
@@ -162,7 +193,13 @@ class DeduplicationError(CollisionError):
         context: dict[str, Any] | None = None,
         original_error: Exception | None = None,
     ) -> None:
-        super().__init__(message, error_code or self.DEDUPLICATION_ERROR, context, original_error)
+        """Initialize DeduplicationError."""
+        super().__init__(
+            message,
+            error_code or self.DEDUPLICATION_ERROR,
+            context,
+            original_error,
+        )
 
 
 class TargetResolutionError(CollisionError):
@@ -175,7 +212,13 @@ class TargetResolutionError(CollisionError):
         context: dict[str, Any] | None = None,
         original_error: Exception | None = None,
     ) -> None:
-        super().__init__(message, error_code or self.TARGET_RESOLUTION_ERROR, context, original_error)
+        """Initialize TargetResolutionError."""
+        super().__init__(
+            message,
+            error_code or self.TARGET_RESOLUTION_ERROR,
+            context,
+            original_error,
+        )
 
 
 class CryptoBackendError(CollisionError):
@@ -188,7 +231,13 @@ class CryptoBackendError(CollisionError):
         context: dict[str, Any] | None = None,
         original_error: Exception | None = None,
     ) -> None:
-        super().__init__(message, error_code or self.CRYPTO_BACKEND_ERROR, context, original_error)
+        """Initialize CryptoBackendError."""
+        super().__init__(
+            message,
+            error_code or self.CRYPTO_BACKEND_ERROR,
+            context,
+            original_error,
+        )
 
 
 class GPUError(CollisionError):
@@ -201,4 +250,10 @@ class GPUError(CollisionError):
         context: dict[str, Any] | None = None,
         original_error: Exception | None = None,
     ) -> None:
-        super().__init__(message, error_code or self.UNKNOWN_ERROR, context, original_error)
+        """Initialize GPUError."""
+        super().__init__(
+            message,
+            error_code or self.UNKNOWN_ERROR,
+            context,
+            original_error,
+        )

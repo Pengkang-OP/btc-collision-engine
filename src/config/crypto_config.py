@@ -7,11 +7,11 @@
 import json
 import os
 import pathlib
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 
-class CryptoBackendType(str, Enum):
+class CryptoBackendType(StrEnum):
     """加密后端类型（字符串版本，用于配置）.
 
     使用 (str, Enum) 而非 StrEnum 以保证一致性。

@@ -21,6 +21,9 @@ env/
 .qoder/
 .qodo/
 .trae/
+.arts/
+.codeartsdoer/
+.cursor/
 .codebuddy/
 .history/
 *.swp
@@ -39,6 +42,8 @@ build/
 logs/
 data_logs/
 monitoring_data/
+.cleanup_logs/
+benchmarks/results/
 checkpoint.json
 *checkpoint.json
 config.json
@@ -53,8 +58,16 @@ htmlcov/
 # === Temporary / Debug / Report Files ===
 _*.py
 _*.txt
+__*.txt
 _*.json
 _*.toml
+*.flake8*.txt
+*ruff_*.txt
+ruff_*.txt
+output_kce*.txt
+tmp_*.txt
+.cf_*
+checkpoint*.json
 debug_*.py
 debug_*.txt
 quick_test_*.py

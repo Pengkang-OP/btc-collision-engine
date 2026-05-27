@@ -837,6 +837,7 @@ class GlobalGPUMemoryManager:
     _pools: dict[int, GPUMemoryPool]
 
     def __new__(cls) -> "GlobalGPUMemoryManager":
+        """Create singleton GlobalGPUMemoryManager instance."""
         _inst = cast("GlobalGPUMemoryManager | None", cls._instance)
         if _inst is None:
             with cls._creation_lock:

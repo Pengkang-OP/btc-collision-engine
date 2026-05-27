@@ -1,4 +1,4 @@
-"""智能审核模块
+"""智能审核模块.
 
 =============
 校验测试结果与业务规则，拦截异常并记录
@@ -23,7 +23,7 @@ from .models import (
 
 
 class AuditModule:
-    """智能审核模块"""
+    """智能审核模块."""
 
     # 默认审核规则
     DEFAULT_RULES = [
@@ -94,6 +94,7 @@ class AuditModule:
     ]
 
     def __init__(self, rules: list[AuditRule] | None = None):
+        """初始化审核模块."""
         self.rules = rules or self.DEFAULT_RULES
         self.audit_history: list[AuditResult] = []
 
@@ -103,12 +104,15 @@ class AuditModule:
         analysis_report: AnalysisReport | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> AuditResult:
-        """执行审核"""
+        """执行审核."""
         audit_id = self._generate_audit_id()
 
         try:
             # 计算审核指标
-            metrics = self._compute_audit_metrics(test_results, analysis_report)
+            metrics = self._compute_audit_metrics(
+                test_results,
+                analysis_report,
+            )
 
             # 执行规则检查
             violations, warnings_list, passed_checks = self._check_rules(
@@ -156,7 +160,7 @@ class AuditModule:
         return result
 
     def _generate_audit_id(self) -> str:
-        """生成审核ID"""
+        """生成审核ID."""
         return f"audit_{uuid.uuid4().hex[:12]}"
 
     def _compute_audit_metrics(
@@ -164,7 +168,7 @@ class AuditModule:
         test_results: TestSuiteResult,
         analysis_report: AnalysisReport | None,
     ) -> dict[str, Any]:
-        """计算审核指标
+        """计算审核指标.
 
         v4.3.1: 添加错误容错 — 单个指标计算失败不影响整体审计。
         """
@@ -214,7 +218,14 @@ class AuditModule:
 
             # 配置状态（安全访问嵌套属性）
             try:
-                data_summary = getattr(analysis_report, "data_summary", None) or {}
+                data_summary = (
+                    getattr(
+                        analysis_report,
+                        "data_summary",
+                        None,
+                    )
+                    or {}
+                )
                 config_info = (
                     data_summary.get("configuration", {}) if isinstance(data_summary, dict) else {}
                 )
@@ -277,7 +288,7 @@ class AuditModule:
         test_results: TestSuiteResult,
         analysis_report: AnalysisReport | None,
     ) -> tuple:
-        """执行规则检查"""
+        """执行规则检查."""
         violations = []
         warnings = []
         passed_checks = 0
@@ -326,8 +337,12 @@ class AuditModule:
 
         return violations, warnings, passed_checks
 
-    def _evaluate_rule(self, rule: AuditRule, metrics: dict[str, Any]) -> dict[str, Any]:
-        """评估单条规则
+    def _evaluate_rule(
+        self,
+        rule: AuditRule,
+        metrics: dict[str, Any],
+    ) -> dict[str, Any]:
+        """评估单条规则.
 
         自 v4.3.1: 使用正则表达式匹配条件，防止子字符串误匹配。
         例如 "test_pass_rate >= 90" 不会错误匹配 "test_pass_rate >= 900"。
@@ -383,7 +398,7 @@ class AuditModule:
         warnings: list[Issue],
         passed_checks: int,
     ) -> SystemStatus:
-        """确定审核状态"""
+        """确定审核状态."""
         # 检查是否有阻塞性违规
         critical_violations = [v for v in violations if v.severity == Severity.CRITICAL]
         high_violations = [v for v in violations if v.severity == Severity.HIGH]
@@ -405,7 +420,7 @@ class AuditModule:
         return SystemStatus.PASSED
 
     def get_audit_summary(self) -> dict[str, Any]:
-        """获取审核摘要"""
+        """获取审核摘要."""
         if not self.audit_history:
             return {"message": "暂无审核记录"}
 
@@ -421,8 +436,13 @@ class AuditModule:
             "pass_rate": f"{latest.passed_checks}/{latest.total_checks}",
         }
 
-    def export_rules(self, filepath: str):
-        """导出审核规则"""
+    def export_rules(self, filepath: str) -> None:
+        """导出审核规则到 JSON 文件.
+
+        Args:
+            filepath: 目标文件路径
+
+        """
         rules_data = [
             {
                 "id": r.id,
@@ -439,7 +459,10 @@ class AuditModule:
             json.dump(rules_data, f, ensure_ascii=False, indent=2)
 
 
-def audit(test_results: TestSuiteResult, analysis_report: AnalysisReport | None = None) -> AuditResult:
-    """执行审核"""
+def audit(
+    test_results: TestSuiteResult,
+    analysis_report: AnalysisReport | None = None,
+) -> AuditResult:
+    """执行审核."""
     module = AuditModule()
     return module.audit(test_results, analysis_report)

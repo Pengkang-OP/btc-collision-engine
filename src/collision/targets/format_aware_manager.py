@@ -16,7 +16,10 @@ Example:
 import pathlib
 import threading
 
-from src.core.multi_format_generator import AddressFormat, MultiFormatAddressGenerator
+from src.core.multi_format_generator import (
+    AddressFormat,
+    MultiFormatAddressGenerator,
+)
 from src.utils import get_configured_logger
 
 logger = get_configured_logger("FormatAwareTargetManager")
@@ -124,7 +127,12 @@ class FormatAwareTargetManager:
                     addresses = [line.strip() for line in f if line.strip() and not line.startswith("#")]
 
                 count = self.add_targets(addresses)
-                logger.info(f"从文件加载目标: {filepath}, {count}/{len(addresses)} 成功")
+                logger.info(
+                    "从文件加载目标: %s, %s/%s 成功",
+                    filepath,
+                    count,
+                    len(addresses),
+                )
                 return count
 
             except (OSError, ValueError, UnicodeDecodeError) as e:
@@ -192,7 +200,7 @@ class FormatAwareTargetManager:
             return len(self._targets_by_format.get(format_type, set()))
 
     def check_match(self, private_key: bytes) -> tuple[bool, str | None, str | None]:
-        """检查私钥是否匹配任何目标
+        """检查私钥是否匹配任何目标.
 
         【说明】返回第一个匹配，如需所有匹配请用 check_match_all.
 
@@ -205,8 +213,11 @@ class FormatAwareTargetManager:
         """
         return self._generator.match_address(private_key, self._targets_by_format)
 
-    def check_match_all(self, private_key: bytes) -> tuple[bool, list[tuple[str, str]]]:
-        """检查私钥是否匹配所有目标格式的地址
+    def check_match_all(
+        self,
+        private_key: bytes,
+    ) -> tuple[bool, list[tuple[str, str]]]:
+        """检查私钥是否匹配所有目标格式的地址.
 
         【完整检查】遍历所有目标格式，返回所有匹配的地址.
 
@@ -219,7 +230,10 @@ class FormatAwareTargetManager:
 
         """
         with self._lock:
-            return self._generator.match_all_formats(private_key, self._targets_by_format)
+            return self._generator.match_all_formats(
+                private_key,
+                self._targets_by_format,
+            )
 
     def clear(self) -> None:
         """清空所有目标."""
@@ -260,5 +274,5 @@ class FormatAwareTargetManager:
         return address.strip().lower() in self._all_targets
 
     def __repr__(self) -> str:
-        stats = self.get_format_stats()
-        return f"FormatAwareTargetManager({stats})"
+        """返回目标管理器的字符串表示."""
+        return f"FormatAwareTargetManager({self.get_format_stats()})"

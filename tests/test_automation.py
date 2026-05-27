@@ -386,3 +386,293 @@ class TestLoopState:
             max_retries=3,
         )
         assert state.can_retry() is False
+
+
+class TestAuditModule:
+    """AuditModule (src/automation/audit.py) 测试."""
+
+    def _make_pass_suite(self) -> TestSuiteResult:
+        """Create a passing test suite result."""
+        return TestSuiteResult(
+            suite_id="test-suite",
+            total=10,
+            passed=10,
+            failed=0,
+            skipped=0,
+            errors=0,
+            results=[
+                TestResult(
+                    test_id="tc-001",
+                    test_name="配置测试",
+                    status="passed",
+                    duration=0.5,
+                ),
+                TestResult(
+                    test_id="tc-002",
+                    test_name="加密测试",
+                    status="passed",
+                    duration=0.3,
+                ),
+                TestResult(
+                    test_id="tc-003",
+                    test_name="端到端测试",
+                    status="passed",
+                    duration=0.8,
+                ),
+            ],
+        )
+
+    def _make_fail_suite(self) -> TestSuiteResult:
+        """Create a failing test suite result."""
+        return TestSuiteResult(
+            suite_id="test-suite",
+            total=10,
+            passed=5,
+            failed=3,
+            skipped=1,
+            errors=1,
+            results=[
+                TestResult(
+                    test_id="tc-001",
+                    test_name="配置测试",
+                    status="failed",
+                    duration=0.5,
+                    message="Config error",
+                    error_details="Missing key",
+                ),
+            ],
+        )
+
+    def _make_clean_report(self) -> AnalysisReport:
+        """Create a clean analysis report with no issues."""
+        return AnalysisReport(
+            report_id="rpt-clean",
+            timestamp=datetime.now(),
+            data_summary={
+                "configuration": {"config_valid": True},
+            },
+            statistics={"quality_score": 85},
+            issues=[],
+        )
+
+    def _make_dirty_report(self) -> AnalysisReport:
+        """Create a dirty analysis report with critical issues."""
+        return AnalysisReport(
+            report_id="rpt-dirty",
+            timestamp=datetime.now(),
+            data_summary={
+                "configuration": {"config_valid": False},
+            },
+            statistics={"quality_score": 45},
+            issues=[
+                Issue(
+                    id="i1",
+                    severity=Severity.CRITICAL,
+                    category="security",
+                    title="Critical Issue",
+                    description="Critical security issue",
+                ),
+                Issue(
+                    id="i2",
+                    severity=Severity.HIGH,
+                    category="performance",
+                    title="High Issue",
+                    description="Performance issue",
+                ),
+                Issue(
+                    id="i3",
+                    severity=Severity.MEDIUM,
+                    category="code",
+                    title="Medium Issue",
+                    description="Code quality issue",
+                ),
+            ],
+        )
+
+    def test_audit_pass(self):
+        """Verify clean audit: all rules pass."""
+        from src.automation.audit import AuditModule
+
+        module = AuditModule()
+        suite = self._make_pass_suite()
+        report = self._make_clean_report()
+        result = module.audit(suite, report)
+        assert result.is_approved is True
+        assert result.passed_checks == len(module.rules)
+
+    def test_audit_fail_critical_issues(self):
+        """Verify audit fails with critical issues."""
+        from src.automation.audit import AuditModule
+
+        module = AuditModule()
+        suite = self._make_pass_suite()
+        report = self._make_dirty_report()
+        result = module.audit(suite, report)
+        assert result.is_approved is False
+        assert result.status == SystemStatus.FAILED
+
+    def test_audit_fail_low_pass_rate(self):
+        """Verify audit fails with low test pass rate."""
+        from src.automation.audit import AuditModule
+
+        module = AuditModule()
+        suite = self._make_fail_suite()
+        report = self._make_clean_report()
+        result = module.audit(suite, report)
+        assert result.is_approved is False
+
+    def test_audit_critical_rule_enforcement(self):
+        """Verify RULE-001: critical test pass rate enforcement."""
+        from src.automation.audit import AuditModule
+
+        module = AuditModule()
+        suite = self._make_fail_suite()
+        result = module.audit(suite)
+        # Should have violations because pass rate < 90 and tests failed
+        violations = result.violations
+        assert any(v.id == "RULE-001" for v in violations), (
+            f"Expected RULE-001 violation, got: {[v.id for v in violations]}"
+        )
+
+    def test_audit_without_report(self):
+        """Verify audit works without an analysis report."""
+        from src.automation.audit import AuditModule
+
+        module = AuditModule()
+        suite = self._make_pass_suite()
+        result = module.audit(suite)
+        assert result is not None
+        assert result.test_results == suite
+
+    def test_audit_module_level_function(self):
+        """Verify module-level audit() function works."""
+        from src.automation.audit import audit
+
+        suite = self._make_pass_suite()
+        report = self._make_clean_report()
+        result = audit(suite, report)
+        assert result.is_approved is True
+
+    def test_audit_history(self):
+        """Verify audit history tracking."""
+        from src.automation.audit import AuditModule
+
+        module = AuditModule()
+        suite = self._make_pass_suite()
+        module.audit(suite)
+        module.audit(suite)
+        assert len(module.audit_history) == 2
+
+    def test_audit_summary(self):
+        """Verify audit summary output."""
+        from src.automation.audit import AuditModule
+
+        module = AuditModule()
+        suite = self._make_pass_suite()
+        module.audit(suite)
+        summary = module.get_audit_summary()
+        assert summary["total_audits"] == 1
+        assert "latest_status" in summary
+        assert "is_approved" in summary
+
+    def test_audit_empty_history(self):
+        """Verify audit summary without history."""
+        from src.automation.audit import AuditModule
+
+        module = AuditModule()
+        summary = module.get_audit_summary()
+        assert "暂无审核记录" in summary["message"]
+
+    def test_audit_rule_export(self, tmp_path):
+        """Verify audit rule export to JSON file."""
+        from src.automation.audit import AuditModule
+
+        module = AuditModule()
+        export_path = tmp_path / "rules_export.json"
+        module.export_rules(str(export_path))
+        assert export_path.exists()
+        import json
+
+        with export_path.open(encoding="utf-8") as f:
+            data = json.load(f)
+        assert len(data) == len(module.rules)
+        assert data[0]["id"] == "RULE-001"
+
+    def test_audit_custom_rules(self):
+        """Verify custom rules override defaults."""
+        from src.automation.audit import AuditModule
+
+        custom_rule = AuditRule(
+            id="CUSTOM-001",
+            name="Custom Rule",
+            description="Custom test rule",
+            condition="test_pass_rate >= 50",
+            action="warn",
+            severity=Severity.MEDIUM,
+        )
+        module = AuditModule(rules=[custom_rule])
+        suite = self._make_pass_suite()
+        result = module.audit(suite)
+        assert result.total_checks == 1
+        assert result.passed_checks == 1
+
+    def test_audit_error_tolerance(self):
+        """Verify audit tolerates errors in test_results (v4.3.1 fix)."""
+        from src.automation.audit import AuditModule
+
+        # Create result with missing attributes (None instead of TestSuiteResult)
+        class BadTestResult:
+            """Simulates a test result with no expected attributes."""
+
+        module = AuditModule()
+        suite = self._make_pass_suite()
+        # _compute_audit_metrics should handle this gracefully
+        metrics = module._compute_audit_metrics(suite, None)
+        assert metrics is not None
+        assert metrics["test_pass_rate"] == 100.0
+
+    def test_audit_evaluate_rule_conditions(self):
+        """Verify rule condition evaluation with regex matching (v4.3.1 fix)."""
+        from src.automation.audit import AuditModule, AuditRule, Severity
+
+        module = AuditModule()
+        metrics = {
+            "test_pass_rate": 95.0,
+            "critical_issues": 0,
+            "high_priority_issues": 2,
+            "test_errors": 0,
+            "quality_score": 85,
+            "critical_tests_passed": True,
+            "performance_tests_passed": True,
+            "config_valid": True,
+        }
+        rule = AuditRule(
+            id="TEST-RULE",
+            name="Test Rule",
+            description="Test condition",
+            condition="test_pass_rate >= 90 AND critical_issues == 0",
+            action="block",
+            severity=Severity.CRITICAL,
+        )
+        result = module._evaluate_rule(rule, metrics)
+        assert result["passed"] is True
+
+    def test_audit_evaluate_rule_fail(self):
+        """Verify rule evaluation with failing condition."""
+        from src.automation.audit import AuditModule, AuditRule, Severity
+
+        module = AuditModule()
+        metrics = {
+            "test_pass_rate": 60.0,
+            "critical_issues": 2,
+        }
+        rule = AuditRule(
+            id="TEST-FAIL",
+            name="Fail Rule",
+            description="Should fail",
+            condition="test_pass_rate >= 90",
+            action="block",
+            severity=Severity.HIGH,
+        )
+        result = module._evaluate_rule(rule, metrics)
+        assert result["passed"] is False

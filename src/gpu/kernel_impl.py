@@ -21,11 +21,14 @@ from typing import Any, cast
 import numpy as np
 
 from ._availability import PYOPENCL_AVAILABLE
+from .device import _assert_opencl_available
 
 if PYOPENCL_AVAILABLE:
     import pyopencl as cl
 else:
     cl = None  # type: ignore[assignment]
+
+_assert_opencl_available()
 
 from ..core.address_generator import P2PKHAddressGenerator
 from ..core.hash_utils import HashUtils
@@ -36,9 +39,9 @@ from ..utils import get_configured_logger
 from .buffer_tracker import GPUBufferTracker
 from .device import GPUDevice
 from .kernel import OPENCL_KERNEL_SOURCE
-from .kernel_protocol import GPUKernelProtocol
-from .performance_optimizer import PerformanceMetrics
-from .seed_utils import _seed_bytes_to_u32_be_array
+from .kernel_protocol import GPUKernelProtocol  # noqa: E402
+from .performance_optimizer import PerformanceMetrics  # noqa: E402
+from .seed_utils import _seed_bytes_to_u32_be_array  # noqa: E402
 
 logger = get_configured_logger("GPUKernel")
 

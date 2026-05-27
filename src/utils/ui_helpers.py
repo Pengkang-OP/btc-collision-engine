@@ -28,7 +28,7 @@ def format_table(
                 )
 
     sep = "+" + "+".join("-" * (w + 2) for w in col_widths) + "+"
-    header_line = "| " + " | ".join(h.ljust(w) for h, w in zip(headers, col_widths)) + " |"
+    header_line = "| " + " | ".join(h.ljust(w) for h, w in zip(headers, col_widths, strict=False)) + " |"
 
     lines = [sep, header_line, sep]
     for row in rows:
@@ -39,6 +39,7 @@ def format_table(
                 for c, w in zip(
                     row,
                     col_widths,
+                    strict=False,
                 )
             )
             + " |"

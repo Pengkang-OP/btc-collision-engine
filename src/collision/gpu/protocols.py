@@ -47,6 +47,7 @@ class GPUDevice:
         memory_total: int = 0,
         device_obj: Any = None,
     ) -> None:
+        """初始化 GPU 设备实例."""
         self.device_id = device_id
         self.vendor = vendor
         self.name = name
@@ -54,6 +55,7 @@ class GPUDevice:
         self.device_obj = device_obj  # 底层GPU对象（cl.Device等）
 
     def to_dict(self) -> GPUDeviceInfo:
+        """将 GPU 设备信息转换为字典."""
         return {
             "device_id": self.device_id,
             "vendor": self.vendor,
@@ -66,6 +68,7 @@ class GPUContext:
     """GPU上下文封装."""
 
     def __init__(self, context_obj: Any = None, device: GPUDevice | None = None) -> None:
+        """初始化 GPU 上下文."""
         self.context_obj = context_obj  # 底层上下文对象（cl.Context等）
         self.device = device
 
@@ -79,6 +82,7 @@ class GPUKernel:
         name: str = "",
         context: GPUContext | None = None,
     ) -> None:
+        """初始化 GPU 内核."""
         self.kernel_obj = kernel_obj  # 底层内核对象（cl.Kernel等）
         self.name = name
         self.context = context
@@ -351,7 +355,6 @@ class VendorOptimizationStrategy(Protocol):
             优化后的组件字典
 
         """
-        ...
 
     def get_monitoring_components(self) -> dict[str, Any]:
         """获取厂商特定监控组件.
@@ -360,4 +363,3 @@ class VendorOptimizationStrategy(Protocol):
             监控组件字典
 
         """
-        ...

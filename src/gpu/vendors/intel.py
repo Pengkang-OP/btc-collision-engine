@@ -21,7 +21,9 @@ from typing import Any
 # 统一日志获取
 from src.utils import get_configured_logger
 
-from ..rate_limited_logger import RateLimitedLogger as _RateLimitedLogger  # Task 8/11 refactor
+from ..rate_limited_logger import (
+    RateLimitedLogger as _RateLimitedLogger,  # Task 8/11 refactor
+)
 from .base import GPUVendorBase
 
 logger = get_configured_logger("IntelVendor")
@@ -41,7 +43,11 @@ class IntelGPUVendor(GPUVendorBase):
         """获取厂商名称。."""
         return "Intel"
 
-    def apply_optimizations(self, device: Any, profile: dict[str, Any]) -> None:
+    def apply_optimizations(
+        self,
+        device: Any,
+        profile: dict[str, Any],
+    ) -> None:
         """应用Intel特定优化.
 
         优化策略:
@@ -59,7 +65,9 @@ class IntelGPUVendor(GPUVendorBase):
 
         # 1. uint32 workaround - 关键优化
         if "uint32_workaround" in optimizations:
-            _rate_logger.info("[OK] 启用uint32 workaround(避免Intel Arc global char* hang bug)")
+            _rate_logger.info(
+                "[OK] 启用uint32 workaround(避免Intel Arc global char* hang bug)",
+            )
             # 标记设备需要特殊处理
             device.requires_uint32_workaround = True
             # 在GPUKernel中使用uint32*替代uchar*
@@ -82,16 +90,26 @@ class IntelGPUVendor(GPUVendorBase):
             import re
 
             device_name_clean = re.sub(r"\((?:r|tm|R|TM)\)", "", device_name.lower()).strip()
-            device_name_clean = re.sub(r"\s+", " ", device_name_clean)  # 合并多余空格
+            device_name_clean = re.sub(r"\s+", " ", device_name_clean)
+            # 合并多余空格
             # Arc A770/A750/A580 及 Pro 系列支持异步执行，不禁用
-            is_high_end = any(
-                x in device_name_clean for x in ["arc a770", "arc a750", "arc a580", "arc pro", "arc a3"]
-            )
+            arc_models = [
+                "arc a770",
+                "arc a750",
+                "arc a580",
+                "arc pro",
+                "arc a3",
+            ]
+            is_high_end = any(x in device_name_clean for x in arc_models)
             if not is_high_end:
-                _rate_logger.warning("[WARN] Intel GPU: 禁用异步传输以确保稳定性")
+                _rate_logger.warning(
+                    "[WARN] Intel GPU: 禁用异步传输以确保稳定性",
+                )
                 device.enable_async_execution = False
             else:
-                _rate_logger.info(f"[OK] Intel Arc 高端型号 ({device_name}): 保持异步执行启用")
+                _rate_logger.info(
+                    f"[OK] Intel Arc 高端型号 ({device_name}): 保持异步执行启用",
+                )
 
         # 4. 专业驱动优化
         if "pro_driver_optimization" in optimizations:
@@ -123,7 +141,9 @@ class IntelGPUVendor(GPUVendorBase):
         # 8. 显存效率设置 (v4.2.1优化: 45% -> 70%)
         memory_efficiency = profile.get("memory_efficiency", 0.70)
         device.memory_efficiency = memory_efficiency
-        _rate_logger.info(f"[OK] Intel GPU内存效率: {memory_efficiency * 100:.0f}% (v4.2.1优化)")
+        _rate_logger.info(
+            f"[OK] Intel GPU内存效率: {memory_efficiency * 100:.0f}% (v4.2.1优化)",
+        )
 
     def _check_driver_version(self, device: Any) -> None:
         """检查驱动版本并给出建议."""
@@ -144,7 +164,8 @@ class IntelGPUVendor(GPUVendorBase):
                 # 检查是否为推荐版本
                 if (major, minor, build, revision) < (31, 0, 101, 4500):
                     _rate_logger.warning(
-                        f"[WARN] Intel驱动 {driver_version} 较旧, 建议更新到 31.0.101.4500+ 以提升稳定性",
+                        f"[WARN] Intel驱动 {driver_version} 较旧, "
+                        "建议更新到 31.0.101.4500+ 以提升稳定性",
                         key=f"intel_driver_old_{driver_version}",
                     )
                 else:
@@ -157,7 +178,11 @@ class IntelGPUVendor(GPUVendorBase):
         except (ValueError, IndexError) as e:
             logger.debug("无法解析Intel驱动版本: %s, 错误: %s", driver_version, e)
 
-    def handle_errors(self, error: Exception, stats: Any | None = None) -> bool:
+    def handle_errors(
+        self,
+        error: Exception,
+        stats: Any | None = None,
+    ) -> bool:
         """处理Intel GPU特定错误.
 
         Intel Arc容易出现超时和hang错误。资源错误委托给基类处理。
@@ -243,14 +268,17 @@ class IntelGPUVendor(GPUVendorBase):
 
         # 5. 设置 OpenCL 缓存目录
         if "OCL_CACHE_DIR" not in os.environ:
+            _cache_subdir = "intel_ocl_cache"
             if os.name == "nt":  # Windows
-                cache_dir = os.path.join(tempfile.gettempdir(), "intel_ocl_cache")
+                cache_dir = os.path.join(tempfile.gettempdir(), _cache_subdir)
             else:  # Linux/macOS
-                cache_dir = os.path.join(tempfile.gettempdir(), "intel_ocl_cache")
+                cache_dir = os.path.join(tempfile.gettempdir(), _cache_subdir)
             pathlib.Path(cache_dir).mkdir(exist_ok=True, parents=True)
             os.environ["OCL_CACHE_DIR"] = cache_dir
             applied["OCL_CACHE_DIR"] = cache_dir
-            _rate_logger.info(f"✅ 设置 OCL_CACHE_DIR={cache_dir} (编译缓存)")
+            _rate_logger.info(
+                f"✅ 设置 OCL_CACHE_DIR={cache_dir} (编译缓存)",
+            )
 
         return applied
 

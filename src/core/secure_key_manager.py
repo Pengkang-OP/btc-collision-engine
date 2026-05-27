@@ -510,7 +510,11 @@ class SecureKeyManager:
                 SecureKeyManager._successful_clears += 1
 
         except Exception as e:
-            # Clear failure is a critical error
+            # Clear failure is a critical error.
+            # Mark as cleared even on failure — the key is already
+            # in an undefined/partial state and further retries
+            # would not improve security.
+            self._cleared = True
             # L3 fix: use lock for thread-safe stats
             with SecureKeyManager._stats_lock:
                 SecureKeyManager._total_clears += 1

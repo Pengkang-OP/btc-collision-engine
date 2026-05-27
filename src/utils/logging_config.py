@@ -21,7 +21,9 @@ from .logger import ColoredFormatter, SafeStreamHandler
 from .security_log_filter import SecurityLogFilter
 
 # v4.5.1: 项目根目录缓存，用于解析相对日志路径
-_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_PROJECT_ROOT = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+)
 
 # 默认日志文件最大字节数（10MB），作为 RotatingFileHandler maxBytes 的 fallback 值
 LOG_DEFAULT_MAX_BYTES: int = 10 * 1024 * 1024  # 10MB
@@ -39,6 +41,17 @@ class SafeRotatingFileHandler(RotatingFileHandler):
     """
 
     def __init__(self, *args, **kwargs) -> None:
+        """Initialize Windows-safe rotating file handler.
+
+        Adds retry logic for Windows file lock conflicts.
+
+        Args:
+            *args: Positional args for RotatingFileHandler
+            **kwargs: Keyword args for RotatingFileHandler, plus:
+                retry_count: Number of retry attempts (default: 3)
+                retry_delay: Delay between retries in seconds (default: 0.1)
+
+        """
         self._retry_count = kwargs.pop("retry_count", 3)
         self._retry_delay = kwargs.pop("retry_delay", 0.1)
         self._is_windows = platform.system() == "Windows"
@@ -92,6 +105,7 @@ class LoggingConfig:
     _initialized = False
 
     def __new__(cls) -> "LoggingConfig":
+        """Create singleton LoggingConfig instance."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
@@ -153,7 +167,9 @@ class LoggingConfig:
     def _ensure_log_directory(self) -> None:
         """确保日志目录存在（相对路径基于项目根目录）."""
         if self._config is None:
-            raise RuntimeError("LoggingConfig._ensure_log_directory(): self._config is None")
+            raise RuntimeError(
+                "LoggingConfig._ensure_log_directory(): self._config is None",
+            )
         log_file = self._config.get("file")
         if not log_file:
             from .log_platform_adapter import ensure_log_directory
@@ -167,7 +183,11 @@ class LoggingConfig:
 
         log_dir = os.path.dirname(log_path)
         if log_dir and not pathlib.Path(log_dir).exists():
-            pathlib.Path(log_dir).mkdir(mode=0o750, exist_ok=True, parents=True)
+            pathlib.Path(log_dir).mkdir(
+                mode=0o750,
+                exist_ok=True,
+                parents=True,
+            )
 
     def _resolve_log_path(self, log_file: str) -> str:
         """将日志路径解析为绝对路径（相对路径基于项目根目录）.
@@ -220,7 +240,9 @@ class LoggingConfig:
     def _setup_root_logger(self) -> None:
         """配置根日志记录器."""
         if self._config is None:
-            raise RuntimeError("LoggingConfig._setup_root_logger(): self._config is None")
+            raise RuntimeError(
+                "LoggingConfig._setup_root_logger(): self._config is None",
+            )
         level = self._config.get("level", "INFO")
         format_str = self._config.get("format", self.DEFAULT_CONFIG["format"])
 
@@ -232,7 +254,10 @@ class LoggingConfig:
         root_logger.handlers.clear()
 
         # 检查环境变量是否禁用控制台日志
-        disable_console = os.environ.get("DISABLE_CONSOLE_LOG", "").lower() in ("1", "true", "yes")
+        disable_console = os.environ.get(
+            "DISABLE_CONSOLE_LOG",
+            "",
+        ).lower() in ("1", "true", "yes")
 
         # 控制台处理器（使用 SafeStreamHandler 以兼容 Windows GBK 编码）
         if self._config.get("enable_console", True) and not disable_console:
@@ -257,7 +282,9 @@ class LoggingConfig:
     ) -> logging.Handler | None:
         """创建文件处理器."""
         if self._config is None:
-            raise RuntimeError("LoggingConfig._create_file_handler(): self._config is None")
+            raise RuntimeError(
+                "LoggingConfig._create_file_handler(): self._config is None",
+            )
         rotation_type = self._config.get("rotation_type", "size")
         level = self._config.get("level", "INFO")
 
@@ -276,7 +303,10 @@ class LoggingConfig:
                 # 基于大小的轮转（默认）
                 handler = SafeRotatingFileHandler(
                     log_file,
-                    maxBytes=self._config.get("max_bytes", LOG_DEFAULT_MAX_BYTES),
+                    maxBytes=self._config.get(
+                        "max_bytes",
+                        LOG_DEFAULT_MAX_BYTES,
+                    ),
                     backupCount=self._config.get("backup_count", 5),
                     encoding="utf-8-sig",  # 修复: 使用UTF-8-BOM解决Windows中文乱码
                 )
@@ -301,11 +331,17 @@ class LoggingConfig:
                     self._rotation_type: str | None = None
                     self._config_snapshot: dict[str, Any] | None = None
 
-                def setFormatter(self, fmt) -> None:  # noqa: N802 — 继承父类 camelCase 方法
+                # noqa: N802 — 继承父类 camelCase 方法
+                def setFormatter(self, fmt) -> None:
                     self._inner.setFormatter(fmt)
                     self._format_str = fmt
 
-                def bind_params(self, log_file: str, rotation_type: str, config: dict[str, Any]) -> None:
+                def bind_params(
+                    self,
+                    log_file: str,
+                    rotation_type: str,
+                    config: dict[str, Any],
+                ) -> None:
                     """绑定创建参数，用于 NFS stale handle 后重建处理器."""
                     self._log_file = log_file
                     self._rotation_type = rotation_type
@@ -332,7 +368,12 @@ class LoggingConfig:
                             self._disk_full_warned = True
                             if (
                                 hasattr(errno, "ESTALE")
-                                and getattr(os_err, "errno", None) == errno.ESTALE
+                                and getattr(
+                                    os_err,
+                                    "errno",
+                                    None,
+                                )
+                                == errno.ESTALE
                             ):
                                 sys.stderr.write(
                                     f"[日志警告] NFS 文件句柄失效且无法恢复: {os_err}\n",
@@ -353,25 +394,29 @@ class LoggingConfig:
                     try:
                         self._inner.close()
                         try:
-                            from logging.handlers import TimedRotatingFileHandler
+                            from logging.handlers import (
+                                TimedRotatingFileHandler,
+                            )
 
                             handler: logging.Handler
                             if self._rotation_type == "time":
+                                _cfg = self._config_snapshot or {}
                                 handler = TimedRotatingFileHandler(
                                     self._log_file,
-                                    when=(self._config_snapshot or {}).get("rotation_when", "midnight"),
-                                    interval=(self._config_snapshot or {}).get("rotation_interval", 1),
-                                    backupCount=(self._config_snapshot or {}).get("backup_count", 5),
+                                    when=_cfg.get("rotation_when", "midnight"),
+                                    interval=_cfg.get("rotation_interval", 1),
+                                    backupCount=_cfg.get("backup_count", 5),
                                     encoding="utf-8-sig",
                                 )
                             else:
+                                _cfg = self._config_snapshot or {}
                                 handler = SafeRotatingFileHandler(
                                     self._log_file,
-                                    maxBytes=(self._config_snapshot or {}).get(
+                                    maxBytes=_cfg.get(
                                         "max_bytes",
                                         LOG_DEFAULT_MAX_BYTES,
                                     ),
-                                    backupCount=(self._config_snapshot or {}).get("backup_count", 5),
+                                    backupCount=_cfg.get("backup_count", 5),
                                     encoding="utf-8-sig",
                                 )
                             handler.setLevel(self.level)
@@ -381,9 +426,15 @@ class LoggingConfig:
                                 else self._inner.formatter,
                             )
                             self._inner = handler
-                            sys.stderr.write(f"[日志] NFS 文件句柄已恢复: {self._log_file}\n")
+                            sys.stderr.write(
+                                "[日志] NFS 文件句柄已恢复: %s\n",
+                                self._log_file,
+                            )
                         except Exception as rebuild_err:
-                            sys.stderr.write(f"[日志警告] NFS 句柄恢复失败: {rebuild_err}\n")
+                            sys.stderr.write(
+                                "[日志警告] NFS 句柄恢复失败: %s\n",
+                                rebuild_err,
+                            )
                     except Exception as close_err:
                         sys.stderr.write(f"[日志警告] 关闭旧日志句柄失败: {close_err}\n")
 
@@ -397,7 +448,11 @@ class LoggingConfig:
 
             # v4.5.1: 绑定创建参数供 NFS stale handle 恢复
             safe_handler = _DiskSafeHandler(handler)
-            safe_handler.bind_params(log_file, rotation_type, self._config or {})
+            safe_handler.bind_params(
+                log_file,
+                rotation_type,
+                self._config or {},
+            )
             return safe_handler
         except Exception as e:
             sys.stderr.write(f"创建日志文件处理器失败: {e}\n")
@@ -408,7 +463,9 @@ class LoggingConfig:
         if not self._initialized:
             self.init()
         if self._config is None:
-            raise RuntimeError("LoggingConfig.get_config(): self._config is None after init()")
+            raise RuntimeError(
+                "LoggingConfig.get_config(): self._config is None after init()",
+            )
         return self._config.copy()
 
     def get_logger(self, name: str) -> logging.Logger:
@@ -509,7 +566,13 @@ def _setup_security_filter() -> None:
         # 自动发现并保护所有已注册的 logger（覆盖显式列表之外的新模块）
         auto_discovered = 0
         for _logger_name, logger_ref in logging.Logger.manager.loggerDict.items():
-            if isinstance(logger_ref, logging.Logger) and id(logger_ref) not in _processed_loggers:
+            if (
+                isinstance(
+                    logger_ref,
+                    logging.Logger,
+                )
+                and id(logger_ref) not in _processed_loggers
+            ):
                 logger_ref.addFilter(security_filter)
                 _processed_loggers.add(id(logger_ref))
                 auto_discovered += 1

@@ -114,8 +114,9 @@ class LockMonitor:
 
             # 计算平均值
             if stats["acquisitions"] > 0:
-                stats["avg_wait_ms"] = stats["total_wait_ms"] / stats["acquisitions"]
-                stats["avg_hold_ms"] = stats["total_hold_ms"] / stats["acquisitions"]
+                acq = stats["acquisitions"]
+                stats["avg_wait_ms"] = stats["total_wait_ms"] / acq
+                stats["avg_hold_ms"] = stats["total_hold_ms"] / acq
             else:
                 stats["avg_wait_ms"] = 0
                 stats["avg_hold_ms"] = 0
@@ -221,10 +222,12 @@ class MonitoredLock:
         self._lock.release()
 
     def __enter__(self) -> "MonitoredLock":
+        """Enter lock context."""
         self.acquire()
         return self
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        """Exit lock context."""
         self.release()
 
 

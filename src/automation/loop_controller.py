@@ -24,7 +24,7 @@ from .models import (
 
 
 class LoopController:
-    """闭环控制器
+    """闭环控制器.
 
     协调分析->测试->审核的完整流程
     异常自动触发反馈回路.
@@ -38,6 +38,7 @@ class LoopController:
         max_iterations: int = 3,
         auto_fix: bool = False,
     ):
+        """初始化闭环控制器."""
         self.project_root = project_root or Path(__file__).parent.parent.parent.parent
 
         self.analysis_module = DataAnalysisModule(self.project_root)
@@ -66,7 +67,7 @@ class LoopController:
         self._phase_failures: dict[str, int] = {"analysis": 0, "test": 0, "audit": 0}
 
     def run(self) -> AuditResult:
-        """执行完整的闭环流程
+        """执行完整的闭环流程.
 
         分析 -> 测试 -> 审核 -> (异常则反馈回路).
 
@@ -116,7 +117,10 @@ class LoopController:
 
                 # 阶段3: 智能审核
                 self._set_phase(SystemStatus.AUDITING)
-                audit_result = self._run_audit_phase(test_results, analysis_report)
+                audit_result = self._run_audit_phase(
+                    test_results,
+                    analysis_report,
+                )
 
                 if audit_result is None:
                     print("[FAIL] Audit phase failed, retrying...")
@@ -213,7 +217,9 @@ class LoopController:
                 for result in results.results:
                     if result.status in ("failed", "error"):
                         status_mark = "[X]" if result.status == "failed" else "[!]"
-                        print(f"      {status_mark} {result.test_name}: {result.message[:50]}")
+                        print(
+                            f"      {status_mark} {result.test_name}: {result.message[:50]}",
+                        )
 
             return results
 
@@ -339,6 +345,9 @@ def run_automation_loop(
     project_root: Path | None = None,
     max_iterations: int = 3,
 ) -> AuditResult:
-    """便捷函数: 运行自动化闭环."""
-    controller = LoopController(project_root, max_iterations)
+    """Run the full automation loop."""
+    controller = LoopController(
+        project_root=project_root,
+        max_iterations=max_iterations,
+    )
     return controller.run()

@@ -46,6 +46,7 @@ class Issue:
     timestamp: datetime = field(default_factory=datetime.now)
 
     def to_dict(self) -> dict[str, Any]:
+        """将 Issue 转换为字典."""
         return {
             "id": self.id,
             "severity": self.severity.value,
@@ -73,13 +74,16 @@ class AnalysisReport:
 
     @property
     def has_critical_issues(self) -> bool:
+        """检查是否存在严重问题."""
         return any(i.severity == Severity.CRITICAL for i in self.issues)
 
     @property
     def issue_count(self) -> int:
+        """获取问题数量."""
         return len(self.issues)
 
     def to_dict(self) -> dict[str, Any]:
+        """将 AnalysisReport 转换为字典."""
         return {
             "report_id": self.report_id,
             "timestamp": self.timestamp.isoformat(),
@@ -91,6 +95,7 @@ class AnalysisReport:
         }
 
     def save(self, filepath: str):
+        """保存报告到文件."""
         with pathlib.Path(filepath).open("w", encoding="utf-8") as f:
             json.dump(self.to_dict(), f, ensure_ascii=False, indent=2)
 
@@ -124,9 +129,11 @@ class TestResult:
 
     @property
     def is_passed(self) -> bool:
+        """检查测试是否通过."""
         return self.status == "passed"
 
     def to_dict(self) -> dict[str, Any]:
+        """将 TestResult 转换为字典."""
         return {
             "test_id": self.test_id,
             "test_name": self.test_name,
@@ -156,10 +163,12 @@ class TestSuiteResult:
 
     @property
     def pass_rate(self) -> float:
+        """计算测试通过率."""
         return (self.passed / self.total * 100) if self.total > 0 else 0.0
 
     @property
     def is_acceptable(self) -> bool:
+        """检查结果是否可接受."""
         return self.pass_rate >= 80.0 and self.errors == 0
 
 
@@ -192,6 +201,7 @@ class AuditResult:
 
     @property
     def is_approved(self) -> bool:
+        """检查审核是否通过."""
         return (
             self.status == SystemStatus.PASSED
             and len([v for v in self.violations if v.severity in (Severity.CRITICAL, Severity.HIGH)])
@@ -200,9 +210,11 @@ class AuditResult:
 
     @property
     def block_count(self) -> int:
+        """获取阻塞性问题数量."""
         return len([v for v in self.violations if v.severity in (Severity.CRITICAL, Severity.HIGH)])
 
     def to_dict(self) -> dict[str, Any]:
+        """将 AuditResult 转换为字典."""
         return {
             "audit_id": self.audit_id,
             "timestamp": self.timestamp.isoformat(),
@@ -217,6 +229,7 @@ class AuditResult:
         }
 
     def save(self, filepath: str):
+        """保存审核结果到文件."""
         with pathlib.Path(filepath).open("w", encoding="utf-8") as f:
             json.dump(self.to_dict(), f, ensure_ascii=False, indent=2)
 
@@ -238,7 +251,9 @@ class LoopState:
     completed_at: datetime | None = None
 
     def can_retry(self) -> bool:
+        """检查是否可以重试."""
         return self.retry_count < self.max_retries
 
     def increment_retry(self):
+        """增加重试计数."""
         self.retry_count += 1

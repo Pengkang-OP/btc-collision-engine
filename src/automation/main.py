@@ -1,4 +1,4 @@
-"""端到端自动化闭环管理系统 - 主入口
+"""端到端自动化闭环管理系统 - 主入口.
 
 提供命令行接口和API接口.
 """
@@ -37,6 +37,7 @@ def _ensure_cwd() -> None:
 
 
 def print_banner() -> None:
+    """打印启动横幅."""
     banner = """
 =================================================================
        End-to-End Automation Loop Control System v5.0.0
@@ -52,6 +53,7 @@ def print_banner() -> None:
 
 
 def run_analysis_only(args: argparse.Namespace) -> "AnalysisReport":
+    """运行数据分析模块."""
     project_root: str | None = cast("str | None", args.project_root)
     output: str | None = cast("str | None", args.output)
 
@@ -71,6 +73,7 @@ def run_analysis_only(args: argparse.Namespace) -> "AnalysisReport":
 
 
 def run_tests_only(args: argparse.Namespace) -> "TestSuiteResult":
+    """运行自动化测试模块."""
     project_root: str | None = cast("str | None", args.project_root)
     output: str | None = cast("str | None", args.output)
 
@@ -103,6 +106,7 @@ def run_tests_only(args: argparse.Namespace) -> "TestSuiteResult":
 
 
 def run_audit_only(args: argparse.Namespace) -> "AuditResult":
+    """运行智能审核模块."""
     project_root: str | None = cast("str | None", args.project_root)
     output: str | None = cast("str | None", args.output)
 
@@ -127,6 +131,7 @@ def run_audit_only(args: argparse.Namespace) -> "AuditResult":
 
 
 def run_full_loop(args: argparse.Namespace) -> "AuditResult":
+    """运行完整闭环流程."""
     project_root: str | None = cast("str | None", args.project_root)
     output: str | None = cast("str | None", args.output)
     max_iterations: int = cast("int", args.max_iterations)
@@ -159,7 +164,7 @@ def run_full_loop(args: argparse.Namespace) -> "AuditResult":
 
 
 def main() -> None:
-
+    """主入口函数."""
     parser = argparse.ArgumentParser(description="端到端自动化闭环管理系统")
 
     _ = parser.add_argument("--project-root", "-p", type=str, default=None)
