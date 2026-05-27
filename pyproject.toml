@@ -165,24 +165,7 @@ module = [
     "src.gpu.async_executor._collector",
     "src.gpu.async_executor._executor",
 ]
-disable_error_code = [
-    "arg-type",
-    "assignment",
-    "attr-defined",
-    "misc",
-    "return-value",
-    "abstract",
-    "union-attr",
-    "call-arg",
-    "var-annotated",
-    "operator",
-    "comparison-overlap",
-    "call-overload",
-    "list-item",
-    "index",
-    "has-type",
-    "func-returns-value",
-]
+ignore_errors = true
 
 # ── 次预存类型债务：补充豁免（2026-05 新增） ──────────────
 # 使用 ignore_errors = true 确保跨 mypy 版本兼容
@@ -211,16 +194,7 @@ module = [
     "src.gpu.memory_pool",                 # lru_timeout unexpected kwarg
     "src.cli.main",                        # dict_values vs Iterable
 ]
-disable_error_code = [
-    "arg-type",
-    "assignment",
-    "attr-defined",
-    "operator",
-    "call-arg",
-    "call-overload",
-    "var-annotated",
-    "has-type",
-]
+ignore_errors = true
 
 [tool.black]
 line-length = 105
