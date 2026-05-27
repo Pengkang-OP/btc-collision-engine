@@ -161,7 +161,9 @@ module = [
     "src.collision.targets.cache",        # identity check overlap
     "src.gpu.context",                    # GPUVendorBase abstract
     "src.gpu.async_executor",             # return value mismatch
-    "src.gpu.async_executor.*",           # 子模块：_sync/_collector/_executor
+    "src.gpu.async_executor._sync",
+    "src.gpu.async_executor._collector",
+    "src.gpu.async_executor._executor",
 ]
 disable_error_code = [
     "arg-type",
