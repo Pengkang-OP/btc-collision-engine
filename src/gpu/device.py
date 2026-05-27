@@ -15,6 +15,16 @@ if TYPE_CHECKING:
     import pyopencl as cl
 
 from ._availability import PYOPENCL_AVAILABLE
+from .constants import (
+    OPENCL_MIN_REQUIRED_VERSION,
+    OPENCL_OPTIMAL_VERSION,
+    OPENCL_RECOMMENDED_VERSION,
+    OPENCL_UPGRADE_ADVICE,
+    OPENCL_VERSION_UNKNOWN,
+)
+from .driver_manager import DriverManager
+from .profiles.loader import GPUProfileLoader
+from .scorer import get_gpu_scorer
 
 if PYOPENCL_AVAILABLE:
     import pyopencl as cl  # noqa: F811
@@ -36,17 +46,6 @@ def _assert_opencl_available() -> None:
             "或在配置中禁用 GPU 加速。",
         )
 
-
-from .constants import (
-    OPENCL_MIN_REQUIRED_VERSION,
-    OPENCL_OPTIMAL_VERSION,
-    OPENCL_RECOMMENDED_VERSION,
-    OPENCL_UPGRADE_ADVICE,
-    OPENCL_VERSION_UNKNOWN,
-)
-from .driver_manager import DriverManager
-from .profiles.loader import GPUProfileLoader
-from .scorer import get_gpu_scorer
 
 logger = get_configured_logger("GPUDevice")
 
