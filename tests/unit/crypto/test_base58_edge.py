@@ -40,27 +40,27 @@ class TestBase58Decode:
 
     def test_decode_invalid_character_0(self):
         """非法字符 '0' 抛出 ValueError（line 90）"""
-        with self.assertRaises(ValueError) as ctx:
+        with pytest.raises(ValueError) as ctx:
             Base58.decode("0")
-        assert str(ctx.exception) in "Invalid"
+        assert "Invalid" in str(ctx.value)
 
     def test_decode_invalid_character_O(self):
         """非法字符 'O' 抛出 ValueError"""
-        with self.assertRaises(ValueError) as ctx:
+        with pytest.raises(ValueError) as ctx:
             Base58.decode("O")
-        assert str(ctx.exception) in "Invalid"
+        assert "Invalid" in str(ctx.value)
 
     def test_decode_invalid_character_I(self):
         """非法字符 'I' 抛出 ValueError"""
-        with self.assertRaises(ValueError) as ctx:
+        with pytest.raises(ValueError) as ctx:
             Base58.decode("I")
-        assert str(ctx.exception) in "Invalid"
+        assert "Invalid" in str(ctx.value)
 
     def test_decode_invalid_character_l(self):
         """非法字符 'l' 抛出 ValueError"""
-        with self.assertRaises(ValueError) as ctx:
+        with pytest.raises(ValueError) as ctx:
             Base58.decode("l")
-        assert str(ctx.exception) in "Invalid"
+        assert "Invalid" in str(ctx.value)
 
 
 class TestBase58CheckDecode:
@@ -76,16 +76,16 @@ class TestBase58CheckDecode:
 
     def test_check_decode_empty_string(self):
         """空字符串抛出 ValueError（line 151）"""
-        with self.assertRaises(ValueError) as ctx:
+        with pytest.raises(ValueError) as ctx:
             Base58.check_decode("")
-        assert str(ctx.exception) in "Empty"
+        assert "Empty" in str(ctx.value)
 
     def test_check_decode_too_short(self):
         """数据过短抛出 ValueError（line 157-160）"""
         # "1" → decode = b"\x00" (1 byte < 5)
-        with self.assertRaises(ValueError) as ctx:
+        with pytest.raises(ValueError) as ctx:
             Base58.check_decode("1")
-        assert str(ctx.exception) in "too short"
+        assert "too short" in str(ctx.value)
 
     def test_check_decode_checksum_failure(self):
         """校验和验证失败（line 169-170）"""
@@ -96,6 +96,6 @@ class TestBase58CheckDecode:
         next_char = alphabet[(alphabet.index(last_char) + 1) % len(alphabet)]
         invalid = valid[:-1] + next_char
 
-        with self.assertRaises(ValueError) as ctx:
+        with pytest.raises(ValueError) as ctx:
             Base58.check_decode(invalid)
-        assert str(ctx.exception) in "checksum"
+        assert "checksum" in str(ctx.value)

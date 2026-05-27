@@ -17,7 +17,7 @@ from src.core.key_generator import SecureKeyGenerator
 class TestEntropyHealthCheck:
     """测试熵池健康检查功能"""
 
-    def setUp(self):
+    def setup_method(self, method):
         """测试前准备"""
         self.key_gen = SecureKeyGenerator(config={"batch_size": 100})
 

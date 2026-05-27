@@ -217,12 +217,12 @@ class DataStorage:
         if self._data_logger is None:
             # 初始化历史数据文件
             if not pathlib.Path(self.history_data_file).exists():
-                with pathlib.Path(self.history_data_file).open("wb") as f:
+                with pathlib.Path(self.history_data_file).open("w", encoding="utf-8") as f:
                     fast_dump([], f)
 
             # 初始化错误日志文件
             if not pathlib.Path(self.error_log_file).exists():
-                with pathlib.Path(self.error_log_file).open("wb") as f:
+                with pathlib.Path(self.error_log_file).open("w", encoding="utf-8") as f:
                     fast_dump([], f)
 
     def save_current_data(self, data: MonitoringData) -> None:
@@ -248,7 +248,7 @@ class DataStorage:
         temp_file = self.current_data_file + ".tmp"
         try:
             # 使用原子写入：先写临时文件，再重命名
-            with pathlib.Path(temp_file).open("wb") as f:
+            with pathlib.Path(temp_file).open("w", encoding="utf-8") as f:
                 fast_dump(data.to_dict(), f, ensure_ascii=False, indent=2)
                 f.flush()
                 os.fsync(f.fileno())  # 确保数据写入磁盘
@@ -487,7 +487,7 @@ class DataStorage:
 
             # 原子写入
             temp_file = error_log_path + ".tmp"
-            with pathlib.Path(temp_file).open("wb") as f:
+            with pathlib.Path(temp_file).open("w", encoding="utf-8") as f:
                 fast_dump(errors, f, ensure_ascii=False, indent=2)
                 f.flush()
                 os.fsync(f.fileno())
@@ -1051,7 +1051,7 @@ class ReportGenerator:
         # 保存报告（如果storage可用）
         try:
             report_file = os.path.join(self.storage.storage_dir, f"report_{today.isoformat()}.json")
-            with pathlib.Path(report_file).open("wb") as f:
+            with pathlib.Path(report_file).open("w", encoding="utf-8") as f:
                 fast_dump(report, f, ensure_ascii=False, indent=2)
             logger.info("每日报告已生成: %s", report_file)
         except Exception as e:

@@ -43,10 +43,10 @@ class TestObjectPoolAutoTuneIdleShrink:
 class TestGlobalPoolManagerAutoCleanupEdge:
     """覆盖 _auto_cleanup_loop 中 tuned/released > 0 的日志分支 (lines 600-603)"""
 
-    def setUp(self):
+    def setup_method(self, method):
         GlobalPoolManager._instance = None
 
-    def tearDown(self):
+    def teardown_method(self, method):
         GlobalPoolManager._instance = None
 
     def test_auto_cleanup_loop_debug_log_branch(self):
@@ -76,10 +76,10 @@ class TestGlobalPoolManagerAutoCleanupEdge:
 class TestGlobalPoolManagerStopCleanupTimeout:
     """覆盖 stop_auto_cleanup 超时警告分支 (line 654)"""
 
-    def setUp(self):
+    def setup_method(self, method):
         GlobalPoolManager._instance = None
 
-    def tearDown(self):
+    def teardown_method(self, method):
         GlobalPoolManager._instance = None
 
     def test_stop_auto_cleanup_timeout_warning_log(self):
@@ -106,10 +106,10 @@ class TestGlobalPoolManagerStopCleanupTimeout:
 class TestECPointPool:
     """ECPointPool 覆盖 — 当前未测 acquire(x,y,curve) / release / get_stats"""
 
-    def setUp(self):
+    def setup_method(self, method):
         GlobalPoolManager._instance = None
 
-    def tearDown(self):
+    def teardown_method(self, method):
         GlobalPoolManager._instance = None
 
     def test_ecpoint_pool_acquire_with_coords(self):

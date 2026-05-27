@@ -52,7 +52,7 @@ class TestFirstRunWizardBasic:
         # 验证collision配置
         assert "mode" in config["collision"]
         assert "batch_size" in config["collision"]
-        assert ["random", "range", "brute_force"] in config["collision"]["mode"]
+        assert config["collision"]["mode"] in ["random", "range", "brute_force"]
 
         # 验证gpu配置
         assert "enabled" in config["gpu"]
@@ -60,7 +60,7 @@ class TestFirstRunWizardBasic:
 
         # 验证logging配置
         assert "level" in config["logging"]
-        assert ["DEBUG", "INFO", "WARNING", "ERROR"] in config["logging"]["level"]
+        assert config["logging"]["level"] in ["DEBUG", "INFO", "WARNING", "ERROR"]
 
     def test_should_run_no_config(self):
         """无配置文件时应运行向导"""

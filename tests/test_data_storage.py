@@ -333,8 +333,8 @@ class TestLoadHistoryWithRecovery:
         if pathlib.Path(storage_no_logger.history_data_file).exists():
             pathlib.Path(storage_no_logger.history_data_file).unlink()
 
-            result = storage_no_logger._load_history_with_recovery()
-            assert result == []
+        result = storage_no_logger._load_history_with_recovery()
+        assert result == []
 
     def test_empty_file_returns_empty(self, storage_no_logger):
         """空文件 (但存在) 的处理"""
@@ -342,8 +342,8 @@ class TestLoadHistoryWithRecovery:
         with pathlib.Path(storage_no_logger.history_data_file).open("w", encoding="utf-8") as f:
             f.write("")
 
-            result = storage_no_logger._load_history_with_recovery()
-            assert result == []
+        result = storage_no_logger._load_history_with_recovery()
+        assert result == []
 
     def test_valid_history_loaded(self, storage_no_logger):
         """正常历史数据加载 (JSONL 格式)"""
@@ -378,19 +378,19 @@ class TestLoadHistoryWithRecovery:
         with pathlib.Path(storage_no_logger.history_data_file).open("w", encoding="utf-8") as f:
             f.write("NOT JSON AT ALL {{{")
 
-            result = storage_no_logger._load_history_with_recovery()
-            # 不应抛异常
-            assert isinstance(result, list)
+        result = storage_no_logger._load_history_with_recovery()
+        # 不应抛异常
+        assert isinstance(result, list)
 
     def test_exception_during_read(self, storage_no_logger):
         """读取异常时返回空列表"""
         with pathlib.Path(storage_no_logger.history_data_file).open("w", encoding="utf-8") as f:
             json.dump([{"valid": "data"}], f)
 
-            # 模拟读取失败
-            with patch("builtins.open", side_effect=PermissionError("access denied")):
-                result = storage_no_logger._load_history_with_recovery()
-                assert result == []
+        # 模拟读取失败 (patch pathlib.Path.open 而非 builtins.open)
+        with patch.object(pathlib.Path, "open", side_effect=PermissionError("access denied")):
+            result = storage_no_logger._load_history_with_recovery()
+            assert result == []
 
 
 # ============================================================================
@@ -415,8 +415,8 @@ class TestReadOperations:
         if pathlib.Path(storage_no_logger.current_data_file).exists():
             pathlib.Path(storage_no_logger.current_data_file).unlink()
 
-            result = storage_no_logger.get_current_data()
-            assert result is None
+        result = storage_no_logger.get_current_data()
+        assert result is None
 
     def test_get_history_data(self, storage_no_logger, sample_monitoring_data):
         """读取历史数据"""
@@ -430,8 +430,8 @@ class TestReadOperations:
         if pathlib.Path(storage_no_logger.history_data_file).exists():
             pathlib.Path(storage_no_logger.history_data_file).unlink()
 
-            result = storage_no_logger.get_history_data()
-            assert result == []
+        result = storage_no_logger.get_history_data()
+        assert result == []
 
     def test_get_error_logs(self, storage_no_logger):
         """读取错误日志"""
@@ -446,16 +446,16 @@ class TestReadOperations:
         if pathlib.Path(storage_no_logger.error_log_file).exists():
             pathlib.Path(storage_no_logger.error_log_file).unlink()
 
-            result = storage_no_logger.get_error_logs()
-            assert result == []
+        result = storage_no_logger.get_error_logs()
+        assert result == []
 
     def test_get_error_logs_corrupt(self, storage_no_logger):
         """损坏的错误日志"""
         with pathlib.Path(storage_no_logger.error_log_file).open("w", encoding="utf-8") as f:
             f.write("CORRUPTED")
 
-            result = storage_no_logger.get_error_logs()
-            assert result == []
+        result = storage_no_logger.get_error_logs()
+        assert result == []
 
 
 # ============================================================================
@@ -473,12 +473,12 @@ class TestCompressOldData:
         for i in range(10):
             storage_no_logger.save_history_data(self._make_monitoring_data(i))
 
-            # 压缩 (days_threshold=0 压缩全部数据)
-            storage_no_logger.compress_old_data(days_threshold=0, sample_rate=0.5)
+        # 压缩 (days_threshold=0 压缩全部数据)
+        storage_no_logger.compress_old_data(days_threshold=0, sample_rate=0.5)
 
-            # 压缩后的文件应存在
-            compressed_file = storage_no_logger.history_data_file.replace(".json", "_compressed.json")
-            assert pathlib.Path(compressed_file).exists()
+        # 压缩后的文件应存在
+        compressed_file = storage_no_logger.history_data_file.replace(".json", "_compressed.json")
+        assert pathlib.Path(compressed_file).exists()
 
     def test_compress_no_history(self, storage_no_logger):
         """无历史数据时跳过压缩"""

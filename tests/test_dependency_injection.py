@@ -158,7 +158,7 @@ class TestDependencyInjectionFix:
             result = generator.generate_daily_report()
 
             # 应成功生成报告（使用降级方案）
-            assert "error" not in result or result.get("message") == "今天暂无数据"
+            assert "error" not in result
             if "date" in result:
                 assert "trends" in result
                 # 趋势分析应使用简单方案

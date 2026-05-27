@@ -20,13 +20,13 @@ class TestP1_3_KeyRangeValidation:
         source = OPENCL_KERNEL_SOURCE
 
         # 检查包含 SECP256K1_N 的使用
-        assert source in "SECP256K1_N", "内核源码中应使用 SECP256K1_N 常量"
+        assert "SECP256K1_N" in source, "内核源码中应使用 SECP256K1_N 常量"
 
         # 检查包含 uint256_cmp 与 N 的比较
-        assert source in "uint256_cmp(&k, &n_val) >= 0", "batch_check 应使用 uint256_cmp 检查 k >= N"
+        assert "uint256_cmp(&k, &n_val) >= 0" in source, "batch_check 应使用 uint256_cmp 检查 k >= N"
 
         # 检查 uint256_is_zero 和 k>=N 在同一条件中
-        assert source in "uint256_is_zero(&k) || uint256_cmp(&k, &n_val) >= 0", "应组合检查 k==0 和 k>=N"
+        assert "uint256_is_zero(&k) || uint256_cmp(&k, &n_val) >= 0" in source, "应组合检查 k==0 和 k>=N"
 
         print("\n[P1-3-A ✓] batch_check: k>=N 验证代码存在")
 
@@ -72,9 +72,9 @@ class TestP1_3_KeyRangeValidation:
         source = OPENCL_KERNEL_SOURCE
 
         # 检查 n_val 的声明和加载
-        assert source in "uint256_t n_val;", "应声明 n_val 局部变量"
+        assert "uint256_t n_val;" in source, "应声明 n_val 局部变量"
 
-        assert source in "n_val.d[i] = SECP256K1_N[i]", "应从 SECP256K1_N 常量加载 N 值"
+        assert "n_val.d[i] = SECP256K1_N[i]" in source, "应从 SECP256K1_N 常量加载 N 值"
 
         # 应该有循环加载
         import re
@@ -97,8 +97,8 @@ class TestP1_3_KeyRangeValidation:
 
         kernels = re.findall(r"__kernel\s+void\s+(\w+)", source)
 
-        assert kernels in "batch_check"
-        assert kernels in "batch_check_local_mem"
+        assert "batch_check" in kernels
+        assert "batch_check_local_mem" in kernels
 
         # 对于每个包含 batch_check 的内核，检查是否都有 N 验证
         # 通过在 batch_check 之后到下一个 __kernel 之间搜索
@@ -112,9 +112,9 @@ class TestP1_3_KeyRangeValidation:
 
                 kernel_body = source[kernel_pos:next_kernel]
 
-                assert kernel_body in "uint256_cmp(&k, &n_val) >= 0", f"{kernel_name} 内核应包含 k>=N 验证"
+                assert "uint256_cmp(&k, &n_val) >= 0" in kernel_body, f"{kernel_name} 内核应包含 k>=N 验证"
 
-                assert kernel_body in "SECP256K1_N", f"{kernel_name} 内核应引用 SECP256K1_N"
+                assert "SECP256K1_N" in kernel_body, f"{kernel_name} 内核应引用 SECP256K1_N"
 
                 print(f"  [{kernel_name}] ✓ k>=N 验证存在")
 

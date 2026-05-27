@@ -138,17 +138,17 @@ class TestOpenSSLBackend:
         """不可用时 RuntimeError → line 171"""
         backend = OpenSSLBackend()
         backend._available = False
-        with self.assertRaises(RuntimeError) as ctx:
+        with pytest.raises(RuntimeError) as ctx:
             backend.generate_public_key(PK)
-        assert str(ctx.exception) in "not available"
+        assert "not available" in str(ctx.value)
 
     def test_scalar_multiply_not_available(self):
         """不可用时 RuntimeError → line 204"""
         backend = OpenSSLBackend()
         backend._available = False
-        with self.assertRaises(RuntimeError) as ctx:
+        with pytest.raises(RuntimeError) as ctx:
             backend.scalar_multiply(5, 0, 0)
-        assert str(ctx.exception) in "not available"
+        assert "not available" in str(ctx.value)
 
     @pytest.mark.skipif(
         not crypto_manager._backends[BackendType.OPENSSL].is_available,
@@ -223,9 +223,9 @@ class TestCoincurveBackend:
         """不可用时 RuntimeError → line 260"""
         backend = CoincurveBackend()
         backend._available = False
-        with self.assertRaises(RuntimeError) as ctx:
+        with pytest.raises(RuntimeError) as ctx:
             backend.generate_public_key(PK)
-        assert str(ctx.exception) in "not available"
+        assert "not available" in str(ctx.value)
 
     @pytest.mark.skipif(
         not CoincurveBackend().is_available,
@@ -242,9 +242,9 @@ class TestCoincurveBackend:
         """不可用时 RuntimeError → line 275"""
         backend = CoincurveBackend()
         backend._available = False
-        with self.assertRaises(RuntimeError) as ctx:
+        with pytest.raises(RuntimeError) as ctx:
             backend.scalar_multiply(5, 0, 0)
-        assert str(ctx.exception) in "not available"
+        assert "not available" in str(ctx.value)
 
     @pytest.mark.skipif(
         not CoincurveBackend().is_available,
@@ -333,9 +333,9 @@ class TestECDSABackend:
         """不可用时 RuntimeError → line 341"""
         backend = ECDSABackend()
         backend._available = False
-        with self.assertRaises(RuntimeError) as ctx:
+        with pytest.raises(RuntimeError) as ctx:
             backend.generate_public_key(PK)
-        assert str(ctx.exception) in "not available"
+        assert "not available" in str(ctx.value)
 
     @pytest.mark.skipif(
         not ECDSABackend().is_available,
@@ -444,9 +444,9 @@ class TestCryptoBackendManagerEdge:
         saved = crypto_manager._current_backend
         try:
             crypto_manager._current_backend = None
-            with self.assertRaises(RuntimeError) as ctx:
+            with pytest.raises(RuntimeError) as ctx:
                 _ = crypto_manager.current_backend
-            assert str(ctx.exception) in "No crypto backend"
+            assert "No crypto backend" in str(ctx.value)
         finally:
             crypto_manager._current_backend = saved
 
@@ -457,9 +457,9 @@ class TestCryptoBackendManagerEdge:
             saved_avail = coincurve._available
             try:
                 coincurve._available = False
-                with self.assertRaises(RuntimeError) as ctx:
+                with pytest.raises(RuntimeError) as ctx:
                     crypto_manager.set_backend(BackendType.COINCURVE)
-                assert str(ctx.exception) in "not available"
+                assert "not available" in str(ctx.value)
             finally:
                 coincurve._available = saved_avail
 

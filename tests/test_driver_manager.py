@@ -273,11 +273,11 @@ class TestDriverVersionEdgeCases:
 class TestDriverCache:
     """测试驱动缓存机制"""
 
-    def setUp(self):
+    def setup_method(self, method):
         """清除缓存"""
         DriverManager.clear_driver_cache()
 
-    def tearDown(self):
+    def teardown_method(self, method):
         """清除缓存"""
         DriverManager.clear_driver_cache()
 

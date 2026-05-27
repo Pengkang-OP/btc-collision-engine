@@ -9,7 +9,7 @@ pytestmark = pytest.mark.gpu
 class TestGPUDeviceSelector:
     """测试GPU设备选择器"""
 
-    def setUp(self):
+    def setup_method(self, method):
         """测试准备"""
         from src.gpu.selector import GPUDeviceSelector
 
@@ -79,7 +79,7 @@ class TestGPUDeviceSelector:
 class TestGPULoadBalancer:
     """测试GPU负载均衡器"""
 
-    def setUp(self):
+    def setup_method(self, method):
         """测试准备"""
         self.devices = [
             {
@@ -137,7 +137,7 @@ class TestGPULoadBalancer:
 class TestGPUAutoConfigurator:
     """测试GPU自动调优器"""
 
-    def setUp(self):
+    def setup_method(self, method):
         """测试准备"""
         from src.gpu.auto_config import GPUAutoConfigurator
 

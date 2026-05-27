@@ -74,7 +74,7 @@ class TestSecureKeyGeneratorInit:
 class TestGenerateBatch:
     """测试批量私钥生成"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.gen = SecureKeyGenerator(config={"batch_size": 100})
 
     def test_generate_batch_valid_keys(self):
@@ -97,9 +97,9 @@ class TestGenerateBatch:
 
     def test_generate_batch_zero_count(self):
         """P0-9: count=0 抛出 ValueError"""
-        with self.assertRaises(ValueError) as ctx:
+        with pytest.raises(ValueError) as ctx:
             self.gen.generate_batch(0)
-        assert str(ctx.exception) in "greater than 0"
+        assert "greater than 0" in str(ctx.value)
 
     def test_generate_batch_negative_count(self):
         """P0-10: count<0 抛出 ValueError"""
@@ -119,9 +119,9 @@ class TestGenerateBatch:
         """P1-1: 所有密钥无效时抛出 RuntimeError"""
         with patch.object(self.gen, "_is_valid_private_key", return_value=False):
             with patch("secrets.token_bytes", return_value=b"\x01" * 32):
-                with self.assertRaises(RuntimeError) as ctx:
+                with pytest.raises(RuntimeError) as ctx:
                     self.gen.generate_batch(5)
-                assert str(ctx.exception) in "Cannot generate any valid private keys"
+                assert "Cannot generate any valid private keys" in str(ctx.value)
 
     def test_generate_batch_with_rate_limit(self):
         """P1-2: 速率限制生效 - 10 keys at 100/s 至少耗时约 0.1s"""
@@ -157,7 +157,7 @@ class TestGenerateBatch:
 class TestGenerateSingle:
     """测试单个私钥生成"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.gen = SecureKeyGenerator()
 
     def test_generate_single_valid(self):
@@ -179,9 +179,9 @@ class TestGenerateSingle:
         """P1-4: 100次尝试失败后抛出 RuntimeError"""
         with patch.object(self.gen, "_is_valid_private_key", return_value=False):
             with patch("secrets.token_bytes", return_value=b"\x00" * 32):
-                with self.assertRaises(RuntimeError) as ctx:
+                with pytest.raises(RuntimeError) as ctx:
                     self.gen.generate_single()
-                assert str(ctx.exception) in "exceeded max attempts"
+                assert "exceeded max attempts" in str(ctx.value)
 
     def test_generate_single_second_attempt_succeeds(self):
         """P1-5: 第一次无效、第二次有效"""
@@ -201,7 +201,7 @@ class TestGenerateSingle:
 class TestIsValidPrivateKey:
     """测试私钥验证"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.gen = SecureKeyGenerator()
 
     def test_valid_key_passes(self):
@@ -245,22 +245,22 @@ class TestIsValidPrivateKey:
 class TestStatistics:
     """测试统计信息"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.gen = SecureKeyGenerator()
 
     def test_get_statistics_initial(self):
         """P0-21: 初始统计信息"""
         stats = self.gen.get_statistics()
         assert stats["total_generated"] == 0
-        assert stats in "elapsed_seconds"
-        assert stats in "generation_rate"
+        assert "elapsed_seconds" in stats
+        assert "generation_rate" in stats
         assert stats["batch_size"] == 1000
         assert stats["rate_limit"] == 0
         assert stats["key_format"] == "both"
-        assert stats in "entropy_check_enabled"
-        assert stats in "min_entropy_bits"
-        assert stats in "low_entropy_warnings"
-        assert stats in "entropy_checks"
+        assert "entropy_check_enabled" in stats
+        assert "min_entropy_bits" in stats
+        assert "low_entropy_warnings" in stats
+        assert "entropy_checks" in stats
 
     def test_get_statistics_after_generation(self):
         """P0-22: 生成密钥后的统计信息"""
@@ -290,7 +290,7 @@ class TestStatistics:
 class TestEntropyCheck:
     """测试熵池检查补充路径"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.gen = SecureKeyGenerator(config={"entropy_check_enabled": True})
 
     def test_entropy_check_disabled_skips(self):

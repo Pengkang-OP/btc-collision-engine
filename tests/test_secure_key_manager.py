@@ -20,7 +20,7 @@ class TestSecureKeyManagerInit:
         mgr = SecureKeyManager()
         assert not mgr.is_cleared
         assert not mgr.is_memory_locked
-        assert ("cryptography", "pynacl", "ctypes") in mgr.backend
+        assert mgr.backend in ("cryptography", "pynacl", "ctypes")
 
     def test_init_lock_memory_disabled(self):
         """禁用内存锁定"""
@@ -31,7 +31,7 @@ class TestSecureKeyManagerInit:
 class TestSecureKeyManagerGenerateKey:
     """generate_key 测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.mgr = SecureKeyManager(lock_memory=False)
 
     def test_generate_random_key(self):
@@ -42,7 +42,7 @@ class TestSecureKeyManagerGenerateKey:
         assert isinstance(key, memoryview)
         assert len(key) == 32
         # 验证只读
-        with self.assertRaises((TypeError, ValueError)):
+        with pytest.raises((TypeError, ValueError)):
             key[0] = 0  # 尝试写入应该失败
         assert not self.mgr.is_cleared
 
@@ -72,24 +72,24 @@ class TestSecureKeyManagerGetKey:
     def test_get_key_not_generated(self):
         """未生成密钥时抛出 SecureMemoryError"""
         mgr = SecureKeyManager()
-        with self.assertRaises(SecureMemoryError) as ctx:
+        with pytest.raises(SecureMemoryError) as ctx:
             mgr.get_key()
-        assert str(ctx.exception) in "not generated"
+        assert "not generated" in str(ctx.value)
 
     def test_get_key_after_clear(self):
         """清零后获取密钥抛出 SecureMemoryError"""
         mgr = SecureKeyManager(lock_memory=False)
         mgr.generate_key()
         mgr.clear()
-        with self.assertRaises(SecureMemoryError) as ctx:
+        with pytest.raises(SecureMemoryError) as ctx:
             mgr.get_key()
-        assert str(ctx.exception) in "has been cleared"
+        assert "has been cleared" in str(ctx.value)
 
 
 class TestSecureKeyManagerClear:
     """clear 测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.mgr = SecureKeyManager(lock_memory=False)
 
     def test_clear_success(self):
@@ -161,10 +161,10 @@ class TestSecureKeyManagerProperties:
 class TestSecureKeyManagerStats:
     """统计测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         SecureKeyManager.reset_clear_stats()
 
-    def tearDown(self):
+    def teardown_method(self, method):
         SecureKeyManager.reset_clear_stats()
 
     def test_get_clear_stats_initial(self):
@@ -231,7 +231,7 @@ class TestConvenienceFunctions:
             assert isinstance(key, memoryview)
             assert len(key) == 32
             # 验证只读
-            with self.assertRaises((TypeError, ValueError)):
+            with pytest.raises((TypeError, ValueError)):
                 key[0] = 0
 
     def test_secure_key_context_from_bytes(self):

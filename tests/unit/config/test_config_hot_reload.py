@@ -46,13 +46,13 @@ class TestConfigWatcherBackend:
 class TestConfigWatcherLifecycle:
     """ConfigWatcher 生命周期测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         fd, self.config_path = tempfile.mkstemp(suffix=".json")
         os.close(fd)
         with pathlib.Path(self.config_path).open("w") as f:
             json.dump({"test": True}, f)
 
-    def tearDown(self):
+    def teardown_method(self, method):
         if pathlib.Path(self.config_path).exists():
             pathlib.Path(self.config_path).unlink()
 
@@ -91,13 +91,13 @@ class TestConfigWatcherLifecycle:
 class TestConfigWatcherPolling:
     """ConfigWatcher 轮询模式测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         fd, self.config_path = tempfile.mkstemp(suffix=".json")
         os.close(fd)
         with pathlib.Path(self.config_path).open("w") as f:
             json.dump({"version": 1}, f)
 
-    def tearDown(self):
+    def teardown_method(self, method):
         if pathlib.Path(self.config_path).exists():
             pathlib.Path(self.config_path).unlink()
 
@@ -218,14 +218,14 @@ class TestConfigWatcherErrors:
 class TestConfigManagerReload:
     """ConfigManager.reload_config() 测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         fd, self.config_path = tempfile.mkstemp(suffix=".json")
         os.close(fd)
         with pathlib.Path(self.config_path).open("w") as f:
             json.dump({"logging": {"level": "DEBUG"}}, f)
         self.cm = ConfigManager(config_file=self.config_path)
 
-    def tearDown(self):
+    def teardown_method(self, method):
         self.cm.stop_watching()
         if pathlib.Path(self.config_path).exists():
             pathlib.Path(self.config_path).unlink()
@@ -274,14 +274,14 @@ class TestConfigManagerReload:
 class TestConfigManagerCallbacks:
     """ConfigManager.on_config_changed() 回调测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         fd, self.config_path = tempfile.mkstemp(suffix=".json")
         os.close(fd)
         with pathlib.Path(self.config_path).open("w") as f:
             json.dump({"logging": {"level": "INFO"}}, f)
         self.cm = ConfigManager(config_file=self.config_path)
 
-    def tearDown(self):
+    def teardown_method(self, method):
         self.cm.stop_watching()
         if pathlib.Path(self.config_path).exists():
             pathlib.Path(self.config_path).unlink()
@@ -344,14 +344,14 @@ class TestConfigManagerCallbacks:
 class TestConfigManagerWatching:
     """ConfigManager start_watching / stop_watching 测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         fd, self.config_path = tempfile.mkstemp(suffix=".json")
         os.close(fd)
         with pathlib.Path(self.config_path).open("w") as f:
             json.dump({"logging": {"level": "INFO"}}, f)
         self.cm = ConfigManager(config_file=self.config_path)
 
-    def tearDown(self):
+    def teardown_method(self, method):
         self.cm.stop_watching()
         if pathlib.Path(self.config_path).exists():
             pathlib.Path(self.config_path).unlink()
@@ -423,14 +423,14 @@ class TestConfigManagerWatching:
 class TestConfigManagerThreadSafety:
     """热重载线程安全测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         fd, self.config_path = tempfile.mkstemp(suffix=".json")
         os.close(fd)
         with pathlib.Path(self.config_path).open("w") as f:
             json.dump({"logging": {"level": "INFO"}}, f)
         self.cm = ConfigManager(config_file=self.config_path)
 
-    def tearDown(self):
+    def teardown_method(self, method):
         self.cm.stop_watching()
         if pathlib.Path(self.config_path).exists():
             pathlib.Path(self.config_path).unlink()
@@ -579,7 +579,7 @@ class TestConfigManagerThreadSafety:
 class TestNotificationChannelConcurrency:
     """S10: 通知渠道并发安全测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         from src.monitoring.alert_system import AlertLevel, AlertSystem, AlertType
 
         self.AlertSystem = AlertSystem

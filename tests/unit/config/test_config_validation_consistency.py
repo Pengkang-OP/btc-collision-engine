@@ -10,7 +10,7 @@ from src.config.config_manager import HAS_JSONSCHEMA, ConfigManager
 class TestConfigValidationConsistency:
     """验证JSON Schema和手动验证的一致性"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.mgr = ConfigManager()
 
     def test_valid_config_passes_both_validators(self):

@@ -17,11 +17,11 @@ from src.collision.key_collision_engine import KeyCollisionEngine
 class TestKeyCollisionEngineP3Checkpoint:
     """P3: Checkpoint 持久化：resume_from / start_from / start resume"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self._ckpt_dir = tempfile.mkdtemp(prefix="test_ckpt_")
         self._ckpt_path = os.path.join(self._ckpt_dir, "checkpoint.json")
 
-    def tearDown(self):
+    def teardown_method(self, method):
         shutil.rmtree(self._ckpt_dir, ignore_errors=True)
 
     def _create_checkpoint(self, mode="range", current_position=100, total_checked=500, range_end=1000):

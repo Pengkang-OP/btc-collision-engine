@@ -162,7 +162,7 @@ class DataLogger:
         )
         os.close(fd)
         try:
-            with pathlib.Path(temp_file).open("wb") as f:
+            with pathlib.Path(temp_file).open("w", encoding="utf-8") as f:
                 fast_dump(data, f, ensure_ascii=False, indent=2)
                 f.flush()
                 os.fsync(f.fileno())  # 确保数据写入磁盘
@@ -190,7 +190,7 @@ class DataLogger:
         try:
             # 初始化当前数据文件
             if not pathlib.Path(self.current_data_file).exists():
-                with pathlib.Path(self.current_data_file).open("wb") as f:
+                with pathlib.Path(self.current_data_file).open("w", encoding="utf-8") as f:
                     fast_dump({}, f)
                 if os.name != "nt":
                     pathlib.Path(self.current_data_file).chmod(0o600)
@@ -674,7 +674,7 @@ class DataLogger:
             )
             os.close(temp_fd)
 
-            with pathlib.Path(temp_file).open("wb") as f:
+            with pathlib.Path(temp_file).open("w", encoding="utf-8") as f:
                 fast_dump(save_data, f, ensure_ascii=False, indent=2)
                 f.flush()
                 os.fsync(f.fileno())
@@ -985,7 +985,7 @@ class DataLogger:
                 "data": compacted,
             }
             temp_file = self.history_data_file + ".compact.tmp"
-            with pathlib.Path(temp_file).open("wb") as f:
+            with pathlib.Path(temp_file).open("w", encoding="utf-8") as f:
                 fast_dump(versioned, f, ensure_ascii=False, indent=2)
                 f.flush()
                 os.fsync(f.fileno())
@@ -1246,7 +1246,7 @@ class DataLogger:
             report_filename = f"report_{report_type}_{now.strftime('%Y%m%d_%H%M%S')}.json"
             report_path = os.path.join(self.storage_dir, report_filename)
 
-            with pathlib.Path(report_path).open("wb") as f:
+            with pathlib.Path(report_path).open("w", encoding="utf-8") as f:
                 fast_dump(report, f, ensure_ascii=False, indent=2)
 
             self.logger.info("%s报告已生成: %s", report_type, report_path)
@@ -1484,7 +1484,7 @@ class DataLogger:
                         "schema_version": self.HISTORY_SCHEMA_VERSION,
                         "data": cleaned_history,
                     }
-                    with pathlib.Path(self.history_data_file).open("wb") as f:
+                    with pathlib.Path(self.history_data_file).open("w", encoding="utf-8") as f:
                         fast_dump(versioned, f, ensure_ascii=False, indent=2)
                     self.logger.info(f"清理了 {len(history) - len(cleaned_history)} 条过期历史数据")
 
@@ -1496,7 +1496,7 @@ class DataLogger:
                 cleaned_errors = [e for e in errors if e.get("timestamp", 0) >= cutoff_time]
 
                 if len(cleaned_errors) != len(errors):
-                    with pathlib.Path(self.error_log_file).open("wb") as f:
+                    with pathlib.Path(self.error_log_file).open("w", encoding="utf-8") as f:
                         fast_dump(cleaned_errors, f, ensure_ascii=False, indent=2)
                     self.logger.info(f"清理了 {len(errors) - len(cleaned_errors)} 条过期错误日志")
 

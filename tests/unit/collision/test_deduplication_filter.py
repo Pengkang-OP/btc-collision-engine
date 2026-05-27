@@ -185,12 +185,12 @@ class TestDeduplicationFilterGetStats:
             f.check_and_add(i.to_bytes(32, "big"))
         stats = f.get_stats()
 
-        assert stats in "unique_keys"
-        assert stats in "unique_addresses"
-        assert stats in "duplicates_found"
-        assert stats in "checks_total"
-        assert stats in "max_size"
-        assert stats in "enabled"
+        assert "unique_keys" in stats
+        assert "unique_addresses" in stats
+        assert "duplicates_found" in stats
+        assert "checks_total" in stats
+        assert "max_size" in stats
+        assert "enabled" in stats
 
     def test_get_stats_values(self):
         """get_stats 返回正确的数值"""

@@ -86,7 +86,7 @@ class TestCollisionEvent:
 class TestEventBus:
     """测试事件总线"""
 
-    def setUp(self):
+    def setup_method(self, method):
         """每个测试前重置事件总线"""
         reset_event_bus()
 
@@ -127,8 +127,8 @@ class TestEventBus:
         bus.publish(event)
 
         assert len(results) == 2
-        assert results in ("h1", 5000)
-        assert results in ("h2", 5000)
+        assert ("h1", 5000) in results
+        assert ("h2", 5000) in results
 
     def test_unsubscribe(self):
         """测试取消订阅"""
@@ -222,7 +222,7 @@ class TestEventBus:
 class TestEventBusAsync:
     """测试异步事件总线"""
 
-    def setUp(self):
+    def setup_method(self, method):
         reset_event_bus()
 
     def test_async_publish(self):
@@ -270,7 +270,7 @@ class TestEventBusAsync:
 class TestEventBusThreadSafety:
     """测试事件总线线程安全"""
 
-    def setUp(self):
+    def setup_method(self, method):
         reset_event_bus()
 
     def test_concurrent_subscribe(self):
@@ -334,7 +334,7 @@ class TestEventBusThreadSafety:
 class TestGlobalEventBus:
     """测试全局事件总线单例"""
 
-    def setUp(self):
+    def setup_method(self, method):
         reset_event_bus()
 
     def test_get_event_bus_returns_same_instance(self):

@@ -81,7 +81,7 @@ class TestGetUtf8Console:
 class TestCLIOutputSingleton:
     """get_instance / init / reset_instance 测试。"""
 
-    def tearDown(self):
+    def teardown_method(self, method):
         CLIOutput.reset_instance()
 
     def test_get_instance_creates_lazily(self):
@@ -117,11 +117,11 @@ class TestCLIOutputSingleton:
 class TestCLIOutputInit:
     """__init__ 参数测试。"""
 
-    def setUp(self):
+    def setup_method(self, method):
         # 每次测试前重置单例，避免污染
         CLIOutput.reset_instance()
 
-    def tearDown(self):
+    def teardown_method(self, method):
         CLIOutput.reset_instance()
 
     @patch("platform.system", return_value="Linux")
@@ -169,14 +169,14 @@ class TestCLIOutputInit:
 class TestCLIOutputMessages:
     """info / success / hint / warning / error / print 测试。"""
 
-    def setUp(self):
+    def setup_method(self, method):
         CLIOutput.reset_instance()
         self.out = CLIOutput()
         # Mock 底层 console 和 err_console
         self.out.console = MagicMock()
         self.out.err_console = MagicMock()
 
-    def tearDown(self):
+    def teardown_method(self, method):
         CLIOutput.reset_instance()
 
     # ── info ──
@@ -301,13 +301,13 @@ class TestCLIOutputMessages:
 class TestCLIOutputStructured:
     """rule / header / startup_panel / final_summary / stats_panel 测试。"""
 
-    def setUp(self):
+    def setup_method(self, method):
         CLIOutput.reset_instance()
         self.out = CLIOutput()
         self.out.console = MagicMock()
         self.out.err_console = MagicMock()
 
-    def tearDown(self):
+    def teardown_method(self, method):
         CLIOutput.reset_instance()
 
     # ── rule ──
@@ -411,13 +411,13 @@ class TestCLIOutputStructured:
 class TestCLIOutputRuntime:
     """status_line / performance_status 测试。"""
 
-    def setUp(self):
+    def setup_method(self, method):
         CLIOutput.reset_instance()
         self.out = CLIOutput()
         self.out.console = MagicMock()
         self.out.err_console = MagicMock()
 
-    def tearDown(self):
+    def teardown_method(self, method):
         CLIOutput.reset_instance()
 
     # ── status_line ──

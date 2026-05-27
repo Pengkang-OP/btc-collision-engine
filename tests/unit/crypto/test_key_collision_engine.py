@@ -1154,7 +1154,7 @@ class TestKeyCollisionEngineP3TuneBatch:
 class TestKeyCollisionEngineP3Checkpoint:
     """P3: Checkpoint 持久化：resume_from / start_from / start resume"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self._ckpt_dir = tempfile.mkdtemp(prefix="test_ckpt_")
         self._ckpt_path = os.path.join(self._ckpt_dir, "checkpoint.json")
 

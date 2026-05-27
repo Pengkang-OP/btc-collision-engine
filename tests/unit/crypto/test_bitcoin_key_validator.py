@@ -18,7 +18,7 @@ from src.core.wif import WIF
 class TestWIFEncoder:
     """WIF 编解码测试 (WIFEncoder 已迁移为 src.core.wif.WIF)"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.pk = (1).to_bytes(32, "big")
         self.pk_random = (12345).to_bytes(32, "big")
 
@@ -185,7 +185,7 @@ class TestKeyValidationResult:
 class TestBitcoinKeyValidatorBasic:
     """BitcoinKeyValidator 基础测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.validator = BitcoinKeyValidator(secure_mode=False)
         self.pk = (1).to_bytes(32, "big")
         self.pk_random = (12345678901234567890).to_bytes(32, "big")
@@ -236,7 +236,7 @@ class TestBitcoinKeyValidatorBasic:
 class TestBitcoinKeyValidatorPubKey:
     """BitcoinKeyValidator 公钥生成测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.validator = BitcoinKeyValidator(secure_mode=False)
         self.pk = (42).to_bytes(32, "big")
 
@@ -298,7 +298,7 @@ class TestBitcoinKeyValidatorPubKey:
 class TestBitcoinKeyValidatorAddress:
     """BitcoinKeyValidator 地址生成与验证测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.validator = BitcoinKeyValidator(secure_mode=False)
         self.pk = (42).to_bytes(32, "big")
 
@@ -368,7 +368,7 @@ class TestBitcoinKeyValidatorAddress:
 class TestBitcoinKeyValidatorWIF:
     """BitcoinKeyValidator WIF 编解码测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.validator = BitcoinKeyValidator(secure_mode=False)
         self.pk = (42).to_bytes(32, "big")
 
@@ -427,7 +427,7 @@ class TestBitcoinKeyValidatorWIF:
 class TestBitcoinKeyValidatorMatch:
     """BitcoinKeyValidator 地址匹配测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.validator = BitcoinKeyValidator(secure_mode=False)
         self.pk = (42).to_bytes(32, "big")
 
@@ -472,7 +472,7 @@ class TestBitcoinKeyValidatorMatch:
 class TestBitcoinKeyValidatorFullChain:
     """完整验证链测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.pk = (42).to_bytes(32, "big")
 
     def test_full_validation_chain_secure_mode(self):
@@ -617,7 +617,7 @@ class TestBitcoinKeyValidatorBech32:
 class TestBitcoinKeyValidatorUncompressedWIF:
     """非压缩WIF前缀检查"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.validator = BitcoinKeyValidator(secure_mode=False)
         self.pk = (12345).to_bytes(32, "big")
 

@@ -30,7 +30,7 @@ class TestUTF8Helper:
         from tools import utf8_helper
 
         assert utf8_helper.__doc__ is not None, "模块应该有文档字符串"
-        assert utf8_helper.__doc__ in "UTF-8", "文档应该提到UTF-8"
+        assert "UTF-8" in utf8_helper.__doc__, "文档应该提到UTF-8"
 
     def test_helper_functions_exist(self):
         """测试所有辅助函数都存在"""
@@ -48,7 +48,7 @@ class TestUTF8HelperMock:
     """
 
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         if sys.platform != "win32":
             raise unittest.SkipTest("Windows-only: ctypes.windll not available on this platform")
 
@@ -189,7 +189,7 @@ class TestUTF8HelperAuxiliary:
             del mock_stdout.encoding
             with mock.patch.object(utf8_helper.sys, "stdout", mock_stdout):
                 result = utf8_helper.get_console_encoding()
-                assert ("utf-8", "unknown") in result
+                assert result in ("utf-8", "unknown")
 
 
 if __name__ == "__main__":

@@ -13,13 +13,13 @@ from src.monitoring.data_logger import DataLogger
 class TestWindowsPermissionRetry:
     """测试 Windows 权限错误重试机制"""
 
-    def setUp(self):
+    def setup_method(self, method):
         """设置测试环境"""
         # 创建临时目录
         self.test_dir = tempfile.mkdtemp()
         self.data_logger = DataLogger(storage_dir=self.test_dir)
 
-    def tearDown(self):
+    def teardown_method(self, method):
         """清理测试环境"""
         import shutil
 
@@ -98,7 +98,7 @@ class TestWindowsPermissionRetry:
         # 验证数据已保存
         with pathlib.Path(current_file).open(encoding="utf-8") as f:
             data = json.load(f)
-        assert data in "performance"
+        assert "performance" in data
         assert data["performance"]["speed"] == 200.0
 
     def test_retry_exhausted_returns_data_to_buffer(self):

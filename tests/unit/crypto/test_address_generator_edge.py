@@ -25,9 +25,9 @@ class TestSecureClearBytearray:
 
     def test_non_bytearray_raises_typeerror(self):
         """传入 bytes 触发 TypeError → lines 61-65"""
-        with self.assertRaises(TypeError) as ctx:
+        with pytest.raises(TypeError) as ctx:
             secure_clear_bytearray(b"\x00" * 32)
-        assert str(ctx.exception) in "bytearray"
+        assert "bytearray" in str(ctx.value)
 
     def test_non_bytearray_list_raises_typeerror(self):
         """传入 list 触发 TypeError"""
@@ -59,7 +59,7 @@ class TestSecureClearBytearray:
 class TestGeneratePrivateKeyEdge:
     """generate_private_key 异常处理与重试耗尽"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.gen = P2PKHAddressGenerator()
 
     def test_generate_private_key_max_retries_exceeded(self):
@@ -68,7 +68,7 @@ class TestGeneratePrivateKeyEdge:
             # 零私钥始终无效, 耗尽 max_retries
             with self.assertRaises(Exception) as ctx:
                 self.gen.generate_private_key(max_retries=3)
-            assert str(ctx.exception) in "Cannot generate valid private key within 3 attempts"
+            assert "Cannot generate valid private key within 3 attempts" in str(ctx.value)
 
     def test_generate_private_key_valueerror_handler(self):
         """secrets.token_bytes 抛 ValueError → lines 173-179"""
@@ -115,7 +115,7 @@ class TestCryptoBackendPerformance:
             {"src.core.crypto_backend": MagicMock(crypto_manager=mock_manager)},
         ):
             # 导入已存在，P2PKHAddressGenerator 会使用 crypto_manager
-            with self.assertWarns(PerformanceWarning):
+            with pytest.warns(PerformanceWarning):
                 P2PKHAddressGenerator()
 
     def test_import_error_silent(self):

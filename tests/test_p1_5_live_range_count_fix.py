@@ -18,11 +18,11 @@ from src.collision.key_collision_engine import KeyCollisionEngine
 class TestLiveRangeCountFix:
     """P1-5: _live_range_count 双重计数修复验证"""
 
-    def setUp(self):
+    def setup_method(self, method):
         """每个测试创建独立的引擎实例"""
         self.engine = None
 
-    def tearDown(self):
+    def teardown_method(self, method):
         """清理"""
         if self.engine and hasattr(self.engine, "_executor") and self.engine._executor:
             self.engine.stop()

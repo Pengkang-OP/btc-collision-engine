@@ -12,7 +12,7 @@ from src.config.config_manager import ConfigManager
 class TestConfigManagerAdvanced:
     """ConfigManager 高级功能测试 — _validate_manual 验证逻辑"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.cm = ConfigManager()
 
     def test_strip_comments_removes_comment_keys(self):
@@ -309,7 +309,7 @@ class TestConfigManagerAdvanced:
 class TestConfigManagerLifecycle:
     """ConfigManager 生命周期测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.cm = ConfigManager()
 
     def test_init_no_file_uses_defaults(self):
@@ -421,11 +421,11 @@ class TestConfigManagerLifecycle:
 class TestConfigManagerWithTempFile:
     """ConfigManager 文件操作测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.tmpdir = tempfile.mkdtemp()
         self.tmpfile = os.path.join(self.tmpdir, "test_config.json")
 
-    def tearDown(self):
+    def teardown_method(self, method):
         import shutil
 
         shutil.rmtree(self.tmpdir, ignore_errors=True)

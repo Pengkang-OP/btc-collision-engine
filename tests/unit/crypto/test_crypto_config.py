@@ -19,7 +19,7 @@ from src.config.crypto_config import CryptoBackendType, CryptoConfig
 class TestCryptoConfig:
     """CryptoConfig 核心方法测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.cfg = CryptoConfig()
 
     # ── save() ─────────────────────────────────────────────────

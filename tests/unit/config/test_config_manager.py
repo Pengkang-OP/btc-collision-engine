@@ -14,14 +14,14 @@ from src.config.config_manager import ConfigManager
 class TestConfigManagerBasic:
     """基础配置测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.test_dir = tempfile.mkdtemp()
         self.config_file = os.path.join(self.test_dir, "test_config.json")
         from src.config.config_manager import ConfigManager as CM
 
         self.cm_class = CM
 
-    def tearDown(self):
+    def teardown_method(self, method):
         shutil.rmtree(self.test_dir, ignore_errors=True)
 
     def test_default_config_initialization(self):
@@ -86,10 +86,10 @@ class TestConfigManagerBasic:
 class TestConfigManagerGetSet:
     """配置读写测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.test_dir = tempfile.mkdtemp()
 
-    def tearDown(self):
+    def teardown_method(self, method):
         shutil.rmtree(self.test_dir, ignore_errors=True)
 
     def test_get_nested_value(self):
@@ -135,14 +135,14 @@ class TestConfigManagerGetSet:
 class TestConfigManagerMerge:
     """配置合并测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.test_dir = tempfile.mkdtemp()
         self.config_file = os.path.join(self.test_dir, "test_config.json")
         from src.config.config_manager import ConfigManager as CM
 
         self.cm_class = CM
 
-    def tearDown(self):
+    def teardown_method(self, method):
         shutil.rmtree(self.test_dir, ignore_errors=True)
 
     def test_merge_partial_config(self):
@@ -197,7 +197,7 @@ class TestConfigManagerMerge:
 class TestConfigManagerValidation:
     """配置验证测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         from src.config.config_manager import ConfigManager as CM
 
         self.cm_class = CM
@@ -286,14 +286,14 @@ class TestConfigManagerValidation:
 class TestConfigManagerEdgeCases:
     """边界情况测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.test_dir = tempfile.mkdtemp()
         self.config_file = os.path.join(self.test_dir, "test_config.json")
         from src.config.config_manager import ConfigManager as CM
 
         self.cm_class = CM
 
-    def tearDown(self):
+    def teardown_method(self, method):
         shutil.rmtree(self.test_dir, ignore_errors=True)
 
     def test_load_corrupted_json(self):

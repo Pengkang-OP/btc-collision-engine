@@ -51,7 +51,7 @@ class TestBatchOptimizerInit:
 class TestBatchOptimizerConvert:
     """batch_private_key_to_int 测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.bo = BatchOptimizer(batch_size=100)
 
     def test_batch_private_key_to_int_normal(self):
@@ -79,7 +79,7 @@ class TestBatchOptimizerConvert:
 class TestBatchOptimizerHash:
     """batch_ripemd160, batch_sha256, batch_hash160 测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.bo = BatchOptimizer(batch_size=100)
 
     def test_batch_ripemd160_normal(self):
@@ -138,7 +138,7 @@ class TestBatchOptimizerHash:
 class TestBatchOptimizerBase58:
     """batch_base58_encode 测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.bo = BatchOptimizer(batch_size=100)
 
     def test_batch_base58_encode_zero(self):
@@ -174,7 +174,7 @@ class TestBatchOptimizerBase58:
 class TestBatchOptimizerAddress:
     """batch_address_from_hash160 测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.bo = BatchOptimizer(batch_size=100)
 
     def test_batch_address_from_hash160_default_version(self):
@@ -227,13 +227,13 @@ class TestBatchCollisionProcessorInit:
         bcp = BatchCollisionProcessor()
         bcp.set_targets(["1Addr1", "1Addr2", "1Addr3"])
         assert len(bcp.target_addresses) == 3
-        assert bcp.target_addresses in "1Addr1"
+        assert "1Addr1" in bcp.target_addresses
 
 
 class TestBatchCollisionProcessorProcessBatch:
     """process_batch 和 _batch_generate_addresses 测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.processor = BatchCollisionProcessor(batch_size=2)
 
     def _make_fallback_mock(self, addresses):

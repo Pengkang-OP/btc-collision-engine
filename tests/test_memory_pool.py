@@ -39,9 +39,9 @@ class TestObjectPoolInit:
 
     def test_init_max_less_than_initial(self):
         """max_size < initial_size 抛出 ValueError"""
-        with self.assertRaises(ValueError) as ctx:
+        with pytest.raises(ValueError) as ctx:
             ObjectPool(lambda: _DummyObj(), initial_size=10, max_size=5)
-        assert str(ctx.exception) in "max_size"
+        assert "max_size" in str(ctx.value)
 
     def test_init_zero_initial_size(self):
         """initial_size=0 有效"""
@@ -52,7 +52,7 @@ class TestObjectPoolInit:
 class TestObjectPoolAcquireRelease:
     """acquire/release 测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.pool = ObjectPool(lambda: _DummyObj(), initial_size=2, max_size=5)
 
     def test_acquire_from_pool(self):
@@ -127,7 +127,7 @@ class TestObjectPoolHitRatio:
 class TestObjectPoolShrink:
     """shrink 测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         self.pool = ObjectPool(lambda: _DummyObj(), initial_size=10, max_size=50)
 
     def test_shrink_noop_when_under_target(self):
@@ -255,9 +255,9 @@ class TestObjectPoolStats:
         """基本统计"""
         pool = ObjectPool(lambda: _DummyObj(), initial_size=5, max_size=20)
         stats = pool.get_stats()
-        assert stats in "current_size"
-        assert stats in "hit_rate"
-        assert stats in "estimated_memory_mb"
+        assert "current_size" in stats
+        assert "hit_rate" in stats
+        assert "estimated_memory_mb" in stats
         assert stats["current_size"] == 5
 
     def test_estimate_memory(self):
@@ -296,17 +296,17 @@ class TestByteArrayPool:
         """获取统计"""
         pool = ByteArrayPool(buffer_size=64, initial_size=5, max_size=20)
         stats = pool.get_stats()
-        assert stats in "current_size"
+        assert "current_size" in stats
 
 
 class TestGlobalPoolManagerLazyInit:
     """GlobalPoolManager 延迟初始化路径测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         # Reset singleton for clean test
         GlobalPoolManager._instance = None
 
-    def tearDown(self):
+    def teardown_method(self, method):
         GlobalPoolManager._instance = None
 
     def test_double_initialize_skips_second(self):
@@ -347,8 +347,8 @@ class TestGlobalPoolManagerLazyInit:
         """get_all_stats 自动初始化"""
         mgr = GlobalPoolManager()
         stats = mgr.get_all_stats()
-        assert stats in "ecpoint"
-        assert stats in "total_estimated_memory_mb"
+        assert "ecpoint" in stats
+        assert "total_estimated_memory_mb" in stats
 
     def test_get_total_memory_estimate_lazy_init(self):
         """get_total_memory_estimate 自动初始化"""
@@ -372,10 +372,10 @@ class TestGlobalPoolManagerLazyInit:
 class TestGlobalPoolManagerAutoTuneAll:
     """auto_tune_all 测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         GlobalPoolManager._instance = None
 
-    def tearDown(self):
+    def teardown_method(self, method):
         GlobalPoolManager._instance = None
 
     def test_auto_tune_all_with_default_budget(self):
@@ -415,10 +415,10 @@ class TestGlobalPoolManagerAutoTuneAll:
 class TestGlobalPoolManagerShrinkAll:
     """shrink_all 测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         GlobalPoolManager._instance = None
 
-    def tearDown(self):
+    def teardown_method(self, method):
         GlobalPoolManager._instance = None
 
     def test_shrink_all_releases_objects(self):
@@ -446,10 +446,10 @@ class TestGlobalPoolManagerShrinkAll:
 class TestGlobalPoolManagerAutoCleanup:
     """P1-6 自动清理测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         GlobalPoolManager._instance = None
 
-    def tearDown(self):
+    def teardown_method(self, method):
         mgr = GlobalPoolManager()
         mgr.stop_auto_cleanup(timeout=1.0)
         GlobalPoolManager._instance = None
@@ -538,10 +538,10 @@ class TestGlobalPoolManagerAutoCleanup:
 class TestGlobalPoolManagerIntegration:
     """集成测试"""
 
-    def setUp(self):
+    def setup_method(self, method):
         GlobalPoolManager._instance = None
 
-    def tearDown(self):
+    def teardown_method(self, method):
         GlobalPoolManager._instance = None
 
     def test_full_lifecycle(self):
@@ -559,7 +559,7 @@ class TestGlobalPoolManagerIntegration:
         assert ba64 is not None
 
         stats = mgr.get_all_stats()
-        assert stats in "ecpoint"
+        assert "ecpoint" in stats
 
         mgr.start_auto_cleanup(interval_seconds=0.5)
         mgr.stop_auto_cleanup(timeout=2.0)
