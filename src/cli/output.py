@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from rich.panel import Panel as _RichPanel
     from rich.table import Table as _RichTable
     from rich.text import Text as _RichText
+
     Console: type = _RichConsole  # type: ignore[misc]  # in TYPE_CHECKING block
     Panel: type = _RichPanel  # type: ignore[misc]
     Table: type = _RichTable  # type: ignore[misc]

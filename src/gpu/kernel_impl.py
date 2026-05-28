@@ -36,6 +36,7 @@ from .seed_utils import _seed_bytes_to_u32_be_array
 cl: Any
 if PYOPENCL_AVAILABLE:
     import pyopencl as _cl
+
     cl = _cl
 else:
     cl = cast(Any, None)

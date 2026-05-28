@@ -29,6 +29,7 @@ from .scorer import get_gpu_scorer
 cl: Any
 if PYOPENCL_AVAILABLE:
     import pyopencl as _cl
+
     cl = _cl
 else:
     cl = cast(Any, None)
