@@ -137,6 +137,9 @@ class DataLogger:
         self._pipeline_error_count: int = 0
         self._pipeline_metrics: list[dict[str, Any]] = []
 
+        # 自动清理上次执行时间（在 __init__ 中初始化以避免 mypy [attr-defined]）
+        self._last_cleanup_time: float = 0.0
+
         self.logger.debug("数据日志系统初始化完成")
 
     def _atomic_write_json(self, filepath: str, data: Any) -> None:
@@ -609,7 +612,7 @@ class DataLogger:
             errors.append(error_record)
             # 手动限制错误列表长度（_error_rotator.max_count）
             # 注意：LogRotator.rotate() 用于文件轮转，不适用于内存列表
-            max_errors = getattr(self._error_rotator, "_max_count", 1000)
+            max_errors = self._error_rotator._max_count or 1000  # type: ignore[attr-defined]
             if len(errors) > max_errors:
                 errors = errors[-max_errors:]
 
@@ -1417,8 +1420,6 @@ class DataLogger:
         配置读取失败时静默回退到默认值，保持向后兼容。
         """
         current_time = time.time()
-        if not hasattr(self, "_last_cleanup_time"):
-            self._last_cleanup_time = 0.0  # pyright: ignore[reportUninitializedInstanceVariable]
 
         # 每24小时最多执行一次清理
         if current_time - self._last_cleanup_time < 86400:
@@ -1541,7 +1542,6 @@ class DataLogger:
                 "error": error,
             }
             if extra:
-                metric_entry: dict[str, Any] = metric_entry  # type: ignore[no-redef]
                 metric_entry["extra"] = extra
             self._pipeline_metrics.append(metric_entry)
 
@@ -1651,7 +1651,7 @@ class DataLogger:
                 errors.extend(pending_errors)
                 # 手动限制错误列表长度（_error_rotator.max_count）
                 # 注意：LogRotator.rotate() 用于文件轮转，不适用于内存列表
-                max_errors = getattr(self._error_rotator, "_max_count", 1000)
+                max_errors = self._error_rotator._max_count or 1000  # type: ignore[attr-defined]
                 if len(errors) > max_errors:
                     errors = errors[-max_errors:]
                 self._atomic_write_json(self.error_log_file, errors)

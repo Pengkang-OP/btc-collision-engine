@@ -272,10 +272,10 @@ def main() -> int:
 
     args = parser.parse_args()
 
-    # 配置向导模式（argparse store_true 返回 bool，但类型推断为 Any）
-    auto_mode: bool = args.auto  # type: ignore[assignment]
-    compact_mode: bool = args.compact  # type: ignore[assignment]
-    output_path: str | None = args.output  # type: ignore[assignment]
+    # 配置向导模式（argparse.Namespace 属性访问返回 Any，需显式转换）
+    auto_mode: bool = bool(args.auto)
+    compact_mode: bool = bool(args.compact)
+    output_path: str | None = str(args.output) if args.output else None
 
     if auto_mode:
         config = WizardConfig(mode=WizardMode.AUTO, show_intro=False, show_summary=True)

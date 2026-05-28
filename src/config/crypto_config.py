@@ -231,10 +231,10 @@ class CryptoConfig:
             RuntimeError: 当GPU不可用时
 
         """
-        from ..collision.gpu.engine import GPUCollisionEngine
+        from src.collision.gpu import create_gpu_collision_engine
 
         gpu_config = self.get_gpu_config()
-        return GPUCollisionEngine(
+        return create_gpu_collision_engine(
             targets=targets,
             batch_size=gpu_config["batch_size"],
             device_index=gpu_config["device_index"],

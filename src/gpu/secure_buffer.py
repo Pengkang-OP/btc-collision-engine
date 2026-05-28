@@ -5,14 +5,16 @@
 """
 
 import logging
-from typing import Any
+from typing import Any, cast
 
 from ._availability import PYOPENCL_AVAILABLE
 
+cl: Any
 if PYOPENCL_AVAILABLE:
-    import pyopencl as cl
+    import pyopencl as _cl
+    cl = _cl
 else:
-    cl = None  # type: ignore[assignment]
+    cl = cast(Any, None)
 
 logger = logging.getLogger("GPUSecureBuffer")
 

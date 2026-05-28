@@ -125,7 +125,7 @@ class GPUResultProcessor:
                 engine.stats.add_match(private_key, address)
 
             # v3.2.0: 发布匹配事件
-            match_event = EngineMatchEvent(
+            match_event = EngineMatchEvent(  # type: ignore[call-arg]
                 private_key=private_key,
                 address=address,
                 wif=wif,
@@ -193,7 +193,7 @@ class GPUResultProcessor:
                 engine.stats.add_match(private_key, address)
 
             # v3.2.0: 发布匹配事件 (PRNG模式)
-            match_event = EngineMatchEvent(
+            match_event = EngineMatchEvent(  # type: ignore[call-arg]
                 private_key=private_key,
                 address=address,
                 wif=wif,

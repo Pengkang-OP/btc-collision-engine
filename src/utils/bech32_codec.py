@@ -69,7 +69,7 @@ def bech32_encode(hrp: str, witver: int, witprog: bytes, spec: str = "bech32") -
     converted = _convertbits(list(witprog), 8, 5)
     if converted is None:
         raise ValueError("Witness program conversion failed")
-    data = [witver] + converted
+    data = [witver] + converted  # type: ignore[operator]
     checksum = bech32_create_checksum(hrp, data, spec)
     combined = data + checksum
     return hrp + "1" + "".join(CHARSET[d] for d in combined)

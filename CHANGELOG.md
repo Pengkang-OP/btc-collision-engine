@@ -5,6 +5,37 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [5.0.2] — 2026-05-29
+
+### Added
+
+- **ROADMAP #11: 统一入口错误处理** — `key_collision_cli.py` 和 `src/__main__.py`
+  添加 try/except 保护模块导入失败，在所有入口路径提供一致的兜底消息
+- **ROADMAP #13: 工厂函数消除反向依赖** — 在 `src/collision/gpu/__init__.py`
+  添加 `create_gpu_collision_engine()` 工厂函数，替代 `src/gpu/config.py`、
+  `src/gpu/facade.py`、`src/gpu/worker.py`、`src/config/crypto_config.py`
+  中直接导入 `GPUCollisionEngine` 的模式
+
+### Changed
+
+- **mypy Strict 逐步启用 (Phase 0)** — 收紧第一个 override block：
+  - 移除 `src.wizard.wizard_engine` 和 `src.gpu.kernel_protocol` 的豁免
+  - `src.cli.output` 从 `ignore_errors = true` 收紧为 `disable_error_code = ["misc"]`
+- **`src/gpu/kernel_protocol.py`** — 移除 Protocol 方法上的 `@abstractmethod` 装饰器，
+  消除 mypy call-arg 签名不匹配
+- **`src/wizard/wizard_engine.py`** — 移除 3 处 `# type: ignore[assignment]`，
+  改为显式类型转换
+- **ROADMAP #15 Phase 3 完成: ruff D 规则全项目生效** — 审计 91 文件，
+  仅 `tools/update_gpu_config.py` 补 docstring，移除全部 9 处 D 豁免
+  (scripts/benchmarks/tests/tools/examples/ + start.py/key_collision.py/conftest.py)
+- **mypy Block 3 (2 模块) 已修复并删除** — 修复 `auto_test.py` 中已移除的
+  `BackendProto` 引用和 `performance_benchmark.py` 中 `MultiprocessCollisionEngine`
+  类名拼写错误，删除对应 mypy override block
+- **mypy Blocks 5+6 (17 模块) 已修复并删除** — 10 文件补充类型注解（-> None、
+  -> list[str] 等 30+ 处），7 文件添加逐行 # type: ignore[error-code] 或代码改动
+  (metrics.py 0->0.0、memory_pool.py functools.partial)。从 6 个 override block
+  缩减至 3 个，24+ 模块豁免
+
 ## [5.0.1] — 2026-05-28
 
 ### Changed

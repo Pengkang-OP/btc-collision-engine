@@ -23,7 +23,7 @@ logger = get_configured_logger(__name__)
 class DataAnalysisModule:
     """数据分析模块 - 自动处理输入数据并生成深度分析报告."""
 
-    def __init__(self, project_root: Path | None = None):
+    def __init__(self, project_root: Path | None = None) -> None:
         """初始化数据分析模块."""
         self.project_root = (
             project_root

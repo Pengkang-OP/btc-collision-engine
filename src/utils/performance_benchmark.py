@@ -166,10 +166,10 @@ class PerformanceBenchmark:
 
             print(f"\n测试工作进程数: {num_workers}")
 
-            from src.collision.multiprocess_engine import MultiprocessCollisionEngine
+            from src.collision.multiprocess_engine import MultiProcessCollisionEngine
 
             # 创建引擎
-            engine = MultiprocessCollisionEngine(
+            engine = MultiProcessCollisionEngine(
                 num_workers=num_workers,
                 batch_size=10000,
                 target_addresses=["test_address"],  # 假地址

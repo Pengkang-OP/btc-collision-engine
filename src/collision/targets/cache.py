@@ -183,7 +183,7 @@ class AddressCache:
 
                 return {
                     "lru_size": len(self.lru_cache),
-                    "lru_max_size": self.lru_cache.maxsize,
+                    "lru_max_size": self.lru_cache.maxsize,  # type: ignore[union-attr]
                     "ttl_size": len(self.ttl_cache),
                     "hits": self.hits,
                     "misses": self.misses,

@@ -198,7 +198,7 @@ class GPUFacade:
             self._gpu_device.initialize(device_index=device_index)
 
             # 创建碰撞引擎 (使用已保存的 targets)
-            from ..collision.gpu.engine import GPUCollisionEngine
+            from ..collision.gpu import create_gpu_collision_engine
 
             # v5.2.1: 提取 gpu 配置段，传递给引擎
             gpu_cfg = {}
@@ -207,7 +207,7 @@ class GPUFacade:
                 if isinstance(gpu_section, dict):
                     gpu_cfg = gpu_section
 
-            self._collision_engine = GPUCollisionEngine(
+            self._collision_engine = create_gpu_collision_engine(
                 targets=set(self._targets) if self._targets else set(),
                 device_index=device_index,
                 batch_size=batch_size,

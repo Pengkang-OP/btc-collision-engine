@@ -16,7 +16,13 @@ import sys
 # 确保项目根目录在路径中（必须在 src 导入之前执行）
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from src.cli.main import main  # 架构必要：sys.path.insert 后立即导入
+# ROADMAP #11: 保护 import 失败，在所有入口路径提供一致的兜底消息
+try:
+    from src.cli.main import main  # 架构必要：sys.path.insert 后立即导入
+except ImportError as _import_err:
+    print(f"错误: 无法加载核心模块 — {_import_err}", file=sys.stderr)
+    print("提示: 请确保已安装所有依赖 (pip install -r requirements.txt)", file=sys.stderr)
+    sys.exit(1)
 
 if __name__ == "__main__":
     main()

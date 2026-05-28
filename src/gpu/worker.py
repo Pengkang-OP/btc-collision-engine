@@ -153,7 +153,7 @@ class SingleGPUWorker(threading.Thread):
         # 增量统计器（线程本地，减少锁竞争）- 根据配置启用
         self._delta_stats: Any | None = None
         if _delta_stats_available:
-            self._delta_stats = ThreadLocalDeltaStats()
+            self._delta_stats = ThreadLocalDeltaStats()  # type: ignore[attr-defined]  # conditional import guard
             logger.debug("GPU %s: 增量统计器已启用", device_idx)
 
         # GPU引擎实例
@@ -219,14 +219,14 @@ class SingleGPUWorker(threading.Thread):
     def _initialize_gpu_engine(self):
         """初始化GPU碰撞引擎."""
         try:
-            # 导入GPU碰撞引擎
-            from ..collision.gpu.engine import GPUCollisionEngine
+            # 导入GPU碰撞引擎工厂
+            from ..collision.gpu import create_gpu_collision_engine
 
             # 配置引擎
             batch_size: int | None = self.config.batch_size  # None=自动计算
 
-            # 创建引擎实例（targets 是必填参数，其余通过 __init__ 完成初始化）
-            self._gpu_engine = GPUCollisionEngine(
+            # 创建引擎实例（targets 是必填参数，其余通过工厂函数传递）
+            self._gpu_engine = create_gpu_collision_engine(
                 targets=self.targets,
                 device_index=self.device_idx,
                 batch_size=cast("int | None", batch_size),
@@ -465,7 +465,7 @@ class SingleGPUWorker(threading.Thread):
 
     # 根据配置条件应用性能监控装饰器
     if _monitor_available:
-        _update_stats = profile_stats_update(_update_stats)
+        _update_stats = profile_stats_update(_update_stats)  # type: ignore[attr-defined]  # conditional import guard
 
     def _cleanup(self) -> None:
         """清理资源."""

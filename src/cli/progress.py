@@ -227,7 +227,7 @@ class LiveStatsDisplay:
 class ProgressBar:
     """Simple progress bar for CLI display (legacy)."""
 
-    def __init__(self, total: int, width: int = 40):
+    def __init__(self, total: int, width: int = 40) -> None:
         """Initialize the simple progress bar."""
         self.total = total
         self.width = width

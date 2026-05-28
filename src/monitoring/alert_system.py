@@ -137,7 +137,7 @@ class AlertSystem:
         self.rules: list[AlertRule] = []
         self.alert_history: list[AlertRecord] = []
         self.last_alert_time: dict[str, float] = {}  # 规则名称 -> 最后告警时间
-        self.alert_callbacks: list[Callable] = []  # 告警回调函数
+        self.alert_callbacks: list[Callable[..., Any]] = []  # 告警回调函数
         self.notification_channels: list[Any] = []  # 通知渠道列表
 
         # #11修复: 增强的速率限制
@@ -197,7 +197,7 @@ class AlertSystem:
         logger.info("添加告警回调函数")
 
     # ── 多渠道通知支持 ──
-    def add_notification_channel(self, channel) -> None:
+    def add_notification_channel(self, channel: Any) -> None:
         """添加告警通知渠道.
 
         渠道对象只需实现 send(alert: AlertRecord) 方法即可（鸭子类型）。
@@ -210,7 +210,7 @@ class AlertSystem:
         channel_name = getattr(channel, "name", str(channel))
         logger.info("添加告警通知渠道: %s", channel_name)
 
-    def remove_notification_channel(self, channel) -> bool:
+    def remove_notification_channel(self, channel: Any) -> bool:
         """移除告警通知渠道.
 
         Args:
@@ -461,7 +461,7 @@ class AlertSystem:
         # 检查是否超过限制
         return len(self._recent_alerts) < self._global_rate_limit_max
 
-    def get_rate_limit_stats(self) -> dict:
+    def get_rate_limit_stats(self) -> dict[str, Any]:
         """获取速率限制统计."""
         current_time = time.time()
         window_start = current_time - self._global_rate_limit_window
@@ -500,7 +500,7 @@ class AlertSystem:
 
         return False
 
-    def _trigger_alert(self, alert: AlertRecord):
+    def _trigger_alert(self, alert: AlertRecord) -> None:
         """触发告警 (P2-7: 多渠道通知).
 
         Args:
@@ -586,7 +586,7 @@ class AlertSystem:
 
         return stats
 
-    def _save_alert_history(self, max_records: int = MAX_ALERT_HISTORY):
+    def _save_alert_history(self, max_records: int = MAX_ALERT_HISTORY) -> None:
         """保存告警历史到文件.
 
         Args:
@@ -617,7 +617,7 @@ class AlertSystem:
         except Exception as e:
             logger.error("保存告警历史失败: %s", e)
 
-    def _load_alert_history(self):
+    def _load_alert_history(self) -> None:
         """从文件加载告警历史."""
         if not self.alert_log_file.exists():
             return

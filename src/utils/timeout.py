@@ -180,8 +180,7 @@ def _execute_with_sigalrm_timeout(
                 )
 
             old_handler = signal.signal(sigalrm, _timeout_handler)
-            # type: ignore[attr-defined]  # Unix-only
-            setitimer(signal.ITIMER_REAL, timeout)
+            setitimer(signal.ITIMER_REAL, timeout)  # type: ignore[attr-defined]  # Unix-only
             try:
                 func(*args, **kwargs)
                 return True
@@ -200,8 +199,7 @@ def _execute_with_sigalrm_timeout(
                 )
                 return False
             finally:
-                # type: ignore[attr-defined]  # Unix-only
-                setitimer(signal.ITIMER_REAL, 0.0)
+                setitimer(signal.ITIMER_REAL, 0.0)  # type: ignore[attr-defined]  # Unix-only
                 signal.signal(  # type: ignore[attr-defined]  # Unix-only
                     signal.SIGALRM,
                     old_handler,

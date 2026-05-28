@@ -56,8 +56,8 @@ class MultiProcessCollisionEngine:
             multiprocessing.cpu_count(),
         )
         self._running = False
-        self._task_queue: multiprocessing.Queue[bytes] | None = None
-        self._result_queue: multiprocessing.Queue[dict[str, Any]] | None = None
+        self._task_queue: "multiprocessing.Queue[bytes] | None" = None  # type: ignore[valid-type]
+        self._result_queue: "multiprocessing.Queue[dict[str, Any]] | None" = None  # type: ignore[valid-type]
         self._processes: list[multiprocessing.Process] = []
         self._total_keys = 0
         self._start_time: float | None = None

@@ -41,7 +41,7 @@ from .kernel_adapter import GPUKernelAdapter
 from .monitoring import PerformanceMonitoringPipeline
 from .vendor_strategy import VendorOptimizationFactory
 
-__all__ = [
+__all__ = [  # first definition
     "AsyncPipelineAdapter",
     "CollisionCore",
     "DataLoggerAdapter",
@@ -52,6 +52,7 @@ __all__ = [
     "GPUKernelAdapter",
     "PerformanceMonitoringPipeline",
     "VendorOptimizationFactory",
+    "create_gpu_collision_engine",
     "get_async_pipeline_adapter",
     "get_collision_core",
     "get_data_logger_adapter",
@@ -67,6 +68,35 @@ __all__ = [
 def get_gpu_engine_facade():
     """返回 GPUEngineFacade 类（非实例）."""
     return GPUEngineFacade
+
+
+def create_gpu_collision_engine(
+    targets: Any,
+    device_index: int = 0,
+    batch_size: int | None = None,
+    **kwargs: Any,
+) -> GPUCollisionEngine:
+    """创建GPU碰撞引擎实例.
+
+    ROADMAP #13: 替代 ``from ..collision.gpu.engine import GPUCollisionEngine``，
+    将创建逻辑集中在此工厂函数，使 src/gpu/ 模块仅需导入此函数而非引擎类。
+
+    Args:
+        targets: 目标地址集合
+        device_index: GPU设备索引，默认0
+        batch_size: 批次大小，None表示自动计算
+        **kwargs: 传递给 GPUCollisionEngine 的额外参数
+            (checkpoint_enabled, dedup_enabled, gpu_config, use_gpu_memory_pool 等)
+
+    Returns:
+        GPUCollisionEngine实例
+    """
+    return GPUCollisionEngine(
+        targets=targets,
+        device_index=device_index,
+        batch_size=batch_size,
+        **kwargs,
+    )
 
 
 def get_monitoring_pipeline():
@@ -104,7 +134,7 @@ def get_data_logger_adapter():
     return DataLoggerAdapter
 
 
-__all__ = [
+__all__ = [  # second definition (kept for module-level completeness)
     "AsyncPipelineAdapter",
     "CollisionCore",
     "DataLoggerAdapter",
@@ -115,6 +145,7 @@ __all__ = [
     "GPUKernelAdapter",
     "PerformanceMonitoringPipeline",
     "VendorOptimizationFactory",
+    "create_gpu_collision_engine",
     "get_async_pipeline_adapter",
     "get_collision_core",
     "get_data_logger_adapter",

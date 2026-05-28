@@ -106,7 +106,7 @@ class RandomSearchMode(BaseSearchMode):
         self,
         engine: "GPUCollisionEngine",
         seed_prefetch_size: int = SEED_PREFETCH_SIZE,
-        adaptive_controller=None,
+        adaptive_controller: Any = None,
     ) -> None:
         """初始化随机搜索模式。."""
         super().__init__(engine)
@@ -478,11 +478,11 @@ class RandomSearchMode(BaseSearchMode):
 
     def _record_performance_data(
         self,
-        engine,
-        batch_optimizer,
-        batch_size,
-        execution_time_ms,
-        speed,
+        engine: Any,
+        batch_optimizer: Any,
+        batch_size: int,
+        execution_time_ms: float,
+        speed: float,
     ) -> None:
         """记录性能数据."""
         # 内存使用
@@ -720,7 +720,7 @@ class RandomSearchMode(BaseSearchMode):
         if engine.on_complete:
             engine.on_complete(engine.stats.snapshot())
 
-    def _process_matches(self, matches, seed, batch_size) -> None:
+    def _process_matches(self, matches: list[dict[str, int]], seed: bytes, batch_size: int) -> None:
         """处理匹配结果.
 
         注意: 此方法当前为死代码，无任何调用者。

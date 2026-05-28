@@ -446,7 +446,7 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
                     return current_buf, seed_buf
                 except Exception as e:
                     logger.warning(f"分配缓冲区失败: {type(e).__name__}: {e}")
-                    return self._run_batch_sync_fallback(
+                    return self._run_batch_sync_fallback(  # type: ignore[return-value]
                         seed,
                         num_keys,
                         program,
@@ -460,7 +460,7 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
                 return current_buf, self.seed_buffer
             except Exception as e:
                 logger.warning(f"获取双缓冲区失败: {type(e).__name__}: {e}")
-                return self._run_batch_sync_fallback(seed, num_keys, program, targets_buf, num_targets)
+                return self._run_batch_sync_fallback(seed, num_keys, program, targets_buf, num_targets)  # type: ignore[return-value]
 
     # ------------------------------------------------------------------
     # 流水线步骤2：传输种子
@@ -488,7 +488,7 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
             )
 
         if not self._is_buffer_valid():
-            return self._run_batch_sync_fallback_and_return(
+            return self._run_batch_sync_fallback_and_return(  # type: ignore[return-value]
                 seed,
                 num_keys,
                 program,
@@ -507,7 +507,7 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
             )
         except TypeError as e:
             if "host-to-host transfers" in str(e):
-                return self._run_batch_sync_fallback_and_return(
+                return self._run_batch_sync_fallback_and_return(  # type: ignore[return-value]
                     seed,
                     num_keys,
                     program,
@@ -517,7 +517,7 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
             raise
         except Exception as e:
             logger.warning(f"写入种子缓冲区失败: {type(e).__name__}: {e}")
-            return self._run_batch_sync_fallback_and_return(
+            return self._run_batch_sync_fallback_and_return(  # type: ignore[return-value]
                 seed,
                 num_keys,
                 program,

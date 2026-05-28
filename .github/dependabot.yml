@@ -20,12 +20,11 @@ updates:
       prefix-development: "chore"
       include: "scope"
     ignore:
-      - dependency-name: "numpy"
-        update-types: ["version-update:semver-patch"]
-      - dependency-name: "pyopencl"
-        update-types: ["version-update:semver-patch"]
       - dependency-name: "gmpy2"
         update-types: ["version-update:semver-major"]
+      # numpy/pyopencl: 上限已从 1.x/2025.x 放宽至 2.x/2026.x，
+      # patch 和 minor 更新安全，不再忽略。
+      # 若后续收紧上限需重新添加对应 ignore 规则。
     groups:
       production-dependencies:
         dependency-type: "production"

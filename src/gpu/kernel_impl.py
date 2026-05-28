@@ -33,10 +33,12 @@ from .performance_optimizer import PerformanceMetrics
 from .secure_buffer import secure_clear_gpu_buffer
 from .seed_utils import _seed_bytes_to_u32_be_array
 
+cl: Any
 if PYOPENCL_AVAILABLE:
-    import pyopencl as cl
+    import pyopencl as _cl
+    cl = _cl
 else:
-    cl = None  # type: ignore[assignment]
+    cl = cast(Any, None)
 
 _assert_opencl_available()
 

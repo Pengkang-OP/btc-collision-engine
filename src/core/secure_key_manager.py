@@ -292,7 +292,7 @@ class SecureKeyManager:
                 if result:
                     self._memory_locked = True
                     return True
-                error_code = ctypes.get_last_error()
+                error_code = ctypes.get_last_error()  # type: ignore[attr-defined]  # Windows-only
                 logger.warning(
                     "Windows VirtualLock failed, error code: %s",
                     error_code,

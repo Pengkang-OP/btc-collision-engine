@@ -469,7 +469,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             private_key = key_mgr.get_key()
 
             # 转换为整数验证范围
-            k = int.from_bytes(private_key, "big")
+            k = int.from_bytes(bytes(private_key), "big")
 
             # 验证范围: 私钥必须在 [1, Secp256k1.N) 范围内
             if k < 1 or k >= Secp256k1.N:
@@ -526,7 +526,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                     {"private_key_hash": m["private_key_hash"], "address": m["address"]}
                     for m in snap.matches
                 ]
-                if hasattr(snap, "matches") and snap.matches
+                if snap.matches
                 else []
             )
 
@@ -884,7 +884,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
         """
         try:
-            pk_bytes = bytes(private_key) if not isinstance(private_key, bytes) else private_key
+            pk_bytes = bytes(private_key)
             # v4.2.2 H4修复: 根据匹配地址类型决定WIF压缩标志
             wif = WIF.encode(pk_bytes, compressed=matched_compressed)
             local_matches.append((pk_bytes, matched_address, wif, matched_hash160))

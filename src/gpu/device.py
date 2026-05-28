@@ -26,10 +26,12 @@ from .driver_manager import DriverManager
 from .profiles.loader import GPUProfileLoader
 from .scorer import get_gpu_scorer
 
+cl: Any
 if PYOPENCL_AVAILABLE:
-    import pyopencl as cl
+    import pyopencl as _cl
+    cl = _cl
 else:
-    cl = None  # type: ignore[assignment]
+    cl = cast(Any, None)
 
 __all__ = [
     "GPUDevice",

@@ -55,9 +55,9 @@ class BaseSearchMode:
 
     def _process_batch_matches(
         self,
-        matches: list,
+        matches: list[dict[str, int]],
         batch_data: bytes,
-        key_extractor_fn,
+        key_extractor_fn: Callable[[bytes, int], bytes] | None,
         mode_name: str,
     ) -> None:
         """处理一批 GPU 匹配结果：提取私钥、WIF 编码、触发回调。."""

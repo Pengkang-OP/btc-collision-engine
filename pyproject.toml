@@ -26,7 +26,7 @@ dependencies = [
     "coincurve>=18.0.0,<22.0.0",    # L1: 添加上限防止破坏性升级
     "gmpy2>=2.1.0,<5.0.0",          # v4.5.1: 放宽上限至 4.x
     "pycryptodome>=3.19.0,<5.0.0",  # C-08: 放宽上限
-    "cachetools>=5.3.0,<7.0.0",     # 锁定 <7.0（cachetools>=7.0 为可选评估升级）
+    "cachetools>=5.3.0,<9.0.0",     # v5.0.1: 放宽至 8.x（评估完成：仅用 LRUCache/TTLCache，未用 MRUCache）
     "pybloom-live>=2.2.0,<5.0.0",   # L1: 添加上限
     "bech32>=1.2.0,<2.0.0",         # L1: 添加上限
     "bitarray>=2.6.0,<4.0.0",       # L1: 添加上限
@@ -40,14 +40,14 @@ dependencies = [
     "PyNaCl>=1.5.0,<2.0.0",
     "rich>=13.0,<16.0.0",           # L1: 添加上限
     "cffi>=1.15.0,<3.0.0",          # L1: 添加上限
-    "numpy>=1.24.0,<2.0.0",         # 锁定 1.x（numpy 2.x 含破坏性变更，等待评估）
+    "numpy>=1.24.0,<3.0.0",         # v5.0.1: 放宽至 2.x（评估完成：未使用移除别名/方法，低风险）
 ]
 
 [project.optional-dependencies]
 # GPU 加速支持
 gpu = [
-    "pyopencl>=2022.1,<2026.0",     # 锁定 <2026.0（2026.x 为可选评估升级）
-    "numpy>=1.24.0,<2.0.0",         # 锁定 1.x（与主依赖一致）
+    "pyopencl>=2022.1,<2027.0",     # v5.0.1: 放宽至 2026.x（评估完成：无 API 破坏性变更，低风险）
+    "numpy>=1.24.0,<3.0.0",         # v5.0.1: 放宽至 2.x（与主依赖一致）
     "gmpy2>=2.1.0,<5.0.0",          # v4.5.1: 与主依赖一致
     "pycryptodome>=3.19.0,<5.0.0",  # C-08: 与主依赖一致
     "nvidia-ml-py>=12.0.0,<14.0.0", # L1: 添加上限
@@ -67,7 +67,7 @@ dev = [
     "sphinx>=7.0.0,<9.0.0",              # L1: 添加上限
     "sphinx-rtd-theme>=1.3.0,<4.0.0",    # L1: 添加上限
     "hypothesis>=6.0.0,<7.0.0",          # 模糊测试（与 requirements-dev.txt 一致）
-    "types-cachetools>=5.0,<7.0.0",      # cachetools 类型存根（与 requirements-dev.txt 一致）
+    "types-cachetools>=5.0,<9.0.0",      # cachetools 类型存根（v5.0.1: 与 cachetools 上限同步放宽）
 ]
 # 一次性安装所有可选依赖
 all = ["btc-collision-engine[gpu,dev]"]
@@ -92,10 +92,9 @@ include = ["src*"]
 
 [tool.mypy]
 # P2-23: strict 子标志逐步启用计划
-# 当前 6 个 [[tool.mypy.overrides]] block 待消除后，按以下顺序逐步启用：
-#   Phase 1: disallow_untyped_defs = true  (所有函数需完整类型注解)
-#   Phase 2: warn_return_any = true        (禁止 Any 返回值传播)
-#   Phase 3: disallow_incomplete_defs = true (禁止部分类型注解)
+# Phase 1 (已启用，2026-05-29): disallow_untyped_defs = true
+# Phase 2 (后续): warn_return_any = true
+# Phase 3 (后续): disallow_incomplete_defs = true
 # 最终目标: strict = true
 python_version = "3.12" # 与 CI type-check job 使用的 Python 版本一致
 ignore_missing_imports = true
@@ -104,7 +103,7 @@ warn_unused_configs = true
 warn_redundant_casts = true
 warn_unused_ignores = false
 check_untyped_defs = false
-disallow_untyped_defs = false # 渐进式类型化，暂不强制函数签名
+disallow_untyped_defs = true # Phase 1: 所有函数需完整类型注解（2026-05-29 开启）
 disallow_incomplete_defs = false # 允许部分类型注解
 disallow_untyped_calls = false # 允许调用未类型化函数
 no_implicit_optional = true # 防止隐式Optional
@@ -117,83 +116,10 @@ exclude = [
 ]
 mypy_path = ["src/gpu/pyopencl_stubs"] # pyopencl stub 文件路径
 
-# ── 预存类型债务：per-module 豁免 ──────────────────────────
-[[tool.mypy.overrides]]
-module = [
-    "src.wizard.wizard_engine", # 模块重构后遗留的死导入
-    "src.cli.output",           # Rich Console 类型参数不匹配
-    "src.gpu.kernel_protocol",  # Protocol call-arg 签名不匹配
-]
-ignore_errors = true
-
-[[tool.mypy.overrides]]
-module = [
-    "src.web.dashboard",              # Flask 条件导入 no-redef
-    "src.gpu.worker",                 # 条件导入后置 sys.path
-    "src.utils.platform_check",       # geteuid Unix 专用
-    "src.utils.timeout",              # ITIMER_REAL/SIGALRM Unix 专用
-    "src.core.secure_key_manager",    # ctypes.WinDLL/get_last_error Windows 专用
-    "src.utils.log_platform_adapter", # ctypes.windll Windows 专用
-]
-disable_error_code = ["attr-defined", "no-redef"]
-
-[[tool.mypy.overrides]]
-module = [
-    "src.automation.auto_test",        # BackendProto 已移除 + 抽象类测试
-    "src.utils.performance_benchmark", # MultiprocessCollisionEngine 已重命名
-]
-disable_error_code = ["attr-defined", "abstract"]
-
-[[tool.mypy.overrides]]
-module = [
-    "src.gpu.kernel_impl",                # PyOpenCL stub 类型不匹配 (Program/Context/CommandQueue None)
-    "src.gpu.device",                     # PyOpenCL None vs Context/CommandQueue
-    "src.collision.gpu.engine",           # CollisionCore abstract + EventBus 类型参数
-    "src.collision.key_collision_engine", # memoryview/attr/StatsSnapshot
-    "src.monitoring.data_logger",         # LogRotator bool vs list
-    "src.monitoring.monitoring_system",   # LogRotator/return_type/attr
-    "src.gpu.vendors.intel",              # RateLimitedLogger key 参数冲突
-    "src.cli.engine_runner",              # 引擎类型窄化
-    "src.utils.error_recovery",           # 泛型 return 类型
-    "src.gpu.executor_types",             # type annotation missing
-    "src.collision.multiprocess_engine",  # Optional Queue
-    "src.collision.targets.cache",        # identity check overlap
-    "src.gpu.context",                    # GPUVendorBase abstract
-    "src.gpu.async_executor",             # return value mismatch
-    "src.gpu.async_executor._sync",
-    "src.gpu.async_executor._collector",
-    "src.gpu.async_executor._executor",
-]
-ignore_errors = true
-
-# ── 次预存类型债务：补充豁免（2026-05 新增） ──────────────
-# 使用 ignore_errors = true 确保跨 mypy 版本兼容
-[[tool.mypy.overrides]]
-module = [
-    "src.utils.fast_json",
-    "src.start_menu._shared",
-    "src.monitoring.alert_system",
-    "src.cli.progress",
-    "src.automation.data_analysis",
-    "src.gpu.search_modes.base_search",
-    "src.gpu.search_modes.random_search",
-    "src.collision.gpu._scheduler",
-    "src.automation.loop_controller",
-    "src.gpu.config",
-]
-ignore_errors = true
-
-[[tool.mypy.overrides]]
-module = [
-    "src.collision.gpu._result_processor", # EngineMatchEvent.source
-    "src.gpu.metrics",                     # float vs int assignment
-    "src.core.key_generator",              # bytearray vs bytes
-    "src.core.crypto_backend",             # PublicKey bytes overload
-    "src.utils.bech32_codec",              # list + None
-    "src.gpu.memory_pool",                 # lru_timeout unexpected kwarg
-    "src.cli.main",                        # dict_values vs Iterable
-]
-ignore_errors = true
+# 所有 [[tool.mypy.overrides]] block 已全部消除！
+# ignore_errors = true 已全部消除（17 模块 → 0）！
+# disable_error_code block 已全部消除（7→5→4→3→2→1→0）！
+# 所有错误码警告均已通过 inline # type: ignore[error-code] 精确标注。
 
 [tool.ruff]
 line-length = 105 # 略高于标准100以容纳中文日志/长变量名
@@ -241,16 +167,14 @@ convention = "google"
 "src/utils/ui_tutorial.py" = ["E501"] # 长行 UI 字符串/格式化提示文本
 "src/collision/targets/validator.py" = ["E501"] # doctest 示例 + 中文注释
 "scripts/**/*.py" = [
-    "D",
     "E501",
     "E402",
     "T201",
 ] # 脚本：sys.path.insert + 可读性长行 + print合法
 "scripts/_batch_p1.py" = ["E501"] # 嵌入式源码字符串补丁脚本
 "scripts/extract_opencl_kernels.py" = ["E501"] # 文档字符串含 markdown 代码示例
-"benchmarks/**/*.py" = ["D", "E501", "E402", "T201"] # 基准测试：格式化非关键，允许 print
+"benchmarks/**/*.py" = ["E501", "E402", "T201"] # 基准测试：格式化非关键，允许 print
 "tests/**/*.py" = [
-    "D",      # ROADMAP #15 Phase 2: Docstring rules exempted for test files
     "T201",   # 测试代码：print 调试输出合法
     "N806",   # Mock/数学变量名大写合法（MockDeviceManager, G, bpMB 等）
     "N802",   # 测试函数名含数学符号大写（G, K, O, I, P, N 等）
@@ -278,7 +202,6 @@ convention = "google"
 "src/utils/health_check.py" = ["T201"] # 健康检查 CLI
 "src/gpu/multi_format_multi_gpu_engine.py" = ["T201"] # GPU 引擎示例/测试
 "tools/**/*.py" = [
-    "D",    # ROADMAP #15 Phase 2: Docstring rules exempted
     "T201", # 运维工具：print 合法输出
     "E402", # sys.path.insert 需在 import 之前
     "E501", # 工具脚本：长行可读性优先
@@ -287,22 +210,20 @@ convention = "google"
 ] # 运维工具：豁免常见模式
 # ── 示例代码允许 print() ──────────────────────────
 "examples/**/*.py" = [
-    "D",    # ROADMAP #15 Phase 2: Docstring rules exempted
     "T201", # demo/示例代码：print 输出合法
     "W293", # 空白行尾空格可接受
     "E501", # demo 代码：长行可读性优先
     "E402", # sys.path 操作需在 import 之前
 ]
 # ── 根目录入口脚本允许 print() ──────────────────────────
-"start.py" = ["D", "T201"]
+"start.py" = ["T201"]
 "start_menu.py" = ["E402"] # 薄引导：sys.path 操作需在 import 之前
 "src/start_menu/*.py" = ["T201", "C901", "SIM105"] # 启动菜单：print+复杂度+简化写法合法
 "key_collision_cli.py" = ["T201"]
 "key_collision.py" = [
-    "D",     # ROADMAP #15: Docstring rules exempted
     "E501",  # CLI 入口：长行可读性优先
 ]
-"conftest.py" = ["D", "SIM115"] # ROADMAP #15 + pytest fixture 中直接 open() 合法
+"conftest.py" = ["SIM115"] # pytest fixture 中直接 open() 合法
 
 # ── 个别文件豁免 ──────────────────────────────────────────
 "tests/test_multi_format_conversion.py" = [
@@ -333,4 +254,3 @@ exclude_dirs = ["tests", "docs", "benchmarks"]
 # B101: assert 语句在本项目中广泛用于防御性编程(非安全校验), 不构成安全风险
 # B105: Bandit 基于变量名模式匹配，误报率极高（配置版本号/延迟值被误标记为密码）
 skips = ["B101", "B105"]
-

@@ -53,9 +53,9 @@ class LoopController:
             current_phase=SystemStatus.IDLE,
         )
 
-        self.on_phase_change: Callable | None = None
-        self.on_issue_found: Callable | None = None
-        self.on_audit_complete: Callable | None = None
+        self.on_phase_change: Callable[..., Any] | None = None
+        self.on_issue_found: Callable[..., Any] | None = None
+        self.on_audit_complete: Callable[..., Any] | None = None
 
         self._lock = threading.Lock()
 
@@ -262,7 +262,7 @@ class LoopController:
             print(f"   [ERROR] Audit failed: {e!s}")
             return None
 
-    def _execute_feedback_loop(self, audit_result: AuditResult):
+    def _execute_feedback_loop(self, audit_result: AuditResult) -> None:
         """执行反馈回路."""
         print("\n[Feedback Loop] Preparing re-analysis...")
 
@@ -284,7 +284,7 @@ class LoopController:
             for violation in audit_result.violations:
                 self.on_issue_found(violation)
 
-    def _set_phase(self, phase: SystemStatus):
+    def _set_phase(self, phase: SystemStatus) -> None:
         """设置当前阶段."""
         with self._lock:
             self.state.previous_phase = self.state.current_phase
@@ -322,7 +322,7 @@ class LoopController:
             "phase_failures": dict(self._phase_failures),
         }
 
-    def save_report(self, filepath: str):
+    def save_report(self, filepath: str) -> None:
         """保存完整报告."""
         summary = self.get_summary()
 

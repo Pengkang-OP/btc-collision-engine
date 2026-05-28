@@ -451,7 +451,7 @@ class CoincurveBackend(CryptoBackend):
         pubkey_bytes = b"\x04" + point_x.to_bytes(32, "big") + point_y.to_bytes(32, "big")
 
         try:
-            pubkey = coincurve.PublicKey(pubkey_bytes)
+            pubkey = coincurve.PublicKey(pubkey_bytes)  # type: ignore[arg-type]
             # coincurve.PublicKey.multiply returns PublicKey object
             result = pubkey.multiply(k.to_bytes(32, "big"))
 

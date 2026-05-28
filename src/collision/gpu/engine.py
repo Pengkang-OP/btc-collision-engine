@@ -341,6 +341,13 @@ class GPUCollisionEngine(BaseCollisionEngine):
             },
         )
 
+        # 显式类型注解 — 因 check_untyped_defs=false，mypy 无法追踪 _init_* 内部对
+        # self._core / self._random_search_mode 的赋值，加注解使其类型对 mypy 可见。
+        self._core: CollisionCore
+        self._random_search_mode: Any
+        self._range_scan_mode: Any
+        self._brute_force_mode: Any
+
         self.event_bus = event_bus or EventBus()
         self._init_basic_attrs(
             targets,
@@ -968,10 +975,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
 
     def is_running(self) -> bool:
         """是否正在运行."""
-        return cast(
-            "bool",
-            self._running and self._thread and self._thread.is_alive(),
-        )
+        return bool(self._running and self._thread and self._thread.is_alive())
 
     def get_device_info(self) -> dict[str, Any]:
         """获取 GPU 设备信息."""
@@ -1049,7 +1053,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
             if hasattr(self, "_device_manager") and self._device_manager is not None:
                 with contextlib.suppress(Exception):
                     self._device_manager.cleanup()
-                self._device_manager = cast("GPUDeviceManager | None", None)
+                self._device_manager = None
                 self._gpu_memory_pool = None
 
             # GPU 内存池由 device_manager.cleanup() 统一清理，无需重复操作

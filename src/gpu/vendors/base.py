@@ -11,7 +11,7 @@ from src.utils import get_configured_logger
 
 from ..constants import PER_KEY_MEMORY_BYTES, align_batch_size
 
-__all__ = ["GPUVendorBase"]
+__all__ = ["DefaultGPUVendor", "GPUVendorBase"]
 
 
 logger = get_configured_logger("BaseVendor")
@@ -141,3 +141,23 @@ class GPUVendorBase(ABC):
             "conservative_mode": "conservative" in optimizations,
             "enable_shader_cache": "shader_cache" in optimizations,
         }
+
+
+class DefaultGPUVendor(GPUVendorBase):
+    """默认GPU厂商处理器（用于未知GPU厂商降级）.
+
+    当检测到未知或不支持的GPU厂商时，使用此默认处理器，
+    提供基本的兼容性，不应用任何特定优化。
+    """
+
+    _RECOMMENDED_BATCH: int = 524288
+    _MAX_BATCH: int = 1048576
+    _MEMORY_EFFICIENCY: float = 0.60
+
+    def get_vendor_name(self) -> str:
+        """获取厂商名称."""
+        return "Unknown"
+
+    def apply_optimizations(self, device: Any, profile: dict[str, Any]) -> None:
+        """未知厂商不应用特定优化."""
+        logger.info("未知GPU厂商，跳过特定优化")

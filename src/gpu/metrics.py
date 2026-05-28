@@ -203,7 +203,7 @@ class GPUMetricsCollector:
         with self._lock:
             count = self._kernel_latency_count[device_idx]
             if count == 0:
-                return {"count": 0, "avg_sec": 0, "p50_sec": 0, "p99_sec": 0}
+                return {"count": 0, "avg_sec": 0.0, "p50_sec": 0.0, "p99_sec": 0.0}
             avg = self._kernel_latency_sum[device_idx] / count
             buckets = self._kernel_latency_buckets[device_idx]
             # 简单百分位估算（基于桶）

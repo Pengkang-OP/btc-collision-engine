@@ -13,7 +13,7 @@
 -r requirements-base.txt
 
 # GPU 计算
-pyopencl>=2022.1,<2026.0    # OpenCL GPU 计算支持（必需, 与 pyproject.toml 一致）
+pyopencl>=2022.1,<2027.0    # OpenCL GPU 计算支持（必需, 评估完成：低风险，与 pyproject.toml 一致）
 
 # GPU 监控 (C-13: 替代已弃用的 pynvml)
 # nvidia-ml-py 安装后导入名称仍为 pynvml，与原 API 完全兼容

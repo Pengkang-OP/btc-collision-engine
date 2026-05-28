@@ -299,11 +299,11 @@ class _SyncFallbackMixin:
         5. 释放缓冲区池中的所有匹配结果缓冲区
         6. 清空待处理状态字段
         """
-        self.stop_result_collector()
+        self.stop_result_collector()  # type: ignore[attr-defined]  # from other mixin
 
         self._finish_all_queues()
-        with self._prefetch_lock:
-            self._prefetch_events.clear()
+        with self._prefetch_lock:  # type: ignore[attr-defined]  # from other mixin
+            self._prefetch_events.clear()  # type: ignore[attr-defined]  # from other mixin
 
         self._wait_pending_event()
 
@@ -346,15 +346,15 @@ class _SyncFallbackMixin:
 
     def _wait_pending_event(self) -> None:
         """安全地等待待处理事件完成。."""
-        if self.pending_event:
+        if self.pending_event:  # type: ignore[attr-defined]  # from other mixin
             try:
-                self.pending_event.wait()
+                self.pending_event.wait()  # type: ignore[attr-defined]  # from other mixin
                 self._log_cleanup(logging.DEBUG, "已等待待处理事件完成")
             except RuntimeError as e:
                 self._log_cleanup(logging.WARNING, "等待待处理事件OpenCL错误: %s", e)
             except Exception as e:
                 self._log_cleanup(logging.WARNING, f"等待待处理事件完成失败: {type(e).__name__}: {e}")
-            self.pending_event = None
+            self.pending_event = None  # type: ignore[attr-defined]  # from other mixin
 
     def _release_buffer_safe(self, name: str, getter, setter) -> None:
         """安全地释放缓冲区资源。."""

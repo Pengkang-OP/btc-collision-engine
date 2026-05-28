@@ -15,7 +15,7 @@ pytest-rerunfailures>=3.0,<17.0.0  # 测试失败重跑
 # 代码质量
 ruff>=0.9.0,<2.0.0                # Lint + 格式化（替代 black/flake8）
 mypy>=1.0.0,<3.0.0                # 类型检查（放宽上限以支持 mypy 2.x，与 pre-commit 及 pyproject.toml 一致）
-types-cachetools>=5.0,<7.0.0      # cachetools 类型存根（与 pyproject.toml 一致）
+types-cachetools>=5.0,<9.0.0      # cachetools 类型存根（与 pyproject.toml 一致）
 bandit>=1.7.0,<2.0.0              # 安全扫描（与 pyproject.toml 一致）
 
 # 性能分析

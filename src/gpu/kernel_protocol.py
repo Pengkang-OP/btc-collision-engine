@@ -6,7 +6,6 @@
 创建日期: 2026-04-22
 """
 
-from abc import abstractmethod
 from typing import Any, Protocol, cast, runtime_checkable
 
 __all__ = ["GPUKernelFactory", "GPUKernelProtocol"]
@@ -34,7 +33,6 @@ class GPUKernelProtocol(Protocol):
         True
     """
 
-    @abstractmethod
     def run_batch(self, seed: bytes, num_keys: int) -> list[dict[str, int]]:
         """执行一批密钥碰撞计算（PRNG模式）.
 
@@ -57,7 +55,6 @@ class GPUKernelProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
     def set_targets(
         self,
         target_hash160s: bytes,
@@ -80,7 +77,6 @@ class GPUKernelProtocol(Protocol):
         """
         ...
 
-    @abstractmethod
     def cleanup(self) -> None:
         """清理GPU资源.
 
@@ -94,7 +90,6 @@ class GPUKernelProtocol(Protocol):
         ...
 
     @property
-    @abstractmethod
     def max_batch_size(self) -> int:
         """最大批次大小.
 
@@ -108,7 +103,6 @@ class GPUKernelProtocol(Protocol):
         ...
 
     @property
-    @abstractmethod
     def device(self) -> Any:
         """GPU设备对象.
 
@@ -119,7 +113,6 @@ class GPUKernelProtocol(Protocol):
         ...
 
     @property
-    @abstractmethod
     def program(self) -> Any:
         """已编译的OpenCL程序.
 

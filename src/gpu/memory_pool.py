@@ -29,6 +29,7 @@
 - Buffer Pool Pattern: "Design Patterns" - Gamma et al.
 """
 
+import functools
 import threading
 import time
 from collections import OrderedDict
@@ -977,10 +978,9 @@ class GlobalGPUMemoryManager:
         lru_timeout = lru_idle_timeout if lru_idle_timeout is not None else self.DEFAULT_LRU_IDLE_TIMEOUT
         start_cleanup_thread(
             self._cleanup_state,
-            self._auto_cleanup_loop,
+            functools.partial(self._auto_cleanup_loop, lru_timeout=lru_timeout),
             interval,
             "gpu-pool-cleanup",
-            lru_timeout=lru_timeout,
         )
 
     def stop_auto_cleanup(self, timeout: float | None = 5.0) -> None:

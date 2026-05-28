@@ -14,7 +14,7 @@ from .constants import OPENCL_MIN_REQUIRED_VERSION, OPENCL_RECOMMENDED_VERSION
 from .device import GPUDevice, identify_vendor
 from .kernel_impl import compile_kernel_with_retry  # DEF-2修复: 共享重试函数
 from .vendors.amd import AMDGPUVendor
-from .vendors.base import GPUVendorBase
+from .vendors.base import DefaultGPUVendor, GPUVendorBase
 from .vendors.intel import IntelGPUVendor
 from .vendors.nvidia import NVIDIAGPUVendor
 
@@ -109,7 +109,7 @@ class GPUContext:
         if vendor_type == "intel":
             return IntelGPUVendor()
         logger.warning("未知GPU厂商: %s,使用默认优化器", vendor)
-        return GPUVendorBase()
+        return DefaultGPUVendor()
 
     def apply_optimizations(self) -> None:
         """应用厂商特定优化.

@@ -291,10 +291,10 @@ class AutoTestModule:
     def test_crypto_backend_init(self) -> dict:
         """测试加密后端初始化."""
         try:
-            from src.core.crypto_backend import BackendProto, CryptoBackend
+            from src.core.crypto_backend import CryptoBackend
 
-            # 使用 BackendProto 类型标注，避免 [abstract] 警告
-            backend: BackendProto = CryptoBackend()
+            # 直接实例化，BackendProto 已移除
+            backend = CryptoBackend()
             available = backend.get_available_backends()
             current = backend.get_current_backend()
 

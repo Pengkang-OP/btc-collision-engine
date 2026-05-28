@@ -123,7 +123,7 @@ class GPUConfig:
 
         return True
 
-    def get_gpu_device_info(self) -> list:
+    def get_gpu_device_info(self) -> list[dict[str, Any]]:
         """获取可用GPU设备列表.
 
         Returns:
@@ -188,11 +188,11 @@ class GPUConfig:
 
         """
         try:
-            from ..collision.gpu.engine import GPUCollisionEngine
+            from ..collision.gpu import create_gpu_collision_engine
 
             gpu_config = self.get_gpu_config()
 
-            return GPUCollisionEngine(
+            return create_gpu_collision_engine(
                 targets=targets,
                 device_index=gpu_config["device_index"],
                 batch_size=gpu_config["batch_size"],
@@ -236,7 +236,7 @@ class GPUConfig:
             logger.error("保存GPU配置失败: %s", e)
             return False
 
-    def validate(self) -> list:
+    def validate(self) -> list[str]:
         """验证配置.
 
         Returns:

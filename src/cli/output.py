@@ -6,22 +6,37 @@ import os
 import platform
 import sys
 import threading
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
 from ..utils import get_configured_logger
 
 logger = get_configured_logger(__name__)
 
-try:
-    from rich.console import Console
-    from rich.panel import Panel
-    from rich.table import Table
-    from rich.text import Text
-except ImportError:
-    Console = None
-    Panel = None
-    Table = None
-    Text = None
+if TYPE_CHECKING:
+    from rich.console import Console as _RichConsole
+    from rich.panel import Panel as _RichPanel
+    from rich.table import Table as _RichTable
+    from rich.text import Text as _RichText
+    Console: type = _RichConsole  # type: ignore[misc]  # in TYPE_CHECKING block
+    Panel: type = _RichPanel  # type: ignore[misc]
+    Table: type = _RichTable  # type: ignore[misc]
+    Text: type = _RichText  # type: ignore[misc]
+else:
+    try:
+        from rich.console import Console as _RichConsole
+        from rich.panel import Panel as _RichPanel
+        from rich.table import Table as _RichTable
+        from rich.text import Text as _RichText
+
+        Console: type = _RichConsole  # type: ignore[misc]  # in try block
+        Panel: type = _RichPanel  # type: ignore[misc]
+        Table: type = _RichTable  # type: ignore[misc]
+        Text: type = _RichText  # type: ignore[misc]
+    except ImportError:
+        Console = cast("type", None)
+        Panel = cast("type", None)
+        Table = cast("type", None)
+        Text = cast("type", None)
 
 
 def _get_utf8_console(stderr: bool = False, no_color: bool = False) -> Any:

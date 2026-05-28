@@ -1,3 +1,12 @@
+"""更新 GPU 配置参数的实用工具.
+
+读取 config.intel_arc.json 并更新 batch_size、显存上限等参数，
+展示配置变更后的预期吞吐量和显存变化。
+
+用法:
+    python tools/update_gpu_config.py
+"""
+
 import json
 import os
 import sys
