@@ -4,6 +4,12 @@ Provides crash recovery by periodically saving progress to JSON
 files with CRC32 integrity verification and atomic writes.
 """
 
+__all__ = [
+    "CRC32MismatchError",
+    "CheckpointError",
+    "CheckpointManager",
+]
+
 import json
 import threading
 import time

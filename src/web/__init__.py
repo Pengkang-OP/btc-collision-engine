@@ -10,6 +10,8 @@ from pathlib import Path
 # pyright: reportImportCycles=false
 from src import __version__ as __version__  # noqa: F401
 
+__all__ = ["create_app", "run_dashboard"]
+
 
 def create_app(data_dir: Path | None = None, debug: bool = False) -> object:
     """Create a Flask app (lazy import for web dashboard).
@@ -22,8 +24,8 @@ def create_app(data_dir: Path | None = None, debug: bool = False) -> object:
     """
     try:
         from .dashboard import create_app as _app  # type: ignore[reportUnknownVariableType]
-    except ImportError:
-        raise ImportError("Flask is not installed. Install with: pip install flask")
+    except ImportError as e:
+        raise ImportError("Flask is not installed. Install with: pip install flask") from e
     return _app(data_dir, debug)  # type: ignore[reportUnknownVariableType]
 
 
@@ -50,8 +52,8 @@ def run_dashboard(
     """
     try:
         from .dashboard import run_dashboard as _run_dashboard
-    except ImportError:
-        raise ImportError("Flask is not installed. Install with: pip install flask")
+    except ImportError as e:
+        raise ImportError("Flask is not installed. Install with: pip install flask") from e
     _run_dashboard(host, port, data_dir, debug, use_reloader, api_key)
 
 

@@ -38,7 +38,6 @@ jobs:
         run: ruff format --check src/ tests/ scripts/ benchmarks/ tools/
 
       - name: ruff check 检查
-        continue-on-error: true
         run: ruff check src/ tests/ scripts/ benchmarks/ tools/
 
       - name: mypy 类型检查
@@ -126,8 +125,8 @@ jobs:
         id: bandit-scan
         run: |
           bandit -r src/ key_collision.py key_collision_cli.py \
-            -ll -f json -o bandit-report.json || true
-          EXIT_CODE=$?
+            -ll -f json -o bandit-report.json; BANDIT_RC=$?; true
+          EXIT_CODE=$BANDIT_RC
           echo "exit_code=$EXIT_CODE" >> "$GITHUB_OUTPUT"
           if [ -s bandit-report.json ]; then
             ISSUE_COUNT=$(jq '.results | length' bandit-report.json)
@@ -153,8 +152,7 @@ jobs:
           fi
 
       - name: pip-audit 依赖漏洞扫描
-        continue-on-error: true
-        run: pip-audit --requirement requirements-base.txt --desc on
+        run: pip-audit --requirement requirements-base.txt --desc on || echo "⚠️ pip-audit 发现漏洞（仅告警，不阻断 CI）"
 
       - name: 上传 Bandit 报告
         if: always()
@@ -207,7 +205,7 @@ jobs:
             --cov=src \
             --cov-report=xml \
             --cov-report=term-missing \
-            --cov-fail-under=30 \
+            --cov-fail-under=50 \
             -m "not (gpu or gpu_kernel or multi_gpu or integration)" \
             --timeout=600 \
             --timeout-method=thread \
@@ -252,7 +250,7 @@ jobs:
       - name: 安装系统依赖
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libgmp-dev
+          sudo apt-get install -y --no-install-recommends libgmp-dev libsecp256k1-dev
 
       - name: 安装 Python 依赖
         run: |
@@ -395,7 +393,6 @@ jobs:
         with:
           globs: "**/*.md"
           config: .markdownlint.json
-        continue-on-error: true
 
       - name: 验证文档结构
         run: |

@@ -1,5 +1,9 @@
 """Base58 encode/decode utility."""
 
+__all__ = [
+    "Base58",
+]
+
 from .hash_utils import HashUtils
 
 

@@ -1,3 +1,5 @@
+__all__ = ["OPENCL_KERNEL_SOURCE"]
+
 # ruff: noqa: E501
 """OpenCL kernel source code (extracted from kernel.py).
 

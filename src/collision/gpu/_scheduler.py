@@ -34,6 +34,18 @@ if TYPE_CHECKING:
 
 from ..events import EngineProgressEvent
 
+__all__ = [
+    "GPUBatchScheduler",
+    "GPU_MAX_BATCH_SIZE",
+    "INITIAL_BATCH_SIZE",
+    "BATCH_LOG_FREQUENCY",
+    "INITIAL_BATCHES_LOG",
+    "GPU_BATCH_MAX_RETRIES",
+    "GPU_BATCH_RETRY_BASE_DELAY",
+    "GPU_BATCH_RETRY_MAX_DELAY",
+]
+
+
 logger = get_configured_logger(__name__)
 
 # 常量

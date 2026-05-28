@@ -6,6 +6,9 @@ on:
     - cron: "0 2 * * *"
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 concurrency:
   group: nightly-test
   cancel-in-progress: true

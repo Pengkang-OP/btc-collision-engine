@@ -9,6 +9,13 @@ from typing import Any
 
 from ..utils import get_configured_logger
 
+__all__ = [
+    "GPUAutoConfigurator",
+    "get_gpu_configurator",
+    "reset_gpu_configurator",
+]
+
+
 logger = get_configured_logger("GPUAutoConfig")
 
 # 字节到GB的转换常量

@@ -10,6 +10,9 @@
 
 from ..utils import get_configured_logger
 
+__all__ = ["GPUMemoryCalculator"]
+
+
 logger = get_configured_logger("GPUMemoryCalculator")
 
 

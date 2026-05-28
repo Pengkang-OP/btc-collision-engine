@@ -15,6 +15,9 @@ from src.utils import get_configured_logger
 
 logger = get_configured_logger("AsyncGPUExecutor.ErrorUtils")
 
+__all__ = ["with_sync_fallback", "safe_release_buffer"]
+
+
 F = TypeVar("F", bound=Callable[..., Any])
 
 

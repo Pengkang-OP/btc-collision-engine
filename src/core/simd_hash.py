@@ -3,6 +3,12 @@
 Provides batch hash operations optimized for collision detection.
 """
 
+__all__ = [
+    "batch_double_sha256",
+    "batch_hash160",
+    "batch_sha256",
+]
+
 import hashlib
 
 from ..utils import get_configured_logger

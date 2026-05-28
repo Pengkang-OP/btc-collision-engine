@@ -9,6 +9,7 @@
 """
 
 import multiprocessing
+import queue
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -146,6 +147,88 @@ class TestMultiProcessEngineGetStats:
         assert stats["workers"] == 4
         assert isinstance(stats["total_keys"], (int, float))
         assert isinstance(stats["elapsed"], (int, float))
+
+
+@pytest.mark.unit
+class TestMultiProcessEngineSubmitGet:
+    """submit_task / get_result 异常路径测试."""
+
+    def test_submit_task_not_started(self):
+        """未启动时调用 submit_task 应抛出 RuntimeError."""
+        from src.collision.multiprocess_engine import MultiProcessCollisionEngine
+
+        engine = MultiProcessCollisionEngine()
+        with pytest.raises(RuntimeError, match="not started"):
+            engine.submit_task(b"\x00" * 32)
+
+    def test_get_result_not_started(self):
+        """未启动时调用 get_result 应抛出 RuntimeError."""
+        from src.collision.multiprocess_engine import MultiProcessCollisionEngine
+
+        engine = MultiProcessCollisionEngine()
+        with pytest.raises(RuntimeError, match="not started"):
+            engine.get_result()
+
+    @patch("multiprocessing.Process")
+    @patch("multiprocessing.Queue")
+    def test_get_result_timeout_none(self, mock_queue_cls, mock_process_cls):
+        """get_result 超时返回 None."""
+        from src.collision.multiprocess_engine import MultiProcessCollisionEngine
+
+        mock_queue = MagicMock()
+        mock_queue.get.side_effect = queue.Empty()
+        mock_queue_cls.return_value = mock_queue
+        mock_process = MagicMock()
+        mock_process_cls.return_value = mock_process
+
+        engine = MultiProcessCollisionEngine(config={"max_workers": 1})
+        engine.start()
+        result = engine.get_result(timeout=0.1)
+        assert result is None
+        engine.stop()
+
+    @patch("multiprocessing.Process")
+    @patch("multiprocessing.Queue")
+    def test_submit_task_after_stop(self, mock_queue_cls, mock_process_cls):
+        """停止后 submit_task 不应抛出异常（队列仍然可用）."""
+        from src.collision.multiprocess_engine import MultiProcessCollisionEngine
+
+        mock_queue = MagicMock()
+        mock_queue_cls.return_value = mock_queue
+        mock_process = MagicMock()
+        mock_process_cls.return_value = mock_process
+
+        engine = MultiProcessCollisionEngine(config={"max_workers": 1})
+        engine.start()
+        engine.stop()
+        # After stop, putting to queue should not crash
+        assert engine._task_queue is not None
+        engine.submit_task(b"\xaa" * 32)
+        mock_queue.put.assert_called_once_with(b"\xaa" * 32)
+
+
+@pytest.mark.unit
+class TestMultiProcessEngineProcessTask:
+    """_process_task 遗留方法测试."""
+
+    @patch("multiprocessing.Process")
+    @patch("multiprocessing.Queue")
+    def test_process_task_puts_result(self, mock_queue_cls, mock_process_cls):
+        from src.collision.multiprocess_engine import MultiProcessCollisionEngine
+
+        mock_queue = MagicMock()
+        mock_queue_cls.return_value = mock_queue
+        mock_process = MagicMock()
+        mock_process_cls.return_value = mock_process
+
+        engine = MultiProcessCollisionEngine(config={"max_workers": 1})
+        engine.start()
+        engine._process_task(0, b"\xbb" * 32)
+        mock_queue.put.assert_called_once()
+        call_args = mock_queue.put.call_args[0][0]
+        assert call_args["worker_id"] == 0
+        assert call_args["private_key_hex"] == "bb" * 32
+        engine.stop()
 
 
 @pytest.mark.unit

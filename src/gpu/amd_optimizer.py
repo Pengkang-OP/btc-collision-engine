@@ -23,6 +23,15 @@ from typing import Any
 
 from ..utils import get_configured_logger
 
+__all__ = [
+    "AmdArchDetector",
+    "AmdDriverDetector",
+    "AmdGPUOptimizer",
+    "AmdMemoryOptimizer",
+    "AmdWavefrontValidator",
+]
+
+
 logger = get_configured_logger("AMDOptimizer")
 
 # 延迟导入避免循环依赖

@@ -16,6 +16,16 @@ Thread Safety:
   performance bottlenecks
 """
 
+__all__ = [
+    "BackendType",
+    "CryptoBackend",
+    "CryptoBackendManager",
+    "generate_public_key",
+    "get_crypto_backend",
+    "set_crypto_backend",
+    "verify_production_ready",
+]
+
 import logging
 import threading
 import time

@@ -10,6 +10,8 @@ v4.5.1: 已修复所有已知的 TextIOWrapper 根因（添加 closefd=False）�
 此补丁保留为防御性保护，防止未来新引入的代码出现同类问题。
 """
 
+import pytest
+
 
 def pytest_configure(config):
     """在 pytest 配置阶段应用 capture/logging 兼容性补丁。.
@@ -21,6 +23,41 @@ def pytest_configure(config):
     _apply_python314_capture_patch()
     _apply_python314_logging_patch()
     _apply_pyopencl_editable_install_fix()
+
+    # 注册自定义 markers，防止 pytest 未知 marker 警告
+    config.addinivalue_line("markers", "gpu: 需要真实 GPU 硬件的测试，无 GPU 时自动跳过")
+    config.addinivalue_line("markers", "slow: 需要较长时间的测试，默认禁用，使用 -m slow 启用")
+
+
+def pytest_collection_modifyitems(config, items):
+    """自动跳过需要 GPU 但无可用 GPU 硬件的测试。.
+
+    标记了 ``@pytest.mark.gpu`` 的测试在 pyopencl 或 coincurve
+    不可用时会被跳过，避免执行长时间 sleep 或 GPU 初始化失败
+    导致超时。
+    """
+    from src.gpu._availability import PYOPENCL_AVAILABLE
+
+    # 检查 coincurve（GPU 地址匹配必需）
+    try:
+        import coincurve  # noqa: F401
+
+        coincurve_available = True
+    except ImportError:
+        coincurve_available = False
+
+    if PYOPENCL_AVAILABLE and coincurve_available:
+        return  # GPU 和 coincurve 均可用，不跳过
+
+    if not PYOPENCL_AVAILABLE:
+        reason = "需要 GPU 硬件 (pyopencl 不可用)"
+    else:
+        reason = "需要 coincurve 库 (GPU 地址匹配不可用)"  # noqa: E501
+
+    skip_gpu = pytest.mark.skip(reason=reason)
+    for item in items:
+        if item.get_closest_marker("gpu") is not None:
+            item.add_marker(skip_gpu)
 
 
 def _apply_python314_capture_patch():
@@ -141,7 +178,8 @@ def _apply_pyopencl_editable_install_fix():
 
     问题根因: editable install 的 MetaPathFinder 会干扰 pyopencl 内部
     'from pyopencl.XXX import YYY' 语句的模块解析，导致
-    ModuleNotFoundError: No module named 'pyopencl.XXX'; 'pyopencl' is not a package
+    ModuleNotFoundError: No module named 'pyopencl.XXX'; 'pyopencl' is not \
+        a package
 
     解决方案: 预导入 pyopencl build() 路径依赖的所有子模块/subpackage。
     """

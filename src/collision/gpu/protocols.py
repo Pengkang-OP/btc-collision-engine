@@ -22,6 +22,22 @@ from typing import Any, Protocol, TypedDict
 
 # ========== GPU类型定义 ==========
 
+__all__ = [
+    "CollisionResult",
+    "GPUContext",
+    "GPUDevice",
+    "GPUDeviceInfo",
+    "GPUExecutionContext",
+    "GPUKernel",
+    "IAsyncExecutionPipeline",
+    "ICollisionCore",
+    "IGPUDeviceManager",
+    "IKernelExecutor",
+    "IMonitoringPipeline",
+    "MatchResult",
+    "VendorOptimizationStrategy",
+]
+
 
 class GPUDeviceInfo(TypedDict, total=False):
     """GPU设备信息."""

@@ -14,6 +14,11 @@ Usage:
     >>> print(addresses['p2pkh'], addresses['p2sh'], addresses['bech32'])
 """
 
+__all__ = [
+    "AddressFormat",
+    "MultiFormatAddressGenerator",
+]
+
 import secrets
 from enum import Enum
 

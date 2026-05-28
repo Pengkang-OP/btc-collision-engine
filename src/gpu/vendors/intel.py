@@ -29,6 +29,9 @@ from .base import GPUVendorBase
 logger = get_configured_logger("IntelVendor")
 
 # 初始化限流 logger（默认间隔从环境变量读取，可自定义）
+
+__all__ = ["IntelGPUVendor"]
+
 _rate_logger = _RateLimitedLogger(logger)
 
 

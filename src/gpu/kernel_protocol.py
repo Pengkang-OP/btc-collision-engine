@@ -9,6 +9,8 @@
 from abc import abstractmethod
 from typing import Any, Protocol, cast, runtime_checkable
 
+__all__ = ["GPUKernelFactory", "GPUKernelProtocol"]
+
 
 @runtime_checkable
 class GPUKernelProtocol(Protocol):

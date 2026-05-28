@@ -11,6 +11,9 @@ from ..utils import get_configured_logger
 from .device import GPUDeviceDetector, identify_vendor
 from .scorer import GPUDeviceScorer, get_gpu_scorer
 
+__all__ = ["GPUDeviceSelector", "get_gpu_selector", "reset_gpu_selector"]
+
+
 logger = get_configured_logger("GPUSelector")
 
 

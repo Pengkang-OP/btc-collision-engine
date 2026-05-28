@@ -27,6 +27,8 @@ logger = get_configured_logger("NvidiaOptimizer")
 
 # 延迟导入避免循环依赖
 
+__all__ = ["NvidiaArchDetector", "NvidiaDriverDetector", "NvidiaGPUOptimizer", "NvidiaMemoryOptimizer"]
+
 
 class NvidiaDriverDetector:
     """NVIDIA 驱动版本检测器.
@@ -156,6 +158,7 @@ class NvidiaDriverDetector:
         """
         try:
             import pyopencl as cl
+
         except ImportError:
             return None
 

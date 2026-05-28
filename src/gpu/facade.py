@@ -16,6 +16,8 @@ init_logging()
 # 获取模块日志记录器
 logger = get_configured_logger("GPUFacade")
 
+__all__ = ["GPUFacade", "create_gpu_facade"]
+
 
 class GPUFacade:
     """GPU外观类.

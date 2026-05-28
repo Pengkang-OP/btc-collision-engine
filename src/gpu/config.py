@@ -14,6 +14,8 @@ from .profiles.loader import GPUProfileLoader
 
 logger = get_configured_logger("GPUConfig")
 
+__all__ = ["GPUConfig"]
+
 
 class GPUConfig:
     """GPU配置管理器.

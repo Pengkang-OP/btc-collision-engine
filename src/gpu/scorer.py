@@ -19,6 +19,9 @@ from typing import Any
 
 from ..utils import get_configured_logger
 
+__all__ = ["GPUDeviceScorer", "get_gpu_scorer", "reset_gpu_scorer"]
+
+
 logger = get_configured_logger("GPUDeviceScorer")
 
 

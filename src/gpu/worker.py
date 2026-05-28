@@ -34,6 +34,8 @@ if _monitor_available:
 
 logger = get_configured_logger("GPUWorker")
 
+__all__ = ["SingleGPUWorker"]
+
 
 class SingleGPUWorker(threading.Thread):
     """单GPU工作器线程.

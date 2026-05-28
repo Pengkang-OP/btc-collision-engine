@@ -34,6 +34,16 @@ INTEL_GPU_MONITORING_AVAILABLE = False
 
 logger = logging.getLogger("GPUPerformanceMonitor")
 
+__all__ = [
+    "INTEL_GPU_MONITORING_AVAILABLE",
+    "GPUKernelMetrics",
+    "GPUMemoryMetrics",
+    "GPUPerformanceMonitor",
+    "GPUPerformanceReport",
+    "get_gpu_performance_monitor",
+    "reset_gpu_performance_monitor",
+]
+
 
 @dataclass
 class GPUKernelMetrics:

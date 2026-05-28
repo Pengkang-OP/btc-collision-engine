@@ -42,6 +42,8 @@ if _aggregator_available:
 
 logger = get_configured_logger("MultiGPUEngine")
 
+__all__ = ["MultiGPUCollisionEngine"]
+
 
 class MultiGPUCollisionEngine:
     """多GPU碰撞引擎.

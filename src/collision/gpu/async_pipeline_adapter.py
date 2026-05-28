@@ -13,6 +13,8 @@ from typing import Any, cast
 
 from src.utils import get_configured_logger
 
+__all__ = ["AsyncPipelineAdapter"]
+
 from .protocols import GPUKernel, IAsyncExecutionPipeline, MatchResult
 
 logger = get_configured_logger(__name__)

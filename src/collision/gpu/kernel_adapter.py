@@ -19,6 +19,8 @@ from .protocols import GPUContext, GPUDevice, GPUKernel, IKernelExecutor, MatchR
 
 logger = get_configured_logger(__name__)
 
+__all__ = ["GPUKernelAdapter"]
+
 
 class GPUKernelAdapter(IKernelExecutor):
     """GPU内核适配器.

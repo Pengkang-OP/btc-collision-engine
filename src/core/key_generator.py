@@ -1,5 +1,9 @@
 """Secure private key generator - compliant with Bitcoin Core specification."""
 
+__all__ = [
+    "SecureKeyGenerator",
+]
+
 import pathlib
 import secrets
 import threading

@@ -26,6 +26,9 @@ from .memory_pool import get_gpu_memory_pool
 from .nvidia_optimizer import NvidiaGPUOptimizer
 from .profiles.loader import GPUProfileLoader
 
+__all__ = ["GPUDeviceManager", "NoValidTargetsError"]
+
+
 _logger = get_configured_logger("GPUDeviceManager")
 
 

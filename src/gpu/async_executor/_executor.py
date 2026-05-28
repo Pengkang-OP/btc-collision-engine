@@ -26,6 +26,8 @@ from ._sync import _SyncFallbackMixin
 
 logger = get_configured_logger("AsyncGPUExecutor")
 
+__all__ = ["AsyncGPUExecutor"]
+
 
 class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin):
     """异步GPU执行器.

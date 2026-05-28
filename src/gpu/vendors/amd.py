@@ -14,6 +14,9 @@ from src.utils import get_configured_logger
 
 from .base import GPUVendorBase
 
+__all__ = ["AMDGPUVendor"]
+
+
 logger = get_configured_logger("AMDVendor")
 
 

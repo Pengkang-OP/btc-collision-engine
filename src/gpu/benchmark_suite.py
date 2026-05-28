@@ -9,6 +9,9 @@ from typing import Any
 
 from ..utils import get_configured_logger
 
+__all__ = ["GPUBenchmarkSuite"]
+
+
 logger = get_configured_logger(__name__)
 
 

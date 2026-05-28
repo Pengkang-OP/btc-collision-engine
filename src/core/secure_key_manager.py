@@ -6,6 +6,14 @@ Supports multiple security backends: cryptography, PyNaCl, ctypes
 fallback.
 """
 
+__all__ = [
+    "SecureKeyManager",
+    "SecureMemoryError",
+    "generate_secure_key",
+    "secure_key_context",
+    "validate_private_key",
+]
+
 import ctypes
 import os
 import secrets
@@ -117,8 +125,8 @@ class SecureKeyManager:
             self._backend: str = "ctypes"
             warnings.warn(
                 "cryptography or PyNaCl not installed, "
-                + "using ctypes fallback. "
-                + "Install: pip install cryptography",
+                "using ctypes fallback. "
+                "Install: pip install cryptography",
                 UserWarning,
                 stacklevel=2,
             )

@@ -1,5 +1,9 @@
 """WIF (Wallet Import Format) encode/decode utility."""
 
+__all__ = [
+    "WIF",
+]
+
 from .base58 import Base58
 from .hash_utils import HashUtils
 

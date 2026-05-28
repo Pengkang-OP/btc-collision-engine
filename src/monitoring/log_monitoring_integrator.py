@@ -2,6 +2,9 @@
 
 from ..utils import get_configured_logger
 
+__all__ = ["LogMonitoringIntegrator", "get_log_monitoring_integrator"]
+
+
 logger = get_configured_logger(__name__)
 
 

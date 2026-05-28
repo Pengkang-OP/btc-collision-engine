@@ -58,6 +58,14 @@ htmlcov/
 # === Temporary / Debug / Report Files ===
 _*.py
 _*.txt
+gpu_*.txt
+single_gpu_*.txt
+public_api_report.txt
+pytest_err_*.txt
+test_ci_*.txt
+
+# === Test Results / Logs ===
+test_results/
 __*.txt
 _*.json
 _*.toml

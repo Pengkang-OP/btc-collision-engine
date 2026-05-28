@@ -9,6 +9,9 @@ import os
 import time
 from typing import Any
 
+__all__ = ["RateLimitedLogger"]
+
+
 _ENV_RATE_LIMIT_SEC = "GPU_LOG_RATE_LIMIT_SEC"
 # backward compat: also check Intel-specific env var
 _ENV_RATE_LIMIT_SEC_LEGACY = "INTEL_LOG_RATE_LIMIT_SEC"

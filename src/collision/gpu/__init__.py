@@ -41,6 +41,27 @@ from .kernel_adapter import GPUKernelAdapter
 from .monitoring import PerformanceMonitoringPipeline
 from .vendor_strategy import VendorOptimizationFactory
 
+__all__ = [
+    "AsyncPipelineAdapter",
+    "CollisionCore",
+    "DataLoggerAdapter",
+    "DeviceManagerAdapter",
+    "GPUCollisionEngine",
+    "GPUEngineConfig",
+    "GPUEngineFacade",
+    "GPUKernelAdapter",
+    "PerformanceMonitoringPipeline",
+    "VendorOptimizationFactory",
+    "get_async_pipeline_adapter",
+    "get_collision_core",
+    "get_data_logger_adapter",
+    "get_device_manager_adapter",
+    "get_gpu_engine_facade",
+    "get_kernel_adapter",
+    "get_monitoring_pipeline",
+    "get_vendor_factory",
+]
+
 
 # 工厂函数（向后兼容：支持延迟导入/依赖注入场景）
 def get_gpu_engine_facade():

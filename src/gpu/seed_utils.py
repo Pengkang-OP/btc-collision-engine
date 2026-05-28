@@ -8,6 +8,8 @@ v4.2.3 M5: 从 engine.py 提取为独立工具模块，统一端序转换逻辑�
 
 import numpy as np
 
+__all__ = ["seed_bytes_to_u32_be_array"]
+
 
 def seed_bytes_to_u32_be_array(seed: bytes) -> "np.ndarray":
     """将 32 字节 seed 按 big-endian 拆成 8*uint32，再转成本机端序.

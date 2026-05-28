@@ -15,6 +15,8 @@ from .protocols import GPUContext, GPUDevice
 
 logger = get_configured_logger(__name__)
 
+__all__ = ["DeviceManagerAdapter"]
+
 
 class DeviceManagerAdapter:
     """GPU设备管理器适配器.

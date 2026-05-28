@@ -8,6 +8,14 @@ Strictly validates against Bitcoin Core specification:
 5. Full workflow validation
 """
 
+__all__ = [
+    "AddressType",
+    "BitcoinKeyValidator",
+    "KeyValidationConstants",
+    "KeyValidationResult",
+    "validate_bitcoin_key_chain",
+]
+
 import hmac
 from enum import Enum
 from typing import Any

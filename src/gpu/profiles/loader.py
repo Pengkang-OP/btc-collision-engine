@@ -13,6 +13,8 @@ from src.utils import get_configured_logger
 
 logger = get_configured_logger("GPUProfileLoader")
 
+__all__ = ["GPUProfileLoader"]
+
 
 class GPUProfileLoader:
     """GPU型号配置加载器."""

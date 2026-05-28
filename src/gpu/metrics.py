@@ -25,6 +25,8 @@ import threading
 import time
 from collections import defaultdict
 
+__all__ = ["GPUMetricsCollector", "get_metrics_collector", "reset_metrics_collector"]
+
 
 class GPUMetricsCollector:
     """GPU 指标收集器.

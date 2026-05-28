@@ -17,6 +17,10 @@ Note:
     is suitable for CPU-only environments or as fallback.
 """
 
+__all__ = [
+    "MultiProcessCollisionEngine",
+]
+
 import multiprocessing
 import queue
 import time

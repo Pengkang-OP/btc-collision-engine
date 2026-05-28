@@ -17,6 +17,9 @@ from typing import Any
 
 from ..utils import get_configured_logger
 
+__all__ = ["AdaptiveTimeoutManager"]
+
+
 logger = get_configured_logger("IntelTimeoutManager")
 
 

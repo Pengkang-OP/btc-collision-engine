@@ -34,6 +34,11 @@ from typing import Any
 # 双缓冲控制环境变量
 ENV_DOUBLE_BUFFER = "BTC_GPU_DOUBLE_BUFFER"
 
+# P1安全修复: GPU缓冲区安全清除工具
+from .secure_buffer import secure_clear_gpu_buffer  # noqa: E402
+
+__all__ = ["ENV_DOUBLE_BUFFER", "DoubleBuffer"]
+
 
 class DoubleBuffer:
     """CPU-GPU 双缓冲管理器.
@@ -215,11 +220,25 @@ class DoubleBuffer:
 
         应在不再需要双缓冲时调用,释放 GPU 显存。
         调用后对象不可再使用。
+
+        P1安全修复: 释放前用零覆盖匹配标志缓冲区，防止敏感数据残留。
         """
         with self._lock:
+            # 创建临时命令队列用于安全清除
+            try:
+                temp_queue = self._cl.CommandQueue(self._context)
+                have_queue = True
+            except Exception:
+                temp_queue = None
+                have_queue = False
+
             for buf in self._buffers:
                 matches = buf.get("matches")
                 if matches is not None:
+                    # P1安全修复: 释放前清除匹配缓冲区
+                    if have_queue and hasattr(matches, "size"):
+                        with suppress(Exception):
+                            secure_clear_gpu_buffer(temp_queue, matches, matches.size)
                     with suppress(Exception):
                         matches.release()
                     buf["matches"] = None

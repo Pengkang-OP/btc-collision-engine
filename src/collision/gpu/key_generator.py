@@ -21,6 +21,18 @@ from typing import cast
 from src.core.secp256k1 import Secp256k1  # v4.2.2: 统一从 secp256k1 获取曲线参数
 
 # Secp256k1 曲线参数
+
+__all__ = [
+    "SECP256K1_N",
+    "SECP256K1_N_BYTES",
+    "BatchKeyGenerator",
+    "KeyGenerationStrategy",
+    "KeyGenerator",
+    "generate_private_key",
+    "generate_private_keys",
+    "get_key_generator",
+]
+
 SECP256K1_N = Secp256k1.N
 SECP256K1_N_BYTES = SECP256K1_N.to_bytes(32, "big")
 

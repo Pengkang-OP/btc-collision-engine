@@ -22,6 +22,9 @@ from .device_manager_adapter import DeviceManagerAdapter
 from .kernel_adapter import GPUKernelAdapter
 from .protocols import GPUContext, GPUDevice, GPUKernel
 
+__all__ = ["GPUEngineFacade"]
+
+
 logger = get_configured_logger(__name__)
 
 

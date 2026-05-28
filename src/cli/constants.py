@@ -1,6 +1,6 @@
 """CLI constants — re-exported from src.constants for backward compatibility."""
 
-from src.constants import (  # noqa: F401, E402
+from src.constants import (  # noqa: F401
     CONFIG_EXAMPLE_FILE,
     CONFIG_FILE_NAME,
     DEFAULT_PAGE_SIZE,

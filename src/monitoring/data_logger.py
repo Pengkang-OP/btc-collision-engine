@@ -28,6 +28,8 @@ from ..utils.fast_json import fast_dump, fast_load, fast_loads
 from ..utils.logging_config import LOG_DEFAULT_MAX_BYTES
 from .storage_config import DataStorageConfig
 
+__all__ = ["DataLogger"]
+
 
 class DataLogger:
     """数据日志记录器.

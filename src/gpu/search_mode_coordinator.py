@@ -14,6 +14,9 @@ if TYPE_CHECKING:
     # ROADMAP #13: 使用协议接口替代直接引用，消除反向依赖
     from ._engine_protocol import GPUEngineProtocol as GPUCollisionEngine
 
+__all__ = ["SearchModeCoordinator"]
+
+
 _logger = get_configured_logger("SearchModeCoordinator")
 
 

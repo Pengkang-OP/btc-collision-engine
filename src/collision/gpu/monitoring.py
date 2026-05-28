@@ -24,6 +24,8 @@ from .protocols import IMonitoringPipeline
 
 logger = get_configured_logger(__name__)
 
+__all__ = ["PerformanceMonitoringPipeline"]
+
 
 class PerformanceMonitoringPipeline(IMonitoringPipeline):
     """性能监控管道.

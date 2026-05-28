@@ -11,6 +11,13 @@ generation.
   optimized_address_generator.py)
 """
 
+__all__ = [
+    "BaseAddressGenerator",
+    "P2PKHAddressGenerator",
+    "PerformanceWarning",
+    "secure_clear_bytearray",
+]
+
 import ctypes
 import secrets
 from abc import ABC, abstractmethod

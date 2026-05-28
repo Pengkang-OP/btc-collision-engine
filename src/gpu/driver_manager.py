@@ -13,6 +13,8 @@ from ..utils import get_configured_logger
 
 logger = get_configured_logger("GPUDriverManager")
 
+__all__ = ["DriverManager", "DriverVersionParser"]
+
 
 class DriverVersionParser:
     """驱动版本解析和比较工具."""

@@ -11,6 +11,9 @@ from src.utils import get_configured_logger
 
 from .base_search import BaseSearchMode
 
+__all__ = ["RangeScanSearchMode"]
+
+
 logger = get_configured_logger("RangeScanSearch")
 
 

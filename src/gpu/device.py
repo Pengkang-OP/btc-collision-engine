@@ -27,9 +27,16 @@ from .profiles.loader import GPUProfileLoader
 from .scorer import get_gpu_scorer
 
 if PYOPENCL_AVAILABLE:
-    import pyopencl as cl  # noqa: F811
+    import pyopencl as cl
 else:
     cl = None  # type: ignore[assignment]
+
+__all__ = [
+    "GPUDevice",
+    "GPUDeviceDetector",
+    "identify_gpu_model",
+    "identify_vendor",
+]
 
 
 def _assert_opencl_available() -> None:
@@ -752,7 +759,7 @@ class GPUDevice:
                 self.queue = cl.CommandQueue(
                     self.context,
                     self.device,
-                    properties=cast(cl.command_queue_properties, ooo_prop),
+                    properties=cast("cl.command_queue_properties", ooo_prop),
                 )
                 # Intel Arc: compute/transfer 共用同一 OOO 队列
                 self.compute_queue = self.queue
@@ -763,12 +770,12 @@ class GPUDevice:
                 self.compute_queue = cl.CommandQueue(
                     self.context,
                     self.device,
-                    properties=cast(cl.command_queue_properties, ooo_prop),
+                    properties=cast("cl.command_queue_properties", ooo_prop),
                 )
                 self.transfer_queue = cl.CommandQueue(
                     self.context,
                     self.device,
-                    properties=cast(cl.command_queue_properties, ooo_prop),
+                    properties=cast("cl.command_queue_properties", ooo_prop),
                 )
                 self.queue = self.compute_queue
                 logger.info("  - 计算队列: 已创建(支持性能分析)")

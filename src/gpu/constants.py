@@ -1,6 +1,6 @@
 """GPU constants — re-exported from src.constants for backward compatibility."""
 
-from src.constants import (  # noqa: F401, E402
+from src.constants import (  # noqa: F401
     BATCH_SIZE_ALIGNMENT,
     BYTES_PER_MB,
     DEFAULT_MEMORY_EFFICIENCY,
@@ -19,5 +19,7 @@ from src.constants import (  # noqa: F401, E402
     align_batch_size,
     clamp_batch_size,
 )
+
+__all__ = ["DEFAULT_BATCH_SIZE"]
 
 DEFAULT_BATCH_SIZE = GPU_DEFAULT_BATCH_SIZE

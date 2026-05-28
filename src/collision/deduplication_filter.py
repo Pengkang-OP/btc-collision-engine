@@ -4,6 +4,10 @@ Thread-safe filter that prevents re-processing of already-seen
 private keys and addresses.
 """
 
+__all__ = [
+    "DeduplicationFilter",
+]
+
 import threading
 
 from ..utils import get_configured_logger

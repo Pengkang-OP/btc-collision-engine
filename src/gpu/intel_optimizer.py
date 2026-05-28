@@ -25,6 +25,8 @@ if TYPE_CHECKING:
     from .intel_timeout_manager import AdaptiveTimeoutManager
     from .performance_reporter import PerformanceReportGenerator
 
+__all__ = ["IntelGPUOptimizer"]
+
 
 class IntelGPUOptimizer:
     """Intel GPU 专有优化器.

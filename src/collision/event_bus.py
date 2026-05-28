@@ -1,5 +1,11 @@
 """Event bus for decoupled communication between components."""
 
+__all__ = [
+    "EventBus",
+    "get_event_bus",
+    "reset_event_bus",
+]
+
 import threading
 from collections.abc import Callable
 from contextlib import suppress

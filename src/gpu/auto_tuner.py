@@ -8,6 +8,9 @@ from typing import Any
 
 from ..utils import get_configured_logger
 
+__all__ = ["GPUAutoTuner"]
+
+
 logger = get_configured_logger(__name__)
 
 

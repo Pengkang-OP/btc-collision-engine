@@ -79,6 +79,7 @@ class TestGPUDeviceDetector:
     """测试GPU设备检测器."""
 
     @patch("src.gpu._availability.PYOPENCL_AVAILABLE", False)
+    @patch("src.gpu.device.PYOPENCL_AVAILABLE", False)
     def test_gpu_not_available(self):
         """测试GPU不可用的情况."""
         from src.gpu.device import GPUDeviceDetector

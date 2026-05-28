@@ -19,6 +19,9 @@ if TYPE_CHECKING:
     from ..gpu.benchmark_suite import GPUBenchmarkSuite
     from ..gpu.performance_reporter import PerformanceReportGenerator
 
+__all__ = ["PerformanceOptimizationPipeline"]
+
+
 logger = get_configured_logger("GPUOptimizationPipeline")
 
 

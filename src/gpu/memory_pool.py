@@ -32,6 +32,7 @@
 import threading
 import time
 from collections import OrderedDict
+from contextlib import suppress
 from typing import Any, cast
 
 # 导入日志配置
@@ -46,6 +47,17 @@ from ..utils.pool_helpers import (
 # 获取模块日志记录器
 # 注意: init_logging() 应由应用入口统一调用，避免重复初始化
 logger = get_configured_logger("GPUMemoryPool")
+
+# P1安全修复: GPU缓冲区安全清除工具（自带 PYOPENCL_AVAILABLE 检查）
+from .secure_buffer import secure_clear_gpu_buffer  # noqa: E402
+
+__all__ = [
+    "LOG_DEFAULT_MAX_BYTES",
+    "GPUBufferAllocator",
+    "GPUMemoryPool",
+    "GlobalGPUMemoryManager",
+    "get_gpu_memory_pool",
+]
 
 # 显存探测测试块大小（10MB），用于 _adapt_pool_capacity 中验证显存是否充足
 LOG_DEFAULT_MAX_BYTES = 10 * 1024 * 1024
@@ -452,12 +464,27 @@ class GPUMemoryPool:
 
         # 执行淘汰
         evicted = 0
+        # 创建临时命令队列用于安全清除
+        try:
+            import pyopencl as cl
+
+            temp_queue = cl.CommandQueue(self._context)
+            have_queue = True
+        except Exception:
+            temp_queue = None
+            have_queue = False
+
         for buf_id, lru_buf, lru_size, lru_type in to_evict:
             # 从对应池中移除
             self._remove_lru_from_pool(lru_type, lru_size, buf_id)
 
             # 从 LRU 缓存中移除
             del self._lru_cache[buf_id]
+
+            # P1安全修复: 淘汰的缓冲区可能含敏感数据，释放前清除
+            if have_queue and hasattr(lru_buf, "release") and hasattr(lru_buf, "size"):
+                with suppress(Exception):
+                    secure_clear_gpu_buffer(temp_queue, lru_buf, lru_buf.size)
 
             # 释放显存
             try:
@@ -642,12 +669,28 @@ class GPUMemoryPool:
             }
 
     def clear(self) -> None:
-        """清空内存池,释放所有缓冲区（尽力而为）."""
+        """清空内存池,释放所有缓冲区（尽力而为）.
+
+        P1安全修复: 释放前用零覆盖所有缓冲区，防止敏感数据残留。
+        """
         with self._lock:
+            # 创建临时命令队列用于安全清除
+            try:
+                import pyopencl as cl
+
+                temp_queue = cl.CommandQueue(self._context)
+                have_queue = True
+            except Exception:
+                temp_queue = None
+                have_queue = False
+
             # 清理通用池
             for size, buffers in self._pool.items():
                 for buf in buffers:
                     try:
+                        # P1安全修复: 释放前清除缓冲区
+                        if have_queue and hasattr(buf, "size"):
+                            secure_clear_gpu_buffer(temp_queue, buf, buf.size)
                         buf.release()
                     except (RuntimeError, OSError) as e:
                         logger.debug("释放缓冲区失败 (size=%s): %s", size, e)
@@ -661,6 +704,9 @@ class GPUMemoryPool:
                 for size, buffers in type_pool.items():
                     for buf in buffers:
                         try:
+                            # P1安全修复: 释放前清除缓冲区
+                            if have_queue and hasattr(buf, "size"):
+                                secure_clear_gpu_buffer(temp_queue, buf, buf.size)
                             buf.release()
                         except (RuntimeError, OSError) as e:
                             logger.debug("释放%s类型缓冲区失败 (size=%s): %s", buffer_type, size, e)

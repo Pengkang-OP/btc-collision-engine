@@ -2,6 +2,19 @@
 
 from __future__ import annotations
 
+__all__ = [
+    "CollisionEvent",
+    "EngineCompleteEvent",
+    "EngineErrorEvent",
+    "EngineEvent",
+    "EngineMatchEvent",
+    "EngineProgressEvent",
+    "EngineStartEvent",
+    "EngineStateEvent",
+    "EngineStopEvent",
+    "EventType",
+]
+
 import time
 from dataclasses import dataclass, field
 from enum import Enum

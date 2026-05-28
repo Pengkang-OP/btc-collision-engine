@@ -11,6 +11,9 @@ from src.utils import get_configured_logger
 
 from ..constants import PER_KEY_MEMORY_BYTES, align_batch_size
 
+__all__ = ["GPUVendorBase"]
+
+
 logger = get_configured_logger("BaseVendor")
 
 

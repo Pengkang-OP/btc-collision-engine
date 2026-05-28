@@ -67,7 +67,10 @@ def mock_engine_patches(mock_targets):
         patch("src.collision.gpu.engine.CollisionCore", return_value=mock_collision_core),
         patch("src.collision.gpu.engine.SearchModeCoordinator"),
         patch("src.collision.gpu.engine.GPUEngineMonitor"),
-        patch("src.collision.gpu.engine.VendorOptimizationFactory.create", return_value=MagicMock()),
+        patch(
+            "src.collision.gpu.vendor_strategy.VendorOptimizationFactory.create",
+            return_value=MagicMock(),
+        ),
         patch("src.collision.gpu.engine.GPUDeviceDetector"),
     ]
     return patches, mock_device_manager, mock_collision_core
@@ -337,7 +340,7 @@ class TestModuleImports:
         """测试包版本号与 __init__.py 一致."""
         from src.collision import gpu
 
-        assert gpu.__version__ == "5.0.0"
+        assert gpu.__version__ == "5.0.1"
 
     def test_package_all_exports(self):
         """测试 __all__ 包含新组件."""

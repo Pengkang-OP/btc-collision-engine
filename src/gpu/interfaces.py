@@ -7,6 +7,13 @@ Facade 和具体实现通过接口解耦，便于测试和替换。
 from abc import ABC, abstractmethod
 from typing import Any, Protocol, runtime_checkable
 
+__all__ = [
+    "GPUCollisionEngineInterface",
+    "GPUDeviceProtocol",
+    "GPUDriverInterface",
+    "GPUMemoryPoolInterface",
+]
+
 
 @runtime_checkable
 class GPUDeviceProtocol(Protocol):

@@ -35,6 +35,8 @@ if TYPE_CHECKING:
 
 logger = get_configured_logger(__name__)
 
+__all__ = ["CollisionCore"]
+
 
 class CollisionCore(ICollisionCore):
     """碰撞核心逻辑.

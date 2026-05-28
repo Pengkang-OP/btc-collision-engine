@@ -18,6 +18,9 @@ from .vendors.base import GPUVendorBase
 from .vendors.intel import IntelGPUVendor
 from .vendors.nvidia import NVIDIAGPUVendor
 
+__all__ = ["GPUContext"]
+
+
 logger = get_configured_logger("GPUContext")
 
 

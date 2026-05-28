@@ -1,5 +1,14 @@
 """Callback type aliases for collision detection."""
 
+__all__ = [
+    "CompleteCallback",
+    "ErrorCallback",
+    "ErrorHandler",
+    "EventHandler",
+    "MatchCallback",
+    "ProgressCallback",
+]
+
 from collections.abc import Callable
 
 # Callback type aliases — used by key_collision_engine.py, gpu/engine.py, gpu/core.py

@@ -4,6 +4,10 @@ Supports random and sequential search modes with configurable
 targets, workers, and event hooks.
 """
 
+__all__ = [
+    "BaseCollisionEngine",
+]
+
 import threading
 from abc import ABC, abstractmethod
 from collections.abc import Callable

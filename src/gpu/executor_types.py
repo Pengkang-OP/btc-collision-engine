@@ -8,6 +8,14 @@ v5.2.4: _PendingBatch.__init__ 初始化 batch_num 属性，消除外部赋值�
 import types
 from typing import Any
 
+__all__ = [
+    "ASYNC_RECOVER_AFTER_SYNC_COUNT",
+    "DEFAULT_QUEUE_DEPTH",
+    "GPU_SPECIFIC_CONFIG",
+    "MAX_CONSECUTIVE_SYNC_FALLBACKS",
+]
+
+
 # 队列深度管理常量
 DEFAULT_QUEUE_DEPTH = 4  # GPU 队列中保持的预提交批次数量
 

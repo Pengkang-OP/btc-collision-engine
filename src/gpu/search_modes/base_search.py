@@ -29,6 +29,8 @@ if TYPE_CHECKING:
 
 logger = get_configured_logger("BaseSearchMode")
 
+__all__ = ["BaseSearchMode"]
+
 
 class BaseSearchMode:
     """所有搜索模式的基类.

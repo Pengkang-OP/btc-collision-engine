@@ -2,6 +2,8 @@
 
 from dataclasses import dataclass, field
 
+__all__ = ["MonitorConfig"]
+
 
 @dataclass
 class MonitorConfig:

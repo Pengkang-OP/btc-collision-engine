@@ -31,6 +31,18 @@ Contains OpenCL kernel code for Bitcoin secp256k1 GPU computation.
 from src.gpu.kernel import OPENCL_KERNEL_SOURCE
 import pyopencl as cl
 
+__all__ = [
+    "get_kernel_version",
+    "get_kernel_version_tuple",
+    "validate_kernel_version",
+    "get_version_changelog",
+    "get_latest_compatible_version",
+    "KERNEL_VERSION",
+    "KERNEL_VERSION_TUPLE",
+    "OPENCL_KERNEL_SOURCE",
+]
+
+
 program = cl.Program(context, OPENCL_KERNEL_SOURCE).build()
 batch_check_kernel = program.batch_check
 ```

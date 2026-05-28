@@ -112,7 +112,7 @@ ASYNC_KEY_GEN_SAFETY_FACTOR = 2.0
 from src.gpu._availability import PYOPENCL_AVAILABLE  # noqa: E402
 
 if PYOPENCL_AVAILABLE:
-    import pyopencl as cl  # noqa: F401
+    import pyopencl as cl
 else:
     cl = None  # type: ignore[assignment]
 
@@ -121,6 +121,27 @@ else:
 # - 模块导入时单线程执行，GIL 保证 _gpu_performance_monitor 赋值安全
 # - get_gpu_performance_monitor() 自身已有 _monitor_lock 保护
 # - 此缓存仅存储引用，不涉及竞态条件，无需额外线程锁
+
+__all__ = [
+    "ASYNC_KEY_GEN_BASE_TIMEOUT",
+    "ASYNC_KEY_GEN_PER_KEY_TIME",
+    "ASYNC_KEY_GEN_SAFETY_FACTOR",
+    "ASYNC_KEY_GEN_TIMEOUT",
+    "BATCH_LOG_FREQUENCY",
+    "EXCEPTION_RECOVERY_DELAY",
+    "GPU_BATCH_MAX_RETRIES",
+    "GPU_BATCH_RETRY_BASE_DELAY",
+    "GPU_BATCH_RETRY_MAX_DELAY",
+    "GPU_MAX_BATCH_SIZE",
+    "INITIAL_BATCHES_LOG",
+    "INITIAL_BATCH_SIZE",
+    "MONITOR_THREAD_JOIN_TIMEOUT",
+    "THREAD_JOIN_TIMEOUT",
+    "UINT32_MAX",
+    "GPUCollisionEngine",
+    "GPUEngineConfig",
+]
+
 _gpu_performance_monitor = None
 
 
@@ -240,7 +261,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         async_log_max_bytes: int = LOG_DEFAULT_MAX_BYTES,
         async_log_backup_count: int = 5,
         check_uncompressed: bool | None = None,
-        key_generation_strategy: KeyGenerationStrategy = (KeyGenerationStrategy.PRNG_SEED,),
+        key_generation_strategy: KeyGenerationStrategy = KeyGenerationStrategy.PRNG_SEED,
         # v3.2.1: 私钥生成策略
         config: "GPUEngineConfig | None" = None,  # v4.3.1: 配置对象优先
         gpu_config: dict[str, Any] | None = None,  # v5.2.1: GPU 配置段（来自 facade）
@@ -762,7 +783,10 @@ class GPUCollisionEngine(BaseCollisionEngine):
 
         # 状态一致性守卫：stats 必须在后续步骤前可用
         if self.stats is None:
-            raise RuntimeError("GPUCollisionEngine.stop(): self.stats is None, 引擎状态异常")
+            logger.warning("stop() 跳过：引擎从未 start，stats 未初始化")
+            self._stop_event.set()
+            self._running = False
+            return
 
         self._search_coordinator.stop()
         self._stop_event.set()

@@ -21,6 +21,9 @@ from ..utils import get_configured_logger
 # 统一GPU评分
 from .scorer import GPUDeviceScorer, get_gpu_scorer
 
+__all__ = ["GPULoadBalancer"]
+
+
 logger = get_configured_logger("GPULoadBalancer")
 
 

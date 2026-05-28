@@ -19,6 +19,12 @@ References:
 
 """
 
+__all__ = [
+    "PrecomputedPointTable",
+    "PrecomputedTableManager",
+    "get_precomputed_table",
+]
+
 import threading
 from typing import Any
 

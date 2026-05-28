@@ -8,6 +8,10 @@ Provides Bitcoin-related hash computation functions:
 - Key fingerprinting
 """
 
+__all__ = [
+    "HashUtils",
+]
+
 import hashlib
 
 

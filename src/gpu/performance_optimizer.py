@@ -17,6 +17,15 @@ from typing import Any
 from ..utils import get_configured_logger
 from .constants import clamp_batch_size
 
+__all__ = [
+    "GPUPerformanceOptimizer",
+    "GPUProfile",
+    "GPUVendor",
+    "PerformanceMetrics",
+    "get_gpu_optimizer",
+]
+
+
 logger = get_configured_logger("GPUPerformanceOptimizer")
 
 

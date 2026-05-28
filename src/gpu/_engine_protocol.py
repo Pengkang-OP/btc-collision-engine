@@ -14,6 +14,8 @@ from __future__ import annotations
 
 from typing import Any, Protocol
 
+__all__ = ["GPUEngineProtocol"]
+
 
 class GPUEngineProtocol(Protocol):
     """GPU碰撞引擎协议接口.

@@ -1,5 +1,9 @@
 """Optimized P2PKH address generator with precomputed tables and SIMD."""
 
+__all__ = [
+    "OptimizedP2PKHAddressGenerator",
+]
+
 from .address_generator import (
     P2PKHAddressGenerator,
 )

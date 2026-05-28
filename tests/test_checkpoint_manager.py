@@ -46,14 +46,24 @@ class TestCheckpointManagerBasic:
         """保存后 exists() 返回 True."""
         assert not self.mgr.exists
         self.mgr.save(
-            mode="random", targets=set(), current_position=0, total_checked=0, matches=[], force=True,
+            mode="random",
+            targets=set(),
+            current_position=0,
+            total_checked=0,
+            matches=[],
+            force=True,
         )
         assert self.mgr.exists
 
     def test_delete(self):
         """删除后 exists() 返回 False."""
         self.mgr.save(
-            mode="random", targets=set(), current_position=0, total_checked=0, matches=[], force=True,
+            mode="random",
+            targets=set(),
+            current_position=0,
+            total_checked=0,
+            matches=[],
+            force=True,
         )
         assert self.mgr.exists
         self.mgr.delete()
@@ -125,7 +135,12 @@ class TestCheckpointSensitiveInfoCleaning:
     def test_security_note_in_file(self):
         """断点文件包含安全说明."""
         self.mgr.save(
-            mode="random", targets=set(), current_position=0, total_checked=0, matches=[], force=True,
+            mode="random",
+            targets=set(),
+            current_position=0,
+            total_checked=0,
+            matches=[],
+            force=True,
         )
         raw = pathlib.Path(self.tmp_path).read_text(encoding="utf-8")
         assert "security_note" in raw
@@ -201,7 +216,12 @@ class TestCheckpointAutoSave:
         try:
             mgr = CheckpointManager(filepath=tmp.name, auto_save_interval=9999)
             mgr.save(
-                mode="random", targets=set(), current_position=0, total_checked=0, matches=[], force=True,  # noqa: E501
+                mode="random",
+                targets=set(),
+                current_position=0,
+                total_checked=0,
+                matches=[],
+                force=True,  # noqa: E501
             )
             # 紧接着保存，间隔未到
             assert not mgr.should_auto_save
@@ -322,17 +342,7 @@ class TestCheckpointFlushErrors:
         self.mgr._buffer = {"key": "val"}
         self.mgr._flush_buffer()
 
-    def test_cleanup_temp_file_exists(self):
-        """_cleanup_temp_file 删除存在的临时文件."""
-        temp_file = self.tmp_path + ".tmp"
-        pathlib.Path(temp_file).write_text("test")
-        assert pathlib.Path(temp_file).exists()
-        self.mgr._cleanup_temp_file(temp_file)
-        assert not pathlib.Path(temp_file).exists()
-
-    def test_cleanup_temp_file_not_exists(self):
-        """_cleanup_temp_file 不存在的文件无异常."""
-        self.mgr._cleanup_temp_file("/nonexistent/path.tmp")
+    # _cleanup_temp_file 和 _check_win32_security 已移除（死代码）
 
 
 class TestCheckpointLoadEdgeCases:
@@ -440,38 +450,6 @@ class TestCheckpointDelete:
         assert not self.mgr._dirty
 
 
-class TestCheckpointPywin32Check:
-    """_check_win32_security 测试."""
-
-    def test_check_win32_security_cached(self):
-        """结果被缓存."""
-        result1 = CheckpointManager._check_win32_security()
-        result2 = CheckpointManager._check_win32_security()
-        assert result1 == result2
-
-    def test_check_win32_security_import_error(self):
-        """pywin32 不可用时返回 False."""
-        old_value = CheckpointManager._has_win32_security
-        CheckpointManager._has_win32_security = None
-        try:
-            with patch("builtins.__import__", side_effect=ImportError("no pywin32")):
-                result = CheckpointManager._check_win32_security()
-        finally:
-            CheckpointManager._has_win32_security = old_value
-        assert not result
-
-    def test_check_win32_security_import_success(self):
-        """pywin32 可用时返回 True."""
-        old_value = CheckpointManager._has_win32_security
-        CheckpointManager._has_win32_security = None
-        try:
-            result = CheckpointManager._check_win32_security()
-            # 如果 pywin32 已安装则为 True，否则为 False
-            assert isinstance(result, bool)
-        finally:
-            CheckpointManager._has_win32_security = old_value
-
-
 class TestCheckpointExists:
     """exists() 测试."""
 
@@ -501,17 +479,6 @@ class TestCheckpointFlushDirCreation:
             mgr.delete()
             if pathlib.Path(subdir).exists():
                 shutil.rmtree(subdir, ignore_errors=True)
-
-
-class TestCheckpointCleanupErrors:
-    """_cleanup_temp_file 异常处理测试."""
-
-    @patch("pathlib.Path.unlink", side_effect=OSError("cannot delete"))
-    @patch("pathlib.Path.exists", return_value=True)
-    def test_cleanup_os_error_silenced(self, mock_exists, mock_unlink):
-        """删除失败时不抛出异常."""
-        mgr = CheckpointManager(filepath="/tmp/test.json")
-        mgr._cleanup_temp_file("/tmp/test.json.tmp")
 
 
 class TestCheckpointLoadTempRecoveryErrors:

@@ -30,6 +30,7 @@ from .device import GPUDevice, _assert_opencl_available
 from .kernel import OPENCL_KERNEL_SOURCE
 from .kernel_protocol import GPUKernelProtocol
 from .performance_optimizer import PerformanceMetrics
+from .secure_buffer import secure_clear_gpu_buffer
 from .seed_utils import _seed_bytes_to_u32_be_array
 
 if PYOPENCL_AVAILABLE:
@@ -40,6 +41,17 @@ else:
 _assert_opencl_available()
 
 logger = get_configured_logger("GPUKernel")
+
+__all__ = [
+    "COMPILE_STRATEGIES",
+    "ENV_LOCAL_MEM_THRESHOLD",
+    "ENV_WORK_GROUP_SIZE",
+    "GPU_KERNEL_COMPILE_MAX_RETRIES",
+    "GPU_KERNEL_COMPILE_RETRY_DELAY_BASE",
+    "GPUKernel",
+    "compile_kernel_with_retry",
+    "get_gpu_optimizer",
+]
 
 # ============================================================================
 # OPT-3: 可调参数 - 允许高级用户根据硬件和负载特征调整内核执行参数
@@ -1066,10 +1078,16 @@ class GPUKernel(GPUKernelProtocol):
 
     def _release_buffers_on_error(self) -> None:
         """错误时释放缓冲区."""
+        # 敏感缓冲区: 释放前尝试安全清除
+        sensitive_bufs = {"_seed_buf", "_match_buf", "_targets_buf"}
         for buf_attr in ("_seed_buf", "_match_buf", "_targets_buf", "_precomp_buf"):
             buf = getattr(self, buf_attr, None)
             if buf is None:
                 continue
+            # P1安全修复: 错误路径也尝试清除敏感数据
+            if buf_attr in sensitive_bufs and hasattr(buf, "size"):
+                with suppress(Exception):
+                    secure_clear_gpu_buffer(self.device.queue, buf, buf.size)
             released = False
             with suppress(Exception):
                 if hasattr(self, "_buffer_tracker") and self._buffer_tracker:
@@ -1204,18 +1222,22 @@ class GPUKernel(GPUKernelProtocol):
 
     def _release_gpu_buffers(self, released_buffers: set[str]) -> None:
         """显式释放所有 OpenCL Buffer。."""
+        # 敏感缓冲区列表: (名称, 缓冲区, 是否清除)
         buffers_to_release = [
-            ("_seed_buf", self._seed_buf),
-            ("_match_buf", self._match_buf),
-            ("_targets_buf", self._targets_buf),
-            ("_precomp_buf", self._precomp_buf),
+            ("_seed_buf", self._seed_buf, True),
+            ("_match_buf", self._match_buf, True),
+            ("_targets_buf", self._targets_buf, True),
+            ("_precomp_buf", self._precomp_buf, False),
         ]
-        for buf_name, buf in buffers_to_release:
+        for buf_name, buf, needs_clear in buffers_to_release:
             if buf_name in released_buffers:
                 logger.debug("缓冲区 %s 已释放，跳过", buf_name)
                 continue
             if buf is not None:
                 try:
+                    # P1安全修复: 释放前用零覆盖敏感数据
+                    if needs_clear and hasattr(buf, "size"):
+                        secure_clear_gpu_buffer(self.device.queue, buf, buf.size)
                     buf.release()
                     logger.debug("已释放 %s", buf_name)
                     if hasattr(self, "_buffer_tracker"):

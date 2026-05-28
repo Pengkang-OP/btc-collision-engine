@@ -2,6 +2,15 @@
 
 from __future__ import annotations
 
+__all__ = [
+    "DEFAULT_CPU_CACHE_INTERVAL_SEC",
+    "DEFAULT_DATA_LOG_SAVE_FREQUENCY",
+    "DEFAULT_ERROR_LOG_INTERVAL_SEC",
+    "DEFAULT_PROGRESS_INTERVAL_COUNT",
+    "CollisionStats",
+    "StatsSnapshot",
+]
+
 import hashlib
 import threading
 import time
@@ -45,7 +54,7 @@ DEFAULT_CPU_CACHE_INTERVAL_SEC = 1.0  # GPU使用率缓存更新间隔（秒）
 class _ErrorCounter:
     """线程安全的错误计数器，支持 getter/setter 属性访问."""
 
-    def __init__(self, lock: threading.Lock) -> None:
+    def __init__(self, lock: threading.RLock) -> None:
         """Initialize error counter with shared lock."""
         self._value: int = 0
         self._lock = lock
@@ -71,7 +80,7 @@ class CollisionStats:
 
     def __init__(self) -> None:
         """Initialize collision statistics tracker."""
-        self._lock: threading.Lock = threading.Lock()
+        self._lock: threading.RLock = threading.RLock()
         self._start_time: float = time.time()
         self._total_keys: int = 0
         self._total_batches: int = 0
