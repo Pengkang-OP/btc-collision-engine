@@ -11,7 +11,7 @@ logger = get_configured_logger(__name__)
 class WizardMessageQueue:
     """Message queue for wizard component communication."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the wizard message queue."""
         self._queue: queue.Queue[Any] = queue.Queue()
 

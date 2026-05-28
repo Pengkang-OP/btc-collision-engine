@@ -48,7 +48,7 @@ class WizardEngine:
         self,
         config: WizardConfig | None = None,
         message_queue: WizardMessageQueue | None = None,
-    ):
+    ) -> None:
         """初始化向导引擎.
 
         Args:
@@ -107,7 +107,7 @@ class WizardEngine:
 
         return self.result
 
-    def _show_intro(self):
+    def _show_intro(self) -> None:
         """显示引导介绍."""
         print()
         print("─" * 60)
@@ -119,28 +119,28 @@ class WizardEngine:
         print()
         time.sleep(0.5)
 
-    def _select_target(self):
+    def _select_target(self) -> None:
         """选择目标地址."""
         selector = TargetSelector()
         targets = selector.select([])  # 存根：传入空列表，返回空列表
         self.result.targets = targets
         self.message_queue.send({"event": "target_selected", "targets": targets})
 
-    def _select_mode(self):
+    def _select_mode(self) -> None:
         """选择碰撞模式."""
         selector = ModeSelector()
         mode = selector.select([])  # 存根：传入空列表，返回空字符串
         self.result.mode = mode
         self.message_queue.send({"event": "mode_selected", "mode": mode})
 
-    def _select_options(self):
+    def _select_options(self) -> None:
         """选择功能选项."""
         selector = OptionSelector()
         # 存根：传入空列表和空 key，返回 None，使用默认值
         _ = selector.select([], "")
         self.message_queue.send({"event": "options_selected"})
 
-    def _select_gpu(self):
+    def _select_gpu(self) -> None:
         """选择GPU设备."""
         selector = GPUSelector()
         gpu_indices = selector.select([])
@@ -150,7 +150,7 @@ class WizardEngine:
             {"event": "gpu_selected", "gpu_indices": gpu_indices, "multi_gpu": len(gpu_indices) > 1},
         )
 
-    def _build_config(self):
+    def _build_config(self) -> None:
         """构建配置."""
         builder = ConfigBuilder()
         try:
@@ -161,7 +161,7 @@ class WizardEngine:
         self.result.command = command
         self.message_queue.send({"event": "config_built", "command": command})
 
-    def _complete(self):
+    def _complete(self) -> None:
         """向导完成."""
         self.result.success = True
         self.message_queue.send({"event": "wizard_complete", "result": self.result.to_dict()})
@@ -178,21 +178,21 @@ class WizardEngine:
 
         self._execute()
 
-    def _cancelled(self):
+    def _cancelled(self) -> None:
         """向导取消."""
         self.result.success = False
         self.result.error_message = "用户取消"
         self.message_queue.send({"event": "wizard_cancelled"})
         print("\n\n[INFO] 向导已取消")
 
-    def _error(self, error_message: str):
+    def _error(self, error_message: str) -> None:
         """向导出错."""
         self.result.success = False
         self.result.error_message = error_message
         self.message_queue.send({"event": "wizard_error", "error": error_message})
         print(f"\n\n[ERROR] 向导出错: {error_message}")
 
-    def _show_summary(self):
+    def _show_summary(self) -> None:
         """显示配置摘要."""
         print()
         print("╭" + "─" * 58 + "╮")
@@ -218,7 +218,7 @@ class WizardEngine:
 
         print("╰" + "─" * 58 + "╯")
 
-    def _execute(self):
+    def _execute(self) -> None:
         """执行生成的命令."""
         if not self.result.command:
             print("[ERROR] 没有可执行的命令")
@@ -238,7 +238,7 @@ class WizardEngine:
             logger.error("Command execution failed: %s", e)
             print(f"[ERROR] 执行失败: {e}")
 
-    def stop(self):
+    def stop(self) -> None:
         """停止向导."""
         self._running = False
 
