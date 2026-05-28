@@ -77,7 +77,7 @@ def with_sync_fallback(
         def wrapper(self: _SyncFallbackHost, *args: Any, **kwargs: Any) -> Any:
             try:
                 return func(self, *args, **kwargs)
-            except SyncFallback:
+            except SyncFallback:  # type: ignore[misc]
                 raise  # 已经完成同步回退的结果，直接穿透
             except error_types as e:
                 logger.warning(f"{message}: {type(e).__name__}: {e}")

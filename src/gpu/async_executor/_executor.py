@@ -159,7 +159,7 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
         self._completed_results: list[tuple[bytes, list[dict]]] = []
         self._completed_results_lock = threading.Lock()
         self._collector_running = False
-        self._collector_thread: threading.Thread | None = None
+        self._collector_thread: threading.Thread | None = None  # type: ignore[assignment]
         self._collector_cycles = 0
 
         # 异步模式恢复
@@ -411,7 +411,7 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
             logger.debug(
                 f"异步预处理回退到同步模式: {len(sf.matches)} matches, {sf.execution_time_ms:.1f}ms",
             )
-            return sf.matches, sf.execution_time_ms
+            return sf.matches, sf.execution_time_ms  # type: ignore[return-value]
         except (RuntimeError, MemoryError) as e:
             logger.warning(f"异步执行OpenCL错误,回退到同步模式: {type(e).__name__}: {e}")
             self.sync_fallbacks += 1

@@ -194,8 +194,8 @@ class GPUFacade:
             # 创建GPU设备
             from .device import GPUDevice
 
-            self._gpu_device = GPUDevice()  # __init__() takes no args
-            self._gpu_device.initialize(device_index=device_index)
+            self._gpu_device = GPUDevice()  # __init__() takes no args  # type: ignore[assignment]
+            self._gpu_device.initialize(device_index=device_index)  # type: ignore[attr-defined]
 
             # 创建碰撞引擎 (使用已保存的 targets)
             from ..collision.gpu import create_gpu_collision_engine
@@ -207,7 +207,7 @@ class GPUFacade:
                 if isinstance(gpu_section, dict):
                     gpu_cfg = gpu_section
 
-            self._collision_engine = create_gpu_collision_engine(
+            self._collision_engine = create_gpu_collision_engine(  # type: ignore[assignment]
                 targets=set(self._targets) if self._targets else set(),
                 device_index=device_index,
                 batch_size=batch_size,
@@ -252,13 +252,13 @@ class GPUFacade:
 
         try:
             # 设置目标
-            self._collision_engine.targets = set(targets)
+            self._collision_engine.targets = set(targets)  # type: ignore[attr-defined]
 
             # v5.2.2: 修复 — 统一 batch_size 传递，None 时使用初始化时的值
             if batch_size is None:
-                batch_size = self._collision_engine.batch_size
+                batch_size = self._collision_engine.batch_size  # type: ignore[attr-defined]
             # 启动碰撞
-            self._collision_engine.start(mode=mode, batch_size=batch_size)
+            self._collision_engine.start(mode=mode, batch_size=batch_size)  # type: ignore[attr-defined]
             logger.debug("GPU碰撞已启动: 模式=%s, 目标=%d", mode, len(targets))
             return True
 
@@ -382,7 +382,7 @@ class GPUFacade:
         """上下文管理器入口."""
         return self
 
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> bool:
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> bool:  # type: ignore[exit-return]
         """上下文管理器出口."""
         self.cleanup()
         return False

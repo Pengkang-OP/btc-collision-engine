@@ -27,8 +27,8 @@ if _is_windows:
         try:
             import msvcrt
 
-            if msvcrt.kbhit():
-                ch = msvcrt.getch()
+            if msvcrt.kbhit():  # type: ignore[attr-defined]
+                ch = msvcrt.getch()  # type: ignore[attr-defined]
                 try:
                     return ch.decode("utf-8", errors="replace")
                 except (UnicodeDecodeError, AttributeError):

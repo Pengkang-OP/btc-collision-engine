@@ -26,7 +26,7 @@ from .driver_manager import DriverManager
 from .profiles.loader import GPUProfileLoader
 from .scorer import get_gpu_scorer
 
-cl: Any
+cl: Any  # type: ignore[no-redef]
 if PYOPENCL_AVAILABLE:
     import pyopencl as _cl
 
@@ -721,7 +721,7 @@ class GPUDevice:
         self._detect_and_validate_driver()
 
         # 创建OpenCL上下文和命令队列
-        self.context = cl.Context([self.device])
+        self.context = cl.Context([self.device])  # type: ignore[assignment, list-item]
 
         # 异步优化: 创建命令队列
         if self.enable_async_execution:
@@ -759,10 +759,10 @@ class GPUDevice:
                 logger.info(
                     "启用GPU异步执行: Intel Arc 单 Out-of-Order 队列（DG2 numQueues=1, profiling=OFF）",
                 )
-                self.queue = cl.CommandQueue(
-                    self.context,
+                self.queue = cl.CommandQueue(  # type: ignore[assignment]
+                    self.context,  # type: ignore[arg-type]
                     self.device,
-                    properties=cast("cl.command_queue_properties", ooo_prop),
+                    properties=cast("cl.command_queue_properties", ooo_prop),  # type: ignore[valid-type]
                 )
                 # Intel Arc: compute/transfer 共用同一 OOO 队列
                 self.compute_queue = self.queue
@@ -770,23 +770,23 @@ class GPUDevice:
                 logger.info("  - 单 OOO 队列: 已创建（内核+传输共用，事件依赖保证顺序）")
             else:
                 logger.info("启用GPU异步执行: 创建双队列(计算+传输)")
-                self.compute_queue = cl.CommandQueue(
-                    self.context,
+                self.compute_queue = cl.CommandQueue(  # type: ignore[assignment]
+                    self.context,  # type: ignore[arg-type]
                     self.device,
-                    properties=cast("cl.command_queue_properties", ooo_prop),
+                    properties=cast("cl.command_queue_properties", ooo_prop),  # type: ignore[valid-type]
                 )
-                self.transfer_queue = cl.CommandQueue(
-                    self.context,
+                self.transfer_queue = cl.CommandQueue(  # type: ignore[assignment]
+                    self.context,  # type: ignore[arg-type]
                     self.device,
-                    properties=cast("cl.command_queue_properties", ooo_prop),
+                    properties=cast("cl.command_queue_properties", ooo_prop),  # type: ignore[valid-type]
                 )
                 self.queue = self.compute_queue
                 logger.info("  - 计算队列: 已创建(支持性能分析)")
                 logger.info("  - 传输队列: 已创建(支持异步传输)")
         else:
             # 传统模式: 单一队列
-            self.queue = cl.CommandQueue(
-                self.context,
+            self.queue = cl.CommandQueue(  # type: ignore[assignment]
+                self.context,  # type: ignore[arg-type]
                 self.device,
             )
             logger.info("使用传统单队列模式(同步执行)")
@@ -855,7 +855,7 @@ class GPUDevice:
     def _detect_and_validate_driver(self) -> None:
         """检测驱动版本并验证健康状态."""
         # 1. 检测驱动版本
-        self.driver_version = DriverManager.detect_driver_version(cast("str", self.vendor))
+        self.driver_version = DriverManager.detect_driver_version(cast("str", self.vendor))  # type: ignore[assignment]
 
         if not self.driver_version:
             logger.warning("无法检测GPU驱动版本")

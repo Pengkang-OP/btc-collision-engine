@@ -295,9 +295,9 @@ class AutoTestModule:
             from src.core.crypto_backend import CryptoBackend
 
             # 直接实例化，BackendProto 已移除
-            backend = CryptoBackend()
-            available = backend.get_available_backends()
-            current = backend.get_current_backend()
+            backend = CryptoBackend()  # type: ignore[abstract]
+            available = backend.get_available_backends()  # type: ignore[attr-defined]
+            current = backend.get_current_backend()  # type: ignore[attr-defined]
 
             if current:
                 return {

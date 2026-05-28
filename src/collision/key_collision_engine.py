@@ -476,7 +476,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 return None
 
             # 生成地址
-            address, compressed_pk, uncompressed_pk = self.generator.generate_address(private_key)
+            address, compressed_pk, uncompressed_pk = self.generator.generate_address(private_key)  # type: ignore[arg-type]
 
             # 检查匹配（v4.2.1 O1: Hash160 二进制比较）
             # 先检查压缩格式
@@ -858,7 +858,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         except (ValueError, TypeError):
             return matched_address
 
-    def _process_key_match(
+    def _process_key_match(  # type: ignore[no-untyped-def]
         self,
         private_key,
         matched_address: str,
@@ -1193,7 +1193,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                         recent_keys_set,
                         should_continue,
                     ) = self._worker_process_key(
-                        private_key,
+                        private_key,  # type: ignore[arg-type]
                         worker_id,
                         local_matches,
                         recent_keys_list,
@@ -1475,7 +1475,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             logger.error("Worker %s: 生成地址失败: %s", worker_id, e, exc_info=True)
             return None
 
-    def _worker_check_and_handle_match(
+    def _worker_check_and_handle_match(  # type: ignore[no-untyped-def]
         self,
         private_key,
         matched_address: str,
@@ -1691,7 +1691,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
         self.stats.update(display_count, total_range=total_range)
         if self.on_progress:
-            self.stats._progress_percent = display_count / total_range * 100
+            self.stats._progress_percent = display_count / total_range * 100  # type: ignore[attr-defined]
             invoke_with_timeout(
                 self.on_progress,
                 args=(self.stats,),
@@ -2139,12 +2139,12 @@ class KeyCollisionEngine(BaseCollisionEngine):
             target_fn = self.random_search
         elif mode == "range":
 
-            def target_fn():
+            def target_fn() -> None:
                 return self.range_scan(kwargs.get("start", 1), kwargs.get("end", 2**32))
 
         else:  # brute_force
 
-            def target_fn():
+            def target_fn() -> None:
                 return self.brute_force(kwargs.get("start", 1), self._max_keys)
 
         _name = target_fn.__name__ if hasattr(target_fn, "__name__") else "lambda"
@@ -2152,7 +2152,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         self._thread = threading.Thread(target=target_fn, daemon=True)
         self._thread.start()
 
-    def start(
+    def start(  # type: ignore[no-untyped-def]
         self,
         mode: str = "random",
         resume: bool = False,

@@ -164,7 +164,7 @@ class MultiProcessCollisionEngine:
                 task = self._task_queue.get(timeout=1)
 
                 # Generate Bitcoin address from private key bytes
-                address = address_generator.generate_from_private_key(task)
+                address = address_generator.generate_from_private_key(task)  # type: ignore[attr-defined]
 
                 result: dict[str, Any] = {
                     "private_key_hex": task.hex(),

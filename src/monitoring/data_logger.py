@@ -167,7 +167,7 @@ class DataLogger:
         os.close(fd)
         try:
             with pathlib.Path(temp_file).open("w", encoding="utf-8") as f:
-                fast_dump(data, f, ensure_ascii=False, indent=2)
+                fast_dump(data, f, ensure_ascii=False, indent=2)  # type: ignore[arg-type]
                 f.flush()
                 os.fsync(f.fileno())  # 确保数据写入磁盘
 
@@ -195,7 +195,7 @@ class DataLogger:
             # 初始化当前数据文件
             if not pathlib.Path(self.current_data_file).exists():
                 with pathlib.Path(self.current_data_file).open("w", encoding="utf-8") as f:
-                    fast_dump({}, f)
+                    fast_dump({}, f)  # type: ignore[arg-type]
                 if os.name != "nt":
                     pathlib.Path(self.current_data_file).chmod(0o600)
 
@@ -206,12 +206,12 @@ class DataLogger:
                     "data": [],
                 }
                 with pathlib.Path(self.history_data_file).open("w", encoding="utf-8") as f:
-                    fast_dump(init_data, f)
+                    fast_dump(init_data, f)  # type: ignore[arg-type]
 
             # 初始化错误日志文件
             if not pathlib.Path(self.error_log_file).exists():
                 with pathlib.Path(self.error_log_file).open("w", encoding="utf-8") as f:
-                    fast_dump([], f)
+                    fast_dump([], f)  # type: ignore[arg-type]
                 if os.name != "nt":
                     pathlib.Path(self.error_log_file).chmod(0o600)
 
@@ -326,7 +326,7 @@ class DataLogger:
             self._current_data["performance"] = perf_data
 
             # 添加到历史缓冲区
-            self._history_buffer.append(perf_data)
+            self._history_buffer.append(perf_data)  # type: ignore[arg-type]
 
         # 在锁外写入CSV日志 — v4.3.1: 批量化写入减少 I/O 频率
         try:
@@ -679,7 +679,7 @@ class DataLogger:
             os.close(temp_fd)
 
             with pathlib.Path(temp_file).open("w", encoding="utf-8") as f:
-                fast_dump(save_data, f, ensure_ascii=False, indent=2)
+                fast_dump(save_data, f, ensure_ascii=False, indent=2)  # type: ignore[arg-type]
                 f.flush()
                 os.fsync(f.fileno())
 
@@ -990,7 +990,7 @@ class DataLogger:
             }
             temp_file = self.history_data_file + ".compact.tmp"
             with pathlib.Path(temp_file).open("w", encoding="utf-8") as f:
-                fast_dump(versioned, f, ensure_ascii=False, indent=2)
+                fast_dump(versioned, f, ensure_ascii=False, indent=2)  # type: ignore[arg-type]
                 f.flush()
                 os.fsync(f.fileno())
 
@@ -1251,7 +1251,7 @@ class DataLogger:
             report_path = os.path.join(self.storage_dir, report_filename)
 
             with pathlib.Path(report_path).open("w", encoding="utf-8") as f:
-                fast_dump(report, f, ensure_ascii=False, indent=2)
+                fast_dump(report, f, ensure_ascii=False, indent=2)  # type: ignore[arg-type]
 
             self.logger.info("%s报告已生成: %s", report_type, report_path)
             self._auto_cleanup_if_needed()
@@ -1411,7 +1411,7 @@ class DataLogger:
             )
             return default_enabled, default_max_age_days
 
-    def _auto_cleanup_if_needed(self):
+    def _auto_cleanup_if_needed(self) -> None:
         """自动清理过期报告文件（每24小时最多执行一次）.
 
         从 config.json 的 monitoring.auto_cleanup 读取：
@@ -1487,7 +1487,7 @@ class DataLogger:
                         "data": cleaned_history,
                     }
                     with pathlib.Path(self.history_data_file).open("w", encoding="utf-8") as f:
-                        fast_dump(versioned, f, ensure_ascii=False, indent=2)
+                        fast_dump(versioned, f, ensure_ascii=False, indent=2)  # type: ignore[arg-type]
                     self.logger.info(f"清理了 {len(history) - len(cleaned_history)} 条过期历史数据")
 
             # 清理错误日志
@@ -1499,7 +1499,7 @@ class DataLogger:
 
                 if len(cleaned_errors) != len(errors):
                     with pathlib.Path(self.error_log_file).open("w", encoding="utf-8") as f:
-                        fast_dump(cleaned_errors, f, ensure_ascii=False, indent=2)
+                        fast_dump(cleaned_errors, f, ensure_ascii=False, indent=2)  # type: ignore[arg-type]
                     self.logger.info(f"清理了 {len(errors) - len(cleaned_errors)} 条过期错误日志")
 
         except Exception as e:

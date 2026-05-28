@@ -169,7 +169,7 @@ class PerformanceBenchmark:
             from src.collision.multiprocess_engine import MultiProcessCollisionEngine
 
             # 创建引擎
-            engine = MultiProcessCollisionEngine(
+            engine = MultiProcessCollisionEngine(  # type: ignore[call-arg]
                 num_workers=num_workers,
                 batch_size=10000,
                 target_addresses=["test_address"],  # 假地址
@@ -202,7 +202,7 @@ class PerformanceBenchmark:
 
             # 提交10个任务
             for _ in range(10):
-                engine.submit_task()
+                engine.submit_task()  # type: ignore[call-arg]
                 time.sleep(0.1)
 
             # 获取统计
@@ -216,7 +216,7 @@ class PerformanceBenchmark:
 
             # 清理
             engine.stop()
-            engine.cleanup()
+            engine.cleanup()  # type: ignore[attr-defined]
 
     def benchmark_bloom_filter(self, sizes: list[int] | None = None) -> None:
         """测试Bloom Filter性能.

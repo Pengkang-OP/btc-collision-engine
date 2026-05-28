@@ -137,13 +137,13 @@ def _setup_and_start_engine(
             if hasattr(engine, "set_targets"):
                 engine.set_targets(list(targets))
             else:
-                engine._targets = list(targets)
+                engine._targets = list(targets)  # type: ignore[assignment]
             engine_type = "MultiGPU"
         else:
             from ..gpu.facade import GPUFacade
 
             # v5.2.2: 补全所有 CLI 参数传递
-            engine = GPUFacade(
+            engine = GPUFacade(  # type: ignore[assignment]
                 targets=list(targets),
                 config=config,
                 checkpoint_enabled=getattr(args, "checkpoint", False),
@@ -161,7 +161,7 @@ def _setup_and_start_engine(
         from ..collision.key_collision_engine import KeyCollisionEngine
 
         # v5.2.2: 修复 — 补全所有 CLI 参数传递
-        engine = KeyCollisionEngine(
+        engine = KeyCollisionEngine(  # type: ignore[assignment]
             targets=targets,
             checkpoint_enabled=getattr(args, "checkpoint", False),
             dedup_enabled=getattr(args, "dedup", False),
@@ -210,7 +210,7 @@ def _setup_and_start_engine(
         total_keys = getattr(args, "total_keys", None) or 2**31
         engine.start(targets=set(targets), mode=mode, total_keys=total_keys)
     else:
-        engine.start()
+        engine.start()  # type: ignore[call-arg]
     logger.info("%s 引擎已启动", engine_type)
 
     return engine, engine_type, alert_system, stop_event

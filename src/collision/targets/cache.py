@@ -62,10 +62,10 @@ class AddressCache:
 
         """
         # 内存LRU缓存 - 用于持久化常用地址
-        self.lru_cache: Any = _LRUCache(maxsize=lru_size) if _LRUCache is not dict else {}
+        self.lru_cache: Any = _LRUCache(maxsize=lru_size) if _LRUCache is not dict else {}  # type: ignore[comparison-overlap]
 
         # TTL缓存 - 用于临时数据，自动过期
-        self.ttl_cache: Any = _TTLCache(maxsize=5000, ttl=ttl_seconds) if _TTLCache is not dict else {}
+        self.ttl_cache: Any = _TTLCache(maxsize=5000, ttl=ttl_seconds) if _TTLCache is not dict else {}  # type: ignore[comparison-overlap]
 
         # 缓存统计
         self.enable_stats = enable_stats

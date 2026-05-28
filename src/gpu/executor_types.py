@@ -123,7 +123,7 @@ class _SyncFallbackError(Exception):
         super().__init__(
             f"Async fallback complete: {len(matches)} matches, {execution_time_ms:.1f}ms",
         )
-        self.matches = [dict(m) for m in matches]
+        self.matches = [dict(m) for m in matches]  # type: ignore[var-annotated, arg-type]
         self.execution_time_ms = execution_time_ms
 
 

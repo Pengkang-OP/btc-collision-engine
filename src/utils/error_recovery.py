@@ -254,7 +254,7 @@ def retry_on_error(
                 )
             raise last_exception
 
-        return wrapper
+        return wrapper  # type: ignore[return-value]
 
     return decorator
 
@@ -712,7 +712,7 @@ class ErrorRecoveryManager:
                         "error_recovery: last_exception is None after retry loop",
                     )
                 manager.record_retry(
-                    resolved_category,
+                    resolved_category,  # type: ignore[arg-type]
                     last_exception,
                     max_retries,
                     False,
@@ -738,7 +738,7 @@ class ErrorRecoveryManager:
 
                 raise last_exception
 
-            return wrapper
+            return wrapper  # type: ignore[return-value]
 
         return decorator
 

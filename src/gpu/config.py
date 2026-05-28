@@ -57,7 +57,7 @@ class GPUConfig:
             return
         try:
             with pathlib.Path(self.config_file).open(encoding="utf-8") as f:
-                user_config = fast_load(f)
+                user_config = fast_load(f)  # type: ignore[arg-type]
 
             # 只加载gpu相关配置
             if "gpu" in user_config:
@@ -220,14 +220,14 @@ class GPUConfig:
             existing_config = {}
             if pathlib.Path(self.config_file).exists():
                 with pathlib.Path(self.config_file).open(encoding="utf-8") as f:
-                    existing_config = fast_load(f)
+                    existing_config = fast_load(f)  # type: ignore[arg-type]
 
             # 更新GPU配置
             existing_config["gpu"] = self.config
 
             # 保存
             with pathlib.Path(self.config_file).open("w", encoding="utf-8") as f:
-                fast_dump(existing_config, f, indent=2, ensure_ascii=False)
+                fast_dump(existing_config, f, indent=2, ensure_ascii=False)  # type: ignore[arg-type]
 
             logger.info("GPU配置已保存")
             return True

@@ -46,7 +46,7 @@ class EnhancedMonitoringSystem:
         if self.data_logging_enabled:
             self.data_logger = DataLogger()
         else:
-            self.data_logger = None
+            self.data_logger = None  # type: ignore[assignment]
 
         # Monitoring data components (created when enable_monitoring_data=True)
         self.storage = None
@@ -97,11 +97,11 @@ class EnhancedMonitoringSystem:
 
     def _init_monitoring_components(self) -> None:
         """Initialize monitoring data components."""
-        self.storage = {}
-        self.detector = {}
+        self.storage = {}  # type: ignore[assignment]
+        self.detector = {}  # type: ignore[assignment]
         # v5.2.2: alert_system 初始化为桩实现，实际告警由 AlertSystem 在 engine_runner 层处理
-        self.alert_system = {}
-        self.report_generator = {}
+        self.alert_system = {}  # type: ignore[assignment]
+        self.report_generator = {}  # type: ignore[assignment]
 
     @property
     def config(self) -> Any:

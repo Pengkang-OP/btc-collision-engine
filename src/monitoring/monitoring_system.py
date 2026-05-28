@@ -106,7 +106,7 @@ class DataCollector:
         self._cpu_sample_thread.start()
         logger.debug("后台CPU采样线程已启动")
 
-    def _background_cpu_sampling(self):
+    def _background_cpu_sampling(self) -> None:
         """后台持续采样CPU使用率，避免阻塞主线程."""
         process = psutil.Process(os.getpid())
         while self._cpu_sample_running:
@@ -240,12 +240,12 @@ class DataStorage:
             # 初始化历史数据文件
             if not pathlib.Path(self.history_data_file).exists():
                 with pathlib.Path(self.history_data_file).open("w", encoding="utf-8") as f:
-                    fast_dump([], f)
+                    fast_dump([], f)  # type: ignore[arg-type]
 
             # 初始化错误日志文件
             if not pathlib.Path(self.error_log_file).exists():
                 with pathlib.Path(self.error_log_file).open("w", encoding="utf-8") as f:
-                    fast_dump([], f)
+                    fast_dump([], f)  # type: ignore[arg-type]
 
     def save_current_data(self, data: MonitoringData) -> None:
         """保存当前数据（P0委托DataLogger或原子写入 + 安全权限）."""
@@ -271,7 +271,7 @@ class DataStorage:
         try:
             # 使用原子写入：先写临时文件，再重命名
             with pathlib.Path(temp_file).open("w", encoding="utf-8") as f:
-                fast_dump(data.to_dict(), f, ensure_ascii=False, indent=2)
+                fast_dump(data.to_dict(), f, ensure_ascii=False, indent=2)  # type: ignore[arg-type]
                 f.flush()
                 os.fsync(f.fileno())  # 确保数据写入磁盘
 
@@ -500,7 +500,7 @@ class DataStorage:
 
             # 添加新错误
             error["timestamp"] = time.time()
-            _ = errors.append(error)
+            _ = errors.append(error)  # type: ignore[func-returns-value]
 
             # 应用轮转：保留最多500条记录
             max_errors = 500
@@ -510,7 +510,7 @@ class DataStorage:
             # 原子写入
             temp_file = error_log_path + ".tmp"
             with pathlib.Path(temp_file).open("w", encoding="utf-8") as f:
-                fast_dump(errors, f, ensure_ascii=False, indent=2)
+                fast_dump(errors, f, ensure_ascii=False, indent=2)  # type: ignore[arg-type]
                 f.flush()
                 os.fsync(f.fileno())
 
@@ -1071,7 +1071,7 @@ class ReportGenerator:
         try:
             report_file = os.path.join(self.storage.storage_dir, f"report_{today.isoformat()}.json")
             with pathlib.Path(report_file).open("w", encoding="utf-8") as f:
-                fast_dump(report, f, ensure_ascii=False, indent=2)
+                fast_dump(report, f, ensure_ascii=False, indent=2)  # type: ignore[arg-type]
             logger.info("每日报告已生成: %s", report_file)
         except Exception as e:
             logger.error("保存报告失败: %s", e)
@@ -1277,19 +1277,19 @@ class MonitoringSystem:
             self._data_logger.stop()
         logger.info("监控系统已停止")
 
-    def _buffer_data_point(self, data: MonitoringData):
+    def _buffer_data_point(self, data: MonitoringData) -> None:
         """缓冲数据点，达到阈值时批量写入."""
         with self._buffer_lock:
             self._data_buffer.append(data.to_dict())
             if len(self._data_buffer) >= self._buffer_flush_size:
                 self._flush_buffer_unlocked()
 
-    def _flush_buffer(self):
+    def _flush_buffer(self) -> None:
         """批量写入缓冲数据（线程安全版本，供外部调用）."""
         with self._buffer_lock:
             self._flush_buffer_unlocked()
 
-    def _flush_buffer_unlocked(self):
+    def _flush_buffer_unlocked(self) -> None:
         """批量写入缓冲数据（内部方法，调用方必须已持有 _buffer_lock）.
 
         自 v4.3.1: 当 DataLogger 可用时，委托给它处理持久化，消除双写竞争。
@@ -1333,7 +1333,7 @@ class MonitoringSystem:
             except OSError as e:
                 logger.debug("清理临时文件失败: %s", e)
 
-    def _monitoring_loop(self):
+    def _monitoring_loop(self) -> None:
         """监控循环.
 
         P2修复: 优化I/O操作,降低历史数据保存频率

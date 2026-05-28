@@ -168,7 +168,7 @@ class CollisionCore(ICollisionCore):
         try:
             from ..collision_stats import CollisionStats
 
-            self.stats = CollisionStats()
+            self.stats = CollisionStats()  # type: ignore[assignment]
         except Exception as e:
             logger.error("初始化碰撞统计失败: %s", e)
             raise
@@ -188,7 +188,7 @@ class CollisionCore(ICollisionCore):
         try:
             from ..checkpoint_manager import CheckpointManager
 
-            self.checkpoint = CheckpointManager(auto_save_interval=self.checkpoint_interval)
+            self.checkpoint = CheckpointManager(auto_save_interval=self.checkpoint_interval)  # type: ignore[assignment]
         except Exception as e:
             logger.error("初始化断点管理器失败: %s", e)
             raise
@@ -209,7 +209,7 @@ class CollisionCore(ICollisionCore):
             dedup_max_size = self.config.get("dedup_max_size", 1_000_000)
             from ..deduplication_filter import DeduplicationFilter
 
-            self.dedup_filter = DeduplicationFilter(max_size=dedup_max_size)
+            self.dedup_filter = DeduplicationFilter(max_size=dedup_max_size)  # type: ignore[assignment]
         except Exception as e:
             logger.error("初始化去重过滤器失败: %s", e)
             raise

@@ -130,10 +130,10 @@ class BaseSearchMode:
         if "out of memory" in error_str or "mem_object_allocation_failure" in error_str:
             logger.warning("GPU内存不足，尝试缩减batch_size")
             with engine._batch_size_lock:
-                if engine._batch_size is None:
+                if engine._batch_size is None:  # type: ignore[attr-defined]
                     raise RuntimeError("engine._batch_size not set")
-                engine._batch_size = max(engine._batch_size // 2, 1024)
-                logger.info(f"batch_size已缩减至 {engine._batch_size}")
+                engine._batch_size = max(engine._batch_size // 2, 1024)  # type: ignore[attr-defined]
+                logger.info(f"batch_size已缩减至 {engine._batch_size}")  # type: ignore[attr-defined]
             return None  # continue
 
         if "timeout" in error_str or "command_execution" in error_str:

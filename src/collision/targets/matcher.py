@@ -102,7 +102,7 @@ class AddressMatcher:
     def _init_trie(self) -> None:
         """初始化前缀树策略."""
         try:
-            self._trie = {}
+            self._trie = {}  # type: ignore[var-annotated]
             for addr in self.targets:
                 self._insert_trie(addr)
             logger.debug(f"前缀树初始化成功: {len(self.targets)} 个目标")

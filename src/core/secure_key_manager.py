@@ -34,14 +34,14 @@ try:
 
     HAS_CRYPTOGRAPHY: bool = True
 except ImportError:
-    HAS_CRYPTOGRAPHY: bool = False
+    HAS_CRYPTOGRAPHY: bool = False  # type: ignore[no-redef]
 
 try:
     import nacl.secret  # noqa: F401  # pyright: ignore[reportUnusedImport]
 
     HAS_PYNACL: bool = True
 except ImportError:
-    HAS_PYNACL: bool = False
+    HAS_PYNACL: bool = False  # type: ignore[no-redef]
 
 
 class SecureMemoryError(Exception):
@@ -122,7 +122,7 @@ class SecureKeyManager:
         elif HAS_PYNACL:
             self._backend = "pynacl"
         else:
-            self._backend: str = "ctypes"
+            self._backend: str = "ctypes"  # type: ignore[no-redef]
             warnings.warn(
                 "cryptography or PyNaCl not installed, "
                 "using ctypes fallback. "
@@ -229,7 +229,7 @@ class SecureKeyManager:
         """
         try:
             # Load kernel32.dll
-            kernel32 = ctypes.WinDLL("kernel32.dll")
+            kernel32 = ctypes.WinDLL("kernel32.dll")  # type: ignore[attr-defined]
 
             # Configure VirtualLock function signature
             # BOOL VirtualLock(LPVOID lpAddress, SIZE_T dwSize);

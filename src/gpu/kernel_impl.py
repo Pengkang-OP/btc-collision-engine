@@ -102,7 +102,7 @@ COMPILE_STRATEGIES = (
 )
 
 
-def compile_kernel_with_retry(
+def compile_kernel_with_retry(  # type: ignore[no-untyped-def]
     ctx,  # OpenCL context
     source: str,
     strategies: list | None = None,
@@ -133,14 +133,14 @@ def compile_kernel_with_retry(
     if log is None:
         log = logger
     if strategies is None:
-        strategies = COMPILE_STRATEGIES
+        strategies = COMPILE_STRATEGIES  # type: ignore[assignment]
 
     last_error = None
     compile_time_total = 0.0
 
     for attempt in range(max_retries):
-        strategy_idx = min(attempt, len(strategies) - 1)
-        strategy_desc, build_options = strategies[strategy_idx]
+        strategy_idx = min(attempt, len(strategies) - 1)  # type: ignore[arg-type]
+        strategy_desc, build_options = strategies[strategy_idx]  # type: ignore[index]
 
         compile_start = time.time()
         try:
@@ -280,7 +280,7 @@ class GPUKernel(GPUKernelProtocol):
         self._batch_kernel_local: Any | None = None  # local memory版本内核引用
         # 查询设备local memory大小（OpenCL标准属性），回退默认值16KB
         try:
-            self._local_mem_size = device.device.local_mem_size
+            self._local_mem_size = device.device.local_mem_size  # type: ignore[attr-defined]
         except (AttributeError, RuntimeError, TypeError):
             self._local_mem_size = 16384  # 默认16KB
 
@@ -391,7 +391,7 @@ class GPUKernel(GPUKernelProtocol):
                     f"COMP-2: OpenCL {device_ocl:.1f} >= 2.0, 使用完整{len(strategies)}级编译策略",
                 )
             else:
-                strategies = [
+                strategies = [  # type: ignore[assignment]
                     ("标准编译", []),
                     ("降级CL1.2编译", ["-cl-std=CL1.2", "-cl-mad-enable", "-cl-no-signed-zeros"]),
                 ]
@@ -404,7 +404,7 @@ class GPUKernel(GPUKernelProtocol):
             self._program, strategy_idx = compile_kernel_with_retry(
                 ctx=self.device.context,
                 source=OPENCL_KERNEL_SOURCE,
-                strategies=strategies,
+                strategies=strategies,  # type: ignore[arg-type]
                 max_retries=len(strategies),
                 retry_delay_base=GPU_KERNEL_COMPILE_RETRY_DELAY_BASE,
                 log=logger,
@@ -449,7 +449,7 @@ class GPUKernel(GPUKernelProtocol):
             # compile_kernel_with_retry 已经记录了详细日志，直接向上传播
             raise
 
-    def _verify(self):
+    def _verify(self) -> None:
         """ALG-3修复: 验证 GPU 计算正确性（增强版）.
 
         验证内容:
@@ -629,7 +629,7 @@ class GPUKernel(GPUKernelProtocol):
             cached_binary = pathlib.Path(cache_file).read_bytes()
 
             # 从二进制加载程序
-            self._program = cl.Program(
+            self._program = cl.Program(  # type: ignore[call-arg]
                 self.device.context,
                 [self.device.device],
                 [cached_binary],
@@ -692,7 +692,7 @@ class GPUKernel(GPUKernelProtocol):
             if pathlib.Path(tmp_file).exists():
                 pathlib.Path(tmp_file).unlink()
 
-    def _cleanup_old_cache_versions(self):
+    def _cleanup_old_cache_versions(self) -> None:
         """P2-06增强: 清理同一设备但不同版本的旧缓存文件.
 
         扫描缓存目录，删除与当前设备匹配但版本号不同的旧缓存。
@@ -745,7 +745,7 @@ class GPUKernel(GPUKernelProtocol):
         # 调用共享函数
         return calculate_optimal_batch_size(device=self.device, target_buffer_size=target_buffer_size)
 
-    def _allocate_buffers(self):
+    def _allocate_buffers(self) -> None:
         """预分配 GPU 内存缓冲区（PRNG模式）.
 
         P2-2修复: 添加缓冲区追踪
@@ -1002,7 +1002,7 @@ class GPUKernel(GPUKernelProtocol):
                 f"threshold={local_threshold:.0%}, "
                 f"global_ws={global_work_size}, local_ws={local_work_size}",
             )
-            self._batch_kernel_local(
+            self._batch_kernel_local(  # type: ignore[misc]
                 self.device.queue,
                 (global_work_size,),
                 (local_work_size,),
@@ -1021,7 +1021,7 @@ class GPUKernel(GPUKernelProtocol):
                 f"global_ws={global_work_size}, local_ws={local_work_size}, "
                 f"num_keys={num_keys}, num_targets={self._num_targets_cached}",
             )
-            self._batch_kernel(
+            self._batch_kernel(  # type: ignore[misc]
                 self.device.queue,
                 (global_work_size,),
                 (local_work_size,),
@@ -1038,7 +1038,7 @@ class GPUKernel(GPUKernelProtocol):
         # 使用 match_flags[:num_keys] 视图而非整个数组，减少主机内存拷贝
         return cl.enqueue_copy(
             self.device.queue,
-            self._match_flags[:num_keys],
+            self._match_flags[:num_keys],  # type: ignore[index]
             self._match_buf,
         )
 
@@ -1049,7 +1049,7 @@ class GPUKernel(GPUKernelProtocol):
         timeout_event = threading.Event()
         execution_completed = [False]
 
-        def timeout_monitor():
+        def timeout_monitor() -> None:
             try:
                 if not timeout_event.wait(timeout_seconds):
                     logger.error("GPU执行超时(%s秒)", timeout_seconds)
@@ -1186,7 +1186,7 @@ class GPUKernel(GPUKernelProtocol):
             raise RuntimeError("GPU执行超时，内核可能已hang")
 
         # 7. 收集结果
-        matches = self._collect_matches(self._match_flags[:num_keys], num_keys)
+        matches = self._collect_matches(self._match_flags[:num_keys], num_keys)  # type: ignore[index]
 
         # 8. 记录性能
         self._record_performance(num_keys, batch_start_time, len(matches))
@@ -1321,4 +1321,4 @@ class GPUKernel(GPUKernelProtocol):
 
         except Exception as e:
             logger.warning("异步日志启用失败: %s，使用同步日志", e)
-            self._async_log_handler = None
+            self._async_log_handler = None  # type: ignore[assignment]

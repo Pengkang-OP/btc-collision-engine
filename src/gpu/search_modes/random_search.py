@@ -364,9 +364,9 @@ class RandomSearchMode(BaseSearchMode):
 
                 # 执行GPU batch计算
                 matches, execution_time_ms = engine._execute_gpu_batch(
-                    seed,
+                    seed,  # type: ignore[arg-type]
                     current_batch_size,
-                    batch_num,
+                    batch_num,  # type: ignore[arg-type]
                 )
 
                 # 重置连续错误计数
@@ -384,7 +384,7 @@ class RandomSearchMode(BaseSearchMode):
                 engine._update_performance_metrics(current_batch_size, execution_time_ms)
 
                 # 检查并报告进度
-                engine._check_and_report_progress(batch_count, current_batch_size)
+                engine._check_and_report_progress(batch_count, current_batch_size)  # type: ignore[call-arg]
 
                 # ------ CPU过载保护 ------
                 # 1. 批次间最小间隔保护

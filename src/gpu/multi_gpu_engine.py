@@ -1110,7 +1110,7 @@ class MultiGPUCollisionEngine:
 
         logger.info("工作负载重新分配完成")
 
-    def _send_failure_alert(self, gpu_id: int, failure_type, error: Exception):
+    def _send_failure_alert(self, gpu_id: int, failure_type, error: Exception) -> None:
         """发送失败告警.
 
         Args:
@@ -1267,7 +1267,7 @@ class MultiGPUCollisionEngine:
                 # 短暂休眠后继续
                 time.sleep(1)
 
-    def _collect_performance_data(self):
+    def _collect_performance_data(self) -> None:
         """收集性能数据."""
         try:
             # 获取当前统计

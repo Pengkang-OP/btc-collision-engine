@@ -532,7 +532,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         on_match: MatchCallback | None,
     ) -> None:
         """初始化 CollisionCore（统计/断点/去重）."""
-        self._core = CollisionCore(
+        self._core = CollisionCore(  # type: ignore[abstract]
             targets=targets,
             config={
                 "checkpoint_enabled": checkpoint_enabled,
@@ -563,7 +563,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         self.data_logging_interval = data_logging_interval
         self.data_logger = None
         self.enhanced_monitoring = None
-        self._engine_monitor = GPUEngineMonitor(engine=self)
+        self._engine_monitor = GPUEngineMonitor(engine=self)  # type: ignore[arg-type]
         self._async_log_handler: Any | None = None
         if use_async_logging:
             self._setup_async_logging(
@@ -583,16 +583,16 @@ class GPUCollisionEngine(BaseCollisionEngine):
                     ),
                 )
                 self.data_logger = self.enhanced_monitoring.data_logger
-                self._enhanced_monitoring_adapter = EnhancedMonitoringAdapter(
+                self._enhanced_monitoring_adapter = EnhancedMonitoringAdapter(  # type: ignore[assignment]
                     self.enhanced_monitoring,
                 )
-                self._enhanced_monitoring_adapter.subscribe_to(self.event_bus)
+                self._enhanced_monitoring_adapter.subscribe_to(self.event_bus)  # type: ignore[attr-defined]
                 self.enhanced_monitoring.start()
                 logger.debug("GPU引擎：增强监控系统已启用并启动（事件适配器模式）")
             else:
                 self.data_logger = DataLogger()
-                self._data_logger_adapter = DataLoggerAdapter(self.data_logger)
-                self._data_logger_adapter.subscribe_to(self.event_bus)
+                self._data_logger_adapter = DataLoggerAdapter(self.data_logger)  # type: ignore[assignment]
+                self._data_logger_adapter.subscribe_to(self.event_bus)  # type: ignore[attr-defined]
                 logger.debug("GPU引擎：数据日志系统已启用（事件适配器模式）")
         except Exception as e:
             logger.warning("GPU引擎：监控系统初始化失败: %s", e, exc_info=True)
@@ -665,7 +665,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         elif search_coordinator_class is not None:
             self._search_coordinator = search_coordinator_class(self, logger)
         else:
-            self._search_coordinator = SearchModeCoordinator(self, logger)
+            self._search_coordinator = SearchModeCoordinator(self, logger)  # type: ignore[arg-type]
 
         self._random_search_mode = self._search_coordinator.get_mode_instance("random")
         self._range_scan_mode = self._search_coordinator.get_mode_instance("range_scan")
@@ -777,7 +777,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         """检查 GPU 是否可用."""
         return GPUDeviceDetector.is_gpu_available()
 
-    def start(
+    def start(  # type: ignore[no-untyped-def]
         self,
         mode: str = "random",
         resume: bool = False,
@@ -1222,7 +1222,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
             current_batch_size,
         )
 
-    def _save_checkpoint(self, count: int):
+    def _save_checkpoint(self, count: int) -> None:
         """保存断点 [委托给 _scheduler]."""
         self._scheduler.save_checkpoint(count)
 
@@ -1242,19 +1242,19 @@ class GPUCollisionEngine(BaseCollisionEngine):
             raise RuntimeError("_range_end not set")
         self._range_scan(self._range_start, self._range_end)
 
-    def _start_brute_force(self):
+    def _start_brute_force(self) -> None:
         """启动暴力穷举."""
         if self._range_start is None:
             raise RuntimeError("_range_start not set for brute_force")
         return self._brute_force(self._range_start)
 
-    def _random_search_sync(self):
+    def _random_search_sync(self) -> None:
         """同步执行版本."""
         if self._random_search_mode is None:
             raise RuntimeError("_random_search_mode not set for sync")
         return self._random_search_mode._execute_sync()
 
-    def _random_search_async(self):
+    def _random_search_async(self) -> None:
         """异步执行版本(双缓冲优化)."""
         if self._random_search_mode is None:
             raise RuntimeError("_random_search_mode not set for async")
@@ -1301,13 +1301,13 @@ class GPUCollisionEngine(BaseCollisionEngine):
             ),
         )
 
-    def _range_scan(self, start: int, end: int):
+    def _range_scan(self, start: int, end: int) -> None:
         """范围扫描模式."""
         if self._range_scan_mode is None:
             raise RuntimeError("GPUCollisionEngine._range_scan_mode is None when calling _range_scan()")
         return self._range_scan_mode.execute(start, end)
 
-    def _brute_force(self, start: int):
+    def _brute_force(self, start: int) -> None:
         """暴力穷举模式."""
         if self._brute_force_mode is None:
             raise RuntimeError("_brute_force_mode not set")
@@ -1333,7 +1333,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
 
     # ========== 异步日志 ==========
 
-    def _setup_async_logging(
+    def _setup_async_logging(  # type: ignore[no-untyped-def]
         self,
         log_file: str,
         max_bytes: int,

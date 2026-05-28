@@ -126,7 +126,7 @@ class MultiFormatMultiGPUEngine:
         all_targets = self._format_manager.get_all_targets()
 
         # 创建包装回调函数
-        def wrapped_callback(device_idx, match):
+        def wrapped_callback(device_idx, match) -> None:
             """包装回调：添加多格式检查."""
             matched_address = match.get("address", "")
             matched_format = match.get("format", "p2pkh")

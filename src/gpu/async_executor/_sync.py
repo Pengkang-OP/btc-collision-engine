@@ -71,14 +71,14 @@ class _SyncFallbackMixin:
 
         # 写入种子到 seed_buffer
         seed_array = _seed_bytes_to_u32_be_array(seed[:32])
-        cl.enqueue_copy(self.device.queue, self.seed_buffer, seed_array)
+        cl.enqueue_copy(self.device.queue, self.seed_buffer, seed_array)  # type: ignore[attr-defined]
 
         # 使用 buffer_a 作为临时缓冲（仅匹配结果）
-        temp_buf = self.buffer_a if self.buffer_a.get("matches") is not None else self.buffer_b
+        temp_buf = self.buffer_a if self.buffer_a.get("matches") is not None else self.buffer_b  # type: ignore[attr-defined]
 
         try:
             cl.enqueue_fill_buffer(
-                self.device.queue,
+                self.device.queue,  # type: ignore[attr-defined]
                 temp_buf["matches"],
                 np.int32(0),
                 0,
@@ -107,7 +107,7 @@ class _SyncFallbackMixin:
 
         try:
             batch_kernel(
-                self.device.queue,
+                self.device.queue,  # type: ignore[attr-defined]
                 (sync_global_ws,),
                 (sync_local_ws,),
                 self.seed_buffer,
@@ -116,7 +116,7 @@ class _SyncFallbackMixin:
                 np.uint32(num_targets),
                 temp_buf["matches"],
                 np.uint32(getattr(self, "check_uncompressed", 0)),
-                self.precomp_buffer,
+                self.precomp_buffer,  # type: ignore[attr-defined]
             )
         except Exception as e:
             logger.warning(f"同步模式内核执行失败: {type(e).__name__}: {e}")
@@ -125,8 +125,8 @@ class _SyncFallbackMixin:
         match_flags = np.zeros(num_keys, dtype=np.int32)
 
         try:
-            cl.enqueue_copy(self.device.queue, match_flags, temp_buf["matches"])
-            self.device.queue.finish()
+            cl.enqueue_copy(self.device.queue, match_flags, temp_buf["matches"])  # type: ignore[attr-defined]
+            self.device.queue.finish()  # type: ignore[attr-defined]
         except Exception as e:
             logger.warning(f"同步模式结果回读失败: {type(e).__name__}: {e}")
             return [], (time.time() - start_time) * 1000
@@ -153,7 +153,7 @@ class _SyncFallbackMixin:
     ) -> NoReturn:
         """回退到同步执行并抛出结果异常（供 _allocate_buffer 使用）。."""
         matches, exec_time = self._run_batch_sync(seed, num_keys, program, targets_buf, num_targets)
-        self.sync_fallbacks += 1
+        self.sync_fallbacks += 1  # type: ignore[attr-defined]
         self._track_sync_fallback()
         raise _SyncFallbackError(matches, exec_time)
 
@@ -167,7 +167,7 @@ class _SyncFallbackMixin:
     ) -> NoReturn:
         """回退到同步执行并抛出结果异常（供 _transfer_seed / _clear_matches_buffer 使用）。."""
         matches, exec_time = self._run_batch_sync(seed, num_keys, program, targets_buf, num_targets)
-        self.sync_fallbacks += 1
+        self.sync_fallbacks += 1  # type: ignore[attr-defined]
         self._track_sync_fallback()
         raise _SyncFallbackError(matches, exec_time)
 
@@ -177,14 +177,14 @@ class _SyncFallbackMixin:
 
     def _track_sync_fallback(self) -> None:
         """追踪连续同步回退，管理异步模式禁用。."""
-        self._consecutive_sync_fallbacks += 1
+        self._consecutive_sync_fallbacks += 1  # type: ignore[has-type]
         if (
-            self._consecutive_sync_fallbacks >= MAX_CONSECUTIVE_SYNC_FALLBACKS
-            and not self._async_mode_disabled
+            self._consecutive_sync_fallbacks >= MAX_CONSECUTIVE_SYNC_FALLBACKS  # type: ignore[has-type]
+            and not self._async_mode_disabled  # type: ignore[has-type]
         ):
             self._async_mode_disabled = True
             logger.warning(
-                f"连续同步回退({self._consecutive_sync_fallbacks}次)超过阈值"
+                f"连续同步回退({self._consecutive_sync_fallbacks}次)超过阈值"  # type: ignore[has-type]
                 f"({MAX_CONSECUTIVE_SYNC_FALLBACKS})，已禁用异步模式",
             )
 
@@ -200,7 +200,7 @@ class _SyncFallbackMixin:
         if (
             self._consecutive_sync_fallbacks > 0
             and self._consecutive_sync_fallbacks % ASYNC_RECOVER_AFTER_SYNC_COUNT == 0
-            and current_time - self._last_async_attempt_time > 30
+            and current_time - self._last_async_attempt_time > 30  # type: ignore[has-type]
         ):
             self._async_mode_disabled = False
             self._last_async_attempt_time = current_time
@@ -208,7 +208,7 @@ class _SyncFallbackMixin:
 
     def _on_async_success(self) -> None:
         """异步执行成功后重置回退计数。."""
-        self.async_executions += 1
+        self.async_executions += 1  # type: ignore[attr-defined]
         self._consecutive_sync_fallbacks = 0
         if self._async_mode_disabled:
             self._async_mode_disabled = False
@@ -245,7 +245,7 @@ class _SyncFallbackMixin:
         except Exception as sync_e:
             logger.debug(f"同步回退也失败: {type(sync_e).__name__}: {sync_e}")
             sync_matches, sync_time = [], 0.0
-        self.sync_fallbacks += 1
+        self.sync_fallbacks += 1  # type: ignore[attr-defined]
         self._track_sync_fallback()
         raise _SyncFallbackError(sync_matches, sync_time) from error
 
@@ -273,7 +273,7 @@ class _SyncFallbackMixin:
 
         try:
             current_buf["matches"] = cl.Buffer(
-                self.device.context,
+                self.device.context,  # type: ignore[attr-defined]
                 cl.mem_flags.READ_WRITE,
                 size=num_keys * 4,
             )
@@ -312,12 +312,12 @@ class _SyncFallbackMixin:
             if sbuf is not None:
                 with suppress(Exception):
                     sbuf.release()
-        self._seed_buffer_pool = []
+        self._seed_buffer_pool = []  # type: ignore[var-annotated]
         self.seed_buffer = None
 
         self._release_buffer_safe(
             "precomp_buffer",
-            lambda: self.precomp_buffer,
+            lambda: self.precomp_buffer,  # type: ignore[attr-defined]
             lambda v: setattr(self, "precomp_buffer", v),
         )
         self._release_buffer_pool()
@@ -328,8 +328,8 @@ class _SyncFallbackMixin:
     def _finish_all_queues(self) -> None:
         """安全地完成所有命令队列。."""
         queues = [
-            ("计算", getattr(self.device, "compute_queue", None)),
-            ("传输", getattr(self.device, "transfer_queue", None)),
+            ("计算", getattr(self.device, "compute_queue", None)),  # type: ignore[attr-defined]
+            ("传输", getattr(self.device, "transfer_queue", None)),  # type: ignore[attr-defined]
         ]
         for name, queue in queues:
             if queue:
@@ -346,9 +346,9 @@ class _SyncFallbackMixin:
 
     def _wait_pending_event(self) -> None:
         """安全地等待待处理事件完成。."""
-        if self.pending_event:  # type: ignore[attr-defined]  # from other mixin
+        if self.pending_event:  # type: ignore[attr-defined, has-type]  # from other mixin
             try:
-                self.pending_event.wait()  # type: ignore[attr-defined]  # from other mixin
+                self.pending_event.wait()  # type: ignore[attr-defined, has-type]  # from other mixin
                 self._log_cleanup(logging.DEBUG, "已等待待处理事件完成")
             except RuntimeError as e:
                 self._log_cleanup(logging.WARNING, "等待待处理事件OpenCL错误: %s", e)
@@ -380,12 +380,12 @@ class _SyncFallbackMixin:
             safe_release_buffer(buf_dict, "matches")
             buf_dict["matches"] = None
             buf_dict["matches"] = cl.Buffer(
-                self.device.context,
+                self.device.context,  # type: ignore[attr-defined]
                 cl.mem_flags.READ_WRITE,
                 size=num_keys * 4,
             )
             cl.enqueue_fill_buffer(
-                self.device.queue,
+                self.device.queue,  # type: ignore[attr-defined]
                 buf_dict["matches"],
                 np.int32(0),
                 0,
@@ -407,9 +407,9 @@ class _SyncFallbackMixin:
                     lambda v, d=buf_dict: d.__setitem__("matches", v),
                 )
                 buf_dict["match_flags"] = None
-            self._buffer_pool = []
+            self._buffer_pool = []  # type: ignore[var-annotated]
         else:
-            for buf_name, buf_dict in [("buffer_a", self.buffer_a), ("buffer_b", self.buffer_b)]:
+            for buf_name, buf_dict in [("buffer_a", self.buffer_a), ("buffer_b", self.buffer_b)]:  # type: ignore[attr-defined]
                 self._release_buffer_safe(
                     f"{buf_name}['matches']",
                     lambda d=buf_dict: d.get("matches"),

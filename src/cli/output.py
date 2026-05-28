@@ -143,21 +143,21 @@ class CLIOutput:
         """打印 INFO 级别消息。."""
         if not self.quiet:
             if Text is not None:
-                self.console.print(Text.assemble(("[INFO] ", "blue"), message))
+                self.console.print(Text.assemble(("[INFO] ", "blue"), message))  # type: ignore[attr-defined]
             else:
                 self.console.print(f"[INFO] {message}")
 
     def success(self, message: str) -> None:
         """打印 SUCCESS 级别消息。."""
         if Text is not None:
-            self.console.print(Text.assemble(("[OK] ", "green"), message))
+            self.console.print(Text.assemble(("[OK] ", "green"), message))  # type: ignore[attr-defined]
         else:
             self.console.print(f"[OK] {message}")
 
     def hint(self, message: str) -> None:
         """打印 HINT 级别消息。."""
         if Text is not None:
-            self.console.print(Text.assemble(("[HINT] ", "cyan"), message))
+            self.console.print(Text.assemble(("[HINT] ", "cyan"), message))  # type: ignore[attr-defined]
         else:
             self.console.print(f"[HINT] {message}")
 
@@ -165,7 +165,7 @@ class CLIOutput:
         """打印 WARNING 级别消息。."""
         if Text is not None:
             self.err_console.print(
-                Text.assemble(("[WARN] ", "yellow"), message),
+                Text.assemble(("[WARN] ", "yellow"), message),  # type: ignore[attr-defined]
             )
         else:
             self.err_console.print(f"[WARN] {message}")
@@ -178,7 +178,7 @@ class CLIOutput:
     def error(self, message: str, details: str | None = None) -> None:
         """打印 ERROR 级别消息。."""
         if Text is not None:
-            self.err_console.print(Text.assemble(("[ERROR] ", "red"), message))
+            self.err_console.print(Text.assemble(("[ERROR] ", "red"), message))  # type: ignore[attr-defined]
         else:
             self.err_console.print(f"[ERROR] {message}")
         if details:

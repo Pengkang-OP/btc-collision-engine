@@ -29,9 +29,9 @@ if _has_rich:
         assert _RichConsole is not None
         _console = _RichConsole()
     except Exception:
-        _console = None
+        _console = None  # type: ignore[assignment]
 else:
-    _console = None
+    _console = None  # type: ignore[assignment]
 
 
 def _venv_python() -> str:

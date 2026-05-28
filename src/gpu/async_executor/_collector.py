@@ -70,11 +70,11 @@ class _ResultCollectorMixin:
             return
         self._collector_running = True
         self._collector_thread = threading.Thread(
-            target=self._result_collector_worker,
+            target=self._result_collector_worker,  # type: ignore[attr-defined]
             name="GPUResultCollector",
             daemon=True,
         )
-        self._collector_thread.start()
+        self._collector_thread.start()  # type: ignore[union-attr]
         logger.debug("GPU后台结果收集器已启动（主动收集）")
 
     def stop_result_collector(self: _CollectorHost) -> None:
@@ -118,7 +118,7 @@ class _ResultCollectorMixin:
 
                 # 轮询事件状态（兼容 pyopencl 2026.1.2）
                 try:
-                    status = oldest.read_event.get_info(cl.event_info.COMMAND_EXECUTION_STATUS)
+                    status = oldest.read_event.get_info(cl.event_info.COMMAND_EXECUTION_STATUS)  # type: ignore[attr-defined]
                     if status != 0:  # CL_COMPLETE = 0
                         time.sleep(0.001)
                         continue

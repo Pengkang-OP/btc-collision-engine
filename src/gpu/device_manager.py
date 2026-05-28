@@ -162,9 +162,9 @@ class GPUDeviceManager:
                     )
 
                 # 2. 准备目标地址
-                target_hash160s, target_list = self._prepare_targets(targets)
-                self.target_hash160s = target_hash160s
-                self.target_list = target_list
+                target_hash160s, target_list = self._prepare_targets(targets)  # type: ignore[func-returns-value, misc]
+                self.target_hash160s = target_hash160s  # type: ignore[has-type]
+                self.target_list = target_list  # type: ignore[has-type]
 
                 # 3. 计算最优batch_size
                 if batch_size is None:
@@ -191,10 +191,10 @@ class GPUDeviceManager:
                 self._init_async_executor(batch_size)
 
                 # 8. 设置目标地址
-                if target_hash160s:
+                if target_hash160s:  # type: ignore[has-type]
                     self._gpu_kernel.set_targets(
-                        target_hash160s,
-                        len(target_list),
+                        target_hash160s,  # type: ignore[has-type]
+                        len(target_list),  # type: ignore[has-type]
                         check_uncompressed=check_uncompressed,
                     )
 
@@ -604,7 +604,7 @@ class GPUDeviceManager:
         )
 
         target_hash160s = b"".join(hash160_list)
-        return target_hash160s, target_list
+        return target_hash160s, target_list  # type: ignore[return-value]
 
     def _calculate_optimal_batch_size(self) -> int:
         """计算最优batch_size."""

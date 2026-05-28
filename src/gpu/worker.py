@@ -28,9 +28,9 @@ _delta_stats_available = is_feature_enabled("delta_stats")
 _monitor_available = is_feature_enabled("performance_monitor")
 
 if _delta_stats_available:
-    from ..collision.delta_stats import ThreadLocalDeltaStats
+    from ..collision.delta_stats import ThreadLocalDeltaStats  # type: ignore[attr-defined]
 if _monitor_available:
-    from ..cli.stats_performance_monitor import profile_stats_update
+    from ..cli.stats_performance_monitor import profile_stats_update  # type: ignore[attr-defined]
 
 logger = get_configured_logger("GPUWorker")
 
@@ -226,10 +226,10 @@ class SingleGPUWorker(threading.Thread):
             batch_size: int | None = self.config.batch_size  # None=自动计算
 
             # 创建引擎实例（targets 是必填参数，其余通过工厂函数传递）
-            self._gpu_engine = create_gpu_collision_engine(
+            self._gpu_engine = create_gpu_collision_engine(  # type: ignore[assignment]
                 targets=self.targets,
                 device_index=self.device_idx,
-                batch_size=cast("int | None", batch_size),
+                batch_size=cast("int | None", batch_size),  # type: ignore[redundant-cast]
                 use_gpu_memory_pool=True,
             )
 

@@ -52,7 +52,7 @@ def _terminate_thread(thread_handle: int, exit_code: int = 0) -> bool:
     if os.name != "nt":
         return False
     try:
-        kernel32 = ctypes.windll.kernel32
+        kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined]
         result = kernel32.TerminateThread(
             ctypes.c_void_p(thread_handle),
             ctypes.c_ulong(exit_code),
