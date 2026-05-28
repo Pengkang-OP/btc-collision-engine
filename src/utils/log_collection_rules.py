@@ -219,7 +219,7 @@ class LogCollectionRuleManager:
         self.rules = [rule for rule in self.rules if rule.name != rule_name]
         self.save_rules()
 
-    def update_rule(self, rule_name: str, **kwargs) -> None:
+    def update_rule(self, rule_name: str, **kwargs: Any) -> None:
         """更新规则."""
         for rule in self.rules:
             if rule.name == rule_name:

@@ -265,7 +265,7 @@ class IMonitoringPipeline(Protocol):
 class ICollisionCore(Protocol):
     """碰撞核心接口."""
 
-    def start(self, mode: str = "random", **kwargs) -> None:
+    def start(self, mode: str = "random", **kwargs: Any) -> None:
         """启动碰撞.
 
         Args:

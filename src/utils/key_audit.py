@@ -8,7 +8,7 @@ logger = get_configured_logger("KeyAudit")
 class KeyAuditor:
     """Audits private key generation and usage for compliance."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the key auditor."""
         self._audit_log: list[dict] = []
 

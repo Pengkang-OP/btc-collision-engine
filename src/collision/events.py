@@ -97,7 +97,7 @@ class EngineMatchEvent(EngineEvent):
     extra: dict[str, Any] = field(default_factory=dict)
     source: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Mask WIF for security – prevent accidental secrets in logs."""
         if self.wif and len(self.wif) > 10:
             self._raw_wif = self.wif

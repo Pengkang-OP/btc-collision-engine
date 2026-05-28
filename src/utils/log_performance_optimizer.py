@@ -352,7 +352,7 @@ def log_performance_decorator(logger: logging.Logger, operation: str, level: str
     """
 
     def decorator(func: Callable) -> Callable:
-        def wrapper(*args, **kwargs) -> Any:
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             start_time = time.time()
             try:
                 result = func(*args, **kwargs)

@@ -1018,7 +1018,7 @@ class GPUPerformanceMonitor:
                     except Exception as e:
                         logger.error("错误回调执行失败: %s", e)
 
-    def _on_performance_degradation(self, metrics: GPUKernelMetrics):
+    def _on_performance_degradation(self, metrics: GPUKernelMetrics) -> None:
         """性能退化处理."""
         degradation_ratio = (
             metrics.keys_per_second / self._peak_throughput if self._peak_throughput > 0 else 0

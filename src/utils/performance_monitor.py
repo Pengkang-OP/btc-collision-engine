@@ -157,7 +157,7 @@ _global_tracker = None
 _tracker_lock = threading.Lock()
 
 
-def _get_tracker_config():
+def _get_tracker_config() -> dict | None:
     """从配置获取追踪器配置."""
     try:
         from ..config.config_manager import ConfigManager

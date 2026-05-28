@@ -30,7 +30,7 @@ try:
             self._callback = callback
             self._watched_path = os.path.abspath(watched_path)
 
-        def on_modified(self, event):
+        def on_modified(self, event: FileSystemEvent) -> None:
             if event.is_directory:
                 return
             if os.path.abspath(event.src_path) == self._watched_path:
