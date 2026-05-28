@@ -22,16 +22,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     opencl-headers \
     && rm -rf /var/lib/apt/lists/*
 
-# 复制依赖文件（仅生产依赖，不包含开发/测试工具）
-# requirements-gpu.txt 通过 -r 引用 requirements-base.txt，两者都需复制
-COPY requirements-base.txt requirements-base.txt
-COPY requirements-gpu.txt requirements-gpu.txt
+# 复制项目文件（用于 pip install）
+COPY pyproject.toml README.md MANIFEST.in ./
+COPY src/ src/
 
-# 创建虚拟环境并安装依赖
+# 创建虚拟环境并安装依赖（统一使用 pyproject.toml 作为单一来源）
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel
-RUN pip install --no-cache-dir -r requirements-gpu.txt
+RUN pip install --no-cache-dir ".[gpu]"
 
 # 生产阶段
 FROM --platform=$TARGETPLATFORM python:3.12-slim AS production
@@ -62,12 +61,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tini \
     # OpenCL运行时（GPU模式需要）
     ocl-icd-libopencl1 \
-    # GPU驱动（根据实际需要选择）
-    # NVIDIA
-    # nvidia-opencl-icd \
-    # AMD
+    # GPU驱动 - 默认启用 NVIDIA（最常见场景）
+    nvidia-opencl-icd \
+    # AMD: 取消注释下一行
     # mesa-opencl-icd \
-    # Intel
+    # Intel: 取消注释下一行
     # intel-opencl-icd \
     # 数学库
     libgmp10 \

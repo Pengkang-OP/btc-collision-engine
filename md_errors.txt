@@ -1,0 +1,4 @@
+markdownlint-cli2 v0.22.1 (markdownlint v0.40.0)
+Finding: docs/api-reference.md ; Get-Content md_errors.txt -TotalCount 200
+Linting: 2 file(s)
+Summary: 17 error(s)

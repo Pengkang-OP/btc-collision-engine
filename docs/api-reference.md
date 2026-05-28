@@ -752,7 +752,7 @@ double_sha256(data: bytes) -> bytes
 
 **示例**:
 
-```
+```python
 
 from src.core.hash_utils import HashUtils
 
@@ -760,7 +760,7 @@ data = b"Hello, Bitcoin!"
 checksum = HashUtils.double_sha256(data)[:4]
 print(f"校验和: {checksum.hex()}")
 
-```python
+```
 ---
 
 ## 4. Base58编码模块 (base58.py)
@@ -784,7 +784,7 @@ print(f"校验和: {checksum.hex()}")
 
 encode(data: bytes) -> str
 
-```python
+```
 
 将字节串编码为Base58字符串。
 
@@ -1162,7 +1162,7 @@ private_key = bytes.fromhex('000000000000000000000000000000000000000000000000000
 address, _, _ = generator.generate_address(private_key)
 print(f"地址: {address}")
 
-```python
+```
 ---
 
 ## 6.2 CryptoManager类 (新增)
@@ -2174,7 +2174,7 @@ get_targets_by_format() -> Dict[AddressFormat, Set[str]]
 
 manager = FormatAwareTargetManager()
 
-# 添加一些地址...
+# 添加几个示例地址
 
 targets = manager.get_targets_by_format()
 for fmt, addrs in targets.items():
@@ -2212,7 +2212,7 @@ get_format_stats() -> Dict[str, int]
 
 manager = FormatAwareTargetManager()
 
-# 添加一些地址...
+# 添加更多示例地址
 
 stats = manager.get_format_stats()
 print("格式统计:")
@@ -2244,7 +2244,7 @@ check_match(private_key: bytes) -> tuple[bool, Optional[str], Optional[str]]
 
 manager = FormatAwareTargetManager()
 
-# 添加地址...
+# 添加目标地址
 
 private_key = bytes.fromhex('0000000000000000000000000000000000000000000000000000000000000001')
 is_match, matched_addr, matched_fmt = manager.check_match(private_key)
@@ -2277,7 +2277,7 @@ check_match_all(private_key: bytes) -> tuple[bool, list[tuple[str, str]]]
 
 manager = FormatAwareTargetManager()
 
-# 添加地址...
+# 添加批量目标地址
 
 private_key = bytes.fromhex('0000000000000000000000000000000000000000000000000000000000000001')
 is_match, all_matches = manager.check_match_all(private_key)
@@ -2879,7 +2879,7 @@ monitor.track_memory_usage(allocated)
 metrics = monitor.get_gpu_metrics()
 print(f"显存使用: {metrics['memory_used_mb']:.0f}MB ({metrics['memory_usage_percent']:.1f}%)")
 
-```python
+```
 ---
 
 ## 11. 监控系统API (monitoring_system.py)
@@ -3194,7 +3194,7 @@ report = monitor.generate_report()
 
 monitor.stop()
 
-```python
+```
 ---
 
 ## 11.8 EnhancedMonitoringSystem类
@@ -3470,7 +3470,7 @@ report = logger.generate_report("daily")
 logger.save_current_data()
 logger.save_history_data()
 
-```markdown
+```
 
 ## cleanup_old_data() 方法
 
@@ -4071,7 +4071,7 @@ address, compressed_pk, uncompressed_pk = generator.generate_address()
 print(f"比特币地址: {address}")
 print(f"压缩公钥: {compressed_pk.hex()}")
 
-```markdown
+```
 
 ## 17.2 从WIF导入私钥
 
@@ -4092,7 +4092,7 @@ address, _, _ = generator.generate_address(private_key)
 
 print(f"地址: {address}")
 
-```markdown
+```
 
 ## 17.3 验证比特币地址
 
@@ -4110,7 +4110,7 @@ try:
 except ValueError as e:
     print(f"地址无效: {e}")
 
-```markdown
+```
 
 ### 17.4 运行碰撞检测
 
@@ -4331,7 +4331,7 @@ finally:
 stats = SecureKeyManager.get_clear_stats()
 print(f"清零成功率: {stats['success_rate']:.2f}%")
 
-```python
+```
 
 **后端优先级**:
 

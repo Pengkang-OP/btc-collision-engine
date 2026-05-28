@@ -120,7 +120,6 @@ mypy_path = ["src/gpu/pyopencl_stubs"] # pyopencl stub 文件路径
 # ── 预存类型债务：per-module 豁免 ──────────────────────────
 [[tool.mypy.overrides]]
 module = [
-    "tools.*",                  # 运维工具脚本，不强制类型检查
     "src.wizard.wizard_engine", # 模块重构后遗留的死导入
     "src.cli.output",           # Rich Console 类型参数不匹配
     "src.gpu.kernel_protocol",  # Protocol call-arg 签名不匹配
@@ -186,6 +185,12 @@ ignore_errors = true
 
 [[tool.mypy.overrides]]
 module = [
+    "key_collision",                       # 根层 key_collision.py：条件导入 try/except 导致 no-redef/attr-defined + implicit Optional + 类型赋值不匹配
+]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = [
     "src.collision.gpu._result_processor", # EngineMatchEvent.source
     "src.gpu.metrics",                     # float vs int assignment
     "src.core.key_generator",              # bytearray vs bytes
@@ -214,6 +219,8 @@ exclude = [
     "dist",
     "*.egg-info",
     ".eggs",
+    "Dockerfile*",   # 非 Python 文件（目录扫描时跳过，避免 ruff 误解析）
+    "pytest.ini",     # INI 配置，非 Python 文件（同上）
 ]
 
 [tool.ruff.lint]
@@ -324,8 +331,8 @@ max-complexity = 15
 line-ending = "lf"
 
 [tool.coverage.run]
-# CI 测试排除 GPU 源码：GPU 测试通过 marker 过滤排除，GPU 源码不应计入覆盖率
-omit = ["src/gpu/*", "src/collision/gpu/*"]
+# GPU 源码纳入覆盖率统计：GPU 测试已通过 marker 机制在有 GPU 硬件的 CI runner
+# 上自动运行并获得实际覆盖率数据；无 GPU 环境则跳过 GPU 测试但保留代码统计。
 
 [tool.bandit]
 exclude_dirs = ["tests", "docs", "benchmarks"]

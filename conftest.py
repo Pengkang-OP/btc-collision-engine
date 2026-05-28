@@ -10,7 +10,12 @@ v4.5.1: 已修复所有已知的 TextIOWrapper 根因（添加 closefd=False）�
 此补丁保留为防御性保护，防止未来新引入的代码出现同类问题。
 """
 
+import logging
+
 import pytest
+
+# 独立 logger，避免循环引用 conftest 补丁
+_logger = logging.getLogger("conftest.compat")
 
 
 def pytest_configure(config):
@@ -135,9 +140,9 @@ def _apply_python314_capture_patch():
 
         capture_mod.FDCaptureBase.resume = _safe_fdcapturebase_resume
 
-    except Exception:
+    except Exception as _exc:
         # 补丁失败时静默跳过，不影响正常功能
-        pass
+        _logger.debug("capture patch failed: %s", _exc)
 
 
 def _apply_python314_logging_patch():
@@ -169,8 +174,8 @@ def _apply_python314_logging_patch():
 
         logging.StreamHandler.emit = _safe_emit
 
-    except Exception:
-        pass
+    except Exception as _exc:
+        _logger.debug("logging patch failed: %s", _exc)
 
 
 def _apply_pyopencl_editable_install_fix():

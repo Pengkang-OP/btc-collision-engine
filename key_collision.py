@@ -13,14 +13,18 @@ v5.0.0: 已移除 _LegacyTargetResolver 回退路径和 CollisionCLI 旧版 CLI�
 版本: v5.0.0
 """
 
+import atexit
+import contextlib
 import hashlib
 import json
 import logging
 import os
 import secrets
+import signal
 import threading
 import time
 import warnings  # 新增：用于弃用警告
+import weakref
 from collections.abc import Callable
 from datetime import datetime
 
@@ -178,7 +182,8 @@ class CheckpointManager:
 
     def __init__(self, filepath: str = None, auto_save_interval: int = 30):
         self.filepath = filepath or os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), self.DEFAULT_FILE,
+            os.path.dirname(os.path.abspath(__file__)),
+            self.DEFAULT_FILE,
         )
         self.auto_save_interval = auto_save_interval
         self._last_save_time = 0.0
@@ -714,9 +719,11 @@ class KeyCollisionEngine:
 
         self._thread = threading.Thread(target=target_fn, daemon=True, name="engine-worker")
         self._thread.start()
-        # 注意: daemon 线程在主进程退出时会强制终止，
-        # 可能丢失最多 30 秒（checkpoint 间隔）的未保存数据。
-        # 生产环境应使用 SIGTERM handler 触发 save_checkpoint() 后再退出。
+
+        # 注册进程退出保护：atexit + SIGTERM handler
+        # daemon 线程在主进程退出时会被强制终止，可能导致丢失 checkpoint 间隔内的数据。
+        # 以下 handler 确保在收到 SIGTERM 或正常退出时触发 checkpoint 保存。
+        self._setup_shutdown_handlers()
 
     def stop(self):
         """停止对撞."""
@@ -724,28 +731,57 @@ class KeyCollisionEngine:
         self._running = False
         if self._thread:
             self._thread.join(timeout=5)
-        # 保存最终断点
-        if self.checkpoint_mgr:
-            matches_list = (
-                [{"address": m["address"], "timestamp": m["timestamp"]} for m in self.stats.matches]
-                if hasattr(self.stats, "matches")
-                else []
-            )
-            self.checkpoint_mgr.save(
-                mode=self._current_mode,
-                targets=self.targets,
-                current_position=self._current_position,
-                total_checked=self.stats.total_checked,
-                matches=matches_list,
-                range_start=self._range_start,
-                range_end=self._range_end,
-            )
+        # 保存最终断点（复用 _save_checkpoint_internal 避免逻辑重复）
+        self._save_checkpoint_internal()
         # 停止监控系统
         if self.monitoring_enabled and self.monitoring_system:
             self.monitoring_system.stop()
 
     def is_running(self) -> bool:
         return self._running and self._thread and self._thread.is_alive()
+
+    def _setup_shutdown_handlers(self):
+        """注册 SIGTERM handler 和 atexit 回调，防止 daemon 线程数据丢失。.
+
+        daemon 线程在主进程退出时会被强制终止，可能导致最多 30s
+        （checkpoint 间隔）的未保存数据丢失。此方法注册保护措施：
+        1. atexit: Python 正常退出时保存 checkpoint
+        2. SIGTERM: 进程被 kill 时保存 checkpoint
+        """
+        engine_ref = weakref.ref(self)
+
+        def _safe_shutdown_save():
+            """在进程退出时尝试保存 checkpoint，不抛出异常。."""
+            eng = engine_ref()
+            if eng is None or not eng._running:
+                return
+            with contextlib.suppress(Exception):
+                eng._save_checkpoint_internal()
+
+        atexit.register(_safe_shutdown_save)
+
+        with contextlib.suppress(ValueError, OSError):
+            # Windows 或非主线程中 signal 不可用，静默忽略
+            signal.signal(signal.SIGTERM, lambda sig, frame: _safe_shutdown_save())
+
+    def _save_checkpoint_internal(self):
+        """内部 checkpoint 保存，供 atexit/SIGTERM handler 调用。."""
+        if not self.checkpoint_mgr:
+            return
+        matches_list = (
+            [{"address": m["address"], "timestamp": m["timestamp"]} for m in self.stats.matches]
+            if hasattr(self.stats, "matches")
+            else []
+        )
+        self.checkpoint_mgr.save(
+            mode=self._current_mode,
+            targets=self.targets,
+            current_position=self._current_position,
+            total_checked=self.stats.total_checked,
+            matches=matches_list,
+            range_start=self._range_start,
+            range_end=self._range_end,
+        )
 
     def get_stats(self) -> CollisionStats:
         return self.stats

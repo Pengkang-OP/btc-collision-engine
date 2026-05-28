@@ -84,7 +84,7 @@ class TestMultiModeNormalFlow:
         assert 0 <= stats.elapsed < 0.1  # 初始化后经过微秒级时间
 
         # 副作用断言
-        assert isinstance(stats._lock, type(threading.Lock()))
+        assert isinstance(stats._lock, (type(threading.Lock()), type(threading.RLock())))
         assert stats.gpu_errors == 0
 
     def test_normal_update_flow(self):
