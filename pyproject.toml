@@ -112,7 +112,6 @@ strict_equality = true # 防止不安全的类型比较
 exclude = [
     "tests/",
     "benchmarks/",
-    "tools/",
     "scripts/",
     "src/gpu/pyopencl_stubs/",
 ]
@@ -121,6 +120,7 @@ mypy_path = ["src/gpu/pyopencl_stubs"] # pyopencl stub 文件路径
 # ── 预存类型债务：per-module 豁免 ──────────────────────────
 [[tool.mypy.overrides]]
 module = [
+    "tools.*",                  # 运维工具脚本，不强制类型检查
     "src.wizard.wizard_engine", # 模块重构后遗留的死导入
     "src.cli.output",           # Rich Console 类型参数不匹配
     "src.gpu.kernel_protocol",  # Protocol call-arg 签名不匹配
