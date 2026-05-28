@@ -2,11 +2,11 @@
 
 **诊断时间**: 2026-04-23 02:42:00  
 **问题**: CLI显示速度为0 keys/s  
-**状态**: ✅ 已定位，部分修复
+**状态**: [OK_CHECK] 已定位，部分修复
 
 ---
 
-## 🔍 问题现象
+## [SEARCH] 问题现象
 
 ### CLI运行输出
 
@@ -31,7 +31,7 @@ Final: 1,032 keys, 102 keys/s  # ← 引擎确实在工作！
 
 ---
 
-## 🎯 问题根源
+## [TARGET] 问题根源
 
 ### 核心问题：统计数据更新机制缺陷
 
@@ -76,7 +76,7 @@ if batch_count > 0:
 **原始get_stats()**（修复前）:
 ```python
 def get_stats(self) -> CollisionStats:
-    return self.stats  # ❌ 没有包含_live_range_count
+    return self.stats  # [CROSS] 没有包含_live_range_count
 ```
 
 **问题**: 
@@ -86,7 +86,7 @@ def get_stats(self) -> CollisionStats:
 
 ---
 
-## ✅ 已应用的修复
+## [OK_CHECK] 已应用的修复
 
 ### 修复1: 改进get_stats()方法
 
@@ -127,13 +127,13 @@ def get_stats(self) -> CollisionStats:
 ```
 
 **效果**:
-- ✅ `get_stats()`现在包含实时计数
-- ✅ 速度计算更准确
-- ✅ 避免重复计算（重置_counter）
+- [OK_CHECK] `get_stats()`现在包含实时计数
+- [OK_CHECK] 速度计算更准确
+- [OK_CHECK] 避免重复计算（重置_counter）
 
 ---
 
-## ⚠️ 剩余问题
+## [WARN] 剩余问题
 
 ### 问题1: 更新频率仍然较低
 
@@ -192,7 +192,7 @@ CHECKPOINT_FILE = os.path.join(LOGS_DIR, "checkpoint.json")
 
 ---
 
-## 📊 性能测试数据
+## [CHART] 性能测试数据
 
 ### 测试1: 1个目标地址，2个工作线程
 
@@ -224,7 +224,7 @@ CHECKPOINT_FILE = os.path.join(LOGS_DIR, "checkpoint.json")
 
 ---
 
-## 🔧 诊断工具
+## [WRENCH] 诊断工具
 
 ### 诊断脚本
 
@@ -249,31 +249,31 @@ python -c "import sys, os, time; sys.path.insert(0, '.'); from src.collision.key
 
 ---
 
-## 📋 修复清单
+## [CHECKLIST] 修复清单
 
 - [x] **修复1**: 改进get_stats()方法
-  - 状态: ✅ 已完成
+  - 状态: [OK_CHECK] 已完成
   - 文件: `src/collision/key_collision_engine.py`
   - 效果: 实时统计包含_live_range_count
 
 - [ ] **优化1**: 减小batch_size（可选）
-  - 状态: ⏳ 待实施
+  - 状态: [HOURGLASS] 待实施
   - 建议: 16核CPU从4000降到2000
   - 效果: 更新频率从2.7秒降到1.3秒
 
 - [ ] **优化2**: 增加中间更新点（可选）
-  - 状态: ⏳ 待实施
+  - 状态: [HOURGLASS] 待实施
   - 建议: 每1000个私钥更新一次
   - 效果: 更平滑的进度显示
 
 - [ ] **修复2**: 断点文件位置
-  - 状态: ⏳ 待实施
+  - 状态: [HOURGLASS] 待实施
   - 建议: 改为`data_logs/checkpoint.json`
   - 效果: 避免权限错误
 
 ---
 
-## 🎯 验证步骤
+## [TARGET] 验证步骤
 
 ### 步骤1: 验证get_stats()修复
 
@@ -321,21 +321,21 @@ python key_collision_cli.py -t 1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH -m random --du
 
 ---
 
-## 📝 总结
+## [MEMO] 总结
 
 ### 问题本质
 
 **不是引擎速度为0，而是统计数据更新机制有缺陷！**
 
-- 引擎正常工作 ✅
-- 私钥正常检测 ✅
-- 但统计数据未实时反映到显示中 ❌
+- 引擎正常工作 [OK_CHECK]
+- 私钥正常检测 [OK_CHECK]
+- 但统计数据未实时反映到显示中 [CROSS]
 
 ### 修复效果
 
-- ✅ `get_stats()`现在包含实时计数
-- ✅ 进度显示会更准确
-- ⚠️ 但由于batch_size较大，仍可能有2-3秒的延迟
+- [OK_CHECK] `get_stats()`现在包含实时计数
+- [OK_CHECK] 进度显示会更准确
+- [WARN] 但由于batch_size较大，仍可能有2-3秒的延迟
 
 ### 后续优化
 
@@ -346,5 +346,5 @@ python key_collision_cli.py -t 1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH -m random --du
 ---
 
 **诊断完成时间**: 2026-04-23 02:42:30  
-**修复状态**: ✅ 核心问题已修复  
+**修复状态**: [OK_CHECK] 核心问题已修复  
 **建议**: 运行验证测试确认修复效果

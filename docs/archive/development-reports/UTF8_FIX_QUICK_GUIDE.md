@@ -1,6 +1,6 @@
 # Windows控制台UTF-8编码乱码 - 快速修复
 
-## 🚀 立即修复(30秒)
+## [QUICK] 立即修复(30秒)
 
 ### 方法1: 使用批处理(最简单)
 
@@ -24,21 +24,21 @@ python tools/gpu_diagnostic.py
 
 ---
 
-## ✅ 验证修复
+## [OK_CHECK] 验证修复
 
 ```powershell
-python -c "print('测试中文: 你好世界! 🌍')"
+python -c "print('测试中文: 你好世界! [EARTH]')"
 ```
 
 **正确输出**:
 
 ```
-测试中文: 你好世界! 🌍
+测试中文: 你好世界! [EARTH]
 ```
 
 ---
 
-## 📁 已创建的工具
+## [DIR] 已创建的工具
 
 | 文件 | 用途 | 使用方法 |
 |------|------|---------|
@@ -49,7 +49,7 @@ python -c "print('测试中文: 你好世界! 🌍')"
 
 ---
 
-## 🔧 永久修复(推荐)
+## [WRENCH] 永久修复(推荐)
 
 ```powershell
 # 1. 以管理员身份打开PowerShell
@@ -62,7 +62,7 @@ Restart-Computer
 
 ---
 
-## 📖 详细文档
+## [BOOK] 详细文档
 
 查看完整指南: [Windows控制台UTF-8编码乱码修复指南](docs/windows-console-utf8-fix.md)
 

@@ -1,6 +1,6 @@
 # 生产部署文件清单
 
-## 📁 文件结构
+## [DIR] 文件结构
 
 ```
 btc-collision-engine/
@@ -36,7 +36,7 @@ btc-collision-engine/
 
 ---
 
-## 📦 文件说明
+## [PACKAGE] 文件说明
 
 ### Docker相关文件（11个文件）
 
@@ -69,52 +69,52 @@ btc-collision-engine/
 
 ---
 
-## ✨ 核心特性
+## [FEATURE] 核心特性
 
 ### 1. systemd服务特性
 
-- ✅ 自动重启和开机自启
-- ✅ 系统级资源控制（CPU、内存、I/O）
-- ✅ 安全加固（NoNewPrivileges、ProtectSystem）
-- ✅ 日志集成（journal）
-- ✅ 健康检查（Watchdog）
-- ✅ 非root用户运行
-- ✅ 私有临时目录
+- [OK] 自动重启和开机自启
+- [OK] 系统级资源控制（CPU、内存、I/O）
+- [OK] 安全加固（NoNewPrivileges、ProtectSystem）
+- [OK] 日志集成（journal）
+- [OK] 健康检查（Watchdog）
+- [OK] 非root用户运行
+- [OK] 私有临时目录
 
 ### 2. Docker容器特性
 
-- ✅ 多阶段构建（减小镜像体积）
-- ✅ 非root用户运行
-- ✅ 健康检查
-- ✅ 数据卷持久化
-- ✅ 日志轮转
-- ✅ 资源限制
-- ✅ 多厂商GPU支持（NVIDIA/AMD/Intel）
-- ✅ 多GPU负载均衡
-- ✅ 监控栈集成（Prometheus + Grafana）
-- ✅ Profile管理（按需启动服务）
+- [OK] 多阶段构建（减小镜像体积）
+- [OK] 非root用户运行
+- [OK] 健康检查
+- [OK] 数据卷持久化
+- [OK] 日志轮转
+- [OK] 资源限制
+- [OK] 多厂商GPU支持（NVIDIA/AMD/Intel）
+- [OK] 多GPU负载均衡
+- [OK] 监控栈集成（Prometheus + Grafana）
+- [OK] Profile管理（按需启动服务）
 
 ### 3. 监控能力
 
-- ✅ 系统级监控（systemd journal）
-- ✅ 应用级监控（health_check）
-- ✅ 指标收集（Prometheus）
-- ✅ 可视化（Grafana）
-- ✅ 告警配置（Alertmanager）
-- ✅ 性能追踪（slow operations）
+- [OK] 系统级监控（systemd journal）
+- [OK] 应用级监控（health_check）
+- [OK] 指标收集（Prometheus）
+- [OK] 可视化（Grafana）
+- [OK] 告警配置（Alertmanager）
+- [OK] 性能追踪（slow operations）
 
 ### 4. 安全特性
 
-- ✅ 非特权用户运行
-- ✅ 文件系统保护
-- ✅ 网络隔离（可选）
-- ✅ 资源限制
-- ✅ 配置文件权限（600）
-- ✅ 数据目录权限（750）
+- [OK] 非特权用户运行
+- [OK] 文件系统保护
+- [OK] 网络隔离（可选）
+- [OK] 资源限制
+- [OK] 配置文件权限（600）
+- [OK] 数据目录权限（750）
 
 ---
 
-## 🚀 使用方式
+## [QUICK] 使用方式
 
 ### systemd部署（3步）
 
@@ -141,7 +141,7 @@ docker-compose logs -f
 
 ---
 
-## 📊 部署方案对比
+## [CHART] 部署方案对比
 
 | 特性 | systemd | Docker |
 |------|---------|--------|
@@ -156,27 +156,27 @@ docker-compose logs -f
 
 ---
 
-## 🎯 推荐场景
+## [TARGET] 推荐场景
 
 ### 选择systemd，如果
 
-- ✅ 使用专用Linux服务器
-- ✅ 需要最大性能（无容器开销）
-- ✅ 已有运维基础设施
-- ✅ 长期稳定运行
-- ✅ 需要精细资源控制
+- [OK] 使用专用Linux服务器
+- [OK] 需要最大性能（无容器开销）
+- [OK] 已有运维基础设施
+- [OK] 长期稳定运行
+- [OK] 需要精细资源控制
 
 ### 选择Docker，如果
 
-- ✅ 需要快速部署和迁移
-- ✅ 多环境部署（开发/测试/生产）
-- ✅ 团队共享环境
-- ✅ 需要环境一致性
-- ✅ 容器化基础设施
+- [OK] 需要快速部署和迁移
+- [OK] 多环境部署（开发/测试/生产）
+- [OK] 团队共享环境
+- [OK] 需要环境一致性
+- [OK] 容器化基础设施
 
 ---
 
-## 📝 配置示例
+## [CONFIG] 配置示例
 
 ### 单GPU配置（config.production.json）
 
@@ -210,7 +210,7 @@ docker-compose logs -f
 
 ---
 
-## 🔍 验证部署
+## [CHECK] 验证部署
 
 ### 健康检查
 
@@ -234,7 +234,7 @@ python benchmarks/benchmark_optimizations.py
 
 ---
 
-## 🛠 维护操作
+## [TOOL] 维护操作
 
 ### 日常检查
 
@@ -265,7 +265,7 @@ python -m src.utils.data_cleanup --temp-days 14 --data-days 30
 
 ---
 
-## 📚 文档索引
+## [DOCS] 文档索引
 
 ### 快速入门
 
@@ -289,7 +289,7 @@ python -m src.utils.data_cleanup --temp-days 14 --data-days 30
 
 ---
 
-## ✅ 部署检查清单
+## [OK] 部署检查清单
 
 ### 部署前
 
@@ -315,7 +315,7 @@ python -m src.utils.data_cleanup --temp-days 14 --data-days 30
 
 ---
 
-## 📞 技术支持
+## [SUPPORT] 技术支持
 
 - **GitHub Issues**: 报告问题和功能请求
 - **文档**: docs/目录
@@ -324,7 +324,7 @@ python -m src.utils.data_cleanup --temp-days 14 --data-days 30
 
 ---
 
-## 🎓 最佳实践
+## [GUIDE] 最佳实践
 
 1. **始终使用config.production.json**，不要使用config.example.json
 2. **定期备份数据**，至少每周一次
@@ -344,14 +344,14 @@ python -m src.utils.data_cleanup --temp-days 14 --data-days 30
 
 ---
 
-## 🎉 总结
+## [DONE] 总结
 
 已创建完整的生产部署方案，包括：
 
-- ✅ **systemd服务**：适合专用服务器，性能最优
-- ✅ **Docker容器**：适合灵活部署，环境一致
-- ✅ **监控栈**：Prometheus + Grafana，可视化监控
-- ✅ **自动化脚本**：一键部署，简化运维
-- ✅ **完整文档**：详细指南，快速上手
+- [OK] **systemd服务**：适合专用服务器，性能最优
+- [OK] **Docker容器**：适合灵活部署，环境一致
+- [OK] **监控栈**：Prometheus + Grafana，可视化监控
+- [OK] **自动化脚本**：一键部署，简化运维
+- [OK] **完整文档**：详细指南，快速上手
 
-**项目现已满足生产运行条件！** 🚀
+**项目现已满足生产运行条件！**

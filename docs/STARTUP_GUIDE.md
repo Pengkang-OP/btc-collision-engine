@@ -6,17 +6,17 @@
 
 本脚本实现了完整的BTC碰撞引擎启动流程，包括：
 
-- ✅ 从文件加载目标比特币地址
+- [OK] 从文件加载目标比特币地址
 
-- ✅ 地址格式验证和过滤
+- [OK] 地址格式验证和过滤
 
-- ✅ GPU加速的随机碰撞模式
+- [OK] GPU加速的随机碰撞模式
 
-- ✅ 端到端性能监控系统
+- [OK] 端到端性能监控系统
 
-- ✅ 实时异常检测和告警
+- [OK] 实时异常检测和告警
 
-- ✅ 完整的日志记录系统
+- [OK] 完整的日志记录系统
 
 ## 快速开始
 
@@ -170,21 +170,21 @@ cat data_logs\current_data.json
 
 ### 性能告警
 
-- ⚠️ 检测速率过低 (< 100 keys/s)
+- [WARN] 检测速率过低 (< 100 keys/s)
 
-- ⚠️ CPU使用率过高 (> 90%)
+- [WARN] CPU使用率过高 (> 90%)
 
-- ⚠️ 内存使用过高 (> 1024 MB)
+- [WARN] 内存使用过高 (> 1024 MB)
 
-- ⚠️ 引擎运行但速度为0
+- [WARN] 引擎运行但速度为0
 
 ### GPU告警
 
-- ⚠️ GPU执行超时 (> 30秒)
+- [WARN] GPU执行超时 (> 30秒)
 
-- ⚠️ 显存使用过高 (> 45%)
+- [WARN] 显存使用过高 (> 45%)
 
-- ⚠️ GPU内核hang检测
+- [WARN] GPU内核hang检测
 
 ### 告警输出
 
@@ -218,13 +218,13 @@ config = {'batch_size': 1048576}  # 1M（默认）
 
 系统已自动应用Intel Arc优化：
 
-- ✅ uint32 workaround（避免global char* hang）
+- [OK] uint32 workaround（避免global char* hang）
 
-- ✅ 30秒超时保护
+- [OK] 30秒超时保护
 
-- ✅ 70%显存使用限制
+- [OK] 70%显存使用限制
 
-- ✅ 异步双缓冲执行
+- [OK] 异步双缓冲执行
 
 ### 3. 多GPU系统
 
@@ -335,7 +335,7 @@ def on_progress(stats):
 
 def on_match(match_info):
     """自定义匹配回调"""
-    print(f"🎯 发现匹配: {match_info['address']}")
+    print(f"[TARGET] 发现匹配: {match_info['address']}")
     # 保存到数据库或发送通知
 
 launcher = BTCCollisionLauncher(

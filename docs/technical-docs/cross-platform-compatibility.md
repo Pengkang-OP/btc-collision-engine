@@ -12,20 +12,20 @@ BTC 碰撞引擎支持 **Windows、Linux、macOS** 三大平台，通过 `Platfo
 
 | 功能 | Windows | Linux | macOS | 备注 |
 |------|:-------:|:-----:|:-----:|------|
-| 核心碰撞引擎 | ✅ | ✅ | ✅ | 纯 Python/coincurve 实现 |
-| GPU 加速 (NVIDIA) | ✅ | ✅ | ⚠️ | macOS 通过 `nvidia-smi` 检测，Apple Silicon 不支持 CUDA |
-| GPU 加速 (AMD) | ✅ | ✅ | ⚠️ | macOS 通过 `system_profiler SPDisplaysDataType` 检测 |
-| GPU 加速 (Intel) | ✅ | ✅ | ⚠️ | macOS 通过 `system_profiler SPDisplaysDataType` 检测 |
-| CLI 界面 | ✅ | ✅ | ✅ | 统一入口 `key_collision_cli.py` |
-| GUI 教程界面 | ✅ | ✅ | ✅ | 跨平台字体自动适配（见 §4.3） |
-| 自动安装脚本 | ✅ `.bat` | ✅ `.sh` | ✅ `.sh` | |
-| 内存锁定 | ❌ | ✅ | ❌ | 仅 Linux 支持 `mlockall` |
-| 断点续传 | ✅ | ✅ | ✅ | 原子文件操作跨平台适配 |
-| 监控系统 | ✅ | ✅ | ✅ | Prometheus + 本地 JSON |
-| 健康检查工具 | ✅ | ✅ | ✅ | `python -m src.utils.health_check` |
-| 平台兼容性检查 | ✅ | ✅ | ✅ | `python -m src.utils.platform_check` |
-| 配置目录管理 | ✅ | ✅ | ✅ | `PlatformUtils.get_config_dir()` |
-| 符号链接 | ⚠️ | ✅ | ✅ | Windows 需开发者模式或管理员权限 |
+| 核心碰撞引擎 | [OK] | [OK] | [OK] | 纯 Python/coincurve 实现 |
+| GPU 加速 (NVIDIA) | [OK] | [OK] | [WARN] | macOS 通过 `nvidia-smi` 检测，Apple Silicon 不支持 CUDA |
+| GPU 加速 (AMD) | [OK] | [OK] | [WARN] | macOS 通过 `system_profiler SPDisplaysDataType` 检测 |
+| GPU 加速 (Intel) | [OK] | [OK] | [WARN] | macOS 通过 `system_profiler SPDisplaysDataType` 检测 |
+| CLI 界面 | [OK] | [OK] | [OK] | 统一入口 `key_collision_cli.py` |
+| GUI 教程界面 | [OK] | [OK] | [OK] | 跨平台字体自动适配（见 §4.3） |
+| 自动安装脚本 | [OK] `.bat` | [OK] `.sh` | [OK] `.sh` | |
+| 内存锁定 | [FAIL] | [OK] | [FAIL] | 仅 Linux 支持 `mlockall` |
+| 断点续传 | [OK] | [OK] | [OK] | 原子文件操作跨平台适配 |
+| 监控系统 | [OK] | [OK] | [OK] | Prometheus + 本地 JSON |
+| 健康检查工具 | [OK] | [OK] | [OK] | `python -m src.utils.health_check` |
+| 平台兼容性检查 | [OK] | [OK] | [OK] | `python -m src.utils.platform_check` |
+| 配置目录管理 | [OK] | [OK] | [OK] | `PlatformUtils.get_config_dir()` |
+| 符号链接 | [WARN] | [OK] | [OK] | Windows 需开发者模式或管理员权限 |
 
 ---
 
@@ -276,13 +276,13 @@ elif PlatformUtils.is_linux():
 **禁止**混用原始 API，避免逻辑分散和表达不一致：
 
 ```python
-# ❌ 禁止
+# [FAIL] 禁止
 import sys, os, platform
 if sys.platform == 'win32': ...
 if os.name == 'nt': ...
 if platform.system() == 'Windows': ...
 
-# ✅ 正确
+# [OK] 正确
 from src.utils.platform_utils import PlatformUtils
 if PlatformUtils.is_windows(): ...
 
@@ -295,11 +295,11 @@ if PlatformUtils.is_windows(): ...
 - 处理外部输入的未知编码文件时，使用 `errors='replace'` 或 `errors='ignore'` 防止崩溃
 
 ```python
-# ✅ 正确
+# [OK] 正确
 with open(path, 'r', encoding='utf-8') as f:
     content = f.read()
 
-# ❌ 禁止（依赖系统默认编码）
+# [FAIL] 禁止（依赖系统默认编码）
 with open(path, 'r') as f:
     content = f.read()
 
@@ -311,13 +311,13 @@ with open(path, 'r') as f:
 import os
 from src.utils.platform_utils import PlatformUtils
 
-# ✅ 正确：使用 os.path.join 构建路径
+# [OK] 正确：使用 os.path.join 构建路径
 log_path = os.path.join("data_logs", "collision.log")
 
-# ✅ 正确：使用 normalize_path 规范化路径
+# [OK] 正确：使用 normalize_path 规范化路径
 clean_path = PlatformUtils.normalize_path(raw_path)
 
-# ❌ 禁止：硬编码路径分隔符
+# [FAIL] 禁止：硬编码路径分隔符
 log_path = "data_logs\\collision.log"   # Windows 专用
 log_path = "data_logs/collision.log"    # Unix 专用
 

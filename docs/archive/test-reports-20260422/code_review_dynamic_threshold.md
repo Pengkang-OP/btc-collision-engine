@@ -9,7 +9,7 @@
 
 ## 执行摘要
 
-### 整体评价: ✅ 通过 - 有少量改进建议
+### 整体评价: [OK_CHECK] 通过 - 有少量改进建议
 
 **优点**:
 
@@ -39,13 +39,13 @@ PERFORMANCE_SAMPLE_COUNT = 5  # 采样次数用于平滑波动
 PERFORMANCE_TOLERANCE = 0.15  # 允许15%的波动范围
 ```
 
-#### ✅ 优点
+#### [OK_CHECK] 优点
 
 - 命名清晰,符合Python常量命名规范
 - 注释准确,说明了每个参数的用途
 - 数值设置合理,基于实际测试数据
 
-#### ⚠️ 问题
+#### [WARN] 问题
 
 **中优先级: 未使用的配置常量**
 
@@ -87,18 +87,18 @@ dynamic_threshold = max(
 adjusted_threshold = dynamic_threshold * (1.0 - self.PERFORMANCE_TOLERANCE)
 ```
 
-#### ✅ 优点
+#### [OK_CHECK] 优点
 
 - 逻辑清晰,分步计算易于理解和调试
 - 注释详细,解释了每个策略的作用
 - 使用了`max(min())`模式确保合理范围
 
-#### ❌ 高优先级: 缺少边界情况防护
+#### [CROSS] 高优先级: 缺少边界情况防护
 
 **问题**: 如果`report.peak_throughput_keys_per_sec`为0或负数,会导致:
 
 - `peak_dynamic_threshold = 0 * 0.05 = 0`
-- `dynamic_threshold = max(50000, min(80000, 0)) = 50000` ✓ 正常
+- `dynamic_threshold = max(50000, min(80000, 0)) = 50000` [OK] 正常
 - 但这掩盖了数据异常,应该主动检测
 
 **建议修复**:
@@ -106,14 +106,14 @@ adjusted_threshold = dynamic_threshold * (1.0 - self.PERFORMANCE_TOLERANCE)
 ```python
 # 验证峰值吞吐量有效性
 if report.peak_throughput_keys_per_sec <= 0:
-    print(f"⚠️ 警告: 峰值吞吐量异常 ({report.peak_throughput_keys_per_sec}), 使用默认阈值")
+    print(f"[WARN] 警告: 峰值吞吐量异常 ({report.peak_throughput_keys_per_sec}), 使用默认阈值")
     peak_dynamic_threshold = target_threshold  # 降级到目标阈值
 else:
     peak_dynamic_threshold = report.peak_throughput_keys_per_sec * self.PERFORMANCE_PEAK_RATIO
 
 # 验证平均吞吐量有效性
 if report.avg_throughput_keys_per_sec <= 0:
-    print(f"❌ 错误: 平均吞吐量为0,测试可能失败")
+    print(f"[CROSS] 错误: 平均吞吐量为0,测试可能失败")
     self.print_result("性能达标", False, "平均吞吐量为0")
     return False
 
@@ -142,13 +142,13 @@ else:
     print(f"     [建议] 可能是系统波动,建议多次测试取平均值")
 ```
 
-#### ✅ 优点
+#### [OK_CHECK] 优点
 
 - 条件分支清晰,成功和失败都有详细信息输出
 - 阈值分解输出非常好,便于调试和理解
 - 失败时提供了有用的建议
 
-#### ⚠️ 中优先级: 可改进的日志
+#### [WARN] 中优先级: 可改进的日志
 
 **建议**: 增加更多诊断信息
 
@@ -179,13 +179,13 @@ else:
 return report.error_rate_percent < 1.0 and passed
 ```
 
-#### ✅ 优点
+#### [OK_CHECK] 优点
 
 - **修复正确**: 使用`passed`变量(动态阈值结果)而非旧的固定阈值
 - **逻辑一致**: 与前面的验证逻辑保持一致
 - **语义清晰**: 需要同时满足稳定性和性能要求
 
-#### ✅ 验证
+#### [OK_CHECK] 验证
 
 ```python
 # 修复前 (错误)
@@ -203,25 +203,25 @@ return report.error_rate_percent < 1.0 and passed
 
 ## 代码质量评估
 
-### 可读性: ⭐⭐⭐⭐⭐ (优秀)
+### 可读性: [STAR][STAR][STAR][STAR][STAR] (优秀)
 
 - 变量命名清晰(`min_threshold`, `peak_dynamic_threshold`, `adjusted_threshold`)
 - 注释充分,解释了为什么这样设计
 - 分步计算,每一步都有明确的目的
 
-### 可维护性: ⭐⭐⭐⭐☆ (良好)
+### 可维护性: [STAR][STAR][STAR][STAR][ESTAR] (良好)
 
 - 配置常量化,易于调整
 - 逻辑分离清晰
 - **改进空间**: 可考虑提取为独立方法
 
-### 健壮性: ⭐⭐⭐☆☆ (中等)
+### 健壮性: [STAR][STAR][STAR][ESTAR][ESTAR] (中等)
 
 - **问题**: 缺少边界情况防护
 - **问题**: 未处理异常数据(峰值为0)
 - 需要增加防御性编程
 
-### 可观测性: ⭐⭐⭐⭐⭐ (优秀)
+### 可观测性: [STAR][STAR][STAR][STAR][STAR] (优秀)
 
 - 详细的阈值分解输出
 - 成功和失败都有完整信息
@@ -238,14 +238,14 @@ return report.error_rate_percent < 1.0 and passed
 ```python
 # 在第480行后添加
 if report.peak_throughput_keys_per_sec <= 0:
-    print(f"⚠️ 警告: 峰值吞吐量异常 ({report.peak_throughput_keys_per_sec}), 使用默认阈值")
+    print(f"[WARN] 警告: 峰值吞吐量异常 ({report.peak_throughput_keys_per_sec}), 使用默认阈值")
     peak_dynamic_threshold = target_threshold
 else:
     peak_dynamic_threshold = report.peak_throughput_keys_per_sec * self.PERFORMANCE_PEAK_RATIO
 
 # 在第496行后添加
 if report.avg_throughput_keys_per_sec <= 0:
-    print(f"❌ 错误: 平均吞吐量为0,测试可能失败")
+    print(f"[CROSS] 错误: 平均吞吐量为0,测试可能失败")
     self.print_result("性能达标", False, "平均吞吐量为0")
     return False
 ```
@@ -314,20 +314,20 @@ def test_dynamic_threshold_calculation():
 
 ## 最终评价
 
-### ✅ 通过标准
+### [OK_CHECK] 通过标准
 
-**动态阈值策略实现**: ⭐⭐⭐⭐☆ (4/5)
+**动态阈值策略实现**: [STAR][STAR][STAR][STAR][ESTAR] (4/5)
 
 - 设计优秀,逻辑清晰
 - 有效解决了固定阈值误报问题
 - 需要补充边界情况防护
 
-**返回值修复**: ⭐⭐⭐⭐⭐ (5/5)
+**返回值修复**: [STAR][STAR][STAR][STAR][STAR] (5/5)
 
 - 修复完全正确
 - 逻辑一致,无回归风险
 
-**整体代码质量**: ⭐⭐⭐⭐☆ (4/5)
+**整体代码质量**: [STAR][STAR][STAR][STAR][ESTAR] (4/5)
 
 - 可读性和可观测性优秀
 - 需要增强健壮性(边界检查)
@@ -356,7 +356,7 @@ min_threshold = self.PERFORMANCE_THRESHOLD_MIN
 
 # 策略2: 基于峰值吞吐量的动态阈值(峰值的5%)
 if report.peak_throughput_keys_per_sec <= 0:
-    print(f"⚠️ 警告: 峰值吞吐量异常 ({report.peak_throughput_keys_per_sec}), 使用默认阈值")
+    print(f"[WARN] 警告: 峰值吞吐量异常 ({report.peak_throughput_keys_per_sec}), 使用默认阈值")
     peak_dynamic_threshold = self.PERFORMANCE_THRESHOLD_TARGET
 else:
     peak_dynamic_threshold = report.peak_throughput_keys_per_sec * self.PERFORMANCE_PEAK_RATIO
@@ -379,7 +379,7 @@ actual_throughput = report.avg_throughput_keys_per_sec
 
 # 验证数据有效性
 if actual_throughput <= 0:
-    print(f"❌ 错误: 平均吞吐量为0,测试可能失败")
+    print(f"[CROSS] 错误: 平均吞吐量为0,测试可能失败")
     self.print_result("性能达标", False, "平均吞吐量为0")
     return False
 

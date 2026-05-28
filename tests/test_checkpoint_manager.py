@@ -221,7 +221,7 @@ class TestCheckpointAutoSave:
                 current_position=0,
                 total_checked=0,
                 matches=[],
-                force=True,  # noqa: E501
+                force=True,
             )
             # 紧接着保存，间隔未到
             assert not mgr.should_auto_save

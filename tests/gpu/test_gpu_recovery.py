@@ -11,7 +11,7 @@ import pytest
 
 pytestmark = pytest.mark.gpu
 
-from src.gpu.gpu_recovery_manager import (  # noqa: E402
+from src.gpu.gpu_recovery_manager import (
     GPUFailureRecord,
     GPUFailureType,
     GPURecoveryManager,

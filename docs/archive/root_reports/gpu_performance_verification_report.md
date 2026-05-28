@@ -5,7 +5,7 @@
 
 ---
 
-## 📊 测试环境
+## [CHART] 测试环境
 
 ### 硬件配置
 
@@ -27,7 +27,7 @@
 
 ---
 
-## ✅ CPU模式测试结果
+## [OK_CHECK] CPU模式测试结果
 
 ### 测试配置
 
@@ -52,15 +52,15 @@
 
 ### 性能优化状态
 
-- ✅ 预计算点表 (window_size=8, 256点)
-- ✅ SIMD哈希优化 (pycryptodome AES-NI)
-- ✅ ECPoint内存池 (1000个对象)
-- ✅ ByteArray内存池 (500+200个对象)
-- ✅ Batch Size自动调整 (1000→4000)
+- [OK_CHECK] 预计算点表 (window_size=8, 256点)
+- [OK_CHECK] SIMD哈希优化 (pycryptodome AES-NI)
+- [OK_CHECK] ECPoint内存池 (1000个对象)
+- [OK_CHECK] ByteArray内存池 (500+200个对象)
+- [OK_CHECK] Batch Size自动调整 (1000→4000)
 
 ---
 
-## ⚠️ GPU模式测试结果
+## [WARN] GPU模式测试结果
 
 ### 测试配置
 
@@ -72,7 +72,7 @@
 
 ### 测试结果
 
-**状态**: ❌ 测试失败
+**状态**: [CROSS] 测试失败
 
 ### 发现的问题
 
@@ -100,7 +100,7 @@ else:
     new_batch_size = 1 << (new_batch_size.bit_length() - 1)
 ```
 
-**修复状态**: ✅ 已修复并提交
+**修复状态**: [OK_CHECK] 已修复并提交
 
 ---
 
@@ -122,7 +122,7 @@ AttributeError: 'GPUKernel' object has no attribute '_target_hash160s'
 self._target_hash160s = None  # P3修复: 添加目标地址缓存
 ```
 
-**修复状态**: ✅ 已修复并提交
+**修复状态**: [OK_CHECK] 已修复并提交
 
 ---
 
@@ -149,7 +149,7 @@ GPU缓冲区在关闭时被尝试释放两次，导致OpenCL报错。
 
 ---
 
-## 📈 性能对比分析
+## [PERF] 性能对比分析
 
 ### 预期性能提升
 
@@ -167,15 +167,15 @@ GPU缓冲区在关闭时被尝试释放两次，导致OpenCL报错。
 
 **需要重新测试**:
 
-1. ✅ 修复batch size计算错误
-2. ✅ 修复_target_hash160s属性缺失
-3. ⏳ 重新运行GPU性能测试
-4. ⏳ 采集GPU实际性能数据
-5. ⏳ 对比CPU/GPU性能差异
+1. [OK_CHECK] 修复batch size计算错误
+2. [OK_CHECK] 修复_target_hash160s属性缺失
+3. [HOURGLASS] 重新运行GPU性能测试
+4. [HOURGLASS] 采集GPU实际性能数据
+5. [HOURGLASS] 对比CPU/GPU性能差异
 
 ---
 
-## 🔧 已修复的问题
+## [WRENCH] 已修复的问题
 
 ### 修复1: GPU自动配置batch size边界检查
 
@@ -191,25 +191,25 @@ GPU缓冲区在关闭时被尝试释放两次，导致OpenCL报错。
 
 ---
 
-## 📋 监控数据验证
+## [CHECKLIST] 监控数据验证
 
 ### 数据日志状态
 
 | 文件 | 大小 | 状态 |
 |------|------|------|
-| current_data.json | 242 bytes | ✅ 存在 |
-| history_data.json | 293,744 bytes | ✅ 存在 |
-| performance.log | 877,809 bytes | ✅ 存在 |
+| current_data.json | 242 bytes | [OK_CHECK] 存在 |
+| history_data.json | 293,744 bytes | [OK_CHECK] 存在 |
+| performance.log | 877,809 bytes | [OK_CHECK] 存在 |
 
 ### 监控功能
 
-- ✅ 数据日志记录正常
-- ✅ 性能指标采集正常
-- ✅ 监控报告生成正常
+- [OK_CHECK] 数据日志记录正常
+- [OK_CHECK] 性能指标采集正常
+- [OK_CHECK] 监控报告生成正常
 
 ---
 
-## 💡 优化建议
+## [TIP] 优化建议
 
 ### 短期优化
 
@@ -231,14 +231,14 @@ GPU缓冲区在关闭时被尝试释放两次，导致OpenCL报错。
 
 ---
 
-## 📝 测试结论
+## [MEMO] 测试结论
 
 ### 当前状态
 
-1. ✅ **CPU模式**: 正常运行，性能符合预期(~1,500 keys/s)
-2. ⚠️ **GPU模式**: 发现3个问题，2个已修复，1个待优化
-3. ✅ **监控系统**: 正常工作，数据记录完整
-4. ✅ **性能优化**: CPU优化全部启用
+1. [OK_CHECK] **CPU模式**: 正常运行，性能符合预期(~1,500 keys/s)
+2. [WARN] **GPU模式**: 发现3个问题，2个已修复，1个待优化
+3. [OK_CHECK] **监控系统**: 正常工作，数据记录完整
+4. [OK_CHECK] **性能优化**: CPU优化全部启用
 
 ### 下一步行动
 
@@ -251,14 +251,14 @@ GPU缓冲区在关闭时被尝试释放两次，导致OpenCL报错。
 
 修复所有问题后，GPU模式应该能够:
 
-- ✅ 成功初始化并运行
-- ✅ 达到100,000+ keys/s的性能
-- ✅ 相比CPU提升67倍以上
-- ✅ 稳定运行无内存泄漏
+- [OK_CHECK] 成功初始化并运行
+- [OK_CHECK] 达到100,000+ keys/s的性能
+- [OK_CHECK] 相比CPU提升67倍以上
+- [OK_CHECK] 稳定运行无内存泄漏
 
 ---
 
-## 📁 相关文件
+## [DIR] 相关文件
 
 ### 测试脚本
 
@@ -279,6 +279,6 @@ GPU缓冲区在关闭时被尝试释放两次，导致OpenCL报错。
 ---
 
 **报告生成时间**: 2026-04-23 02:11:30  
-**测试状态**: ⚠️ 部分完成(CPU成功，GPU待重新测试)  
-**问题修复**: ✅ 2个关键问题已修复  
+**测试状态**: [WARN] 部分完成(CPU成功，GPU待重新测试)  
+**问题修复**: [OK_CHECK] 2个关键问题已修复  
 **下一步**: 重新运行GPU性能测试

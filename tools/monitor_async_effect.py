@@ -233,9 +233,9 @@ def continuous_monitor(interval=10):
             health = monitor_async_stats()
 
             if health >= 80:
-                print("✅ 异步优化运行正常,继续监控...")
+                print("OK 异步优化运行正常,继续监控...")
             else:
-                print("⚠️ 检测到问题,请检查日志")
+                print("WARN 检测到问题,请检查日志")
 
             print()
             time.sleep(interval)

@@ -118,7 +118,7 @@ class CryptoBackend(ABC):
 class PurePythonBackend(CryptoBackend):
     """Pure Python backend - uses existing secp256k1.py implementation.
 
-    ⚠️ 安全警告 (SEC-1):
+    [SEC] 安全警告 (SEC-1):
     - 本后端仅用于教育和研究目的
     - 纯 Python 实现的椭圆曲线运算性能较低（比 coincurve 慢约 1000 倍）
     - 虽然使用 Montgomery Ladder（算法上恒定时间），但 Python

@@ -6,7 +6,7 @@
 
 ---
 
-## 📊 优化概述
+## [CHART] 优化概述
 
 ### 问题诊断
 
@@ -21,14 +21,14 @@
 
 实施**双缓冲异步执行**机制:
 
-1. ✅ 双OpenCL队列(计算+传输分离)
-2. ✅ 双缓冲机制(消除CPU-GPU等待)
-3. ✅ 异步私钥生成(并行准备数据)
-4. ✅ 安全保护(超时+自动回退)
+1. [OK_CHECK] 双OpenCL队列(计算+传输分离)
+2. [OK_CHECK] 双缓冲机制(消除CPU-GPU等待)
+3. [OK_CHECK] 异步私钥生成(并行准备数据)
+4. [OK_CHECK] 安全保护(超时+自动回退)
 
 ---
 
-## 🔧 实施详情
+## [WRENCH] 实施详情
 
 ### 修改文件清单
 
@@ -171,7 +171,7 @@ def _random_search_async(self):
 
 ---
 
-## 📈 性能预测
+## [PERF] 性能预测
 
 ### 执行流程对比
 
@@ -212,7 +212,7 @@ GPU利用率: ~90%+
 
 ---
 
-## 🛡️ 安全机制
+## [SHIELD] 安全机制
 
 ### 1. 超时保护
 
@@ -246,7 +246,7 @@ except Exception as e:
 
 ---
 
-## 🧪 测试方法
+## [TEST] 测试方法
 
 ### 快速测试
 
@@ -275,7 +275,7 @@ python -c "import json; c=json.load(open('config.intel_arc.json')); print(f'异�
 
 ---
 
-## 📋 使用指南
+## [CHECKLIST] 使用指南
 
 ### 启用异步
 
@@ -313,12 +313,12 @@ python -c "import json; c=json.load(open('config.intel_arc.json')); print(f'异�
 
 ---
 
-## ⚠️ 注意事项
+## [WARN] 注意事项
 
 ### Intel Arc特殊考虑
 
 1. **global char* hang bug**
-   - uint32 workaround已启用 ✅
+   - uint32 workaround已启用 [OK_CHECK]
    - 异步执行不会影响此修复
 
 2. **驱动兼容性**
@@ -343,15 +343,15 @@ python -c "import json; c=json.load(open('config.intel_arc.json')); print(f'异�
 
 ---
 
-## 🎯 后续优化
+## [TARGET] 后续优化
 
 ### 已完成
 
-- ✅ 双队列异步机制
-- ✅ 双缓冲消除等待
-- ✅ 安全保护(超时+回退)
-- ✅ Batch size增大(100万)
-- ✅ 显存限制放宽(70%)
+- [OK_CHECK] 双队列异步机制
+- [OK_CHECK] 双缓冲消除等待
+- [OK_CHECK] 安全保护(超时+回退)
+- [OK_CHECK] Batch size增大(100万)
+- [OK_CHECK] 显存限制放宽(70%)
 
 ### 待实施
 
@@ -362,7 +362,7 @@ python -c "import json; c=json.load(open('config.intel_arc.json')); print(f'异�
 
 ---
 
-## 📊 测试检查清单
+## [CHART] 测试检查清单
 
 ### 功能测试
 
@@ -390,7 +390,7 @@ python -c "import json; c=json.load(open('config.intel_arc.json')); print(f'异�
 
 ---
 
-## 📝 总结
+## [MEMO] 总结
 
 ### 核心改进
 
@@ -414,8 +414,8 @@ python -c "import json; c=json.load(open('config.intel_arc.json')); print(f'异�
 
 ---
 
-**实施状态**: ✅ 完成  
-**测试状态**: ⏳ 待验证  
-**生产就绪**: ⚠️ 需要稳定性测试
+**实施状态**: [OK_CHECK] 完成  
+**测试状态**: [HOURGLASS] 待验证  
+**生产就绪**: [WARN] 需要稳定性测试
 
 **下一步**: 重启程序,观察运行效果,收集性能数据!

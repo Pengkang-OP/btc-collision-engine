@@ -2,25 +2,25 @@
 
 **监控时间**: 2026-04-23 02:36:30  
 **监控对象**: key_collision_cli.py  
-**监控状态**: ⚠️ 发现问题
+**监控状态**: [WARN] 发现问题
 
 ---
 
-## 📊 运行状态总览
+## [CHART] 运行状态总览
 
 ### 基本信息
 
 | 项目 | 状态 | 详情 |
 |------|------|------|
-| **CLI程序** | ❌ 已停止 | 发现严重问题后手动停止 |
-| **碰撞引擎** | ❌ 未工作 | 速度持续为0 |
-| **目标地址** | ✅ 已加载 | 38个地址 |
-| **断点续传** | ❌ 失败 | 权限错误 |
-| **监控系统** | ✅ 运行中 | 正常记录数据 |
+| **CLI程序** | [CROSS] 已停止 | 发现严重问题后手动停止 |
+| **碰撞引擎** | [CROSS] 未工作 | 速度持续为0 |
+| **目标地址** | [OK_CHECK] 已加载 | 38个地址 |
+| **断点续传** | [CROSS] 失败 | 权限错误 |
+| **监控系统** | [OK_CHECK] 运行中 | 正常记录数据 |
 
 ---
 
-## 🚨 发现的问题
+## [ALERT] 发现的问题
 
 ### 问题1: 引擎速度为0 (严重)
 
@@ -51,9 +51,9 @@ MonitoringSystem - WARNING - ALERT: 检测速率过低: 0.00/s
 
 **影响**:
 
-- ❌ 无法进行碰撞检测
-- ❌ 浪费计算资源
-- ❌ 监控系统持续报警
+- [CROSS] 无法进行碰撞检测
+- [CROSS] 浪费计算资源
+- [CROSS] 监控系统持续报警
 
 ---
 
@@ -92,49 +92,49 @@ Access : JOHN-PC\pengk Allow Write, Read, Synchronize
 
 **影响**:
 
-- ❌ 无法保存断点
-- ❌ 日志污染严重
-- ❌ 性能影响（频繁错误处理）
+- [CROSS] 无法保存断点
+- [CROSS] 日志污染严重
+- [CROSS] 性能影响（频繁错误处理）
 
 ---
 
-## 📈 性能数据分析
+## [PERF] 性能数据分析
 
 ### 监控数据统计
 
 | 指标 | 数值 | 状态 |
 |------|------|------|
-| **已检查私钥** | 0 | ❌ 异常 |
-| **检测速度** | 0.00 keys/s | ❌ 异常 |
-| **匹配数** | 0 | ✅ 正常（未工作） |
+| **已检查私钥** | 0 | [CROSS] 异常 |
+| **检测速度** | 0.00 keys/s | [CROSS] 异常 |
+| **匹配数** | 0 | [OK_CHECK] 正常（未工作） |
 | **运行时间** | 60秒 | - |
-| **历史数据** | 521,157 bytes | ✅ 有数据 |
-| **性能日志** | 170 bytes | ⚠️ 较少 |
+| **历史数据** | 521,157 bytes | [OK_CHECK] 有数据 |
+| **性能日志** | 170 bytes | [WARN] 较少 |
 
 ### 数据文件状态
 
 | 文件 | 大小 | 状态 |
 |------|------|------|
-| `src/data_logs/current_data.json` | 存在 | ✅ 正常 |
-| `src/data_logs/history_data.json` | 521 KB | ✅ 有历史数据 |
-| `src/data_logs/performance.log` | 170 bytes | ⚠️ 数据少 |
-| `src/collision/collision_checkpoint.json` | 存在 | ❌ 无法写入 |
+| `src/data_logs/current_data.json` | 存在 | [OK_CHECK] 正常 |
+| `src/data_logs/history_data.json` | 521 KB | [OK_CHECK] 有历史数据 |
+| `src/data_logs/performance.log` | 170 bytes | [WARN] 数据少 |
+| `src/collision/collision_checkpoint.json` | 存在 | [CROSS] 无法写入 |
 
 ---
 
-## 🔍 问题诊断
+## [SEARCH] 问题诊断
 
 ### 诊断1: 引擎初始化检查
 
 **成功初始化的组件**:
 
-- ✅ CryptoBackend: coincurve (libsecp256k1)
-- ✅ BigIntOptimizer: gmpy2 Comba乘法
-- ✅ SIMDHash: pycryptodome AES-NI
-- ✅ PrecomputedTable: window_size=8, 256点
-- ✅ MemoryPool: ECPoint + ByteArray池
-- ✅ KeyCollisionEngine: 目标数=38
-- ✅ EnhancedMonitoringSystem: 已启用
+- [OK_CHECK] CryptoBackend: coincurve (libsecp256k1)
+- [OK_CHECK] BigIntOptimizer: gmpy2 Comba乘法
+- [OK_CHECK] SIMDHash: pycryptodome AES-NI
+- [OK_CHECK] PrecomputedTable: window_size=8, 256点
+- [OK_CHECK] MemoryPool: ECPoint + ByteArray池
+- [OK_CHECK] KeyCollisionEngine: 目标数=38
+- [OK_CHECK] EnhancedMonitoringSystem: 已启用
 
 **日志输出**:
 
@@ -164,10 +164,10 @@ KeyCollisionEngine - INFO - 对撞引擎启动完成
 
 **实际行为**:
 
-1. ✅ 线程启动成功
-2. ❌ 未检测到私钥生成
-3. ❌ 未检测到地址计算
-4. ❌ 统计数据未更新
+1. [OK_CHECK] 线程启动成功
+2. [CROSS] 未检测到私钥生成
+3. [CROSS] 未检测到地址计算
+4. [CROSS] 统计数据未更新
 
 **可能问题**:
 
@@ -209,11 +209,11 @@ for proc in psutil.process_iter(['open_files']):
 
 ---
 
-## 💡 修复建议
+## [TIP] 修复建议
 
 ### 修复1: 引擎速度为0
 
-**优先级**: 🔴 高（阻塞性bug）
+**优先级**: [RED] 高（阻塞性bug）
 
 **诊断步骤**:
 
@@ -241,7 +241,7 @@ except Exception as e:
 
 ### 修复2: 断点文件权限
 
-**优先级**: 🟡 中（影响功能）
+**优先级**: [YELLOW] 中（影响功能）
 
 **修复方案**:
 
@@ -285,11 +285,11 @@ def save_checkpoint(self, data, max_retries=3):
 
 ---
 
-## 🎯 行动计划
+## [TARGET] 行动计划
 
 ### 立即行动
 
-1. **停止当前CLI** ✅ 已完成
+1. **停止当前CLI** [OK_CHECK] 已完成
 2. **检查工作线程代码** - 诊断速度为0的原因
 3. **修复断点文件位置** - 避免权限问题
 4. **添加调试日志** - 确认线程执行流程
@@ -308,7 +308,7 @@ def save_checkpoint(self, data, max_retries=3):
 
 ---
 
-## 📋 监控清单
+## [CHECKLIST] 监控清单
 
 - [x] CLI程序状态检查
 - [x] 引擎速度监控
@@ -321,7 +321,7 @@ def save_checkpoint(self, data, max_retries=3):
 
 ---
 
-## 🔧 调试命令
+## [WRENCH] 调试命令
 
 ### 查看实时日志
 

@@ -1,25 +1,25 @@
 # BTC碰撞引擎 v2.2.0 GUI/CLI集成报告
 
 **集成日期**: 2026-04-21  
-**状态**: ✅ 已完成
+**状态**: [OK_CHECK] 已完成
 
 ---
 
-## 📋 集成概览
+## [CHECKLIST] 集成概览
 
 ### 完成的工作
 
 | 组件 | 任务 | 状态 | 修改文件 |
 |------|------|------|---------|
-| CLI | 添加性能优化参数 | ✅ 完成 | `src/cli/main.py` |
-| CLI | 显示优化配置信息 | ✅ 完成 | `src/cli/main.py` |
-| GUI | 第1处引擎创建集成 | ✅ 完成 | `key_collision_gui.py:1177` |
-| GUI | 第2处引擎创建集成 | ✅ 完成 | `key_collision_gui.py:1299` |
-| GUI | 默认启用优化 | ✅ 完成 | 2处修改 |
+| CLI | 添加性能优化参数 | [OK_CHECK] 完成 | `src/cli/main.py` |
+| CLI | 显示优化配置信息 | [OK_CHECK] 完成 | `src/cli/main.py` |
+| GUI | 第1处引擎创建集成 | [OK_CHECK] 完成 | `key_collision_gui.py:1177` |
+| GUI | 第2处引擎创建集成 | [OK_CHECK] 完成 | `key_collision_gui.py:1299` |
+| GUI | 默认启用优化 | [OK_CHECK] 完成 | 2处修改 |
 
 ---
 
-## 🔧 CLI集成详情
+## [WRENCH] CLI集成详情
 
 ### 新增命令行参数
 
@@ -103,7 +103,7 @@ python key_collision_cli.py -t 1A1z... -m random --window-size 8 --duration 60 -
 
 ---
 
-## 🎨 GUI集成详情
+## [ART] GUI集成详情
 
 ### 修改位置
 
@@ -155,13 +155,13 @@ self.engine = KeyCollisionEngine(
 
 ### GUI默认行为
 
-- ✅ **自动启用优化**: 用户无需任何配置即可享受性能提升
-- ✅ **透明升级**: 现有GUI代码无需修改即可使用优化引擎
-- ✅ **向后兼容**: 不影响现有功能
+- [OK_CHECK] **自动启用优化**: 用户无需任何配置即可享受性能提升
+- [OK_CHECK] **透明升级**: 现有GUI代码无需修改即可使用优化引擎
+- [OK_CHECK] **向后兼容**: 不影响现有功能
 
 ---
 
-## 📊 性能优化参数说明
+## [CHART] 性能优化参数说明
 
 ### 参数对比表
 
@@ -176,14 +176,14 @@ self.engine = KeyCollisionEngine(
 
 | 场景 | window_size | simd | memory_pool | 说明 |
 |------|-------------|------|-------------|------|
-| 默认/推荐 | 8 | ✅ | ✅ | 最佳性能 |
-| 低内存 | 6 | ✅ | ✅ | 减少内存占用 |
-| 最低内存 | 4 | ❌ | ❌ | 最小内存 |
+| 默认/推荐 | 8 | [OK_CHECK] | [OK_CHECK] | 最佳性能 |
+| 低内存 | 6 | [OK_CHECK] | [OK_CHECK] | 减少内存占用 |
+| 最低内存 | 4 | [CROSS] | [CROSS] | 最小内存 |
 | 兼容模式 | - | - | - | 禁用所有优化 |
 
 ---
 
-## 🧪 验证测试
+## [TEST] 验证测试
 
 ### CLI测试
 
@@ -226,7 +226,7 @@ python tests/test_optimization_stress.py
 
 ---
 
-## 📈 性能监控集成
+## [PERF] 性能监控集成
 
 ### CLI实时监控
 
@@ -252,7 +252,7 @@ OptimizedP2PKHAddressGenerator初始化完成
 
 ---
 
-## ⚠️ 注意事项
+## [WARN] 注意事项
 
 ### 1. 依赖要求
 
@@ -265,9 +265,9 @@ pip install pycryptodome>=3.19.0
 
 **如果依赖未安装**:
 
-- ✅ 系统自动降级到标准实现
-- ✅ 不会报错或崩溃
-- ⚠️ 性能提升不可用
+- [OK_CHECK] 系统自动降级到标准实现
+- [OK_CHECK] 不会报错或崩溃
+- [WARN] 性能提升不可用
 
 ### 2. Windows gmpy2安装
 
@@ -295,7 +295,7 @@ pip install gmpy2 --only-binary=all
 压力测试中可能看到性能退化告警:
 
 ```
-⚠️ 检测到性能退化: 当前=58 addr/s, 峰值=75 addr/s, 退化率=77.16%
+[WARN] 检测到性能退化: 当前=58 addr/s, 峰值=75 addr/s, 退化率=77.16%
 ```
 
 **这是正常的**,原因:
@@ -308,7 +308,7 @@ pip install gmpy2 --only-binary=all
 
 ---
 
-## 🎯 下一步建议
+## [TARGET] 下一步建议
 
 ### 短期 (v2.2.x)
 
@@ -344,7 +344,7 @@ pip install gmpy2 --only-binary=all
 
 ---
 
-## 📚 相关文档
+## [BOOKS] 相关文档
 
 - [USAGE_GUIDE_v2.2.0.md](USAGE_GUIDE_v2.2.0.md) - 快速使用指南
 - [RELEASE_NOTES_v2.2.0.md](RELEASE_NOTES_v2.2.0.md) - 发布说明
@@ -353,7 +353,7 @@ pip install gmpy2 --only-binary=all
 
 ---
 
-## ✅ 集成验证清单
+## [OK_CHECK] 集成验证清单
 
 - [x] CLI帮助信息显示新参数
 - [x] CLI启动显示优化配置
@@ -368,5 +368,5 @@ pip install gmpy2 --only-binary=all
 ---
 
 **集成完成时间**: 2026-04-21 18:50  
-**集成状态**: ✅ 已完成  
-**测试状态**: 🔄 压力测试运行中
+**集成状态**: [OK_CHECK] 已完成  
+**测试状态**: [REFRESH] 压力测试运行中

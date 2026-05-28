@@ -77,13 +77,13 @@
 
 **使用场景**:
 
-- ✅ 函数入口/出口追踪
+- [OK] 函数入口/出口追踪
 
-- ✅ 变量值和状态变化
+- [OK] 变量值和状态变化
 
-- ✅ 算法中间结果
+- [OK] 算法中间结果
 
-- ✅ 配置加载细节
+- [OK] 配置加载细节
 
 **示例**:
 
@@ -96,11 +96,11 @@ logger.debug(f"工作线程 {worker_id}: 开始处理批次 {batch_number}")
 
 **注意事项**:
 
-- ❌ 不要记录敏感信息（私钥、密码）
+- [FAIL] 不要记录敏感信息（私钥、密码）
 
-- ❌ 不要在生产环境默认启用
+- [FAIL] 不要在生产环境默认启用
 
-- ✅ 使用惰性格式化: `logger.debug("值=%s", value)`
+- [OK] 使用惰性格式化: `logger.debug("值=%s", value)`
 
 ### 2.2 INFO级别
 
@@ -108,15 +108,15 @@ logger.debug(f"工作线程 {worker_id}: 开始处理批次 {batch_number}")
 
 **使用场景**:
 
-- ✅ 引擎初始化完成
+- [OK] 引擎初始化完成
 
-- ✅ 配置加载成功
+- [OK] 配置加载成功
 
-- ✅ 阶段性进度（每30秒或每100万次）
+- [OK] 阶段性进度（每30秒或每100万次）
 
-- ✅ 资源创建/销毁
+- [OK] 资源创建/销毁
 
-- ✅ 模式切换
+- [OK] 模式切换
 
 **示例**:
 
@@ -130,11 +130,11 @@ logger.info(f"断点已保存: position={position}, checked={total_checked}")
 
 **注意事项**:
 
-- ✅ 包含关键上下文信息
+- [OK] 包含关键上下文信息
 
-- ✅ 使用人类可读的格式
+- [OK] 使用人类可读的格式
 
-- ✅ 记录重要操作的结果
+- [OK] 记录重要操作的结果
 
 ### 2.3 WARNING级别
 
@@ -142,15 +142,15 @@ logger.info(f"断点已保存: position={position}, checked={total_checked}")
 
 **使用场景**:
 
-- ✅ 配置项缺失（使用默认值）
+- [OK] 配置项缺失（使用默认值）
 
-- ✅ 性能降级
+- [OK] 性能降级
 
-- ✅ 资源使用率高（>80%）
+- [OK] 资源使用率高（>80%）
 
-- ✅ 降级操作（fallback）
+- [OK] 降级操作（fallback）
 
-- ✅ 可恢复的错误
+- [OK] 可恢复的错误
 
 **示例**:
 
@@ -164,11 +164,11 @@ logger.warning(f"批次处理失败（资源不足），跳过当前批次")
 
 **注意事项**:
 
-- ✅ 说明问题的影响
+- [OK] 说明问题的影响
 
-- ✅ 提供可能的解决方案
+- [OK] 提供可能的解决方案
 
-- ✅ 包含足够的上下文
+- [OK] 包含足够的上下文
 
 ### 2.4 ERROR级别
 
@@ -176,15 +176,15 @@ logger.warning(f"批次处理失败（资源不足），跳过当前批次")
 
 **使用场景**:
 
-- ✅ 功能模块失败
+- [OK] 功能模块失败
 
-- ✅ 资源分配失败
+- [OK] 资源分配失败
 
-- ✅ 数据验证失败
+- [OK] 数据验证失败
 
-- ✅ 外部服务不可用
+- [OK] 外部服务不可用
 
-- ✅ 不可恢复的批次错误
+- [OK] 不可恢复的批次错误
 
 **示例**:
 
@@ -198,13 +198,13 @@ logger.error(f"配置验证失败: {errors}")
 
 **注意事项**:
 
-- ✅ 包含异常类型和消息
+- [OK] 包含异常类型和消息
 
-- ✅ 说明失败的操作
+- [OK] 说明失败的操作
 
-- ✅ 提供足够的调试信息
+- [OK] 提供足够的调试信息
 
-- ❌ 不要使用`logger.exception()`除非需要堆栈跟踪
+- [FAIL] 不要使用`logger.exception()`除非需要堆栈跟踪
 
 ### 2.5 EXCEPTION级别
 
@@ -212,11 +212,11 @@ logger.error(f"配置验证失败: {errors}")
 
 **使用场景**:
 
-- ✅ 未知错误（捕获所有异常）
+- [OK] 未知错误（捕获所有异常）
 
-- ✅ 需要堆栈跟踪调试的错误
+- [OK] 需要堆栈跟踪调试的错误
 
-- ✅ 系统级错误
+- [OK] 系统级错误
 
 **示例**:
 
@@ -231,11 +231,11 @@ except Exception as e:
 
 **注意事项**:
 
-- ✅ 仅在`except`块中使用
+- [OK] 仅在`except`块中使用
 
-- ✅ 自动包含`exc_info=True`
+- [OK] 自动包含`exc_info=True`
 
-- ❌ 不要用于已知错误类型
+- [FAIL] 不要用于已知错误类型
 
 ### 2.6 CRITICAL级别
 
@@ -243,11 +243,11 @@ except Exception as e:
 
 **使用场景**:
 
-- ✅ 关键资源完全不可用
+- [OK] 关键资源完全不可用
 
-- ✅ 数据损坏
+- [OK] 数据损坏
 
-- ✅ 系统即将崩溃
+- [OK] 系统即将崩溃
 
 **示例**:
 
@@ -387,13 +387,13 @@ class SampledLogger:
 
 ### 4.4 采样日志优势
 
-- ✅ **减少I/O开销**: 降低日志写入频率99.9%
+- [OK] **减少I/O开销**: 降低日志写入频率99.9%
 
-- ✅ **保持性能**: 不影响高频操作的性能
+- [OK] **保持性能**: 不影响高频操作的性能
 
-- ✅ **保留信息**: 仍然可以追踪趋势
+- [OK] **保留信息**: 仍然可以追踪趋势
 
-- ✅ **线程安全**: 使用锁保护计数器
+- [OK] **线程安全**: 使用锁保护计数器
 
 ---
 
@@ -440,15 +440,15 @@ gpu_monitor_logger = logging.getLogger("GPUMonitor")
 
 ## 5.3 命名原则
 
-- ✅ 使用模块路径作为名称
+- [OK] 使用模块路径作为名称
 
-- ✅ 使用点号分隔层级
+- [OK] 使用点号分隔层级
 
-- ✅ 全部小写，下划线分隔
+- [OK] 全部小写，下划线分隔
 
-- ❌ 不要使用中文
+- [FAIL] 不要使用中文
 
-- ❌ 不要使用缩写（除非是通用缩写如GPU、CPU）
+- [FAIL] 不要使用缩写（除非是通用缩写如GPU、CPU）
 
 ---
 
@@ -470,10 +470,10 @@ logger = get_configured_logger(__name__)
 ## 6.2 使用惰性格式化
 
 ```python
-# ✅ 推荐: 惰性格式化
+# [OK] 推荐: 惰性格式化
 logger.info("GPU初始化成功: %s (batch_size: %d)", device_name, batch_size)
 
-# ❌ 不推荐: 提前格式化（即使日志级别不匹配也会执行）
+# [FAIL] 不推荐: 提前格式化（即使日志级别不匹配也会执行）
 logger.info(f"GPU初始化成功: {device_name} (batch_size: {batch_size})")
 
 ```markdown
@@ -481,10 +481,10 @@ logger.info(f"GPU初始化成功: {device_name} (batch_size: {batch_size})")
 ## 6.3 包含关键上下文
 
 ```python
-# ✅ 推荐: 包含上下文
+# [OK] 推荐: 包含上下文
 logger.error(f"GPU批次处理失败 (device={device_index}, batch_size={batch_size}): {error}")
 
-# ❌ 不推荐: 缺少上下文
+# [FAIL] 不推荐: 缺少上下文
 logger.error(f"GPU处理失败: {error}")
 
 ```markdown
@@ -492,10 +492,10 @@ logger.error(f"GPU处理失败: {error}")
 ## 6.4 避免敏感信息
 
 ```python
-# ❌ 绝对禁止: 记录私钥
+# [FAIL] 绝对禁止: 记录私钥
 logger.debug(f"私钥: {private_key_hex}")
 
-# ✅ 推荐: 记录地址或哈希
+# [OK] 推荐: 记录地址或哈希
 logger.debug(f"生成地址: {address}")
 logger.debug(f"地址哈希: {hash160.hex()}")
 
@@ -518,15 +518,15 @@ except Exception as e:
 ### 6.6 进度日志优化
 
 ```python
-# ✅ 推荐: 使用采样日志
+# [OK] 推荐: 使用采样日志
 sampled_logger.info(f"进度: {count:,} 已检查, {speed:,.0f} 次/秒")
 
-# ✅ 推荐: 使用时间间隔
+# [OK] 推荐: 使用时间间隔
 if time.time() - last_log_time > 1.0:  # 每秒记录一次
     logger.info(f"进度: {count:,} 已检查, {speed:,.0f} 次/秒")
     last_log_time = time.time()
 
-# ❌ 不推荐: 每次都记录
+# [FAIL] 不推荐: 每次都记录
 logger.info(f"进度: {count:,}")  # 太快！
 
 ```markdown
@@ -552,10 +552,10 @@ logger.info(f"GPU资源已清理: {device_name}")
 ### 7.1 日志格式错误
 
 ```python
-# ❌ 错误: 缺少模块名称
+# [FAIL] 错误: 缺少模块名称
 logger = logging.getLogger()  # 使用根日志记录器
 
-# ✅ 正确: 使用模块名称
+# [OK] 正确: 使用模块名称
 logger = logging.getLogger(__name__)
 
 ```markdown
@@ -563,16 +563,16 @@ logger = logging.getLogger(__name__)
 ## 7.2 日志级别滥用
 
 ```python
-# ❌ 错误: 使用INFO记录调试信息
+# [FAIL] 错误: 使用INFO记录调试信息
 logger.info(f"变量值: x={x}, y={y}, z={z}")
 
-# ✅ 正确: 使用DEBUG
+# [OK] 正确: 使用DEBUG
 logger.debug(f"变量值: x={x}, y={y}, z={z}")
 
-# ❌ 错误: 使用WARNING记录正常信息
+# [FAIL] 错误: 使用WARNING记录正常信息
 logger.warning("引擎启动成功")
 
-# ✅ 正确: 使用INFO
+# [OK] 正确: 使用INFO
 logger.info("引擎启动成功")
 
 ```markdown
@@ -580,12 +580,12 @@ logger.info("引擎启动成功")
 ## 7.3 敏感信息泄露
 
 ```python
-# ❌ 绝对禁止
+# [FAIL] 绝对禁止
 logger.debug(f"私钥: {private_key}")
 logger.info(f"WIF: {wif}")
 logger.error(f"密钥材料: {key_material.hex()}")
 
-# ✅ 正确
+# [OK] 正确
 logger.debug(f"地址: {address}")
 logger.info(f"地址数量: {len(targets)}")
 logger.error(f"地址格式无效: {invalid_address}")
@@ -595,18 +595,18 @@ logger.error(f"地址格式无效: {invalid_address}")
 ## 7.4 性能问题
 
 ```python
-# ❌ 错误: 高频操作不使用采样
+# [FAIL] 错误: 高频操作不使用采样
 for i in range(1000000):
     logger.info(f"处理: {i}")  # 写入100万次日志！
 
-# ✅ 正确: 使用采样日志
+# [OK] 正确: 使用采样日志
 for i in range(1000000):
     sampled_logger.info(f"处理: {i}")  # 只写入1000次日志
 
-# ❌ 错误: 提前格式化字符串
+# [FAIL] 错误: 提前格式化字符串
 logger.debug(f"复杂计算结果: {expensive_function()}")
 
-# ✅ 正确: 惰性格式化
+# [OK] 正确: 惰性格式化
 logger.debug("复杂计算结果: %s", expensive_function())
 
 ```markdown
@@ -614,25 +614,25 @@ logger.debug("复杂计算结果: %s", expensive_function())
 ## 7.5 异常处理不当
 
 ```python
-# ❌ 错误: 使用logger.info记录异常
+# [FAIL] 错误: 使用logger.info记录异常
 try:
     do_something()
 except Exception as e:
     logger.info(f"错误: {e}")  # 缺少堆栈跟踪
 
-# ✅ 正确: 使用logger.exception
+# [OK] 正确: 使用logger.exception
 try:
     do_something()
 except Exception as e:
     logger.exception(f"操作失败: {operation_name}")
 
-# ❌ 错误: 吞掉异常不记录
+# [FAIL] 错误: 吞掉异常不记录
 try:
     do_something()
 except Exception:
     pass  # 没有任何日志！
 
-# ✅ 正确: 至少记录ERROR
+# [OK] 正确: 至少记录ERROR
 try:
     do_something()
 except Exception as e:

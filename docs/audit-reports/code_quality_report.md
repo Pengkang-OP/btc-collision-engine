@@ -10,14 +10,14 @@
 
 | 阶段 | 状态 | 详情 |
 |------|------|------|
-| 1. 代码格式化与风格修复 | ✅ 通过 | 337 个文件已格式化，0 个风格问题 |
-| 2. 安全漏洞扫描 | ✅ 通过 | 77 个 LOW 问题，0 个 HIGH/MEDIUM |
-| 3. 类型检查 | ✅ 通过 | 0 个类型错误 |
-| 4. GPU 源码检查与测试 | ✅ 通过 | 76 个测试全部通过 |
-| 5. 配置文件与文档验证 | ✅ 通过 | 所有配置文件和文档完整 |
-| 6. 代码质量报告生成 | ✅ 完成 | 报告已生成 |
+| 1. 代码格式化与风格修复 | [OK] 通过 | 337 个文件已格式化，0 个风格问题 |
+| 2. 安全漏洞扫描 | [OK] 通过 | 77 个 LOW 问题，0 个 HIGH/MEDIUM |
+| 3. 类型检查 | [OK] 通过 | 0 个类型错误 |
+| 4. GPU 源码检查与测试 | [OK] 通过 | 76 个测试全部通过 |
+| 5. 配置文件与文档验证 | [OK] 通过 | 所有配置文件和文档完整 |
+| 6. 代码质量报告生成 | [OK] 完成 | 报告已生成 |
 
-**门禁决策**: ✅ **通过** - 所有检查项均已通过，无阻塞性问题。
+**门禁决策**: [OK] **通过** - 所有检查项均已通过，无阻塞性问题。
 
 ---
 
@@ -138,9 +138,9 @@ Success: no issues found in 231 source files
 
 | P0 问题 | 状态 | 说明 |
 |----------|------|------|
-| 未定义变量 `recent_metrics`/`avg_execution_time` | ✅ 已修复 | mypy 检查通过，无此问题 |
-| 未定义名称 `pk_bytes` | ✅ 已修复 | 代码已更新为 `pk` |
-| SIGALRM 跨平台不兼容 | ✅ 已处理 | 代码已有平台条件判断 |
+| 未定义变量 `recent_metrics`/`avg_execution_time` | [OK] 已修复 | mypy 检查通过，无此问题 |
+| 未定义名称 `pk_bytes` | [OK] 已修复 | 代码已更新为 `pk` |
+| SIGALRM 跨平台不兼容 | [OK] 已处理 | 代码已有平台条件判断 |
 
 ---
 
@@ -200,8 +200,8 @@ python -m pytest tests/ -v --tb=short -m "smoke or unit" --maxfail=5
 
 | 文件 | 状态 | 说明 |
 |------|------|------|
-| `config.example.json` | ✅ 有效 | 有效的 JSON，包含所有必需配置段 |
-| `config.json` | ✅ 有效 | 有效的 JSON，包含所有必需配置段 |
+| `config.example.json` | [OK] 有效 | 有效的 JSON，包含所有必需配置段 |
+| `config.json` | [OK] 有效 | 有效的 JSON，包含所有必需配置段 |
 
 **验证命令**:
 
@@ -216,11 +216,11 @@ python -c "import json, os; print('Exists:', os.path.exists('config.json')); jso
 
 | 目录/文件 | 状态 | 说明 |
 |-------------|------|------|
-| `docs/` | ✅ 完整 | 456 个文件（434 个 .md，13 个 .py，3 个 .txt，2 个 .csv，1 个 .html） |
-| `README.md` | ✅ 存在 | 项目说明文档 |
-| `CHANGELOG.md` | ✅ 存在 | 变更日志 |
-| `CONTRIBUTING.md` | ✅ 存在 | 贡献指南 |
-| `LICENSE` | ✅ 存在 | MIT 许可证 |
+| `docs/` | [OK] 完整 | 456 个文件（434 个 .md，13 个 .py，3 个 .txt，2 个 .csv，1 个 .html） |
+| `README.md` | [OK] 存在 | 项目说明文档 |
+| `CHANGELOG.md` | [OK] 存在 | 变更日志 |
+| `CONTRIBUTING.md` | [OK] 存在 | 贡献指南 |
+| `LICENSE` | [OK] 存在 | MIT 许可证 |
 
 ---
 
@@ -230,14 +230,14 @@ python -c "import json, os; print('Exists:', os.path.exists('config.json')); jso
 
 | 检查项 | 状态 | 阻塞性问题 |
 |--------|------|--------------|
-| 代码格式化 | ✅ 通过 | 无 |
-| 代码风格 | ✅ 通过 | 无 |
-| 安全扫描 | ✅ 通过 | 无 HIGH/MEDIUM 问题 |
-| 类型检查 | ✅ 通过 | 无类型错误 |
-| GPU 源码检查 | ✅ 通过 | 无 |
-| 核心功能测试 | ✅ 通过 | 无（76 个测试全部通过） |
-| 配置文件验证 | ✅ 通过 | 无 |
-| 文档完整性 | ✅ 通过 | 无 |
+| 代码格式化 | [OK] 通过 | 无 |
+| 代码风格 | [OK] 通过 | 无 |
+| 安全扫描 | [OK] 通过 | 无 HIGH/MEDIUM 问题 |
+| 类型检查 | [OK] 通过 | 无类型错误 |
+| GPU 源码检查 | [OK] 通过 | 无 |
+| 核心功能测试 | [OK] 通过 | 无（76 个测试全部通过） |
+| 配置文件验证 | [OK] 通过 | 无 |
+| 文档完整性 | [OK] 通过 | 无 |
 
 ### 6.2 最终决策
 
@@ -245,7 +245,7 @@ python -c "import json, os; print('Exists:', os.path.exists('config.json')); jso
 
 ╔══════════════════════════════════════════════════════════════╗
 ║                                                              ║
-║        门禁决策: ✅ 通过 (PASSED)                        ║
+║        门禁决策: [OK] 通过 (PASSED)                        ║
 ║                                                              ║
 ║  所有检查项均已通过，无阻塞性问题。                  ║
 ║  代码质量门禁严格执行完成。                        ║
@@ -306,21 +306,21 @@ python -c "import json, os; print('Exists:', os.path.exists('config.json')); jso
 
 | 检查项 | 状态 | 结果 |
 |--------|------|------|
-| mypy (6 个修改文件) | ✅ 通过 | `Success: no issues found in 6 source files` |
-| ruff (6 个修改文件) | ✅ 通过 | `All checks passed!` |
-| pytest (之前修复的测试) | ✅ 通过 | `76 passed in 5.03s` |
-| 配置迁移覆盖率 | ✅ 100% | `config_migration.py: 100%`, `commands.py: 28%` |
+| mypy (6 个修改文件) | [OK] 通过 | `Success: no issues found in 6 source files` |
+| ruff (6 个修改文件) | [OK] 通过 | `All checks passed!` |
+| pytest (之前修复的测试) | [OK] 通过 | `76 passed in 5.03s` |
+| 配置迁移覆盖率 | [OK] 100% | `config_migration.py: 100%`, `commands.py: 28%` |
 
 ### 7.4 质量门禁更新
 
 ```
 
 ╔══════════════════════════════════════════════════════════════╗
-║  后续建议执行状态: ✅ 已完成                             ║
+║  后续建议执行状态: [OK] 已完成                             ║
 ║                                                              ║
-║  1. LOW 安全问题审查: ✅ 30 个 assert 已替换为显式异常   ║
-║  2. 测试覆盖率: ✅ CLI 基础模块 23%，配置迁移 100%       ║
-║  3. CI/CD 集成: ✅ ruff 已集成到 CI lint job            ║
+║  1. LOW 安全问题审查: [OK] 30 个 assert 已替换为显式异常   ║
+║  2. 测试覆盖率: [OK] CLI 基础模块 23%，配置迁移 100%       ║
+║  3. CI/CD 集成: [OK] ruff 已集成到 CI lint job            ║
 ║                                                              ║
 ╚══════════════════════════════════════════════════════════════╝
 

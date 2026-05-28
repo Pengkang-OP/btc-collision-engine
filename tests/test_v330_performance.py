@@ -44,7 +44,7 @@ def _benchmark_batch_size(batch_size: int, test_duration: int = 30):
 
     # 检查内存池
     if engine._gpu_memory_pool is None:
-        print("❌ 内存池未初始化！")
+        print("ERR 内存池未初始化！")
         return None
 
     pool = engine._gpu_memory_pool
@@ -97,7 +97,7 @@ def _benchmark_batch_size(batch_size: int, test_duration: int = 30):
         print(f"  采样次数: {len(speeds)}")
     else:
         avg_speed = 0
-        print("  ❌ 未收集到速度数据")
+        print("  ERR 未收集到速度数据")
 
     # 检查内存池状态
     final_stats = pool.get_stats()
@@ -110,7 +110,7 @@ def _benchmark_batch_size(batch_size: int, test_duration: int = 30):
 
     print("\n[4/4] 清理资源...")
     engine.cleanup()
-    print("  ✅ 资源已清理")
+    print("  OK 资源已清理")
 
     return {
         "batch_size": batch_size,
@@ -168,14 +168,14 @@ def main():
     # 找到最佳结果
     if results:
         best = max(results, key=lambda x: x["avg_speed"])
-        print(f"\n🏆 最佳配置: {best['batch_size'] / 1024 / 1024:.2f}M批次")
+        print(f"\n[TROPHY] 最佳配置: {best['batch_size'] / 1024 / 1024:.2f}M批次")
         print(f"   平均速度: {best['avg_speed']:,.0f} keys/s")
 
         if best["avg_speed"] > 600000:
-            print(f"   ✅ 突破600K目标！超出{(best['avg_speed'] - 600000) / 600000 * 100:.1f}%")
+            print(f"   OK 突破600K目标！超出{(best['avg_speed'] - 600000) / 600000 * 100:.1f}%")
         else:
             gap = 600000 - best["avg_speed"]
-            print(f"   ⚠️ 距离600K目标还差{gap:,.0f} keys/s ({gap / 600000 * 100:.1f}%)")
+            print(f"   WARN 距离600K目标还差{gap:,.0f} keys/s ({gap / 600000 * 100:.1f}%)")
 
     print(f"\n{'=' * 80}")
     print("测试完成")
@@ -186,7 +186,7 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        print(f"\n❌ 测试失败: {e}")
+        print(f"\nERR 测试失败: {e}")
         import traceback
 
         traceback.print_exc()

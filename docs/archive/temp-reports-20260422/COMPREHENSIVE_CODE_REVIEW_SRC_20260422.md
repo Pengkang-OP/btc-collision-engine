@@ -7,29 +7,29 @@
 
 ---
 
-## 📊 执行摘要
+## [CHART] 执行摘要
 
-### 整体评分: **8.7/10** ⭐⭐⭐⭐
+### 整体评分: **8.7/10** [STAR][STAR][STAR][STAR]
 
 | 审查维度 | 评分 | 状态 |
 |---------|------|------|
-| 安全性 | 9.2/10 | ✅ 优秀 |
-| 性能优化 | 8.5/10 | ⚠️ 良好 |
-| 代码质量 | 8.8/10 | ✅ 优秀 |
-| 架构设计 | 8.9/10 | ✅ 优秀 |
-| 可维护性 | 8.3/10 | ⚠️ 良好 |
-| 测试覆盖 | 8.0/10 | ⚠️ 良好 |
+| 安全性 | 9.2/10 | [OK_CHECK] 优秀 |
+| 性能优化 | 8.5/10 | [WARN] 良好 |
+| 代码质量 | 8.8/10 | [OK_CHECK] 优秀 |
+| 架构设计 | 8.9/10 | [OK_CHECK] 优秀 |
+| 可维护性 | 8.3/10 | [WARN] 良好 |
+| 测试覆盖 | 8.0/10 | [WARN] 良好 |
 
 ### 关键发现
 
-- **P0 Critical**: 0个 (✅ 无严重问题)
-- **P1 High**: 3个 (⚠️ 需要优先处理)
-- **P2 Medium**: 7个 (📋 建议改进)
-- **P3 Low**: 12个 (💡 优化建议)
+- **P0 Critical**: 0个 ([OK_CHECK] 无严重问题)
+- **P1 High**: 3个 ([WARN] 需要优先处理)
+- **P2 Medium**: 7个 ([CHECKLIST] 建议改进)
+- **P3 Low**: 12个 ([TIP] 优化建议)
 
 ---
 
-## 🔴 P1 - 高优先级问题 (3个)
+## [RED] P1 - 高优先级问题 (3个)
 
 ### P1-1: SecureKeyManager内存锁定未完全实现
 
@@ -47,7 +47,7 @@ def _try_lock_memory(self):
             libc = ctypes.CDLL("libc.so.6")
             # mlock需要root权限或CAP_IPC_LOCK能力
             # 这里我们只是尝试，失败不影响功能
-            pass  # 实际应用中需要正确实现  # ⚠️ 未实现
+            pass  # 实际应用中需要正确实现  # [WARN] 未实现
     except (OSError, AttributeError):
         pass
 ```
@@ -175,7 +175,7 @@ def generate_batch(self, count: int) -> List[bytes]:
 
 ---
 
-## 🟡 P2 - 中优先级问题 (7个)
+## [YELLOW] P2 - 中优先级问题 (7个)
 
 ### P2-1: 椭圆曲线运算缺少恒定时间保证
 
@@ -186,8 +186,8 @@ def generate_batch(self, count: int) -> List[bytes]:
 
 **现状**:
 
-- ✅ 已实现 `scalar_multiply_const_time()` (Montgomery Ladder)
-- ⚠️ 但 `generate_public_key()` 默认使用恒定时间版本，这是正确的
+- [OK_CHECK] 已实现 `scalar_multiply_const_time()` (Montgomery Ladder)
+- [WARN] 但 `generate_public_key()` 默认使用恒定时间版本，这是正确的
 
 **建议**:
 在文档中明确标注，并考虑弃用非恒定时间版本：
@@ -196,7 +196,7 @@ def generate_batch(self, count: int) -> List[bytes]:
 import warnings
 
 def scalar_multiply(self, k: int, point: ECPoint) -> ECPoint:
-    """⚠️ 已弃用：请使用 scalar_multiply_const_time()"""
+    """[WARN] 已弃用：请使用 scalar_multiply_const_time()"""
     warnings.warn(
         "scalar_multiply() 不是恒定时间实现，存在侧信道攻击风险。"
         "请使用 scalar_multiply_const_time()",
@@ -397,7 +397,7 @@ class WebhookNotification(NotificationChannel):
 
 ---
 
-## 🔵 P3 - 低优先级优化建议 (12个)
+## [BLUE] P3 - 低优先级优化建议 (12个)
 
 ### P3-1: 代码重复 - 地址生成器
 
@@ -461,46 +461,46 @@ class WebhookNotification(NotificationChannel):
 
 ---
 
-## ✅ 优秀实践亮点
+## [OK_CHECK] 优秀实践亮点
 
-### 1. 安全性设计 ⭐⭐⭐⭐⭐
+### 1. 安全性设计 [STAR][STAR][STAR][STAR][STAR]
 
-- ✅ 使用 `secrets` 模块生成密码学安全随机数
-- ✅ 实现 `SecureKeyManager` 支持私钥安全清零
-- ✅ 椭圆曲线运算提供恒定时间实现
-- ✅ 敏感数据使用 `bytearray` 存储，支持安全擦除
+- [OK_CHECK] 使用 `secrets` 模块生成密码学安全随机数
+- [OK_CHECK] 实现 `SecureKeyManager` 支持私钥安全清零
+- [OK_CHECK] 椭圆曲线运算提供恒定时间实现
+- [OK_CHECK] 敏感数据使用 `bytearray` 存储，支持安全擦除
 
-### 2. GPU优化 ⭐⭐⭐⭐⭐
+### 2. GPU优化 [STAR][STAR][STAR][STAR][STAR]
 
-- ✅ Intel Arc A770兼容性修复完善
-- ✅ 持久化Buffer避免频繁内存分配
-- ✅ 自适应超时管理器防止GPU挂起
-- ✅ 多GPU负载均衡机制
+- [OK_CHECK] Intel Arc A770兼容性修复完善
+- [OK_CHECK] 持久化Buffer避免频繁内存分配
+- [OK_CHECK] 自适应超时管理器防止GPU挂起
+- [OK_CHECK] 多GPU负载均衡机制
 
-### 3. 架构设计 ⭐⭐⭐⭐
+### 3. 架构设计 [STAR][STAR][STAR][STAR]
 
-- ✅ 模块化设计清晰，依赖关系合理
-- ✅ 观察者模式实现监控解耦
-- ✅ 策略模式支持多种碰撞算法
-- ✅ 工厂模式管理GPU内核
+- [OK_CHECK] 模块化设计清晰，依赖关系合理
+- [OK_CHECK] 观察者模式实现监控解耦
+- [OK_CHECK] 策略模式支持多种碰撞算法
+- [OK_CHECK] 工厂模式管理GPU内核
 
-### 4. 监控体系 ⭐⭐⭐⭐
+### 4. 监控体系 [STAR][STAR][STAR][STAR]
 
-- ✅ 多层次监控（性能、告警、日志）
-- ✅ 数据原子写入防止损坏
-- ✅ 告警冷却机制避免风暴
-- ✅ 统一数据源设计
+- [OK_CHECK] 多层次监控（性能、告警、日志）
+- [OK_CHECK] 数据原子写入防止损坏
+- [OK_CHECK] 告警冷却机制避免风暴
+- [OK_CHECK] 统一数据源设计
 
-### 5. 配置管理 ⭐⭐⭐⭐
+### 5. 配置管理 [STAR][STAR][STAR][STAR]
 
-- ✅ 线程安全的配置读写
-- ✅ 深拷贝避免配置共享
-- ✅ 完整的配置验证机制
-- ✅ 支持分层配置合并
+- [OK_CHECK] 线程安全的配置读写
+- [OK_CHECK] 深拷贝避免配置共享
+- [OK_CHECK] 完整的配置验证机制
+- [OK_CHECK] 支持分层配置合并
 
 ---
 
-## 📈 性能优化建议
+## [PERF] 性能优化建议
 
 ### 短期优化 (1-2周)
 
@@ -522,22 +522,22 @@ class WebhookNotification(NotificationChannel):
 
 ---
 
-## 🔒 安全审计结论
+## [LOCK] 安全审计结论
 
 ### 总体安全评级: **A-**
 
 **优势**:
 
-- ✅ 私钥生命周期管理完善
-- ✅ 使用密码学安全随机数生成器
-- ✅ 支持私钥安全清零
-- ✅ 椭圆曲线运算有恒定时间实现
+- [OK_CHECK] 私钥生命周期管理完善
+- [OK_CHECK] 使用密码学安全随机数生成器
+- [OK_CHECK] 支持私钥安全清零
+- [OK_CHECK] 椭圆曲线运算有恒定时间实现
 
 **改进空间**:
 
-- ⚠️ 内存锁定功能未完全实现 (P1-1)
-- ⚠️ 熵池健康检查缺失 (P1-3)
-- ⚠️ 侧信道防护需要加强文档说明
+- [WARN] 内存锁定功能未完全实现 (P1-1)
+- [WARN] 熵池健康检查缺失 (P1-3)
+- [WARN] 侧信道防护需要加强文档说明
 
 **建议**:
 
@@ -547,7 +547,7 @@ class WebhookNotification(NotificationChannel):
 
 ---
 
-## 📋 修复优先级矩阵
+## [CHECKLIST] 修复优先级矩阵
 
 | 优先级 | 问题ID | 修复工作量 | 影响范围 | 建议修复时间 |
 |-------|--------|-----------|---------|-------------|
@@ -565,7 +565,7 @@ class WebhookNotification(NotificationChannel):
 
 ---
 
-## 🎯 总结与行动计划
+## [TARGET] 总结与行动计划
 
 ### 立即行动 (本周)
 
@@ -588,7 +588,7 @@ class WebhookNotification(NotificationChannel):
 
 ---
 
-## 📝 审查方法论
+## [MEMO] 审查方法论
 
 本次审查采用以下方法：
 

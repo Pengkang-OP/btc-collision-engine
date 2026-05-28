@@ -5,11 +5,11 @@ import tempfile
 
 # 添加项目根目录到路径
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-import pathlib  # noqa: E402
+import pathlib
 
-import pytest  # noqa: E402
+import pytest
 
-from src.collision.checkpoint_manager import CheckpointManager  # noqa: E402
+from src.collision.checkpoint_manager import CheckpointManager
 
 
 class TestACLEnvironmentVariable:

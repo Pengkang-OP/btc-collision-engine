@@ -6,7 +6,7 @@
 
 ---
 
-## 📊 现状分析
+## [CHART] 现状分析
 
 ### 当前架构
 
@@ -16,7 +16,7 @@ secp256k1.py (教学参考实现)
     ↓
 crypto_backend.py (抽象层)
     ├── PurePythonBackend (使用secp256k1.py)
-    ├── CoincurveBackend (libsecp256k1) ✅ 推荐
+    ├── CoincurveBackend (libsecp256k1) [OK] 推荐
     ├── OpenSSLBackend (cryptography)
     └── ECDSABackend (ecdsa库)
 
@@ -26,17 +26,17 @@ crypto_backend.py (抽象层)
 
 **直接使用secp256k1.py的文件** (需要迁移):
 
-1. ✅ `src/collision/key_collision_engine.py` - CPU碰撞引擎
+1. [OK] `src/collision/key_collision_engine.py` - CPU碰撞引擎
 
-2. ✅ `src/collision/gpu_collision_engine.py` - GPU碰撞引擎  
+2. [OK] `src/collision/gpu_collision_engine.py` - GPU碰撞引擎  
 
-3. ✅ `src/collision/plugins/example_plugin.py` - 示例插件
+3. [OK] `src/collision/plugins/example_plugin.py` - 示例插件
 
 **已使用crypto_backend的文件** (无需迁移):
 
-1. ✅ `src/core/address_generator.py` - 地址生成器
+1. [OK] `src/core/address_generator.py` - 地址生成器
 
-2. ✅ `src/config/crypto_config.py` - 加密配置
+2. [OK] `src/config/crypto_config.py` - 加密配置
 
 ### 默认后端选择
 
@@ -48,11 +48,11 @@ crypto_backend.py (抽象层)
 
 ```
 
-**当前环境**: coincurve已安装并自动启用 ✅
+**当前环境**: coincurve已安装并自动启用 [OK]
 
 ---
 
-## 🎯 迁移目标
+## [TARGET] 迁移目标
 
 ### 性能目标
 
@@ -60,22 +60,22 @@ crypto_backend.py (抽象层)
 |------|-------------------|----------------|------|
 | 标量乘法 | 2.29ms | ~0.002ms | **1000x** |
 | 公钥生成 | ~5ms | ~0.005ms | **1000x** |
-| 恒定时间 | ❌ 无法保证 | ✅ 保证 | **安全** |
-| 侧信道防护 | ❌ 无 | ✅ 有 | **安全** |
+| 恒定时间 | [FAIL] 无法保证 | [OK] 保证 | **安全** |
+| 侧信道防护 | [FAIL] 无 | [OK] 有 | **安全** |
 
 ### 兼容性目标
 
-- ✅ 保持向后兼容（降级到PurePythonBackend）
+- [OK] 保持向后兼容（降级到PurePythonBackend）
 
-- ✅ 统一错误处理
+- [OK] 统一错误处理
 
-- ✅ 保持API一致性
+- [OK] 保持API一致性
 
-- ✅ 测试覆盖率100%
+- [OK] 测试覆盖率100%
 
 ---
 
-## 📋 迁移步骤
+## [CHECKLIST] 迁移步骤
 
 ### 步骤1: 修改key_collision_engine.py
 
@@ -235,15 +235,15 @@ def get_crypto_backend_info(self) -> dict:
 
 测试内容:
 
-1. ✅ coincurve后端可用性检查
+1. [OK] coincurve后端可用性检查
 
-2. ✅ 性能对比测试（coincurve vs secp256k1.py）
+2. [OK] 性能对比测试（coincurve vs secp256k1.py）
 
-3. ✅ 计算正确性验证
+3. [OK] 计算正确性验证
 
-4. ✅ 降级机制测试
+4. [OK] 降级机制测试
 
-5. ✅ 线程安全测试
+5. [OK] 线程安全测试
 
 ---
 
@@ -263,7 +263,7 @@ def get_crypto_backend_info(self) -> dict:
 
 ---
 
-## ⚠️ 风险评估
+## [WARN] 风险评估
 
 ### 风险1: coincurve未安装
 
@@ -320,7 +320,7 @@ except ImportError:
 
 ---
 
-## 📊 验证计划
+## [CHART] 验证计划
 
 ### 1. 功能验证
 
@@ -370,24 +370,24 @@ python -m pytest tests/test_gpu_collision_engine.py -v
 
 ---
 
-## 🚀 实施时间线
+## [QUICK] 实施时间线
 
 | 步骤 | 预计时间 | 状态 |
 |------|---------|------|
-| 1. 分析现状 | 10min | ✅ 完成 |
-| 2. 修改key_collision_engine.py | 20min | ⏳ 待执行 |
-| 3. 修改gpu_collision_engine.py | 20min | ⏳ 待执行 |
-| 4. 修改example_plugin.py | 10min | ⏳ 待执行 |
-| 5. 添加后端切换API | 30min | ⏳ 待执行 |
-| 6. 创建迁移验证测试 | 40min | ⏳ 待执行 |
-| 7. 运行测试验证 | 20min | ⏳ 待执行 |
-| 8. 性能对比测试 | 15min | ⏳ 待执行 |
-| 9. 更新文档 | 30min | ⏳ 待执行 |
+| 1. 分析现状 | 10min | [OK] 完成 |
+| 2. 修改key_collision_engine.py | 20min | [HOURGLASS] 待执行 |
+| 3. 修改gpu_collision_engine.py | 20min | [HOURGLASS] 待执行 |
+| 4. 修改example_plugin.py | 10min | [HOURGLASS] 待执行 |
+| 5. 添加后端切换API | 30min | [HOURGLASS] 待执行 |
+| 6. 创建迁移验证测试 | 40min | [HOURGLASS] 待执行 |
+| 7. 运行测试验证 | 20min | [HOURGLASS] 待执行 |
+| 8. 性能对比测试 | 15min | [HOURGLASS] 待执行 |
+| 9. 更新文档 | 30min | [HOURGLASS] 待执行 |
 | **总计** | **~3小时** | |
 
 ---
 
-## ✅ 成功标准
+## [OK] 成功标准
 
 - [x] 所有3个文件完成迁移
 
@@ -403,7 +403,7 @@ python -m pytest tests/test_gpu_collision_engine.py -v
 
 ---
 
-## 📝 回滚方案
+## [CONFIG] 回滚方案
 
 如果迁移出现问题，可以快速回滚：
 

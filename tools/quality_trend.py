@@ -16,9 +16,9 @@ from utf8_helper import setup_windows_utf8
 
 setup_windows_utf8()
 
-import contextlib  # noqa: E402
+import contextlib
 
-from tools.check_document_quality import DocumentQualityChecker  # noqa: E402
+from tools.check_document_quality import DocumentQualityChecker
 
 
 class QualityTrendAnalyzer:
@@ -44,14 +44,14 @@ class QualityTrendAnalyzer:
                     data = json.load(f)
                     if isinstance(data, list):
                         return data
-                    print("⚠️  历史记录格式错误，重置为空列表")
+                    print("WARN 历史记录格式错误，重置为空列表")
                     return []
             except json.JSONDecodeError as e:
-                print(f"⚠️  历史记录JSON解析失败: {e}")
-                print("💡 重置为空列表")
+                print(f"WARN 历史记录JSON解析失败: {e}")
+                print("TIP 重置为空列表")
                 return []
             except (OSError, PermissionError) as e:
-                print(f"⚠️  无法读取历史记录: {e}")
+                print(f"WARN 无法读取历史记录: {e}")
                 return []
         return []
 
@@ -65,7 +65,7 @@ class QualityTrendAnalyzer:
             # 原子替换
             temp_file.replace(self.history_file)
         except (OSError, PermissionError) as e:
-            print(f"⚠️  无法保存历史记录: {e}")
+            print(f"WARN 无法保存历史记录: {e}")
 
     def add_record(self, avg_score: float, doc_count: int, details: dict):
         """添加新记录.
@@ -109,17 +109,17 @@ class QualityTrendAnalyzer:
             trend = scores[-1] - scores[-2]
             if trend > 0.2:
                 trend_status = "improving"
-                trend_icon = "📈"
+                trend_icon = "UP"
             elif trend < -0.2:
                 trend_status = "declining"
-                trend_icon = "📉"
+                trend_icon = "DOWN"
             else:
                 trend_status = "stable"
-                trend_icon = "➡️"
+                trend_icon = "[ARROW]"
         else:
             trend = 0
             trend_status = "stable"
-            trend_icon = "➡️"
+            trend_icon = "[ARROW]"
 
         return {
             "status": "success",
@@ -138,34 +138,34 @@ class QualityTrendAnalyzer:
         trend = self.get_trend()
 
         print(f"\n{'=' * 60}")
-        print("📊 文档质量趋势分析报告")
+        print("STATS 文档质量趋势分析报告")
         print(f"{'=' * 60}")
 
         if trend["status"] == "insufficient_data":
-            print(f"\n⚠️  {trend['message']}")
+            print(f"\nWARN {trend['message']}")
             print(f"当前记录数: {len(self.history)}")
-            print("\n💡 建议: 运行多次质量检查以积累数据")
+            print("\nTIP 建议: 运行多次质量检查以积累数据")
             print("   python tools/check_document_quality.py")
             return
 
-        print("\n📈 统计信息:")
+        print("\nUP 统计信息:")
         print(f"  记录次数: {trend['record_count']}")
         print(f"  平均评分: {trend['avg_score']}/10")
         print(f"  最低评分: {trend['min_score']}/10")
         print(f"  最高评分: {trend['max_score']}/10")
 
-        print(f"\n📊 质量趋势: {trend['trend_icon']} {trend['trend_status'].upper()}")
+        print(f"\nSTATS 质量趋势: {trend['trend_icon']} {trend['trend_status'].upper()}")
         print(f"  最近变化: {trend['trend']:+.2f}")
 
         if trend["trend_status"] == "improving":
-            print("  ✅ 文档质量正在提升!")
+            print("  OK 文档质量正在提升!")
         elif trend["trend_status"] == "declining":
-            print("  ⚠️  文档质量下降，需要关注!")
+            print("  WARN 文档质量下降，需要关注!")
         else:
-            print("  ➡️  文档质量稳定")
+            print("  [ARROW] 文档质量稳定")
 
         # 评分历史
-        print("\n📝 最近评分历史:")
+        print("\n[NOTE] 最近评分历史:")
         for i, score in enumerate(trend["scores"][-10:], 1):
             print(f"  {i:2d}. {score}/10")
 
@@ -174,7 +174,7 @@ class QualityTrendAnalyzer:
     def export_csv(self, output_file: str = "quality_trend.csv"):
         """导出为CSV格式."""
         if not self.history:
-            print("❌ 没有历史数据")
+            print("ERR 没有历史数据")
             return
 
         try:
@@ -183,11 +183,11 @@ class QualityTrendAnalyzer:
                 f.writelines(
                     f"{record['timestamp']},{record['avg_score']},{record['doc_count']}\n"
                     for record in self.history
-                )  # noqa: E501
+                )
 
-            print(f"✅ 数据已导出到: {output_file}")
+            print(f"OK 数据已导出到: {output_file}")
         except (OSError, PermissionError) as e:
-            print(f"❌ 无法导出CSV: {e}")
+            print(f"ERR 无法导出CSV: {e}")
 
 
 def main():
@@ -210,7 +210,7 @@ def main():
 
     # 执行质量检查
     if args.check:
-        print("🔍 执行质量检查...")
+        print("SEARCH 执行质量检查...")
         checker = DocumentQualityChecker(args.docs_dir)
         scores = checker.check_all()
 
@@ -226,7 +226,7 @@ def main():
 
             # 记录
             analyzer.add_record(avg_score, len(scores), details)
-            print("\n✅ 质量检查完成，已记录")
+            print("\nOK 质量检查完成，已记录")
             print(f"   平均评分: {avg_score:.1f}/10")
             print(f"   文档数量: {len(scores)}")
 

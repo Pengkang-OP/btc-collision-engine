@@ -6,73 +6,73 @@
 > **审查时间**: 2026-04-21
 > **审查范围**: GPU 引擎 P0/P1/P2 集成更改
 > **审查类型**: 回归风险审查
-> **审查状态**: ✅ 通过（有少量建议）
+> **审查状态**: [OK_CHECK] 通过（有少量建议）
 
 ## 目录
 
-- [📋 审查摘要](#-审查摘要)
+- [[CHECKLIST] 审查摘要](#-审查摘要)
   - [整体评价](#整体评价)
   - [审查结论](#审查结论)
-- [🚨 高风险问题（必须修复）](#-高风险问题必须修复)
-- [⚠️ 中风险问题（建议修复）](#-中风险问题建议修复)
+- [[ALERT] 高风险问题（必须修复）](#-高风险问题必须修复)
+- [[WARN] 中风险问题（建议修复）](#-中风险问题建议修复)
   - [问题 1: `run_batch` 中的监控代码可能影响性能](#问题-1-run_batch-中的监控代码可能影响性能)
 - [问题 2: `_init_intel_monitoring_and_tuning` 中的错误处理](#问题-2-_init_intel_monitoring_and_tuning-中的错误处理)
   - [问题 3: `run_benchmark` 和 `start_auto_tuning` 可能修改 `batch_size`](#问题-3-run_benchmark-和-start_auto_tuning-可能修改-batch_size)
-- [💡 低风险问题（可选优化）](#-低风险问题可选优化)
+- [[TIP] 低风险问题（可选优化）](#-低风险问题可选优化)
   - [优化 1: 导入顺序调整](#优化-1-导入顺序调整)
 - [优化 2: 添加类型注解](#优化-2-添加类型注解)
 - [优化 3: 文档字符串完善](#优化-3-文档字符串完善)
-- [✅ 优秀实践](#-优秀实践)
-  - [1. 防御性编程 ✅](#1-防御性编程-)
-- [2. 向后兼容性 ✅](#2-向后兼容性-)
-- [3. 日志记录完善 ✅](#3-日志记录完善-)
-  - [4. 测试覆盖完整 ✅](#4-测试覆盖完整-)
-- [📊 回归风险评估](#-回归风险评估)
+- [[OK_CHECK] 优秀实践](#-优秀实践)
+  - [1. 防御性编程 [OK_CHECK]](#1-防御性编程-)
+- [2. 向后兼容性 [OK_CHECK]](#2-向后兼容性-)
+- [3. 日志记录完善 [OK_CHECK]](#3-日志记录完善-)
+  - [4. 测试覆盖完整 [OK_CHECK]](#4-测试覆盖完整-)
+- [[CHART] 回归风险评估](#-回归风险评估)
   - [影响范围分析](#影响范围分析)
   - [非 Intel GPU 影响](#非-intel-gpu-影响)
   - [Intel GPU 影响](#intel-gpu-影响)
-- [🔍 详细代码检查清单](#-详细代码检查清单)
-  - [初始化流程 ✅](#初始化流程-)
-  - [运行时行为 ✅](#运行时行为-)
-  - [线程安全 ✅](#线程安全-)
-  - [内存管理 ✅](#内存管理-)
-  - [API 兼容性 ✅](#api-兼容性-)
-- [📝 总结建议](#-总结建议)
+- [[SEARCH] 详细代码检查清单](#-详细代码检查清单)
+  - [初始化流程 [OK_CHECK]](#初始化流程-)
+  - [运行时行为 [OK_CHECK]](#运行时行为-)
+  - [线程安全 [OK_CHECK]](#线程安全-)
+  - [内存管理 [OK_CHECK]](#内存管理-)
+  - [API 兼容性 [OK_CHECK]](#api-兼容性-)
+- [[MEMO] 总结建议](#-总结建议)
   - [立即执行（阻塞合并）](#立即执行阻塞合并)
   - [尽快执行（建议合并前）](#尽快执行建议合并前)
   - [后续优化（可合并后执行）](#后续优化可合并后执行)
-- [🎯 最终结论](#-最终结论)
-  - [✅ **代码可以合并**](#-代码可以合并)
-- [📊 审查统计](#-审查统计)
+- [[TARGET] 最终结论](#-最终结论)
+  - [[OK_CHECK] **代码可以合并**](#-代码可以合并)
+- [[CHART] 审查统计](#-审查统计)
 
 ---
 
-## 📋 审查摘要
+## [CHECKLIST] 审查摘要
 
 ### 整体评价
 
 | 维度 | 评分 | 说明 |
 |------|------|------|
-| **向后兼容性** | ⭐⭐⭐⭐⭐ | 优秀 - 非 Intel GPU 完全不受影响 |
-| **代码质量** | ⭐⭐⭐⭐ | 良好 - 结构清晰，有改进空间 |
-| **性能影响** | ⭐⭐⭐⭐ | 良好 - 监控代码有轻微开销 |
-| **错误处理** | ⭐⭐⭐⭐⭐ | 优秀 - 全面且防御性编程 |
-| **测试覆盖** | ⭐⭐⭐⭐⭐ | 优秀 - 55 个测试 100% 通过 |
-| **回归风险** | 🟢 低 | 影响范围有限，防御措施完善 |
+| **向后兼容性** | [STAR][STAR][STAR][STAR][STAR] | 优秀 - 非 Intel GPU 完全不受影响 |
+| **代码质量** | [STAR][STAR][STAR][STAR] | 良好 - 结构清晰，有改进空间 |
+| **性能影响** | [STAR][STAR][STAR][STAR] | 良好 - 监控代码有轻微开销 |
+| **错误处理** | [STAR][STAR][STAR][STAR][STAR] | 优秀 - 全面且防御性编程 |
+| **测试覆盖** | [STAR][STAR][STAR][STAR][STAR] | 优秀 - 55 个测试 100% 通过 |
+| **回归风险** | [GREEN] 低 | 影响范围有限，防御措施完善 |
 
 ### 审查结论
 
-**✅ 代码可以合并**，建议采纳以下改进建议（非阻塞）。
+**[OK_CHECK] 代码可以合并**，建议采纳以下改进建议（非阻塞）。
 
 ---
 
-## 🚨 高风险问题（必须修复）
+## [ALERT] 高风险问题（必须修复）
 
 **无** - 未发现高风险问题。
 
 ---
 
-## ⚠️ 中风险问题（建议修复）
+## [WARN] 中风险问题（建议修复）
 
 ### 问题 1: `run_batch` 中的监控代码可能影响性能
 
@@ -170,17 +170,17 @@ if self.memory_monitor:
 ```python
 def _init_intel_monitoring_and_tuning(self):
     """初始化 Intel GPU 监控和调优组件（P1/P2）"""
-    logger.info("\n📊 初始化 Intel GPU 监控和调优组件...")
+    logger.info("\n[CHART] 初始化 Intel GPU 监控和调优组件...")
 
     # 1. 自适应超时管理器（P1）
     self.timeout_manager = AdaptiveTimeoutManager(...)  # 可能失败
-    logger.info("✅ 自适应超时管理器已初始化")
+    logger.info("[OK_CHECK] 自适应超时管理器已初始化")
 
     # 2. 显存监控器（P1）
     total_memory = self._gpu_device.device_info.get('global_mem_size', 0)
     if total_memory > 0:
         self.memory_monitor = IntelMemoryMonitor(...)  # 可能失败
-        logger.info(f"✅ 显存监控器已初始化 (总显存: {total_memory/1024**3:.1f}GB)")
+        logger.info(f"[OK_CHECK] 显存监控器已初始化 (总显存: {total_memory/1024**3:.1f}GB)")
 
     # 3-5. 其他组件...
 ```python
@@ -196,7 +196,7 @@ def _init_intel_monitoring_and_tuning(self):
 ```python
 def _init_intel_monitoring_and_tuning(self):
     """初始化 Intel GPU 监控和调优组件（P1/P2）"""
-    logger.info("\n📊 初始化 Intel GPU 监控和调优组件...")
+    logger.info("\n[CHART] 初始化 Intel GPU 监控和调优组件...")
 
     # 1. 自适应超时管理器（P1）
     try:
@@ -207,9 +207,9 @@ def _init_intel_monitoring_and_tuning(self):
             min_timeout=10.0,
             max_timeout=120.0
         )
-        logger.info("✅ 自适应超时管理器已初始化")
+        logger.info("[OK_CHECK] 自适应超时管理器已初始化")
     except Exception as e:
-        logger.warning(f"⚠️ 自适应超时管理器初始化失败（非致命）: {e}")
+        logger.warning(f"[WARN] 自适应超时管理器初始化失败（非致命）: {e}")
         self.timeout_manager = None
 
     # 2. 显存监控器（P1）
@@ -220,27 +220,27 @@ def _init_intel_monitoring_and_tuning(self):
                 total_memory_bytes=total_memory,
                 safe_usage_ratio=0.45
             )
-            logger.info(f"✅ 显存监控器已初始化 (总显存: {total_memory/1024**3:.1f}GB)")
+            logger.info(f"[OK_CHECK] 显存监控器已初始化 (总显存: {total_memory/1024**3:.1f}GB)")
         else:
-            logger.warning("⚠️ 无法获取显存大小，跳过显存监控器初始化")
+            logger.warning("[WARN] 无法获取显存大小，跳过显存监控器初始化")
     except Exception as e:
-        logger.warning(f"⚠️ 显存监控器初始化失败（非致命）: {e}")
+        logger.warning(f"[WARN] 显存监控器初始化失败（非致命）: {e}")
         self.memory_monitor = None
 
     # 3. 基准测试套件（P2）
     try:
         self.benchmark_suite = GPUBenchmarkSuite(self)
-        logger.info("✅ 基准测试套件已初始化")
+        logger.info("[OK_CHECK] 基准测试套件已初始化")
     except Exception as e:
-        logger.warning(f"⚠️ 基准测试套件初始化失败（非致命）: {e}")
+        logger.warning(f"[WARN] 基准测试套件初始化失败（非致命）: {e}")
         self.benchmark_suite = None
 
     # 4. 自动调优器（P2）
     try:
         self.auto_tuner = GPUAutoTuner(self)
-        logger.info("✅ 自动调优器已初始化")
+        logger.info("[OK_CHECK] 自动调优器已初始化")
     except Exception as e:
-        logger.warning(f"⚠️ 自动调优器初始化失败（非致命）: {e}")
+        logger.warning(f"[WARN] 自动调优器初始化失败（非致命）: {e}")
         self.auto_tuner = None
 
     # 5. 性能报告生成器（P2）
@@ -250,12 +250,12 @@ def _init_intel_monitoring_and_tuning(self):
             benchmark_suite=self.benchmark_suite,
             auto_tuner=self.auto_tuner
         )
-        logger.info("✅ 性能报告生成器已初始化")
+        logger.info("[OK_CHECK] 性能报告生成器已初始化")
     except Exception as e:
-        logger.warning(f"⚠️ 性能报告生成器初始化失败（非致命）: {e}")
+        logger.warning(f"[WARN] 性能报告生成器初始化失败（非致命）: {e}")
         self.performance_reporter = None
 
-    logger.info("✅ 监控和调优组件初始化完成\n")
+    logger.info("[OK_CHECK] 监控和调优组件初始化完成\n")
 ```python
 
 **优先级**: 中（提高鲁棒性）
@@ -277,8 +277,8 @@ def start_auto_tuning(self, max_iterations: int = 30, save_report: bool = True) 
     # 调优回调：更新 batch_size
     def on_new_batch_size(new_size):
         old_size = self.batch_size
-        self.batch_size = new_size  # ⚠️ 直接修改
-        logger.info(f"🔄 更新 batch_size: {old_size:,} -> {new_size:,}")
+        self.batch_size = new_size  # [WARN] 直接修改
+        logger.info(f"[REFRESH] 更新 batch_size: {old_size:,} -> {new_size:,}")
 
     results = self.auto_tuner.start_tuning(
         max_iterations=max_iterations,
@@ -319,10 +319,10 @@ def start_auto_tuning(
 
     # 保存原始 batch_size
     original_batch_size = self.batch_size
-    logger.info(f"📌 当前 batch_size: {original_batch_size:,}")
+    logger.info(f"[PIN] 当前 batch_size: {original_batch_size:,}")
 
     logger.info("\n" + "="*60)
-    logger.info("🎯 开始自动调优")
+    logger.info("[TARGET] 开始自动调优")
     logger.info("="*60)
 
     # 调优回调：更新 batch_size（仅在 auto_apply=True 时）
@@ -330,9 +330,9 @@ def start_auto_tuning(
         if auto_apply:
             old_size = self.batch_size
             self.batch_size = new_size
-            logger.info(f"🔄 自动更新 batch_size: {old_size:,} -> {new_size:,}")
+            logger.info(f"[REFRESH] 自动更新 batch_size: {old_size:,} -> {new_size:,}")
         else:
-            logger.info(f"💡 建议 batch_size: {new_size:,} (当前: {self.batch_size:,})")
+            logger.info(f"[TIP] 建议 batch_size: {new_size:,} (当前: {self.batch_size:,})")
 
     results = self.auto_tuner.start_tuning(
         max_iterations=max_iterations,
@@ -341,13 +341,13 @@ def start_auto_tuning(
 
     # 显示结果
     optimal_size = results.get('optimal_batch_size')
-    logger.info(f"\n✅ 调优完成！")
+    logger.info(f"\n[OK_CHECK] 调优完成！")
     logger.info(f"   最优 batch_size: {optimal_size:,}")
     logger.info(f"   预期吞吐量: {results.get('expected_throughput', 0):,.0f} keys/s")
     logger.info(f"   调优周期: {results.get('tuning_cycles', 0)}")
 
     if not auto_apply and optimal_size:
-        logger.info(f"   💡 要应用此配置，请使用: engine.batch_size = {optimal_size:,}")
+        logger.info(f"   [TIP] 要应用此配置，请使用: engine.batch_size = {optimal_size:,}")
 
     # 保存报告...
     return results
@@ -357,7 +357,7 @@ def start_auto_tuning(
 
 ---
 
-## 💡 低风险问题（可选优化）
+## [TIP] 低风险问题（可选优化）
 
 ### 优化 1: 导入顺序调整
 
@@ -481,9 +481,9 @@ def _init_intel_monitoring_and_tuning(self):
 
 ---
 
-## ✅ 优秀实践
+## [OK_CHECK] 优秀实践
 
-### 1. 防御性编程 ✅
+### 1. 防御性编程 [OK_CHECK]
 
 **位置**: 多处
 
@@ -493,7 +493,7 @@ def _init_intel_monitoring_and_tuning(self):
 - 不会因监控组件失败而影响主流程
 
 ```python
-# ✅ 优秀示例
+# [OK_CHECK] 优秀示例
 if self.timeout_manager:
     self.timeout_manager.record_execution_time(execution_time_ms)
 
@@ -504,7 +504,7 @@ except Exception as perf_error:
     logger.debug(f"性能指标记录失败: {perf_error}")
 ```markdown
 
-## 2. 向后兼容性 ✅
+## 2. 向后兼容性 [OK_CHECK]
 
 **位置**: `src/collision/gpu_collision_engine.py:713`
 
@@ -514,14 +514,14 @@ except Exception as perf_error:
 - 所有新属性默认为 None
 
 ```python
-# ✅ 优秀示例
+# [OK_CHECK] 优秀示例
 if vendor.lower().startswith('intel'):
-    logger.info("🔧 检测到 Intel GPU，应用特殊优化")
+    logger.info("[WRENCH] 检测到 Intel GPU，应用特殊优化")
     self._apply_intel_specific_optimizations()
 # 非 Intel GPU 不会进入此分支
 ```
 
-## 3. 日志记录完善 ✅
+## 3. 日志记录完善 [OK_CHECK]
 
 **位置**: 所有新增代码
 
@@ -531,7 +531,7 @@ if vendor.lower().startswith('intel'):
 - 清晰的警告和错误信息
 - 便于调试和监控
 
-### 4. 测试覆盖完整 ✅
+### 4. 测试覆盖完整 [OK_CHECK]
 
 **优点**:
 
@@ -541,21 +541,21 @@ if vendor.lower().startswith('intel'):
 
 ---
 
-## 📊 回归风险评估
+## [CHART] 回归风险评估
 
 ### 影响范围分析
 
 | 组件 | 影响范围 | 风险等级 | 说明 |
 |------|---------|---------|------|
-| **导入语句** | 全局 | 🟢 低 | 仅在模块加载时执行 |
-| **`__init__` 属性** | 实例 | 🟢 低 | 默认为 None，无副作用 |
-| **`_init_intel_monitoring_and_tuning`** | Intel GPU | 🟢 低 | 仅 Intel GPU 调用 |
-| **`run_batch` 监控** | 所有 GPU | 🟡 中 | 每次批次执行都调用 |
-| **P2 便捷方法** | 手动调用 | 🟢 低 | 用户主动触发 |
+| **导入语句** | 全局 | [GREEN] 低 | 仅在模块加载时执行 |
+| **`__init__` 属性** | 实例 | [GREEN] 低 | 默认为 None，无副作用 |
+| **`_init_intel_monitoring_and_tuning`** | Intel GPU | [GREEN] 低 | 仅 Intel GPU 调用 |
+| **`run_batch` 监控** | 所有 GPU | [YELLOW] 中 | 每次批次执行都调用 |
+| **P2 便捷方法** | 手动调用 | [GREEN] 低 | 用户主动触发 |
 
 ### 非 Intel GPU 影响
 
-**结论**: ✅ **零影响**
+**结论**: [OK_CHECK] **零影响**
 
 1. `_apply_intel_specific_optimizations()` 不会被调用
 2. `timeout_manager` 保持为 None
@@ -565,7 +565,7 @@ if vendor.lower().startswith('intel'):
 
 ### Intel GPU 影响
 
-**结论**: ✅ **正向影响**
+**结论**: [OK_CHECK] **正向影响**
 
 1. **性能**: 额外开销约 5-10 微秒/批次（可忽略）
 2. **稳定性**: 显著提升（超时预警 + 显存监控）
@@ -574,37 +574,37 @@ if vendor.lower().startswith('intel'):
 
 ---
 
-## 🔍 详细代码检查清单
+## [SEARCH] 详细代码检查清单
 
-### 初始化流程 ✅
+### 初始化流程 [OK_CHECK]
 
 - [x] 属性默认值安全（None）
 - [x] Intel 检测逻辑正确
 - [x] 组件初始化顺序合理
 - [x] 错误处理完善
 
-### 运行时行为 ✅
+### 运行时行为 [OK_CHECK]
 
 - [x] 监控代码有保护
 - [x] 异常不会传播
 - [x] 日志记录适当
 - [x] 性能影响可接受
 
-### 线程安全 ✅
+### 线程安全 [OK_CHECK]
 
 - [x] `timeout_manager` 使用 deque（线程安全）
 - [x] `memory_monitor` 基本操作原子
 - [x] 无共享可变状态
 - [x] 无竞态条件
 
-### 内存管理 ✅
+### 内存管理 [OK_CHECK]
 
 - [x] `deque` 有 maxlen 限制
 - [x] 历史列表有大小限制
 - [x] 无内存泄漏风险
 - [x] 资源正确释放
 
-### API 兼容性 ✅
+### API 兼容性 [OK_CHECK]
 
 - [x] 无方法签名更改
 - [x] 无返回值类型更改
@@ -613,7 +613,7 @@ if vendor.lower().startswith('intel'):
 
 ---
 
-## 📝 总结建议
+## [MEMO] 总结建议
 
 ### 立即执行（阻塞合并）
 
@@ -621,43 +621,43 @@ if vendor.lower().startswith('intel'):
 
 ### 尽快执行（建议合并前）
 
-1. ✅ **问题 2**: 为 `_init_intel_monitoring_and_tuning` 添加 try-except 保护
+1. [OK_CHECK] **问题 2**: 为 `_init_intel_monitoring_and_tuning` 添加 try-except 保护
    - 提高鲁棒性
    - 防止监控组件失败导致引擎崩溃
    - 工作量: 15 分钟
 
 ### 后续优化（可合并后执行）
 
-1. 💡 **问题 1**: 降低监控日志频率
+1. [TIP] **问题 1**: 降低监控日志频率
    - 减少日志噪音
    - 轻微性能提升
    - 工作量: 10 分钟
 
-2. 💡 **问题 3**: 添加 `auto_apply` 参数到 `start_auto_tuning`
+2. [TIP] **问题 3**: 添加 `auto_apply` 参数到 `start_auto_tuning`
    - 提高用户控制力
    - 防止意外修改配置
    - 工作量: 20 分钟
 
-3. 💡 **优化 1-3**: 代码风格和文档完善
+3. [TIP] **优化 1-3**: 代码风格和文档完善
    - 提高代码质量
    - 改善可维护性
    - 工作量: 30 分钟
 
 ---
 
-## 🎯 最终结论
+## [TARGET] 最终结论
 
-### ✅ **代码可以合并**
+### [OK_CHECK] **代码可以合并**
 
 **理由**:
 
-1. ✅ 无高风险问题
-2. ✅ 向后兼容性完美
-3. ✅ 测试覆盖完整
-4. ✅ 性能影响可接受
-5. ✅ 错误处理完善
-6. ✅ 非 Intel GPU 零影响
-7. ✅ Intel GPU 显著提升
+1. [OK_CHECK] 无高风险问题
+2. [OK_CHECK] 向后兼容性完美
+3. [OK_CHECK] 测试覆盖完整
+4. [OK_CHECK] 性能影响可接受
+5. [OK_CHECK] 错误处理完善
+6. [OK_CHECK] 非 Intel GPU 零影响
+7. [OK_CHECK] Intel GPU 显著提升
 
 **建议操作**:
 
@@ -668,7 +668,7 @@ if vendor.lower().startswith('intel'):
 
 ---
 
-## 📊 审查统计
+## [CHART] 审查统计
 
 | 指标 | 数值 |
 |------|------|
@@ -679,7 +679,7 @@ if vendor.lower().startswith('intel'):
 | **低风险问题** | 3 |
 | **优秀实践** | 4 |
 | **审查时间** | 45 分钟 |
-| **回归风险等级** | 🟢 低 |
+| **回归风险等级** | [GREEN] 低 |
 
 ---
 

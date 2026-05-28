@@ -6,25 +6,25 @@
 
 ---
 
-## 📊 功能使用总览
+## [CHART] 功能使用总览
 
 | 功能模块 | 状态 | 使用位置 | 使用频率 |
 |---------|------|---------|---------|
-| GPUMemoryPool | ✅ 已使用 | 碰撞引擎初始化 | 每次启动 |
-| GPUBufferAllocator | ❌ 未使用 | 仅测试代码 | 0次 |
-| GlobalGPUMemoryManager | ✅ 已使用 | 内存池单例管理 | 每次启动 |
-| BufferTracker | ✅ 已使用 | 碰撞引擎缓冲区管理 | 每次启动 |
-| calculate_optimal_batch_size | ✅ 已使用 | 测试/文档示例 | 测试阶段 |
-| BatchSizeConfig | ✅ 已使用 | 工具函数配置 | 测试阶段 |
-| preallocate_buffers | ❌ 未使用 | 无生产代码调用 | 0次 |
+| GPUMemoryPool | [OK_CHECK] 已使用 | 碰撞引擎初始化 | 每次启动 |
+| GPUBufferAllocator | [CROSS] 未使用 | 仅测试代码 | 0次 |
+| GlobalGPUMemoryManager | [OK_CHECK] 已使用 | 内存池单例管理 | 每次启动 |
+| BufferTracker | [OK_CHECK] 已使用 | 碰撞引擎缓冲区管理 | 每次启动 |
+| calculate_optimal_batch_size | [OK_CHECK] 已使用 | 测试/文档示例 | 测试阶段 |
+| BatchSizeConfig | [OK_CHECK] 已使用 | 工具函数配置 | 测试阶段 |
+| preallocate_buffers | [CROSS] 未使用 | 无生产代码调用 | 0次 |
 
 ---
 
-## ✅ 已使用功能详细分析
+## [OK_CHECK] 已使用功能详细分析
 
 ### 1. GPUMemoryPool - 核心内存池
 
-**状态**: ✅ **已使用 (生产环境)**
+**状态**: [OK_CHECK] **已使用 (生产环境)**
 
 #### 使用位置
 
@@ -69,18 +69,18 @@ GPUCollisionEngine.__init__()
 
 **配置文件中的使用**:
 
-- ✅ `config.intel_arc.json`: `"gpu_memory_pool": true`
-- ✅ `config.optimized.json`: `"gpu_memory_pool": true`
-- ✅ `config.example.json`: `"use_gpu_memory_pool": true`
-- ✅ `config.multi_gpu.json`: `"use_memory_pool": true`
+- [OK_CHECK] `config.intel_arc.json`: `"gpu_memory_pool": true`
+- [OK_CHECK] `config.optimized.json`: `"gpu_memory_pool": true`
+- [OK_CHECK] `config.example.json`: `"use_gpu_memory_pool": true`
+- [OK_CHECK] `config.multi_gpu.json`: `"use_memory_pool": true`
 
 **引擎参数**:
 
 ```python
 engine = GPUCollisionEngine(
-    use_gpu_memory_pool=True,           # ✅ 启用
-    gpu_pool_max_buffers=100,           # ✅ 最大100个缓冲区
-    gpu_pool_max_memory_mb=512          # ✅ 最大512MB
+    use_gpu_memory_pool=True,           # [OK_CHECK] 启用
+    gpu_pool_max_buffers=100,           # [OK_CHECK] 最大100个缓冲区
+    gpu_pool_max_memory_mb=512          # [OK_CHECK] 最大512MB
 )
 ```
 
@@ -88,7 +88,7 @@ engine = GPUCollisionEngine(
 
 ### 2. GlobalGPUMemoryManager - 全局管理器
 
-**状态**: ✅ **已使用 (作为单例)**
+**状态**: [OK_CHECK] **已使用 (作为单例)**
 
 #### 使用位置
 
@@ -120,7 +120,7 @@ def get_gpu_memory_pool(context, max_buffers: int = 100) -> GPUMemoryPool:
 
 ### 3. GPUBufferTracker - 缓冲区跟踪器
 
-**状态**: ✅ **已使用 (生产环境)**
+**状态**: [OK_CHECK] **已使用 (生产环境)**
 
 #### 使用位置
 
@@ -173,27 +173,27 @@ if hasattr(self, '_buffer_tracker'):
 
 | 功能 | 状态 | 说明 |
 |------|------|------|
-| track_buffer() | ✅ 已使用 | 注册缓冲区 |
-| release_buffer() | ✅ 已使用 | 注销缓冲区 |
-| get_stats() | ✅ 已使用 | 查询统计 |
-| force_check_on_shutdown() | ✅ 已使用 | 关闭时检查 |
+| track_buffer() | [OK_CHECK] 已使用 | 注册缓冲区 |
+| release_buffer() | [OK_CHECK] 已使用 | 注销缓冲区 |
+| get_stats() | [OK_CHECK] 已使用 | 查询统计 |
+| force_check_on_shutdown() | [OK_CHECK] 已使用 | 关闭时检查 |
 
 ---
 
 ### 4. calculate_optimal_batch_size - 智能计算
 
-**状态**: ✅ **已使用 (测试和文档)**
+**状态**: [OK_CHECK] **已使用 (测试和文档)**
 
 #### 使用位置
 
 **测试代码**:
 
-- ✅ `tests/test_gpu_memory_utils.py` (15次调用)
-- ✅ `tests/test_gpu_exception_handling.py` (1次调用)
+- [OK_CHECK] `tests/test_gpu_memory_utils.py` (15次调用)
+- [OK_CHECK] `tests/test_gpu_exception_handling.py` (1次调用)
 
 **文档示例**:
 
-- ✅ `src/utils/gpu_memory_utils.py` (docstring示例)
+- [OK_CHECK] `src/utils/gpu_memory_utils.py` (docstring示例)
 
 #### 使用场景
 
@@ -211,7 +211,7 @@ batch_size = calculate_optimal_batch_size(device, config=config)
 
 #### 生产代码使用情况
 
-❌ **未在生产代码中直接调用**
+[CROSS] **未在生产代码中直接调用**
 
 **原因分析**:
 
@@ -223,13 +223,13 @@ batch_size = calculate_optimal_batch_size(device, config=config)
 
 ### 5. BatchSizeConfig - 配置数据类
 
-**状态**: ✅ **已使用 (测试阶段)**
+**状态**: [OK_CHECK] **已使用 (测试阶段)**
 
 #### 使用位置
 
 **测试代码**:
 
-- ✅ `tests/test_gpu_memory_utils.py` (多次使用)
+- [OK_CHECK] `tests/test_gpu_memory_utils.py` (多次使用)
 
 **使用场景**:
 
@@ -245,11 +245,11 @@ config = BatchSizeConfig(
 
 ---
 
-## ❌ 未使用功能详细分析
+## [CROSS] 未使用功能详细分析
 
 ### 1. GPUBufferAllocator - 高级分配器
 
-**状态**: ❌ **未使用 (仅测试代码)**
+**状态**: [CROSS] **未使用 (仅测试代码)**
 
 #### 定义位置
 
@@ -273,11 +273,11 @@ class GPUBufferAllocator:
 
 **仅在测试代码中**:
 
-- ❌ `tests/test_gpu_memory_pool.py` (L144-170)
+- [CROSS] `tests/test_gpu_memory_pool.py` (L144-170)
 
 **生产代码**:
 
-- ❌ **无任何调用**
+- [CROSS] **无任何调用**
 
 #### 未使用原因分析
 
@@ -311,7 +311,7 @@ class GPUBufferAllocator:
 
 ### 2. preallocate_buffers - 预分配功能
 
-**状态**: ❌ **未使用 (生产代码)**
+**状态**: [CROSS] **未使用 (生产代码)**
 
 #### 定义位置
 
@@ -329,11 +329,11 @@ def preallocate_buffers(self, sizes: List[int], count_per_size: int = 2):
 
 **测试代码**:
 
-- ❌ 无测试覆盖
+- [CROSS] 无测试覆盖
 
 **生产代码**:
 
-- ❌ **无任何调用**
+- [CROSS] **无任何调用**
 
 #### 未使用原因分析
 
@@ -365,16 +365,16 @@ if self.use_gpu_memory_pool and self._gpu_memory_pool:
         ],
         count_per_size=2               # 每个大小2个
     )
-    logger.info("✅ GPU内存池预分配完成")
+    logger.info("[OK_CHECK] GPU内存池预分配完成")
 ```
 
-**推荐**: ✅ 启用预分配（低成本，有收益）
+**推荐**: [OK_CHECK] 启用预分配（低成本，有收益）
 
 ---
 
 ### 3. clear_all() - 全局清理
 
-**状态**: ❌ **未使用**
+**状态**: [CROSS] **未使用**
 
 #### 定义位置
 
@@ -394,11 +394,11 @@ def clear_all(self):
 
 **测试代码**:
 
-- ❌ 无调用
+- [CROSS] 无调用
 
 **生产代码**:
 
-- ❌ 无调用
+- [CROSS] 无调用
 
 #### 未使用原因
 
@@ -412,34 +412,34 @@ def clear_all(self):
 
 ---
 
-## 📈 使用统计总结
+## [PERF] 使用统计总结
 
 ### 核心功能使用率
 
 | 功能 | 定义行数 | 使用位置数 | 使用率 |
 |------|---------|-----------|--------|
-| GPUMemoryPool | 166行 | 5处 | 100% ✅ |
-| GPUBufferAllocator | 55行 | 1处(测试) | 0% ❌ |
-| GlobalGPUMemoryManager | 43行 | 2处 | 50% ⚠️ |
-| GPUBufferTracker | 190行 | 6处 | 100% ✅ |
-| calculate_optimal_batch_size | 128行 | 17处(测试) | 测试用 ✅ |
-| preallocate_buffers | 41行 | 0处 | 0% ❌ |
+| GPUMemoryPool | 166行 | 5处 | 100% [OK_CHECK] |
+| GPUBufferAllocator | 55行 | 1处(测试) | 0% [CROSS] |
+| GlobalGPUMemoryManager | 43行 | 2处 | 50% [WARN] |
+| GPUBufferTracker | 190行 | 6处 | 100% [OK_CHECK] |
+| calculate_optimal_batch_size | 128行 | 17处(测试) | 测试用 [OK_CHECK] |
+| preallocate_buffers | 41行 | 0处 | 0% [CROSS] |
 
 ### 代码行使用分析
 
 | 类别 | 行数 | 占比 | 状态 |
 |------|------|------|------|
-| **已使用代码** | ~400行 | 65% | ✅ |
-| **测试代码** | ~100行 | 16% | ✅ |
-| **未使用代码** | ~120行 | 19% | ❌ |
+| **已使用代码** | ~400行 | 65% | [OK_CHECK] |
+| **测试代码** | ~100行 | 16% | [OK_CHECK] |
+| **未使用代码** | ~120行 | 19% | [CROSS] |
 
 ---
 
-## 🎯 优化建议
+## [TARGET] 优化建议
 
 ### 高优先级 (立即执行)
 
-#### 1. 启用预分配功能 ⭐⭐⭐⭐⭐
+#### 1. 启用预分配功能 [STAR][STAR][STAR][STAR][STAR]
 
 **收益**: 首次分配延迟-50%  
 **成本**: 3行代码  
@@ -463,7 +463,7 @@ if self._gpu_memory_pool:
 
 ### 中优先级 (近期执行)
 
-#### 2. GPUBufferAllocator标记为实验性 ⭐⭐⭐
+#### 2. GPUBufferAllocator标记为实验性 [STAR][STAR][STAR]
 
 **收益**: 代码清晰度提升  
 **成本**: 修改注释  
@@ -482,7 +482,7 @@ class GPUBufferAllocator:
     """
 ```
 
-#### 3. 添加预分配单元测试 ⭐⭐⭐
+#### 3. 添加预分配单元测试 [STAR][STAR][STAR]
 
 **收益**: 代码覆盖率提升  
 **成本**: 30行测试代码  
@@ -492,7 +492,7 @@ class GPUBufferAllocator:
 
 ### 低优先级 (长期优化)
 
-#### 4. 清理未使用代码 ⭐⭐
+#### 4. 清理未使用代码 [STAR][STAR]
 
 **收益**: 代码库精简  
 **成本**: 需要评估影响  
@@ -504,7 +504,7 @@ class GPUBufferAllocator:
 - 确认无外部依赖后移除
 - 或移至experimental模块
 
-#### 5. 生产环境使用calculate_optimal_batch_size ⭐
+#### 5. 生产环境使用calculate_optimal_batch_size [STAR]
 
 **收益**: 自动优化配置  
 **成本**: 需要重构初始化逻辑  
@@ -512,24 +512,24 @@ class GPUBufferAllocator:
 
 ---
 
-## 📋 功能使用矩阵
+## [CHECKLIST] 功能使用矩阵
 
 | 功能 | 生产使用 | 测试覆盖 | 文档示例 | 配置支持 | 推荐状态 |
 |------|---------|---------|---------|---------|---------|
-| GPUMemoryPool.allocate() | ✅ | ✅ | ✅ | ✅ | 核心功能 |
-| GPUMemoryPool.release() | ✅ | ✅ | ✅ | ✅ | 核心功能 |
-| GPUMemoryPool.get_stats() | ✅ | ✅ | ✅ | ✅ | 核心功能 |
-| GPUMemoryPool.clear() | ❌ | ✅ | ❌ | ❌ | 保留 |
-| GPUMemoryPool.preallocate_buffers() | ❌ | ❌ | ❌ | ❌ | **建议启用** |
-| GPUBufferAllocator | ❌ | ✅ | ❌ | ❌ | 实验性 |
-| GlobalGPUMemoryManager | ✅ | ✅ | ❌ | ✅ | 核心功能 |
-| GPUBufferTracker | ✅ | ✅ | ❌ | ✅ | 核心功能 |
-| calculate_optimal_batch_size | ❌ | ✅ | ✅ | ❌ | 工具函数 |
-| BatchSizeConfig | ❌ | ✅ | ✅ | ❌ | 工具函数 |
+| GPUMemoryPool.allocate() | [OK_CHECK] | [OK_CHECK] | [OK_CHECK] | [OK_CHECK] | 核心功能 |
+| GPUMemoryPool.release() | [OK_CHECK] | [OK_CHECK] | [OK_CHECK] | [OK_CHECK] | 核心功能 |
+| GPUMemoryPool.get_stats() | [OK_CHECK] | [OK_CHECK] | [OK_CHECK] | [OK_CHECK] | 核心功能 |
+| GPUMemoryPool.clear() | [CROSS] | [OK_CHECK] | [CROSS] | [CROSS] | 保留 |
+| GPUMemoryPool.preallocate_buffers() | [CROSS] | [CROSS] | [CROSS] | [CROSS] | **建议启用** |
+| GPUBufferAllocator | [CROSS] | [OK_CHECK] | [CROSS] | [CROSS] | 实验性 |
+| GlobalGPUMemoryManager | [OK_CHECK] | [OK_CHECK] | [CROSS] | [OK_CHECK] | 核心功能 |
+| GPUBufferTracker | [OK_CHECK] | [OK_CHECK] | [CROSS] | [OK_CHECK] | 核心功能 |
+| calculate_optimal_batch_size | [CROSS] | [OK_CHECK] | [OK_CHECK] | [CROSS] | 工具函数 |
+| BatchSizeConfig | [CROSS] | [OK_CHECK] | [OK_CHECK] | [CROSS] | 工具函数 |
 
 ---
 
-## 🔍 详细调用分析
+## [SEARCH] 详细调用分析
 
 ### GPUMemoryPool 完整调用链
 
@@ -584,7 +584,7 @@ GlobalGPUMemoryManager (保持单例)
 
 ---
 
-## 💡 实际运行数据
+## [TIP] 实际运行数据
 
 ### Intel Arc A770 测试数据
 
@@ -609,9 +609,9 @@ GlobalGPUMemoryManager (保持单例)
 
 ---
 
-## 🚨 发现的问题
+## [ALERT] 发现的问题
 
-### 问题1: 内存池未实际使用 ⚠️
+### 问题1: 内存池未实际使用 [WARN]
 
 **严重程度**: 中
 
@@ -657,7 +657,7 @@ else:
 
 ---
 
-### 问题2: 预分配功能未启用 ⚠️
+### 问题2: 预分配功能未启用 [WARN]
 
 **严重程度**: 低
 
@@ -671,7 +671,7 @@ else:
 
 ---
 
-### 问题3: GPUBufferAllocator未使用 ℹ️
+### 问题3: GPUBufferAllocator未使用 [INFO]
 
 **严重程度**: 信息
 
@@ -685,34 +685,34 @@ else:
 
 ---
 
-## 📝 总结
+## [MEMO] 总结
 
 ### 功能使用情况
 
 | 类别 | 数量 | 占比 | 状态 |
 |------|------|------|------|
-| **核心功能(已使用)** | 4个 | 40% | ✅ 正常 |
-| **工具功能(测试用)** | 2个 | 20% | ✅ 正常 |
-| **实验功能(未使用)** | 2个 | 20% | ⚠️ 需处理 |
-| **辅助功能(少用)** | 2个 | 20% | ✅ 保留 |
+| **核心功能(已使用)** | 4个 | 40% | [OK_CHECK] 正常 |
+| **工具功能(测试用)** | 2个 | 20% | [OK_CHECK] 正常 |
+| **实验功能(未使用)** | 2个 | 20% | [WARN] 需处理 |
+| **辅助功能(少用)** | 2个 | 20% | [OK_CHECK] 保留 |
 
 ### 关键发现
 
-1. ✅ **核心内存池已集成**: GPUMemoryPool和BufferTracker已正确使用
-2. ⚠️ **内存池未真正生效**: 缓冲区仍直接分配，未使用pool.allocate()
-3. ❌ **预分配功能未启用**: 错失性能优化机会
-4. ❌ **GPUBufferAllocator未使用**: 代码冗余
+1. [OK_CHECK] **核心内存池已集成**: GPUMemoryPool和BufferTracker已正确使用
+2. [WARN] **内存池未真正生效**: 缓冲区仍直接分配，未使用pool.allocate()
+3. [CROSS] **预分配功能未启用**: 错失性能优化机会
+4. [CROSS] **GPUBufferAllocator未使用**: 代码冗余
 
 ### 优先行动项
 
-1. 🔴 **修复内存池使用** (高优先级)
+1. [RED] **修复内存池使用** (高优先级)
    - 修改缓冲区分配逻辑
    - 使用pool.allocate()替代cl.Buffer()
 
-2. 🟡 **启用预分配** (中优先级)
+2. [YELLOW] **启用预分配** (中优先级)
    - 在初始化后调用preallocate_buffers()
 
-3. 🟢 **标记实验功能** (低优先级)
+3. [GREEN] **标记实验功能** (低优先级)
    - GPUBufferAllocator标记为实验性
    - 或考虑移除
 

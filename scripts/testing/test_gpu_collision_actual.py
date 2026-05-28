@@ -66,23 +66,23 @@ def main():  # noqa: C901
 
         print(
             f"\r  [{bar}] {progress_pct:5.1f}% | "
-            f"⏱️  {mins:02d}:{secs:02d} | "
-            f"📊 {stats.total_checked:>12,} keys | "
-            f"⚡ {current_speed:>12,.2f} keys/s",
+            f"STOPWATCH  {mins:02d}:{secs:02d} | "
+            f"STATS {stats.total_checked:>12,} keys | "
+            f"BOLT {current_speed:>12,.2f} keys/s",
             end="",
             flush=True,
         )
 
     def on_match(private_key: bytes, address: str, wif: str):
         """匹配回调."""
-        print("\n\n  🎯 发现匹配!")
+        print("\n\n  TARGET 发现匹配!")
         print(f"     地址: {address}")
         print(f"     私钥: {private_key.hex()}")
         print(f"     WIF: {wif}")
 
     try:
         # 1. 初始化引擎
-        print("  📋 步骤1: 初始化GPU碰撞引擎...")
+        print("  CLIPBOARD 步骤1: 初始化GPU碰撞引擎...")
         print()
 
         start_init = time.time()
@@ -102,12 +102,12 @@ def main():  # noqa: C901
         )
         init_time = time.time() - start_init
 
-        print(f"\n\n  ✅ GPU引擎初始化完成 (耗时: {init_time:.2f}秒)")
+        print(f"\n\n  OK GPU引擎初始化完成 (耗时: {init_time:.2f}秒)")
         print()
 
         # 获取设备信息
         device_info = engine._gpu_device.get_device_info()
-        print("  📱 GPU设备信息:")
+        print("  PHONE GPU设备信息:")
         print(f"     名称: {device_info.get('name', 'Unknown')}")
         print(f"     厂商: {device_info.get('vendor', 'Unknown')}")
         # 修复: 使用global_mem_size（字节）而非global_mem_gb
@@ -118,9 +118,9 @@ def main():  # noqa: C901
         print()
 
         # 2. 开始测试
-        print(f"  🎯 目标地址: {len(targets)} 个")
-        print(f"  ⏱️  测试时长: {test_duration}秒")
-        print("  🚀 开始GPU碰撞测试...")
+        print(f"  TARGET 目标地址: {len(targets)} 个")
+        print(f"  STOPWATCH  测试时长: {test_duration}秒")
+        print("  FAST 开始GPU碰撞测试...")
         print()
         print("  " + "─" * 78)
 
@@ -135,10 +135,10 @@ def main():  # noqa: C901
 
                 # 检查是否意外停止
                 if not engine.is_running():
-                    print("\n\n  ⚠️  引擎意外停止!")
+                    print("\n\n  WARN  引擎意外停止!")
                     break
         except KeyboardInterrupt:
-            print("\n\n  ⚠️  收到中断信号，正在停止...")
+            print("\n\n  WARN  收到中断信号，正在停止...")
         finally:
             engine.stop()
 
@@ -148,10 +148,10 @@ def main():  # noqa: C901
         print()
         print("  " + "─" * 78)
         print()
-        print("  📊 测试完成!")
+        print("  STATS 测试完成!")
         print()
         print(f"  {'=' * 76}")
-        print("  📈 性能统计")
+        print("  UP 性能统计")
         print(f"  {'=' * 76}")
         print(f"     总运行时间: {elapsed:.2f}秒")
         print(f"     总检查数:   {total_checked:>15,} keys")
@@ -164,7 +164,7 @@ def main():  # noqa: C901
 
         # 4. 性能对比
         print()
-        print("  📊 性能对比")
+        print("  STATS 性能对比")
         print(f"  {'=' * 76}")
 
         cpu_speed = 88  # CPU模式参考速度
@@ -178,13 +178,13 @@ def main():  # noqa: C901
 
         # 性能评级
         if speedup >= 5000:
-            rating = "🏆 优秀"
+            rating = "TROPHY 优秀"
         elif speedup >= 1000:
-            rating = "✅ 良好"
+            rating = "OK 良好"
         elif speedup >= 100:
-            rating = "⚠️  一般"
+            rating = "WARN  一般"
         else:
-            rating = "❌ 较差"
+            rating = "ERR 较差"
 
         print(f"     性能评级:     {rating}")
         print(f"  {'=' * 76}")
@@ -192,7 +192,7 @@ def main():  # noqa: C901
         # 5. 稳定性分析
         if len(stats_history) > 10:
             print()
-            print("  📊 稳定性分析")
+            print("  STATS 稳定性分析")
             print(f"  {'=' * 76}")
 
             speeds = [s["speed"] for s in stats_history if s["speed"] > 0]
@@ -209,13 +209,13 @@ def main():  # noqa: C901
                 print()
 
                 if speed_cv < 10:
-                    stability = "🏆 非常稳定"
+                    stability = "TROPHY 非常稳定"
                 elif speed_cv < 20:
-                    stability = "✅ 稳定"
+                    stability = "OK 稳定"
                 elif speed_cv < 30:
-                    stability = "⚠️  波动较大"
+                    stability = "WARN  波动较大"
                 else:
-                    stability = "❌ 不稳定"
+                    stability = "ERR 不稳定"
 
                 print(f"     稳定性评级:   {stability}")
 
@@ -223,7 +223,7 @@ def main():  # noqa: C901
 
         # 6. 资源使用
         print()
-        print("  📊 资源使用")
+        print("  STATS 资源使用")
         print(f"  {'=' * 76}")
 
         try:
@@ -242,21 +242,23 @@ def main():  # noqa: C901
 
         # 7. 总结
         print()
-        print("  📝 测试总结")
+        print("  NOTE 测试总结")
         print(f"  {'=' * 76}")
-        print(f"     GPU模式:      {'✅ 正常工作' if total_checked > 0 else '❌ 未运行'}")
-        print(f"     性能达标:     {'✅ 是' if speedup >= 100 else '⚠️  低于预期'}")
+        print(f"     GPU模式:      {'OK 正常工作' if total_checked > 0 else 'ERR 未运行'}")
+        print(f"     性能达标:     {'OK 是' if speedup >= 100 else 'WARN  低于预期'}")
         print(
-            f"     稳定性:       {'✅ 良好' if min_speed != float('inf') and speed_cv < 30 else '⚠️  需优化'}",
+            f"     稳定性:       {'OK 良好' if min_speed != float('inf') and speed_cv < 30 else 'WARN  需优化'}",
         )
-        print(f"     生产就绪:     {'✅ 是' if speedup >= 1000 and total_checked > 100000 else '❌ 否'}")
+        print(
+            f"     生产就绪:     {'OK 是' if speedup >= 1000 and total_checked > 100000 else 'ERR 否'}"
+        )
         print(f"  {'=' * 76}")
         print()
 
         return 0 if total_checked > 0 else 1
 
     except Exception as e:
-        print(f"\n\n  ❌ GPU测试失败: {e}")
+        print(f"\n\n  ERR GPU测试失败: {e}")
         import traceback
 
         print()

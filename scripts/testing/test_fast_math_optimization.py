@@ -8,7 +8,7 @@ import time
 
 # 添加项目根目录到路径
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
+from src.collision.gpu.engine import GPUCollisionEngine
 
 
 def test_fast_math_optimization(test_duration=30):
@@ -119,7 +119,7 @@ def test_fast_math_optimization(test_duration=30):
             print("    优化前(65K):     44,096 keys/s (基线)")
             print("    优化1(262K):     47,799 keys/s (+8.4%)")
             print(
-                f"    快速数学(262K):  {avg_speed:,.2f} keys/s ({((avg_speed - 47799) / 47799 * 100):+.1f}%)",  # noqa: E501
+                f"    快速数学(262K):  {avg_speed:,.2f} keys/s ({((avg_speed - 47799) / 47799 * 100):+.1f}%)",
             )
             print()
 
@@ -131,16 +131,16 @@ def test_fast_math_optimization(test_duration=30):
             print(f"{'=' * 80}")
 
             if improvement > 5:
-                print(f"    效果: ✅ 显著提升 (+{improvement:.1f}%)")
+                print(f"    效果: OK 显著提升 (+{improvement:.1f}%)")
                 print("    建议: 保留快速数学优化")
             elif improvement > 0:
-                print(f"    效果: ⚠️  轻微提升 (+{improvement:.1f}%)")
+                print(f"    效果: WARN  轻微提升 (+{improvement:.1f}%)")
                 print("    建议: 可以保留，继续观察")
             elif improvement > -3:
-                print(f"    效果: ⚠️  轻微下降 ({improvement:.1f}%)")
+                print(f"    效果: WARN  轻微下降 ({improvement:.1f}%)")
                 print("    建议: 在统计误差范围内，可保留")
             else:
-                print(f"    效果: ❌ 显著下降 ({improvement:.1f}%)")
+                print(f"    效果: ERR 显著下降 ({improvement:.1f}%)")
                 print("    建议: 考虑禁用快速数学")
 
             print(f"{'=' * 80}")

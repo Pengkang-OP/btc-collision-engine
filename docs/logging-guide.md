@@ -155,10 +155,10 @@ logger.critical(f"系统无法继续运行: {reason}")
 ## 3.2 格式化输出
 
 ```python
-# ✅ 推荐: 惰性格式化
+# [OK] 推荐: 惰性格式化
 logger.info("用户%s登录，IP=%s", username, ip_address)
 
-# ❌ 不推荐: 提前格式化
+# [FAIL] 不推荐: 提前格式化
 logger.info(f"用户{username}登录，IP={ip_address}")
 
 ```markdown
@@ -166,13 +166,13 @@ logger.info(f"用户{username}登录，IP={ip_address}")
 ## 3.3 包含上下文
 
 ```python
-# ✅ 推荐: 包含关键上下文
+# [OK] 推荐: 包含关键上下文
 logger.error(
     f"GPU批次处理失败 (device={device_index}, "
     f"batch_size={batch_size}): {error}"
 )
 
-# ❌ 不推荐: 缺少上下文
+# [FAIL] 不推荐: 缺少上下文
 logger.error(f"处理失败: {error}")
 
 ```python
@@ -382,14 +382,14 @@ logger.debug(f"详细数据: %s", compute_expensive_data())  # 总是执行
 ### 7.1 日志初始化
 
 ```python
-# ✅ 推荐: 在程序入口初始化
+# [OK] 推荐: 在程序入口初始化
 from src.utils import init_logging
 
 def main():
     init_logging()  # 最先调用
     # ... 其他代码
 
-# ❌ 不推荐: 延迟初始化
+# [FAIL] 不推荐: 延迟初始化
 def some_function():
     init_logging()  # 可能导致日志丢失
 
@@ -398,14 +398,14 @@ def some_function():
 ## 7.2 日志记录器命名
 
 ```python
-# ✅ 推荐: 使用模块路径
+# [OK] 推荐: 使用模块路径
 logger = logging.getLogger(__name__)
 # 输出: src.collision.key_collision_engine
 
-# ✅ 推荐: 明确命名
+# [OK] 推荐: 明确命名
 logger = logging.getLogger("GPUMonitor")
 
-# ❌ 不推荐: 使用根日志记录器
+# [FAIL] 不推荐: 使用根日志记录器
 logger = logging.getLogger()
 
 ```markdown
@@ -413,11 +413,11 @@ logger = logging.getLogger()
 ## 7.3 避免敏感信息
 
 ```python
-# ❌ 绝对禁止
+# [FAIL] 绝对禁止
 logger.debug(f"私钥: {private_key_hex}")
 logger.info(f"WIF: {wif}")
 
-# ✅ 推荐
+# [OK] 推荐
 logger.debug(f"地址: {address}")
 logger.info(f"地址数量: {len(targets)}")
 
@@ -426,19 +426,19 @@ logger.info(f"地址数量: {len(targets)}")
 ## 7.4 异常处理
 
 ```python
-# ✅ 推荐: 已知错误
+# [OK] 推荐: 已知错误
 try:
     result = gpu_operation()
 except RuntimeError as e:
     logger.error(f"GPU运行时错误: {type(e).__name__}: {e}")
 
-# ✅ 推荐: 未知错误
+# [OK] 推荐: 未知错误
 try:
     result = complex_operation()
 except Exception as e:
     logger.exception(f"未知错误: {operation}")
 
-# ❌ 不推荐: 吞掉异常
+# [FAIL] 不推荐: 吞掉异常
 try:
     do_something()
 except Exception:
@@ -449,18 +449,18 @@ except Exception:
 ## 7.5 性能优化
 
 ```python
-# ✅ 推荐: 使用采样日志
+# [OK] 推荐: 使用采样日志
 for i in range(1000000):
     sampled_logger.info(f"进度: {i}")
 
-# ✅ 推荐: 使用时间间隔
+# [OK] 推荐: 使用时间间隔
 last_log = time.time()
 for i in range(1000000):
     if time.time() - last_log > 1.0:
         logger.info(f"进度: {i}")
         last_log = time.time()
 
-# ❌ 不推荐: 每次都记录
+# [FAIL] 不推荐: 每次都记录
 for i in range(1000000):
     logger.info(f"进度: {i}")  # 太慢！
 
@@ -469,12 +469,12 @@ for i in range(1000000):
 ## 7.6 资源管理日志
 
 ```python
-# ✅ 推荐: 完整的生命周期日志
+# [OK] 推荐: 完整的生命周期日志
 logger.info(f"GPU设备初始化: {device_name}")
 logger.debug(f"GPU显存使用: {used_mb:.1f}MB / {total_mb:.1f}MB")
 logger.info(f"GPU资源已清理: {device_name}")
 
-# ✅ 推荐: 使用性能监控
+# [OK] 推荐: 使用性能监控
 with EnhancedPerformanceMonitor(logger, "资源清理"):
     cleanup_resources()
 
@@ -619,7 +619,7 @@ logging.getLogger("src.collision").setLevel(logging.DEBUG)
 **A**: 确保使用同一个采样日志器实例：
 
 ```python
-# ✅ 正确: 全局实例
+# [OK] 正确: 全局实例
 sampled_logger = get_sampled_logger("mymodule", sample_rate=1000)
 
 def func1():
@@ -628,7 +628,7 @@ def func1():
 def func2():
     sampled_logger.info("消息2")
 
-# ❌ 错误: 每次创建新实例
+# [FAIL] 错误: 每次创建新实例
 def func():
     sampled_logger = get_sampled_logger("mymodule", sample_rate=1000)
     sampled_logger.info("消息")

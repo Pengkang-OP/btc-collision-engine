@@ -224,7 +224,7 @@ class GPUDeviceSelector:
 
         for i, device in enumerate(sorted_devices):
             is_best = i == 0
-            marker = "⭐ " if is_best else "   "
+            marker = "[BEST] " if is_best else "       "
             lines.append(marker + self.format_device_info(device, detailed=False))
             if i < len(sorted_devices) - 1:
                 lines.append("-" * 60)

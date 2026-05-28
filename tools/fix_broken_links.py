@@ -237,13 +237,13 @@ def main():
 
     docs_dir = Path(args.docs_dir)
     if not docs_dir.exists():
-        print(f"❌ 文档目录不存在: {docs_dir}")
+        print(f"ERR 文档目录不存在: {docs_dir}")
         sys.exit(1)
 
-    print("🔧 开始修复断裂链接...\n")
+    print("TOOL 开始修复断裂链接...\n")
 
     if args.dry_run:
-        print("⚠️  模拟运行模式 - 不会修改文件\n")
+        print("WARN 模拟运行模式 - 不会修改文件\n")
 
     md_files = list(docs_dir.glob("*.md"))
     md_files = [f for f in md_files if "archive" not in str(f)]
@@ -261,9 +261,9 @@ def main():
             file_results.append(result)
 
             if not args.dry_run:
-                print(f"✅ {result['file']}: 修复 {result['broken_links']} 个链接")
+                print(f"OK {result['file']}: 修复 {result['broken_links']} 个链接")
             else:
-                print(f"📄 {result['file']}: 将修复 {result['broken_links']} 个链接")
+                print(f"[FILE] {result['file']}: 将修复 {result['broken_links']} 个链接")
 
                 # 显示修复详情
                 for fix in result["fixes"][:3]:  # 只显示前3个
@@ -275,25 +275,25 @@ def main():
                     print(f"   ... 还有 {len(result['fixes']) - 3} 个修复")
 
     print(f"\n{'=' * 60}")
-    print("📊 断裂链接修复报告")
+    print("STATS 断裂链接修复报告")
     print(f"{'=' * 60}")
 
-    print(f"\n📁 扫描文件: {len(md_files)}")
-    print(f"🔗 总链接数: {sum(r['total_links'] for r in file_results)}")
-    print(f"❌ 断裂链接: {total_broken}")
-    print(f"✅ 已修复: {total_fixed}")
+    print(f"\n[FOLDER] 扫描文件: {len(md_files)}")
+    print(f"[LINK] 总链接数: {sum(r['total_links'] for r in file_results)}")
+    print(f"ERR 断裂链接: {total_broken}")
+    print(f"OK 已修复: {total_fixed}")
 
     if file_results:
         print("\n修复详情:")
         for result in sorted(file_results, key=lambda x: -x["broken_links"]):
-            print(f"  📄 {result['file']}: {result['broken_links']} 个")
+            print(f"  [FILE] {result['file']}: {result['broken_links']} 个")
 
     print(f"\n{'=' * 60}")
 
     if args.dry_run:
-        print("\n💡 这是模拟运行。移除 --dry-run 参数以实际修复。")
+        print("\nTIP 这是模拟运行。移除 --dry-run 参数以实际修复。")
     else:
-        print(f"\n✅ 修复完成！共修复 {total_fixed} 个断裂链接。")
+        print(f"\nOK 修复完成！共修复 {total_fixed} 个断裂链接。")
 
     return total_fixed
 

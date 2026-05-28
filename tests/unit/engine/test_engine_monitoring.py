@@ -75,7 +75,7 @@ class EngineMonitorIntegration:
         # 初始化监控系统（先不绑定引擎）
         self.monitoring_system = EnhancedMonitoringSystem(engine=None, config=config)
 
-        logger.info("✅ 监控系统初始化完成")
+        logger.info("OK 监控系统初始化完成")
 
     def setup_engine(self, targets: set):
         """配置并初始化碰撞引擎."""
@@ -96,7 +96,7 @@ class EngineMonitorIntegration:
             use_enhanced_monitoring=True,
         )
 
-        logger.info("✅ 碰撞引擎初始化完成")
+        logger.info("OK 碰撞引擎初始化完成")
         logger.info(f"   目标地址数: {len(targets)}")
         logger.info(f"   数据日志: {'启用' if self.engine.data_logging_enabled else '禁用'}")
         logger.info(f"   增强监控: {'启用' if self.engine.enhanced_monitoring else '禁用'}")
@@ -105,7 +105,7 @@ class EngineMonitorIntegration:
         """进度回调."""
         speed_str = f"{stats.speed:.2f}/s" if stats.speed < 1000 else f"{stats.speed / 1000:.2f}K/s"
         logger.info(
-            f"📊 进度: 已检测={stats.total_checked:,} | "
+            f"STATS 进度: 已检测={stats.total_checked:,} | "
             f"速度={speed_str} | "
             f"时间={stats.format_elapsed()} | "
             f"匹配={len(stats.matches)}",
@@ -114,7 +114,7 @@ class EngineMonitorIntegration:
     def on_match(self, private_key: bytes, address: str, wif: str):
         """匹配回调."""
         logger.info("\n" + "=" * 70)
-        logger.info("🎯 发现匹配！")
+        logger.info("TARGET 发现匹配！")
         logger.info("   地址: %s", address)
         logger.info(f"   私钥: {private_key.hex()}")
         logger.info("   WIF: %s", wif)
@@ -123,7 +123,7 @@ class EngineMonitorIntegration:
     def on_complete(self, stats: CollisionStats):
         """完成回调."""
         logger.info("\n" + "=" * 70)
-        logger.info("✅ 碰撞引擎完成")
+        logger.info("OK 碰撞引擎完成")
         logger.info(f"   总检测: {stats.total_checked:,}")
         logger.info(f"   平均速度: {stats.speed:.2f}/s")
         logger.info(f"   运行时间: {stats.format_elapsed()}")
@@ -139,7 +139,7 @@ class EngineMonitorIntegration:
         # 启动引擎（内置监控系统会自动启动）
         self.engine.start(mode=mode)
         self.running = True
-        logger.info("✅ 碰撞引擎已启动（内置监控系统自动启动）")
+        logger.info("OK 碰撞引擎已启动（内置监控系统自动启动）")
 
         # 运行指定时长
         start_time = time.time()
@@ -163,7 +163,7 @@ class EngineMonitorIntegration:
 
         if self.engine:
             self.engine.stop()
-            logger.info("✅ 碰撞引擎已停止（内置监控系统自动停止）")
+            logger.info("OK 碰撞引擎已停止（内置监控系统自动停止）")
 
         logger.info("\n" + "=" * 70)
         logger.info("测试完成")
@@ -182,7 +182,7 @@ class EngineMonitorIntegration:
             if "data_stats" in status:
                 stats = status["data_stats"]
                 logger.info(
-                    "\n📈 监控状态: "
+                    "\nUP 监控状态: "
                     f"速度={stats.get('speed', 0):.2f}/s | "
                     f"检测={stats.get('total_checks', 0):,} | "
                     f"匹配={stats.get('total_matches', 0)} | "
@@ -192,7 +192,7 @@ class EngineMonitorIntegration:
 
             if status.get("recent_alerts"):
                 alerts = status["recent_alerts"]
-                logger.info(f"🚨 最近告警: {len(alerts)} 条")
+                logger.info(f"[ALERT] 最近告警: {len(alerts)} 条")
                 for alert in alerts[-3:]:
                     logger.info(f"   - {alert.get('message', 'Unknown')}")
 
@@ -230,26 +230,26 @@ def verify_monitoring_data():
         filepath = os.path.join(data_logs_dir, filename)
         if pathlib.Path(filepath).exists():
             size = pathlib.Path(filepath).stat().st_size
-            logger.info(f"✅ {filename}: {size:,} bytes")
+            logger.info(f"OK {filename}: {size:,} bytes")
         else:
-            logger.warning("❌ %s: 不存在", filename)
+            logger.warning("ERR %s: 不存在", filename)
 
     # 检查报告文件
     import glob
 
     report_files = glob.glob(os.path.join(data_logs_dir, "report_daily_*.json"))
     if report_files:
-        logger.info(f"✅ 每日报告: {len(report_files)} 个")
+        logger.info(f"OK 每日报告: {len(report_files)} 个")
         for rf in report_files[-3:]:
             logger.info(f"   - {os.path.basename(rf)}")
     else:
-        logger.warning("❌ 每日报告: 未找到")
+        logger.warning("ERR 每日报告: 未找到")
 
 
 def main():
     """主函数."""
     logger.info("=" * 70)
-    logger.info("🚀 碰撞引擎与监控系统集成测试")
+    logger.info("FAST 碰撞引擎与监控系统集成测试")
     logger.info("=" * 70)
 
     # 创建集成测试实例
@@ -265,7 +265,7 @@ def main():
     tester.setup_engine(targets)
 
     # 4. 启动引擎（使用brute_force模式，从1开始，快速找到匹配）
-    logger.info("\n💡 测试策略:")
+    logger.info("\nTIP 测试策略:")
     logger.info("   - 使用brute_force模式从私钥1开始扫描")
     logger.info("   - 目标地址是私钥=1的地址，应该很快找到")
     logger.info("   - 运行30秒或找到匹配后停止")
@@ -287,22 +287,22 @@ def main():
 
         try:
             report = tester.engine.enhanced_monitoring.generate_report()
-            logger.info("✅ 监控报告已生成")
+            logger.info("OK 监控报告已生成")
             logger.info(f"   报告类型: {type(report)}")
         except Exception as e:
             logger.error("生成报告失败: %s", e)
 
     logger.info("\n" + "=" * 70)
-    logger.info("✅ 集成测试完成")
+    logger.info("OK 集成测试完成")
     logger.info("=" * 70)
-    logger.info("\n📊 监控系统验证结果:")
-    logger.info("   ✅ 数据日志记录 - 正常")
-    logger.info("   ✅ 性能监控采集 - 正常")
-    logger.info("   ✅ 异常检测告警 - 正常")
-    logger.info("   ✅ 报告生成功能 - 正常")
-    logger.info("   ✅ 引擎监控集成 - 正常")
-    logger.info("\n💾 监控数据位置: data_logs/")
-    logger.info("📝 日志文件: collision.log")
+    logger.info("\nSTATS 监控系统验证结果:")
+    logger.info("   OK 数据日志记录 - 正常")
+    logger.info("   OK 性能监控采集 - 正常")
+    logger.info("   OK 异常检测告警 - 正常")
+    logger.info("   OK 报告生成功能 - 正常")
+    logger.info("   OK 引擎监控集成 - 正常")
+    logger.info("\n[SAVE] 监控数据位置: data_logs/")
+    logger.info("NOTE 日志文件: collision.log")
     logger.info("=" * 70)
 
 

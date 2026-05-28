@@ -12,12 +12,12 @@
 
 | 版本 | 状态 | 备注 |
 |------|------|------|
-| Python 3.9 | ✅ 支持 | 最低要求 |
-| Python 3.10 | ✅ 支持 | 测试环境 |
-| Python 3.11 | ✅ 支持 | mypy 配置使用 |
-| Python 3.12 | ✅ 支持 | black target-version |
-| Python 3.13 | ⚠️ 理论支持 | pyproject.toml 已声明，但未经测试 |
-| Python 3.14 | 🔴 风险 | requirements 注释提到兼容，但 cffi 可能有预编译问题 |
+| Python 3.9 | [OK] 支持 | 最低要求 |
+| Python 3.10 | [OK] 支持 | 测试环境 |
+| Python 3.11 | [OK] 支持 | mypy 配置使用 |
+| Python 3.12 | [OK] 支持 | black target-version |
+| Python 3.13 | [WARN] 理论支持 | pyproject.toml 已声明，但未经测试 |
+| Python 3.14 | [RED] 风险 | requirements 注释提到兼容，但 cffi 可能有预编译问题 |
 
 **风险点**:
 
@@ -29,17 +29,17 @@
 
 | 依赖 | 版本约束 | 状态 |
 |------|----------|------|
-| `coincurve` | >=18.0.0 | ✅ 良好 |
-| `gmpy2` | >=2.1.0,**<4.0.0** | ✅ C-07 已修复 |
-| `pycryptodome` | >=3.19.0,<4.0.0 | ⚠️ 接近上限 |
-| `cryptography` | >=43.0.0,**<46.0.0** | ✅ C-03 已修复 |
-| `cffi` | >=1.15.0 | ✅ 良好 |
-| `pyopencl` | >=2021.1 / >=2022.1 | ✅ 良好 |
-| `numpy` | >=1.24.0 | ⚠️ 可能有 API 变化 |
-| `chardet` | >=5.0.0,<6.0.0 | ⚠️ 接近上限 |
-| `requests` | >=2.28.0,<3.0.0 | ⚠️ 接近上限，3.0 可能有破坏性变更 |
-| `pytest` | >=9.0.0,<10.0.0 | ⚠️ 接近 pytest 10 发布，需监控 |
-| `rich` | >=13.0 | ✅ 无上限约束 |
+| `coincurve` | >=18.0.0 | [OK] 良好 |
+| `gmpy2` | >=2.1.0,**<4.0.0** | [OK] C-07 已修复 |
+| `pycryptodome` | >=3.19.0,<4.0.0 | [WARN] 接近上限 |
+| `cryptography` | >=43.0.0,**<46.0.0** | [OK] C-03 已修复 |
+| `cffi` | >=1.15.0 | [OK] 良好 |
+| `pyopencl` | >=2021.1 / >=2022.1 | [OK] 良好 |
+| `numpy` | >=1.24.0 | [WARN] 可能有 API 变化 |
+| `chardet` | >=5.0.0,<6.0.0 | [WARN] 接近上限 |
+| `requests` | >=2.28.0,<3.0.0 | [WARN] 接近上限，3.0 可能有破坏性变更 |
+| `pytest` | >=9.0.0,<10.0.0 | [WARN] 接近 pytest 10 发布，需监控 |
+| `rich` | >=13.0 | [OK] 无上限约束 |
 
 **已修复**:
 
@@ -53,10 +53,10 @@
 
 | 模块 | 导出项数量 | 稳定性 |
 |------|-----------|--------|
-| `src.collision` | 30+ | ✅ 稳定 |
-| `src.gpu` | 20+ | ⚠️ GPU 重构中 |
-| `src.cli` | 10+ | ✅ 稳定 |
-| `src.core` | 25+ | ✅ 稳定 |
+| `src.collision` | 30+ | [OK] 稳定 |
+| `src.gpu` | 20+ | [WARN] GPU 重构中 |
+| `src.cli` | 10+ | [OK] 稳定 |
+| `src.core` | 25+ | [OK] 稳定 |
 
 #### 1.3.2 条件导入处理
 
@@ -73,15 +73,15 @@ except ImportError:
 
 ```
 
-✅ **评估**: 条件导入实现良好，GPU 不可用时自动降级到 CPU。
+[OK] **评估**: 条件导入实现良好，GPU 不可用时自动降级到 CPU。
 
 #### 1.3.3 弃用模块
 
 | 旧路径 | 新路径 | 移除时间 | 状态 |
 |--------|--------|----------|------|
-| `src.collision.targets.resolver` | `src.collision.targets.resolver` | 2026-Q3 | ⚠️ 警告中 |
+| `src.collision.targets.resolver` | `src.collision.targets.resolver` | 2026-Q3 | [WARN] 警告中 |
 
-✅ **评估**: 弃用流程规范，有完整迁移指南。
+[OK] **评估**: 弃用流程规范，有完整迁移指南。
 
 ---
 
@@ -91,20 +91,20 @@ except ImportError:
 
 | 平台 | 状态 | 支持级别 |
 |------|------|----------|
-| Windows 10/11 | ✅ 支持 | 一线支持 |
-| Windows Server | ⚠️ 未测试 | 理论上支持 |
-| Linux (Ubuntu 20.04+) | ✅ 支持 | 一线支持 |
-| Linux (其他发行版) | ⚠️ 依赖 | 驱动兼容性 |
-| macOS | ⚠️ 有限支持 | 驱动限制 |
+| Windows 10/11 | [OK] 支持 | 一线支持 |
+| Windows Server | [WARN] 未测试 | 理论上支持 |
+| Linux (Ubuntu 20.04+) | [OK] 支持 | 一线支持 |
+| Linux (其他发行版) | [WARN] 依赖 | 驱动兼容性 |
+| macOS | [WARN] 有限支持 | 驱动限制 |
 
 ### 2.2 GPU 厂商支持
 
 | 厂商 | Windows | Linux | 驱动要求 |
 |------|---------|-------|----------|
-| **NVIDIA** | ✅ 支持 | ✅ 支持 | CUDA >= 11.0 |
-| **AMD** | ✅ 支持 | ✅ 支持 | AMD 驱动 >= 21.x |
-| **Intel Arc** | ✅ 支持 | ❌ 不支持 | Intel Arc 驱动 >= 31.0.101.4146 |
-| **Intel HD/UHD** | ⚠️ 受限 | ⚠️ 受限 | OpenCL 1.2 兼容 |
+| **NVIDIA** | [OK] 支持 | [OK] 支持 | CUDA >= 11.0 |
+| **AMD** | [OK] 支持 | [OK] 支持 | AMD 驱动 >= 21.x |
+| **Intel Arc** | [OK] 支持 | [FAIL] 不支持 | Intel Arc 驱动 >= 31.0.101.4146 |
+| **Intel HD/UHD** | [WARN] 受限 | [WARN] 受限 | OpenCL 1.2 兼容 |
 
 **问题**:
 
@@ -165,7 +165,7 @@ fonts = {
 
 ```
 
-✅ **评估**: 字体回退机制良好。
+[OK] **评估**: 字体回退机制良好。
 
 ---
 
@@ -175,7 +175,7 @@ fonts = {
 
 | 版本 | 格式 | Schema 验证 | 兼容性 |
 |------|------|-------------|--------|
-| 当前 | JSON | ✅ jsonschema | ⚠️ Schema 演进可能破坏 |
+| 当前 | JSON | [OK] jsonschema | [WARN] Schema 演进可能破坏 |
 
 **风险**:
 
@@ -187,11 +187,11 @@ fonts = {
 
 | 字段段 | 字段数 | 向后兼容 | 向前兼容 |
 |--------|--------|----------|----------|
-| `crypto` | 6 | ✅ | ✅ |
-| `engine` | 5 | ✅ | ✅ |
-| `collision` | 12 | ⚠️ v4.2.1 新增字段 | ✅ |
-| `logging` | 11 | ✅ | ✅ |
-| `gpu` | 25+ | ⚠️ 持续演进 | ⚠️ |
+| `crypto` | 6 | [OK] | [OK] |
+| `engine` | 5 | [OK] | [OK] |
+| `collision` | 12 | [WARN] v4.2.1 新增字段 | [OK] |
+| `logging` | 11 | [OK] | [OK] |
+| `gpu` | 25+ | [WARN] 持续演进 | [WARN] |
 
 **问题**:
 
@@ -203,7 +203,7 @@ fonts = {
 
 | 文件 | 格式 | 版本字段 | 兼容性 |
 |------|------|----------|--------|
-| `checkpoint.dat` | 自定义 | ❌ 无 | 🔴 高风险 |
+| `checkpoint.dat` | 自定义 | [FAIL] 无 | [RED] 高风险 |
 
 **风险**:
 
@@ -215,9 +215,9 @@ fonts = {
 
 | 文件类型 | 格式 | Schema | 兼容性 |
 |----------|------|---------|--------|
-| `collision.log` | 文本 | ❌ 无 | ✅ 纯文本兼容 |
-| `data_logs/*.json` | JSON | ⚠️ 弱验证 | ⚠️ 格式演进风险 |
-| `performance.csv` | CSV | ❌ 无 | ✅ 简单格式 |
+| `collision.log` | 文本 | [FAIL] 无 | [OK] 纯文本兼容 |
+| `data_logs/*.json` | JSON | [WARN] 弱验证 | [WARN] 格式演进风险 |
+| `performance.csv` | CSV | [FAIL] 无 | [OK] 简单格式 |
 
 ---
 
@@ -227,11 +227,11 @@ fonts = {
 
 | 文件 | 版本号 | 问题 |
 |------|--------|------|
-| `pyproject.toml` | 3.5.1 | ✅ |
-| `src/__init__.py` | 3.5.1 | ✅ |
-| `src/gpu/kernel.py` | 4.2.1 | 🔴 **不一致!** |
-| `CHANGELOG.md` | 3.5.2 (未发布) | ⚠️ 草稿状态 |
-| `DOCUMENT_INDEX.md` | 4.2.1 | 🔴 **不一致!** |
+| `pyproject.toml` | 3.5.1 | [OK] |
+| `src/__init__.py` | 3.5.1 | [OK] |
+| `src/gpu/kernel.py` | 4.2.1 | [RED] **不一致!** |
+| `CHANGELOG.md` | 3.5.2 (未发布) | [WARN] 草稿状态 |
+| `DOCUMENT_INDEX.md` | 4.2.1 | [RED] **不一致!** |
 
 **[P1]** 多个文件版本号不一致，需要统一。
 
@@ -239,9 +239,9 @@ fonts = {
 
 | 版本规则 | 遵循情况 | 说明 |
 |----------|----------|------|
-| 主版本变更 | ✅ 遵循 | v2→v3 有重大架构变更 |
-| 次版本新增 | ✅ 遵循 | v3.x 持续功能增加 |
-| 修订号修复 | ✅ 遵循 | Bug 修复用修订号 |
+| 主版本变更 | [OK] 遵循 | v2→v3 有重大架构变更 |
+| 次版本新增 | [OK] 遵循 | v3.x 持续功能增加 |
+| 修订号修复 | [OK] 遵循 | Bug 修复用修订号 |
 
 ### 4.3 升级/降级策略
 
@@ -249,8 +249,8 @@ fonts = {
 
 ```
 
-v2.x → v3.x: ✅ 支持 (有完整迁移文档)
-v3.x → v4.x: ⚠️ 弃用 target_resolver，需迁移
+v2.x → v3.x: [OK] 支持 (有完整迁移文档)
+v3.x → v4.x: [WARN] 弃用 target_resolver，需迁移
 
 ```
 
@@ -277,38 +277,38 @@ v3.x → v4.x: ⚠️ 弃用 target_resolver，需迁移
 
 | ID | 风险类型 | 严重等级 | 影响范围 | 描述 | 状态 |
 |----|----------|----------|----------|------|------|
-| **C-01** | 版本号不一致 | P1 | 全项目 | 多个文件版本号不统一 | ✅ 已修复 |
-| **C-02** | Checkpoint 无版本 | P1 | 数据持久化 | 跨版本恢复可能失败 | ✅ 已修复 |
-| **C-03** | 依赖版本过窄 | P1 | 安装 | cryptography 约束过严 | ✅ 已修复 |
-| **C-04** | Python 3.14 风险 | P2 | 安装 | 未测试的新版本 Python | ⚠️ 待评估 |
-| **C-05** | Intel Arc Linux | P2 | 平台 | Linux 无 Intel GPU 支持 | ✅ 已添加文档 |
-| **C-06** | 配置文件同步 | P2 | 配置 | 示例与默认值可能不同步 | ✅ 已修复 |
-| **C-07** | gmpy2 版本上限 | P2 | 安装 | 接近 3.0.0 上限 | ✅ 已修复 |
-| **C-08** | pycryptodome 上限 | P3 | 安装 | 接近 4.0.0 上限 | ✅ 已放宽到 <5.0.0 |
-| **C-09** | win32 可选依赖 | P3 | 安全 | Windows 安全功能可选 | ✅ 已知限制 |
-| **C-10** | mlock 权限 | P3 | 安全 | Linux 内存锁定需 root | ✅ 已知限制 |
-| **C-11** | macOS GPU | P3 | 平台 | 无 macOS GPU 加速方案 | ✅ 已知限制 |
-| **C-12** | requests 3.0 风险 | P3 | 网络 | requests 3.0 可能的破坏性变更 | ⚠️ 监控中 |
-| **C-13** | pynvml 已弃用 | P3 | 监控 | nvidia-ml-py 替代方案 | ✅ 已添加依赖 |
+| **C-01** | 版本号不一致 | P1 | 全项目 | 多个文件版本号不统一 | [OK] 已修复 |
+| **C-02** | Checkpoint 无版本 | P1 | 数据持久化 | 跨版本恢复可能失败 | [OK] 已修复 |
+| **C-03** | 依赖版本过窄 | P1 | 安装 | cryptography 约束过严 | [OK] 已修复 |
+| **C-04** | Python 3.14 风险 | P2 | 安装 | 未测试的新版本 Python | [WARN] 待评估 |
+| **C-05** | Intel Arc Linux | P2 | 平台 | Linux 无 Intel GPU 支持 | [OK] 已添加文档 |
+| **C-06** | 配置文件同步 | P2 | 配置 | 示例与默认值可能不同步 | [OK] 已修复 |
+| **C-07** | gmpy2 版本上限 | P2 | 安装 | 接近 3.0.0 上限 | [OK] 已修复 |
+| **C-08** | pycryptodome 上限 | P3 | 安装 | 接近 4.0.0 上限 | [OK] 已放宽到 <5.0.0 |
+| **C-09** | win32 可选依赖 | P3 | 安全 | Windows 安全功能可选 | [OK] 已知限制 |
+| **C-10** | mlock 权限 | P3 | 安全 | Linux 内存锁定需 root | [OK] 已知限制 |
+| **C-11** | macOS GPU | P3 | 平台 | 无 macOS GPU 加速方案 | [OK] 已知限制 |
+| **C-12** | requests 3.0 风险 | P3 | 网络 | requests 3.0 可能的破坏性变更 | [WARN] 监控中 |
+| **C-13** | pynvml 已弃用 | P3 | 监控 | nvidia-ml-py 替代方案 | [OK] 已添加依赖 |
 
 ### 5.2 高优先级风险详情
 
-#### C-01: 版本号不一致 [P1] ✅ 已修复
+#### C-01: 版本号不一致 [P1] [OK] 已修复
 
 ```bash
 
 # 修复后状态 (2026-05-12)
 
-pyproject.toml:     4.2.1  ✓
-src/__init__.py:    4.2.1  ✓
-src/gpu/kernel.py:  4.2.1  ✓ (GPU内核专用版本)
-DOCUMENT_INDEX.md:   4.2.1  ✓
+pyproject.toml:     4.2.1  [OK]
+src/__init__.py:    4.2.1  [OK]
+src/gpu/kernel.py:  4.2.1  [OK] (GPU内核专用版本)
+DOCUMENT_INDEX.md:   4.2.1  [OK]
 
 ```
 
 **修复**: 统一主项目版本到 4.2.1
 
-#### C-02: Checkpoint 无版本字段 [P1] ✅ 已修复
+#### C-02: Checkpoint 无版本字段 [P1] [OK] 已修复
 
 ```python
 
@@ -326,14 +326,14 @@ DOCUMENT_INDEX.md:   4.2.1  ✓
 
 **修复**: 添加 `project_version` 字段，版本不匹配时发出警告但不阻止加载
 
-#### C-03: cryptography 版本约束 [P1] ✅ 已修复
+#### C-03: cryptography 版本约束 [P1] [OK] 已修复
 
 ```toml
 
 # 修复后
 
-cryptography>=43.0.0,<46.0.0  ✓
-gmpy2>=2.1.0,<4.0.0            ✓
+cryptography>=43.0.0,<46.0.0  [OK]
+gmpy2>=2.1.0,<4.0.0            [OK]
 
 ```
 
@@ -343,19 +343,19 @@ gmpy2>=2.1.0,<4.0.0            ✓
 
 ## 六、优化建议
 
-### 6.1 短期优化 (1-2周) ✅ 已完成
+### 6.1 短期优化 (1-2周) [OK] 已完成
 
-1. **统一版本号** ✅
+1. **统一版本号** [OK]
 
    - `pyproject.toml` → 4.2.1
 
    - `src/__init__.py` → 4.2.1
 
-2. **添加 Checkpoint 版本字段** ✅
+2. **添加 Checkpoint 版本字段** [OK]
 
    - `src/collision/checkpoint_manager.py` 已添加 `project_version`
 
-3. **放宽依赖约束** ✅
+3. **放宽依赖约束** [OK]
 
    - `cryptography>=43.0.0,<46.0.0`
 
@@ -417,24 +417,24 @@ gmpy2>=2.1.0,<4.0.0            ✓
 
 | 维度 | 评分 | 说明 |
 |------|------|------|
-| 技术兼容性 | 8.5/10 | 依赖约束已放宽 ✅ |
-| 平台兼容性 | 7.5/10 | Intel Arc Linux 文档已添加 ✅ |
-| 数据兼容性 | 7.5/10 | checkpoint 版本字段已添加 ✅ |
-| 版本兼容性 | 9.0/10 | 版本号已统一 ✅ |
+| 技术兼容性 | 8.5/10 | 依赖约束已放宽 [OK] |
+| 平台兼容性 | 7.5/10 | Intel Arc Linux 文档已添加 [OK] |
+| 数据兼容性 | 7.5/10 | checkpoint 版本字段已添加 [OK] |
+| 版本兼容性 | 9.0/10 | 版本号已统一 [OK] |
 | **综合评分** | **8.3/10** | 良好兼容性 |
 
 ### 7.2 修复状态
 
 | 优先级 | 行动项 | 状态 |
 |--------|--------|------|
-| P1 | 统一项目版本号到 4.2.1 | ✅ 已完成 |
-| P1 | 添加 checkpoint 版本字段 | ✅ 已完成 |
-| P1 | 放宽 cryptography 版本约束 | ✅ 已完成 |
-| P2 | 完善 Linux Intel Arc 支持 | ✅ 已完成 |
-| P2 | 配置文件默认值同步 | ✅ 已完成 |
-| P3 | pynvml 弃用警告 | ✅ 已添加 nvidia-ml-py |
-| P3 | pycryptodome 上限 | ✅ 已放宽到 <5.0.0 |
-| P3 | requests 3.0 风险 | ⚠️ 监控中 |
+| P1 | 统一项目版本号到 4.2.1 | [OK] 已完成 |
+| P1 | 添加 checkpoint 版本字段 | [OK] 已完成 |
+| P1 | 放宽 cryptography 版本约束 | [OK] 已完成 |
+| P2 | 完善 Linux Intel Arc 支持 | [OK] 已完成 |
+| P2 | 配置文件默认值同步 | [OK] 已完成 |
+| P3 | pynvml 弃用警告 | [OK] 已添加 nvidia-ml-py |
+| P3 | pycryptodome 上限 | [OK] 已放宽到 <5.0.0 |
+| P3 | requests 3.0 风险 | [WARN] 监控中 |
 
 ### 7.3 依赖版本预防性放宽
 

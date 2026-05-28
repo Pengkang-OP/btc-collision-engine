@@ -1,6 +1,6 @@
 # CLI使用逻辑审查报告
 
-## 📋 审查概述
+## [CHECKLIST] 审查概述
 
 **审查对象**: BTC碰撞引擎CLI (`src/cli/main.py`, `key_collision_cli.py`)
 **审查日期**: 2026-04-24
@@ -8,9 +8,9 @@
 
 ---
 
-## 🔍 核心问题识别
+## [SEARCH] 核心问题识别
 
-### 1. **新手引导不足** ⚠️ 严重
+### 1. **新手引导不足** [WARN] 严重
 
 #### 问题描述
 
@@ -36,7 +36,7 @@ python key_collision_cli.py  # 直接报错，没有提示如何使用
 
 ---
 
-### 2. **错误提示不友好** ⚠️ 中等
+### 2. **错误提示不友好** [WARN] 中等
 
 #### 问题描述
 
@@ -51,7 +51,7 @@ python key_collision_cli.py  # 直接报错，没有提示如何使用
 
 # 改进建议
 错误: 需要指定目标地址
-💡 提示: 
+[TIP] 提示: 
    - 单个地址: python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random
    - 多个地址: python key_collision_cli.py -f targets.txt -m random
    - 查看示例: python key_collision_cli.py --examples
@@ -65,7 +65,7 @@ python key_collision_cli.py  # 直接报错，没有提示如何使用
 
 ---
 
-### 3. **参数组合复杂度高** ⚠️ 中等
+### 3. **参数组合复杂度高** [WARN] 中等
 
 #### 问题描述
 
@@ -89,7 +89,7 @@ python key_collision_cli.py  # 直接报错，没有提示如何使用
 
 ---
 
-### 4. **进度反馈不够直观** ⚠️ 轻微
+### 4. **进度反馈不够直观** [WARN] 轻微
 
 #### 问题描述
 
@@ -112,7 +112,7 @@ python key_collision_cli.py  # 直接报错，没有提示如何使用
 
 ---
 
-### 5. **缺乏交互式配置** ⚠️ 中等
+### 5. **缺乏交互式配置** [WARN] 中等
 
 #### 问题描述
 
@@ -128,7 +128,7 @@ python key_collision_cli.py  # 直接报错，没有提示如何使用
 
 ---
 
-### 6. **配置文件管理不透明** ⚠️ 轻微
+### 6. **配置文件管理不透明** [WARN] 轻微
 
 #### 问题描述
 
@@ -149,14 +149,14 @@ python key_collision_cli.py  # 直接报错，没有提示如何使用
 ```bash
 # 提供更详细的指导
 [WARNING] 配置文件不存在
-💡 自动创建默认配置? [Y/n]: Y
+[TIP] 自动创建默认配置? [Y/n]: Y
 [OK] 已创建 config.json (基于 config.example.json)
-💡 提示: 运行 'python key_collision_cli.py --config-preview' 查看当前配置
+[TIP] 提示: 运行 'python key_collision_cli.py --config-preview' 查看当前配置
 ```
 
 ---
 
-### 7. **示例和模板不足** ⚠️ 中等
+### 7. **示例和模板不足** [WARN] 中等
 
 #### 问题描述
 
@@ -172,7 +172,7 @@ python key_collision_cli.py  # 直接报错，没有提示如何使用
 
 ---
 
-### 8. **命令别名和快捷方式缺失** ⚠️ 轻微
+### 8. **命令别名和快捷方式缺失** [WARN] 轻微
 
 #### 问题描述
 
@@ -192,7 +192,7 @@ python key_collision_cli.py quick -t 1A1z...  # 自动启用推荐配置
 
 ---
 
-## 📊 人性化评分
+## [CHART] 人性化评分
 
 | 维度 | 评分 (1-10) | 说明 |
 |------|-------------|------|
@@ -206,16 +206,16 @@ python key_collision_cli.py quick -t 1A1z...  # 自动启用推荐配置
 
 ---
 
-## 🎯 改进建议优先级
+## [TARGET] 改进建议优先级
 
-### 🔴 高优先级（立即改进）
+### [RED] 高优先级（立即改进）
 
 #### 1. 添加 `--quick-start` 快速引导模式
 
 ```python
 def quick_start_mode():
     """交互式快速引导"""
-    print("🚀 BTC碰撞引擎快速引导")
+    print("[QUICK] BTC碰撞引擎快速引导")
     print("=" * 50)
     
     # 步骤1: 选择目标
@@ -234,7 +234,7 @@ def quick_start_mode():
     
     # 步骤3: 构建命令
     cmd = ["python", "key_collision_cli.py"] + targets + mode_arg
-    print(f"\n✅ 生成命令: {' '.join(cmd)}")
+    print(f"\n[OK_CHECK] 生成命令: {' '.join(cmd)}")
     print("是否立即执行? [Y/n]: ", end="")
     # ...
 ```
@@ -262,14 +262,14 @@ def enhanced_error_message(error_type, context=None):
 ```python
 # 在 _run_main() 开始处添加
 if not config_exists and not any_util_commands(args):
-    print("🎯 检测到首次运行，启动配置向导...")
+    print("[TARGET] 检测到首次运行，启动配置向导...")
     from src.utils.first_run_wizard import FirstRunWizard
     wizard = FirstRunWizard()
     wizard.run()
     return
 ```
 
-### 🟡 中优先级（短期改进）
+### [YELLOW] 中优先级（短期改进）
 
 #### 4. 添加 `--examples` 命令
 
@@ -277,7 +277,7 @@ if not config_exists and not any_util_commands(args):
 python key_collision_cli.py --examples
 
 # 输出:
-📚 常用示例:
+[BOOKS] 常用示例:
 
 1. 基础随机碰撞:
    python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random
@@ -321,7 +321,7 @@ python key_collision_cli.py --config-check
 # 输出配置状态、错误提示、修复建议
 ```
 
-### 🟢 低优先级（长期优化）
+### [GREEN] 低优先级（长期优化）
 
 #### 7. 支持配置文件模板
 
@@ -360,7 +360,7 @@ def recommend_params(targets, mode, system_info):
 
 ---
 
-## 🛠️ 实施计划
+## [TOOL] 实施计划
 
 ### 第一阶段（1-2周）：核心体验改进
 
@@ -385,7 +385,7 @@ def recommend_params(targets, mode, system_info):
 
 ---
 
-## 📈 预期效果
+## [PERF] 预期效果
 
 | 指标 | 改进前 | 改进后 | 提升 |
 |------|--------|--------|------|
@@ -396,7 +396,7 @@ def recommend_params(targets, mode, system_info):
 
 ---
 
-## 📝 总结
+## [MEMO] 总结
 
 当前CLI功能完整但人性化程度不足，主要问题集中在：
 

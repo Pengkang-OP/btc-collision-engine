@@ -6,7 +6,7 @@
 
 ---
 
-## 📖 目录
+## [BOOK] 目录
 
 1. [快速入门](#快速入门)
 
@@ -30,7 +30,7 @@
 
 ---
 
-## 🚀 快速入门
+## [QUICK] 快速入门
 
 ### 5分钟快速开始
 
@@ -58,7 +58,7 @@ python key_collision_cli.py --quick-run
 
 ---
 
-## 🎯 启动方式
+## [TARGET] 启动方式
 
 ### 方式1: 交互式向导（推荐新手）
 
@@ -148,7 +148,7 @@ python key_collision_cli.py --quick-run
 
 ---
 
-## ⌨️ 命令别名（快捷命令）
+## [KEYBOARD] 命令别名（快捷命令）
 
 为了减少输入量，我们提供了6个命令别名。
 
@@ -186,7 +186,7 @@ python key_collision_cli.py --recommend
 
 ---
 
-## ⚡ 快速模式
+## [BOLT] 快速模式
 
 快速模式是最高效的启动方式，适合已知配置的用户。
 
@@ -262,7 +262,7 @@ QUICK_RUN_DEFAULTS = {
 
 ---
 
-## 🧙 交互式向导
+## [MAGE] 交互式向导
 
 交互式向导适合新手用户或需要自定义配置的场景。
 
@@ -379,7 +379,7 @@ python key_collision_cli.py --quick-start
 
 ---
 
-## 📦 紧凑模式
+## [PACKAGE] 紧凑模式
 
 紧凑模式跳过向导中的详细帮助信息，加快配置速度。
 
@@ -425,17 +425,17 @@ python key_collision_cli.py --quick-start --compact
 
 ### 适用场景
 
-- ✅ 熟练用户
+- [OK] 熟练用户
 
-- ✅ 快速测试
+- [OK] 快速测试
 
-- ✅ 自动化脚本
+- [OK] 自动化脚本
 
-- ✅ 终端窗口较小
+- [OK] 终端窗口较小
 
 ---
 
-## 🔧 高级用法
+## [TOOL] 高级用法
 
 ### 1. 自定义目标文件
 
@@ -525,7 +525,7 @@ python key_collision_cli.py --quick-run --engine multi-gpu
 
 ---
 
-## 📝 配置文件
+## [CONFIG] 配置文件
 
 ### 主配置文件
 
@@ -567,7 +567,7 @@ cat config.example.json
 
 ---
 
-## ❓ 常见问题
+## [MISS] 常见问题
 
 ### Q1: 如何创建targets.txt文件？
 
@@ -652,7 +652,7 @@ start.bat rec
 
 ---
 
-## 🔍 故障排查
+## [CHECK] 故障排查
 
 ### 问题1: 启动失败
 
@@ -740,7 +740,7 @@ export LANG=zh_CN.UTF-8
 
 ---
 
-## 📚 相关文档
+## [DOCS] 相关文档
 
 - [README.md](README.md) - 项目概述
 
@@ -754,7 +754,7 @@ export LANG=zh_CN.UTF-8
 
 ---
 
-## 🆘 获取帮助
+## [SOS] 获取帮助
 
 如果遇到问题：
 
@@ -768,7 +768,7 @@ export LANG=zh_CN.UTF-8
 
 ---
 
-## 🎉 快速参考卡
+## [DONE] 快速参考卡
 
 ### 最常用命令
 
@@ -820,4 +820,4 @@ start.bat cc
 
 **维护者**: BTC碰撞引擎团队
 
-**祝您使用愉快！** 🚀
+**祝您使用愉快！** [QUICK]

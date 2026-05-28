@@ -39,20 +39,20 @@
 **适用场景**：核心功能链路上的错误，导致后续操作不可靠。
 
 ```python
-# ✅ 正确
+# [OK] 正确
 try:
     self._init_crypto_backend(config)
 except Exception as e:
     logger.error("加密后端初始化失败: %s", e, exc_info=True)
     raise  # 必须传播，让上层处理
 
-# ✅ 包装后传播
+# [OK] 包装后传播
 try:
     result = low_level_api()
 except (ValueError, TypeError) as e:
     raise HighLevelError(f"参数验证失败: {e}") from e
 
-# ❌ 错误：静默吞异常
+# [FAIL] 错误：静默吞异常
 try:
     self._init_crypto_backend(config)
 except Exception as e:
@@ -76,26 +76,26 @@ except Exception as e:
 **适用场景**：非核心功能失败，可以用降级方案继续执行。
 
 ```python
-# ✅ 正确：GPU 不可用，回退 CPU
+# [OK] 正确：GPU 不可用，回退 CPU
 try:
     gpu_result = self._run_on_gpu(batch)
 except (RuntimeError, MemoryError) as e:
     logger.warning("GPU执行失败，回退CPU模式: %s", e)
     return self._run_on_cpu(batch)
 
-# ✅ 正确：资源获取失败，返回默认值
+# [OK] 正确：资源获取失败，返回默认值
 try:
     result = get_performance_data()
 except Exception as e:
     logger.warning("获取性能数据失败，使用默认值: %s", e)
     return DEFAULT_PERF_DATA
 
-# ❌ 错误：不应降级的关键路径
+# [FAIL] 错误：不应降级的关键路径
 try:
     self._process_payment(amount)
 except Exception as e:
-    logger.warning("支付处理失败: %s", e)  # ❌ 支付不能降级
-    return False  # ❌ 调用方无法区分"支付失败"和"支付被拒"
+    logger.warning("支付处理失败: %s", e)  # [FAIL] 支付不能降级
+    return False  # [FAIL] 调用方无法区分"支付失败"和"支付被拒"
 
 ```
 
@@ -106,7 +106,7 @@ except Exception as e:
 **适用场景**：回调、日志、监控等外围操作，失败不应影响主流程。
 
 ```python
-# ✅ 正确：回调隔离
+# [OK] 正确：回调隔离
 try:
     if self.on_progress:
         self.on_progress(stats)
@@ -114,18 +114,18 @@ except Exception as e:
     logger.exception("进度回调执行异常（已隔离）: %s", e)
     # 不 raise — 回调失败不应中断引擎
 
-# ✅ 正确：数据日志隔离
+# [OK] 正确：数据日志隔离
 try:
     self.data_logger.log_performance(metrics)
 except Exception as e:
     logger.exception("数据日志记录失败（已隔离）: %s", e)
     # 不 raise — 日志失败不应中断搜索
 
-# ❌ 错误：L3 滥用为 L1
+# [FAIL] 错误：L3 滥用为 L1
 try:
     seeds = self._generate_seeds(count)  # 关键操作
 except Exception as e:
-    logger.exception("生成种子失败（已隔离）: %s", e)  # ❌ 种子是搜索的关键输入
+    logger.exception("生成种子失败（已隔离）: %s", e)  # [FAIL] 种子是搜索的关键输入
     # raise 缺失 — 后续搜索使用无效种子
 
 ```
@@ -137,7 +137,7 @@ except Exception as e:
 **适用场景**：临时文件删除、缓存清理、信号量释放等确定性操作。
 
 ```python
-# ✅ 正确：使用 contextlib.suppress
+# [OK] 正确：使用 contextlib.suppress
 from contextlib import suppress
 
 with suppress(OSError):
@@ -146,13 +146,13 @@ with suppress(OSError):
 with suppress(FileNotFoundError):
     os.remove(log_file)
 
-# ✅ 正确：需要记录的清理
+# [OK] 正确：需要记录的清理
 try:
     os.remove(temp_file)
 except OSError as cleanup_error:
     logger.debug("清理临时文件失败（可忽略）: %s", cleanup_error)
 
-# ❌ 错误：使用 except: pass
+# [FAIL] 错误：使用 except: pass
 try:
     os.remove(temp_file)
 except:
@@ -167,19 +167,19 @@ except:
 **适用场景**：模块边界处需要将底层异常转换为高层语义异常。
 
 ```python
-# ✅ 正确：适配器层转换
+# [OK] 正确：适配器层转换
 try:
     result = low_level_gpu_api.run(batch)
 except OpenCLError as e:
     raise GPUExecutionError(f"GPU批次执行失败: {e}") from e
 
-# ✅ 正确：保持原始异常链
+# [OK] 正确：保持原始异常链
 try:
     self._validate_config(config)
 except (ValueError, TypeError) as e:
     raise ConfigError(f"GPU配置无效: {e}") from e
 
-# ❌ 错误：丢失原始异常
+# [FAIL] 错误：丢失原始异常
 try:
     self._validate_config(config)
 except (ValueError, TypeError) as e:
@@ -194,15 +194,15 @@ except (ValueError, TypeError) as e:
 ### 3.1 绝对禁止
 
 ```python
-# ❌ 裸 except
+# [FAIL] 裸 except
 except:
     ...
 
-# ❌ 静默吞异常  
+# [FAIL] 静默吞异常  
 except Exception:
     pass
 
-# ❌ 无变量的 except（无法访问异常信息）
+# [FAIL] 无变量的 except（无法访问异常信息）
 except Exception:
     logger.error("操作失败")
 
@@ -211,21 +211,21 @@ except Exception:
 ### 3.2 条件禁止
 
 ```python
-# ❌ L1 路径中缺少 raise
+# [FAIL] L1 路径中缺少 raise
 try:
     self._init_crypto_backend(config)
 except Exception as e:
     logger.error("初始化失败: %s", e, exc_info=True)
     # 缺少 raise — 后续在错误状态下运行
 
-# ❌ L1 路径中使用 warning 级别
+# [FAIL] L1 路径中使用 warning 级别
 try:
     kernel_result = self._execute_kernel(count, ws)
 except Exception as e:
     logger.warning("内核执行失败: %s", e)  # 应使用 ERROR + raise
     return []
 
-# ❌ 关键路径使用 f-string 而非 %s 格式化
+# [FAIL] 关键路径使用 f-string 而非 %s 格式化
 logger.error(f"操作失败: {e}")  # 应使用 logger.error("操作失败: %s", e)
 
 ```
@@ -237,12 +237,12 @@ logger.error(f"操作失败: {e}")  # 应使用 logger.error("操作失败: %s",
 ### 4.1 消息格式
 
 ```python
-# ✅ 标准格式
+# [OK] 标准格式
 logger.error("操作失败: %s", e, exc_info=True)          # 需要堆栈
 logger.warning("操作失败: %s", e)                         # 不需要堆栈
 logger.exception("操作失败（已隔离）: %s", e)              # 自动包含堆栈
 
-# ✅ 结构化上下文
+# [OK] 结构化上下文
 logger.error(
     "批次执行失败: batch=%d, device=%s, error=%s",
     batch_id,
@@ -250,7 +250,7 @@ logger.error(
     e,
 )
 
-# ❌ 禁止 f-string（延迟求值增加开销，且与项目规范不一致）
+# [FAIL] 禁止 f-string（延迟求值增加开销，且与项目规范不一致）
 logger.error(f"操作失败: {e}")
 
 ```
@@ -259,8 +259,8 @@ logger.error(f"操作失败: {e}")
 
 | 要素 | 必选 | 示例 |
 |------|------|------|
-| 操作名 | ✔ | `"GPU批次执行失败"` |
-| 异常详情 | ✔ | `"%s", e` |
+| 操作名 | [CHECK] | `"GPU批次执行失败"` |
+| 异常详情 | [CHECK] | `"%s", e` |
 | 上下文信息 | 推荐 | `"device=%s, batch=%d"` |
 | 操作影响 | 推荐 | `"（已隔离）"`、`"（已降级）"` |
 
@@ -333,7 +333,7 @@ except RuntimeError as e:
 
 ## 8. 示例对照表
 
-| 场景 | ✅ 正确 | ❌ 错误 |
+| 场景 | [OK] 正确 | [FAIL] 错误 |
 |------|---------|---------|
 | 内核执行失败 | `logger.error + raise` | `logger.warning + return []` |
 | 回调隔离 | `logger.exception + 不raise` | `except: pass` |

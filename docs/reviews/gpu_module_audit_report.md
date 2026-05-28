@@ -4,7 +4,7 @@
 **审核阶段**: Phase 3
 **审核工具**: code-review-and-quality (五轴框架) + 手动六维度扩展
 **审核日期**: 2026-05-28
-**模块评分**: **78/100** ⚠️ (良好但有改进空间)
+**模块评分**: **78/100** [WARN] (良好但有改进空间)
 
 ---
 
@@ -110,16 +110,16 @@ src/gpu/
 
 | 文件 | 大小 | 评分 | 建议 |
 |------|------|------|------|
-| `_kernel_source.py` | 55KB | ⚠️ 合理 | OpenCL C 源码嵌入，内容不可分割 |
-| `kernel_impl.py` | 53KB | ❌ 偏大 | `GPUKernel` 类 ~400 行，含编译/执行/Buffer/验证逻辑，建议拆分 |
-| `multi_gpu_engine.py` | 50KB | ❌ 偏大 | 多 GPU 协调逻辑复杂，建议拆分 worker 管理/任务分配 |
-| `memory_pool.py` | 36KB | ⚠️ 合理 | 含 LRU 池 + 预分配 + 监控，逻辑紧凑 |
-| `amd_optimizer.py` | 36KB | ⚠️ 合理 | 架构检测逻辑复杂，需要详细代码 |
-| `device_manager.py` | 35KB | ⚠️ 合理 | 设备管理职责集中 |
-| `device.py` | 35KB | ⚠️ 合理 | 设备检测 + 厂商识别 |
-| `performance_optimizer.py` | 26KB | ✅ 合理 | - |
-| `driver_manager.py` | 26KB | ✅ 合理 | - |
-| `nvidia_optimizer.py` | 26KB | ✅ 合理 | - |
+| `_kernel_source.py` | 55KB | [WARN] 合理 | OpenCL C 源码嵌入，内容不可分割 |
+| `kernel_impl.py` | 53KB | [FAIL] 偏大 | `GPUKernel` 类 ~400 行，含编译/执行/Buffer/验证逻辑，建议拆分 |
+| `multi_gpu_engine.py` | 50KB | [FAIL] 偏大 | 多 GPU 协调逻辑复杂，建议拆分 worker 管理/任务分配 |
+| `memory_pool.py` | 36KB | [WARN] 合理 | 含 LRU 池 + 预分配 + 监控，逻辑紧凑 |
+| `amd_optimizer.py` | 36KB | [WARN] 合理 | 架构检测逻辑复杂，需要详细代码 |
+| `device_manager.py` | 35KB | [WARN] 合理 | 设备管理职责集中 |
+| `device.py` | 35KB | [WARN] 合理 | 设备检测 + 厂商识别 |
+| `performance_optimizer.py` | 26KB | [OK] 合理 | - |
+| `driver_manager.py` | 26KB | [OK] 合理 | - |
+| `nvidia_optimizer.py` | 26KB | [OK] 合理 | - |
 
 ### 3.2 复杂度分析
 
@@ -160,24 +160,24 @@ src/gpu/
 
 | 位置 | 类型 | 评价 |
 |------|------|------|
-| `device.py:60-61` | `except ValueError: pass` | ⚠️ 版本解析失败静默忽略，至少应 warning 日志 |
-| `driver_manager.py:286-287` | `except (OSError, ...): pass` | ✅ 驱动检测方法回退，可接受 |
-| `driver_manager.py:396-397` | 同上 | ✅ 同上 |
-| `kernel_impl.py:713-714` | `except OSError: pass` | ❌ 清理操作失败应记录日志 |
-| `kernel.py:240-241` | `except OSError: pass` | ⚠️ 文件加载失败回退嵌入源码，可接受 |
-| `multi_gpu_engine.py:482-486` | `except (OSError, ...): pass` (x2) | ❌ 多处错误静默忽略 |
+| `device.py:60-61` | `except ValueError: pass` | [WARN] 版本解析失败静默忽略，至少应 warning 日志 |
+| `driver_manager.py:286-287` | `except (OSError, ...): pass` | [OK] 驱动检测方法回退，可接受 |
+| `driver_manager.py:396-397` | 同上 | [OK] 同上 |
+| `kernel_impl.py:713-714` | `except OSError: pass` | [FAIL] 清理操作失败应记录日志 |
+| `kernel.py:240-241` | `except OSError: pass` | [WARN] 文件加载失败回退嵌入源码，可接受 |
+| `multi_gpu_engine.py:482-486` | `except (OSError, ...): pass` (x2) | [FAIL] 多处错误静默忽略 |
 
 ### 3.4 设计模式使用
 
 | 模式 | 使用位置 | 评价 |
 |------|----------|------|
-| **Strategy** | `vendors/base.py` → nvidia/amd/intel | ✅ 正确使用，基类 `calculate_batch_size()` 已将共用逻辑提至基类 |
-| **Facade** | `facade.py` | ✅ 合理封装 GPU 子系统复杂度 |
-| **Protocol** | `_engine_protocol.py` | ✅ 消除反向依赖 (ROADMAP #13) |
-| **Adapter** | `collision/gpu/` 目录 | ✅ 适配 GPU 接口到碰撞引擎 |
-| **Singleton** | `scorer.py`, `auto_config.py` | ✅ `get_*()` 函数实现单例模式 |
-| **LRU Pool** | `memory_pool.py` | ✅ `OrderedDict` 重构后的 LRU 实现 |
-| **Observer** | 事件总线引用 | ✅ 解耦搜索模式和引擎状态通知 |
+| **Strategy** | `vendors/base.py` → nvidia/amd/intel | [OK] 正确使用，基类 `calculate_batch_size()` 已将共用逻辑提至基类 |
+| **Facade** | `facade.py` | [OK] 合理封装 GPU 子系统复杂度 |
+| **Protocol** | `_engine_protocol.py` | [OK] 消除反向依赖 (ROADMAP #13) |
+| **Adapter** | `collision/gpu/` 目录 | [OK] 适配 GPU 接口到碰撞引擎 |
+| **Singleton** | `scorer.py`, `auto_config.py` | [OK] `get_*()` 函数实现单例模式 |
+| **LRU Pool** | `memory_pool.py` | [OK] `OrderedDict` 重构后的 LRU 实现 |
+| **Observer** | 事件总线引用 | [OK] 解耦搜索模式和引擎状态通知 |
 
 ---
 
@@ -190,7 +190,7 @@ src/gpu/
   - `vendors/base.py` → 通用 batch_size 计算、错误处理统一
   - `amd_optimizer.py`/`nvidia_optimizer.py` → 驱动检测 + 架构代识别
   - `intel_optimizer.py` → Intel Arc 特有 workarounds
-- **评价**: ✅ 合理 — Strategy 模式 + 独立优化器文件，职责清晰
+- **评价**: [OK] 合理 — Strategy 模式 + 独立优化器文件，职责清晰
 
 **问题 R2 - OpenCL 内核编译策略**
 - **决策**: 4 种降级编译策略
@@ -198,16 +198,16 @@ src/gpu/
   2. 降级 CL1.2
   3. Intel Arc workaround
   4. 最小功能集
-- **评价**: ✅ 合理 — 兼容多厂商硬件差异
+- **评价**: [OK] 合理 — 兼容多厂商硬件差异
 
 **问题 R3 - 搜索模式策略分离**
 - **决策**: `BaseSearchMode` → `RandomSearchMode` 继承体系
-- **评价**: ✅ 合理 — 为未来添加顺序搜索、模式匹配搜索等模式预留扩展点
+- **评价**: [OK] 合理 — 为未来添加顺序搜索、模式匹配搜索等模式预留扩展点
 - **改进建议**: `BaseSearchMode` 已从 `GPUCollisionEngine._execute_batch_loop` 迁移了大量逻辑，但仍需通过 `self.engine` 访问引擎状态，耦合度仍较高
 
 **问题 R4 - 统一 GPU 评分**
 - **决策**: `GPUDeviceScorer` 集中评分公式，消除 selector/load_balancer/device 三处不一致
-- **评价**: ✅ 合理 — Task 11 改进，有效解决评分不一致问题
+- **评价**: [OK] 合理 — Task 11 改进，有效解决评分不一致问题
 
 ### 4.2 安全约束
 
@@ -216,14 +216,14 @@ src/gpu/
 - **文件**: `context.py:24-47`
 - 所有厂商统一使用 `-cl-std=CL2.0`，严格禁用 `-cl-fast-relaxed-math`
 - 代码注释明确说明：`secp256k1/SHA256/RIPEMD160 精度要求`
-- **评价**: ✅ 完全正确 — 加密运算必须禁用 fast-math
+- **评价**: [OK] 完全正确 — 加密运算必须禁用 fast-math
 
 **问题 R6 - Intel Arc uint32 workaround**
 - **严重性**: Info (正向发现)
 - **文件**: `vendors/intel.py`
 - 避免 `global char*` 导致的驱动级 hang bug，使用 `uint32*` 替代 `uchar*` 缓冲区
 - 环境变量优化：`OCL_QUEUE_THREAD_TRACE=0`、`IGDRCL_DEBUG_LEVEL=0` 等
-- **评价**: ✅ 合理的厂商特定解决
+- **评价**: [OK] 合理的厂商特定解决
 
 ### 4.3 依赖管理
 
@@ -231,7 +231,7 @@ src/gpu/
 - **严重性**: Minor | **文件**: `kernel_impl.py`
 - `import numpy as np` 用于内存视图操作和类型转换
 - 非 GPU 场景无需 numpy，但此模块专为 GPU 设计，依赖合理
-- **评价**: ⚠️ 合理但有优化空间（可考虑 `memoryview` + `struct` 替代部分场景）
+- **评价**: [WARN] 合理但有优化空间（可考虑 `memoryview` + `struct` 替代部分场景）
 
 ---
 
@@ -299,7 +299,7 @@ src/gpu/
   if not devices:
       raise ValueError("设备列表不能为空")
   ```
-- ✅ 正确处理空输入
+- [OK] 正确处理空输入
 
 **问题 L8 - GPU 设备索引越界**
 - **严重性**: Minor | **文件**: `search_modes/base_search.py:82-88`
@@ -308,7 +308,7 @@ src/gpu/
       logger.warning("目标索引越界: %d >= %d，跳过匹配", ...)
       continue
   ```
-- ✅ 正确处理匹配索引越界
+- [OK] 正确处理匹配索引越界
 
 ---
 
@@ -318,12 +318,12 @@ src/gpu/
 
 | 位置 | 原因 | 合理性 |
 |------|------|--------|
-| `device.py:22` | `cl = None` 当 pyopencl 不可用时类型不匹配 | ✅ 必要，无法避免 |
-| `kernel_impl.py:28` | 同上 | ✅ 必要 |
-| `device_manager.py:573` | `cast("Any", ...)` 用于 OpenCL 对象 | ✅ 必要 |
-| `gpu_recovery_manager.py:707` | 设置 `_health_check_executor = None` | ✅ 必要 |
-| `search_modes/random_search.py:484` | `_handle_batch_error` override 签名不同 | ✅ 必要 (Liskov) |
-| `executor_types.py` (引用提及) | 已在 v5.2.4 消除 | ✅ 已修复 |
+| `device.py:22` | `cl = None` 当 pyopencl 不可用时类型不匹配 | [OK] 必要，无法避免 |
+| `kernel_impl.py:28` | 同上 | [OK] 必要 |
+| `device_manager.py:573` | `cast("Any", ...)` 用于 OpenCL 对象 | [OK] 必要 |
+| `gpu_recovery_manager.py:707` | 设置 `_health_check_executor = None` | [OK] 必要 |
+| `search_modes/random_search.py:484` | `_handle_batch_error` override 签名不同 | [OK] 必要 (Liskov) |
+| `executor_types.py` (引用提及) | 已在 v5.2.4 消除 | [OK] 已修复 |
 
 **结论**: 6 处 `# type: ignore` 均合理，无需移除。
 
@@ -369,7 +369,7 @@ src/gpu/
 - SHA-256 / RIPEMD-160 实现位于 OpenCL C 代码中
 - 编译选项确保 `-cl-std=CL2.0`（无 fast-math），保证精度
 - 2*G 自检验证在 `kernel_impl.py` 中: `verify_kernel_with_2g()`
-- **评价**: ✅ 整体设计正确
+- **评价**: [OK] 整体设计正确
 
 **问题 D2 - 私钥数据传输安全**
 - **严重性**: Major
@@ -384,7 +384,7 @@ src/gpu/
 **问题 D3 - `auto_config.py` 输入验证**
 - **严重性**: Minor | **文件**: `auto_config.py:92-100`
 - `_get_memory_gb()` 验证 `device` 是否为 dict 及 `memory_gb` 是否为有效数值
-- ✅ 正确的输入验证
+- [OK] 正确的输入验证
 
 **问题 D4 - `vendors/base.py` 缺乏 device 参数验证**
 - **严重性**: Minor | **文件**: `vendors/base.py:75`
@@ -408,7 +408,7 @@ src/gpu/
 - **严重性**: Info
 - GPU 内核执行时间为批量操作，非条件分支，时序变化在数百微秒级
 - 批处理模式下时序信息难以被利用
-- **评价**: ✅ 风险极低
+- **评价**: [OK] 风险极低
 
 ---
 
@@ -447,11 +447,11 @@ src/gpu/
 
 | ID | 文件 | 问题 | 备注 |
 |----|------|------|------|
-| **I1** | `context.py:24-47` | OpenCL 编译选项安全约束 | ✅ 正确实现，文档记录清晰 |
-| **I2** | `vendors/intel.py` | Intel Arc uint32 workaround | ✅ 合理的厂商特定解决 |
-| **I3** | `gpu_recovery_manager.py` | 恢复管理器架构 | ✅ 设计良好，接口清晰 |
-| **I4** | `scorer.py` | 统一 GPU 评分 | ✅ 消除了多处理评分不一致 |
-| **I5** | `multi_gpu_engine.py` | 锁顺序约定（文档注释） | ✅ 良好实践，可考虑运行时验证 |
+| **I1** | `context.py:24-47` | OpenCL 编译选项安全约束 | [OK] 正确实现，文档记录清晰 |
+| **I2** | `vendors/intel.py` | Intel Arc uint32 workaround | [OK] 合理的厂商特定解决 |
+| **I3** | `gpu_recovery_manager.py` | 恢复管理器架构 | [OK] 设计良好，接口清晰 |
+| **I4** | `scorer.py` | 统一 GPU 评分 | [OK] 消除了多处理评分不一致 |
+| **I5** | `multi_gpu_engine.py` | 锁顺序约定（文档注释） | [OK] 良好实践，可考虑运行时验证 |
 
 ---
 
@@ -465,26 +465,26 @@ src/gpu/
 | **逻辑审核** | 70/100 | 多处 bare except 静默忽略，GPU 不可用缺少守卫 |
 | **类型审核** | 80/100 | 6 处 type:ignore 均合理，Any 使用主要集中在 pyopencl_stubs |
 | **数据正确性** | 85/100 | 密码学操作正确，需关注 GPU 内存私钥清除 |
-| **综合评分** | **78/100** ⚠️ | |
+| **综合评分** | **78/100** [WARN] | |
 
 **对比其他模块**:
 - collision/: 75/100
 - core/: 82/100
-- **gpu/: 78/100** ⚠️
+- **gpu/: 78/100** [WARN]
 
 ### 主要优势
-1. ✅ Strategy 模式厂商架构清晰，可扩展性好
-2. ✅ Protocol 接口解耦 (ROADMAP #13 完成)
-3. ✅ OpenCL 编译选项安全约束严格 (CL2.0, no fast-math)
-4. ✅ GPU 内存池 LRU 重构后的高性能设计
-5. ✅ 多 GPU 协调的锁顺序约定
+1. [OK] Strategy 模式厂商架构清晰，可扩展性好
+2. [OK] Protocol 接口解耦 (ROADMAP #13 完成)
+3. [OK] OpenCL 编译选项安全约束严格 (CL2.0, no fast-math)
+4. [OK] GPU 内存池 LRU 重构后的高性能设计
+5. [OK] 多 GPU 协调的锁顺序约定
 
 ### 主要风险
-1. ❌ 多处 bare except 静默忽略错误 (M1, M2)
-2. ❌ GPU 不可用时无运行时守卫 (C1)
-3. ⚠️ GPU 内存中私钥数据未显式清除 (M6)
-4. ⚠️ 批量 PRNG 种子模式下 seed_utils 的端序处理一致性问题需在 kernel source 中验证
-5. ⚠️ 3 个 50KB+ 文件在持续迭代中需关注
+1. [FAIL] 多处 bare except 静默忽略错误 (M1, M2)
+2. [FAIL] GPU 不可用时无运行时守卫 (C1)
+3. [WARN] GPU 内存中私钥数据未显式清除 (M6)
+4. [WARN] 批量 PRNG 种子模式下 seed_utils 的端序处理一致性问题需在 kernel source 中验证
+5. [WARN] 3 个 50KB+ 文件在持续迭代中需关注
 
 ---
 

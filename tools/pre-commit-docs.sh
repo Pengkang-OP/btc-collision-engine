@@ -8,28 +8,28 @@
 # 或者创建符号链接:
 #   ln -s ../../tools/pre-commit-docs.sh .git/hooks/pre-commit
 
-echo "🔍 检查文档质量..."
+echo "[CHECK] 检查文档质量..."
 
 # 检查是否有文档被修改
 changed_docs=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^docs/.*\.md$' || true)
 
 if [ -z "$changed_docs" ]; then
-    echo "✅ 没有文档变更，跳过检查"
+    echo "[OK] 没有文档变更，跳过检查"
     exit 0
 fi
 
-echo "📄 检测到文档变更:"
+echo "[FILE] 检测到文档变更:"
 echo "$changed_docs"
 echo ""
 
 # 运行质量检查
-echo "🔧 运行文档质量检查..."
+echo "[TOOL] 运行文档质量检查..."
 python tools/check_document_quality.py
 
 # 检查退出码
 if [ $? -ne 0 ]; then
     echo ""
-    echo "❌ 文档质量检查失败！"
+    echo "[FAIL] 文档质量检查失败！"
     echo ""
     echo "请先修复以下问题："
     echo "1. 代码块语言类型标注"
@@ -45,15 +45,15 @@ fi
 
 # 检查断裂链接
 echo ""
-echo "🔗 检查断裂链接..."
+echo "[LINK] 检查断裂链接..."
 python tools/check_broken_links.py
 
 if [ $? -ne 0 ]; then
     echo ""
-    echo "⚠️  发现断裂链接，但不阻止提交"
+    echo "[WARN] 发现断裂链接，但不阻止提交"
     echo "建议修复：python tools/fix_broken_links.py"
 fi
 
 echo ""
-echo "✅ 文档质量检查通过！"
+echo "[OK] 文档质量检查通过！"
 exit 0

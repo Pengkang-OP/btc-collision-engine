@@ -360,7 +360,7 @@ flowchart TD
     
     Init --> CheckMaxKeys{"max_keys == None?"}
     
-    CheckMaxKeys -->|是| LogWarning["⚠️ 记录警告<br/>将无限运行直到手动停止"]
+    CheckMaxKeys -->|是| LogWarning["[WARN] 记录警告<br/>将无限运行直到手动停止"]
     
     CheckMaxKeys -->|否| LogLimit["记录限制<br/>max_keys = N"]
     
@@ -608,7 +608,7 @@ flowchart LR
     subgraph Runtime["运行时匹配"]
         R1["生成新地址"] --> R2["提取地址Hash160<br/>Base58解码"]
         R2 --> R3{"Hash160 in targets?<br/>Set查找 O(1)"}
-        R3 -->|匹配| R4["🎯 发现碰撞!"]
+        R3 -->|匹配| R4["[TARGET] 发现碰撞!"]
         R3 -->|不匹配| R5["继续下一个"]
     end
     
@@ -852,14 +852,14 @@ flowchart LR
     subgraph Problem["问题: 速度显示为0"]
         P1["工作线程持续运行"] --> P2["_live_range_count异步更新"]
         P2 --> P3["主线程get_stats()查询"]
-        P3 --> P4["❌ 旧代码未合并live_count"]
+        P3 --> P4["[CROSS] 旧代码未合并live_count"]
         P4 --> P5["stats.total_checked = 0"]
         P5 --> P6["显示: 速度=0 keys/s"]
     end
     
     subgraph Solution["修复: P2实时统计修复"]
         S1["工作线程: 每批次更新<br/>_live_range_count += batch_count"] --> S2["主线程: get_stats()合并<br/>with _state_lock:<br/>  stats.total_checked += _live_range_count<br/>  _live_range_count = 0<br/>  stats.speed = total / elapsed"]
-        S2 --> S3["✅ 实时数据准确<br/>显示: 速度=N keys/s"]
+        S2 --> S3["[OK_CHECK] 实时数据准确<br/>显示: 速度=N keys/s"]
     end
     
     Problem -.时序问题.-> P3
@@ -962,10 +962,10 @@ flowchart TD
 
 **安全特性**:
 
-- ✅ 不保存私钥（仅保存地址）
-- ✅ 原子写入防止数据损坏
-- ✅ 文件权限0o600（仅所有者可访问）
-- ✅ 自动保存间隔可配置（默认30秒）
+- [OK_CHECK] 不保存私钥（仅保存地址）
+- [OK_CHECK] 原子写入防止数据损坏
+- [OK_CHECK] 文件权限0o600（仅所有者可访问）
+- [OK_CHECK] 自动保存间隔可配置（默认30秒）
 
 ---
 
@@ -1141,7 +1141,7 @@ graph TB
         WIF["WIF编解码<br/>WIF.encode/decode"]
     end
     
-    subgraph Targets["🎯 目标地址管理"]
+    subgraph Targets["[TARGET] 目标地址管理"]
         WIFTable["WIF目标地址表<br/>多个比特币WIF地址"]
         WIFParser["WIF解析器<br/>Base58Check解码"]
         HashSet["Hash160目标集合<br/>Set[str] O(1)查找"]
@@ -1320,7 +1320,7 @@ flowchart TD
         MonitorProgress --> MonitorGPU["监控GPU性能指标<br/>- GPU利用率 (%)<br/>- 显存使用量 (MB)<br/>- 温度 (°C)<br/>- 功耗 (W)"]
         MonitorGPU --> CheckMatch{"发现匹配?"}
         CheckMatch -->|是| RecordMatch["记录匹配结果<br/>- 私钥 (WIF格式)<br/>- 比特币地址<br/>- Hash160<br/>- 时间戳"]
-        RecordMatch --> ShowMatch["显示匹配通知<br/>🎯 碰撞成功!"]
+        RecordMatch --> ShowMatch["显示匹配通知<br/>[TARGET] 碰撞成功!"]
         ShowMatch --> HasCallback{"有on_match回调?"}
         HasCallback -->|是| InvokeCallback["触发匹配回调<br/>on_match(pk, address, wif)"]
         HasCallback -->|否| CheckStop
@@ -1369,9 +1369,9 @@ flowchart TD
    - SHA256(公钥) → RIPEMD160 → Hash160 (20 字节)
 4. **存储优化**: 使用 `Set[str]` 存储 Hash160，实现 O(1) 查找性能
 5. **统计显示**:
-   - ✅ 成功加载: N 个地址
-   - ❌ 无效跳过: M 个地址
-   - 🔄 去重后: K 个唯一地址
+   - [OK_CHECK] 成功加载: N 个地址
+   - [CROSS] 无效跳过: M 个地址
+   - [REFRESH] 去重后: K 个唯一地址
 
 **代码示例**:
 
@@ -1550,7 +1550,7 @@ def on_progress(stats):
     print(f"已检查: {stats.total_checked:,} | 速度: {stats.speed:,.0f} keys/s")
 
 def on_match(private_key, address, wif):
-    print(f"🎯 碰撞成功!")
+    print(f"[TARGET] 碰撞成功!")
     print(f"  地址: {address}")
     print(f"  WIF: {wif}")
     print(f"  私钥: {private_key.hex()}")
@@ -1567,21 +1567,21 @@ engine.start(
 
 ### 关键注意事项
 
-#### ⚠️ 安全警告
+#### [WARN] 安全警告
 
 1. **私钥保护**: WIF 地址表包含敏感私钥信息，必须加密存储
 2. **显存限制**: 避免设置过高的 `memory_usage`，防止系统 OOM
 3. **温度监控**: GPU 温度超过 85°C 时应降低负载或暂停运行
 4. **法律合规**: 仅用于合法的安全研究和授权测试
 
-#### 🚀 性能优化建议
+#### [QUICK] 性能优化建议
 
 1. **Batch Size**: 根据显存容量调整，通常 10000-50000 为佳
 2. **Work Groups**: 设置为计算单元数的 2-4 倍以充分利用 GPU
 3. **内存对齐**: 确保数据按 256 字节对齐以提高传输效率
 4. **异步传输**: 使用 PCIe 异步传输减少 CPU-GPU 数据交换延迟
 
-#### 🔧 故障排除
+#### [WRENCH] 故障排除
 
 | 问题 | 可能原因 | 解决方案 |
 |------|---------|---------|

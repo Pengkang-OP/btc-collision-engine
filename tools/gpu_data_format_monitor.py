@@ -141,7 +141,7 @@ class GPUDataFormatMonitor:
             display_interval: 显示间隔（秒）
         """
         print("\n" + "=" * 80)
-        print("🔍 GPU 数据格式实时监控")
+        print("SEARCH GPU 数据格式实时监控")
         print("=" * 80)
         print(f"启动时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"目标地址数: {len(self.target_addresses)}")
@@ -155,7 +155,7 @@ class GPUDataFormatMonitor:
             # 启动引擎
             engine.start(mode="random")
 
-            print("✅ 引擎已启动，开始监控...\n")
+            print("OK 引擎已启动，开始监控...\n")
 
             # 监控循环
             while engine.is_running():
@@ -177,9 +177,9 @@ class GPUDataFormatMonitor:
                 self._display_monitoring_report(new_checked)
 
         except KeyboardInterrupt:
-            print("\n\n⚠️  监控被用户中断")
+            print("\n\nWARN 监控被用户中断")
         except Exception as e:
-            print(f"\n\n❌ 监控过程出错: {e}")
+            print(f"\n\nERR 监控过程出错: {e}")
             import traceback
 
             traceback.print_exc()
@@ -282,11 +282,11 @@ class GPUDataFormatMonitor:
         address_rate = 100.0 if total_addr_validations > 0 else 0
 
         print("\n" + "-" * 80)
-        print(f"📊 监控报告 - {datetime.now().strftime('%H:%M:%S')}")
+        print(f"STATS 监控报告 - {datetime.now().strftime('%H:%M:%S')}")
         print("-" * 80)
 
         # 性能统计
-        print("⚡ 性能统计:")
+        print("BOLT 性能统计:")
         print(f"   总检测数: {format_number_with_commas(self.total_checked)}")
         print(f"   新增检测: {format_number_with_commas(new_checked)}")
         print(f"   当前速度: {format_speed(speed)} keys/s")
@@ -294,21 +294,21 @@ class GPUDataFormatMonitor:
         print()
 
         # 私钥验证
-        print("🔑 私钥验证:")
+        print("KEY 私钥验证:")
         print(f"   有效私钥: {format_number_with_commas(self.valid_private_keys)}")
         print(f"   无效私钥: {format_number_with_commas(self.invalid_private_keys)}")
         print(f"   合格率: {private_key_rate:.2f}%")
         print()
 
         # 公钥验证
-        print("🔓 公钥验证:")
+        print("[UNLOCK] 公钥验证:")
         print(f"   有效公钥: {format_number_with_commas(self.valid_public_keys)}")
         print(f"   无效公钥: {format_number_with_commas(self.invalid_public_keys)}")
         print(f"   合格率: {public_key_rate:.2f}%")
         print()
 
         # 地址验证
-        print("📍 地址验证:")
+        print("[LOCATION] 地址验证:")
         print(f"   有效地址: {format_number_with_commas(self.valid_addresses)}")
         print(f"   无效地址: {format_number_with_commas(self.invalid_addresses)}")
         print(f"   合格率: {address_rate:.2f}%")
@@ -316,7 +316,7 @@ class GPUDataFormatMonitor:
 
         # 格式错误
         if self.format_errors:
-            print(f"⚠️  格式错误示例 (最近 {len(self.format_errors)} 个):")
+            print(f"WARN 格式错误示例 (最近 {len(self.format_errors)} 个):")
             for i, error in enumerate(self.format_errors[-5:], 1):
                 print(f"   {i}. {error}")
             print()
@@ -328,13 +328,13 @@ class GPUDataFormatMonitor:
         elapsed = time.time() - self.start_time if self.start_time else 0
 
         print("\n" + "=" * 80)
-        print("📈 GPU 数据格式监控 - 最终报告")
+        print("UP GPU 数据格式监控 - 最终报告")
         print("=" * 80)
         print(f"结束时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"总运行时间: {elapsed:.1f} 秒")
         print()
 
-        print("🔑 私钥验证统计:")
+        print("KEY 私钥验证统计:")
         print(f"   有效: {format_number_with_commas(self.valid_private_keys)}")
         print(f"   无效: {format_number_with_commas(self.invalid_private_keys)}")
         total = self.valid_private_keys + self.invalid_private_keys
@@ -342,7 +342,7 @@ class GPUDataFormatMonitor:
             print(f"   合格率: {self.valid_private_keys / total * 100:.2f}%")
         print()
 
-        print("🔓 公钥验证统计:")
+        print("[UNLOCK] 公钥验证统计:")
         print(f"   有效: {format_number_with_commas(self.valid_public_keys)}")
         print(f"   无效: {format_number_with_commas(self.invalid_public_keys)}")
         total = self.valid_public_keys + self.invalid_public_keys
@@ -350,15 +350,15 @@ class GPUDataFormatMonitor:
             print(f"   合格率: {self.valid_public_keys / total * 100:.2f}%")
         print()
 
-        print("📍 地址验证统计:")
+        print("[LOCATION] 地址验证统计:")
         print(f"   有效: {format_number_with_commas(self.valid_addresses)}")
         print(f"   无效: {format_number_with_commas(self.invalid_addresses)}")
         print()
 
         if self.format_errors:
-            print(f"⚠️  共发现 {len(self.format_errors)} 个格式错误")
+            print(f"WARN 共发现 {len(self.format_errors)} 个格式错误")
         else:
-            print("✅ 未发现格式错误")
+            print("OK 未发现格式错误")
 
         print("=" * 80)
 
@@ -366,7 +366,7 @@ class GPUDataFormatMonitor:
 def main():
     """主函数."""
     print("\n" + "=" * 80)
-    print("🚀 GPU 数据格式实时监控工具")
+    print("FAST GPU 数据格式实时监控工具")
     print("=" * 80)
     print()
 
@@ -378,7 +378,7 @@ def main():
         "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
     ]
 
-    print(f"📋 目标地址 ({len(target_addresses)} 个):")
+    print(f"[NOTE] 目标地址 ({len(target_addresses)} 个):")
     for addr in target_addresses:
         print(f"   - {addr}")
     print()
@@ -392,19 +392,19 @@ def main():
             resolved_targets.add(result)
 
     if not resolved_targets:
-        print("❌ 无法解析目标地址")
+        print("ERR 无法解析目标地址")
         return
 
-    print(f"✅ 成功解析 {len(resolved_targets)} 个目标地址\n")
+    print(f"OK 成功解析 {len(resolved_targets)} 个目标地址\n")
 
     # 创建引擎
     engine = KeyCollisionEngine(
         targets=resolved_targets,
         on_progress=lambda stats: None,
         on_match=lambda pk, addr, wif: print(
-            f"\n🎯 发现匹配!\n   地址: {addr}\n   私钥: {pk.hex()}\n   WIF: {wif}\n",
+            f"\n[TARGET] 发现匹配!\n   地址: {addr}\n   私钥: {pk.hex()}\n   WIF: {wif}\n",
         ),
-        on_complete=lambda stats: print("\n✅ 对撞完成"),
+        on_complete=lambda stats: print("\nOK 对撞完成"),
     )
 
     # 创建监控器

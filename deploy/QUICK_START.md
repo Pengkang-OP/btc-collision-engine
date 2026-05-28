@@ -2,7 +2,7 @@
 
 > **版本**: v5.0.0
 
-## 🚀 30秒快速启动
+## [QUICK] 30秒快速启动
 
 ### systemd方式（Linux服务器）
 
@@ -26,7 +26,7 @@ docker-compose --profile gpu --profile nvidia up -d
 
 ---
 
-## 📋 部署前准备
+## [CHECKLIST] 部署前准备
 
 ### 系统要求
 
@@ -52,7 +52,7 @@ sudo usermod -aG docker $USER
 
 ---
 
-## 🔧 配置步骤
+## [TOOL] 配置步骤
 
 ### 1. 创建生产配置
 
@@ -98,7 +98,7 @@ EOF
 
 ---
 
-## 📊 运行模式
+## [CHART] 运行模式
 
 ### CPU模式
 
@@ -140,7 +140,7 @@ docker-compose --profile gpu --profile nvidia up -d
 
 ---
 
-## 🔍 监控和日志
+## [CHECK] 监控和日志
 
 ### 查看状态
 
@@ -175,7 +175,7 @@ docker-compose logs -f btc-engine-gpu
 
 ---
 
-## 🛠 常用命令
+## [TOOL] 常用命令
 
 ### systemd管理
 
@@ -212,7 +212,7 @@ docker exec -it btc-collision-gpu bash
 
 ---
 
-## 📈 性能优化
+## [PERF] 性能优化
 
 ### CPU优化
 
@@ -252,7 +252,7 @@ pip install pycryptodome>=3.19.0
 
 ---
 
-## 🔒 安全建议
+## [LOCK] 安全建议
 
 ### 文件权限
 
@@ -277,7 +277,7 @@ sudo systemctl edit btc-collision-engine
 
 ---
 
-## 🐛 故障排除
+## [DEBUG] 故障排除
 
 ### 服务无法启动
 
@@ -320,7 +320,7 @@ nvidia-smi --query-gpu=utilization.gpu --format=csv -l 5
 
 ---
 
-## 📚 完整文档
+## [DOCS] 完整文档
 
 - [部署详细说明](./README.md)
 - [项目文档](../docs/)
@@ -328,7 +328,7 @@ nvidia-smi --query-gpu=utilization.gpu --format=csv -l 5
 
 ---
 
-## 💡 快速参考
+## [TIP] 快速参考
 
 | 任务 | 命令 |
 |------|------|

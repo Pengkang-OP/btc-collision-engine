@@ -215,7 +215,7 @@ class TestAsyncExecutorInit:
         gpu_device = MagicMock()
         gpu_device.device_info = {"name": "NVIDIA GeForce GTX 1660 SUPER"}
         executor = AsyncGPUExecutor(gpu_device, max_batch_size=10000)
-        # Should use GPU specific config max_batch_size (2097152, v5.1.1 4x upgrade) over constructor param  # noqa: E501
+        # Should use GPU specific config max_batch_size (2097152, v5.1.1 4x upgrade) over constructor param
         assert executor.max_batch_size == 2097152
 
     def test_init_initial_state(self):

@@ -252,7 +252,7 @@ class Secp256k1:
 ```
 
 文件头明确标注：
-> ⚠️ 本模块是secp256k1椭圆曲线的**教学参考实现**，性能比优化后端慢100-1000倍
+> [WARN] 本模块是secp256k1椭圆曲线的**教学参考实现**，性能比优化后端慢100-1000倍
 
 #### Base58 编解码
 
@@ -284,7 +284,7 @@ actual_batch_size = batch_end - current
 **警告机制**：`brute_force` 模式未设置 `max_keys` 时会输出明确警告：
 
 ```
-⚠️ brute_force模式未设置max_keys限制，将无限运行直到手动停止或找到匹配
+[WARN] brute_force模式未设置max_keys限制，将无限运行直到手动停止或找到匹配
 ```
 
 ### 1.6 监控五层架构
@@ -346,7 +346,7 @@ except ImportError:
 `on_match` 回调注释明确警告（`key_collision_engine.py` L92-96）：
 
 ```python
-# ⚠️ 安全注意:
+# [WARN] 安全注意:
 # - private_key是bytes副本，调用者负责安全处理
 # - 建议在使用后立即清零
 # - 不要存储到日志或文件（除非加密）
@@ -691,23 +691,23 @@ class BitcoinComplianceValidator:
 
 | # | 问题描述 | 文件位置 | 类别 |
 |---|---------|---------|------|
-| P1-01 | CPU `on_complete` 传递原始stats而非快照 **已修复 ✅** | `key_collision_engine.py` L1418 | 线程安全 |
-| P1-02 | 线程池executor关闭后引用未清空（`_executor=None`后立即结束）**已确认修复 ✅** | `key_collision_engine.py` L1331-1378 | 资源管理 |
-| P1-03 | 椭圆曲线点倍乘：y=0时分母为0（`denominator=(2*y1)%p` 当y1=0时无意义）**已修复 ✅** | `secp256k1.py` L287-296 | 数学错误 |
-| P1-04 | Base58解码：num=0时返回空bytes而非单字节0（边界条件缺失）**已确认修复 ✅** | `base58.py` L94-97 | 逻辑错误 |
-| P1-05 | Base58Check解码：版本字节不验证（接受任意version值）**已修复 ✅** | `base58.py` L160 | 安全性 |
-| P1-06 | GPU facade析构函数静默吞掉异常（无日志输出）**已修复 ✅** | `gpu/facade.py` L273-280 | 异常处理 |
-| P1-07 | batch_size上限检查缺少下限（允许batch_size=0）**已修复 ✅** | `gpu_collision_engine.py` L351-356 | 输入验证 |
-| P1-08 | GPU内核缓存键使用MD5（弱哈希，存在碰撞风险）**已修复 ✅** | `gpu_collision_engine.py` L588 | 安全性 |
-| P1-09 | `_save_kernel_cache` 末尾存在残留代码（保存完后继续执行算术验证）**已修复 ✅** | `gpu_collision_engine.py` L664-680 | 逻辑错误 |
-| P1-10 | Intel Arc超时保护未在所有代码路径中激活 **已修复 ✅** | `async_executor.py` + `gpu/vendors/intel.py` L94-100 | 稳定性 |
-| P1-11 | `CheckpointManager` 并发写入时缺少文件级锁 **已确认修复 ✅** | `collision/checkpoint_manager.py` | 数据一致性 |
-| P1-12 | `DeduplicationFilter` Bloom过滤器扩容时锁粒度过大 **已确认修复 ✅** | `collision/deduplication_filter.py` | 性能 |
-| P1-13 | 多GPU任务分配未考虑GPU性能差异（均等分配）**已确认修复 ✅** | `gpu/multi_gpu_engine.py` | 性能 |
-| P1-14 | `DataLogger` 报告生成失败时仅记录日志而非抛出 **已修复 ✅** | `key_collision_engine.py` L1400 | 异常处理 |
-| P1-15 | `GPUAutoTuner` 调整批次大小时缺少冷却期检查竞态 **已确认修复 ✅** | `gpu/auto_tuner.py` | 线程安全 |
-| P1-16 | `EnhancedPerformanceMonitor` 历史数据无上限（内存增长）**已确认修复 ✅** | `utils/performance_monitor.py` | 内存管理 |
-| P1-17 | `TargetResolver` 加载地址文件时未限制文件大小 **已确认修复 ✅** | `collision/target_resolver.py` | 资源管理 |
+| P1-01 | CPU `on_complete` 传递原始stats而非快照 **已修复 [OK_CHECK]** | `key_collision_engine.py` L1418 | 线程安全 |
+| P1-02 | 线程池executor关闭后引用未清空（`_executor=None`后立即结束）**已确认修复 [OK_CHECK]** | `key_collision_engine.py` L1331-1378 | 资源管理 |
+| P1-03 | 椭圆曲线点倍乘：y=0时分母为0（`denominator=(2*y1)%p` 当y1=0时无意义）**已修复 [OK_CHECK]** | `secp256k1.py` L287-296 | 数学错误 |
+| P1-04 | Base58解码：num=0时返回空bytes而非单字节0（边界条件缺失）**已确认修复 [OK_CHECK]** | `base58.py` L94-97 | 逻辑错误 |
+| P1-05 | Base58Check解码：版本字节不验证（接受任意version值）**已修复 [OK_CHECK]** | `base58.py` L160 | 安全性 |
+| P1-06 | GPU facade析构函数静默吞掉异常（无日志输出）**已修复 [OK_CHECK]** | `gpu/facade.py` L273-280 | 异常处理 |
+| P1-07 | batch_size上限检查缺少下限（允许batch_size=0）**已修复 [OK_CHECK]** | `gpu_collision_engine.py` L351-356 | 输入验证 |
+| P1-08 | GPU内核缓存键使用MD5（弱哈希，存在碰撞风险）**已修复 [OK_CHECK]** | `gpu_collision_engine.py` L588 | 安全性 |
+| P1-09 | `_save_kernel_cache` 末尾存在残留代码（保存完后继续执行算术验证）**已修复 [OK_CHECK]** | `gpu_collision_engine.py` L664-680 | 逻辑错误 |
+| P1-10 | Intel Arc超时保护未在所有代码路径中激活 **已修复 [OK_CHECK]** | `async_executor.py` + `gpu/vendors/intel.py` L94-100 | 稳定性 |
+| P1-11 | `CheckpointManager` 并发写入时缺少文件级锁 **已确认修复 [OK_CHECK]** | `collision/checkpoint_manager.py` | 数据一致性 |
+| P1-12 | `DeduplicationFilter` Bloom过滤器扩容时锁粒度过大 **已确认修复 [OK_CHECK]** | `collision/deduplication_filter.py` | 性能 |
+| P1-13 | 多GPU任务分配未考虑GPU性能差异（均等分配）**已确认修复 [OK_CHECK]** | `gpu/multi_gpu_engine.py` | 性能 |
+| P1-14 | `DataLogger` 报告生成失败时仅记录日志而非抛出 **已修复 [OK_CHECK]** | `key_collision_engine.py` L1400 | 异常处理 |
+| P1-15 | `GPUAutoTuner` 调整批次大小时缺少冷却期检查竞态 **已确认修复 [OK_CHECK]** | `gpu/auto_tuner.py` | 线程安全 |
+| P1-16 | `EnhancedPerformanceMonitor` 历史数据无上限（内存增长）**已确认修复 [OK_CHECK]** | `utils/performance_monitor.py` | 内存管理 |
+| P1-17 | `TargetResolver` 加载地址文件时未限制文件大小 **已确认修复 [OK_CHECK]** | `collision/target_resolver.py` | 资源管理 |
 
 ### 2.4 低危问题汇总（P2/P3级 - 17个）
 
@@ -715,13 +715,13 @@ class BitcoinComplianceValidator:
 |---|---------|---------|------|
 | P2-01 | `GPUBufferTracker` 清理时从迭代中修改dict（使用to_remove列表已修复，但cleanup逻辑仍有潜力） | `gpu_collision_engine.py` L144 | P2 |
 | P2-02 | `BATCH_LOG_FREQUENCY=100` 等魔法数字在代码中部分已提取为常量但不完整 | 全局 | P2 |
-| P2-03 | `EllipticCurve.mod_inverse` 注释中提到Fermat小定理但未实现 **已注释澄清 ✅** | `secp256k1.py` L200-205 | P2 |
-| P2-04 | \ConfigManager.DEFAULT_CONFIG\ 中gpu.batch_size=65536（应设更合理默认値）**已修复：默认値调整为262144 ✅** | \config_manager.py\ L126 | P2 |
+| P2-03 | `EllipticCurve.mod_inverse` 注释中提到Fermat小定理但未实现 **已注释澄清 [OK_CHECK]** | `secp256k1.py` L200-205 | P2 |
+| P2-04 | \ConfigManager.DEFAULT_CONFIG\ 中gpu.batch_size=65536（应设更合理默认値）**已修复：默认値调整为262144 [OK_CHECK]** | \config_manager.py\ L126 | P2 |
 | P2-05 | `StorageConfig` 路径计算使用相对路径，在多工作目录场景下可能错误 | `storage_config.py` | P2 |
 | P2-06 | GPU内核缓存文件无版本管理（OpenCL驱动更新后可能加载过时缓存） | `gpu_collision_engine.py` L596-662 | P2 |
 | P2-07 | `SecurityLogFilter` 的RAW_KEY_PATTERN正则在Windows路径上可能误匹配 | `security_log_filter.py` L37-39 | P2 |
-| P2-08 | `FirstRunWizard` 标记文件路径硬编码 `data_logs/.wizard_completed` **已配置化 ✅** | `first_run_wizard.py` L40 | P2 |
-| P2-09 | CLI参数 `--window-size` 未实现下限检查（允许输0或负数）**已添加范围验证 ✅** | `main.py` L229-231 | P2 |
+| P2-08 | `FirstRunWizard` 标记文件路径硬编码 `data_logs/.wizard_completed` **已配置化 [OK_CHECK]** | `first_run_wizard.py` L40 | P2 |
+| P2-09 | CLI参数 `--window-size` 未实现下限检查（允许输0或负数）**已添加范围验证 [OK_CHECK]** | `main.py` L229-231 | P2 |
 | P3-01 | `secp256k1.py` 中 `verify_parameters` 方法简化了 Miller-Rabin 测试 | `secp256k1.py` L51-78 | P3 |
 | P3-02 | `GPUProfile` dataclass 缺少 `__post_init__` 验证 | `performance_optimizer.py` L41-68 | P3 |
 | P3-03 | `Base58.check_decode` 无类型注解（返回 `tuple` 应为 `Tuple[int, bytes]`） | `base58.py` L130 | P3 |
@@ -737,62 +737,62 @@ class BitcoinComplianceValidator:
 
 | # | 问题描述 | 文件位置 | 类别 | 级别 |
 |---|---------|---------|------|------|
-| CQ-40 | `BitcoinKeyValidator` 密鑰验证内部计算用完的 `EllipticCurve` 对象未安全清零（曲线点中间结果可能残留内存）**已安全清零中间结果 ✅** | `bitcoin_key_validator.py` | 安全性 | P2 |
-| CQ-41 | `PluginManager.load_plugins()` L78-79 加载失败时捕获异常后仅记录日志，尚未完成加载的模块资源（`sys.modules[模块名]` 残留常驻）未清理 **已添加sys.modules清理 ✅** | `plugins/plugin_manager.py` | 资源管理 | P2 |
-| CQ-42 | `continuous_matcher.py` 中匹配回调内部异常被静默吞和，不会向调用方传播错误状态 **已确认：回调在引擎层已有安全包装 ✅** | `continuous_matcher.py` | 异常处理 | P2 |
-| CQ-43 | `GPURecoveryManager._execute_recovery()` 在执行 `REDUCE_BATCH_SIZE` 策略时，搜寻块缓冲区未设定上限即行释放，可能导致引用悬空 **已修复：GPU缓冲区悉空引用修复 ✅** | `gpu_recovery_manager.py` | 内存管理 | P2 |
-| CQ-44 | `AsyncGPUExecutor` 内部使用 `import pyopencl`、`pyopencl.array`，但其最小支持版本未在 docstring 或页首注释中明确声明 **已在页首注释添加版本声明 ✅** | `async_executor.py` | 依赖版本 | P2 |
-| CQ-45 | `EventBus.publish()` L156 在同步模式下未验证 `event.event_type` 是否为 None，可能导致 `_subscribers.get(None, [])` 静默返回空列表 **已添加None类型检查 ✅** | `event_bus.py` | 输入验证 | P2 |
-| CQ-46 | `BitcoinKeyValidator` 验证日志输出包含 `detail` 字典完整内容，当 `secure_mode=False` 时可能将 `private_key_hash` 写入日志，应屏蔽 **已屏蔽敏感字段 ✅** | `bitcoin_key_validator.py` | 安全性 | P2 |
+| CQ-40 | `BitcoinKeyValidator` 密鑰验证内部计算用完的 `EllipticCurve` 对象未安全清零（曲线点中间结果可能残留内存）**已安全清零中间结果 [OK_CHECK]** | `bitcoin_key_validator.py` | 安全性 | P2 |
+| CQ-41 | `PluginManager.load_plugins()` L78-79 加载失败时捕获异常后仅记录日志，尚未完成加载的模块资源（`sys.modules[模块名]` 残留常驻）未清理 **已添加sys.modules清理 [OK_CHECK]** | `plugins/plugin_manager.py` | 资源管理 | P2 |
+| CQ-42 | `continuous_matcher.py` 中匹配回调内部异常被静默吞和，不会向调用方传播错误状态 **已确认：回调在引擎层已有安全包装 [OK_CHECK]** | `continuous_matcher.py` | 异常处理 | P2 |
+| CQ-43 | `GPURecoveryManager._execute_recovery()` 在执行 `REDUCE_BATCH_SIZE` 策略时，搜寻块缓冲区未设定上限即行释放，可能导致引用悬空 **已修复：GPU缓冲区悉空引用修复 [OK_CHECK]** | `gpu_recovery_manager.py` | 内存管理 | P2 |
+| CQ-44 | `AsyncGPUExecutor` 内部使用 `import pyopencl`、`pyopencl.array`，但其最小支持版本未在 docstring 或页首注释中明确声明 **已在页首注释添加版本声明 [OK_CHECK]** | `async_executor.py` | 依赖版本 | P2 |
+| CQ-45 | `EventBus.publish()` L156 在同步模式下未验证 `event.event_type` 是否为 None，可能导致 `_subscribers.get(None, [])` 静默返回空列表 **已添加None类型检查 [OK_CHECK]** | `event_bus.py` | 输入验证 | P2 |
+| CQ-46 | `BitcoinKeyValidator` 验证日志输出包含 `detail` 字典完整内容，当 `secure_mode=False` 时可能将 `private_key_hash` 写入日志，应屏蔽 **已屏蔽敏感字段 [OK_CHECK]** | `bitcoin_key_validator.py` | 安全性 | P2 |
 
 ### 2.6 修复优先级路线图
 
 ```
 Sprint-1（已完成）：
-  ✅ P0-3：统一 coincurve 版本依赖 → 已修复
-  ✅ P0-1：GPU on_progress 使用 stats.snapshot() → 已修复
-  ✅ P0-2：GPU on_match 添加安全包装文档 → 已修复（添加_safe_invoke_match_callback方法）
-  ✅ P0-4：统一范围扫描边界逻辑 → 已修复（统一使用end+1）
-  ✅ P0-5：OpenCL 内核添加边界检查 → 已确认修复（边界检查已存在）
+  [OK_CHECK] P0-3：统一 coincurve 版本依赖 → 已修复
+  [OK_CHECK] P0-1：GPU on_progress 使用 stats.snapshot() → 已修复
+  [OK_CHECK] P0-2：GPU on_match 添加安全包装文档 → 已修复（添加_safe_invoke_match_callback方法）
+  [OK_CHECK] P0-4：统一范围扫描边界逻辑 → 已修复（统一使用end+1）
+  [OK_CHECK] P0-5：OpenCL 内核添加边界检查 → 已确认修复（边界检查已存在）
 
 Sprint-2（已完成）：
-  ✅ P1-01：CPU on_complete 改传 stats.snapshot() 快照 → 已修复
-  ✅ P1-03：secp256k1 点倍乘 y=0 除零保护 → 已修复
-  ✅ P1-05：Base58Check 版本字节验证 → 已修复
-  ✅ P1-06：GPU Facade 析构日志增强 → 已完全修复
-  ✅ P1-07：GPU batch_size 下限检查 → 已修复
-  ✅ P1-08：内核缓存键 MD5 → SHA256 → 已修复
-  ✅ P1-09：移除残留死代码 → 已修复
-  ✅ P1-10：Intel 超时保护全路径激活 → 已修复（async_executor.py + intel.py）
-  ✅ P1-14：报告失败记录错误计数 → 已修复
-  ✅ P1-02/P1-04/P1-11～P1-13/P1-15～P1-17：已确认修复（共8项）
+  [OK_CHECK] P1-01：CPU on_complete 改传 stats.snapshot() 快照 → 已修复
+  [OK_CHECK] P1-03：secp256k1 点倍乘 y=0 除零保护 → 已修复
+  [OK_CHECK] P1-05：Base58Check 版本字节验证 → 已修复
+  [OK_CHECK] P1-06：GPU Facade 析构日志增强 → 已完全修复
+  [OK_CHECK] P1-07：GPU batch_size 下限检查 → 已修复
+  [OK_CHECK] P1-08：内核缓存键 MD5 → SHA256 → 已修复
+  [OK_CHECK] P1-09：移除残留死代码 → 已修复
+  [OK_CHECK] P1-10：Intel 超时保护全路径激活 → 已修复（async_executor.py + intel.py）
+  [OK_CHECK] P1-14：报告失败记录错误计数 → 已修复
+  [OK_CHECK] P1-02/P1-04/P1-11～P1-13/P1-15～P1-17：已确认修复（共8项）
 
-当前状态：P0（5/5）+ P1（17/17）全部修复 ✅
+当前状态：P0（5/5）+ P1（17/17）全部修复 [OK_CHECK]
 
 Sprint-3（已完成）：
-  ✅ P2-03：mod_inverse 注释澄清（Fermat小定理注释说明）
-  ✅ P2-04：ConfigManager batch_size 默认値 65536 → 262144
-  ✅ P2-08：FirstRunWizard 标记路径配置化
-  ✅ P2-09：--window-size 参数范围验证
-  ✅ CQ-40：EllipticCurve 中间结果清零
-  ✅ CQ-41：PluginManager sys.modules 清理
-  ✅ CQ-42：确认无问题（回调在引擎层已有安全包装）
-  ✅ CQ-43：GPU 缓冲区悬空引用修复
-  ✅ CQ-44：pyopencl 版本声明
-  ✅ CQ-45：EventBus event_type None 检查
-  ✅ CQ-46：日志敏感信息屏蔽
-  ✅ dedup_filter 死锁修复（reset() 提取 _get_stats_unlocked()）
-  ✅ 预存在测试修复（25个测试）
-  ✅ CI/CD GPU/非GPU 环境自动分流（conftest.py + ci.yml）
-  ✅ GPU Mock 测试基础设施统一化（gpu_mock_factory.py）
-  ✅ 性能基准回归验证通过
+  [OK_CHECK] P2-03：mod_inverse 注释澄清（Fermat小定理注释说明）
+  [OK_CHECK] P2-04：ConfigManager batch_size 默认値 65536 → 262144
+  [OK_CHECK] P2-08：FirstRunWizard 标记路径配置化
+  [OK_CHECK] P2-09：--window-size 参数范围验证
+  [OK_CHECK] CQ-40：EllipticCurve 中间结果清零
+  [OK_CHECK] CQ-41：PluginManager sys.modules 清理
+  [OK_CHECK] CQ-42：确认无问题（回调在引擎层已有安全包装）
+  [OK_CHECK] CQ-43：GPU 缓冲区悬空引用修复
+  [OK_CHECK] CQ-44：pyopencl 版本声明
+  [OK_CHECK] CQ-45：EventBus event_type None 检查
+  [OK_CHECK] CQ-46：日志敏感信息屏蔽
+  [OK_CHECK] dedup_filter 死锁修复（reset() 提取 _get_stats_unlocked()）
+  [OK_CHECK] 预存在测试修复（25个测试）
+  [OK_CHECK] CI/CD GPU/非GPU 环境自动分流（conftest.py + ci.yml）
+  [OK_CHECK] GPU Mock 测试基础设施统一化（gpu_mock_factory.py）
+  [OK_CHECK] 性能基准回归验证通过
 
-当前状态：P0（5/5）+ P1（17/17）+ P2（11/11）全部修复 ✅
+当前状态：P0（5/5）+ P1（17/17）+ P2（11/11）全部修复 [OK_CHECK]
 测试通过率：~85% → **~99%**（修复25个预存在测试）
 
 中期规划（1个月内）：
-  📋 P2级涉及内存管理的问题（P2-01、P2-06）
-  📋 P3级代码规范改进
+  [CHECKLIST] P2级涉及内存管理的问题（P2-01、P2-06）
+  [CHECKLIST] P3级代码规范改进
 ```
 
 ---
@@ -1139,11 +1139,11 @@ class GPUVendorBase(ABC):
 
 | 参数 | 位置 | 功能 | 实现状态 |
 |------|------|------|----------|
-| `--validate-addresses FILE` | L297-302 | 验证地址文件中所有比特币地址格式 | ✅ |
-| `--platform-check` | L321-326 | 跨平台兼容性检查（路径、编码、磁盘） | ✅ |
-| `--export-progress FILE` | L351-356 | 运行结束后导出进度数据到JSON | ✅ |
-| `--export-matches FILE` | L357-362 | 导出匹配结果到JSON文件 | ✅ |
-| `--recommend` | L363-368 | 查询目标和系统信息推荐最优参数组合 | ✅ |
+| `--validate-addresses FILE` | L297-302 | 验证地址文件中所有比特币地址格式 | [OK_CHECK] |
+| `--platform-check` | L321-326 | 跨平台兼容性检查（路径、编码、磁盘） | [OK_CHECK] |
+| `--export-progress FILE` | L351-356 | 运行结束后导出进度数据到JSON | [OK_CHECK] |
+| `--export-matches FILE` | L357-362 | 导出匹配结果到JSON文件 | [OK_CHECK] |
+| `--recommend` | L363-368 | 查询目标和系统信息推荐最优参数组合 | [OK_CHECK] |
 
 **交互功能亮点：**
 
@@ -1313,7 +1313,7 @@ CLI体验     ████████░░  8.5/10  大幅改善，新手友�
 - [x] GPU 范围扫描边界逻辑统一 → **已修复（统一使用end+1）**
 - [x] OpenCL 内核添加越界检查 → **已确认修复（边界检查已存在）**
 
-**P1（已全部修复 ✅）：**
+**P1（已全部修复 [OK_CHECK]）：**
 
 - [x] secp256k1 点倍乘 y=0 边界处理 → **已修复**
 - [x] Base58Check 版本字节验证 → **已修复**
@@ -1442,27 +1442,27 @@ CLI体验     ████████░░  8.5/10  大幅改善，新手友�
 
 | 修复类别 | 问题描述 | 修复文件 | 状态 |
 |---------|---------|---------|------|
-| P2-03 | mod_inverse 注释澄清（Fermat小定理说明） | `secp256k1.py` | 新增修复 ✅ |
-| P2-04 | ConfigManager batch_size 默认値 65536 → 262144 | `config_manager.py` | 新增修复 ✅ |
-| P2-08 | FirstRunWizard 标记路径配置化 | `first_run_wizard.py` | 新增修复 ✅ |
-| P2-09 | --window-size 参数范围验证（限制最小值） | `src/cli/main.py` | 新增修复 ✅ |
-| CQ-40 | EllipticCurve 中间结果安全清零 | `bitcoin_key_validator.py` | 新增修复 ✅ |
-| CQ-41 | PluginManager 加载失败时 sys.modules 清理 | `plugins/plugin_manager.py` | 新增修复 ✅ |
-| CQ-42 | continuous_matcher 回调安全包装确认 | `continuous_matcher.py` | 历史已确认 ✅ |
-| CQ-43 | GPURecoveryManager 缓冲区悬空引用修复 | `gpu_recovery_manager.py` | 新增修复 ✅ |
-| CQ-44 | AsyncGPUExecutor pyopencl 版本声明 | `async_executor.py` | 新增修复 ✅ |
-| CQ-45 | EventBus event_type None 检查 | `event_bus.py` | 新增修复 ✅ |
-| CQ-46 | BitcoinKeyValidator 日志敏感字段屏蔽 | `bitcoin_key_validator.py` | 新增修复 ✅ |
-| 死锁修复 | dedup_filter reset() 提取_get_stats_unlocked() 避免死锁 | `collision/deduplication_filter.py` | 新增修复 ✅ |
+| P2-03 | mod_inverse 注释澄清（Fermat小定理说明） | `secp256k1.py` | 新增修复 [OK_CHECK] |
+| P2-04 | ConfigManager batch_size 默认値 65536 → 262144 | `config_manager.py` | 新增修复 [OK_CHECK] |
+| P2-08 | FirstRunWizard 标记路径配置化 | `first_run_wizard.py` | 新增修复 [OK_CHECK] |
+| P2-09 | --window-size 参数范围验证（限制最小值） | `src/cli/main.py` | 新增修复 [OK_CHECK] |
+| CQ-40 | EllipticCurve 中间结果安全清零 | `bitcoin_key_validator.py` | 新增修复 [OK_CHECK] |
+| CQ-41 | PluginManager 加载失败时 sys.modules 清理 | `plugins/plugin_manager.py` | 新增修复 [OK_CHECK] |
+| CQ-42 | continuous_matcher 回调安全包装确认 | `continuous_matcher.py` | 历史已确认 [OK_CHECK] |
+| CQ-43 | GPURecoveryManager 缓冲区悬空引用修复 | `gpu_recovery_manager.py` | 新增修复 [OK_CHECK] |
+| CQ-44 | AsyncGPUExecutor pyopencl 版本声明 | `async_executor.py` | 新增修复 [OK_CHECK] |
+| CQ-45 | EventBus event_type None 检查 | `event_bus.py` | 新增修复 [OK_CHECK] |
+| CQ-46 | BitcoinKeyValidator 日志敏感字段屏蔽 | `bitcoin_key_validator.py` | 新增修复 [OK_CHECK] |
+| 死锁修复 | dedup_filter reset() 提取_get_stats_unlocked() 避免死锁 | `collision/deduplication_filter.py` | 新增修复 [OK_CHECK] |
 
 **测试基础设施升级：**
 
 | 升级项目 | 说明 | 状态 |
 |---------|------|------|
-| 预存在测试修复 | 修复25个历史遗留失败测试 | 已完成 ✅ |
-| CI/CD 环境自动分流 | conftest.py 检测 GPU 并动态跳过非 GPU 测试；ci.yml 分离 GPU/非GPU 两个 job | 已完成 ✅ |
-| GPU Mock 基础设施统一化 | gpu_mock_factory.py 统一提供 Mock 对象，消除重复 Mock 代码 | 已完成 ✅ |
-| 性能基准回归验证 | benchmark_performance_optimizations.py 回归验证通过 | 已完成 ✅ |
+| 预存在测试修复 | 修复25个历史遗留失败测试 | 已完成 [OK_CHECK] |
+| CI/CD 环境自动分流 | conftest.py 检测 GPU 并动态跳过非 GPU 测试；ci.yml 分离 GPU/非GPU 两个 job | 已完成 [OK_CHECK] |
+| GPU Mock 基础设施统一化 | gpu_mock_factory.py 统一提供 Mock 对象，消除重复 Mock 代码 | 已完成 [OK_CHECK] |
+| 性能基准回归验证 | benchmark_performance_optimizations.py 回归验证通过 | 已完成 [OK_CHECK] |
 
 **测试验证结果：** 从 1616 passed/31 failed 提升至 ~99%通过率（1641 passed/少量预期跳过）
 
@@ -1476,16 +1476,16 @@ CLI体验     ████████░░  8.5/10  大幅改善，新手友�
 
 | 修复编号 | 问题描述 | 修复文件 | 状态 |
 |---------|---------|---------|------|
-| P1-01 | CPU引擎on_complete传快照 | `key_collision_engine.py` | 新增修复 ✅ |
-| P1-03 | 椭圆曲线y=0除零保护 | `secp256k1.py` | 新增修复 ✅ |
-| P1-05 | Base58Check版本字节验证 | `base58.py` | 新增修复 ✅ |
-| P1-06 | GPU Facade析构日志增强 | `gpu/facade.py` | 完全修复 ✅ |
-| P1-07 | GPU batch_size下限检查 | `gpu_collision_engine.py` | 新增修复 ✅ |
-| P1-08 | 内核缓存键MD5→SHA256 | `gpu_collision_engine.py` | 新增修复 ✅ |
-| P1-09 | 移除残留死代码 | `gpu_collision_engine.py` | 新增修复 ✅ |
-| P1-10 | Intel超时保护全路径激活 | `async_executor.py` + `gpu/vendors/intel.py` | 新增修复 ✅ |
-| P1-14 | 报告失败记录错误计数 | `key_collision_engine.py` | 新增修复 ✅ |
-| P1-02/P1-04/P1-11～P1-13/P1-15～P1-17 | 各项（共8个） | 各对应文件 | 历史已确认修复 ✅ |
+| P1-01 | CPU引擎on_complete传快照 | `key_collision_engine.py` | 新增修复 [OK_CHECK] |
+| P1-03 | 椭圆曲线y=0除零保护 | `secp256k1.py` | 新增修复 [OK_CHECK] |
+| P1-05 | Base58Check版本字节验证 | `base58.py` | 新增修复 [OK_CHECK] |
+| P1-06 | GPU Facade析构日志增强 | `gpu/facade.py` | 完全修复 [OK_CHECK] |
+| P1-07 | GPU batch_size下限检查 | `gpu_collision_engine.py` | 新增修复 [OK_CHECK] |
+| P1-08 | 内核缓存键MD5→SHA256 | `gpu_collision_engine.py` | 新增修复 [OK_CHECK] |
+| P1-09 | 移除残留死代码 | `gpu_collision_engine.py` | 新增修复 [OK_CHECK] |
+| P1-10 | Intel超时保护全路径激活 | `async_executor.py` + `gpu/vendors/intel.py` | 新增修复 [OK_CHECK] |
+| P1-14 | 报告失败记录错误计数 | `key_collision_engine.py` | 新增修复 [OK_CHECK] |
+| P1-02/P1-04/P1-11～P1-13/P1-15～P1-17 | 各项（共8个） | 各对应文件 | 历史已确认修复 [OK_CHECK] |
 
 **测试验证结果：** 1616 passed，31 failed（均为预存在问题，与本次修复无关）
 
@@ -1561,40 +1561,40 @@ CLI体验     ████████░░  8.5/10  大幅改善，新手友�
 
 | # | 功能参数 | 分组 | 实现状态 | 验证结果 |
 |---|---------|------|---------|---------|
-| 1 | `-t/--targets` | 目标地址 | ✅ | 单个/多个地址支持 |
-| 2 | `-f/--file` | 目标地址 | ✅ | 支持#注释行 |
-| 3 | `-m/--mode` | 碰撞模式 | ✅ | 三种模式完整 |
-| 4 | `--start` | 碰撞模式 | ✅ | 十六进制验证 |
-| 5 | `--end` | 碰撞模式 | ✅ | start<end验证 |
-| 6 | `--checkpoint` | 功能选项 | ✅ | 断点保存完整 |
-| 7 | `--checkpoint-interval` | 功能选项 | ✅ | 默认30秒 |
-| 8 | `--dedup` | 功能选项 | ✅ | random模式有效 |
-| 9 | `--dedup-max-size` | 功能选项 | ✅ | 默认100万 |
-| 10 | `--workers` | 性能选项 | ✅ | >=1验证 |
-| 11 | `--duration` | 性能选项 | ✅ | >=0验证 |
-| 12 | `--progress-interval` | 性能选项 | ✅ | 默认5秒 |
-| 13 | `--no-optimize` | v4.2.1优化 | ✅ | 禁用优化引擎 |
-| 14 | `--window-size` | v4.2.1优化 | ✅ | 预计算表窗口 |
-| 15 | `--no-simd` | v4.2.1优化 | ✅ | 禁用SIMD哈希 |
-| 16 | `--no-memory-pool` | v4.2.1优化 | ✅ | 禁用内存池 |
-| 17 | `--use-gpu` | GPU加速 | ✅ | 单GPU延迟导入 |
-| 18 | `--gpu-device` | GPU加速 | ✅ | -1自动选择 |
-| 19 | `--gpu-batch-size` | GPU加速 | ✅ | None自动计算 |
-| 20 | `--multi-gpu` | GPU加速 | ✅ | 优先级>--use-gpu |
-| 21 | `--gpu-count` | GPU加速 | ✅ | -1使用全部 |
-| 22 | `--gpu-indices` | GPU加速 | ✅ | 手动指定索引 |
-| 23 | `--validate-addresses` | 实用工具 | ✅ | Base58Check验证 |
-| 24 | `--health-check` | 实用工具 | ✅ | 依赖/配置/磁盘 |
-| 25 | `--cleanup` | 实用工具 | ✅ | 支持--dry-run |
-| 26 | `--dry-run` | 实用工具 | ✅ | 与--cleanup联用 |
-| 27 | `--platform-check` | 实用工具 | ✅ | 跨平台兼容性 |
-| 28 | `--quick-start` | 实用工具 | ✅ | 4步交互引导 |
-| 29 | `--examples` | 实用工具 | ✅ | 8个使用场景 |
-| 30 | `--config-check` | 实用工具 | ✅ | Schema验证 |
-| 31 | `--template` | 实用工具 | ✅ | 4个预置模板 |
-| 32 | `--recommend` | 实用工具 | ✅ | 智能参数推荐 |
-| 33 | `--export-progress FILE` | 实用工具 | ✅ | 导出进度数据到JSON |
-| 34 | `--export-matches FILE` | 实用工具 | ✅ | 导出匹配结果到JSON |
+| 1 | `-t/--targets` | 目标地址 | [OK_CHECK] | 单个/多个地址支持 |
+| 2 | `-f/--file` | 目标地址 | [OK_CHECK] | 支持#注释行 |
+| 3 | `-m/--mode` | 碰撞模式 | [OK_CHECK] | 三种模式完整 |
+| 4 | `--start` | 碰撞模式 | [OK_CHECK] | 十六进制验证 |
+| 5 | `--end` | 碰撞模式 | [OK_CHECK] | start<end验证 |
+| 6 | `--checkpoint` | 功能选项 | [OK_CHECK] | 断点保存完整 |
+| 7 | `--checkpoint-interval` | 功能选项 | [OK_CHECK] | 默认30秒 |
+| 8 | `--dedup` | 功能选项 | [OK_CHECK] | random模式有效 |
+| 9 | `--dedup-max-size` | 功能选项 | [OK_CHECK] | 默认100万 |
+| 10 | `--workers` | 性能选项 | [OK_CHECK] | >=1验证 |
+| 11 | `--duration` | 性能选项 | [OK_CHECK] | >=0验证 |
+| 12 | `--progress-interval` | 性能选项 | [OK_CHECK] | 默认5秒 |
+| 13 | `--no-optimize` | v4.2.1优化 | [OK_CHECK] | 禁用优化引擎 |
+| 14 | `--window-size` | v4.2.1优化 | [OK_CHECK] | 预计算表窗口 |
+| 15 | `--no-simd` | v4.2.1优化 | [OK_CHECK] | 禁用SIMD哈希 |
+| 16 | `--no-memory-pool` | v4.2.1优化 | [OK_CHECK] | 禁用内存池 |
+| 17 | `--use-gpu` | GPU加速 | [OK_CHECK] | 单GPU延迟导入 |
+| 18 | `--gpu-device` | GPU加速 | [OK_CHECK] | -1自动选择 |
+| 19 | `--gpu-batch-size` | GPU加速 | [OK_CHECK] | None自动计算 |
+| 20 | `--multi-gpu` | GPU加速 | [OK_CHECK] | 优先级>--use-gpu |
+| 21 | `--gpu-count` | GPU加速 | [OK_CHECK] | -1使用全部 |
+| 22 | `--gpu-indices` | GPU加速 | [OK_CHECK] | 手动指定索引 |
+| 23 | `--validate-addresses` | 实用工具 | [OK_CHECK] | Base58Check验证 |
+| 24 | `--health-check` | 实用工具 | [OK_CHECK] | 依赖/配置/磁盘 |
+| 25 | `--cleanup` | 实用工具 | [OK_CHECK] | 支持--dry-run |
+| 26 | `--dry-run` | 实用工具 | [OK_CHECK] | 与--cleanup联用 |
+| 27 | `--platform-check` | 实用工具 | [OK_CHECK] | 跨平台兼容性 |
+| 28 | `--quick-start` | 实用工具 | [OK_CHECK] | 4步交互引导 |
+| 29 | `--examples` | 实用工具 | [OK_CHECK] | 8个使用场景 |
+| 30 | `--config-check` | 实用工具 | [OK_CHECK] | Schema验证 |
+| 31 | `--template` | 实用工具 | [OK_CHECK] | 4个预置模板 |
+| 32 | `--recommend` | 实用工具 | [OK_CHECK] | 智能参数推荐 |
+| 33 | `--export-progress FILE` | 实用工具 | [OK_CHECK] | 导出进度数据到JSON |
+| 34 | `--export-matches FILE` | 实用工具 | [OK_CHECK] | 导出匹配结果到JSON |
 
 **验证结论：** 34/34 = **100% 实现率**
 
@@ -1621,112 +1621,112 @@ CLI体验     ████████░░  8.5/10  大幅改善，新手友�
 
 | 测试文件 | 覆盖模块 | 状态 |
 |---------|---------|------|
-| `test_key_collision_engine.py` | `KeyCollisionEngine` | ✅ |
-| `test_gpu_collision_engine.py` | `GPUCollisionEngine` | ✅ |
-| `test_multiprocess_security.py` | `MultiprocessCollisionEngine` 安全 | ✅ |
-| `test_event_system.py` | `EventBus` + 事件类型 | ✅ |
-| `test_collision_stats.py` | `CollisionStats` | ✅ |
-| `test_checkpoint_manager.py` | `CheckpointManager` | ✅ |
-| `test_deduplication_filter.py` | `DeduplicationFilter` | ✅ |
-| `test_target_management.py` | targets/ 子模块 | ✅ |
+| `test_key_collision_engine.py` | `KeyCollisionEngine` | [OK_CHECK] |
+| `test_gpu_collision_engine.py` | `GPUCollisionEngine` | [OK_CHECK] |
+| `test_multiprocess_security.py` | `MultiprocessCollisionEngine` 安全 | [OK_CHECK] |
+| `test_event_system.py` | `EventBus` + 事件类型 | [OK_CHECK] |
+| `test_collision_stats.py` | `CollisionStats` | [OK_CHECK] |
+| `test_checkpoint_manager.py` | `CheckpointManager` | [OK_CHECK] |
+| `test_deduplication_filter.py` | `DeduplicationFilter` | [OK_CHECK] |
+| `test_target_management.py` | targets/ 子模块 | [OK_CHECK] |
 
 **GPU 模块**：
 
 | 测试文件 | 覆盖模块 | 状态 |
 |---------|---------|------|
-| `test_gpu_memory_pool.py` | `GPUMemoryPool` | ✅ |
-| `test_gpu_recovery.py` | `GPURecoveryManager` | ✅ |
-| `test_gpu_performance_optimizer.py` | `GPUPerformanceOptimizer` | ✅ |
-| `test_gpu_thread_safety.py` | GPU 线程安全 | ✅ |
-| `test_gpu_buffer_tracker.py` | `GPUBufferTracker` | ✅ |
-| `test_gpu_exception_handling.py` | GPU 异常处理 | ✅ |
-| `test_gpu_memory_utils.py` | GPU 内存工具 | ✅ |
-| `test_multi_gpu.py` | 多 GPU 基础 | ✅ |
-| `test_multi_gpu_concurrent.py` | 多 GPU 并发 | ✅ |
-| `test_multi_gpu_integration.py` | 多 GPU 集成 | ✅ |
-| `test_multi_gpu_stress.py` | 多 GPU 压力 | ✅ |
-| `test_intel_gpu_compatibility.py` | Intel 安全性 | ✅ |
-| `test_gpu_selection_and_switching.py` | 设备选择与切换 | ✅ |
-| `test_gpu_p2_optimizations.py` | GPU P1/P2优化 | ✅ |
-| `test_gpu_performance_benchmark.py` | GPU 性能基准 | ✅ |
-| `test_gpu_performance_verification.py` | GPU 性能验证 | ✅ |
-| `test_async_optimization.py` | 异步优化 | ✅ |
+| `test_gpu_memory_pool.py` | `GPUMemoryPool` | [OK_CHECK] |
+| `test_gpu_recovery.py` | `GPURecoveryManager` | [OK_CHECK] |
+| `test_gpu_performance_optimizer.py` | `GPUPerformanceOptimizer` | [OK_CHECK] |
+| `test_gpu_thread_safety.py` | GPU 线程安全 | [OK_CHECK] |
+| `test_gpu_buffer_tracker.py` | `GPUBufferTracker` | [OK_CHECK] |
+| `test_gpu_exception_handling.py` | GPU 异常处理 | [OK_CHECK] |
+| `test_gpu_memory_utils.py` | GPU 内存工具 | [OK_CHECK] |
+| `test_multi_gpu.py` | 多 GPU 基础 | [OK_CHECK] |
+| `test_multi_gpu_concurrent.py` | 多 GPU 并发 | [OK_CHECK] |
+| `test_multi_gpu_integration.py` | 多 GPU 集成 | [OK_CHECK] |
+| `test_multi_gpu_stress.py` | 多 GPU 压力 | [OK_CHECK] |
+| `test_intel_gpu_compatibility.py` | Intel 安全性 | [OK_CHECK] |
+| `test_gpu_selection_and_switching.py` | 设备选择与切换 | [OK_CHECK] |
+| `test_gpu_p2_optimizations.py` | GPU P1/P2优化 | [OK_CHECK] |
+| `test_gpu_performance_benchmark.py` | GPU 性能基准 | [OK_CHECK] |
+| `test_gpu_performance_verification.py` | GPU 性能验证 | [OK_CHECK] |
+| `test_async_optimization.py` | 异步优化 | [OK_CHECK] |
 
 **密码学核心模块**：
 
 | 测试文件 | 覆盖模块 | 状态 |
 |---------|---------|------|
-| `test_core_crypto.py` | 密码学核心 | ✅ |
-| `test_bitcoin_key_validation.py` | `BitcoinKeyValidator` | ✅ |
-| `test_secp256k1_extended.py` | `secp256k1` 扩展 | ✅ |
-| `test_crypto_backend.py` | `CryptoBackend` | ✅ |
-| `test_bech32_p2sh_conversion.py` | Bech32/P2SH | ✅ |
-| `test_bech32_p2sh_performance.py` | Bech32/P2SH性能 | ✅ |
-| `test_p2sh_bech32_addresses.py` | 地址测试 | ✅ |
-| `test_address_matching_flow.py` | 地址匹配流 | ✅ |
-| `test_address_import.py` | 地址导入 | ✅ |
-| `test_boundary_values.py` | 边界值 | ✅ |
-| `test_memory_pool.py` | CPU内存池 | ✅ |
-| `test_key_generator_entropy.py` | 密钥生成器 | ✅ |
-| `test_secure_key_integration.py` | 安全密钥集成 | ✅ |
-| `test_memory_locking.py` | 内存锁定 | ✅ |
-| `test_entropy_check.py` | 熵检测 | ✅ |
+| `test_core_crypto.py` | 密码学核心 | [OK_CHECK] |
+| `test_bitcoin_key_validation.py` | `BitcoinKeyValidator` | [OK_CHECK] |
+| `test_secp256k1_extended.py` | `secp256k1` 扩展 | [OK_CHECK] |
+| `test_crypto_backend.py` | `CryptoBackend` | [OK_CHECK] |
+| `test_bech32_p2sh_conversion.py` | Bech32/P2SH | [OK_CHECK] |
+| `test_bech32_p2sh_performance.py` | Bech32/P2SH性能 | [OK_CHECK] |
+| `test_p2sh_bech32_addresses.py` | 地址测试 | [OK_CHECK] |
+| `test_address_matching_flow.py` | 地址匹配流 | [OK_CHECK] |
+| `test_address_import.py` | 地址导入 | [OK_CHECK] |
+| `test_boundary_values.py` | 边界值 | [OK_CHECK] |
+| `test_memory_pool.py` | CPU内存池 | [OK_CHECK] |
+| `test_key_generator_entropy.py` | 密钥生成器 | [OK_CHECK] |
+| `test_secure_key_integration.py` | 安全密钥集成 | [OK_CHECK] |
+| `test_memory_locking.py` | 内存锁定 | [OK_CHECK] |
+| `test_entropy_check.py` | 熵检测 | [OK_CHECK] |
 
 **CLI 与工具模块**：
 
 | 测试文件 | 覆盖模块 | 状态 |
 |---------|---------|------|
-| `test_cli.py` | CLI基础 | ✅ |
-| `test_cli_advanced_features.py` | CLI高级功能 | ✅ |
-| `test_first_run_wizard.py` | 新手引导 | ✅ |
-| `test_platform_check.py` | 平台检查 | ✅ |
-| `test_document_quality.py` | 文档质量 | ✅ |
-| `test_utf8_helper.py` | UTF-8工具 | ✅ |
+| `test_cli.py` | CLI基础 | [OK_CHECK] |
+| `test_cli_advanced_features.py` | CLI高级功能 | [OK_CHECK] |
+| `test_first_run_wizard.py` | 新手引导 | [OK_CHECK] |
+| `test_platform_check.py` | 平台检查 | [OK_CHECK] |
+| `test_document_quality.py` | 文档质量 | [OK_CHECK] |
+| `test_utf8_helper.py` | UTF-8工具 | [OK_CHECK] |
 
 **监控与告警模块**：
 
 | 测试文件 | 覆盖模块 | 状态 |
 |---------|---------|------|
-| `test_alert_system.py` | `AlertSystem` | ✅ |
-| `test_alert_system_integration.py` | 告警集成 | ✅ |
-| `test_alert_notifications.py` | 告警通知 | ✅ |
-| `test_enhanced_monitoring.py` | 增强监控 | ✅ |
-| `test_monitoring_integration.py` | 监控集成 | ✅ |
-| `test_engine_monitoring.py` | 引擎监控 | ✅ |
-| `test_data_logger.py` | `DataLogger` | ✅ |
-| `test_data_monitor.py` | 数据监控 | ✅ |
-| `test_monitor_config.py` | 监控配置 | ✅ |
-| `test_validation_monitor.py` | 验证监控 | ✅ |
-| `test_optimization_monitor.py` | 优化监控 | ✅ |
-| `test_gpu_performance_monitor.py` | GPU 性能监控 | ✅ |
+| `test_alert_system.py` | `AlertSystem` | [OK_CHECK] |
+| `test_alert_system_integration.py` | 告警集成 | [OK_CHECK] |
+| `test_alert_notifications.py` | 告警通知 | [OK_CHECK] |
+| `test_enhanced_monitoring.py` | 增强监控 | [OK_CHECK] |
+| `test_monitoring_integration.py` | 监控集成 | [OK_CHECK] |
+| `test_engine_monitoring.py` | 引擎监控 | [OK_CHECK] |
+| `test_data_logger.py` | `DataLogger` | [OK_CHECK] |
+| `test_data_monitor.py` | 数据监控 | [OK_CHECK] |
+| `test_monitor_config.py` | 监控配置 | [OK_CHECK] |
+| `test_validation_monitor.py` | 验证监控 | [OK_CHECK] |
+| `test_optimization_monitor.py` | 优化监控 | [OK_CHECK] |
+| `test_gpu_performance_monitor.py` | GPU 性能监控 | [OK_CHECK] |
 
 **安全与配置模块**：
 
 | 测试文件 | 覆盖模块 | 状态 |
 |---------|---------|------|
-| `test_security.py` | 安全多维 | ✅ |
-| `test_security_log_filter.py` | `SecurityLogFilter` | ✅ |
-| `test_config_manager.py` | `ConfigManager` | ✅ |
-| `test_gpu_config_manager.py` | GPU配置管理 | ✅ |
-| `test_dependency_injection.py` | 依赖注入 | ✅ |
-| `test_p1_2_decoupling.py` | 模块解耦 | ✅ |
-| `test_acl_environment_variable.py` | ACL环境变量 | ✅ |
-| `test_windows_permission_retry.py` | Windows权限重试 | ✅ |
-| `test_data_cleanup.py` | 数据清理 | ✅ |
+| `test_security.py` | 安全多维 | [OK_CHECK] |
+| `test_security_log_filter.py` | `SecurityLogFilter` | [OK_CHECK] |
+| `test_config_manager.py` | `ConfigManager` | [OK_CHECK] |
+| `test_gpu_config_manager.py` | GPU配置管理 | [OK_CHECK] |
+| `test_dependency_injection.py` | 依赖注入 | [OK_CHECK] |
+| `test_p1_2_decoupling.py` | 模块解耦 | [OK_CHECK] |
+| `test_acl_environment_variable.py` | ACL环境变量 | [OK_CHECK] |
+| `test_windows_permission_retry.py` | Windows权限重试 | [OK_CHECK] |
+| `test_data_cleanup.py` | 数据清理 | [OK_CHECK] |
 
 **稳定性与并发测试**：
 
 | 测试文件 | 覆盖模块 | 状态 |
 |---------|---------|------|
-| `test_stability_24h.py` | 24小时稳定性 | ✅ |
-| `test_thread_safety_fixes.py` | 线程安全修复 | ✅ |
-| `test_error_counter_thread_safety.py` | 错误计数器线程安全 | ✅ |
-| `test_exception_handling.py` | 异常处理 | ✅ |
-| `test_exceptions.py` | 异常类型 | ✅ |
-| `test_performance.py` | 性能测试 | ✅ |
-| `test_performance_benchmarks.py` | 性能基准 | ✅ |
-| `test_performance_monitor.py` | 性能监控器 | ✅ |
-| `test_optimization_stress.py` | 优化压力 | ✅ |
+| `test_stability_24h.py` | 24小时稳定性 | [OK_CHECK] |
+| `test_thread_safety_fixes.py` | 线程安全修复 | [OK_CHECK] |
+| `test_error_counter_thread_safety.py` | 错误计数器线程安全 | [OK_CHECK] |
+| `test_exception_handling.py` | 异常处理 | [OK_CHECK] |
+| `test_exceptions.py` | 异常类型 | [OK_CHECK] |
+| `test_performance.py` | 性能测试 | [OK_CHECK] |
+| `test_performance_benchmarks.py` | 性能基准 | [OK_CHECK] |
+| `test_performance_monitor.py` | 性能监控器 | [OK_CHECK] |
+| `test_optimization_stress.py` | 优化压力 | [OK_CHECK] |
 
 **测试覆盖总结：**
 
@@ -1793,9 +1793,9 @@ v4.2.1版本引入了**异步双缓冲优化**（Async Double Buffering），这
 
 | 指标 | 结果 |
 |------|------|
-| **性能回归** | ✅ 无（0处） |
-| **性能提升** | ✅ 稳定（0处显著变化） |
-| **整体评估** | ✅ 性能稳定，无显著变化 |
+| **性能回归** | [OK_CHECK] 无（0处） |
+| **性能提升** | [OK_CHECK] 稳定（0处显著变化） |
+| **整体评估** | [OK_CHECK] 性能稳定，无显著变化 |
 
 **结论**：v4.2.1版本在引入异步双缓冲优化后，**未引入任何性能回归**，核心模块性能保持稳定。
 
@@ -1846,10 +1846,10 @@ v4.2.1版本引入了**异步双缓冲优化**（Async Double Buffering），这
 
 **性能特点**：
 
-- ✅ uint32_workaround必须启用（避免global char* hang bug）
-- ✅ 异步执行显著提升吞吐量（+30-50%）
-- ✅ queue_depth=4平衡延迟和吞吐量
-- ✅ 自适应超时防止永久卡死
+- [OK_CHECK] uint32_workaround必须启用（避免global char* hang bug）
+- [OK_CHECK] 异步执行显著提升吞吐量（+30-50%）
+- [OK_CHECK] queue_depth=4平衡延迟和吞吐量
+- [OK_CHECK] 自适应超时防止永久卡死
 
 ### 10.7 GPU配置管理器（CODE-1修复）
 
@@ -1864,10 +1864,10 @@ v4.2.1引入的GPU配置管理器在v4.2.1中得到进一步完善：
 
 **修复效果**：
 
-- ✅ 解决了多配置源冲突问题
-- ✅ 完善了参数验证机制
-- ✅ 提供了企业级配置治理能力
-- ✅ 向后兼容保证
+- [OK_CHECK] 解决了多配置源冲突问题
+- [OK_CHECK] 完善了参数验证机制
+- [OK_CHECK] 提供了企业级配置治理能力
+- [OK_CHECK] 向后兼容保证
 
 **使用示例**：
 
@@ -1888,7 +1888,7 @@ merged_config = config_manager.merge_gpu_configs(
 
 基于v4.2.1实测数据，提供以下优化建议：
 
-#### ✅ 推荐配置
+#### [OK_CHECK] 推荐配置
 
 **Intel Arc A770**：
 
@@ -1929,16 +1929,16 @@ merged_config = config_manager.merge_gpu_configs(
 }
 ```
 
-#### ⚠️ 避免配置
+#### [WARN] 避免配置
 
 ```json
 {
   "gpu": {
-    "batch_size": 1024,  // ❌ 过小，性能极差
-    "memory_usage_ratio": 0.95  // ❌ 过高，系统不稳定
+    "batch_size": 1024,  // [CROSS] 过小，性能极差
+    "memory_usage_ratio": 0.95  // [CROSS] 过高，系统不稳定
   },
   "optimization": {
-    "uint32_workaround": false  // ❌ Intel Arc必须启用
+    "uint32_workaround": false  // [CROSS] Intel Arc必须启用
   }
 }
 ```
@@ -1956,7 +1956,7 @@ merged_config = config_manager.merge_gpu_configs(
 
 ### 10.10 验证结论
 
-**✅ v4.2.1性能验证通过**
+**[OK_CHECK] v4.2.1性能验证通过**
 
 1. **无性能回归**：所有核心模块性能稳定
 2. **异步优化就绪**：双缓冲优化已验证，建议生产环境启用
@@ -1966,10 +1966,10 @@ merged_config = config_manager.merge_gpu_configs(
 
 **生产建议**：
 
-- ✅ 可以安全升级到v4.2.1
-- ✅ 建议启用异步执行（`async_execution: true`）
-- ✅ 定期运行基准测试监控性能变化
-- ✅ 使用GPU配置管理器统一管理配置
+- [OK_CHECK] 可以安全升级到v4.2.1
+- [OK_CHECK] 建议启用异步执行（`async_execution: true`）
+- [OK_CHECK] 定期运行基准测试监控性能变化
+- [OK_CHECK] 使用GPU配置管理器统一管理配置
 
 ---
 
@@ -1997,10 +1997,10 @@ merged_config = config_manager.merge_gpu_configs(
 
 | 测试项 | 结果 | 说明 |
 |--------|------|------|
-| 基准测试 | ✅ 通过 | 6项核心测试全部通过 |
-| 性能对比 | ✅ 无回归 | 与v4.2.1对比无性能退化 |
-| 异步优化 | ✅ 验证 | 双缓冲优化效果符合预期 |
-| Intel Arc | ✅ 适配 | uint32_workaround等机制完善 |
+| 基准测试 | [OK_CHECK] 通过 | 6项核心测试全部通过 |
+| 性能对比 | [OK_CHECK] 无回归 | 与v4.2.1对比无性能退化 |
+| 异步优化 | [OK_CHECK] 验证 | 双缓冲优化效果符合预期 |
+| Intel Arc | [OK_CHECK] 适配 | uint32_workaround等机制完善 |
 
 ---
 

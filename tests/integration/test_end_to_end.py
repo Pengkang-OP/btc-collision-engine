@@ -113,6 +113,6 @@ def test_end_to_end_address_import():
 if __name__ == "__main__":
     success = test_end_to_end_address_import()
     if success:
-        print("\n✅ 所有测试通过！")
+        print("\nOK 所有测试通过！")
     else:
-        print("\n❌ 测试失败！")
+        print("\nERR 测试失败！")

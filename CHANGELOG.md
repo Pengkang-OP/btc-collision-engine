@@ -45,7 +45,7 @@
   - 5 个 API 路由迁移至 `f"{API_PREFIX}/..."` 并添加 `@rate_limit`
   - 添加 `/api/<path:subpath>` 旧路径自动 301 重定向至 `/api/v1/*`
   - 启动横幅动态显示 `/api/v1/` 端点
-  - ROADMAP 已标记为 ✅ 完成（30/30 项，100%）
+  - ROADMAP 已标记为 [OK] 完成（30/30 项，100%）
 - **ROADMAP #23 start_menu.py 拆分为包（785行 → ~150行/模块）**:
   - 创建 `src/start_menu/` 包（`_shared.py`, `_i18n.py`, `_utils.py`, `_ui.py`, `_main.py`）
   - 根级 `start_menu.py` 缩减为 9 行薄引导（仅 sys.path + 调用包 main()）
@@ -67,7 +67,7 @@
   - `README.md` 入口描述从"推荐使用"更新为"统一命令行入口"
   - `key_collision_cli.py` docstring 移除 ROADMAP #11 待办注释，声明为统一入口
   - `pyproject.toml` 已有 `[project.scripts] btc-collision = "src.cli.main:main"`
-  - ROADMAP 已标记为 ✅ 完成（29/30 项，97%）
+  - ROADMAP 已标记为 [OK] 完成（29/30 项，97%）
 
 - **`src/gpu/async_executor.py` → `src/gpu/async_executor/` 包拆分**:
   - 单文件 1707 行拆分为 6 模块包（`__init__.py`, `_executor.py`, `_gpu_info.py`, `_collector.py`, `_sync.py`, `_error_utils.py`）

@@ -61,7 +61,7 @@ class TestLiveRangeCountFix:
         final_live = self.engine._live_range_count
         assert final_live == 0, f"_live_range_count 应为0(已重置)，实际为 {final_live}"
 
-        print(f"\n[P1-5-A ✓] _live_range_count 已正确重置: {final_live}")
+        print(f"\n[P1-5-A [OK]] _live_range_count 已正确重置: {final_live}")
 
     def test_final_count_not_doubled_random_search(self):
         """P1-5-B: random_search 最终计数不翻倍（核心验证）."""
@@ -96,7 +96,7 @@ class TestLiveRangeCountFix:
             # 批次=50，单worker 2秒大约处理2000-5000个，不会到100k
             assert final_count < 100000, f"计数 {final_count} 异常偏高，可能存在双重计数"
 
-            print(f"\n[P1-5-B ✓] 最终计数: {final_count} (在合理范围内)")
+            print(f"\n[P1-5-B [OK]] 最终计数: {final_count} (在合理范围内)")
 
     def test_live_count_not_double_accumulated(self):
         """P1-5-C: _live_range_count 内部机制验证（直接访问内部状态）."""
@@ -133,7 +133,7 @@ class TestLiveRangeCountFix:
         )
 
         print(
-            f"\n[P1-5-C ✓] 引擎停止后 _live_range_count={final_live}, "
+            f"\n[P1-5-C [OK]] 引擎停止后 _live_range_count={final_live}, "
             f"total_checked={stats.total_checked}",
         )
 
@@ -173,7 +173,7 @@ class TestLiveRangeCountFix:
         assert live_after == 0, f"_live_range_count 应为0(已重置)，实际为 {live_after}"
 
         print(
-            f"\n[P1-5-D ✓] range_scan 最终计数: {final_count} (范围1-500), "
+            f"\n[P1-5-D [OK]] range_scan 最终计数: {final_count} (范围1-500), "
             f"_live_range_count={live_after}",
         )
 
@@ -203,7 +203,7 @@ class TestLiveRangeCountFix:
             "缺少 _random_search_finalize 中的 live 计数重置代码"
         )
 
-        print("\n[P1-5-E ✓] 代码中无重复提交，余数提交和计数合并代码均存在")
+        print("\n[P1-5-E [OK]] 代码中无重复提交，余数提交和计数合并代码均存在")
 
     def test_progress_callback_counts_monotonic(self):
         """P1-5-F: 进度回调中的total_checked单调递增（不翻倍）."""
@@ -243,9 +243,9 @@ class TestLiveRangeCountFix:
                     f"进度计数跳跃异常 (ratio={ratio:.2f}): {progress_counts[i - 1]} -> {progress_counts[i]}"
                 )
 
-            print(f"\n[P1-5-F ✓] 进度计数单调递增: {progress_counts}")
+            print(f"\n[P1-5-F [OK]] 进度计数单调递增: {progress_counts}")
         else:
-            print(f"\n[P1-5-F ⚠] 进度回调次数不足({len(progress_counts)})，跳过完整性验证")
+            print(f"\n[P1-5-F WARN] 进度回调次数不足({len(progress_counts)})，跳过完整性验证")
 
 
 if __name__ == "__main__":

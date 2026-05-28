@@ -1,6 +1,6 @@
 # BTC碰撞引擎性能优化快速参考
 
-## 🚀 快速开始
+## [QUICK] 快速开始
 
 ### 1. 安装优化依赖
 
@@ -35,7 +35,7 @@ print(f"哈希后端: {simd_opt.get_backend_name()}")
 
 ---
 
-## 📦 核心优化模块
+## [PACKAGE] 核心优化模块
 
 ### 预计算点表 (+50%标量乘法)
 
@@ -153,7 +153,7 @@ print(f"GPU缓冲区复用率: {stats['reuse_rate']:.2f}")
 
 ---
 
-## 📊 性能基准测试
+## [CHART] 性能基准测试
 
 ### 运行基准测试
 
@@ -186,7 +186,7 @@ print(f"后端: {optimizer.get_backend_name()}")
 
 ---
 
-## 🔧 配置调优
+## [WRENCH] 配置调优
 
 ### 推荐配置
 
@@ -212,7 +212,7 @@ print(f"后端: {optimizer.get_backend_name()}")
 
 ---
 
-## ⚠️ 注意事项
+## [WARN] 注意事项
 
 ### 1. 依赖回退
 
@@ -260,7 +260,7 @@ finally:
 
 ---
 
-## 📈 性能监控
+## [PERF] 性能监控
 
 ### 实时监控池统计
 
@@ -280,7 +280,7 @@ while True:
 
 ---
 
-## 🆘 故障排查
+## [SOS] 故障排查
 
 ### 问题1: gmpy2安装失败(Windows)
 
@@ -318,7 +318,7 @@ pool_mgr.ecpoint_pool = ECPointPool(
 
 ---
 
-## 📚 相关文档
+## [BOOKS] 相关文档
 
 - **完整实施报告**: `docs/optimization-implementation-summary.md`
 - **进度报告**: `docs/optimization-progress-report.md`

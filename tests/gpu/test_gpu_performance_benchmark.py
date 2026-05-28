@@ -18,11 +18,11 @@ import pytest
 
 pytestmark = pytest.mark.gpu
 
-import pathlib  # noqa: E402
+import pathlib
 
-from src.collision.collision_stats import CollisionStats  # noqa: E402
-from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
-from src.collision.key_collision_engine import KeyCollisionEngine  # noqa: E402
+from src.collision.collision_stats import CollisionStats
+from src.collision.gpu.engine import GPUCollisionEngine
+from src.collision.key_collision_engine import KeyCollisionEngine
 
 # 配置日志
 logging.basicConfig(
@@ -54,7 +54,7 @@ class GPUPerformanceBenchmark:
 
         """
         logger.info("=" * 70)
-        logger.info("🔵 开始CPU模式性能测试")
+        logger.info("[BLUE] 开始CPU模式性能测试")
         logger.info("=" * 70)
         logger.info(f"目标地址数: {len(targets)}")
         logger.info("测试时长: %s秒", duration)
@@ -68,7 +68,7 @@ class GPUPerformanceBenchmark:
             stats_data["matches"] = len(stats.matches)
 
         def on_match(private_key: bytes, address: str, wif: str):
-            logger.info("🎯 发现匹配: %s", address)
+            logger.info("TARGET 发现匹配: %s", address)
 
         try:
             # 创建CPU引擎
@@ -83,7 +83,7 @@ class GPUPerformanceBenchmark:
                 use_enhanced_monitoring=True,
             )
 
-            logger.info("✅ CPU引擎初始化完成")
+            logger.info("OK CPU引擎初始化完成")
             logger.info(f"   加密后端: {type(engine.generator).__name__}")
             logger.info("   工作线程: 默认(CPU核心数)")
 
@@ -103,7 +103,7 @@ class GPUPerformanceBenchmark:
             self.cpu_time = time.time() - start_time
             self.cpu_stats = stats_data
 
-            logger.info("\n📊 CPU模式测试结果:")
+            logger.info("\nSTATS CPU模式测试结果:")
             logger.info(f"   总检测数: {stats_data['total_checked']:,}")
             logger.info(f"   平均速度: {stats_data['speed']:.2f} keys/s")
             logger.info(f"   运行时间: {self.cpu_time:.2f}秒")
@@ -112,7 +112,7 @@ class GPUPerformanceBenchmark:
             return stats_data
 
         except Exception as e:
-            logger.error("❌ CPU模式测试失败: %s", e)
+            logger.error("ERR CPU模式测试失败: %s", e)
             import traceback
 
             traceback.print_exc()
@@ -130,7 +130,7 @@ class GPUPerformanceBenchmark:
 
         """
         logger.info("\n" + "=" * 70)
-        logger.info("🟢 开始GPU模式性能测试")
+        logger.info("GREEN 开始GPU模式性能测试")
         logger.info("=" * 70)
         logger.info(f"目标地址数: {len(targets)}")
         logger.info("测试时长: %s秒", duration)
@@ -144,7 +144,7 @@ class GPUPerformanceBenchmark:
             stats_data["matches"] = len(stats.matches)
 
         def on_match(private_key: bytes, address: str, wif: str):
-            logger.info("🎯 发现匹配: %s", address)
+            logger.info("TARGET 发现匹配: %s", address)
 
         try:
             # 检查GPU可用性
@@ -158,18 +158,18 @@ class GPUPerformanceBenchmark:
                     gpu_devices.extend(devices)
 
                 if not gpu_devices:
-                    logger.warning("⚠️ 未检测到GPU设备，跳过GPU测试")
+                    logger.warning("WARN 未检测到GPU设备，跳过GPU测试")
                     return stats_data
 
-                logger.info(f"✅ 检测到 {len(gpu_devices)} 个GPU设备")
+                logger.info(f"OK 检测到 {len(gpu_devices)} 个GPU设备")
                 for i, dev in enumerate(gpu_devices):
                     logger.info(f"   GPU {i}: {dev.name} ({dev.vendor})")
 
             except ImportError:
-                logger.warning("⚠️ PyOpenCL未安装，跳过GPU测试")
+                logger.warning("WARN PyOpenCL未安装，跳过GPU测试")
                 return stats_data
             except Exception as e:
-                logger.warning("⚠️ GPU检测失败: %s，跳过GPU测试", e)
+                logger.warning("WARN GPU检测失败: %s，跳过GPU测试", e)
                 return stats_data
 
             # 创建GPU引擎
@@ -186,7 +186,7 @@ class GPUPerformanceBenchmark:
                 use_enhanced_monitoring=True,
             )
 
-            logger.info("✅ GPU引擎初始化完成")
+            logger.info("OK GPU引擎初始化完成")
             logger.info(f"   设备: {engine._gpu_device.get_device_info().get('name', 'Unknown')}")
             logger.info(f"   Batch Size: {engine.batch_size}")
 
@@ -206,7 +206,7 @@ class GPUPerformanceBenchmark:
             self.gpu_time = time.time() - start_time
             self.gpu_stats = stats_data
 
-            logger.info("\n📊 GPU模式测试结果:")
+            logger.info("\nSTATS GPU模式测试结果:")
             logger.info(f"   总检测数: {stats_data['total_checked']:,}")
             logger.info(f"   平均速度: {stats_data['speed']:.2f} keys/s")
             logger.info(f"   运行时间: {self.gpu_time:.2f}秒")
@@ -215,7 +215,7 @@ class GPUPerformanceBenchmark:
             return stats_data
 
         except Exception as e:
-            logger.error("❌ GPU模式测试失败: %s", e)
+            logger.error("ERR GPU模式测试失败: %s", e)
             import traceback
 
             traceback.print_exc()
@@ -224,19 +224,19 @@ class GPUPerformanceBenchmark:
     def print_comparison_report(self):
         """打印性能对比报告."""
         logger.info("\n" + "=" * 70)
-        logger.info("📈 GPU加速性能对比报告")
+        logger.info("UP GPU加速性能对比报告")
         logger.info("=" * 70)
 
         if self.cpu_stats and self.cpu_stats["speed"] > 0:
             cpu_speed = self.cpu_stats["speed"]
-            logger.info("\n🔵 CPU模式:")
+            logger.info("\n[BLUE] CPU模式:")
             logger.info(f"   速度: {cpu_speed:,.2f} keys/s")
             logger.info(f"   检测数: {self.cpu_stats['total_checked']:,}")
             logger.info(f"   时间: {self.cpu_time:.2f}秒")
 
         if self.gpu_stats and self.gpu_stats["speed"] > 0:
             gpu_speed = self.gpu_stats["speed"]
-            logger.info("\n🟢 GPU模式:")
+            logger.info("\nGREEN GPU模式:")
             logger.info(f"   速度: {gpu_speed:,.2f} keys/s")
             logger.info(f"   检测数: {self.gpu_stats['total_checked']:,}")
             logger.info(f"   时间: {self.gpu_time:.2f}秒")
@@ -249,16 +249,16 @@ class GPUPerformanceBenchmark:
                 speedup = gpu_speed / cpu_speed
                 improvement = ((gpu_speed - cpu_speed) / cpu_speed) * 100
 
-                logger.info("\n🚀 性能提升:")
+                logger.info("\nFAST 性能提升:")
                 logger.info(f"   加速倍数: {speedup:.2f}x")
                 logger.info(f"   性能提升: {improvement:.1f}%")
 
                 if speedup >= 10:
-                    logger.info("   ✅ GPU加速效果显著!")
+                    logger.info("   OK GPU加速效果显著!")
                 elif speedup >= 2:
-                    logger.info("   ✅ GPU加速效果良好")
+                    logger.info("   OK GPU加速效果良好")
                 else:
-                    logger.info("   ⚠️ GPU加速效果一般，可能需要优化")
+                    logger.info("   WARN GPU加速效果一般，可能需要优化")
 
         logger.info("\n" + "=" * 70)
 
@@ -281,7 +281,7 @@ def create_test_targets() -> set:
 def main():
     """主函数."""
     logger.info("=" * 70)
-    logger.info("🚀 GPU加速模式性能验证测试")
+    logger.info("FAST GPU加速模式性能验证测试")
     logger.info("=" * 70)
     logger.info(f"时间: {time.strftime('%Y-%m-%d %H:%M:%S')}")
 
@@ -294,7 +294,7 @@ def main():
     # 测试时长（秒）
     test_duration = 15
 
-    logger.info("\n💡 测试策略:")
+    logger.info("\nTIP 测试策略:")
     logger.info("   - 先测试CPU模式 %s秒", test_duration)
     logger.info("   - 再测试GPU模式 %s秒", test_duration)
     logger.info("   - 对比性能差异")
@@ -306,7 +306,7 @@ def main():
     cpu_stats = benchmark.test_cpu_mode(targets, duration=test_duration)  # noqa: F841
 
     # 等待2秒让系统稳定
-    logger.info("\n⏳ 等待系统稳定...")
+    logger.info("\n[HOURGLASS] 等待系统稳定...")
     time.sleep(2)
 
     # 2. 测试GPU模式
@@ -317,7 +317,7 @@ def main():
 
     # 4. 验证监控数据
     logger.info("\n" + "=" * 70)
-    logger.info("📋 验证监控数据")
+    logger.info("[CLIPBOARD] 验证监控数据")
     logger.info("=" * 70)
 
     data_logs_dir = "data_logs"
@@ -331,12 +331,12 @@ def main():
         filepath = os.path.join(data_logs_dir, filename)
         if pathlib.Path(filepath).exists():
             size = pathlib.Path(filepath).stat().st_size
-            logger.info(f"✅ {filename}: {size:,} bytes")
+            logger.info(f"OK {filename}: {size:,} bytes")
         else:
-            logger.warning("❌ %s: 不存在", filename)
+            logger.warning("ERR %s: 不存在", filename)
 
     logger.info("\n" + "=" * 70)
-    logger.info("✅ GPU性能验证测试完成")
+    logger.info("OK GPU性能验证测试完成")
     logger.info("=" * 70)
 
     # 保存测试结果
@@ -360,7 +360,7 @@ def main():
     with pathlib.Path(result_file).open("w", encoding="utf-8") as f:
         json.dump(test_result, f, indent=2, ensure_ascii=False)
 
-    logger.info("💾 测试结果已保存: %s", result_file)
+    logger.info("[SAVE] 测试结果已保存: %s", result_file)
     logger.info("=" * 70)
 
 

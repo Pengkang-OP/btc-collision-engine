@@ -162,10 +162,10 @@ Bech32m: bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jjw (format 
 ```text
 私钥 (32 bytes)
     │
-    ▼ [椭圆曲线标量乘法 Q = k * G]
+    [E] [椭圆曲线标量乘法 Q = k * G]
 公钥 (33/65 bytes)
     │
-    ▼ [验证点在 secp256k1 曲线上]
+    [E] [验证点在 secp256k1 曲线上]
 验证结果
 
 ```
@@ -175,16 +175,16 @@ Bech32m: bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jjw (format 
 ```text
 公钥
     │
-    ▼ [SHA256]
+    [E] [SHA256]
 SHA256 Hash
     │
-    ▼ [RIPEMD160]
+    [E] [RIPEMD160]
 Hash160 (20 bytes)
     │
-    ▼ [添加版本字节 0x00]
+    [E] [添加版本字节 0x00]
 版本 || Hash160
     │
-    ▼ [Base58Check 编码]
+    [E] [Base58Check 编码]
 P2PKH 地址 (以 '1' 开头)
 
 ```
@@ -194,19 +194,19 @@ P2PKH 地址 (以 '1' 开头)
 ```text
 压缩公钥
     │
-    ▼ [HASH160]
+    [E] [HASH160]
 Pub Key Hash
     │
-    ▼ [创建 RedeemScript]
+    [E] [创建 RedeemScript]
 OP_DUP OP_HASH160 <20 bytes> OP_EQUALVERIFY OP_CHECKSIG
     │
-    ▼ [HASH160]
+    [E] [HASH160]
 Script Hash
     │
-    ▼ [添加版本字节 0x05]
+    [E] [添加版本字节 0x05]
 版本 || Script Hash
     │
-    ▼ [Base58Check 编码]
+    [E] [Base58Check 编码]
 P2SH 地址 (以 '3' 开头)
 
 ```
@@ -216,13 +216,13 @@ P2SH 地址 (以 '3' 开头)
 ```text
 压缩公钥
     │
-    ▼ [HASH160]
+    [E] [HASH160]
 Pub Key Hash (20 bytes)
     │
-    ▼ [创建 Witness Program]
+    [E] [创建 Witness Program]
 0x00 || 0x14 || Pub Key Hash
     │
-    ▼ [Bech32 编码]
+    [E] [Bech32 编码]
 Bech32 地址 (以 'bc1' 开头)
 
 ```
@@ -232,13 +232,13 @@ Bech32 地址 (以 'bc1' 开头)
 ```text
 压缩公钥 (移除前缀，仅保留 x 坐标)
     │
-    ▼ [x-only 公钥]
+    [E] [x-only 公钥]
 X Only Public Key (32 bytes)
     │
-    ▼ [创建 Witness Program]
+    [E] [创建 Witness Program]
 0x01 || 0x20 || X Only Public Key
     │
-    ▼ [Bech32m 编码]
+    [E] [Bech32m 编码]
 Bech32m 地址 (以 'bc1p' 开头)
 
 ```

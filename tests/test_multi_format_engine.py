@@ -40,7 +40,7 @@ for fmt, addr in addresses.items():
         expected_fmt = AddressFormat(fmt)
         match = detected_fmt == expected_fmt
         print(
-            f"  {fmt:10s}: {'✓' if match else '✗'} (expected={expected_fmt.value}, detected={detected_fmt.value})",  # noqa: E501
+            f"  {fmt:10s}: {'[OK]' if match else '[FAIL]'} (expected={expected_fmt.value}, detected={detected_fmt.value})",
         )
 
 # 2. 测试格式检测
@@ -59,7 +59,7 @@ for addr, expected_fmt in test_addresses:
     try:
         detected_fmt = gen.detect_address_format(addr)
         match = detected_fmt == expected_fmt
-        print(f"  {addr[:30]:30s} -> {detected_fmt.value:10s} {'✓' if match else '✗'}")
+        print(f"  {addr[:30]:30s} -> {detected_fmt.value:10s} {'[OK]' if match else '[FAIL]'}")
     except Exception as e:
         print(f"  {addr[:30]:30s} -> ERROR: {e}")
 
@@ -80,7 +80,7 @@ target_addresses = [
 print(f"\nAdding {len(target_addresses)} targets:")
 for addr in target_addresses:
     success = manager.add_target(addr)
-    print(f"  {addr[:40]:40s} {'✓' if success else '✗'}")
+    print(f"  {addr[:40]:40s} {'[OK]' if success else '[FAIL]'}")
 
 # 统计
 print("\nFormat Statistics:")
@@ -118,7 +118,7 @@ for fmt in ["p2pkh", "p2sh", "bech32", "taproot"]:
         manager_test.add_target(addr)
         is_match, matched_addr, matched_fmt = manager_test.check_match(private_key_1)
         print(
-            f"  {fmt:10s}: {'✓ MATCHED' if is_match else '✗ NO MATCH'} - {matched_addr if is_match else ''}",  # noqa: E501
+            f"  {fmt:10s}: {'[OK] MATCHED' if is_match else '[FAIL] NO MATCH'} - {matched_addr if is_match else ''}",
         )
 
 # 5. 测试混合格式匹配
@@ -137,7 +137,7 @@ print(f"Format distribution: {mixed_manager.get_format_stats()}")
 # 测试已知私钥
 is_match, matched_addr, matched_fmt = mixed_manager.check_match(private_key_1)
 print("\nKey=1 matching result:")
-print(f"  Matched: {'✓ YES' if is_match else '✗ NO'}")
+print(f"  Matched: {'[OK] YES' if is_match else '[FAIL] NO'}")
 if is_match:
     print(f"  Address: {matched_addr}")
     print(f"  Format: {matched_fmt}")
@@ -146,7 +146,7 @@ if is_match:
 print("\n[Test 6] Performance Test")
 print("-" * 80)
 
-import time  # noqa: E402
+import time
 
 # 生成1000个地址
 iterations = 1000
@@ -167,7 +167,7 @@ print("-" * 80)
 support = gen.validate_format_support()
 print("Format generation support:")
 for fmt, supported in support.items():
-    status = "✓" if supported else "✗"
+    status = "[OK]" if supported else "[FAIL]"
     print(f"  {fmt:10s}: {status}")
 
 print("\n" + "=" * 80)
@@ -186,17 +186,17 @@ test_results = {
 all_passed = all(test_results.values())
 
 for test_name, result in test_results.items():
-    status = "✓ PASS" if result else "✗ FAIL"
+    status = "[OK] PASS" if result else "[FAIL] FAIL"
     print(f"  {status} {test_name}")
 
 print("\n" + "=" * 80)
 if all_passed:
-    print("✓ ALL MULTI-FORMAT FEATURES WORKING CORRECTLY")
+    print("[OK] ALL MULTI-FORMAT FEATURES WORKING CORRECTLY")
     print("\nNew Capabilities:")
     print("  • Generate addresses in all formats (P2PKH/P2SH/Bech32/Taproot)")
     print("  • Auto-detect address format")
     print("  • Match against multi-format targets")
     print("  • Format-aware target management")
 else:
-    print("✗ SOME FEATURES NOT WORKING")
+    print("[FAIL] SOME FEATURES NOT WORKING")
 print("=" * 80)

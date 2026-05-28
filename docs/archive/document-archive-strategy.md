@@ -12,9 +12,9 @@
 
 | 文档 | 行数 | 创建时间 | 类型 | 状态 |
 |------|------|----------|------|------|
-| `import-path-optimization-report.md` | 414 | 第一轮优化 | 优化报告 | 📦 待归档 |
-| `import-path-review-fixes-report.md` | 409 | 第二轮优化 | 修复报告 | 📦 待归档 |
-| `import-path-final-optimization-report.md` | 465 | 最终完成 | **最终报告** | ✅ 保留 |
+| `import-path-optimization-report.md` | 414 | 第一轮优化 | 优化报告 | [PACKAGE] 待归档 |
+| `import-path-review-fixes-report.md` | 409 | 第二轮优化 | 修复报告 | [PACKAGE] 待归档 |
+| `import-path-final-optimization-report.md` | 465 | 最终完成 | **最终报告** | [OK_CHECK] 保留 |
 
 ---
 
@@ -33,10 +33,10 @@ docs/
 ```
 
 **优点**:
-- ✅ 保持主目录整洁
-- ✅ 保留完整历史记录
-- ✅ 便于未来查阅
-- ✅ 不丢失任何信息
+- [OK_CHECK] 保持主目录整洁
+- [OK_CHECK] 保留完整历史记录
+- [OK_CHECK] 便于未来查阅
+- [OK_CHECK] 不丢失任何信息
 
 **实施步骤**:
 1. 创建 `docs/archive/` 目录
@@ -56,13 +56,13 @@ docs/
 ```
 
 **优点**:
-- ✅ 单一文档，易于维护
-- ✅ 完整的历史记录
-- ✅ 避免重复内容
+- [OK_CHECK] 单一文档，易于维护
+- [OK_CHECK] 完整的历史记录
+- [OK_CHECK] 避免重复内容
 
 **缺点**:
-- ❌ 文档可能过长（1200+行）
-- ❌ 需要大量编辑工作
+- [CROSS] 文档可能过长（1200+行）
+- [CROSS] 需要大量编辑工作
 
 ---
 
@@ -79,13 +79,13 @@ docs/
 ```
 
 **优点**:
-- ✅ 无需移动文件
-- ✅ 保留完整历史
-- ✅ 实施成本最低
+- [OK_CHECK] 无需移动文件
+- [OK_CHECK] 保留完整历史
+- [OK_CHECK] 实施成本最低
 
 **缺点**:
-- ❌ 主目录文档较多
-- ❌ 可能造成混淆
+- [CROSS] 主目录文档较多
+- [CROSS] 可能造成混淆
 
 ---
 
@@ -145,7 +145,7 @@ docs/
 
 ## 推荐阅读
 
-- ✅ **[最终优化报告](../import-path-final-optimization-report.md)**
+- [OK_CHECK] **[最终优化报告](../import-path-final-optimization-report.md)**
   - 包含完整的重构总结
   - 所有优化成果汇总
   - 后续行动计划
@@ -184,10 +184,10 @@ docs/
 
 ### 归档触发条件
 
-- ✅ 文档被新版本替代
-- ✅ 多个文档内容重叠>50%
-- ✅ 阶段性工作完成（如重构项目）
-- ✅ 维护成本过高
+- [OK_CHECK] 文档被新版本替代
+- [OK_CHECK] 多个文档内容重叠>50%
+- [OK_CHECK] 阶段性工作完成（如重构项目）
+- [OK_CHECK] 维护成本过高
 
 ---
 

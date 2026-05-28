@@ -18,14 +18,14 @@
 
 | 设备 | 厂商 | 计算单元 | 显存 | 推荐用途 |
 |------|------|---------|------|---------|
-| **Intel Arc A770 Graphics** | Intel | 512 | 15.56 GB | ⭐ **首选** (最高性能) |
+| **Intel Arc A770 Graphics** | Intel | 512 | 15.56 GB | [STAR] **首选** (最高性能) |
 | NVIDIA GeForce GTX 1660 Ti | NVIDIA | 24 | 6.00 GB | 备用GPU |
 | AMD Ryzen 7 5700X (CPU) | AMD | 16 | 31.91 GB | 仅测试用 |
 
 ### pyopencl状态
-- ✅ 已安装: 版本 2026.1.2
-- ✅ OpenCL平台: 3个
-- ✅ 驱动: OpenCL 3.0 CUDA 13.2.73 (NVIDIA), OpenCL 3.0 NEO (Intel)
+- [OK] 已安装: 版本 2026.1.2
+- [OK] OpenCL平台: 3个
+- [OK] 驱动: OpenCL 3.0 CUDA 13.2.73 (NVIDIA), OpenCL 3.0 NEO (Intel)
 
 ---
 

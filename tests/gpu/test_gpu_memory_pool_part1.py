@@ -19,8 +19,8 @@ _mock_context_mod = MagicMock()
 _mock_context_mod.GPUContext = MagicMock()
 sys.modules["src.gpu.context"] = _mock_context_mod
 
-from src.gpu.memory_pool import GPUMemoryPool  # 架构必要：sys.modules mock 注入后立即导入  # noqa: E402
-from src.gpu.memory_pool import logger as pool_logger  # 架构必要：同上  # noqa: E402
+from src.gpu.memory_pool import GPUMemoryPool  # 架构必要：sys.modules mock 注入后立即导入
+from src.gpu.memory_pool import logger as pool_logger  # 架构必要：同上
 
 
 def _make_mock_buf(size=256, buf_id=42):

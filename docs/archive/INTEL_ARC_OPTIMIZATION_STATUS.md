@@ -14,20 +14,20 @@
 
 ---
 
-## ✅ 优化参数启动状态总览
+## [OK_CHECK] 优化参数启动状态总览
 
 | 优化参数 | 状态 | 配置值 | 说明 |
 |---------|------|--------|------|
-| **异步执行** | ✅ 已启用 | `true` | 双缓冲优化 |
-| **uint32 Workaround** | ✅ 已启用 | `true` | 避免global char* hang bug |
-| **超时保护** | ✅ 已启用 | `30秒` | 防止GPU永久卡死 |
-| **显存效率** | ✅ 已优化 | `70%` | 从45%提升至70% |
-| **GPU内存池** | ✅ 已启用 | `8192 MB` | 最大200个缓冲区 |
-| **厂商优化** | ✅ 已启用 | `true` | Intel特殊优化策略 |
-| **自适应超时** | ✅ 已启用 | `true` | 动态调整超时时间 |
-| **批次大小** | ✅ 已优化 | `1,048,576` | 1M（v3.2.0验证最优） |
+| **异步执行** | [OK_CHECK] 已启用 | `true` | 双缓冲优化 |
+| **uint32 Workaround** | [OK_CHECK] 已启用 | `true` | 避免global char* hang bug |
+| **超时保护** | [OK_CHECK] 已启用 | `30秒` | 防止GPU永久卡死 |
+| **显存效率** | [OK_CHECK] 已优化 | `70%` | 从45%提升至70% |
+| **GPU内存池** | [OK_CHECK] 已启用 | `8192 MB` | 最大200个缓冲区 |
+| **厂商优化** | [OK_CHECK] 已启用 | `true` | Intel特殊优化策略 |
+| **自适应超时** | [OK_CHECK] 已启用 | `true` | 动态调整超时时间 |
+| **批次大小** | [OK_CHECK] 已优化 | `1,048,576` | 1M（v3.2.0验证最优） |
 
-**总评**: ✅ **所有优化参数均已正确启动**
+**总评**: [OK_CHECK] **所有优化参数均已正确启动**
 
 ---
 
@@ -35,7 +35,7 @@
 
 ### 1. 异步执行 (Async Execution)
 
-**状态**: ✅ **已启用**
+**状态**: [OK_CHECK] **已启用**
 
 **配置来源**:
 
@@ -57,8 +57,8 @@ if cfg.get('gpu', {}).get('async_execution', False):
 **运行时验证**:
 
 ```
-✅ GPU异步执行已启用(配置文件 config.intel_arc.json) - 双缓冲优化
-✅ 使用GPU异步执行模式(双缓冲)
+[OK_CHECK] GPU异步执行已启用(配置文件 config.intel_arc.json) - 双缓冲优化
+[OK_CHECK] 使用GPU异步执行模式(双缓冲)
 GPU _random_search_async 启动（异步双缓冲模式）
 ```
 
@@ -78,7 +78,7 @@ GPU _random_search_async 启动（异步双缓冲模式）
 
 ### 2. uint32 Workaround
 
-**状态**: ✅ **已启用**
+**状态**: [OK_CHECK] **已启用**
 
 **配置来源**:
 
@@ -92,16 +92,16 @@ def _verify_uint32_workaround(self):
     """验证 uint32 workaround 是否正确应用"""
     # 检查内核源码是否使用uint32而非char*
     if 'uint32' in kernel_source:
-        logger.info("✅ 内核源码使用 uint32 workaround")
+        logger.info("[OK_CHECK] 内核源码使用 uint32 workaround")
         return True
 ```
 
 **运行时验证**:
 
 ```
-✅ 启用uint32 workaround(避免Intel Arc global char* hang bug)
-✅ 内核源码使用 uint32 workaround
-✅ Intel uint32 workaround 验证通过 (已在GPU内核验证中确认)
+[OK_CHECK] 启用uint32 workaround(避免Intel Arc global char* hang bug)
+[OK_CHECK] 内核源码使用 uint32 workaround
+[OK_CHECK] Intel uint32 workaround 验证通过 (已在GPU内核验证中确认)
 ```
 
 **问题背景**:
@@ -124,7 +124,7 @@ __global uint32* targets
 
 ### 3. 超时保护 (Timeout Protection)
 
-**状态**: ✅ **已启用**
+**状态**: [OK_CHECK] **已启用**
 
 **配置来源**:
 
@@ -149,8 +149,8 @@ timeout_manager = IntelTimeoutManager(
 **运行时验证**:
 
 ```
-✅ 启用超时保护机制: 30秒
-✅ 自适应超时管理器已初始化: base=30s, history=50, safety=3.0x, range=[10.0s, 120.0s]
+[OK_CHECK] 启用超时保护机制: 30秒
+[OK_CHECK] 自适应超时管理器已初始化: base=30s, history=50, safety=3.0x, range=[10.0s, 120.0s]
 ```
 
 **工作原理**:
@@ -170,7 +170,7 @@ timeout_manager = IntelTimeoutManager(
 
 ### 4. 显存效率 (Memory Efficiency)
 
-**状态**: ✅ **已优化**
+**状态**: [OK_CHECK] **已优化**
 
 **配置来源**:
 
@@ -187,8 +187,8 @@ v2.2.1: 70% (优化配置) ← 当前
 **运行时验证**:
 
 ```
-✅ Intel GPU内存效率: 70% (v2.2.1优化)
-✅ Intel 显存效率: 70%
+[OK_CHECK] Intel GPU内存效率: 70% (v2.2.1优化)
+[OK_CHECK] Intel 显存效率: 70%
 ```
 
 **计算方式**:
@@ -218,7 +218,7 @@ batch_size = available_memory / memory_per_key
 
 ### 5. GPU内存池 (GPU Memory Pool)
 
-**状态**: ✅ **已启用**
+**状态**: [OK_CHECK] **已启用**
 
 **配置来源**:
 
@@ -234,7 +234,7 @@ batch_size = available_memory / memory_per_key
 GPU内存池已启用: max_buffers=100, max_memory=512MB
 GPU内存池初始化完成
 GPU内存池预分配完成: 4个缓冲区
-✅ GPU内存池预分配完成
+[OK_CHECK] GPU内存池预分配完成
 ```
 
 **技术实现**:
@@ -264,7 +264,7 @@ class GPUMemoryPool:
 
 ### 6. 厂商优化 (Vendor Optimizations)
 
-**状态**: ✅ **已启用**
+**状态**: [OK_CHECK] **已启用**
 
 **配置来源**:
 
@@ -275,20 +275,20 @@ class GPUMemoryPool:
 
 ```
 应用Intel优化策略: Intel(R) Arc(TM) A770 Graphics
-✅ 启用uint32 workaround(避免Intel Arc global char* hang bug)
-✅ 启用超时保护机制: 30秒
-⚠️ Intel GPU: 禁用异步传输以确保稳定性
-✅ Intel GPU内存效率: 70% (v2.2.1优化)
+[OK_CHECK] 启用uint32 workaround(避免Intel Arc global char* hang bug)
+[OK_CHECK] 启用超时保护机制: 30秒
+[WARN] Intel GPU: 禁用异步传输以确保稳定性
+[OK_CHECK] Intel GPU内存效率: 70% (v2.2.1优化)
 GPU厂商优化应用成功
 ```
 
 **Intel特殊优化**:
 
-1. ✅ uint32 workaround（避免hang bug）
-2. ✅ 超时保护（30秒）
-3. ✅ 显存效率优化（70%）
-4. ⚠️ 异步传输禁用（确保稳定性）
-5. ✅ 保守内存策略（防止OOM）
+1. [OK_CHECK] uint32 workaround（避免hang bug）
+2. [OK_CHECK] 超时保护（30秒）
+3. [OK_CHECK] 显存效率优化（70%）
+4. [WARN] 异步传输禁用（确保稳定性）
+5. [OK_CHECK] 保守内存策略（防止OOM）
 
 **OpenCL编译选项**:
 
@@ -304,7 +304,7 @@ compiler_options = [
 
 ### 7. 自适应超时 (Adaptive Timeout)
 
-**状态**: ✅ **已启用**
+**状态**: [OK_CHECK] **已启用**
 
 **配置来源**:
 
@@ -348,7 +348,7 @@ class IntelTimeoutManager:
 
 ### 8. 批次大小 (Batch Size)
 
-**状态**: ✅ **已优化**
+**状态**: [OK_CHECK] **已优化**
 
 **配置来源**:
 
@@ -394,29 +394,29 @@ GPU配置合并完成: batch_size=1,048,576, work_group=512, mem_ratio=70%
 ```json
 {
   "gpu": {
-    "use_gpu": true,                    ✅
-    "device_index": 0,                  ✅
-    "auto_detect": true,                ✅
-    "batch_size": 1048576,              ✅
-    "memory_usage_ratio": 0.70,         ✅
-    "enable_vendor_optimizations": true,✅
-    "gpu_memory_pool": true,            ✅
-    "max_buffers": 200,                 ✅
-    "max_memory_mb": 8192,              ✅
-    "async_execution": true,            ✅
-    "timeout_protection": true,         ✅
-    "base_timeout_seconds": 30          ✅
+    "use_gpu": true,                    [OK_CHECK]
+    "device_index": 0,                  [OK_CHECK]
+    "auto_detect": true,                [OK_CHECK]
+    "batch_size": 1048576,              [OK_CHECK]
+    "memory_usage_ratio": 0.70,         [OK_CHECK]
+    "enable_vendor_optimizations": true,[OK_CHECK]
+    "gpu_memory_pool": true,            [OK_CHECK]
+    "max_buffers": 200,                 [OK_CHECK]
+    "max_memory_mb": 8192,              [OK_CHECK]
+    "async_execution": true,            [OK_CHECK]
+    "timeout_protection": true,         [OK_CHECK]
+    "base_timeout_seconds": 30          [OK_CHECK]
   },
   "optimization": {
-    "uint32_workaround": true,          ✅
-    "disable_async_transfer": false,    ✅
-    "conservative_memory_policy": false,✅
-    "adaptive_timeout": true            ✅
+    "uint32_workaround": true,          [OK_CHECK]
+    "disable_async_transfer": false,    [OK_CHECK]
+    "conservative_memory_policy": false,[OK_CHECK]
+    "adaptive_timeout": true            [OK_CHECK]
   }
 }
 ```
 
-**完整性**: ✅ **所有参数已正确配置**
+**完整性**: [OK_CHECK] **所有参数已正确配置**
 
 ---
 
@@ -426,12 +426,12 @@ GPU配置合并完成: batch_size=1,048,576, work_group=512, mem_ratio=70%
 
 | 优化项 | 启用前 | 启用后 | 提升幅度 | 贡献度 |
 |-------|--------|--------|---------|--------|
-| 异步执行 | 150K keys/s | 242K keys/s | +61% | ⭐⭐⭐⭐⭐ |
-| uint32 Workaround | 无法运行 | 稳定运行 | N/A | ⭐⭐⭐⭐⭐ |
-| 批次大小1M | 100K keys/s | 242K keys/s | +142% | ⭐⭐⭐⭐⭐ |
-| 显存效率70% | 间接提升 | 间接提升 | +50% | ⭐⭐⭐⭐ |
-| GPU内存池 | - | - | +5-10% | ⭐⭐⭐ |
-| 超时保护 | 崩溃风险 | 自动恢复 | 稳定性 | ⭐⭐⭐⭐⭐ |
+| 异步执行 | 150K keys/s | 242K keys/s | +61% | [STAR][STAR][STAR][STAR][STAR] |
+| uint32 Workaround | 无法运行 | 稳定运行 | N/A | [STAR][STAR][STAR][STAR][STAR] |
+| 批次大小1M | 100K keys/s | 242K keys/s | +142% | [STAR][STAR][STAR][STAR][STAR] |
+| 显存效率70% | 间接提升 | 间接提升 | +50% | [STAR][STAR][STAR][STAR] |
+| GPU内存池 | - | - | +5-10% | [STAR][STAR][STAR] |
+| 超时保护 | 崩溃风险 | 自动恢复 | 稳定性 | [STAR][STAR][STAR][STAR][STAR] |
 
 **综合性能**:
 
@@ -446,39 +446,39 @@ GPU配置合并完成: batch_size=1,048,576, work_group=512, mem_ratio=70%
 从最近的测试运行日志中提取的验证信息：
 
 ```
-✅ 从配置文件 config.intel_arc.json读取异步设置
-✅ GPU异步执行已启用(配置文件 config.intel_arc.json) - 双缓冲优化
-✅ 启用uint32 workaround(避免Intel Arc global char* hang bug)
-✅ 启用超时保护机制: 30秒
-✅ Intel GPU内存效率: 70% (v2.2.1优化)
+[OK_CHECK] 从配置文件 config.intel_arc.json读取异步设置
+[OK_CHECK] GPU异步执行已启用(配置文件 config.intel_arc.json) - 双缓冲优化
+[OK_CHECK] 启用uint32 workaround(避免Intel Arc global char* hang bug)
+[OK_CHECK] 启用超时保护机制: 30秒
+[OK_CHECK] Intel GPU内存效率: 70% (v2.2.1优化)
 GPU自动配置生成: batch_size=1,048,576, vendor=True
 GPU配置合并完成: batch_size=1,048,576, work_group=512, mem_ratio=70%
-✅ 异步执行: True (合并配置)
-✅ uint32 workaround: 已启用 (合并配置)
-✅ Intel uint32 workaround 验证通过 (已在GPU内核验证中确认)
-✅ 自适应超时管理器已初始化: base=30s, history=50, safety=3.0x, range=[10.0s, 120.0s]
-✅ 显存监控器已初始化 (总显存: 15.6GB)
-✅ 基准测试套件已初始化
-✅ 自动调优器已初始化
-✅ 性能报告生成器已初始化
-✅ 所有 5 个监控和调优组件初始化成功
-✅ Intel 超时保护: 30秒
-✅ Intel 异步执行: 已启用(双缓冲优化)
-✅ Intel 显存效率: 70%
-✅ Intel GPU 特殊优化应用完成
+[OK_CHECK] 异步执行: True (合并配置)
+[OK_CHECK] uint32 workaround: 已启用 (合并配置)
+[OK_CHECK] Intel uint32 workaround 验证通过 (已在GPU内核验证中确认)
+[OK_CHECK] 自适应超时管理器已初始化: base=30s, history=50, safety=3.0x, range=[10.0s, 120.0s]
+[OK_CHECK] 显存监控器已初始化 (总显存: 15.6GB)
+[OK_CHECK] 基准测试套件已初始化
+[OK_CHECK] 自动调优器已初始化
+[OK_CHECK] 性能报告生成器已初始化
+[OK_CHECK] 所有 5 个监控和调优组件初始化成功
+[OK_CHECK] Intel 超时保护: 30秒
+[OK_CHECK] Intel 异步执行: 已启用(双缓冲优化)
+[OK_CHECK] Intel 显存效率: 70%
+[OK_CHECK] Intel GPU 特殊优化应用完成
 ```
 
-**验证结果**: ✅ **所有优化参数均已正确启动并运行**
+**验证结果**: [OK_CHECK] **所有优化参数均已正确启动并运行**
 
 ---
 
 ## 建议与注意事项
 
-### ✅ 当前状态
+### [OK_CHECK] 当前状态
 
 所有优化参数已正确配置并启动，性能达到最优水平。
 
-### 💡 可选进一步优化
+### [TIP] 可选进一步优化
 
 1. **驱动更新**:
    - 当前无法检测驱动版本
@@ -495,7 +495,7 @@ GPU配置合并完成: batch_size=1,048,576, work_group=512, mem_ratio=70%
    - 可测试: 256 或 1024
    - 需要基准测试验证
 
-### ⚠️ 注意事项
+### [WARN] 注意事项
 
 1. **异步传输**:
    - 已禁用（`disable_async_transfer: false`）
@@ -516,28 +516,28 @@ GPU配置合并完成: batch_size=1,048,576, work_group=512, mem_ratio=70%
 
 ## 总结
 
-### ✅ 优化参数启动状态
+### [OK_CHECK] 优化参数启动状态
 
 | 类别 | 状态 | 评分 |
 |------|------|------|
-| 异步执行 | ✅ 已启用 | ⭐⭐⭐⭐⭐ |
-| uint32 Workaround | ✅ 已启用 | ⭐⭐⭐⭐⭐ |
-| 超时保护 | ✅ 已启用 | ⭐⭐⭐⭐⭐ |
-| 显存效率 | ✅ 70% | ⭐⭐⭐⭐⭐ |
-| GPU内存池 | ✅ 已启用 | ⭐⭐⭐⭐ |
-| 厂商优化 | ✅ 已启用 | ⭐⭐⭐⭐⭐ |
-| 自适应超时 | ✅ 已启用 | ⭐⭐⭐⭐⭐ |
-| 批次大小 | ✅ 1M最优 | ⭐⭐⭐⭐⭐ |
+| 异步执行 | [OK_CHECK] 已启用 | [STAR][STAR][STAR][STAR][STAR] |
+| uint32 Workaround | [OK_CHECK] 已启用 | [STAR][STAR][STAR][STAR][STAR] |
+| 超时保护 | [OK_CHECK] 已启用 | [STAR][STAR][STAR][STAR][STAR] |
+| 显存效率 | [OK_CHECK] 70% | [STAR][STAR][STAR][STAR][STAR] |
+| GPU内存池 | [OK_CHECK] 已启用 | [STAR][STAR][STAR][STAR] |
+| 厂商优化 | [OK_CHECK] 已启用 | [STAR][STAR][STAR][STAR][STAR] |
+| 自适应超时 | [OK_CHECK] 已启用 | [STAR][STAR][STAR][STAR][STAR] |
+| 批次大小 | [OK_CHECK] 1M最优 | [STAR][STAR][STAR][STAR][STAR] |
 
-### 🎯 综合评分: ⭐⭐⭐⭐⭐ (100/100)
+### [TARGET] 综合评分: [STAR][STAR][STAR][STAR][STAR] (100/100)
 
 **所有Intel Arc A770优化参数均已正确启动并运行！**
 
-- ✅ 配置文件完整
-- ✅ 运行时验证通过
-- ✅ 性能达到预期（242K keys/s）
-- ✅ 稳定性良好（变异系数3.35%）
-- ✅ 资源使用合理（42MB显存）
+- [OK_CHECK] 配置文件完整
+- [OK_CHECK] 运行时验证通过
+- [OK_CHECK] 性能达到预期（242K keys/s）
+- [OK_CHECK] 稳定性良好（变异系数3.35%）
+- [OK_CHECK] 资源使用合理（42MB显存）
 
 **结论**: 可以放心使用该配置进行长时间运行。
 

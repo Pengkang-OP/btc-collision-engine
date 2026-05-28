@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from src.utils.key_audit import (  # noqa: E402
+from src.utils.key_audit import (
     KeyAuditLevel,
     KeyAuditLogger,
     KeyOperationType,
@@ -86,9 +86,9 @@ def test_key_audit_logger():
     for log_file in log_files:
         if os.path.exists(log_file):
             size = os.path.getsize(log_file)
-            print(f"  ✅ {log_file}: {size} 字节")
+            print(f"  OK {log_file}: {size} 字节")
         else:
-            print(f"  ⚠️  {log_file}: 不存在")
+            print(f"  WARN  {log_file}: 不存在")
 
     print("\n" + "=" * 70)
     print("测试完成！")
@@ -102,7 +102,7 @@ if __name__ == "__main__":
         success = test_key_audit_logger()
         sys.exit(0 if success else 1)
     except Exception as e:
-        print(f"\n❌ 测试失败: {e}")
+        print(f"\nERR 测试失败: {e}")
         import traceback
 
         traceback.print_exc()

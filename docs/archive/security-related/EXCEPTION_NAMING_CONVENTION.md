@@ -200,14 +200,14 @@ grep -r "as e:" src/ | wc -l
 
 ### 1. 优先语义化命名
 
-✅ **推荐**:
+[OK_CHECK] **推荐**:
 
 ```python
 except Exception as cleanup_error:
     logger.debug(f"清理失败: {cleanup_error}")
 ```
 
-❌ **不推荐**:
+[CROSS] **不推荐**:
 
 ```python
 except Exception as e:
@@ -216,7 +216,7 @@ except Exception as e:
 
 ### 2. 保持上下文清晰
 
-✅ **推荐**:
+[OK_CHECK] **推荐**:
 
 ```python
 try:
@@ -225,7 +225,7 @@ except OSError as cleanup_error:
     logger.debug(f"清理临时文件失败: {cleanup_error}")
 ```
 
-❌ **不推荐**:
+[CROSS] **不推荐**:
 
 ```python
 try:
@@ -236,14 +236,14 @@ except Exception:
 
 ### 3. 日志消息要包含异常信息
 
-✅ **推荐**:
+[OK_CHECK] **推荐**:
 
 ```python
 except Exception as cleanup_error:
     logger.debug(f"清理失败: {cleanup_error}")
 ```
 
-❌ **不推荐**:
+[CROSS] **不推荐**:
 
 ```python
 except Exception as cleanup_error:

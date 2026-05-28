@@ -6,7 +6,7 @@
 
 ---
 
-## 📋 目录
+## [CHECKLIST] 目录
 
 1. [系统架构概览](#系统架构概览)
 2. [核心组件分析](#核心组件分析)
@@ -19,7 +19,7 @@
 
 ---
 
-## 🏗️ 系统架构概览
+## [BUILD] 系统架构概览
 
 ### 三层内存管理架构
 
@@ -32,7 +32,7 @@
 │  - 泄漏检测                                       │
 └──────────────────┬──────────────────────────────┘
                    │
-┌──────────────────▼──────────────────────────────┐
+┌──────────────────[E]──────────────────────────────┐
 │          管理层: 全局内存管理器                    │
 │  (memory_pool.py)                                │
 │  - GlobalGPUMemoryManager (单例)                  │
@@ -40,7 +40,7 @@
 │  - GPUBufferAllocator (分类管理)                  │
 └──────────────────┬──────────────────────────────┘
                    │
-┌──────────────────▼──────────────────────────────┐
+┌──────────────────[E]──────────────────────────────┐
 │          工具层: 内存计算工具                      │
 │  (gpu_memory_utils.py)                           │
 │  - BatchSizeConfig (配置管理)                     │
@@ -59,7 +59,7 @@
 
 ---
 
-## 🔍 核心组件分析
+## [SEARCH] 核心组件分析
 
 ### 1. GPUMemoryPool - 内存池核心
 
@@ -205,7 +205,7 @@ def get_gpu_memory_pool(context, max_buffers=100) -> GPUMemoryPool:
 
 ---
 
-## 🎯 碰撞引擎内存管理
+## [TARGET] 碰撞引擎内存管理
 
 ### 文件: `src/collision/gpu_collision_engine.py`
 
@@ -312,7 +312,7 @@ def _cleanup(self):
 
 ---
 
-## 🛠️ 内存工具函数
+## [TOOL] 内存工具函数
 
 ### 文件: `src/utils/gpu_memory_utils.py`
 
@@ -396,7 +396,7 @@ def calculate_optimal_batch_size(
 
 ---
 
-## ⚡ 性能优化策略
+## [BOLT] 性能优化策略
 
 ### 1. 缓冲区复用机制
 
@@ -462,7 +462,7 @@ if total_buffers >= self._max_buffers:
 
 ---
 
-## 🛡️ 内存泄漏防护
+## [SHIELD] 内存泄漏防护
 
 ### 多层防护机制
 
@@ -474,21 +474,21 @@ if total_buffers >= self._max_buffers:
 │ - 生成泄漏报告                            │
 └──────────────────┬──────────────────────┘
                    │
-┌──────────────────▼──────────────────────┐
+┌──────────────────[E]──────────────────────┐
 │ 第2层: 内存池容量限制                     │
 │ - max_buffers: 最大缓冲区数量             │
 │ - max_memory_mb: 最大内存使用量           │
 │ - 池满时直接释放                          │
 └──────────────────┬──────────────────────┘
                    │
-┌──────────────────▼──────────────────────┐
+┌──────────────────[E]──────────────────────┐
 │ 第3层: 双重释放防护                       │
 │ - released_buffers集合追踪                │
 │ - 已释放缓冲区设为None                    │
 │ - 跳过已释放的缓冲区                      │
 └──────────────────┬──────────────────────┘
                    │
-┌──────────────────▼──────────────────────┐
+┌──────────────────[E]──────────────────────┐
 │ 第4层: 异常处理                           │
 │ - try-except包裹释放逻辑                  │
 │ - 记录释放失败信息                        │
@@ -522,12 +522,12 @@ if total_buffers >= self._max_buffers:
 [INFO] GPU引擎关闭时释放了2个缓冲区 (总大小: 73728.0KB): _keys_buf, _match_buf
 [WARNING] GPU内存泄漏检测报告: 未释放=2, 释放成功=2, 释放失败=0
 
-结果: ✅ 无内存泄漏
+结果: [OK_CHECK] 无内存泄漏
 ```
 
 ---
 
-## 📊 性能基准测试
+## [CHART] 性能基准测试
 
 ### Intel Arc A770 实测数据
 
@@ -550,7 +550,7 @@ if total_buffers >= self._max_buffers:
 
 ---
 
-## 🎯 最佳实践建议
+## [TARGET] 最佳实践建议
 
 ### 1. 配置推荐
 
@@ -569,10 +569,10 @@ if total_buffers >= self._max_buffers:
 
 **理由**:
 
-- ✅ 1M批次性能最优 (522,928 keys/s)
-- ✅ 显存占用低 (42 MB, 0.26%)
-- ✅ 内存池复用率高 (85%+)
-- ✅ 已充分验证稳定性
+- [OK_CHECK] 1M批次性能最优 (522,928 keys/s)
+- [OK_CHECK] 显存占用低 (42 MB, 0.26%)
+- [OK_CHECK] 内存池复用率高 (85%+)
+- [OK_CHECK] 已充分验证稳定性
 
 #### NVIDIA RTX 4090 (24GB)
 
@@ -589,9 +589,9 @@ if total_buffers >= self._max_buffers:
 
 **理由**:
 
-- ✅ 4M批次充分利用显存
-- ✅ 显存占用适中 (168 MB, 0.7%)
-- ✅ 预期性能更高
+- [OK_CHECK] 4M批次充分利用显存
+- [OK_CHECK] 显存占用适中 (168 MB, 0.7%)
+- [OK_CHECK] 预期性能更高
 
 ### 2. 使用建议
 
@@ -600,7 +600,7 @@ if total_buffers >= self._max_buffers:
 ```python
 engine = GPUCollisionEngine(
     targets=targets,
-    use_gpu_memory_pool=True,      # ✅ 启用内存池
+    use_gpu_memory_pool=True,      # [OK_CHECK] 启用内存池
     gpu_pool_max_buffers=100,      # 最大100个缓冲区
     gpu_pool_max_memory_mb=512     # 最大512MB
 )
@@ -629,23 +629,23 @@ print(f"缓冲区数量: {stats['pooled_buffers']}")
 
 ### 3. 避免的陷阱
 
-#### ❌ 不要禁用内存池
+#### [CROSS] 不要禁用内存池
 
 ```python
 # 错误: 禁用内存池会导致性能下降
 engine = GPUCollisionEngine(
-    use_gpu_memory_pool=False  # ❌ 不推荐
+    use_gpu_memory_pool=False  # [CROSS] 不推荐
 )
 ```
 
-#### ❌ 不要设置过大的max_buffers
+#### [CROSS] 不要设置过大的max_buffers
 
 ```python
 # 错误: 过多缓冲区浪费显存
-gpu_pool_max_buffers=1000  # ❌ 不推荐
+gpu_pool_max_buffers=1000  # [CROSS] 不推荐
 ```
 
-#### ❌ 不要忘记清理
+#### [CROSS] 不要忘记清理
 
 ```python
 # 错误: 引擎关闭时未清理
@@ -689,7 +689,7 @@ print(f"复用率: {stats['reuse_rate']*100:.1f}%")
 
 ---
 
-## 🔧 技术细节
+## [WRENCH] 技术细节
 
 ### 内存对齐策略
 
@@ -734,9 +734,9 @@ class GlobalGPUMemoryManager:
 
 ---
 
-## 📈 性能优化路线图
+## [PERF] 性能优化路线图
 
-### 已实现 ✅
+### 已实现 [OK_CHECK]
 
 - [x] GPU内存池系统 (v2.2.0)
 - [x] 256字节对齐优化 (v2.2.1)
@@ -746,7 +746,7 @@ class GlobalGPUMemoryManager:
 - [x] 双重释放防护 (v2.2.1修复)
 - [x] 智能batch_size计算
 
-### 待优化 🚧
+### 待优化 [E]
 
 - [ ] 自动调整max_buffers (基于显存大小)
 - [ ] LRU淘汰策略 (优先淘汰旧缓冲区)
@@ -755,7 +755,7 @@ class GlobalGPUMemoryManager:
 - [ ] 多GPU内存池共享
 - [ ] 显存使用预测模型
 
-### 长期规划 🔮
+### 长期规划 [CRYSTAL]
 
 - [ ] 零拷贝内存优化
 - [ ] 统一内存管理 (CUDA/HIP/OpenCL)
@@ -765,7 +765,7 @@ class GlobalGPUMemoryManager:
 
 ---
 
-## 📝 总结
+## [MEMO] 总结
 
 ### 核心优势
 
@@ -799,10 +799,10 @@ class GlobalGPUMemoryManager:
 
 **预期性能**:
 
-- 🚀 522,928 keys/s
-- 💾 42 MB 显存占用
-- ✅ 85%+ 缓冲区复用率
-- 🛡️ 零内存泄漏
+- [QUICK] 522,928 keys/s
+- [E] 42 MB 显存占用
+- [OK_CHECK] 85%+ 缓冲区复用率
+- [SHIELD] 零内存泄漏
 
 ---
 

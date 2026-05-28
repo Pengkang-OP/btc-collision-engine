@@ -10,27 +10,27 @@
 
 | 依赖 | 版本范围 | 许可证 | 兼容性说明 |
 |------|---------|--------|-----------|
-| `coincurve` | >=18.0.0 | MIT | ✅ 完全兼容 |
-| `gmpy2` | >=2.1.0,<5.0.0 | LGPL-3.0 | ✅ 动态链接兼容 |
-| `pycryptodome` | >=3.19.0,<5.0.0 | BSD-3-Clause | ✅ 完全兼容 |
-| `cryptography` | >=43.0.0,<46.0.0 | Apache-2.0 OR BSD-3-Clause | ✅ 完全兼容 |
-| `PyNaCl` | >=1.5.0,<2.0.0 | Apache-2.0 | ✅ 完全兼容 |
-| `cffi` | >=1.15.0 | MIT | ✅ 完全兼容 |
-| `ecdsa` | >=0.18.0 | MIT | ✅ 完全兼容 |
-| `numpy` | >=1.24.0 | BSD-3-Clause | ✅ 完全兼容 |
-| `pyopencl` | >=2022.1 | MIT | ✅ 完全兼容 |
-| `psutil` | >=5.9.0 | BSD-3-Clause | ✅ 完全兼容 |
-| `requests` | >=2.28.0,<3.0.0 | Apache-2.0 | ✅ 完全兼容 |
-| `bech32` | >=1.2.0 | MIT | ✅ 完全兼容 |
-| `bitarray` | >=2.6.0 | Python-2.0 | ✅ 完全兼容 |
-| `pybloom-live` | >=2.2.0 | LGPL-3.0 | ✅ 动态链接兼容 |
-| `cachetools` | >=5.3.0 | MIT | ✅ 完全兼容 |
-| `chardet` | >=5.0.0,<6.0.0 | LGPL-2.1 | ✅ 动态链接兼容 |
-| `setproctitle` | >=1.3.0 | BSD-3-Clause | ✅ 完全兼容 |
-| `jsonschema` | >=4.0.0 | MIT | ✅ 完全兼容 |
-| `rich` | >=13.0 | MIT | ✅ 完全兼容 |
-| `pywin32` | >=306 (Windows) | PSF | ✅ 完全兼容 |
-| `nvidia-ml-py` | >=12.0.0 | BSD-3-Clause | ✅ 完全兼容 |
+| `coincurve` | >=18.0.0 | MIT | [OK] 完全兼容 |
+| `gmpy2` | >=2.1.0,<5.0.0 | LGPL-3.0 | [OK] 动态链接兼容 |
+| `pycryptodome` | >=3.19.0,<5.0.0 | BSD-3-Clause | [OK] 完全兼容 |
+| `cryptography` | >=43.0.0,<46.0.0 | Apache-2.0 OR BSD-3-Clause | [OK] 完全兼容 |
+| `PyNaCl` | >=1.5.0,<2.0.0 | Apache-2.0 | [OK] 完全兼容 |
+| `cffi` | >=1.15.0 | MIT | [OK] 完全兼容 |
+| `ecdsa` | >=0.18.0 | MIT | [OK] 完全兼容 |
+| `numpy` | >=1.24.0 | BSD-3-Clause | [OK] 完全兼容 |
+| `pyopencl` | >=2022.1 | MIT | [OK] 完全兼容 |
+| `psutil` | >=5.9.0 | BSD-3-Clause | [OK] 完全兼容 |
+| `requests` | >=2.28.0,<3.0.0 | Apache-2.0 | [OK] 完全兼容 |
+| `bech32` | >=1.2.0 | MIT | [OK] 完全兼容 |
+| `bitarray` | >=2.6.0 | Python-2.0 | [OK] 完全兼容 |
+| `pybloom-live` | >=2.2.0 | LGPL-3.0 | [OK] 动态链接兼容 |
+| `cachetools` | >=5.3.0 | MIT | [OK] 完全兼容 |
+| `chardet` | >=5.0.0,<6.0.0 | LGPL-2.1 | [OK] 动态链接兼容 |
+| `setproctitle` | >=1.3.0 | BSD-3-Clause | [OK] 完全兼容 |
+| `jsonschema` | >=4.0.0 | MIT | [OK] 完全兼容 |
+| `rich` | >=13.0 | MIT | [OK] 完全兼容 |
+| `pywin32` | >=306 (Windows) | PSF | [OK] 完全兼容 |
+| `nvidia-ml-py` | >=12.0.0 | BSD-3-Clause | [OK] 完全兼容 |
 
 ## 风险评估
 

@@ -2,7 +2,7 @@
 
 本目录存放项目开发和维护过程中使用的辅助工具脚本。
 
-## 🚨 Windows UTF-8 编码问题
+## [ALERT] Windows UTF-8 编码问题
 
 **问题**：在Windows系统中，中文和emoji字符可能显示为乱码，特别是使用管道时。
 
@@ -29,22 +29,22 @@
 
 ## 工具分类
 
-### 🔧 数据工具
+### [WRENCH] 数据工具
 - 地址提取和验证
 - 密钥生成和转换
 - 数据格式化工具
 
-### 📊 分析工具
+### [CHART] 分析工具
 - 性能基准测试
 - 日志分析工具
 - 数据可视化工具
 
-### 🛠️ 开发工具
+### [TOOL] 开发工具
 - 代码质量检查
 - 文档链接验证
 - 配置管理工具
 
-### 🚀 部署工具
+### [ROCKET] 部署工具
 - SSH配置脚本
 - 远程推送脚本
 - 环境设置工具
@@ -58,7 +58,7 @@
 
 ## 现有工具
 
-### 📝 文档工具
+### [MEMO] 文档工具
 - **check_document_quality.py** - 文档质量检查
 - **add_version_info.py** - 批量添加版本信息
 - **add_table_of_contents.py** - 自动添加目录
@@ -66,16 +66,16 @@
 - **fix_heading_levels.py** - 标题层级修复
 - **fix_code_blocks.py** - 代码块语言类型修复
 
-### 🔍 系统工具
+### [SEARCH] 系统工具
 - **audit_resource_cleanup.py** - 资源清理审计
 - **check_pr_status.py** - GitHub PR状态检查
 - **cleanup_monitoring_data.py** - 监控数据清理
 
-### 🌐 UTF-8编码支持
+### [GLOBE] UTF-8编码支持
 - **run_utf8.ps1** - PowerShell UTF-8包装器（支持管道）
 - **run_utf8.bat** - CMD UTF-8包装器（支持管道）
 
-> 💡 提示：所有文档工具已内置UTF-8编码支持，直接运行即可正常显示中文和emoji。
+> [IDEA] 提示：所有文档工具已内置UTF-8编码支持，直接运行即可正常显示中文和emoji。
 
 ## 相关文档
 

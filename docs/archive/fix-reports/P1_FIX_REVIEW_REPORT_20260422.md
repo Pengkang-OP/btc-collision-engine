@@ -6,18 +6,18 @@
 
 ---
 
-## 📊 审查摘要
+## [CHART] 审查摘要
 
 | 问题 | 原方案评级 | 改进后评级 | 风险等级 | 建议 |
 |------|-----------|-----------|---------|------|
-| **P1-1**: 裸异常捕获 | ⚠️ 部分有效 | ✅ 完全有效 | 中 | 采用分级修复策略 |
-| **P1-2**: 私钥日志泄露 | ✅ 有效但不完整 | ✅ 完全有效 | 高 | 结合现有安全过滤器 |
+| **P1-1**: 裸异常捕获 | [WARN] 部分有效 | [OK_CHECK] 完全有效 | 中 | 采用分级修复策略 |
+| **P1-2**: 私钥日志泄露 | [OK_CHECK] 有效但不完整 | [OK_CHECK] 完全有效 | 高 | 结合现有安全过滤器 |
 
 **综合结论**: 原修复方案方向正确，但需要细化和补充
 
 ---
 
-## 🔍 P1问题1: 裸异常捕获过多 (25处)
+## [SEARCH] P1问题1: 裸异常捕获过多 (25处)
 
 ### 原修复方案评估
 
@@ -25,15 +25,15 @@
 
 ```python
 # 修复前
-except:  # ❌
+except:  # [CROSS]
     pass
 
 # 原修复方案
-except (ValueError, TypeError) as e:  # ✅
+except (ValueError, TypeError) as e:  # [OK_CHECK]
     logger.warning(f"错误: {e}")
 ```
 
-**评估结果**: ⚠️ 部分有效，存在以下问题：
+**评估结果**: [WARN] 部分有效，存在以下问题：
 
 #### 问题1: 一刀切方案不适用所有场景
 
@@ -54,15 +54,15 @@ except (ValueError, TypeError) as e:  # ✅
 def __del__(self):
     try:
         self.clear()
-    except Exception:  # ✅ 合理：析构函数不应抛出异常
+    except Exception:  # [OK_CHECK] 合理：析构函数不应抛出异常
         pass  # 对象正在销毁，无法做更多处理
 ```
 
 **分析**:
 
-- ✅ 这是Python最佳实践
-- ✅ 析构函数中抛出异常会导致程序崩溃
-- ✅ 保持现状，无需修复
+- [OK_CHECK] 这是Python最佳实践
+- [OK_CHECK] 析构函数中抛出异常会导致程序崩溃
+- [OK_CHECK] 保持现状，无需修复
 
 **案例2: 监控失败不影响业务 (合理)**
 
@@ -75,9 +75,9 @@ except Exception:
 
 **分析**:
 
-- ✅ 监控是辅助功能，失败不应阻断主流程
-- ✅ 但应添加DEBUG级别日志记录
-- ⚠️ 需要改进：添加日志而非静默失败
+- [OK_CHECK] 监控是辅助功能，失败不应阻断主流程
+- [OK_CHECK] 但应添加DEBUG级别日志记录
+- [WARN] 需要改进：添加日志而非静默失败
 
 #### 问题3: 未考虑现有安全过滤器
 
@@ -112,9 +112,9 @@ except Exception as e:
 
 **理由**:
 
-- ✅ 资源清理失败不影响核心功能
-- ✅ 添加DEBUG日志便于调试
-- ✅ 不会掩盖关键错误（使用DEBUG级别）
+- [OK_CHECK] 资源清理失败不影响核心功能
+- [OK_CHECK] 添加DEBUG日志便于调试
+- [OK_CHECK] 不会掩盖关键错误（使用DEBUG级别）
 
 **风险**: 极低  
 **工作量**: 12处 × 2分钟 = 24分钟
@@ -147,16 +147,16 @@ except Exception as e:
 
 **理由**:
 
-- ✅ 降级是设计意图，不是错误
-- ✅ WARNING级别提醒用户性能可能受影响
-- ✅ 保留降级逻辑，提升系统健壮性
+- [OK_CHECK] 降级是设计意图，不是错误
+- [OK_CHECK] WARNING级别提醒用户性能可能受影响
+- [OK_CHECK] 保留降级逻辑，提升系统健壮性
 
 **风险**: 极低  
 **工作量**: 8处 × 3分钟 = 24分钟
 
 ---
 
-#### 策略C: 数据解析场景 (5处) - 中风险 ⚠️
+#### 策略C: 数据解析场景 (5处) - 中风险 [WARN]
 
 **文件分布**:
 
@@ -180,9 +180,9 @@ except (ValueError, TypeError, OSError) as e:
 
 **理由**:
 
-- ❌ 裸异常捕获会掩盖KeyboardInterrupt等
-- ✅ 具体异常类型明确错误范围
-- ✅ 便于调试和问题定位
+- [CROSS] 裸异常捕获会掩盖KeyboardInterrupt等
+- [OK_CHECK] 具体异常类型明确错误范围
+- [OK_CHECK] 便于调试和问题定位
 
 **风险**: 中（需要测试验证）  
 **工作量**: 5处 × 5分钟 = 25分钟
@@ -202,7 +202,7 @@ except (ValueError, TypeError, OSError) as e:
 
 ---
 
-## 🔍 P1问题2: 私钥数据可能泄露到日志
+## [SEARCH] P1问题2: 私钥数据可能泄露到日志
 
 ### 原修复方案评估
 
@@ -215,7 +215,7 @@ key_hash = hashlib.sha256(private_key[:16].encode()).hexdigest()[:8]
 message=f"检测到重复的私钥: hash={key_hash}...",
 ```
 
-**评估结果**: ✅ 有效，但有更优方案
+**评估结果**: [OK_CHECK] 有效，但有更优方案
 
 #### 发现1: 项目已有SecurityLogFilter
 
@@ -255,14 +255,14 @@ def setup_security_filter():
 
 ```python
 # src/gpu/data_monitor.py:476
-stats['seen_keys'].add(private_key)  # ❌ 明文存储私钥
+stats['seen_keys'].add(private_key)  # [CROSS] 明文存储私钥
 ```
 
 **风险评估**:
 
-- 🔴 **高风险**: 私钥在内存中明文存储
-- 🔴 可能被内存dump攻击获取
-- 🔴 违反SecureKeyManager最佳实践
+- [RED] **高风险**: 私钥在内存中明文存储
+- [RED] 可能被内存dump攻击获取
+- [RED] 违反SecureKeyManager最佳实践
 
 **但SecurityLogFilter只能保护日志输出，无法保护内存中的私钥！**
 
@@ -274,9 +274,9 @@ stats['seen_keys'].add(private_key)  # ❌ 明文存储私钥
 
 | 方案 | 安全性 | 实现难度 | 性能影响 | 推荐度 |
 |------|--------|---------|---------|--------|
-| **A**: SHA256哈希 | ⭐⭐⭐⭐ | 低 | 极低 | ⭐⭐⭐ |
-| **B**: 内存中仅存哈希 | ⭐⭐⭐⭐⭐ | 中 | 低 | ⭐⭐⭐⭐⭐ |
-| **C**: 使用布隆过滤器 | ⭐⭐⭐⭐⭐ | 高 | 极低 | ⭐⭐⭐⭐ |
+| **A**: SHA256哈希 | [STAR][STAR][STAR][STAR] | 低 | 极低 | [STAR][STAR][STAR] |
+| **B**: 内存中仅存哈希 | [STAR][STAR][STAR][STAR][STAR] | 中 | 低 | [STAR][STAR][STAR][STAR][STAR] |
+| **C**: 使用布隆过滤器 | [STAR][STAR][STAR][STAR][STAR] | 高 | 极低 | [STAR][STAR][STAR][STAR] |
 
 #### 推荐方案: 方案B (内存中仅存哈希)
 
@@ -307,14 +307,14 @@ def _validate_match(self, device_idx: int, match_data: Dict):
             severity='high',
             message=f"无效的私钥格式: 长度={len(private_key)}",
             device_idx=device_idx,
-            details={'private_key_length': len(private_key)}  # ✅ 安全：仅长度
+            details={'private_key_length': len(private_key)}  # [OK_CHECK] 安全：仅长度
         )
         self._record_issue(issue)
     
     # 修复3: 检查重复的私钥（使用哈希）
     stats = self._device_stats[device_idx]
     if private_key_hash in stats['seen_keys']:
-        # ✅ 安全：仅输出哈希前8位
+        # [OK_CHECK] 安全：仅输出哈希前8位
         issue = DataQualityIssue(
             issue_type=DataQualityIssue.DUPLICATE_KEY,
             severity='medium',
@@ -334,17 +334,17 @@ def _validate_match(self, device_idx: int, match_data: Dict):
                 stats['seen_keys'].discard(key)
             logger.debug(f"GPU {device_idx} 清理旧的私钥哈希记录")
         
-        # ✅ 安全：仅存储哈希，不存储明文私钥
+        # [OK_CHECK] 安全：仅存储哈希，不存储明文私钥
         stats['seen_keys'].add(private_key_hash)
 ```
 
 **优势**:
 
-1. ✅ **内存安全**: 私钥不在内存中明文存储
-2. ✅ **日志安全**: 仅输出哈希前缀
-3. ✅ **双重保护**: SecurityLogFilter + 哈希存储
-4. ✅ **功能完整**: 去重检测功能不受影响
-5. ✅ **性能优秀**: SHA256哈希极快 (<0.001ms)
+1. [OK_CHECK] **内存安全**: 私钥不在内存中明文存储
+2. [OK_CHECK] **日志安全**: 仅输出哈希前缀
+3. [OK_CHECK] **双重保护**: SecurityLogFilter + 哈希存储
+4. [OK_CHECK] **功能完整**: 去重检测功能不受影响
+5. [OK_CHECK] **性能优秀**: SHA256哈希极快 (<0.001ms)
 
 **风险评估**:
 
@@ -364,9 +364,9 @@ if private_key in stats['seen_keys']:
     issue = DataQualityIssue(
         issue_type=DataQualityIssue.DUPLICATE_KEY,
         severity='medium',
-        message=f"检测到重复的私钥: [已屏蔽]",  # ✅ 不输出任何私钥信息
+        message=f"检测到重复的私钥: [已屏蔽]",  # [OK_CHECK] 不输出任何私钥信息
         device_idx=device_idx,
-        details={'duplicate_detected': True}  # ✅ 仅标记
+        details={'duplicate_detected': True}  # [OK_CHECK] 仅标记
     )
 ```
 
@@ -379,8 +379,8 @@ if private_key in stats['seen_keys']:
 
 | 方案 | 安全性 | 工作量 | 推荐度 | 优先级 |
 |------|--------|--------|--------|--------|
-| **推荐B**: 内存哈希存储 | ⭐⭐⭐⭐⭐ | 30分钟 | ⭐⭐⭐⭐⭐ | P1 |
-| **备选A**: 仅修复日志 | ⭐⭐⭐ | 5分钟 | ⭐⭐⭐ | P1(临时) |
+| **推荐B**: 内存哈希存储 | [STAR][STAR][STAR][STAR][STAR] | 30分钟 | [STAR][STAR][STAR][STAR][STAR] | P1 |
+| **备选A**: 仅修复日志 | [STAR][STAR][STAR] | 5分钟 | [STAR][STAR][STAR] | P1(临时) |
 
 **建议**:
 
@@ -389,7 +389,7 @@ if private_key in stats['seen_keys']:
 
 ---
 
-## 📋 综合修复计划
+## [CHECKLIST] 综合修复计划
 
 ### 阶段1: 紧急修复 (30分钟)
 
@@ -432,9 +432,9 @@ import re
 with open('src/gpu/data_monitor.py', 'r') as f:
     content = f.read()
     if 'private_key[:16]' in content:
-        print('❌ 仍存在私钥泄露风险')
+        print('[CROSS] 仍存在私钥泄露风险')
     else:
-        print('✅ 私钥泄露风险已修复')
+        print('[OK_CHECK] 私钥泄露风险已修复')
 "
 ```
 
@@ -473,7 +473,7 @@ with open('src/gpu/data_monitor.py', 'r') as f:
 
 ---
 
-## 🎯 风险评估
+## [TARGET] 风险评估
 
 ### 修复风险
 
@@ -487,31 +487,31 @@ with open('src/gpu/data_monitor.py', 'r') as f:
 
 | 风险 | 概率 | 影响 | 后果 |
 |------|------|------|------|
-| 私钥泄露 | 中 (30%) | 🔴 极高 | 资产损失、法律责任 |
+| 私钥泄露 | 中 (30%) | [RED] 极高 | 资产损失、法律责任 |
 | 掩盖严重错误 | 高 (60%) | 高 | 难以调试、系统崩溃 |
 | 安全审计不通过 | 高 (80%) | 中 | 无法发布 |
 
 ---
 
-## ✅ 审查结论
+## [OK_CHECK] 审查结论
 
 ### 原方案评级
 
 | 问题 | 原方案 | 评级 | 主要问题 |
 |------|--------|------|---------|
-| P1-1 | 一刀切替换 | ⚠️ 6/10 | 未区分场景，忽略了合理的`except Exception:` |
-| P1-2 | SHA256哈希日志 | ✅ 7/10 | 有效但不完整，未解决内存存储问题 |
+| P1-1 | 一刀切替换 | [WARN] 6/10 | 未区分场景，忽略了合理的`except Exception:` |
+| P1-2 | SHA256哈希日志 | [OK_CHECK] 7/10 | 有效但不完整，未解决内存存储问题 |
 
 ### 改进后方案评级
 
 | 问题 | 改进方案 | 评级 | 改进点 |
 |------|---------|------|--------|
-| P1-1 | 分级修复策略 | ✅ 9/10 | 区分3类场景，保留合理的异常捕获 |
-| P1-2 | 内存哈希存储 | ✅ 10/10 | 双重保护，彻底解决泄露风险 |
+| P1-1 | 分级修复策略 | [OK_CHECK] 9/10 | 区分3类场景，保留合理的异常捕获 |
+| P1-2 | 内存哈希存储 | [OK_CHECK] 10/10 | 双重保护，彻底解决泄露风险 |
 
 ### 最终建议
 
-**✅ 推荐采用改进后的修复方案**
+**[OK_CHECK] 推荐采用改进后的修复方案**
 
 **执行时间**:
 
@@ -521,18 +521,18 @@ with open('src/gpu/data_monitor.py', 'r') as f:
 
 **风险评级**:
 
-- 修复风险: 🟢 低
-- 不修复风险: 🔴 高
+- 修复风险: [GREEN] 低
+- 不修复风险: [RED] 高
 
 **ROI分析**:
 
 - 投入: 4小时
 - 收益: 消除高危安全风险，提升代码质量
-- **ROI**: ⭐⭐⭐⭐⭐ 极高
+- **ROI**: [STAR][STAR][STAR][STAR][STAR] 极高
 
 ---
 
-## 📝 附录
+## [MEMO] 附录
 
 ### A. 25处裸异常捕获详细清单
 
@@ -560,7 +560,7 @@ with open('src/gpu/data_monitor.py', 'r') as f:
 7. `src/collision/key_collision_engine.py:1382`
 8. 其他文件
 
-#### C类: 数据解析 (5处) ⚠️ 优先修复
+#### C类: 数据解析 (5处) [WARN] 优先修复
 
 1. `src/gui/components/alert_panel.py:212`
 2. `src/gui/components/multi_gpu_monitor.py:221`

@@ -102,7 +102,7 @@ def monitor_performance(duration_seconds=60):
 
         print("【功能状态】")
         for name, enabled in checks.items():
-            print(f"  {'✅' if enabled else '❌'} {name}")
+            print(f"  {'OK' if enabled else 'ERR'} {name}")
 
         print()
         print("【性能评估】")

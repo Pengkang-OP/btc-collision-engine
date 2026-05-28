@@ -12,20 +12,20 @@
 
 经过全面代码审查，发现：
 
-✅ **已修复** (审计报告中的问题):
+[OK_CHECK] **已修复** (审计报告中的问题):
 
 - `multiprocess_engine.py`: 所有异常已具体化（TypeError, ValueError, MemoryError, NameError等）
 - `match_storage.py`: 异常已具体化（OSError, PermissionError）
 - `performance_reporter.py`: 异常已具体化（KeyError, TypeError, ValueError）
 
-⚠️ **待优化** (发现的新问题):
+[WARN] **待优化** (发现的新问题):
 
 - `key_collision_engine.py`: 15处 `except Exception`
 - `gpu_collision_engine.py`: 10+处 `except Exception`
 
 ### 风险评估
 
-**风险等级**: 🟢 低
+**风险等级**: [GREEN] 低
 
 当前代码中的 `except Exception` 使用场景分析：
 
@@ -51,7 +51,7 @@ except Exception as e:
     logger.debug(f"进度回调失败: {e}")
 ```
 
-✅ **评估**: 安全 - 回调失败不应中断引擎
+[OK_CHECK] **评估**: 安全 - 回调失败不应中断引擎
 
 **场景B: 统计更新保护 (安全)**
 
@@ -62,7 +62,7 @@ except Exception as e:
     logger.error(f"统计更新失败: {e}")
 ```
 
-✅ **评估**: 安全 - 统计失败不应中断引擎
+[OK_CHECK] **评估**: 安全 - 统计失败不应中断引擎
 
 **场景C: 数据日志保护 (安全)**
 
@@ -73,7 +73,7 @@ except Exception as e:
     logger.debug(f"数据日志记录失败: {e}")
 ```
 
-✅ **评估**: 安全 - 日志失败不应中断引擎
+[OK_CHECK] **评估**: 安全 - 日志失败不应中断引擎
 
 **场景D: 断点保存保护 (安全)**
 
@@ -84,7 +84,7 @@ except Exception as e:
     logger.error(f"断点保存失败: {e}")
 ```
 
-✅ **评估**: 安全 - 断点失败不应中断引擎
+[OK_CHECK] **评估**: 安全 - 断点失败不应中断引擎
 
 ### 2. gpu_collision_engine.py (10+处)
 
@@ -133,22 +133,22 @@ except Exception as e:
 
 | 问题 | 审计时状态 | 当前状态 | 操作 |
 |------|-----------|---------|------|
-| multiprocess_engine.py 裸异常 | ❌ 存在 | ✅ 已修复 | 无需操作 |
-| match_storage.py 裸异常 | ❌ 存在 | ✅ 已修复 | 无需操作 |
-| performance_reporter.py 裸异常 | ❌ 存在 | ✅ 已修复 | 无需操作 |
+| multiprocess_engine.py 裸异常 | [CROSS] 存在 | [OK_CHECK] 已修复 | 无需操作 |
+| match_storage.py 裸异常 | [CROSS] 存在 | [OK_CHECK] 已修复 | 无需操作 |
+| performance_reporter.py 裸异常 | [CROSS] 存在 | [OK_CHECK] 已修复 | 无需操作 |
 
 ### 当前代码质量
 
 **评分**: 8.5/10 (优秀)
 
-✅ **优点**:
+[OK_CHECK] **优点**:
 
 - 大部分异常已具体化
 - 保护性异常使用合理
 - 所有异常都有日志记录
 - 不会掩盖关键错误
 
-⚠️ **改进空间**:
+[WARN] **改进空间**:
 
 - 可以在文档中说明异常处理策略
 - 关键路径可以添加更具体的异常
@@ -194,7 +194,7 @@ except Exception as e:
 ---
 
 **检查完成时间**: 2026-04-23  
-**检查状态**: ✅ 已完成  
+**检查状态**: [OK_CHECK] 已完成  
 **建议**: 保持现状，代码质量良好
 
 ---

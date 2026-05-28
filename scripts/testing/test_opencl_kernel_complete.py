@@ -32,11 +32,11 @@ def test_kernel_compilation():
             gpu_devices.extend(devices)
 
         if not gpu_devices:
-            print("❌ 未找到GPU设备")
+            print("ERR 未找到GPU设备")
             return False
 
         device = gpu_devices[0]
-        print(f"✓ 使用GPU: {device.name}")
+        print(f"OK 使用GPU: {device.name}")
         print(f"  厂商: {device.vendor}")
         print(f"  内存: {device.global_mem_size // (1024**2)} MB")
 
@@ -46,21 +46,21 @@ def test_kernel_compilation():
         program = cl.Program(context, OPENCL_KERNEL_SOURCE).build()
         compile_time = time.time() - start
 
-        print(f"✓ 内核编译成功 (耗时: {compile_time:.2f}秒)")
+        print(f"OK 内核编译成功 (耗时: {compile_time:.2f}秒)")
 
         # 验证内核函数存在
         kernels = ["batch_check", "verify_arithmetic", "debug_hash"]
         for kernel_name in kernels:
             if hasattr(program, kernel_name):
-                print(f"  ✓ {kernel_name} 内核存在")
+                print(f"  OK {kernel_name} 内核存在")
             else:
-                print(f"  ❌ {kernel_name} 内核缺失")
+                print(f"  ERR {kernel_name} 内核缺失")
                 return False
 
         return True
 
     except Exception as e:
-        print(f"❌ 内核编译失败: {e}")
+        print(f"ERR 内核编译失败: {e}")
         import traceback
 
         traceback.print_exc()
@@ -112,7 +112,7 @@ def test_verify_arithmetic():
         x_hex = uint256_to_hex(result_x)
         y_hex = uint256_to_hex(result_y)
 
-        print("✓ 2*G计算完成")
+        print("OK 2*G计算完成")
         print(f"  X坐标: 0x{x_hex}")
         print(f"  Y坐标: 0x{y_hex}")
 
@@ -121,16 +121,16 @@ def test_verify_arithmetic():
         expected_y = "1ae168fea63dc339a3c58419466ceaeef7f632653266d0e1236431a950cfe52a"
 
         if x_hex == expected_x and y_hex == expected_y:
-            print("✓ 算术验证通过 - 2*G计算正确")
+            print("OK 算术验证通过 - 2*G计算正确")
             return True
-        print("⚠️  算术验证结果不匹配")
+        print("WARN  算术验证结果不匹配")
         print(f"  预期X: 0x{expected_x}")
         print(f"  预期Y: 0x{expected_y}")
         # 注意：这不一定是错误，可能是字节序问题
         return True  # 仍然返回True，因为内核执行成功
 
     except Exception as e:
-        print(f"❌ 算术验证失败: {e}")
+        print(f"ERR 算术验证失败: {e}")
         import traceback
 
         traceback.print_exc()
@@ -190,7 +190,7 @@ def test_debug_hash():
         cl.enqueue_copy(queue, qx_out, qx_buf)
         cl.enqueue_copy(queue, qy_out, qy_buf)
 
-        print("✓ 哈希计算完成 (k=1)")
+        print("OK 哈希计算完成 (k=1)")
         print(f"  压缩公钥: {pubkey_out[:5].tobytes().hex()}... ({len(pubkey_out)}字节)")
         print(f"  SHA-256: {sha256_out[:8].tobytes().hex()}...")
         print(f"  Hash160: {hash160_out.tobytes().hex()}")
@@ -198,13 +198,13 @@ def test_debug_hash():
         # k=1的公钥应该是基点G
         # 压缩公钥首字节应该是0x02或0x03
         if pubkey_out[0] in [0x02, 0x03]:
-            print(f"✓ 公钥格式正确 (首字节: 0x{pubkey_out[0]:02x})")
+            print(f"OK 公钥格式正确 (首字节: 0x{pubkey_out[0]:02x})")
             return True
-        print(f"⚠️  公钥格式异常 (首字节: 0x{pubkey_out[0]:02x})")
+        print(f"WARN  公钥格式异常 (首字节: 0x{pubkey_out[0]:02x})")
         return True  # 仍然返回True
 
     except Exception as e:
-        print(f"❌ 哈希验证失败: {e}")
+        print(f"ERR 哈希验证失败: {e}")
         import traceback
 
         traceback.print_exc()
@@ -232,7 +232,7 @@ def test_batch_check_structure():
         batch_kernel = program.batch_check
 
         # 获取内核信息
-        print("✓ batch_check内核存在")
+        print("OK batch_check内核存在")
         print(f"  内核函数对象: {batch_kernel}")
 
         # 验证内核源码包含关键功能
@@ -245,16 +245,16 @@ def test_batch_check_structure():
 
         for pattern, desc in source_checks:
             if pattern in OPENCL_KERNEL_SOURCE:
-                print(f"  ✓ {desc}: {pattern}")
+                print(f"  OK {desc}: {pattern}")
             else:
-                print(f"  ❌ {desc}缺失: {pattern}")
+                print(f"  ERR {desc}缺失: {pattern}")
                 return False
 
-        print("✓ 批量检查内核结构验证通过")
+        print("OK 批量检查内核结构验证通过")
         return True
 
     except Exception as e:
-        print(f"❌ 批量检查内核验证失败: {e}")
+        print(f"ERR 批量检查内核验证失败: {e}")
         import traceback
 
         traceback.print_exc()
@@ -272,22 +272,22 @@ def test_intel_arc_workaround():
 
         # 检查是否使用uint32替代uchar
         if "__global const uint *private_keys" in OPENCL_KERNEL_SOURCE:
-            print("✓ 使用uint32私钥输入（避免Intel Arc hang bug）")
+            print("OK 使用uint32私钥输入（避免Intel Arc hang bug）")
         else:
-            print("❌ 未使用uint32优化")
+            print("ERR 未使用uint32优化")
             return False
 
         # 检查是否使用ulong算术
         if "ulong carry" in OPENCL_KERNEL_SOURCE or "ulong sum" in OPENCL_KERNEL_SOURCE:
-            print("✓ 使用ulong算术（避免signed long bug）")
+            print("OK 使用ulong算术（避免signed long bug）")
         else:
-            print("⚠️  未检测到ulong算术")
+            print("WARN  未检测到ulong算术")
 
-        print("✓ Intel Arc workaround验证通过")
+        print("OK Intel Arc workaround验证通过")
         return True
 
     except Exception as e:
-        print(f"❌ Intel Arc验证失败: {e}")
+        print(f"ERR Intel Arc验证失败: {e}")
         return False
 
 
@@ -311,7 +311,7 @@ def main():
             result = test_func()
             results.append((name, result))
         except Exception as e:
-            print(f"\n❌ 测试 {name} 异常: {e}")
+            print(f"\nERR 测试 {name} 异常: {e}")
             results.append((name, False))
 
     # 总结
@@ -323,17 +323,17 @@ def main():
     total = len(results)
 
     for name, result in results:
-        status = "✅ 通过" if result else "❌ 失败"
+        status = "OK 通过" if result else "ERR 失败"
         print(f"  {status} - {name}")
 
     print("=" * 70)
     print(f"总计: {passed}/{total} 测试通过")
 
     if passed == total:
-        print("🎉 所有测试通过！GPU内核完全可用！")
+        print("PARTY 所有测试通过！GPU内核完全可用！")
         print("=" * 70)
         return 0
-    print(f"⚠️  {total - passed} 个测试未通过")
+    print(f"WARN  {total - passed} 个测试未通过")
     print("=" * 70)
     return 1
 

@@ -674,7 +674,7 @@ class NvidiaGPUOptimizer:
             result["memory"] = self._memory_config
 
             self._logger.info(
-                f"\u2705 NVIDIA 显存配置: {self._memory_config['global_mem_gb']:.1f}GB"
+                f"OK NVIDIA 显存配置: {self._memory_config['global_mem_gb']:.1f}GB"
                 f"（类型: {'HBM' if self._memory_config.get('is_hbm') else 'GDDR'}），"
                 f"memory_ratio={self._memory_config['memory_ratio']:.2f}，"
                 f"异步传输={'建议启用' if self._memory_config['async_transfer'] else '不建议'}",
@@ -682,7 +682,8 @@ class NvidiaGPUOptimizer:
 
         except Exception as e:
             self._logger.warning(
-                f"⚠️ NVIDIA 显存优化配置失败（非致命）: {type(e).__name__}\n   显存配置将使用保守默认值",
+                "WARN NVIDIA 显存优化配置失败（非致命）: %s\n   显存配置将使用保守默认值",
+                type(e).__name__,
                 exc_info=True,
             )
             self._memory_config = {
@@ -695,7 +696,7 @@ class NvidiaGPUOptimizer:
 
         # 4. 快速数学优化禁用确认（加密/哈希必须精确）
         result["fast_math_disabled"] = True
-        self._logger.info("✅ 快速数学优化: 已禁用（保证 SHA256/RIPEMD160/secp256k1 精度）")
+        self._logger.info("OK 快速数学优化: 已禁用（保证 SHA256/RIPEMD160/secp256k1 精度）")
 
         # 5. 汇总优化建议
         result["recommended_memory_ratio"] = (

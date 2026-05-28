@@ -5,7 +5,7 @@
 
 ## 目录
 
-- [📋 目录](#-目录)
+- [[CHECKLIST] 目录](#-目录)
 - [文档自动化生成机制](#文档自动化生成机制)
   - [1. API文档自动生成](#1-api文档自动生成)
     - [从代码注释生成API文档](#从代码注释生成api文档)
@@ -50,7 +50,7 @@
 - [相关文档](#相关文档)
 ---
 
-## 📋 目录
+## [CHECKLIST] 目录
 
 - [文档自动化生成机制](#文档自动化生成机制)
 - [文档版本管理规范](#文档版本管理规范)
@@ -102,13 +102,13 @@ def generate_api_docs():
         "src/"
     ]
     
-    print("🔧 正在生成API文档...")
+    print("[WRENCH] 正在生成API文档...")
     result = subprocess.run(cmd, capture_output=True, text=True)
     
     if result.returncode == 0:
-        print(f"✅ API文档已生成: {output_dir}")
+        print(f"[OK_CHECK] API文档已生成: {output_dir}")
     else:
-        print(f"❌ 生成失败: {result.stderr}")
+        print(f"[CROSS] 生成失败: {result.stderr}")
         sys.exit(1)
 
 if __name__ == "__main__":
@@ -253,18 +253,18 @@ def scan_docs(docs_dir="docs"):
 
 def update_index(doc_info):
     """更新DOCUMENT_INDEX.md"""
-    print("📋 文档扫描结果:\n")
+    print("[CHECKLIST] 文档扫描结果:\n")
     
     for doc in sorted(doc_info, key=lambda x: x['file']):
-        print(f"📄 {doc['file']}")
+        print(f"[FILE] {doc['file']}")
         print(f"   标题: {doc['title']}")
         print(f"   版本: {doc['version']}")
         print(f"   更新: {doc['date']}")
         print(f"   大小: {doc['size']}")
         print()
     
-    print(f"\n✅ 共扫描 {len(doc_info)} 个文档")
-    print(f"📅 扫描时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"\n[OK_CHECK] 共扫描 {len(doc_info)} 个文档")
+    print(f"[E] 扫描时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
 if __name__ == "__main__":
     doc_info = scan_docs()
@@ -357,7 +357,7 @@ git blame docs/architecture.md
 3. 在文档开头添加归档标记：
 
 ```markdown
-> ⚠️ **归档文档**: 本文档已归档，仅供参考。  
+> [WARN] **归档文档**: 本文档已归档，仅供参考。  
 > **归档日期**: 2026-04-21  
 > **替代文档**: [新文档链接](new-doc.md)
 ```python
@@ -446,28 +446,28 @@ git blame docs/architecture.md
 python tools/check_document_quality.py
 
 # 输出示例:
-# 🔍 开始检查文档质量...
+# [SEARCH] 开始检查文档质量...
 # 
-# 📁 找到 32 个核心文档
+# [DIR] 找到 32 个核心文档
 # 
-# ✅ architecture.md - 质量评分: 9.5/10
-# ✅ api-reference.md - 质量评分: 9.2/10
-# ⚠️  getting-started.md - 质量评分: 7.8/10
-#    ⚠️  建议添加版本信息
+# [OK_CHECK] architecture.md - 质量评分: 9.5/10
+# [OK_CHECK] api-reference.md - 质量评分: 9.2/10
+# [WARN]  getting-started.md - 质量评分: 7.8/10
+#    [WARN]  建议添加版本信息
 # 
 # ============================================================
-# 📊 文档质量检查报告
+# [CHART] 文档质量检查报告
 # ============================================================
 # 
 # 核心文档总数: 32
 # 平均质量评分: 8.9/10
 # 
 # 质量分布:
-#   ✅ 优秀 (≥8.5): 28 个
-#   ⚠️  良好 (7.0-8.4): 4 个
-#   ❌ 需改进 (<7.0): 0 个
+#   [OK_CHECK] 优秀 (≥8.5): 28 个
+#   [WARN]  良好 (7.0-8.4): 4 个
+#   [CROSS] 需改进 (<7.0): 0 个
 # 
-# 总体评价: ✅ 优秀
+# 总体评价: [OK_CHECK] 优秀
 # ============================================================
 ```markdown
 
@@ -484,25 +484,25 @@ python tools/check_broken_links.py --check-external
 python tools/check_broken_links.py --docs-dir docs
 
 # 输出示例:
-# 🔍 开始检查文档链接...
+# [SEARCH] 开始检查文档链接...
 # 
-# 📁 找到 75 个文档
+# [DIR] 找到 75 个文档
 # 
 # ============================================================
-# 📊 链接检查报告
+# [CHART] 链接检查报告
 # ============================================================
 # 
-# 📁 检查文件数: 75
-# 🔗 总链接数: 1,234
-# ❌ 断裂链接: 3
+# [DIR] 检查文件数: 75
+# [LINK] 总链接数: 1,234
+# [CROSS] 断裂链接: 3
 # 
-# ⚠️  断裂链接详情:
+# [WARN]  断裂链接详情:
 # 
-# 📄 architecture.md:
+# [FILE] architecture.md:
 #    行 45: [旧链接](old-file.md)
 #       原因: 文件不存在: /path/to/old-file.md
 # 
-# 📄 api-reference.md:
+# [FILE] api-reference.md:
 #    行 120: [外部链接](https://example.com/404)
 #       原因: HTTP 404
 # 
@@ -516,7 +516,7 @@ python tools/check_broken_links.py --docs-dir docs
 python tools/generate_doc_stats.py
 
 # 输出示例:
-# 📊 文档统计报告 - 2026-04-21
+# [CHART] 文档统计报告 - 2026-04-21
 # 
 # 核心文档: 32个
 # 归档文档: 43个
@@ -624,27 +624,27 @@ repos:
 
 ### 1. 文档编写最佳实践
 
-- ✅ 先写大纲，再填充内容
-- ✅ 使用模板保持一致性
-- ✅ 包含完整可运行的示例
-- ✅ 定期更新保持时效性
-- ✅ 使用工具和自动化检查质量
+- [OK_CHECK] 先写大纲，再填充内容
+- [OK_CHECK] 使用模板保持一致性
+- [OK_CHECK] 包含完整可运行的示例
+- [OK_CHECK] 定期更新保持时效性
+- [OK_CHECK] 使用工具和自动化检查质量
 
 ### 2. 文档维护最佳实践
 
-- ✅ 小变更直接PR，大变更先讨论
-- ✅ 使用检查清单确保质量
-- ✅ 及时响应审查意见
-- ✅ 保持文档与代码同步
-- ✅ 定期回顾和改进流程
+- [OK_CHECK] 小变更直接PR，大变更先讨论
+- [OK_CHECK] 使用检查清单确保质量
+- [OK_CHECK] 及时响应审查意见
+- [OK_CHECK] 保持文档与代码同步
+- [OK_CHECK] 定期回顾和改进流程
 
 ### 3. 工具使用最佳实践
 
-- ✅ 在提交前运行质量检查
-- ✅ 在PR中附带检查报告
-- ✅ 定期运行全量检查
-- ✅ 持续改进工具脚本
-- ✅ 集成到CI/CD流程
+- [OK_CHECK] 在提交前运行质量检查
+- [OK_CHECK] 在PR中附带检查报告
+- [OK_CHECK] 定期运行全量检查
+- [OK_CHECK] 持续改进工具脚本
+- [OK_CHECK] 集成到CI/CD流程
 
 ---
 

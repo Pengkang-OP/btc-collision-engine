@@ -43,10 +43,10 @@ def run_bandit_scan(severity="medium", format_type="json"):
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
         return result
     except subprocess.TimeoutExpired:
-        print("❌ 扫描超时(60秒)")
+        print("ERR 扫描超时(60秒)")
         return None
     except Exception as e:
-        print(f"❌ 扫描失败: {e}")
+        print(f"ERR 扫描失败: {e}")
         return None
 
 
@@ -62,20 +62,20 @@ def parse_json_report(json_file="bandit_report.json"):
 
         return data
     except Exception as e:
-        print(f"❌ 解析报告失败: {e}")
+        print(f"ERR 解析报告失败: {e}")
         return None
 
 
 def print_summary(report):
     """打印安全扫描总结."""
     if not report:
-        print("❌ 无报告数据")
+        print("ERR 无报告数据")
         return
 
     issues = report.get("results", [])  # bandit使用results而非issues
 
     print("\n" + "=" * 80)
-    print("🔒 安全扫描报告总结")
+    print("LOCK 安全扫描报告总结")
     print("=" * 80)
 
     # 统计问题
@@ -86,11 +86,11 @@ def print_summary(report):
             severity_counts[severity] += 1
 
     metrics = report.get("metrics", {})
-    print("\n📊 扫描统计:")
+    print("\nSTATS 扫描统计:")
     print(f"   扫描文件数: {len(metrics) - 1}")  # 减去_totals
     print(f"   发现问题数: {len(issues)}")
 
-    print("\n🚨 问题统计:")
+    print("\nCRIT 问题统计:")
     print(f"   高危(High): {severity_counts['HIGH']}")
     print(f"   中危(Medium): {severity_counts['MEDIUM']}")
     print(f"   低危(Low): {severity_counts['LOW']}")
@@ -101,7 +101,7 @@ def print_summary(report):
     # 显示高危问题详情
     high_issues = [i for i in issues if i.get("issue_severity") == "HIGH"]
     if high_issues:
-        print(f"\n⚠️  高危问题详情 ({len(high_issues)}个):")
+        print(f"\nWARN 高危问题详情 ({len(high_issues)}个):")
         for i, issue in enumerate(high_issues[:5], 1):  # 最多显示5个
             print(f"\n  {i}. [{issue.get('test_id')}] {issue.get('issue_text')}")
             print(f"     文件: {issue.get('filename')}:{issue.get('line_number')}")
@@ -110,13 +110,13 @@ def print_summary(report):
 
     # 安全评分
     if severity_counts["HIGH"] == 0 and severity_counts["MEDIUM"] == 0:
-        score = "✅ 优秀 (10/10)"
+        score = "OK 优秀 (10/10)"
     elif severity_counts["HIGH"] == 0:
-        score = "🟡 良好 (7-9/10)"
+        score = "YELLOW 良好 (7-9/10)"
     else:
-        score = "🔴 需要改进 (<7/10)"
+        score = "RED 需要改进 (<7/10)"
 
-    print(f"\n🏆 安全评分: {score}")
+    print(f"\nTROPHY 安全评分: {score}")
     print("=" * 80)
 
 
@@ -158,11 +158,11 @@ def generate_html_report(report, output_file="security_report.html"):
 </head>
 <body>
     <div class="container">
-        <h1>🔒 安全扫描报告</h1>
+        <h1>LOCK 安全扫描报告</h1>
         <p><strong>生成时间:</strong> {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</p>
 
         <div class="summary">
-            <h2>📊 扫描统计</h2>
+            <h2>STATS 扫描统计</h2>
             <table>
                 <tr><td>总代码行数</td><td>{metrics.get("_total_lines_of_code", 0):,}</td></tr>
                 <tr><td>高危问题</td><td>{metrics.get("_issue_severity", {}).get("HIGH", 0)}</td></tr>
@@ -171,7 +171,7 @@ def generate_html_report(report, output_file="security_report.html"):
             </table>
         </div>
 
-        <h2>🚨 问题详情</h2>
+        <h2>CRIT 问题详情</h2>
 """
 
     for issue in issues:
@@ -196,7 +196,7 @@ def generate_html_report(report, output_file="security_report.html"):
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(html_content)
 
-    print(f"✅ HTML报告已生成: {output_path}")
+    print(f"OK HTML报告已生成: {output_path}")
 
 
 def main():
@@ -217,11 +217,11 @@ def main():
     args = parser.parse_args()
 
     print("=" * 80)
-    print("🔒 BTC碰撞引擎 - 自动化安全扫描")
+    print("LOCK BTC碰撞引擎 - 自动化安全扫描")
     print("=" * 80)
 
     # 运行扫描
-    print("\n🔍 正在运行安全扫描...")
+    print("\nSEARCH 正在运行安全扫描...")
     result = run_bandit_scan(args.severity, "json")
 
     if result is None:
@@ -231,7 +231,7 @@ def main():
     report = parse_json_report("bandit_report.json")
 
     if report is None:
-        print("❌ 无法解析扫描报告")
+        print("ERR 无法解析扫描报告")
         sys.exit(1)
 
     # 打印总结
@@ -247,10 +247,10 @@ def main():
         severity_counts = report.get("metrics", {}).get("_issue_severity", {})
 
         if severity_counts.get("HIGH", 0) > 0:
-            print("\n❌ CI/CD检查失败: 发现高危安全问题")
+            print("\nERR CI/CD检查失败: 发现高危安全问题")
             sys.exit(1)
         else:
-            print("\n✅ CI/CD检查通过: 无高危安全问题")
+            print("\nOK CI/CD检查通过: 无高危安全问题")
             sys.exit(0)
     else:
         # 普通模式,始终成功退出

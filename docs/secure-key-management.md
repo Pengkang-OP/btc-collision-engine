@@ -45,7 +45,7 @@ secure_clear_bytearray(private_key)
 
 ```python
 
-**影响**: 🔴 高 - 清零可能不完整
+**影响**: [RED] 高 - 清零可能不完整
 
 ## 2. 交换文件可能包含数据
 
@@ -59,7 +59,7 @@ secure_clear_bytearray(private_key)
 
 ```python
 
-**影响**: 🔴 高 - 私钥可能持久化到磁盘
+**影响**: [RED] 高 - 私钥可能持久化到磁盘
 
 ## 3. CPU缓存残留
 
@@ -70,7 +70,7 @@ secure_clear_bytearray(private_key)
 
 ```python
 
-**影响**: 🟡 中 - 高级攻击可能恢复数据
+**影响**: [YELLOW] 中 - 高级攻击可能恢复数据
 
 ## 4. 对象复制
 
@@ -82,7 +82,7 @@ func(private_key)  # 函数调用可能复制
 
 ```python
 
-**影响**: 🟡 中 - 多个副本难以追踪
+**影响**: [YELLOW] 中 - 多个副本难以追踪
 
 ---
 
@@ -92,12 +92,12 @@ func(private_key)  # 函数调用可能复制
 
 | 方案 | GC保护 | 交换保护 | CPU缓存 | 实现难度 | 推荐度 |
 |------|--------|----------|---------|----------|--------|
-| **普通bytes** | ❌ | ❌ | ❌ | 简单 | ❌ 不推荐 |
-| **bytearray+memset** | ⚠️ 部分 | ❌ | ❌ | 简单 | ⚠️ 可用 |
-| **SecureKeyManager** | ✅ 较好 | ⚠️ 部分 | ❌ | 中等 | ✅ 推荐 |
-| **cryptography.io** | ✅ 较好 | ✅ 可选 | ⚠️ 部分 | 中等 | ✅✅ 强烈推荐 |
-| **PyNaCl/libsodium** | ✅ 较好 | ✅ 可选 | ⚠️ 部分 | 中等 | ✅✅ 强烈推荐 |
-| **硬件HSM** | ✅ 完全 | ✅ 完全 | ✅ 完全 | 困难 | ⭐ 最高安全 |
+| **普通bytes** | [FAIL] | [FAIL] | [FAIL] | 简单 | [FAIL] 不推荐 |
+| **bytearray+memset** | [WARN] 部分 | [FAIL] | [FAIL] | 简单 | [WARN] 可用 |
+| **SecureKeyManager** | [OK] 较好 | [WARN] 部分 | [FAIL] | 中等 | [OK] 推荐 |
+| **cryptography.io** | [OK] 较好 | [OK] 可选 | [WARN] 部分 | 中等 | [OK][OK] 强烈推荐 |
+| **PyNaCl/libsodium** | [OK] 较好 | [OK] 可选 | [WARN] 部分 | 中等 | [OK][OK] 强烈推荐 |
+| **硬件HSM** | [OK] 完全 | [OK] 完全 | [OK] 完全 | 困难 | * 最高安全 |
 
 ### 方案详解
 
@@ -115,19 +115,19 @@ def secure_clear_bytearray(buffer: bytearray):
 
 **优点**:
 
-- ✅ 无需外部依赖
+- [OK] 无需外部依赖
 
-- ✅ 比不做强
+- [OK] 比不做强
 
-- ✅ 简单直接
+- [OK] 简单直接
 
 **缺点**:
 
-- ❌ 无法防止GC复制
+- [FAIL] 无法防止GC复制
 
-- ❌ 无法防止交换
+- [FAIL] 无法防止交换
 
-- ❌ 无法清除CPU缓存
+- [FAIL] 无法清除CPU缓存
 
 **适用场景**: 低安全要求、测试环境
 
@@ -148,19 +148,19 @@ with SecureKeyManager() as key_mgr:
 
 **优点**:
 
-- ✅ 自动选择最佳后端
+- [OK] 自动选择最佳后端
 
-- ✅ 上下文管理器保证清零
+- [OK] 上下文管理器保证清零
 
-- ✅ 异常安全
+- [OK] 异常安全
 
-- ✅ 支持内存锁定（Linux）
+- [OK] 支持内存锁定（Linux）
 
 **缺点**:
 
-- ⚠️ 仍受Python GC限制
+- [WARN] 仍受Python GC限制
 
-- ⚠️ 需要安装密码学库（推荐）
+- [WARN] 需要安装密码学库（推荐）
 
 **适用场景**: 生产环境、一般安全要求
 
@@ -178,19 +178,19 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms
 
 **优点**:
 
-- ✅ 使用OpenSSL的OPENSSL_cleanse
+- [OK] 使用OpenSSL的OPENSSL_cleanse
 
-- ✅ 经过广泛审计
+- [OK] 经过广泛审计
 
-- ✅ 支持内存锁定
+- [OK] 支持内存锁定
 
-- ✅ 功能完善
+- [OK] 功能完善
 
 **缺点**:
 
-- ⚠️ 需要安装: `pip install cryptography`
+- [WARN] 需要安装: `pip install cryptography`
 
-- ⚠️ 仍受Python限制
+- [WARN] 仍受Python限制
 
 **适用场景**: 生产环境、中高安全要求
 
@@ -208,17 +208,17 @@ import nacl.secret
 
 **优点**:
 
-- ✅ sodium_memzero是专用安全清零
+- [OK] sodium_memzero是专用安全清零
 
-- ✅ 现代API设计
+- [OK] 现代API设计
 
-- ✅ 支持内存锁定
+- [OK] 支持内存锁定
 
-- ✅ 防侧信道攻击
+- [OK] 防侧信道攻击
 
 **缺点**:
 
-- ⚠️ 需要安装: `pip install pynacl`
+- [WARN] 需要安装: `pip install pynacl`
 
 **适用场景**: 生产环境、中高安全要求
 
@@ -242,21 +242,21 @@ import nacl.secret
 
 **优点**:
 
-- ✅ 完全防止内存复制
+- [OK] 完全防止内存复制
 
-- ✅ 完全防止交换
+- [OK] 完全防止交换
 
-- ✅ 防物理攻击
+- [OK] 防物理攻击
 
-- ✅ 审计追踪
+- [OK] 审计追踪
 
 **缺点**:
 
-- ❌ 成本高（$500-$5000+）
+- [FAIL] 成本高（$500-$5000+）
 
-- ❌ 实现复杂
+- [FAIL] 实现复杂
 
-- ❌ 需要专用硬件
+- [FAIL] 需要专用硬件
 
 **适用场景**: 金融机构、最高安全要求
 
@@ -284,7 +284,7 @@ with SecureKeyManager() as key_mgr:
 
     print(f"地址: {address}")
 
-# 退出上下文，私钥已自动清零 ✅
+# 退出上下文，私钥已自动清零 [OK]
 
 ```markdown
 
@@ -421,7 +421,7 @@ pip install cryptography pynacl
 
 ## 最佳实践
 
-### ✅ DO - 应该做的
+### [OK] DO - 应该做的
 
 1. **使用上下文管理器**
 
@@ -474,15 +474,15 @@ pip install cryptography pynacl
 
 ---
 
-### ❌ DON'T - 不应该做的
+### [FAIL] DON'T - 不应该做的
 
 1. **不要在日志中记录私钥**
 
    ```python
-   # ❌ 绝对不要
+   # [FAIL] 绝对不要
    logger.info(f"私钥: {private_key.hex()}")
 
-   # ✅ 可以记录地址
+   # [OK] 可以记录地址
    logger.info(f"地址: {address}")
 
 ```python
@@ -490,10 +490,10 @@ pip install cryptography pynacl
 2. **不要存储私钥到变量**
 
    ```python
-   # ❌ 危险：创建副本
+   # [FAIL] 危险：创建副本
    temp_key = private_key[:]
 
-   # ✅ 直接使用引用
+   # [OK] 直接使用引用
    use_key(private_key)
 
 ```python
@@ -501,10 +501,10 @@ pip install cryptography pynacl
 3. **不要传递给不可信函数**
 
    ```python
-   # ❌ 危险：函数可能保存副本
+   # [FAIL] 危险：函数可能保存副本
    untrusted_function(private_key)
 
-   # ✅ 只传递地址
+   # [OK] 只传递地址
    use_address(address)
 
 ```python
@@ -512,13 +512,13 @@ pip install cryptography pynacl
 4. **不要忽略清零**
 
    ```python
-   # ❌ 忘记清零
+   # [FAIL] 忘记清零
    key_mgr = SecureKeyManager()
    key_mgr.generate_key()
    use_key(key_mgr.get_key())
    # 忘记key_mgr.clear()
 
-   # ✅ 使用上下文管理器
+   # [OK] 使用上下文管理器
    with SecureKeyManager() as key_mgr:
        key_mgr.generate_key()
        use_key(key_mgr.get_key())
@@ -673,28 +673,28 @@ assert all(b == 0 for b in key_mgr._key)
 
 ### 立即行动
 
-1. ✅ 安装密码学库
+1. [OK] 安装密码学库
 
    ```bash
    pip install cryptography
 
 ```python
 
-2. ✅ 使用SecureKeyManager
+2. [OK] 使用SecureKeyManager
 
    ```python
    from src.core.secure_key_manager import SecureKeyManager
 
 ```python
 
-3. ✅ 审查现有代码
+3. [OK] 审查现有代码
 
    ```bash
    grep -r "private_key" src/
 
 ```python
 
-4. ✅ 运行测试验证
+4. [OK] 运行测试验证
 
    ```bash
    python examples/secure_key_manager_example.py

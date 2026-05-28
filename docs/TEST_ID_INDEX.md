@@ -81,12 +81,12 @@
 
 | 测试ID | 测试文件 | 跳过原因 | 状态 | 关联文档 |
 |--------|----------|----------|------|----------|
-| GPU-HW-001 | `tests/test_gpu_collision_engine.py` | 需要NVIDIA GPU | ⏸️ 跳过 | [GPU引擎指南](gpu-engine-guide.md) |
-| GPU-HW-002 | `tests/test_gpu_collision_engine.py` | 需要AMD GPU | ⏸️ 跳过 | [GPU引擎指南](gpu-engine-guide.md) |
-| GPU-HW-003 | `tests/test_gpu_collision_engine.py` | 需要Intel Arc GPU | ⏸️ 跳过 | [Intel Arc集成指南](intel-arc-gpu-compatibility-research.md) |
-| GPU-HW-004 | `tests/test_multi_gpu.py` | 需要多GPU环境 | ⏸️ 跳过 | [多GPU指南](MULTI_GPU.md) |
-| PERF-001 | `tests/test_performance_monitor.py` | 长时间运行测试 | ⏸️ 跳过 | [性能优化指南](performance-optimization.md) |
-| PERF-002 | `tests/test_gpu_performance.py` | GPU性能基准 | ⏸️ 跳过 | GPU性能监控（文档已移除） |
+| GPU-HW-001 | `tests/test_gpu_collision_engine.py` | 需要NVIDIA GPU | [PAUSE] 跳过 | [GPU引擎指南](gpu-engine-guide.md) |
+| GPU-HW-002 | `tests/test_gpu_collision_engine.py` | 需要AMD GPU | [PAUSE] 跳过 | [GPU引擎指南](gpu-engine-guide.md) |
+| GPU-HW-003 | `tests/test_gpu_collision_engine.py` | 需要Intel Arc GPU | [PAUSE] 跳过 | [Intel Arc集成指南](intel-arc-gpu-compatibility-research.md) |
+| GPU-HW-004 | `tests/test_multi_gpu.py` | 需要多GPU环境 | [PAUSE] 跳过 | [多GPU指南](MULTI_GPU.md) |
+| PERF-001 | `tests/test_performance_monitor.py` | 长时间运行测试 | [PAUSE] 跳过 | [性能优化指南](performance-optimization.md) |
+| PERF-002 | `tests/test_gpu_performance.py` | GPU性能基准 | [PAUSE] 跳过 | GPU性能监控（文档已移除） |
 
 ---
 

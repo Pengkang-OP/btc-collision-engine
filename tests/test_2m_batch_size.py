@@ -18,14 +18,14 @@ import pytest
 
 pytestmark = pytest.mark.gpu  # 需要真实GPU硬件
 
-from src.collision.collision_stats import CollisionStats  # noqa: E402
-from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
+from src.collision.collision_stats import CollisionStats
+from src.collision.gpu.engine import GPUCollisionEngine
 
 
 def run_2m_batch_size(duration=60):
     """测试2M批次大小（内部基准函数，不作为 pytest 测试收集）."""
     print("\n" + "=" * 80)
-    print("🚀 Intel Arc GPU 2M批次大小性能测试")
+    print("FAST Intel Arc GPU 2M批次大小性能测试")
     print("=" * 80)
     print(f"测试时长: {duration} 秒")
     print("批次大小: 2,097,152 (2M)")
@@ -46,7 +46,7 @@ def run_2m_batch_size(duration=60):
     except BaseException:
         targets = {"12ib7dApVFvg82TXKycWBNpN8kFyiAN1dr"}
 
-    print(f"✅ 加载 {len(targets)} 个目标地址\n")
+    print(f"OK 加载 {len(targets)} 个目标地址\n")
 
     # 统计数据
     stats_data = {"total_checked": 0, "speed": 0.0, "elapsed": 0.0, "matches": []}
@@ -81,14 +81,14 @@ def run_2m_batch_size(duration=60):
 
     def on_match(private_key: bytes, address: str, wif: str):
         """匹配回调."""
-        print(f"\n🎯 发现匹配: {address}")
+        print(f"\nTARGET 发现匹配: {address}")
         print(f"   私钥: {private_key.hex()}")
         print(f"   WIF: {wif}\n")
         stats_data["matches"].append({"address": address, "private_key": private_key.hex(), "wif": wif})
 
     try:
         # 初始化GPU引擎（2M批次）
-        print("📋 初始化GPU碰撞引擎 (2M批次)...")
+        print("[CLIPBOARD] 初始化GPU碰撞引擎 (2M批次)...")
         engine = GPUCollisionEngine(
             targets=targets,
             device_index=-1,  # 自动选择
@@ -103,14 +103,14 @@ def run_2m_batch_size(duration=60):
 
         # 获取设备信息
         device_info = engine._gpu_device.get_device_info()
-        print("\n✅ GPU引擎初始化完成")
+        print("\nOK GPU引擎初始化完成")
         print(f"   设备: {device_info.get('name', 'Unknown')}")
         print(f"   厂商: {device_info.get('vendor', 'Unknown')}")
         print(f"   显存: {device_info.get('global_mem_size', 0) / 1024**3:.1f} GB")
         print(f"   批次大小: {engine.batch_size:,} (2M)")
         print(f"   异步执行: {engine._gpu_device.enable_async_execution}")
 
-        print(f"\n⏱️  开始测试，持续 {duration} 秒...\n")
+        print(f"\n[STOPWATCH]  开始测试，持续 {duration} 秒...\n")
         print("-" * 80)
 
         # 启动引擎
@@ -122,7 +122,7 @@ def run_2m_batch_size(duration=60):
             while (time.time() - start_time) < duration:
                 time.sleep(1)
         except KeyboardInterrupt:
-            print("\n\n⚠️  收到中断信号，正在停止...")
+            print("\n\nWARN  收到中断信号，正在停止...")
         finally:
             engine.stop()
 
@@ -135,7 +135,7 @@ def run_2m_batch_size(duration=60):
 
         # 打印结果
         print("-" * 80)
-        print("\n📊 2M批次测试完成！")
+        print("\nSTATS 2M批次测试完成！")
         print("=" * 80)
         print(f"  总检查数   : {stats_data['total_checked']:,}")
         print(f"  运行时间   : {elapsed:.2f} 秒")
@@ -148,14 +148,14 @@ def run_2m_batch_size(duration=60):
 
         # 显存估算
         estimated_memory_mb = (2097152 / 1048576) * 42  # 1M ≈ 42MB
-        print("\n💾 显存使用估算:")
+        print("\n[SAVE] 显存使用估算:")
         print(f"  预计占用: ~{estimated_memory_mb:.0f} MB")
         print("  总显存: 16,384 MB (16GB)")
         print(f"  使用率: {estimated_memory_mb / 16384 * 100:.2f}%")
-        print("  状态: ✅ 非常安全")
+        print("  状态: OK 非常安全")
 
         # 与1M批次对比
-        print("\n📈 性能对比（vs 1M批次 ~522,928 keys/s）:")
+        print("\nUP 性能对比（vs 1M批次 ~522,928 keys/s）:")
         baseline_1m = 522928
         improvement = (avg_speed - baseline_1m) / baseline_1m * 100
         print(f"  1M批次基线: {baseline_1m:,.0f} keys/s")
@@ -163,9 +163,9 @@ def run_2m_batch_size(duration=60):
         print(f"  性能提升: {improvement:+.1f}%")
 
         if improvement > 0:
-            print("  ✅ 2M批次性能更优！")
+            print("  OK 2M批次性能更优！")
         else:
-            print("  ⚠️ 2M批次未见明显提升")
+            print("  WARN 2M批次未见明显提升")
 
         print("=" * 80)
 
@@ -189,12 +189,12 @@ def run_2m_batch_size(duration=60):
         with Path(result_file).open("w", encoding="utf-8") as f:
             json.dump(test_result, f, indent=2, ensure_ascii=False)
 
-        print(f"\n💾 测试结果已保存到: {result_file}")
+        print(f"\n[SAVE] 测试结果已保存到: {result_file}")
 
         return test_result
 
     except Exception as e:
-        print(f"\n❌ 测试失败: {e}")
+        print(f"\nERR 测试失败: {e}")
         import traceback
 
         traceback.print_exc()
@@ -218,24 +218,24 @@ def main():
 
     if result:
         print("\n" + "=" * 80)
-        print("🎉 测试完成！")
+        print("[DONE] 测试完成！")
         print("=" * 80)
 
-        print("\n📊 核心结果:")
+        print("\nSTATS 核心结果:")
         print(f"  平均速度: {result['avg_speed']:,.0f} keys/s")
         print(f"  性能提升: {result['improvement_vs_1m_percent']:+.1f}%")
         print(f"  显存使用: {result['estimated_memory_mb']:.0f} MB")
 
         if result["improvement_vs_1m_percent"] > 2:
-            print("\n✅ 建议: 使用2M批次大小（性能提升显著）")
+            print("\nOK 建议: 使用2M批次大小（性能提升显著）")
         elif result["improvement_vs_1m_percent"] > 0:
-            print("\n✅ 建议: 可以使用2M批次大小（轻微提升）")
+            print("\nOK 建议: 可以使用2M批次大小（轻微提升）")
         else:
-            print("\n⚠️ 建议: 保持1M批次大小（2M未见优势）")
+            print("\nWARN 建议: 保持1M批次大小（2M未见优势）")
 
         print("=" * 80)
         return 0
-    print("\n❌ 测试失败")
+    print("\nERR 测试失败")
     return 1
 
 

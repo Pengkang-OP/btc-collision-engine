@@ -36,17 +36,17 @@
 ```
 SecureKeyManager.generate_key()  ←  core/secp256k1.py
         │
-        ▼
+        [E]
 private_key_bytes (bytes)
         │
         ├──→ _worker_generate_addresses()  →  地址生成  →  Hash160
         │                                                   │
-        │                                                   ▼
+        │                                                   [E]
         │                                          set(target_hash160s) 匹配
         │                                                   │
         │                                            [命中]   │   [未命中]
         │                                              │       └──→ 丢弃
-        │                                              ▼
+        │                                              [E]
         │                                    _worker_check_and_handle_match()
         │                                              │
         │                                              ├──→ WIF.encode()       →  WIF (str)
@@ -61,13 +61,13 @@ private_key_bytes (bytes)
 
 | 控制点 | 机制 | 评估 |
 |--------|------|------|
-| EventBus 私钥传递 | 显式设为 `b""` 空字节 (`key_collision_engine.py:1518`) | ✅ 良好 — 私钥不经过广播通道 |
-| EventBus WIF 传递 | 显式设为 `""` 空字符串 (`key_collision_engine.py:1520`) | ✅ 良好 — 明文WIF不进入事件 |
-| 事件 WIF 日志脱敏 | `__post_init__` 自动掩码为 `6chars...4chars` (`events.py:89-91`) | ✅ 优秀 — 自动脱敏 |
-| 检查点私钥剥离 | `match.pop("private_key_hex")` + `pop("private_key_wif")` (`checkpoint_manager.py:183-185`) | ✅ 良好 — 敏感字段不写入检查点 |
-| 统计中私钥哈希 | SHA256 截断前16hex (`collision_stats.py:143`) | ✅ 合理 — 不可逆哈希，足够唯一标识 |
-| 内存中私钥清理 | **未调用 `bytearray.clear()` 或 `secrets.compare_digest()`** | ⚠️ **Minor** — bytes 对象不可变，依赖 GC 回收 |
-| 回调安全调用 | `_safe_invoke_match_callback` 使用 `invoke_with_timeout` (`key_collision_engine.py:1506`) | ⚠️ 依赖调用者正确处理 pk_copy |
+| EventBus 私钥传递 | 显式设为 `b""` 空字节 (`key_collision_engine.py:1518`) | [OK] 良好 — 私钥不经过广播通道 |
+| EventBus WIF 传递 | 显式设为 `""` 空字符串 (`key_collision_engine.py:1520`) | [OK] 良好 — 明文WIF不进入事件 |
+| 事件 WIF 日志脱敏 | `__post_init__` 自动掩码为 `6chars...4chars` (`events.py:89-91`) | [OK] 优秀 — 自动脱敏 |
+| 检查点私钥剥离 | `match.pop("private_key_hex")` + `pop("private_key_wif")` (`checkpoint_manager.py:183-185`) | [OK] 良好 — 敏感字段不写入检查点 |
+| 统计中私钥哈希 | SHA256 截断前16hex (`collision_stats.py:143`) | [OK] 合理 — 不可逆哈希，足够唯一标识 |
+| 内存中私钥清理 | **未调用 `bytearray.clear()` 或 `secrets.compare_digest()`** | [WARN] **Minor** — bytes 对象不可变，依赖 GC 回收 |
+| 回调安全调用 | `_safe_invoke_match_callback` 使用 `invoke_with_timeout` (`key_collision_engine.py:1506`) | [WARN] 依赖调用者正确处理 pk_copy |
 
 ---
 
@@ -77,21 +77,21 @@ private_key_bytes (bytes)
 
 | 操作 | 位置 | 底层库 | 评估 |
 |------|------|--------|------|
-| SHA256(private_key) | `collision_stats.py:143` | `hashlib.sha256` | ✅ 标准库，适合统计用哈希 |
-| WIF 编码 | `key_collision_engine.py:1502` | `core.WIF.encode` | ✅ 委托给核心模块，碰撞模块不实现 |
-| 公钥→Hash160 | `targets/resolver.py` | `core` 模块 | ✅ 委托给核心模块 |
-| CRC32 完整性 | `checkpoint_manager.py:143,188` | `zlib.crc32` | ✅ 适合完整性检查（非安全场景） |
+| SHA256(private_key) | `collision_stats.py:143` | `hashlib.sha256` | [OK] 标准库，适合统计用哈希 |
+| WIF 编码 | `key_collision_engine.py:1502` | `core.WIF.encode` | [OK] 委托给核心模块，碰撞模块不实现 |
+| 公钥→Hash160 | `targets/resolver.py` | `core` 模块 | [OK] 委托给核心模块 |
+| CRC32 完整性 | `checkpoint_manager.py:143,188` | `zlib.crc32` | [OK] 适合完整性检查（非安全场景） |
 
 ### 3.2 密码学反模式检查
 
 | 反模式 | 是否存在于 collision 模块 | 结论 |
 |--------|--------------------------|------|
-| 自定义加密原语 | ❌ 未发现 | ✅ 良好 — 全部委托给 `core/` 模块 |
-| 明文私钥持久化 | ❌ 未发现 | ✅ 检查点剥离敏感字段 |
-| 使用 `Math.random()` 生成密钥 | ❌ 未发现 | ✅ 密钥生成在 `core/secp256k1.py` |
-| 使用 `==` 比较哈希值 | ⚠️ Python set `__contains__` | ✅ Hash160 是公开值，无需常量时间 |
-| IV/nonce 重用 | N/A | ✅ 碰撞模块不使用对称加密 |
-| 加密密码而非哈希 | N/A | ✅ 不适用 |
+| 自定义加密原语 | [FAIL] 未发现 | [OK] 良好 — 全部委托给 `core/` 模块 |
+| 明文私钥持久化 | [FAIL] 未发现 | [OK] 检查点剥离敏感字段 |
+| 使用 `Math.random()` 生成密钥 | [FAIL] 未发现 | [OK] 密钥生成在 `core/secp256k1.py` |
+| 使用 `==` 比较哈希值 | [WARN] Python set `__contains__` | [OK] Hash160 是公开值，无需常量时间 |
+| IV/nonce 重用 | N/A | [OK] 碰撞模块不使用对称加密 |
+| 加密密码而非哈希 | N/A | [OK] 不适用 |
 
 ---
 
@@ -124,7 +124,7 @@ if compressed_hash160 in self.target_hash160s:
 - 哈希表查找不是 O(1) 常量时间，执行时间依赖于：
   - Bucket 碰撞数量（受负载因子影响）
   - **输入 hash160 的值**（因为 hash160 用于决定 bucket）
-- **结论**: ✅ **安全** — hash160 是**公开值**（从公钥派生）。即使是攻击者，知道 hash160 并无帮助。时序侧信道需要攻击者能观察秘密值的时序差异，此处无秘密。
+- **结论**: [OK] **安全** — hash160 是**公开值**（从公钥派生）。即使是攻击者，知道 hash160 并无帮助。时序侧信道需要攻击者能观察秘密值的时序差异，此处无秘密。
 
 #### 操作 2: 私钥范围验证
 
@@ -137,7 +137,7 @@ if k < 1 or k >= Secp256k1.N:
 **分析**: 
 - 在 range/brute_force 模式下，`k` 是顺序递增的非秘密值
 - 在 random 模式下，`k` 是随机生成但用于生成地址（公开结果），不是秘密
-- **结论**: ✅ **安全** — 分支不依赖秘密值
+- **结论**: [OK] **安全** — 分支不依赖秘密值
 
 #### 操作 3: WIF 编码错误处理
 
@@ -154,7 +154,7 @@ except (ValueError, TypeError, OverflowError) as e:
 **分析**: 
 - WIF 编码可能因错误输入抛异常
 - 异常路径包含 `pk_bytes` 的引用，但错误消息不包含私钥值
-- **结论**: ✅ **安全** — 错误处理不泄漏密钥材料
+- **结论**: [OK] **安全** — 错误处理不泄漏密钥材料
 
 #### 操作 4: 去重过滤器中私钥比较
 
@@ -166,7 +166,7 @@ if key in self._seen_keys:
 **分析**:
 - 同样使用 `set` 的 `__contains__`，非常量时间
 - `key` 是私钥 bytes（理论上应保密）
-- **结论**: ⚠️ **理论上可讨论，但实际风险极低**。理由：
+- **结论**: [WARN] **理论上可讨论，但实际风险极低**。理由：
   - 此过滤器的目的是避免已发现的**匹配项**被重复处理（而非逃避密码学比较）
   - 即使攻击者能通过时序推断 `key` 的存在性，他们也需要已经**拥有该私钥**才能进行时序攻击
   - 在已知私钥的情况下关心时序没有意义
@@ -175,27 +175,27 @@ if key in self._seen_keys:
 
 | 操作 | 文件 | 涉及秘密? | 常量时间? | 安全? |
 |------|------|-----------|-----------|-------|
-| `hash160 in set` | `key_collision_engine.py` | ❌ (公开值) | ❌ | ✅ |
-| `private_key in set` | `deduplication_filter.py` | ✅ (私钥) | ❌ | ✅ (实战不可利用) |
-| `k < 1 or k >= N` | `key_collision_engine.py` | ❌ (扫描值) | ✅ | ✅ |
-| `entry["private_key_hash"] = ...` | `collision_stats.py` | ✅ (私钥→hash) | ✅ | ✅ |
-| `WIF.encode()` | `key_collision_engine.py` | ✅ (私钥) | 取决于 core 实现 | ✅ (委托) |
+| `hash160 in set` | `key_collision_engine.py` | [FAIL] (公开值) | [FAIL] | [OK] |
+| `private_key in set` | `deduplication_filter.py` | [OK] (私钥) | [FAIL] | [OK] (实战不可利用) |
+| `k < 1 or k >= N` | `key_collision_engine.py` | [FAIL] (扫描值) | [OK] | [OK] |
+| `entry["private_key_hash"] = ...` | `collision_stats.py` | [OK] (私钥→hash) | [OK] | [OK] |
+| `WIF.encode()` | `key_collision_engine.py` | [OK] (私钥) | 取决于 core 实现 | [OK] (委托) |
 
 ---
 
 ## 五、安全风险发现
 
-### 🔴 Critical（0 项）
+### [RED] Critical（0 项）
 
 碰撞模块中未发现 Critical 级密码学安全风险。
 
-### 🟠 Major（1 项）
+### [ORANGE] Major（1 项）
 
 | ID | 文件 | 行 | 描述 | 建议 |
 |----|------|----|------|------|
 | CRY-M1 | `key_collision_engine.py` | 多个位置 | **私钥 bytes 对象未显式清零** — 私钥以 `bytes` (不可变) 形式存在于多个变量的作用域中。Python 的 GC 在释放 bytes 前不会覆写内存，私钥可能在进程堆中残留 | 对于签名等长生命周期场景，使用 `bytearray` 并手动 `clear()`；但对碰撞场景影响较小（worker 持续循环生成新私钥，旧私钥的引用很快被覆盖） |
 
-### 🔵 Minor（4 项）
+### [BLUE] Minor（4 项）
 
 | ID | 文件 | 行 | 描述 | 建议 |
 |----|------|----|------|------|
@@ -204,7 +204,7 @@ if key in self._seen_keys:
 | CRY-N3 | `targets/storage.py` | 多处 | 目标地址文件中的地址以明文 JSON/CSV 存储 | 虽然地址是公开信息，但应确认存储文件权限是否足够严格 |
 | CRY-N4 | `event_bus.py` | 全局 | 全局 singleton EventBus 可能被任何组件订阅，潜在信息泄漏 | 确认敏感事件的订阅者范围是否受控 |
 
-### ⚪ Info（2 项）
+### [WHITE] Info（2 项）
 
 | ID | 文件 | 行 | 描述 |
 |----|------|----|------|
@@ -217,19 +217,19 @@ if key in self._seen_keys:
 
 ### 6.1 优秀实践（已实施）
 
-1. **✅ EventBus 零私钥策略** — 碰撞事件不包含私钥/WIF，仅含地址（公开信息）
-2. **✅ WIF 自动脱敏** — `EngineMatchEvent.__post_init__()` 自动掩码，防止日志泄漏
-3. **✅ 检查点敏感字段剥离** — `private_key_hex` 和 `private_key_wif` 明确 pop
-4. **✅ 错误处理不泄漏密钥** — WIF 编码异常仅包含 error type + message，无私钥
-5. **✅ 输入参数验证** — start() 参数类型/范围严格检查
-6. **✅ SQL 注入防护** — storage.py 使用参数化查询
-7. **✅ 路径穿越防护** — 标准化路径检查
+1. **[OK] EventBus 零私钥策略** — 碰撞事件不包含私钥/WIF，仅含地址（公开信息）
+2. **[OK] WIF 自动脱敏** — `EngineMatchEvent.__post_init__()` 自动掩码，防止日志泄漏
+3. **[OK] 检查点敏感字段剥离** — `private_key_hex` 和 `private_key_wif` 明确 pop
+4. **[OK] 错误处理不泄漏密钥** — WIF 编码异常仅包含 error type + message，无私钥
+5. **[OK] 输入参数验证** — start() 参数类型/范围严格检查
+6. **[OK] SQL 注入防护** — storage.py 使用参数化查询
+7. **[OK] 路径穿越防护** — 标准化路径检查
 
 ### 6.2 改进机会（待实施）
 
-1. **⚠️ 考虑为关键回调的敏感参数添加生命周期管理** — `on_match` 回调中的 `pk_copy` 建议由调用者负责清理
-2. **⚠️ 建议对包含敏感字段的日志行进行扫描** — 运行时检测是否有未预期的私钥/地址泄漏
-3. **ℹ️ 考虑添加 `__del__` 或 `weakref.finalize` 确保敏感 bytes 尽快可回收**
+1. **[WARN] 考虑为关键回调的敏感参数添加生命周期管理** — `on_match` 回调中的 `pk_copy` 建议由调用者负责清理
+2. **[WARN] 建议对包含敏感字段的日志行进行扫描** — 运行时检测是否有未预期的私钥/地址泄漏
+3. **[INFO] 考虑添加 `__del__` 或 `weakref.finalize` 确保敏感 bytes 尽快可回收**
 
 ---
 
@@ -263,11 +263,11 @@ if key in self._seen_keys:
 
 `src/collision/` 模块的密码学安全实践整体良好：
 
-- **敏感数据流设计** ✅ — 私钥不经过广播通道，WIF 自动脱敏
-- **持久化安全** ✅ — 检查点剥离私钥字段，参数化查询防注入
-- **密码学原语使用** ✅ — 全部委托给 `core/` 模块，无自定义加密实现
-- **常量时间安全** ✅ — 模块内的比较操作涉及公开值，无实际时序风险
-- **输入验证** ✅ — 参数类型范围检查到位
+- **敏感数据流设计** [OK] — 私钥不经过广播通道，WIF 自动脱敏
+- **持久化安全** [OK] — 检查点剥离私钥字段，参数化查询防注入
+- **密码学原语使用** [OK] — 全部委托给 `core/` 模块，无自定义加密实现
+- **常量时间安全** [OK] — 模块内的比较操作涉及公开值，无实际时序风险
+- **输入验证** [OK] — 参数类型范围检查到位
 
 ### 8.2 安全等级评分
 

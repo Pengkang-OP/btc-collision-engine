@@ -3,11 +3,11 @@
 **问题描述**: 驱动已更新、温度正常、电源正常,但仍出现间歇性问题  
 **诊断日期**: 2026-04-21  
 **GPU型号**: Intel Arc A770 16GB  
-**前置条件**: 驱动✓ 温度✓ 电源✓
+**前置条件**: 驱动[OK] 温度[OK] 电源[OK]
 
 ---
 
-## 🔍 深层原因分析
+## [SEARCH] 深层原因分析
 
 ### 1. 多GPU冲突 (新发现!)
 
@@ -175,9 +175,9 @@ EnableUlps = 0
 
 | 批次大小 | 吞吐量 | 显存使用 | 稳定性 | 推荐度 |
 |---------|--------|---------|--------|--------|
-| 65,536 | 45k keys/s | 256MB | 极高 | ⭐⭐⭐⭐⭐ |
-| 131,072 | 100k keys/s | 384MB | 高 | ⭐⭐⭐⭐ |
-| 262,144 | 150k keys/s | 512MB | 中 | ⭐⭐⭐ |
+| 65,536 | 45k keys/s | 256MB | 极高 | [STAR][STAR][STAR][STAR][STAR] |
+| 131,072 | 100k keys/s | 384MB | 高 | [STAR][STAR][STAR][STAR] |
+| 262,144 | 150k keys/s | 512MB | 中 | [STAR][STAR][STAR] |
 
 **推荐配置** (针对间歇性问题):
 
@@ -254,7 +254,7 @@ safety_factor = 2.5x     # 从3.0降到2.5
 
 ---
 
-## 🛠️ 完整优化配置
+## [TOOL] 完整优化配置
 
 ### 配置文件: config.optimized.json
 
@@ -307,7 +307,7 @@ python key_collision_cli.py --config config.optimized.json
 
 ---
 
-## 📋 逐步排查清单
+## [CHECKLIST] 逐步排查清单
 
 ### 第1步: 确认使用正确的GPU
 
@@ -376,7 +376,7 @@ python tests/test_stability_24h.py --hours 0.083 --interval 60
 
 ---
 
-## 🎯 推荐优化流程
+## [TARGET] 推荐优化流程
 
 ### 快速修复 (15分钟)
 
@@ -409,7 +409,7 @@ python tests/test_stability_24h.py --hours 0.083 --interval 60
 
 ---
 
-## 📊 预期效果
+## [CHART] 预期效果
 
 ### 优化前
 
@@ -431,7 +431,7 @@ python tests/test_stability_24h.py --hours 0.083 --interval 60
 
 ---
 
-## 🔧 已生成的工具
+## [WRENCH] 已生成的工具
 
 | 工具 | 路径 | 说明 |
 |------|------|------|
@@ -442,7 +442,7 @@ python tests/test_stability_24h.py --hours 0.083 --interval 60
 
 ---
 
-## 📞 技术支持
+## [TELEPHONE] 技术支持
 
 如果完成以上所有优化后问题仍然存在:
 

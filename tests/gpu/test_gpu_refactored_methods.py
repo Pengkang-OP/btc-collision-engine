@@ -59,7 +59,8 @@ _PHASE6_PATCHERS = [
     patch("src.collision.gpu.engine.SearchModeCoordinator"),
     patch("src.collision.gpu.engine.GPUEngineMonitor"),
     patch(
-        "src.collision.gpu.vendor_strategy.VendorOptimizationFactory.create", return_value=MagicMock()
+        "src.collision.gpu.vendor_strategy.VendorOptimizationFactory.create",
+        return_value=MagicMock(),
     ),
     patch("src.collision.gpu.engine.GPUDeviceDetector"),
 ]

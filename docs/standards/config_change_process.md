@@ -2,7 +2,7 @@
 
 **版本**: v4.2.2
 **日期**: 2026-04-24
-**状态**: ✅ 已实施
+**状态**: [OK] 已实施
 
 ---
 
@@ -83,10 +83,10 @@
 **完全兼容**: 只放宽限制
 
 ```python
-# ✅ 兼容: 扩大范围
+# [OK] 兼容: 扩大范围
 "batch_size": {"minimum": 1, "maximum": 33554432}  # 从16777216扩大
 
-# ✅ 兼容: 添加新枚举值
+# [OK] 兼容: 添加新枚举值
 "log_level": {"enum": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL", "TRACE"]}
 
 ```
@@ -94,7 +94,7 @@
 **部分兼容**: 需要迁移
 
 ```python
-# ⚠️ 部分兼容: 改变类型但提供转换
+# [WARN] 部分兼容: 改变类型但提供转换
 # 旧: "timeout": 30 (int)
 # 新: "timeout": "30s" (string)
 
@@ -110,7 +110,7 @@ def migrate_config(config):
 **不兼容**: 需要版本升级
 
 ```python
-# ❌ 不兼容: 删除配置项
+# [FAIL] 不兼容: 删除配置项
 # 旧: "deprecated_option": ...
 # 新: (删除)
 
@@ -363,12 +363,12 @@ def check_schema_sync():
     errors = cm._validate_with_schema(config)
 
     if errors:
-        print("❌ 配置验证失败:")
+        print("[FAIL] 配置验证失败:")
         for key, error in errors.items():
             print(f"  {key}: {error}")
         return False
 
-    print("✅ 配置和Schema同步")
+    print("[OK] 配置和Schema同步")
     return True
 
 if __name__ == '__main__':
@@ -406,19 +406,19 @@ if __name__ == '__main__':
 # 配置迁移历史
 
 ## v4.2.1 (2026-04-24)
-- ✅ 新增: async_execution (boolean, default: true)
-- ✅ 新增: work_group_size (integer, 64-2048)
-- ✅ 新增: use_fast_math (boolean)
-- ✅ 新增: use_uint32_workaround (boolean)
-- ✅ 新增: compiler_flags (string)
+- [OK] 新增: async_execution (boolean, default: true)
+- [OK] 新增: work_group_size (integer, 64-2048)
+- [OK] 新增: use_fast_math (boolean)
+- [OK] 新增: use_uint32_workaround (boolean)
+- [OK] 新增: compiler_flags (string)
 
 ## v4.2.1 (2026-03-15)
-- ⚠️ 修改: memory_usage_ratio范围从0.1-0.9改为0.1-1.0
-- ✅ 新增: enable_vendor_optimizations
+- [WARN] 修改: memory_usage_ratio范围从0.1-0.9改为0.1-1.0
+- [OK] 新增: enable_vendor_optimizations
 
 ## v4.2.1 (2026-01-01)
-- ❌ 删除: legacy_mode (使用gpu.vendor_optimizations替代)
-- ✅ 新增: gpu.use_gpu
+- [FAIL] 删除: legacy_mode (使用gpu.vendor_optimizations替代)
+- [OK] 新增: gpu.use_gpu
 
 ```
 
@@ -441,12 +441,12 @@ if __name__ == '__main__':
 ### 7.2 命名规范
 
 ```python
-# ✅ 好的命名
+# [OK] 好的命名
 "batch_size"          # 清晰
 "memory_usage_ratio"  # 明确
 "enable_async"        # 布尔值用enable/enable
 
-# ❌ 不好的命名
+# [FAIL] 不好的命名
 "bs"                  # 缩写不清
 "mem"                 # 含义不明
 "async"               # 缺少动词
@@ -456,12 +456,12 @@ if __name__ == '__main__':
 ### 7.3 默认值原则
 
 ```python
-# ✅ 安全的默认值
+# [OK] 安全的默认值
 "batch_size": 1024           # 保守值
 "memory_usage_ratio": 0.5    # 50%显存
 "enable_async": True         # 性能最优
 
-# ❌ 危险的默认值
+# [FAIL] 危险的默认值
 "batch_size": 16777216       # 可能导致OOM
 "memory_usage_ratio": 0.95   # 几乎用尽显存
 

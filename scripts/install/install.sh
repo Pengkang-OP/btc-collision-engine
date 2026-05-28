@@ -136,10 +136,10 @@ fi
 echo ""
 echo "[7/7] 验证关键依赖..."
 echo -e "${YELLOW}[验证]${NC} 检查关键依赖..."
-python3 -c "import coincurve; print(f'  coincurve {coincurve.__version__} ✓')" 2>/dev/null || echo -e "  ${RED}coincurve 未安装${NC}"
-python3 -c "import gmpy2; print(f'  gmpy2 {gmpy2.version} ✓')" 2>/dev/null || echo -e "  ${YELLOW}gmpy2 未安装（可选加速）${NC}"
-python3 -c "import psutil; print(f'  psutil {psutil.__version__} ✓')" 2>/dev/null || echo -e "  ${RED}psutil 未安装${NC}"
-python3 -c "import ecdsa; print(f'  ecdsa {ecdsa.__version__} ✓')" 2>/dev/null || echo -e "  ${YELLOW}ecdsa 备选库 ✓${NC}"
+python3 -c "import coincurve; print(f'  coincurve {coincurve.__version__} [OK]')" 2>/dev/null || echo -e "  ${RED}coincurve 未安装${NC}"
+python3 -c "import gmpy2; print(f'  gmpy2 {gmpy2.version} [OK]')" 2>/dev/null || echo -e "  ${YELLOW}gmpy2 未安装（可选加速）${NC}"
+python3 -c "import psutil; print(f'  psutil {psutil.__version__} [OK]')" 2>/dev/null || echo -e "  ${RED}psutil 未安装${NC}"
+python3 -c "import ecdsa; print(f'  ecdsa {ecdsa.__version__} [OK]')" 2>/dev/null || echo -e "  ${YELLOW}ecdsa 备选库 [OK]${NC}"
 
 # 创建必要目录
 mkdir -p logs data_logs monitoring_data

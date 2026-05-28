@@ -1,18 +1,18 @@
 """secp256k1椭圆曲线参数和运算.
 
-⚠️ 重要安全警告 ⚠️
+WARN 重要安全警告 WARN
 ==================
 本模块是secp256k1椭圆曲线的**教学参考实现**，专为以下用途设计：
 1. 学习和理解比特币密码学原理
 2. 验证其他加密后端的计算正确性
 3. 教育和演示目的
 
-🚫 不应用于生产环境：
+NO 不应用于生产环境：
 - 性能比优化后端(coincurve/OpenSSL)慢100-1000倍
 - Python层面无法保证真正的恒定时间执行
 - 缺乏针对侧信道攻击的完整防护
 
-✅ 生产环境请使用 crypto_backend.py 中的优化后端
+OK 生产环境请使用 crypto_backend.py 中的优化后端
 """
 
 import os
@@ -106,7 +106,7 @@ class Secp256k1:
     def _miller_rabin_probabilistic(n: int, rounds: int = 5) -> bool:
         """P3-01: 概率性Miller-Rabin素性测试.
 
-        ⚠️ 重要: 此为概率性算法，不是确定性验证。
+        WARN 重要: 此为概率性算法，不是确定性验证。
         对 256 位整数，5 轮测试提供约 2^-10 的错误率。
         若需确定性验证，请使用精确值比较（见 verify_parameters()）。
 
@@ -187,7 +187,7 @@ class Secp256k1:
 
 
 class ECPoint:
-    """⚠️ 教学参考实现 — 不应在生产环境中使用.
+    """WARN 教学参考实现 — 不应在生产环境中使用.
 
     =========================================
     本类为 secp256k1 椭圆曲线的**教学参考实现**。
@@ -264,7 +264,7 @@ class ECPoint:
 
 
 class EllipticCurve:
-    """⚠️ 教学参考实现 — 不应在生产环境中使用.
+    """WARN 教学参考实现 — 不应在生产环境中使用.
 
     =========================================
     本类为 secp256k1 椭圆曲线的**教学参考实现**。
@@ -299,9 +299,9 @@ class EllipticCurve:
 
         计算a在模m下的乘法逆元，即找到x使得 (a * x) % m = 1
 
-        ⚠️ 性能警告:
+        WARN 性能警告:
         此实现时间复杂度为O(log m)，在批量运算中可能成为瓶颈。
-        ⚠️ 侧信道风险: 扩展欧几里得算法非恒定时间，存在侧信道泄露风险。
+        WARN 侧信道风险: 扩展欧几里得算法非恒定时间，存在侧信道泄露风险。
         对于安全敏感场景，建议使用 mod_inverse_const_time() 方法。
 
         Args:
@@ -352,7 +352,7 @@ class EllipticCurve:
         2. 每次乘法都是恒定的
         3. 内存访问模式不依赖于输入值
 
-        ⚠️ 限制: 仅适用于素数模数。对于secp256k1曲线，p和N都是素数。
+        WARN 限制: 仅适用于素数模数。对于secp256k1曲线，p和N都是素数。
 
         Args:
             a: 被求逆元的整数
@@ -518,7 +518,7 @@ class EllipticCurve:
     def scalar_multiply(self, k: int, point: ECPoint) -> ECPoint:
         """椭圆曲线标量乘法（双倍-加法算法）.
 
-        ⚠️ v5.0.0: 已永久禁用 — 此实现未使用恒定时间算法，存在侧信道攻击风险。
+        WARN v5.0.0: 已永久禁用 — 此实现未使用恒定时间算法，存在侧信道攻击风险。
         请使用 scalar_multiply_const_time() 替代。
 
         Args:
@@ -570,7 +570,7 @@ class EllipticCurve:
         2. 使用 int(a.is_infinity) 参与掩码运算确定结果类型
         3. 最后的 if result_inf 分支取决于预计算点的类型（与 condition 无关）
 
-        ⚠️ Python限制: 完全消除 Python 层面的时序分支需要 C 扩展（如 CMOV 指令）。
+        WARN Python限制: 完全消除 Python 层面的时序分支需要 C 扩展（如 CMOV 指令）。
         本实现在 Python 层面提供了最佳防护。
 
         v4.2.2 C2审计: ECPoint(None, None) 与 ECPoint(x, y) 构造开销存在微小差异。
@@ -613,7 +613,7 @@ class EllipticCurve:
         return ECPoint(x, y, self.curve)
 
     def scalar_multiply_const_time(self, k: int, point: ECPoint) -> ECPoint:
-        """⚠️ 教学参考实现 — 不应在生产环境中使用.
+        """WARN 教学参考实现 — 不应在生产环境中使用.
 
         =========================================
         Python 层面无法保证完全的恒定时间执行。
@@ -677,7 +677,7 @@ class EllipticCurve:
             r1_double = self.point_add(r1, r1)
 
             # 恒定时间条件选择
-            # ⚠️ Python层面无法保证完全恒定时间
+            # WARN Python层面无法保证完全恒定时间
             # 在CPython中，这种简单的条件赋值通常会被优化
             # 对于真正的侧信道防护，需要使用C扩展或专门的加密库
             # 生产环境请使用crypto_backend.py中的优化实现
@@ -690,7 +690,7 @@ class EllipticCurve:
         return r0
 
     def generate_public_key(self, private_key: bytes | int, compressed: bool = True) -> bytes:
-        """⚠️ 教学参考实现 — 不应在生产环境中使用.
+        """WARN 教学参考实现 — 不应在生产环境中使用.
 
         =========================================
         Python 层面无法保证完全的恒定时间执行和侧信道防护。
@@ -784,17 +784,17 @@ def _issue_production_warning() -> None:
     warnings.warn(
         "\n"
         "=" * 70 + "\n"
-        "⚠️  secp256k1.py 生产环境警告 ⚠️\n"
+        "WARN  secp256k1.py 生产环境警告 WARN\n"
         "=" * 70 + "\n"
         "本模块是教学参考实现，不应用于生产环境：\n"
         "  • 性能比 coincurve/OpenSSL 慢 100-1000 倍\n"
         "  • Python 层面无法保证真正的恒定时间执行\n"
         "  • 缺乏针对侧信道攻击的完整防护\n\n"
-        "✅ 生产环境请使用 crypto_backend.py 中的优化后端:\n"
+        "OK 生产环境请使用 crypto_backend.py 中的优化后端:\n"
         "   from src.core.crypto_backend import CryptoBackend\n"
         "   backend = CryptoBackend.get_backend()  # 自动选择最优后端\n"
         "\n"
-        "💡 如已安装优化后端但未生效，检查 pip list | grep coincurve\n"
+        "TIP 如已安装优化后端但未生效，检查 pip list | grep coincurve\n"
         "   如确实需要使用纯Python实现，可设置环境变量:\n"
         "   BTC_COLLISION_RAW_SECP256K1_OK=1\n"
         "=" * 70,

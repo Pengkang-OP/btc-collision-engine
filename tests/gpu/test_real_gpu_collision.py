@@ -17,10 +17,10 @@ import pytest
 # 模块级别 marker：本文件所有测试都属于 GPU 测试
 pytestmark = pytest.mark.gpu
 
-import pathlib  # noqa: E402
+import pathlib
 
-from src.collision.collision_stats import CollisionStats  # noqa: E402
-from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
+from src.collision.collision_stats import CollisionStats
+from src.collision.gpu.engine import GPUCollisionEngine
 
 # 配置日志
 logging.basicConfig(
@@ -57,7 +57,7 @@ def test_gpu_initialization():
 
         engine = GPUCollisionEngine(targets, batch_size=10000, device_index=0)
 
-        logger.info("✅ GPU引擎初始化成功")
+        logger.info("OK GPU引擎初始化成功")
         logger.info(f"   - GPU可用: {engine.is_gpu_available()}")
         logger.info(f"   - 设备索引: {engine.device_index}")
         logger.info(f"   - 批次大小: {engine.batch_size}")
@@ -75,7 +75,7 @@ def test_gpu_initialization():
         return engine
 
     except Exception as e:
-        logger.error("❌ GPU引擎初始化失败: %s", e)
+        logger.error("ERR GPU引擎初始化失败: %s", e)
         return None
 
 
@@ -87,7 +87,7 @@ def test_collision_flow(engine):
     logger.info("=" * 60)
 
     if not engine:
-        logger.error("⏭️ 跳过: 引擎未初始化")
+        logger.error("[SKIP] 跳过: 引擎未初始化")
         return
 
     # 设置回调函数
@@ -110,7 +110,7 @@ def test_collision_flow(engine):
     def on_match(match_info):
         nonlocal match_count
         match_count += 1
-        logger.info("   🎯 发现碰撞 #%s: %s", match_count, match_info)
+        logger.info("   TARGET 发现碰撞 #%s: %s", match_count, match_info)
 
     def on_complete(stats):
         nonlocal complete_called
@@ -140,7 +140,7 @@ def test_collision_flow(engine):
 
         elapsed = time.time() - start_time
 
-        logger.info("✅ 碰撞流程测试完成")
+        logger.info("OK 碰撞流程测试完成")
         logger.info(f"   - 运行时间: {elapsed:.2f}s")
         logger.info("   - 进度回调次数: %s", progress_count)
         logger.info("   - 碰撞次数: %s", match_count)
@@ -149,7 +149,7 @@ def test_collision_flow(engine):
         logger.info(f"   - 最终状态: {'running' if engine._running else 'stopped'}")
 
     except Exception as e:
-        logger.error("❌ 碰撞流程测试失败: %s", e)
+        logger.error("ERR 碰撞流程测试失败: %s", e)
         import traceback
 
         traceback.print_exc()
@@ -163,7 +163,7 @@ def test_error_counter_behavior(engine):
     logger.info("=" * 60)
 
     if not engine:
-        logger.error("⏭️ 跳过: 引擎未初始化")
+        logger.error("[SKIP] 跳过: 引擎未初始化")
         return
 
     # 测试1: 重启重置计数器
@@ -176,9 +176,9 @@ def test_error_counter_behavior(engine):
     engine.stop()
 
     if engine._consecutive_gpu_errors == 0:
-        logger.info(f"   ✅ 重启后计数器重置为: {engine._consecutive_gpu_errors}")
+        logger.info(f"   OK 重启后计数器重置为: {engine._consecutive_gpu_errors}")
     else:
-        logger.error(f"   ❌ 重启后计数器未重置: {engine._consecutive_gpu_errors}")
+        logger.error(f"   ERR 重启后计数器未重置: {engine._consecutive_gpu_errors}")
 
     # 测试2: 锁保护验证
     logger.info("   测试3.2: 锁保护机制验证")
@@ -198,9 +198,9 @@ def test_error_counter_behavior(engine):
         t.join()
 
     if engine._consecutive_gpu_errors == 100:
-        logger.info(f"   ✅ 100线程并发递增准确: {engine._consecutive_gpu_errors}")
+        logger.info(f"   OK 100线程并发递增准确: {engine._consecutive_gpu_errors}")
     else:
-        logger.error(f"   ❌ 并发递增不准确: 期望100, 实际{engine._consecutive_gpu_errors}")
+        logger.error(f"   ERR 并发递增不准确: 期望100, 实际{engine._consecutive_gpu_errors}")
 
     # 重置计数器
     with engine._batch_size_lock:
@@ -215,7 +215,7 @@ def test_callback_snapshot_safety(engine):
     logger.info("=" * 60)
 
     if not engine:
-        logger.error("⏭️ 跳过: 引擎未初始化")
+        logger.error("[SKIP] 跳过: 引擎未初始化")
         return
 
     received_snapshots = []
@@ -242,19 +242,19 @@ def test_callback_snapshot_safety(engine):
         all_are_stats = all(isinstance(stats, CollisionStats) for _, stats in received_snapshots)
 
         if all_are_stats:
-            logger.info("   ✅ 所有回调都收到CollisionStats对象")
+            logger.info("   OK 所有回调都收到CollisionStats对象")
         else:
-            logger.error("   ❌ 部分回调收到非CollisionStats对象")
+            logger.error("   ERR 部分回调收到非CollisionStats对象")
 
         # 验证快照非原对象
         all_are_snapshots = all(stats is not engine.stats for _, stats in received_snapshots)
 
         if all_are_snapshots:
-            logger.info("   ✅ 所有回调都使用快照（非原对象）")
+            logger.info("   OK 所有回调都使用快照（非原对象）")
         else:
-            logger.error("   ❌ 部分回调使用原对象（非快照）")
+            logger.error("   ERR 部分回调使用原对象（非快照）")
     else:
-        logger.warning("   ⚠️  未收到任何回调（可能是运行时间太短）")
+        logger.warning("   WARN  未收到任何回调（可能是运行时间太短）")
 
 
 def test_config_loading():
@@ -285,19 +285,19 @@ def test_config_loading():
                 logger.info("     - max_error_retries: %s", max_retries)
 
                 if max_retries == 100:
-                    logger.info("     ✅ 配置正确")
+                    logger.info("     OK 配置正确")
                 else:
-                    logger.warning("     ⚠️  未配置或使用默认值")
+                    logger.warning("     WARN  未配置或使用默认值")
             else:
                 logger.warning("   %s: 文件不存在", config_file)
 
     except Exception as e:
-        logger.error("   ❌ 配置加载测试失败: %s", e)
+        logger.error("   ERR 配置加载测试失败: %s", e)
 
 
 def main():
     """主测试流程."""
-    logger.info("🚀 真实GPU环境碰撞测试 - 验证异常处理和锁保护修复")
+    logger.info("FAST 真实GPU环境碰撞测试 - 验证异常处理和锁保护修复")
     logger.info("")
 
     # 测试1: GPU初始化
@@ -318,15 +318,15 @@ def main():
     # 总结
     logger.info("")
     logger.info("=" * 60)
-    logger.info("📊 测试总结")
+    logger.info("STATS 测试总结")
     logger.info("=" * 60)
-    logger.info("✅ GPU引擎初始化: 完成")
-    logger.info("✅ 碰撞流程测试: 完成")
-    logger.info("✅ 错误计数器验证: 完成")
-    logger.info("✅ 回调快照安全: 完成")
-    logger.info("✅ 配置加载验证: 完成")
+    logger.info("OK GPU引擎初始化: 完成")
+    logger.info("OK 碰撞流程测试: 完成")
+    logger.info("OK 错误计数器验证: 完成")
+    logger.info("OK 回调快照安全: 完成")
+    logger.info("OK 配置加载验证: 完成")
     logger.info("")
-    logger.info("🎉 所有测试完成！")
+    logger.info("[DONE] 所有测试完成！")
 
 
 if __name__ == "__main__":

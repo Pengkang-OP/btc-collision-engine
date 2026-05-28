@@ -131,16 +131,16 @@ tests/gpu_mock_factory.py，统一管理：
 ### 2.3 不合规示例
 
 ```
-# ❌ 无类型前缀
+# [FAIL] 无类型前缀
 修复了batch_size的bug
 
-# ❌ 描述过于模糊
+# [FAIL] 描述过于模糊
 fix: 修复问题
 
-# ❌ 混合中英文
+# [FAIL] 混合中英文
 fix(core): fix entropy check
 
-# ❌ 一个提交包含多个不相关变更
+# [FAIL] 一个提交包含多个不相关变更
 feat: 添加GPU支持 + 修复地址解析 + 更新README
 
 ```
@@ -162,7 +162,7 @@ feat: 添加GPU支持 + 修复地址解析 + 更新README
 ### 3.2 分支工作流
 
 ```
-main ──────────────────────────────────── 合并 ──► tag: v4.2.1
+main ──────────────────────────────────── 合并 ──[E] tag: v4.2.1
   │                                            │
   └── develop ──────────────── merge ──────────┘
         │                           │
@@ -331,8 +331,8 @@ git push origin v4.2.1
 ```markdown
 ### 新增
 
-- 🚀 **Windows安装脚本** (`scripts/install/install.bat`): 7步自动化安装流程
-- 🏥 **健康检查模块** (`src/utils/health_check.py`): 依赖验证、磁盘空间检查
+- [QUICK] **Windows安装脚本** (`scripts/install/install.bat`): 7步自动化安装流程
+- [HOSPITAL] **健康检查模块** (`src/utils/health_check.py`): 依赖验证、磁盘空间检查
 
 ### 修复
 

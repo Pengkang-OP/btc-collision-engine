@@ -6,25 +6,25 @@
 
 ---
 
-## 🔍 问题现象
+## [SEARCH] 问题现象
 
 运行Python脚本时,中文显示为乱码:
 
 ```
-❌ 错误输出:
+[CROSS] 错误输出:
 妫€娴嬪埌GPU璁惧: Intel(R) Arc(TM) A770 Graphics
 搴旂敤Intel浼樺寲绛栫暐
 
-✅ 正确输出:
+[OK_CHECK] 正确输出:
 检测到GPU设备: Intel(R) Arc(TM) A770 Graphics
 应用Intel优化策略
 ```
 
 ---
 
-## 🛠️ 解决方案
+## [TOOL] 解决方案
 
-### 方案1: 临时修复(推荐用于单次运行) ⭐
+### 方案1: 临时修复(推荐用于单次运行) [STAR]
 
 #### 使用批处理脚本
 
@@ -52,7 +52,7 @@ python tools/gpu_diagnostic.py
 
 ---
 
-### 方案2: 会话级修复(推荐用于开发) ⭐⭐
+### 方案2: 会话级修复(推荐用于开发) [STAR][STAR]
 
 #### PowerShell脚本
 
@@ -72,7 +72,7 @@ python tools/gpu_diagnostic.py
 
 ---
 
-### 方案3: 永久修复(推荐用于生产环境) ⭐⭐⭐
+### 方案3: 永久修复(推荐用于生产环境) [STAR][STAR][STAR]
 
 #### 修改注册表(需要管理员权限)
 
@@ -116,7 +116,7 @@ sys.setdefaultencoding('utf-8')
 
 ---
 
-### 方案5: 使用Windows Terminal(最佳体验) ⭐⭐⭐⭐
+### 方案5: 使用Windows Terminal(最佳体验) [STAR][STAR][STAR][STAR]
 
 Windows Terminal默认支持UTF-8,无需额外配置。
 
@@ -153,7 +153,7 @@ winget install Microsoft.WindowsTerminal
 
 ---
 
-## 📋 快速修复流程
+## [CHECKLIST] 快速修复流程
 
 ### 立即可用(1分钟)
 
@@ -181,18 +181,18 @@ python tools/gpu_diagnostic.py
 
 ---
 
-## 🔧 验证修复
+## [WRENCH] 验证修复
 
 ### 方法1: 运行测试脚本
 
 ```powershell
-python -c "print('测试中文输出: 你好世界! 🌍')"
+python -c "print('测试中文输出: 你好世界! [EARTH]')"
 ```
 
 **正确输出**:
 
 ```
-测试中文输出: 你好世界! 🌍
+测试中文输出: 你好世界! [EARTH]
 ```
 
 **错误输出**:
@@ -245,19 +245,19 @@ chcp
 
 ---
 
-## 📊 方案对比
+## [CHART] 方案对比
 
 | 方案 | 难度 | 持久性 | 需要重启 | 推荐场景 |
 |------|------|--------|---------|---------|
-| 方案1: 批处理 | ⭐ | 临时 | 否 | 单次运行 |
-| 方案2: 会话脚本 | ⭐⭐ | 会话 | 否 | 开发调试 |
-| 方案3: 注册表 | ⭐⭐⭐ | 永久 | 是 | 生产环境 |
-| 方案4: Python代码 | ⭐⭐⭐ | 脚本级 | 否 | 脚本分发 |
-| 方案5: Windows Terminal | ⭐ | 永久 | 否 | 日常使用 |
+| 方案1: 批处理 | [STAR] | 临时 | 否 | 单次运行 |
+| 方案2: 会话脚本 | [STAR][STAR] | 会话 | 否 | 开发调试 |
+| 方案3: 注册表 | [STAR][STAR][STAR] | 永久 | 是 | 生产环境 |
+| 方案4: Python代码 | [STAR][STAR][STAR] | 脚本级 | 否 | 脚本分发 |
+| 方案5: Windows Terminal | [STAR] | 永久 | 否 | 日常使用 |
 
 ---
 
-## 🚨 常见问题
+## [ALERT] 常见问题
 
 ### Q1: 设置后仍然乱码?
 
@@ -346,7 +346,7 @@ Restart-Computer
 
 ---
 
-## 📝 已提供的工具
+## [MEMO] 已提供的工具
 
 | 工具 | 路径 | 说明 |
 |------|------|------|
@@ -358,7 +358,7 @@ Restart-Computer
 
 ---
 
-## 🎯 推荐工作流
+## [TARGET] 推荐工作流
 
 ### 开发人员
 
@@ -386,7 +386,7 @@ Restart-Computer
 
 ---
 
-## 📚 相关资源
+## [BOOKS] 相关资源
 
 - [Windows控制台代码页文档](https://docs.microsoft.com/en-us/windows/console/code-page-identifiers)
 - [Python UTF-8模式](https://docs.python.org/3/using/windows.html#utf-8-mode)

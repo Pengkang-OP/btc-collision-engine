@@ -1,6 +1,6 @@
 # BTC碰撞引擎项目健康度改进报告
 
-## 📊 改进概览
+## [CHART] 改进概览
 
 **改进日期**: 2026-04-22  
 **审查评分**: 8.7/10 (优秀)  
@@ -8,20 +8,20 @@
 
 ---
 
-## ✅ 已完成的P0改进
+## [OK_CHECK] 已完成的P0改进
 
-### 1. 🔒 自动化安全扫描 (bandit集成)
+### 1. [LOCK] 自动化安全扫描 (bandit集成)
 
 **问题**: 缺少自动化安全扫描工具  
 **解决方案**: 创建`tools/security_scan.py`
 
 #### 功能特性
 
-- ✅ 自动扫描`src/`目录下所有Python代码
-- ✅ 支持JSON/HTML/TXT三种报告格式
-- ✅ 按严重性分级(High/Medium/Low)
-- ✅ CI/CD模式集成(高危问题自动失败)
-- ✅ 生成可视化HTML报告
+- [OK_CHECK] 自动扫描`src/`目录下所有Python代码
+- [OK_CHECK] 支持JSON/HTML/TXT三种报告格式
+- [OK_CHECK] 按严重性分级(High/Medium/Low)
+- [OK_CHECK] CI/CD模式集成(高危问题自动失败)
+- [OK_CHECK] 生成可视化HTML报告
 
 #### 发现并修复的安全问题
 
@@ -47,33 +47,33 @@ python tools/security_scan.py --ci-mode
 #### 扫描结果
 
 ```
-📊 扫描统计:
+[CHART] 扫描统计:
    扫描文件数: 90
    发现问题数: 44
 
-🚨 问题统计:
-   高危(High): 0 ✅ (已从3修复为0)
+[ALERT] 问题统计:
+   高危(High): 0 [OK_CHECK] (已从3修复为0)
    中危(Medium): 6
    低危(Low): 35
 
-🏆 安全评分: 🟡 良好 (7-9/10)
+[TROPHY] 安全评分: [YELLOW] 良好 (7-9/10)
 ```
 
 ---
 
-### 2. ⚡ 性能回归测试基线
+### 2. [BOLT] 性能回归测试基线
 
 **问题**: 缺少性能基线和回归检测机制  
 **解决方案**: 创建`tools/performance_baseline.py`
 
 #### 功能特性
 
-- ✅ CPU地址生成性能测试(keys/s)
-- ✅ 内存池性能测试(加速比)
-- ✅ 预计算表性能测试(加速比)
-- ✅ GPU碰撞引擎性能测试(keys/s)
-- ✅ 基线保存与对比功能
-- ✅ 性能回归自动检测(>5%下降失败)
+- [OK_CHECK] CPU地址生成性能测试(keys/s)
+- [OK_CHECK] 内存池性能测试(加速比)
+- [OK_CHECK] 预计算表性能测试(加速比)
+- [OK_CHECK] GPU碰撞引擎性能测试(keys/s)
+- [OK_CHECK] 基线保存与对比功能
+- [OK_CHECK] 性能回归自动检测(>5%下降失败)
 
 #### 测试项目
 
@@ -108,7 +108,7 @@ python tools/performance_baseline.py --compare-baseline
 
 ---
 
-### 3. 🛡️ CI/CD性能门禁(准备就绪)
+### 3. [SHIELD] CI/CD性能门禁(准备就绪)
 
 **问题**: CI/CD流程中缺少性能门禁  
 **解决方案**: 性能基线工具支持回归检测
@@ -124,13 +124,13 @@ python tools/performance_baseline.py --compare-baseline
 
 #### 门禁规则
 
-- ✅ 性能下降<5%: 通过
-- ⚠️ 性能下降5-10%: 警告
-- ❌ 性能下降>10%: 失败
+- [OK_CHECK] 性能下降<5%: 通过
+- [WARN] 性能下降5-10%: 警告
+- [CROSS] 性能下降>10%: 失败
 
 ---
 
-## 📈 健康度评分变化
+## [PERF] 健康度评分变化
 
 | 维度 | 改进前 | 改进后 | 提升 |
 |------|--------|--------|------|
@@ -141,7 +141,7 @@ python tools/performance_baseline.py --compare-baseline
 
 ---
 
-## 🎯 新增工具清单
+## [TARGET] 新增工具清单
 
 | 工具 | 路径 | 用途 | 行数 |
 |------|------|------|------|
@@ -154,7 +154,7 @@ python tools/performance_baseline.py --compare-baseline
 
 ---
 
-## 🔧 修复清单
+## [WRENCH] 修复清单
 
 | 修复项 | 文件 | 修改内容 |
 |--------|------|---------|
@@ -164,7 +164,7 @@ python tools/performance_baseline.py --compare-baseline
 
 ---
 
-## 📋 使用指南
+## [CHECKLIST] 使用指南
 
 ### 日常开发
 
@@ -200,7 +200,7 @@ python tools/nvidia_gpu_monitor.py
 
 ---
 
-## 🚀 下一步改进建议(P1/P2)
+## [QUICK] 下一步改进建议(P1/P2)
 
 ### P1 (近期处理)
 
@@ -216,9 +216,9 @@ python tools/nvidia_gpu_monitor.py
 
 ---
 
-## 📊 项目健康度检查清单
+## [CHART] 项目健康度检查清单
 
-### ✅ 已完成
+### [OK_CHECK] 已完成
 
 - [x] 核心功能完整(3种碰撞模式、多地址类型、GPU加速)
 - [x] 测试覆盖率>90%(约70+测试文件)
@@ -230,14 +230,14 @@ python tools/nvidia_gpu_monitor.py
 - [x] **自动化安全扫描** ← 新增
 - [x] **性能回归测试门禁** ← 新增
 
-### ⏳ 待完成
+### [HOURGLASS] 待完成
 
 - [ ] Docker容器化支持
 - [ ] 性能基线强制执行
 
 ---
 
-## 🎉 总结
+## [DONE] 总结
 
 通过本次P0优先级改进:
 
@@ -246,7 +246,7 @@ python tools/nvidia_gpu_monitor.py
 3. **工具生态**: 新增4个专业工具,总计1,119行代码
 4. **健康评分**: 从8.7/10提升到9.1/10
 
-**项目状态**: ✅ 生产就绪,持续优化中
+**项目状态**: [OK_CHECK] 生产就绪,持续优化中
 
 ---
 

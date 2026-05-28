@@ -124,7 +124,9 @@ def _infer_language(content: str, filepath: Path) -> str:
 
     # Python 特征
     if re.search(
-        r"^import\s+|^from\s+|^def\s+|^class\s+|print\(|os\.|sys\.|pathlib", content, re.MULTILINE,
+        r"^import\s+|^from\s+|^def\s+|^class\s+|print\(|os\.|sys\.|pathlib",
+        content,
+        re.MULTILINE,
     ):
         return "python"
 
@@ -134,7 +136,9 @@ def _infer_language(content: str, filepath: Path) -> str:
 
     # YAML 特征
     if re.search(r"^---\s*$", content, re.MULTILINE) or re.search(
-        r"^[a-zA-Z_]+:\s", content, re.MULTILINE,
+        r"^[a-zA-Z_]+:\s",
+        content,
+        re.MULTILINE,
     ):
         return "yaml"
 
@@ -167,7 +171,7 @@ def run_quality_check() -> list[tuple[float, str]]:
     )
     output = result.stdout + result.stderr
     poor_docs: list[tuple[float, str]] = []
-    for m in re.finditer(r"[❌✅]\s+([\w\-\.]+\.md)\s+-\s+质量评分:\s+([\d\.]+)/10", output):
+    for m in re.finditer(r"(?:ERR|OK)\s+([\w\-\.]+\.md)\s+-\s+质量评分:\s+([\d\.]+)/10", output):
         score = float(m.group(2))
         if score < THRESHOLD:
             poor_docs.append((score, m.group(1)))
@@ -177,7 +181,7 @@ def run_quality_check() -> list[tuple[float, str]]:
 
 def main():
     print("=" * 60)
-    print("📝 文档质量自动修复工具")
+    print("[NOTE] 文档质量自动修复工具")
     print("=" * 60)
 
     # 获取低分文档
@@ -193,7 +197,7 @@ def main():
     for score, fname in poor_docs:
         fpath = DOCS_DIR / fname
         if not fpath.exists():
-            print(f"\n  ⚠️  文件不存在: {fname}")
+            print(f"\n  WARN 文件不存在: {fname}")
             continue
 
         content = fpath.read_text(encoding="utf-8")
@@ -210,9 +214,9 @@ def main():
         if content != original:
             fpath.write_text(content, encoding="utf-8")
             fixed_count += 1
-            print(f"\n  ✅ {fname}: 已修复")
+            print(f"\n  OK {fname}: 已修复")
         else:
-            print(f"\n  ➖ {fname}: 无需自动修复")
+            print(f"\n  [NO_CHANGE] {fname}: 无需自动修复")
 
     print(f"\n{'=' * 60}")
     print(f"修复完成: {fixed_count}/{len(poor_docs)} 个文档已修改")

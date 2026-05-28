@@ -33,7 +33,7 @@ def test_memory_monitor():
         safe_usage_ratio=0.45,  # Intel保守策略：45%
     )
 
-    print("\n✓ 显存监控器初始化成功")
+    print("\n[OK] 显存监控器初始化成功")
     print(f"  - 总显存: {total_memory / 1024**3:.1f} GB")
     print(f"  - 安全限制: {monitor.safe_limit / 1024**2:.0f} MB (45%)")
     print(f"  - 警告阈值: {monitor.warning_limit / 1024**2:.0f} MB")
@@ -53,7 +53,7 @@ def test_memory_monitor():
             f"  批次 {i + 1}: 分配 {size / 1024**2:.0f}MB -> "
             f"使用 {status['current_mb']:.0f}MB "
             f"({status['usage_percent']:.1f}%) "
-            f"[{'✓' if success else '✗'}]",
+            f"[{'[OK]' if success else '[FAIL]'}]",
         )
 
     # 测试显存释放
@@ -66,25 +66,25 @@ def test_memory_monitor():
     print("\n测试状态检查...")
     warnings = monitor.check_warnings()
     if warnings:
-        print("  ⚠️ 警告:")
+        print("  WARN 警告:")
         for warning in warnings:
             print(f"    - {warning}")
     else:
-        print("  ✓ 无警告")
+        print("  [OK] 无警告")
 
     # 测试批次调整建议
     print("\n测试批次调整建议...")
     reduction = monitor.get_recommended_batch_reduction()
     if reduction > 0:
-        print(f"  ⚠️ 建议减少批次大小: {reduction * 100:.0f}%")
+        print(f"  WARN 建议减少批次大小: {reduction * 100:.0f}%")
     else:
-        print("  ✓ 无需调整批次大小")
+        print("  [OK] 无需调整批次大小")
 
     # 生成报告
     print("\n显存使用报告:")
     print(monitor.get_report())
 
-    print("\n✅ 显存监控测试通过")
+    print("\nOK 显存监控测试通过")
     return True
 
 
@@ -98,7 +98,7 @@ def test_timeout_manager():
 
     manager = AdaptiveTimeoutManager(base_timeout=30.0, min_timeout=10.0, max_timeout=120.0)
 
-    print("\n✓ 超时管理器初始化成功")
+    print("\n[OK] 超时管理器初始化成功")
     print(f"  - 基础超时: {manager.base_timeout}秒")
     print(f"  - 超时范围: {manager.min_timeout} - {manager.max_timeout}秒")
 
@@ -131,9 +131,9 @@ def test_timeout_manager():
     print("\n测试重置...")
     manager.reset()
     stats = manager.get_statistics()
-    print(f"  ✓ 已重置，状态: {stats['status']}")
+    print(f"  [OK] 已重置，状态: {stats['status']}")
 
-    print("\n✅ 超时管理测试通过")
+    print("\nOK 超时管理测试通过")
     return True
 
 
@@ -148,7 +148,7 @@ def test_performance_monitor():
     # 创建性能监控器
     monitor = GPUPerformanceMonitor()
 
-    print("\n✓ 性能监控器初始化成功")
+    print("\n[OK] 性能监控器初始化成功")
 
     # 模拟性能数据
     print("\n记录性能数据...")
@@ -164,7 +164,7 @@ def test_performance_monitor():
     print("\n生成性能报告...")
     report = monitor.get_performance_report()
 
-    print("\n📊 GPU性能报告:")
+    print("\nSTATS GPU性能报告:")
     print("  设备: Intel(R) Arc(TM) A770 Graphics")
     print(f"  监控时长: {report.monitoring_duration_sec:.1f}秒")
     print(f"  总批次数: {report.total_batches}")
@@ -175,7 +175,7 @@ def test_performance_monitor():
     print(f"  错误率: {report.error_rate_percent:.2f}%")
     print(f"  性能稳定性: {report.performance_stability_percent:.1f}%")
 
-    print("\n✅ 性能监控测试通过")
+    print("\nOK 性能监控测试通过")
     return True
 
 
@@ -192,11 +192,11 @@ def test_data_monitor():
         config={"check_interval": 0.5, "throughput_threshold": 0.5, "error_rate_threshold": 0.1},
     )
 
-    print("\n✓ 数据监控器初始化成功")
+    print("\n[OK] 数据监控器初始化成功")
 
     # 启动监控
     monitor.start()
-    print("  ✓ 监控已启动")
+    print("  [OK] 监控已启动")
 
     # 模拟数据报告
     print("\n模拟数据报告...")
@@ -213,7 +213,7 @@ def test_data_monitor():
     print("\n获取监控统计...")
     stats = monitor.get_stats()
 
-    print("\n📈 数据监控统计:")
+    print("\nUP 数据监控统计:")
     print(f"  总监控密钥: {stats['total_keys_monitored']:,}")
     print(f"  总验证匹配: {stats['total_matches_verified']:,}")
     print(f"  总检测问题: {stats['total_issues_detected']:,}")
@@ -227,9 +227,9 @@ def test_data_monitor():
 
     # 停止监控
     monitor.stop()
-    print("\n  ✓ 监控已停止")
+    print("\n  [OK] 监控已停止")
 
-    print("\n✅ 数据质量监控测试通过")
+    print("\nOK 数据质量监控测试通过")
     return True
 
 
@@ -249,8 +249,8 @@ def test_integration():
     timeout_manager = AdaptiveTimeoutManager(base_timeout=30.0)
 
     print("\n步骤1: 初始化监控组件")
-    print(f"  ✓ 显存监控器: 安全限制 {memory_monitor.safe_limit / 1024**2:.0f}MB")
-    print(f"  ✓ 超时管理器: 基础超时 {timeout_manager.base_timeout}秒")
+    print(f"  [OK] 显存监控器: 安全限制 {memory_monitor.safe_limit / 1024**2:.0f}MB")
+    print(f"  [OK] 超时管理器: 基础超时 {timeout_manager.base_timeout}秒")
 
     # 2. 模拟碰撞引擎运行
     print("\n步骤2: 模拟碰撞引擎运行（10个批次）")
@@ -275,7 +275,7 @@ def test_integration():
     # 3. 生成综合报告
     print("\n步骤3: 生成综合资源报告")
     print("\n" + "=" * 60)
-    print("📊 Intel Arc A770 资源监控报告")
+    print("STATS Intel Arc A770 资源监控报告")
     print("=" * 60)
 
     mem_status = memory_monitor.get_status()
@@ -293,7 +293,7 @@ def test_integration():
     print(f"  当前超时: {timeout_manager.get_timeout():.1f}秒")
 
     print("\n" + "=" * 60)
-    print("✅ 集成工作流测试通过")
+    print("OK 集成工作流测试通过")
 
     return True
 
@@ -332,15 +332,15 @@ def main():
     total = len(results)
 
     for name, result in results:
-        status = "✅ 通过" if result else "❌ 失败"
+        status = "OK 通过" if result else "ERR 失败"
         print(f"  {status} - {name}")
 
     print(f"\n总计: {passed}/{total} 测试通过")
 
     if passed == total:
-        print("\n🎉 所有Intel Arc资源监控功能验证通过！")
+        print("\n[DONE] 所有Intel Arc资源监控功能验证通过！")
         return 0
-    print(f"\n⚠️ {total - passed} 个测试失败")
+    print(f"\nWARN {total - passed} 个测试失败")
     return 1
 
 

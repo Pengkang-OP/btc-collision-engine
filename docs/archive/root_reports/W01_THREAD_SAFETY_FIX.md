@@ -3,11 +3,11 @@
 **修复日期**: 2026-04-23  
 **问题编号**: W-01  
 **严重程度**: Warning (中风险)  
-**修复状态**: ✅ 已完成  
+**修复状态**: [OK_CHECK] 已完成  
 
 ---
 
-## 📋 问题描述
+## [CHECKLIST] 问题描述
 
 ### 问题现象
 
@@ -29,7 +29,7 @@ RuntimeError: main thread is not in main loop
 
 ---
 
-## 🔧 修复方案
+## [WRENCH] 修复方案
 
 ### 修复位置
 
@@ -86,48 +86,48 @@ def load_thread():
 
 ---
 
-## ✅ 验证结果
+## [OK_CHECK] 验证结果
 
 ### 代码检查
 
 ```bash
-✅ 语法检查通过 - 无错误
-✅ 模块导入成功 - GPUSelectorPanel可正常导入
-✅ 代码格式正确 - 缩进和格式符合规范
+[OK_CHECK] 语法检查通过 - 无错误
+[OK_CHECK] 模块导入成功 - GPUSelectorPanel可正常导入
+[OK_CHECK] 代码格式正确 - 缩进和格式符合规范
 ```
 
 ### 功能验证
 
 | 测试项 | 状态 | 说明 |
 |--------|------|------|
-| 正常加载 | ✅ 通过 | GPU设备正常加载和显示 |
-| 加载失败 | ✅ 通过 | 错误信息正常记录日志 |
-| 线程安全 | ✅ 通过 | RuntimeError被正确捕获 |
-| 日志记录 | ✅ 通过 | 详细的警告日志已添加 |
+| 正常加载 | [OK_CHECK] 通过 | GPU设备正常加载和显示 |
+| 加载失败 | [OK_CHECK] 通过 | 错误信息正常记录日志 |
+| 线程安全 | [OK_CHECK] 通过 | RuntimeError被正确捕获 |
+| 日志记录 | [OK_CHECK] 通过 | 详细的警告日志已添加 |
 
 ### 测试输出
 
 ```
 [INFO] 检测到 2 个GPU设备
-⚠️ UI更新失败(设备列表): main thread is not in main loop
+[WARN] UI更新失败(设备列表): main thread is not in main loop
 ```
 
 测试环境中出现预期警告，但程序未崩溃，证明修复有效。
 
 ---
 
-## 📊 影响评估
+## [CHART] 影响评估
 
 ### 正面影响
 
-- ✅ 提高了线程安全性
-- ✅ 增强了错误处理能力
-- ✅ 改善了日志可观测性
-- ✅ 防止程序意外崩溃
+- [OK_CHECK] 提高了线程安全性
+- [OK_CHECK] 增强了错误处理能力
+- [OK_CHECK] 改善了日志可观测性
+- [OK_CHECK] 防止程序意外崩溃
 
 ### 负面影响
 
-- ❌ 无
+- [CROSS] 无
 
 ### 性能影响
 
@@ -135,29 +135,29 @@ def load_thread():
 
 ---
 
-## 🎯 修复效果
+## [TARGET] 修复效果
 
 ### 修复前
 
 ```
-❌ RuntimeError未捕获
-❌ 程序可能崩溃
-❌ 错误信息不明确
-❌ 用户看到空白界面
+[CROSS] RuntimeError未捕获
+[CROSS] 程序可能崩溃
+[CROSS] 错误信息不明确
+[CROSS] 用户看到空白界面
 ```
 
 ### 修复后
 
 ```
-✅ RuntimeError被捕获
-✅ 程序稳定运行
-✅ 详细日志记录
-✅ 优雅降级处理
+[OK_CHECK] RuntimeError被捕获
+[OK_CHECK] 程序稳定运行
+[OK_CHECK] 详细日志记录
+[OK_CHECK] 优雅降级处理
 ```
 
 ---
 
-## 📝 相关修复
+## [MEMO] 相关修复
 
 ### 已有的线程安全改进
 
@@ -177,7 +177,7 @@ def load_thread():
 
 ---
 
-## 🔮 后续建议
+## [CRYSTAL] 后续建议
 
 ### 可选优化
 
@@ -193,14 +193,14 @@ def load_thread():
 
 ---
 
-## ✅ 结论
+## [OK_CHECK] 结论
 
 **W-01线程安全问题已完全修复**
 
 - 修复方法: 嵌套try-except捕获RuntimeError
 - 修复效果: 程序稳定性显著提升
 - 代码质量: 符合最佳实践
-- 上线状态: ✅ 可以上线
+- 上线状态: [OK_CHECK] 可以上线
 
 ---
 

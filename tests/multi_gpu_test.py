@@ -10,8 +10,8 @@ import pytest
 
 pytestmark = pytest.mark.gpu  # 需要真实GPU硬件
 
-from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine  # noqa: E402
-from src.utils import get_configured_logger, init_logging  # noqa: E402
+from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
+from src.utils import get_configured_logger, init_logging
 
 # 配置日志
 init_logging()
@@ -31,10 +31,10 @@ def test_multi_gpu_initialization():
         # 初始化设备
         init_result = engine.initialize(device_count=2)
         if not init_result:
-            logger.error("❌ 多GPU设备初始化失败")
+            logger.error("ERR 多GPU设备初始化失败")
             return False
 
-        logger.info("✅ 多GPU初始化成功")
+        logger.info("OK 多GPU初始化成功")
 
         # 获取设备信息
         devices = engine.get_devices()
@@ -46,7 +46,7 @@ def test_multi_gpu_initialization():
 
         return True
     except Exception as e:
-        logger.error("❌ 多GPU初始化失败: %s", e)
+        logger.error("ERR 多GPU初始化失败: %s", e)
         import traceback
 
         traceback.print_exc()
@@ -76,7 +76,7 @@ def test_multi_gpu_collision_detection():
         # 初始化设备
         init_result = engine.initialize(device_count=2)
         if not init_result:
-            logger.error("❌ 多GPU设备初始化失败")
+            logger.error("ERR 多GPU设备初始化失败")
             return False
 
         logger.info("多GPU引擎初始化成功")
@@ -88,7 +88,7 @@ def test_multi_gpu_collision_detection():
         start_time = time.time()
         start_result = engine.start(targets=test_targets, mode="random", total_keys=100000)
         if not start_result:
-            logger.error("❌ 多GPU碰撞检测启动失败")
+            logger.error("ERR 多GPU碰撞检测启动失败")
             return False
 
         # 运行一段时间
@@ -106,7 +106,7 @@ def test_multi_gpu_collision_detection():
 
         return True
     except Exception as e:
-        logger.error("❌ 多GPU碰撞检测失败: %s", e)
+        logger.error("ERR 多GPU碰撞检测失败: %s", e)
         import traceback
 
         traceback.print_exc()
@@ -136,7 +136,7 @@ def test_multi_gpu_resource_release():
         # 初始化设备
         init_result = engine.initialize(device_count=2)
         if not init_result:
-            logger.error("❌ 多GPU设备初始化失败")
+            logger.error("ERR 多GPU设备初始化失败")
             return False
 
         logger.info("多GPU引擎初始化成功")
@@ -144,7 +144,7 @@ def test_multi_gpu_resource_release():
         # 启动碰撞检测
         start_result = engine.start(targets=test_targets, mode="random", total_keys=100000)
         if not start_result:
-            logger.error("❌ 多GPU碰撞检测启动失败")
+            logger.error("ERR 多GPU碰撞检测启动失败")
             return False
 
         # 运行一段时间
@@ -163,10 +163,10 @@ def test_multi_gpu_resource_release():
         engine.cleanup()
         logger.info("多GPU引擎资源已清理")
 
-        logger.info("✅ 多GPU资源释放成功")
+        logger.info("OK 多GPU资源释放成功")
         return True
     except Exception as e:
-        logger.error("❌ 多GPU资源释放失败: %s", e)
+        logger.error("ERR 多GPU资源释放失败: %s", e)
         import traceback
 
         traceback.print_exc()
@@ -186,11 +186,11 @@ def main():
         release_result = test_multi_gpu_resource_release()
 
         if init_result and collision_result and release_result:
-            logger.info("✅ 多GPU测试全部成功")
+            logger.info("OK 多GPU测试全部成功")
         else:
-            logger.error("❌ 多GPU测试部分失败")
+            logger.error("ERR 多GPU测试部分失败")
     except Exception as e:
-        logger.error("❌ 测试过程中出现错误: %s", e)
+        logger.error("ERR 测试过程中出现错误: %s", e)
         import traceback
 
         traceback.print_exc()

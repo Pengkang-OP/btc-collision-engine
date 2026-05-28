@@ -1,6 +1,6 @@
 # Intel Arc A770 GPU配置与优化指南
 
-## 📊 当前状态分析
+## [CHART] 当前状态分析
 
 从你的任务管理器截图：
 
@@ -13,7 +13,7 @@ GPU 1: Intel Arc A770 Graphics (18%, 59°C)
   └─ 驱动: 32.0.101.8724
 ```
 
-## ⚡ 关键问题识别
+## [BOLT] 关键问题识别
 
 ### 1. **GPU利用率过低 (18%)**
 - 原因：batch_size太小
@@ -26,7 +26,7 @@ GPU 1: Intel Arc A770 Graphics (18%, 59°C)
 ### 3. **温度良好 (59°C)**
 - 很好！有很大超频空间
 
-## 🔧 Intel Arc A770 推荐配置
+## [WRENCH] Intel Arc A770 推荐配置
 
 ### 方式一：直接配置
 
@@ -74,7 +74,7 @@ engine.start(mode="random")
 }
 ```
 
-## 📈 预期性能提升
+## [PERF] 预期性能提升
 
 | 配置 | 原始状态 | 优化后 | 提升 |
 |------|---------|--------|------|
@@ -83,7 +83,7 @@ engine.start(mode="random")
 | 温度 | 59°C | 65-75°C | 正常 |
 | 功耗 | 120W | 180-220W | 正常 |
 
-## 🎯 性能监控指标
+## [TARGET] 性能监控指标
 
 ```python
 # 运行时获取性能数据
@@ -95,7 +95,7 @@ print(f"温度: {stats['avg_temperature']:.1f}°C")
 print(f"显存使用: {stats['avg_memory_used_mb']:.0f}MB")
 ```
 
-## 🚨 自适应调整逻辑
+## [ALERT] 自适应调整逻辑
 
 系统会根据GPU利用率自动调整：
 
@@ -110,7 +110,7 @@ print(f"显存使用: {stats['avg_memory_used_mb']:.0f}MB")
   → batch_size *= 0.5
 ```
 
-## 📝 Intel Arc 特定优化
+## [MEMO] Intel Arc 特定优化
 
 ### 1. uint32 Workaround
 ```python
@@ -135,7 +135,7 @@ use_double_buffering=True  # 必须启用
 timeout_seconds=30  # Intel驱动有时不稳定
 ```
 
-## 🚀 完整启动命令
+## [QUICK] 完整启动命令
 
 ```bash
 # 使用Intel Arc A770启动
@@ -146,7 +146,7 @@ python key_collision_cli.py \
     --mode random
 ```
 
-## 📊 性能监控面板
+## [CHART] 性能监控面板
 
 启动后监控会显示：
 ```
@@ -158,16 +158,16 @@ python key_collision_cli.py \
 └─ 功耗: 201 W
 ```
 
-## 💡 如果GPU利用率仍然低
+## [TIP] 如果GPU利用率仍然低
 
 检查以下项：
-1. ✅ 是否使用异步执行？
-2. ✅ 是否启用双缓冲？
-3. ✅ batch_size是否足够大？
-4. ✅ 队列深度是否够？
-5. ✅ 是否有CPU瓶颈？
+1. [OK_CHECK] 是否使用异步执行？
+2. [OK_CHECK] 是否启用双缓冲？
+3. [OK_CHECK] batch_size是否足够大？
+4. [OK_CHECK] 队列深度是否够？
+5. [OK_CHECK] 是否有CPU瓶颈？
 
-## 🔬 高级：GPU计算性能调优
+## [MICRO] 高级：GPU计算性能调优
 
 如果想获得更高性能：
 
@@ -182,12 +182,12 @@ max_batch_size=3145728  # 300万
 local_work_size=[64, 1, 1]
 ```
 
-## 📚 参考资料
+## [BOOKS] 参考资料
 
 - Intel Arc OpenCL优化指南
 - GPU性能监控文档 (GPU_MONITORING.md)
 - Intel GPU Vendor优化 (src/gpu/vendors/intel.py)
 
-## 🎊 开始优化！
+## [CONFETTI] 开始优化！
 
 现在运行程序，观察GPU利用率提升到70-90%！

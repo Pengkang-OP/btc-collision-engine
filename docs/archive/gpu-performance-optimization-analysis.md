@@ -6,7 +6,7 @@
 
 ---
 
-## 📊 当前性能问题诊断
+## [CHART] 当前性能问题诊断
 
 ### 1. 观察到的问题
 
@@ -21,8 +21,8 @@
 ```json
 {
     "batch_size": 262144,          // 26万
-    "async_execution": false,      // ❌ 异步已禁用
-    "gpu_memory_pool": true,       // ✅ 内存池已启用
+    "async_execution": false,      // [CROSS] 异步已禁用
+    "gpu_memory_pool": true,       // [OK_CHECK] 内存池已启用
     "max_memory_mb": 512,          // 限制512MB
     "memory_limit_percent": 45     // 最多使用45%显存
 }
@@ -43,7 +43,7 @@
 
 ---
 
-## 🔍 根本原因分析
+## [SEARCH] 根本原因分析
 
 ### 问题1: 异步执行被禁用
 
@@ -52,16 +52,16 @@
 ```python
 # 3. 异步传输 - Intel建议禁用
 if 'async_transfer' in optimizations:
-    logger.warning("⚠️ Intel GPU: 禁用异步传输以确保稳定性")
+    logger.warning("[WARN] Intel GPU: 禁用异步传输以确保稳定性")
     device.enable_async = False
 ```
 
 **影响**:
 
-- ❌ GPU执行是**同步阻塞**的
-- ❌ CPU等待GPU完成后才继续
-- ❌ GPU空闲时CPU无法准备下一批数据
-- ❌ 造成规律性间歇停顿
+- [CROSS] GPU执行是**同步阻塞**的
+- [CROSS] CPU等待GPU完成后才继续
+- [CROSS] GPU空闲时CPU无法准备下一批数据
+- [CROSS] 造成规律性间歇停顿
 
 **执行流程(当前)**:
 
@@ -112,9 +112,9 @@ max_memory_mb = 512       # 硬限制512MB
 
 ---
 
-## 💡 优化方案
+## [TIP] 优化方案
 
-### 方案A: 启用安全的异步执行 (推荐⭐⭐⭐⭐⭐)
+### 方案A: 启用安全的异步执行 (推荐[STAR][STAR][STAR][STAR][STAR])
 
 **原理**: 使用**多队列异步**而非单队列同步
 
@@ -200,7 +200,7 @@ GPU: [空闲]  → [执行A] → [执行B] → [执行C] → [执行D]
 
 ---
 
-### 方案B: 增大Batch Size (简单有效⭐⭐⭐⭐)
+### 方案B: 增大Batch Size (简单有效[STAR][STAR][STAR][STAR])
 
 **修改配置**:
 
@@ -231,7 +231,7 @@ GPU: [空闲]  → [执行A] → [执行B] → [执行C] → [执行D]
 
 ---
 
-### 方案C: 组合优化 (最佳⭐⭐⭐⭐⭐)
+### 方案C: 组合优化 (最佳[STAR][STAR][STAR][STAR][STAR])
 
 **同时应用A+B**:
 
@@ -258,7 +258,7 @@ memory_limit_percent = 70      # 70% (11GB)
 
 ---
 
-## ⚠️ Intel Arc特殊考虑
+## [WARN] Intel Arc特殊考虑
 
 ### 风险: global char* hang bug
 
@@ -268,7 +268,7 @@ memory_limit_percent = 70      # 70% (11GB)
 使用 global char* 指针 → GPU hang → 系统冻结
 ```
 
-**当前Workaround**: 已启用uint32 workaround ✅
+**当前Workaround**: 已启用uint32 workaround [OK_CHECK]
 
 ### 异步执行的安全性
 
@@ -299,7 +299,7 @@ if memory > limit:
 
 ---
 
-## 📋 实施建议
+## [CHECKLIST] 实施建议
 
 ### 立即可做 (无需代码修改)
 
@@ -351,7 +351,7 @@ if memory > limit:
 
 ---
 
-## 🎯 推荐行动计划
+## [TARGET] 推荐行动计划
 
 ### 第1步: 立即增大Batch (今天)
 
@@ -379,11 +379,11 @@ print('配置已更新: batch_size=1000000, max_memory=1024MB')
 
 我为您准备完整的异步优化代码,包括:
 
-- ✅ 双队列机制
-- ✅ 双缓冲实现
-- ✅ 安全保护
-- ✅ 性能监控
-- ✅ 回退机制
+- [OK_CHECK] 双队列机制
+- [OK_CHECK] 双缓冲实现
+- [OK_CHECK] 安全保护
+- [OK_CHECK] 性能监控
+- [OK_CHECK] 回退机制
 
 **需要我现在实施吗?**
 
@@ -404,14 +404,14 @@ python tools/status_report.py
 
 ---
 
-## 📊 性能对比预测
+## [CHART] 性能对比预测
 
 | 阶段 | Batch Size | 异步 | 吞吐量 | GPU利用率 |
 |------|-----------|------|--------|-----------|
-| 当前 | 262k | ❌ | 44k | 50% |
-| 第1步 | 1M | ❌ | 80k | 70% |
-| 第2步 | 1M | ✅ | 120k | 90% |
-| 最终 | 2M | ✅ | 150k+ | 95% |
+| 当前 | 262k | [CROSS] | 44k | 50% |
+| 第1步 | 1M | [CROSS] | 80k | 70% |
+| 第2步 | 1M | [OK_CHECK] | 120k | 90% |
+| 最终 | 2M | [OK_CHECK] | 150k+ | 95% |
 
 ---
 
@@ -419,15 +419,15 @@ python tools/status_report.py
 
 **核心问题**:
 
-1. ❌ 异步执行被禁用 → GPU大量时间空闲
-2. ❌ Batch size过小 → GPU计算单元未充分利用
-3. ❌ 显存限制过严 → 99.85%显存未使用
+1. [CROSS] 异步执行被禁用 → GPU大量时间空闲
+2. [CROSS] Batch size过小 → GPU计算单元未充分利用
+3. [CROSS] 显存限制过严 → 99.85%显存未使用
 
 **解决方案**:
 
-1. ✅ 启用安全异步 (双队列)
-2. ✅ 增大batch size (100万+)
-3. ✅ 放宽显存限制 (70%)
+1. [OK_CHECK] 启用安全异步 (双队列)
+2. [OK_CHECK] 增大batch size (100万+)
+3. [OK_CHECK] 放宽显存限制 (70%)
 
 **预期提升**:
 
@@ -437,4 +437,4 @@ python tools/status_report.py
 
 ---
 
-**是否需要我立即实施异步优化代码?** 🚀
+**是否需要我立即实施异步优化代码?** [QUICK]

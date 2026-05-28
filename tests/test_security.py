@@ -48,7 +48,7 @@ class TestCryptographicSecurity:
         # 应该大致均匀分布（允许一定偏差）
         assert 30 <= low_count <= 70, f"私钥分布不均匀: 低={low_count}, 高={high_count}"
 
-        print("✅ 私钥随机性测试通过:")
+        print("OK 私钥随机性测试通过:")
         print("   唯一性: 100/100")
         print(f"   分布: 低={low_count}, 高={high_count}")
 
@@ -72,7 +72,7 @@ class TestCryptographicSecurity:
             diff = abs(pk1 - pk2)
 
             if diff > min_diff:
-                print(f"✅ 私钥不可预测性测试通过 (尝试 {attempt + 1}/{max_attempts}):")
+                print(f"OK 私钥不可预测性测试通过 (尝试 {attempt + 1}/{max_attempts}):")
                 print(f"   差异: {diff}")
                 print(f"   最小要求: {min_diff}")
                 return  # 测试通过
@@ -207,7 +207,7 @@ class TestDataProtection:
         # 清理
         logger.removeHandler(handler)
 
-        print("✅ 私钥未泄露到日志")
+        print("OK 私钥未泄露到日志")
 
     def test_secure_file_permissions(self):
         """测试文件权限安全."""
@@ -263,7 +263,7 @@ class TestDeduplicationSecurity:
         assert stats["checks_total"] == 200
         assert stats["unique_keys"] == 200
 
-        print(f"✅ 去重过滤器内存管理正常: {dedup._current_size} keys")
+        print(f"OK 去重过滤器内存管理正常: {dedup._current_size} keys")
 
 
 class TestInputValidation:
@@ -350,7 +350,7 @@ class TestEngineSecurity:
         stats_str = str(stats.__dict__)
         assert "private_key" not in stats_str.lower()
 
-        print("✅ 引擎统计信息未泄露私钥")
+        print("OK 引擎统计信息未泄露私钥")
 
     def test_engine_thread_safety(self):
         """测试引擎线程安全."""
@@ -370,7 +370,7 @@ class TestEngineSecurity:
         stats = engine.get_stats()
         assert isinstance(stats.total_checked, int)
 
-        print("✅ 引擎线程安全测试通过")
+        print("OK 引擎线程安全测试通过")
 
 
 class TestComplianceChecklist:
@@ -449,12 +449,12 @@ class TestComplianceChecklist:
         checklist["内存管理安全"] = True
 
         # 打印结果
-        print("\n🔒 安全合规检查清单:")
+        print("\n[LOCK] 安全合规检查清单:")
         passed = sum(1 for v in checklist.values() if v)
         total = len(checklist)
 
         for item, status in checklist.items():
-            symbol = "✅" if status else "❌"
+            symbol = "OK" if status else "ERR"
             print(f"   {symbol} {item}")
 
         print(f"\n   通过: {passed}/{total}")

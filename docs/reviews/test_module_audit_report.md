@@ -3,7 +3,7 @@
 **审核对象**: tests/ 目录（~240 个测试文件）
 **审核阶段**: Phase 5 — 测试审核 (phase-5-test-review)
 **审核技能**: python-testing-patterns (pytest + Mock + Fixture 模式)
-**综合评分**: **80/100** ✅
+**综合评分**: **80/100** [OK]
 **生成日期**: 2026-05-28
 
 ---
@@ -40,16 +40,16 @@ f:/btc-collision-engine/tests/
 
 | 指标 | 数值 | 评级 |
 |------|------|------|
-| 总测试文件数 | ~240 | ✅ 充足 |
-| 预估测试函数数 | ~1,200+ | ✅ 充足 |
-| conftest 文件数 | 4（根/acceptance/gpu/unit） | ✅ 层次合理 |
-| Fixture 定义 | 34 处 | ✅ 良好 |
-| 参数化测试 (@parametrize) | 19 处 | ⚠️ 偏低 |
-| Mock/MagicMock 使用 | 98+ 文件 | ✅ 广泛 |
-| 属性测试 (hypothesis) | 1 文件 (test_fuzzing.py) | ⚠️ 偏少 |
-| 异步测试 (async def) | 0 | ℹ️ 项目为同步 |
-| xfail 标记 | 0 | ⚠️ 无预期失败管理 |
-| skip/skipif 标记 | 有（通过 conftest 逻辑动态处理） | ✅ |
+| 总测试文件数 | ~240 | [OK] 充足 |
+| 预估测试函数数 | ~1,200+ | [OK] 充足 |
+| conftest 文件数 | 4（根/acceptance/gpu/unit） | [OK] 层次合理 |
+| Fixture 定义 | 34 处 | [OK] 良好 |
+| 参数化测试 (@parametrize) | 19 处 | [WARN] 偏低 |
+| Mock/MagicMock 使用 | 98+ 文件 | [OK] 广泛 |
+| 属性测试 (hypothesis) | 1 文件 (test_fuzzing.py) | [WARN] 偏少 |
+| 异步测试 (async def) | 0 | [INFO] 项目为同步 |
+| xfail 标记 | 0 | [WARN] 无预期失败管理 |
+| skip/skipif 标记 | 有（通过 conftest 逻辑动态处理） | [OK] |
 
 ---
 
@@ -83,7 +83,7 @@ f:/btc-collision-engine/tests/
 
 ## 三、质量审核 (Quality Review) — 82/100
 
-### 3.1 测试组织设计 (⭐⭐⭐⭐⭐)
+### 3.1 测试组织设计 (*****)
 
 ```
 按测试类型分层：    按被测模块分层（unit/）：
@@ -97,12 +97,12 @@ unit/ ——— 单元测试    ├── logging/
                      └── web/
 ```
 
-- ✅ **测试类型分离**: smoke / unit / integration / acceptance / performance 清晰分层
-- ✅ **与 src/ 模块对应**: unit/ 子目录直接映射 src/ 模块结构
-- ✅ **GPU 独立目录**: 56 个 GPU 测试文件集中管理
-- ⚠️ **根目录混杂**: ~104 个测试文件散落在 tests/ 根目录，应逐步迁移到 unit/ 或 integration/
+- [OK] **测试类型分离**: smoke / unit / integration / acceptance / performance 清晰分层
+- [OK] **与 src/ 模块对应**: unit/ 子目录直接映射 src/ 模块结构
+- [OK] **GPU 独立目录**: 56 个 GPU 测试文件集中管理
+- [WARN] **根目录混杂**: ~104 个测试文件散落在 tests/ 根目录，应逐步迁移到 unit/ 或 integration/
 
-### 3.2 Fixture 设计质量 (⭐⭐⭐⭐⭐)
+### 3.2 Fixture 设计质量 (*****)
 
 测试基础设施设计优秀，包含：
 
@@ -114,13 +114,13 @@ unit/ ——— 单元测试    ├── logging/
 6. **会话级清理**: `pytest_sessionfinish` 强制停止监控线程 + 安全进程退出
 7. **单例重置**: `reset_cli_output_singleton` autouse fixture 防止跨测试污染
 
-### 3.3 Mock 策略 (⭐⭐⭐⭐)
+### 3.3 Mock 策略 (****)
 
-- ✅ 使用 `ExitStack` 管理多层 patch 上下文（7 层 GPU mock）
-- ✅ 使用 `patch.dict("sys.modules", ...)` 注入 Mock 模块
-- ✅ `Mock` 和 `MagicMock` 区分使用（`Mock` 为默认）
-- ✅ 有独立的 `gpu_mock_factory.py`（16.8 KB）和 `gpu_mock_patch.py`（4.5 KB）
-- ⚠️ 约 20% 的根目录测试文件使用 `@patch` 装饰器而非 conftest fixture，导致测试间重复
+- [OK] 使用 `ExitStack` 管理多层 patch 上下文（7 层 GPU mock）
+- [OK] 使用 `patch.dict("sys.modules", ...)` 注入 Mock 模块
+- [OK] `Mock` 和 `MagicMock` 区分使用（`Mock` 为默认）
+- [OK] 有独立的 `gpu_mock_factory.py`（16.8 KB）和 `gpu_mock_patch.py`（4.5 KB）
+- [WARN] 约 20% 的根目录测试文件使用 `@patch` 装饰器而非 conftest fixture，导致测试间重复
 
 ### 3.4 重复代码
 
@@ -136,11 +136,11 @@ unit/ ——— 单元测试    ├── logging/
 
 | 方面 | 评估 | 说明 |
 |------|------|------|
-| 测试驱动开发 (TDD) | ⚠️ 部分 | 测试存在但未严格执行 TDD 流程 |
-| 测试隔离性 | ✅ 良好 | autouse fixture + tmp_path 确保隔离 |
-| CI/CD 友好性 | ✅ 优秀 | 分级阈值 + 条件跳过 + 冒烟门禁 |
-| 资源清理 | ✅ 优秀 | session teardown + 线程清理 + 文件清理 |
-| 跨平台兼容 | ✅ 良好 | Windows 补丁 + 条件跳过 |
+| 测试驱动开发 (TDD) | [WARN] 部分 | 测试存在但未严格执行 TDD 流程 |
+| 测试隔离性 | [OK] 良好 | autouse fixture + tmp_path 确保隔离 |
+| CI/CD 友好性 | [OK] 优秀 | 分级阈值 + 条件跳过 + 冒烟门禁 |
+| 资源清理 | [OK] 优秀 | session teardown + 线程清理 + 文件清理 |
+| 跨平台兼容 | [OK] 良好 | Windows 补丁 + 条件跳过 |
 
 ### 4.2 亮点
 
@@ -165,31 +165,31 @@ unit/ ——— 单元测试    ├── logging/
 
 | 源码问题 | 严重性 | 测试覆盖 | 评估 |
 |----------|--------|----------|------|
-| `collision/gpu/protocols.py` docstring 语法错误 | Critical | ✅ **已覆盖**（会被静态检查发现） | 良好 |
-| `gpu/device.py:22` / `kernel_impl.py:28` cl=None | Critical | ❌ **未覆盖** | **高风险缺口** |
-| `multiprocess_engine.py` 存根实现 | Major | ⚠️ 部分覆盖（Mock 测试，无异常路径） | 中风险 |
-| `automation/audit.py` 4 处 `except: pass` | Major | ❌ **完全未覆盖** | **高风险缺口** |
-| `web/dashboard.py` host=0.0.0.0 + B104 | Major | ✅ 已覆盖（路由测试 + 路径解析） | 良好 |
-| `monitoring/monitoring_system.py` 8 处 pyright type:ignore | Minor | ℹ️ 不影响运行时 | - |
-| `simd_optimizer.py` 边缘情况 | Minor | ✅ **优秀覆盖**（397 行 edge 测试） | 良好 |
-| `secure_key_manager.clear()` 异常路径 | Major | ✅ **优秀覆盖**（完整异常路径） | 良好 |
+| `collision/gpu/protocols.py` docstring 语法错误 | Critical | [OK] **已覆盖**（会被静态检查发现） | 良好 |
+| `gpu/device.py:22` / `kernel_impl.py:28` cl=None | Critical | [FAIL] **未覆盖** | **高风险缺口** |
+| `multiprocess_engine.py` 存根实现 | Major | [WARN] 部分覆盖（Mock 测试，无异常路径） | 中风险 |
+| `automation/audit.py` 4 处 `except: pass` | Major | [FAIL] **完全未覆盖** | **高风险缺口** |
+| `web/dashboard.py` host=0.0.0.0 + B104 | Major | [OK] 已覆盖（路由测试 + 路径解析） | 良好 |
+| `monitoring/monitoring_system.py` 8 处 pyright type:ignore | Minor | [INFO] 不影响运行时 | - |
+| `simd_optimizer.py` 边缘情况 | Minor | [OK] **优秀覆盖**（397 行 edge 测试） | 良好 |
+| `secure_key_manager.clear()` 异常路径 | Major | [OK] **优秀覆盖**（完整异常路径） | 良好 |
 
 ### 5.2 模块级覆盖评估
 
 | 被测模块(src/) | 对应测试 | 覆盖评估 |
 |----------------|----------|----------|
-| collision/ (22 文件) | unit/collision/ + acceptance/ + 根目录 | ⚠️ ~50% |
-| core/ (17 文件) | unit/crypto/ + test_core_crypto.py | ✅ ~80% |
-| gpu/ (85 文件) | gpu/ 目录 (55 文件) | ✅ ~75% |
-| monitoring/ (10 文件) | 根目录 test_data_* + test_enhanced_monitoring + unit/engine | ⚠️ ~60% |
-| cli/ (18 文件) | unit/cli/ + 根目录 test_commands | ⚠️ ~55% |
-| config/ (8 文件) | unit/config/ | ✅ ~70% |
-| utils/ (30 文件) | unit/utils/ | ⚠️ ~40% |
-| automation/ (7 文件) | test_automation.py (仅测试 models.py) | ❌ ~15% |
-| wizard/ (11 文件) | test_first_run_wizard.py + test_wizard.py | ⚠️ ~50% |
-| web/ (2 文件) | unit/web/ | ✅ ~85% |
-| log_engine/ (8 文件) | unit/logging/ | ⚠️ ~60% |
-| start_menu/ | 无独立测试 | ❌ ~10% |
+| collision/ (22 文件) | unit/collision/ + acceptance/ + 根目录 | [WARN] ~50% |
+| core/ (17 文件) | unit/crypto/ + test_core_crypto.py | [OK] ~80% |
+| gpu/ (85 文件) | gpu/ 目录 (55 文件) | [OK] ~75% |
+| monitoring/ (10 文件) | 根目录 test_data_* + test_enhanced_monitoring + unit/engine | [WARN] ~60% |
+| cli/ (18 文件) | unit/cli/ + 根目录 test_commands | [WARN] ~55% |
+| config/ (8 文件) | unit/config/ | [OK] ~70% |
+| utils/ (30 文件) | unit/utils/ | [WARN] ~40% |
+| automation/ (7 文件) | test_automation.py (仅测试 models.py) | [FAIL] ~15% |
+| wizard/ (11 文件) | test_first_run_wizard.py + test_wizard.py | [WARN] ~50% |
+| web/ (2 文件) | unit/web/ | [OK] ~85% |
+| log_engine/ (8 文件) | unit/logging/ | [WARN] ~60% |
+| start_menu/ | 无独立测试 | [FAIL] ~10% |
 
 ### 5.3 关键缺口详细分析
 
@@ -244,39 +244,39 @@ unit/ ——— 单元测试    ├── logging/
 
 ### 7.1 密码学测试正确性
 
-- ✅ `test_core_crypto.py` 使用已知 SHA256 向量验证哈希正确性
-- ✅ Base58 编解码往返测试确保一致性
-- ✅ WIF 编解码往返测试
-- ✅ secp256k1 曲线参数验证（G 点在曲线上、N < P 等）
-- ✅ 私钥范围验证（0 < pk < N）
-- ✅ 恒定时间标量乘法验证（1 * G = G）
+- [OK] `test_core_crypto.py` 使用已知 SHA256 向量验证哈希正确性
+- [OK] Base58 编解码往返测试确保一致性
+- [OK] WIF 编解码往返测试
+- [OK] secp256k1 曲线参数验证（G 点在曲线上、N < P 等）
+- [OK] 私钥范围验证（0 < pk < N）
+- [OK] 恒定时间标量乘法验证（1 * G = G）
 
 ### 7.2 输入验证测试
 
-- ✅ 无效私钥长度测试（0/16/24/31/33/48/64 字节）
-- ✅ 无效地址格式边界测试
-- ✅ 无效 JSON 文件处理
-- ✅ 空数据/缺失文件处理
+- [OK] 无效私钥长度测试（0/16/24/31/33/48/64 字节）
+- [OK] 无效地址格式边界测试
+- [OK] 无效 JSON 文件处理
+- [OK] 空数据/缺失文件处理
 
 ### 7.3 资源泄漏测试
 
-- ✅ `tmp_path` 广泛用于文件操作测试（至少 90 处引用）
-- ✅ `TemporaryDirectory` 和 `NamedTemporaryFile` 使用
-- ✅ 会话级清理（`pytest_sessionfinish`）
-- ⚠️ 无专门的资源泄漏检测（如 `tracemalloc` 使用）
+- [OK] `tmp_path` 广泛用于文件操作测试（至少 90 处引用）
+- [OK] `TemporaryDirectory` 和 `NamedTemporaryFile` 使用
+- [OK] 会话级清理（`pytest_sessionfinish`）
+- [WARN] 无专门的资源泄漏检测（如 `tracemalloc` 使用）
 
 ### 7.4 时序侧信道测试
 
-- ❌ **没有专门的常量时间测试**。虽然 `test_core_crypto.py` 验证了恒定时间标量乘法结果正确性，但没有测试执行时间的均匀性
+- [FAIL] **没有专门的常量时间测试**。虽然 `test_core_crypto.py` 验证了恒定时间标量乘法结果正确性，但没有测试执行时间的均匀性
 - **建议**: 添加 `time.perf_counter` 执行的时序分布测试，验证恒定时间实现
 
 ### 7.5 安全性测试
 
-- ✅ `test_security.py` 包含私钥随机性、不可预测性测试
-- ✅ 安全内存清除测试（secure_key_manager）
-- ✅ 熵池检查（test_entropy_check.py）
-- ⚠️ 缺少 Web 安全测试（XSS/CSRF/注入）
-- ⚠️ 缺少时序侧信道测试
+- [OK] `test_security.py` 包含私钥随机性、不可预测性测试
+- [OK] 安全内存清除测试（secure_key_manager）
+- [OK] 熵池检查（test_entropy_check.py）
+- [WARN] 缺少 Web 安全测试（XSS/CSRF/注入）
+- [WARN] 缺少时序侧信道测试
 
 ---
 
@@ -327,13 +327,13 @@ unit/ ——— 单元测试    ├── logging/
 
 | 维度 | 评分 | 评级 |
 |------|------|------|
-| 规范审核 (Spec) | 85/100 | ✅ 良好 |
-| 质量审核 (Quality) | 82/100 | ✅ 良好 |
-| 合理审核 (Reasonableness) | 84/100 | ✅ 良好 |
-| 逻辑审核 (Logic) | 78/100 | ⚠️ 待改进 |
-| 类型审核 (Type) | 75/100 | ⚠️ 测试代码可接受 |
-| 数据正确性 (Data) | 80/100 | ✅ 良好 |
-| **综合评分** | **80/100** | **✅ 通过** |
+| 规范审核 (Spec) | 85/100 | [OK] 良好 |
+| 质量审核 (Quality) | 82/100 | [OK] 良好 |
+| 合理审核 (Reasonableness) | 84/100 | [OK] 良好 |
+| 逻辑审核 (Logic) | 78/100 | [WARN] 待改进 |
+| 类型审核 (Type) | 75/100 | [WARN] 测试代码可接受 |
+| 数据正确性 (Data) | 80/100 | [OK] 良好 |
+| **综合评分** | **80/100** | **[OK] 通过** |
 
 ### 9.2 最强项
 
@@ -355,33 +355,33 @@ unit/ ——— 单元测试    ├── logging/
 
 | 源码问题 | 测试覆盖 | 风险 |
 |----------|----------|------|
-| `automation/audit.py` except:pass | ❌ 无测试 | **高风险** |
-| `gpu/device.py` cl=None | ❌ 无测试 | **高风险** |
-| `multiprocess_engine.py` 存根 | ⚠️ 仅基本路径 | 中风险 |
-| `web/dashboard.py` 0.0.0.0 | ✅ 已覆盖 | 低风险 |
-| `secure_key_manager.clear()` 异常 | ✅ 已覆盖 | 低风险 |
-| `simd_optimizer.py` 边缘情况 | ✅ 已覆盖 | 低风险 |
+| `automation/audit.py` except:pass | [FAIL] 无测试 | **高风险** |
+| `gpu/device.py` cl=None | [FAIL] 无测试 | **高风险** |
+| `multiprocess_engine.py` 存根 | [WARN] 仅基本路径 | 中风险 |
+| `web/dashboard.py` 0.0.0.0 | [OK] 已覆盖 | 低风险 |
+| `secure_key_manager.clear()` 异常 | [OK] 已覆盖 | 低风险 |
+| `simd_optimizer.py` 边缘情况 | [OK] 已覆盖 | 低风险 |
 
 ---
 
 ## 十、全项目模块评分排序（含测试）
 
 ```
-1. config/     → 85/100 ✅
-2. utils/      → 84/100 ✅
-3. core/       → 82/100 ✅
-4. tests/      → 80/100 ✅  ← 新增
-5. cli/        → 82/100 ✅
-6. log_engine/ → 82/100 ✅
-7. monitoring/ → 80/100 ✅
-8. start_menu/ → 80/100 ✅
-9. wizard/     → 78/100 ⚠️
-10. gpu/       → 78/100 ⚠️
-11. collision/ → 75/100 ⚠️
-12. automation/→ 75/100 ⚠️
-13. web/       → 70/100 ⚠️
+1. config/     → 85/100 [OK]
+2. utils/      → 84/100 [OK]
+3. core/       → 82/100 [OK]
+4. tests/      → 80/100 [OK]  ← 新增
+5. cli/        → 82/100 [OK]
+6. log_engine/ → 82/100 [OK]
+7. monitoring/ → 80/100 [OK]
+8. start_menu/ → 80/100 [OK]
+9. wizard/     → 78/100 [WARN]
+10. gpu/       → 78/100 [WARN]
+11. collision/ → 75/100 [WARN]
+12. automation/→ 75/100 [WARN]
+13. web/       → 70/100 [WARN]
 ━━━━━━━━━━━━━━━━━━━━━━━━
-整体健康度   → 81/100 ✅
+整体健康度   → 81/100 [OK]
 ```
 
 ---

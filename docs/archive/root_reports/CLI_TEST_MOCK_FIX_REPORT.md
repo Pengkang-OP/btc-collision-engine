@@ -6,7 +6,7 @@
 
 ---
 
-## 📋 问题概述
+## [CHECKLIST] 问题概述
 
 ### 原始问题
 
@@ -18,9 +18,9 @@ TypeError: '>' not supported between instances of 'Mock' and 'int'
 
 ### 失败测试
 
-1. ❌ `test_main_random_mode`
-2. ❌ `test_main_range_mode`
-3. ❌ `test_main_brute_force_mode`
+1. [CROSS] `test_main_random_mode`
+2. [CROSS] `test_main_range_mode`
+3. [CROSS] `test_main_brute_force_mode`
 
 ### 错误位置
 
@@ -36,7 +36,7 @@ elapsed_sec = stats.elapsed if stats.elapsed > 0 else (
 
 ---
 
-## 🔍 根因分析
+## [SEARCH] 根因分析
 
 ### 问题1: Mock对象属性未正确配置
 
@@ -50,7 +50,7 @@ elapsed_sec = stats.elapsed if stats.elapsed > 0 else (
 **错误代码示例**:
 
 ```python
-# ❌ 错误：使用Mock()快捷创建，未设置数值属性
+# [CROSS] 错误：使用Mock()快捷创建，未设置数值属性
 mock_instance.get_stats.return_value = Mock(
     total_checked=1000,
     format_elapsed=lambda: '0:00:01',
@@ -70,7 +70,7 @@ mock_instance.get_stats.return_value = Mock(
 
 ---
 
-## ✅ 修复方案
+## [OK_CHECK] 修复方案
 
 ### 修复1: 正确配置Mock对象属性
 
@@ -83,7 +83,7 @@ mock_instance.get_stats.return_value = Mock(
 **修复代码**:
 
 ```python
-# ✅ 正确：显式创建Mock并设置所有必要属性
+# [OK_CHECK] 正确：显式创建Mock并设置所有必要属性
 mock_stats = Mock()
 mock_stats.total_checked = 1000
 mock_stats.elapsed = 1.0  # 修复: 设置为数值类型
@@ -105,10 +105,10 @@ mock_instance.get_stats.return_value = mock_stats
 **修复代码**:
 
 ```python
-# ❌ 修复前
+# [CROSS] 修复前
 assert '总检查数 : 1,000' in captured.out
 
-# ✅ 修复后
+# [OK_CHECK] 修复后
 assert '总检查数  : 1,000' in captured.out  # 两个空格
 ```
 
@@ -122,16 +122,16 @@ assert '总检查数  : 1,000' in captured.out  # 两个空格
 **修复代码**:
 
 ```python
-# ❌ 修复前
+# [CROSS] 修复前
 with patch('time.time', side_effect=[1000, 1001]):
 
-# ✅ 修复后
+# [OK_CHECK] 修复后
 with patch('time.time', side_effect=[1000, 1001, 1001, 1001]):
 ```
 
 ---
 
-## 📝 修改详情
+## [MEMO] 修改详情
 
 ### 文件: tests/test_cli.py
 
@@ -251,7 +251,7 @@ with patch('time.time', side_effect=[1000, 1001, 1001, 1001]):
 
 ---
 
-## 🧪 测试验证
+## [TEST] 测试验证
 
 ### 修复前测试结果
 
@@ -285,41 +285,41 @@ python -m pytest tests/test_cli.py tests/test_checkpoint_manager.py tests/test_e
 ============================= 45 passed in 8.32s ==============================
 ```
 
-**测试通过率**: ✅ **100%** (45/45)
+**测试通过率**: [OK_CHECK] **100%** (45/45)
 
 ---
 
-## 📊 修复影响评估
+## [CHART] 修复影响评估
 
 ### 正面影响
 
-1. ✅ **测试覆盖率提升** - CLI测试从57%提升到100%
-2. ✅ **代码质量提升** - 消除类型比较错误
-3. ✅ **文档准确性** - 集成报告可更新为100%测试通过
-4. ✅ **CI/CD稳定性** - 避免持续集成失败
+1. [OK_CHECK] **测试覆盖率提升** - CLI测试从57%提升到100%
+2. [OK_CHECK] **代码质量提升** - 消除类型比较错误
+3. [OK_CHECK] **文档准确性** - 集成报告可更新为100%测试通过
+4. [OK_CHECK] **CI/CD稳定性** - 避免持续集成失败
 
 ### 无负面影响
 
-- ✅ 不改变生产代码逻辑
-- ✅ 不影响实际功能
-- ✅ 不引入新依赖
-- ✅ 不改变API接口
+- [OK_CHECK] 不改变生产代码逻辑
+- [OK_CHECK] 不影响实际功能
+- [OK_CHECK] 不引入新依赖
+- [OK_CHECK] 不改变API接口
 
 ---
 
-## 🎓 经验总结
+## [GUIDE] 经验总结
 
 ### Mock对象最佳实践
 
 1. **显式设置数值属性**
 
    ```python
-   # ✅ 推荐：显式创建并设置属性
+   # [OK_CHECK] 推荐：显式创建并设置属性
    mock_stats = Mock()
    mock_stats.elapsed = 1.0
    mock_stats.start_time = 1000
    
-   # ❌ 避免：使用快捷方式可能遗漏属性
+   # [CROSS] 避免：使用快捷方式可能遗漏属性
    Mock(elapsed=1.0, start_time=1000)
    ```
 
@@ -330,10 +330,10 @@ python -m pytest tests/test_cli.py tests/test_checkpoint_manager.py tests/test_e
 3. **提供足够的side_effect值**
 
    ```python
-   # ✅ 推荐：分析代码调用次数，提供足够值
+   # [OK_CHECK] 推荐：分析代码调用次数，提供足够值
    with patch('time.time', side_effect=[1000, 1001, 1001, 1001]):
    
-   # ❌ 避免：值不足导致StopIteration
+   # [CROSS] 避免：值不足导致StopIteration
    with patch('time.time', side_effect=[1000, 1001]):
    ```
 
@@ -364,13 +364,13 @@ python -m pytest tests/test_cli.py tests/test_checkpoint_manager.py tests/test_e
 
 ---
 
-## 📋 后续建议
+## [CHECKLIST] 后续建议
 
 ### 短期 (已完成)
 
-1. ✅ 修复CLI单元测试
-2. ✅ 验证所有测试通过
-3. ✅ 更新集成报告
+1. [OK_CHECK] 修复CLI单元测试
+2. [OK_CHECK] 验证所有测试通过
+3. [OK_CHECK] 更新集成报告
 
 ### 中期 (建议)
 
@@ -386,9 +386,9 @@ python -m pytest tests/test_cli.py tests/test_checkpoint_manager.py tests/test_e
 
 ---
 
-## 🏁 结论
+## [E] 结论
 
-**修复状态**: ✅ **完全修复**
+**修复状态**: [OK_CHECK] **完全修复**
 
 **修复结果**:
 

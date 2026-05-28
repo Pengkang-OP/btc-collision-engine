@@ -18,16 +18,16 @@ def test_security_check_integration():
         from src.cli.main import _run_main  # noqa: F401 — 导入可用性检测
         from src.core.crypto_backend import verify_production_ready
 
-        print("  ✅ 导入成功")
+        print("  OK 导入成功")
     except ImportError as e:
-        print(f"  ❌ 导入失败: {e}")
+        print(f"  ERR 导入失败: {e}")
         return False
 
     # 测试2: 验证生产模式安全检查
     print("\n[测试2] 生产模式安全检查:")
     print("-" * 70)
     is_ready, message = verify_production_ready()
-    print(f"  状态: {'✅ 通过' if is_ready else '❌ 未通过'}")
+    print(f"  状态: {'OK 通过' if is_ready else 'ERR 未通过'}")
     print(f"  消息:\n{message}")
 
     # 测试3: 参数解析器检查
@@ -43,9 +43,9 @@ def test_security_check_integration():
     try:
         sys.argv = ["test"] + test_args
         args = parse_args()
-        print(f"  ✅ --production 参数: {args.production}")
-        print(f"  ✅ --secure 参数: {args.secure}")
-        print(f"  ✅ --skip-security-check 参数: {args.skip_security_check}")
+        print(f"  OK --production 参数: {args.production}")
+        print(f"  OK --secure 参数: {args.secure}")
+        print(f"  OK --skip-security-check 参数: {args.skip_security_check}")
     finally:
         sys.argv = original_argv
 
@@ -57,7 +57,7 @@ def test_security_check_integration():
         sys.argv = ["test", "--help"]
         with contextlib.suppress(SystemExit):
             parse_args()
-        print("  ✅ 帮助信息可正常显示")
+        print("  OK 帮助信息可正常显示")
     finally:
         sys.argv = original_argv
 
@@ -74,13 +74,13 @@ def test_security_check_integration():
             parse_args()
         help_text = sys.stdout.getvalue()
         if "--production" in help_text:
-            print("  ✅ --production 选项已添加")
+            print("  OK --production 选项已添加")
         if "--secure" in help_text:
-            print("  ✅ --secure 选项已添加")
+            print("  OK --secure 选项已添加")
         if "--skip-security-check" in help_text:
-            print("  ✅ --skip-security-check 选项已添加")
+            print("  OK --skip-security-check 选项已添加")
         if "安全选项" in help_text:
-            print("  ✅ 安全选项分组已添加")
+            print("  OK 安全选项分组已添加")
     finally:
         sys.stdout = original_stdout
         sys.argv = original_argv
@@ -97,7 +97,7 @@ if __name__ == "__main__":
         success = test_security_check_integration()
         sys.exit(0 if success else 1)
     except Exception as e:
-        print(f"\n❌ 测试失败: {e}")
+        print(f"\nERR 测试失败: {e}")
         import traceback
 
         traceback.print_exc()

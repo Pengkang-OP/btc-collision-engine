@@ -16,7 +16,7 @@ import sys
 # 确保项目根目录在路径中（必须在 src 导入之前执行）
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from src.cli.main import main  # 架构必要：sys.path.insert 后立即导入  # noqa: E402
+from src.cli.main import main  # 架构必要：sys.path.insert 后立即导入
 
 if __name__ == "__main__":
     main()

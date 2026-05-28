@@ -40,10 +40,10 @@ def run_test_file(test_file):
                 start_time = time.time()
                 test_func()
                 elapsed = time.time() - start_time
-                print(f"✅ 通过 ({elapsed:.2f}s)")
+                print(f"OK 通过 ({elapsed:.2f}s)")
                 passed += 1
             except Exception as e:
-                print("❌ 失败")
+                print("ERR 失败")
                 errors.append((test_func_name, str(e), traceback.format_exc()))
                 failed += 1
 
@@ -51,7 +51,7 @@ def run_test_file(test_file):
         return passed, failed, errors
 
     except Exception as e:
-        print(f"  ❌ 导入失败: {e}")
+        print(f"  ERR 导入失败: {e}")
         return 0, 1, [("import", str(e), traceback.format_exc())]
 
 
@@ -78,7 +78,7 @@ def main():
 
     for test_file in test_files:
         if not os.path.exists(test_file):
-            print(f"\n⚠️  跳过不存在的文件: {test_file}")
+            print(f"\nWARN  跳过不存在的文件: {test_file}")
             continue
 
         passed, failed, errors = run_test_file(test_file)
@@ -91,8 +91,8 @@ def main():
     print("测试总结")
     print(f"{'=' * 80}")
     print(f"总测试数: {total_passed + total_failed}")
-    print(f"✅ 通过: {total_passed}")
-    print(f"❌ 失败: {total_failed}")
+    print(f"OK 通过: {total_passed}")
+    print(f"ERR 失败: {total_failed}")
 
     if total_passed + total_failed > 0:
         pass_rate = (total_passed / (total_passed + total_failed)) * 100
@@ -109,9 +109,9 @@ def main():
 
     print(f"\n{'=' * 80}")
     if total_failed == 0:
-        print("🎉 所有测试通过! 无回归!")
+        print("PARTY 所有测试通过! 无回归!")
     else:
-        print(f"⚠️  有 {total_failed} 个测试失败")
+        print(f"WARN  有 {total_failed} 个测试失败")
     print(f"{'=' * 80}")
 
     return 0 if total_failed == 0 else 1

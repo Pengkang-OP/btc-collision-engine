@@ -155,12 +155,12 @@ def test_gpu_utilization(mode: str = "async", duration: int = 60):
         if mode == "sync":
             if hasattr(engine, "_async_executor") and engine._async_executor:
                 engine._async_executor = None
-                print("  [配置] ✓ 异步执行器已禁用(同步模式)")
+                print("  [配置] OK 异步执行器已禁用(同步模式)")
         elif hasattr(engine, "_async_executor") and engine._async_executor:
             queue_depth = getattr(engine._async_executor, "queue_depth", "N/A")
-            print(f"  [配置] ✓ 异步执行器已启用 (队列深度: {queue_depth})")
+            print(f"  [配置] OK 异步执行器已启用 (队列深度: {queue_depth})")
         else:
-            print("  [错误] ✗ 异步执行器未启用!")
+            print("  [错误] ERR 异步执行器未启用!")
             return
 
         init_time = time.time() - init_start
@@ -181,7 +181,7 @@ def test_gpu_utilization(mode: str = "async", duration: int = 60):
         # 后台线程: 超时后强制退出
         def force_exit():
             time.sleep(duration)
-            print(f"\n  ⏰ [{duration}秒倒计时结束] 强制退出...")
+            print(f"\n  ALARM [{duration}秒倒计时结束] 强制退出...")
             os._exit(0)
 
         exit_thread = threading.Thread(target=force_exit, daemon=True)
@@ -234,7 +234,7 @@ def test_gpu_utilization(mode: str = "async", duration: int = 60):
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(result, f, indent=2, ensure_ascii=False)
 
-        print(f"\n  📊 详细数据已保存: {filepath}")
+        print(f"\n  STATS 详细数据已保存: {filepath}")
 
     except Exception as e:
         print(f"\n  [错误] 测试失败: {e}")

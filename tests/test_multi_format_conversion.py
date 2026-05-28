@@ -44,7 +44,7 @@ def main():
     print(f"Starts with '1': {p2pkh_address[0] == '1'}")
 
     result = validator.validate_address(p2pkh_address)
-    print(f"Validation: {'✓ PASS' if result.success else '✗ FAIL'}")
+    print(f"Validation: {'[OK] PASS' if result.success else '[FAIL] FAIL'}")
     if result.success:
         print(f"Address Type: {result.details.get('address_type', 'N/A')}")
         print(f"Checksum Valid: {result.details.get('checksum_valid', 'N/A')}")
@@ -53,7 +53,7 @@ def main():
     print("\n" + "=" * 80)
     print("[2] P2SH Address (Pay-to-Script-Hash)")
     print("-" * 80)
-    print("ℹ P2SH/Bech32 conversion requires AddressConverter (module removed)")
+    print("[INFO] P2SH/Bech32 conversion requires AddressConverter (module removed)")
 
     # 4. Taproot地址生成 (SegWit v1)
     print("\n" + "=" * 80)
@@ -65,11 +65,11 @@ def main():
         print(f"Generated Taproot Address: {taproot_address}")
         print(f"Starts with 'bc1p': {taproot_address.startswith('bc1p')}")
         result = validator.validate_address(taproot_address)
-        print(f"Validation: {'✓ PASS' if result.success else '✗ FAIL'}")
+        print(f"Validation: {'[OK] PASS' if result.success else '[FAIL] FAIL'}")
         if result.success:
             print(f"Address Type: {result.details.get('address_type', 'N/A')}")
     except Exception as e:
-        print(f"❌ Taproot conversion failed: {e}")
+        print(f"ERR Taproot conversion failed: {e}")
 
     # 5. P2PKH <-> P2SH 转换
     print("\n" + "=" * 80)
@@ -85,9 +85,11 @@ def main():
         print(f"P2SH: {p2pkh_to_p2sh}")
         print("  ↓ Convert")
         print(f"P2PKH: {p2sh_to_p2pkh}")
-        print(f"\nRound-trip conversion: {'✓ PASS' if p2pkh_address == p2sh_to_p2pkh else '✗ FAIL'}")
+        print(
+            f"\nRound-trip conversion: {'[OK] PASS' if p2pkh_address == p2sh_to_p2pkh else '[FAIL] FAIL'}"
+        )
     except Exception as e:
-        print(f"❌ P2PKH <-> P2SH conversion failed: {e}")
+        print(f"ERR P2PKH <-> P2SH conversion failed: {e}")
 
     # 6. Bech32 -> P2SH
     print("\n" + "=" * 80)
@@ -104,10 +106,10 @@ def main():
         print("  ↓ Convert")
         print(f"Bech32: {wrapped_to_native}")
         print(
-            f"\nRound-trip conversion: {'✓ PASS' if bech32_address == wrapped_to_native else '✗ FAIL'}",
+            f"\nRound-trip conversion: {'[OK] PASS' if bech32_address == wrapped_to_native else '[FAIL] FAIL'}",
         )
     except Exception as e:
-        print(f"❌ Bech32 <-> P2SH-P2WPKH conversion failed: {e}")
+        print(f"ERR Bech32 <-> P2SH-P2WPKH conversion failed: {e}")
 
     # 7. 已知地址验证
     print("\n" + "=" * 80)
@@ -122,7 +124,7 @@ def main():
 
     for addr, addr_type, description in known_addresses:
         result = validator.validate_address(addr)
-        status = "✓" if result.success else "✗"
+        status = "[OK]" if result.success else "[FAIL]"
         detected_type = result.details.get("address_type", "N/A") if result.success else "N/A"
         print(f"{status} {addr}")
         print(f"  Type: {addr_type} (Expected), {detected_type} (Detected)")
@@ -181,14 +183,14 @@ def main():
     all_passed = all(test_results.values())
 
     for test_name, result in test_results.items():
-        status = "✓ PASS" if result else "✗ FAIL"
+        status = "[OK] PASS" if result else "[FAIL] FAIL"
         print(f"{status} {test_name}")
 
     print("\n" + "=" * 80)
     if all_passed:
-        print("✓ ALL FORMAT CONVERSIONS WORKING CORRECTLY")
+        print("[OK] ALL FORMAT CONVERSIONS WORKING CORRECTLY")
     else:
-        print("✗ SOME FORMAT CONVERSIONS FAILED")
+        print("[FAIL] SOME FORMAT CONVERSIONS FAILED")
     print("=" * 80)
 
 

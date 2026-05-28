@@ -1,6 +1,6 @@
 # GPU自适应优化系统 - 快速参考
 
-## 🚀 快速开始
+## [QUICK] 快速开始
 
 ### 1. 使用优化系统（自动模式）
 
@@ -32,7 +32,7 @@ print(f"平均速度: {report['performance']['avg_speed_keys_per_sec']:,.0f} key
 print(f"调整次数: {report['performance']['total_adjustments']}")
 ```
 
-## 📊 厂商默认配置
+## [CHART] 厂商默认配置
 
 | GPU厂商 | Batch Size | Work Group | 内存使用率 | 特殊优化 |
 |--------|-----------|-----------|-----------|---------|
@@ -40,7 +40,7 @@ print(f"调整次数: {report['performance']['total_adjustments']}")
 | **AMD** | 524,288 | 256 | 60% | 异步+缓冲池 |
 | **Intel** | 262,144 | 128 | 50% | uint32 workaround |
 
-## 🔄 自适应调整规则
+## [REFRESH] 自适应调整规则
 
 ### 何时减小 Batch Size？
 
@@ -56,7 +56,7 @@ print(f"调整次数: {report['performance']['total_adjustments']}")
 |-----|------|------|
 | 性能良好 | 执行 < 500ms 且 错误 < 0.5% | 增加 8192 |
 
-## 🎯 显存优化参考
+## [TARGET] 显存优化参考
 
 | 显存大小 | Batch Size | 内存使用率 | 适用场景 |
 |---------|-----------|-----------|---------|
@@ -65,7 +65,7 @@ print(f"调整次数: {report['performance']['total_adjustments']}")
 | 4-8GB | 65,536-131,072 | 50-60% | 中端独显 |
 | 8GB+ | 131,072-2M | 70-80% | 高端独显 |
 
-## 🔧 常见问题
+## [WRENCH] 常见问题
 
 ### Q1: 如何知道优化系统是否在工作？
 
@@ -95,12 +95,12 @@ engine = GPUCollisionEngine(
 
 ### Q4: Intel Arc GPU注意事项
 
-- ✅ 系统会自动启用 `uint32 workaround`
-- ✅ 自动禁用异步执行（避免hang）
-- ✅ 首次编译可能需要20-30秒（正常）
-- ⚠️ 推荐使用 `range_scan` 模式
+- [OK_CHECK] 系统会自动启用 `uint32 workaround`
+- [OK_CHECK] 自动禁用异步执行（避免hang）
+- [OK_CHECK] 首次编译可能需要20-30秒（正常）
+- [WARN] 推荐使用 `range_scan` 模式
 
-## 📈 性能监控
+## [PERF] 性能监控
 
 ### 查看实时性能
 
@@ -126,7 +126,7 @@ for rec in report['recommendations']:
 建议: Intel GPU建议启用uint32 workaround避免hang bug
 ```
 
-## 📁 相关文件
+## [DIR] 相关文件
 
 | 文件 | 说明 |
 |-----|------|
@@ -136,14 +136,14 @@ for rec in report['recommendations']:
 | `GPU_PERFORMANCE_OPTIMIZATION.md` | 完整文档 |
 | `demo_gpu_optimizer.py` | 演示脚本 |
 
-## ⚡ 性能指标
+## [BOLT] 性能指标
 
 - **优化器开销**: < 0.01% 吞吐量影响
 - **内存占用**: < 100KB
 - **调整频率**: 每10秒一次
 - **分析耗时**: < 1ms
 
-## 🎓 最佳实践
+## [GUIDE] 最佳实践
 
 1. **首次运行**: 允许系统运行30秒以收集足够的性能数据
 2. **监控日志**: 关注自适应调整日志，了解系统决策
@@ -151,7 +151,7 @@ for rec in report['recommendations']:
 4. **保持驱动最新**: GPU驱动更新可能显著改善性能
 5. **合理设置batch_size**: 使用 `None` 让系统自动选择
 
-## 🔍 调试技巧
+## [SEARCH] 调试技巧
 
 ### 启用详细日志
 

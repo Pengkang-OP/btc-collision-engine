@@ -10,8 +10,8 @@ import pytest
 
 pytestmark = pytest.mark.gpu  # 需要真实GPU硬件
 
-from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
-from src.utils import get_configured_logger, init_logging  # noqa: E402
+from src.collision.gpu.engine import GPUCollisionEngine
+from src.utils import get_configured_logger, init_logging
 
 # 配置日志
 init_logging()
@@ -24,7 +24,7 @@ def _run_gpu_engine_test(test_targets, test_name: str) -> None:
         engine = GPUCollisionEngine(device_index=0, batch_size=1024, targets=test_targets)
         return engine
     except Exception as e:
-        logger.error("❌ %s 引擎初始化失败: %s", test_name, e)
+        logger.error("ERR %s 引擎初始化失败: %s", test_name, e)
         raise
 
 
@@ -36,7 +36,7 @@ def test_single_gpu_initialization():
     engine = None
     try:
         engine = _run_gpu_engine_test(test_targets, "单GPU初始化")
-        logger.info("✅ 单GPU初始化成功")
+        logger.info("OK 单GPU初始化成功")
 
         device_info = engine.get_device_info()
         logger.info("设备信息: %s", device_info)
@@ -92,7 +92,7 @@ def test_single_gpu_resource_release():
         logger.info("单GPU引擎已停止，资源释放耗时: %.2f秒", elapsed)
 
         time.sleep(3)
-        logger.info("✅ 单GPU资源释放成功")
+        logger.info("OK 单GPU资源释放成功")
     finally:
         if engine:
             try:
@@ -113,18 +113,18 @@ def main():
     for name, test_func in tests:
         try:
             test_func()
-            logger.info("✅ %s 成功", name)
+            logger.info("OK %s 成功", name)
         except Exception as e:
-            logger.error("❌ %s 失败: %s", name, e)
+            logger.error("ERR %s 失败: %s", name, e)
             import traceback
 
             traceback.print_exc()
             all_ok = False
 
     if all_ok:
-        logger.info("✅ 单GPU测试全部成功")
+        logger.info("OK 单GPU测试全部成功")
     else:
-        logger.error("❌ 单GPU测试部分失败")
+        logger.error("ERR 单GPU测试部分失败")
 
 
 if __name__ == "__main__":

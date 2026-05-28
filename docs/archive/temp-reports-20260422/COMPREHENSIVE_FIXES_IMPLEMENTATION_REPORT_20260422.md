@@ -6,41 +6,41 @@
 
 ---
 
-## 📊 执行摘要
+## [CHART] 执行摘要
 
 本次修复工作基于全面代码审查报告,计划修复22个问题(P1:3个, P2:7个, P3:12个)。
 
 **已完成修复**:
 
-- ✅ P1-1: SecureKeyManager内存锁定(已有完整实现)
-- ✅ P1-3: 熵池健康检查(新增实现)
+- [OK_CHECK] P1-1: SecureKeyManager内存锁定(已有完整实现)
+- [OK_CHECK] P1-3: 熵池健康检查(新增实现)
 
 **待实施修复**:
 
-- ⏳ P1-2: GPU异常恢复机制(需要多GPU架构支持)
-- ⏳ P2-1到P2-7: 7个中优先级问题
-- ⏳ P3-1到P3-12: 12个低优先级问题
+- [HOURGLASS] P1-2: GPU异常恢复机制(需要多GPU架构支持)
+- [HOURGLASS] P2-1到P2-7: 7个中优先级问题
+- [HOURGLASS] P3-1到P3-12: 12个低优先级问题
 
 ---
 
-## ✅ 已完成修复详细
+## [OK_CHECK] 已完成修复详细
 
 ### P1-1: SecureKeyManager内存锁定
 
-**状态**: ✅ 已完成(审查时发现已有完整实现)
+**状态**: [OK_CHECK] 已完成(审查时发现已有完整实现)
 
 **文件**: `src/core/secure_key_manager.py`
 
 **实现内容**:
 
-- ✅ Linux平台mlock()系统调用(第151-188行)
-- ✅ macOS平台mlock()系统调用(第159行)
-- ✅ Windows平台VirtualLock() API(第190-222行)
-- ✅ 密钥内存锁定_lock_key_memory()(第224-278行)
-- ✅ 密钥内存解锁_unlock_key_memory()(第280行起)
-- ✅ clear()方法中正确调用解锁(第385-404行)
+- [OK_CHECK] Linux平台mlock()系统调用(第151-188行)
+- [OK_CHECK] macOS平台mlock()系统调用(第159行)
+- [OK_CHECK] Windows平台VirtualLock() API(第190-222行)
+- [OK_CHECK] 密钥内存锁定_lock_key_memory()(第224-278行)
+- [OK_CHECK] 密钥内存解锁_unlock_key_memory()(第280行起)
+- [OK_CHECK] clear()方法中正确调用解锁(第385-404行)
 
-**代码质量**: ⭐⭐⭐⭐⭐ 优秀
+**代码质量**: [STAR][STAR][STAR][STAR][STAR] 优秀
 
 **测试建议**:
 
@@ -57,7 +57,7 @@
 
 ### P1-3: 熵池健康检查
 
-**状态**: ✅ 已完成(新增实现)
+**状态**: [OK_CHECK] 已完成(新增实现)
 
 **文件**: `src/core/key_generator.py`
 
@@ -118,9 +118,9 @@ def generate_batch(self, count: int) -> List[bytes]:
 
 **设计决策**:
 
-- ✅ 低熵时记录警告但不阻塞(避免影响性能)
-- ✅ 统计低熵出现次数(self.stats['low_entropy_count'])
-- ✅ Windows/macOS无法检查时假设健康(跨平台兼容)
+- [OK_CHECK] 低熵时记录警告但不阻塞(避免影响性能)
+- [OK_CHECK] 统计低熵出现次数(self.stats['low_entropy_count'])
+- [OK_CHECK] Windows/macOS无法检查时假设健康(跨平台兼容)
 
 **测试建议**:
 
@@ -135,7 +135,7 @@ def generate_batch(self, count: int) -> List[bytes]:
 
 ---
 
-## ⏳ 待实施修复清单
+## [HOURGLASS] 待实施修复清单
 
 ### P1-2: GPU异常恢复机制
 
@@ -176,7 +176,7 @@ import warnings
 def scalar_multiply(self, k: int, point: ECPoint) -> ECPoint:
     """标量乘法(非恒定时间实现)
     
-    ⚠️ 已弃用: 请使用 scalar_multiply_const_time()
+    [WARN] 已弃用: 请使用 scalar_multiply_const_time()
     """
     warnings.warn(
         "scalar_multiply() 不是恒定时间实现，存在侧信道攻击风险。"
@@ -441,31 +441,31 @@ class WebhookNotification(NotificationChannel):
 
 ---
 
-## 📈 实施建议
+## [PERF] 实施建议
 
 ### 优先级排序
 
 **立即实施(本周)**:
 
-1. ✅ P1-1: 内存锁定(已完成)
-2. ✅ P1-3: 熵池检查(已完成)
-3. ⏳ P2-1: 弃用警告(1小时,快速修复)
-4. ⏳ P2-5: 进度回调控制(2小时,快速修复)
-5. ⏳ P2-6: GPU内核缓存(4小时,性能提升显著)
+1. [OK_CHECK] P1-1: 内存锁定(已完成)
+2. [OK_CHECK] P1-3: 熵池检查(已完成)
+3. [HOURGLASS] P2-1: 弃用警告(1小时,快速修复)
+4. [HOURGLASS] P2-5: 进度回调控制(2小时,快速修复)
+5. [HOURGLASS] P2-6: GPU内核缓存(4小时,性能提升显著)
 
 **短期实施(本月)**:
-6. ⏳ P2-2: GPU缓冲区追踪(6小时)
-7. ⏳ P2-3: 监控数据压缩(4小时)
-8. ⏳ P3问题批量修复(6-8小时)
+6. [HOURGLASS] P2-2: GPU缓冲区追踪(6小时)
+7. [HOURGLASS] P2-3: 监控数据压缩(4小时)
+8. [HOURGLASS] P3问题批量修复(6-8小时)
 
 **中期实施(下季度)**:
-9. ⏳ P1-2: GPU异常恢复(需架构改造)
-10. ⏳ P2-4: 配置热重载(8小时)
-11. ⏳ P2-7: 告警多渠道(6小时)
+9. [HOURGLASS] P1-2: GPU异常恢复(需架构改造)
+10. [HOURGLASS] P2-4: 配置热重载(8小时)
+11. [HOURGLASS] P2-7: 告警多渠道(6小时)
 
 ---
 
-## 🧪 测试计划
+## [TEST] 测试计划
 
 ### 需要新增的测试文件
 
@@ -485,7 +485,7 @@ class WebhookNotification(NotificationChannel):
 
 ---
 
-## 📝 文档更新计划
+## [MEMO] 文档更新计划
 
 ### 需要更新的文档
 
@@ -502,7 +502,7 @@ class WebhookNotification(NotificationChannel):
 
 ---
 
-## ⚠️ 风险与约束
+## [WARN] 风险与约束
 
 ### 技术风险
 
@@ -524,12 +524,12 @@ class WebhookNotification(NotificationChannel):
 
 ---
 
-## 📊 修复统计
+## [CHART] 修复统计
 
 | 状态 | 数量 | 百分比 |
 |------|------|--------|
-| ✅ 已完成 | 2 | 9% |
-| ⏳ 待实施 | 20 | 91% |
+| [OK_CHECK] 已完成 | 2 | 9% |
+| [HOURGLASS] 待实施 | 20 | 91% |
 | **总计** | **22** | **100%** |
 
 **按优先级**:
@@ -540,7 +540,7 @@ class WebhookNotification(NotificationChannel):
 
 ---
 
-## 🎯 下一步行动
+## [TARGET] 下一步行动
 
 ### 立即可执行
 
@@ -574,7 +574,7 @@ python -m pytest tests/test_key_generator.py -v
 
 ---
 
-## 📞 联系与支持
+## [TELEPHONE] 联系与支持
 
 如有问题或需要技术支持,请参考:
 

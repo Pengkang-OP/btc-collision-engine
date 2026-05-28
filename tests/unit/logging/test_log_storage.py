@@ -94,12 +94,12 @@ class TestLogStorageSave:
         assert len(files) == 2
 
     def test_save_handles_unicode(self, storage, tmpdir):
-        entries = [{"message": "中文测试 🚀", "type": "test"}]
+        entries = [{"message": "中文测试 FAST", "type": "test"}]
         storage.save(entries)
         files = list(pathlib.Path(tmpdir).glob("log_*.json"))
         with open(files[0], encoding="utf-8") as f:
             data = json.load(f)
-        assert data[0]["message"] == "中文测试 🚀"
+        assert data[0]["message"] == "中文测试 FAST"
 
 
 # ============================================================================

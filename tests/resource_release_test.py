@@ -11,7 +11,7 @@ import pytest
 
 pytestmark = pytest.mark.gpu  # 需要真实GPU硬件
 
-from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
+from src.collision.gpu.engine import GPUCollisionEngine
 
 # 配置日志
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -66,6 +66,6 @@ def test_resource_release():
 if __name__ == "__main__":
     success = test_resource_release()
     if success:
-        logger.info("✅ GPU资源释放测试成功")
+        logger.info("OK GPU资源释放测试成功")
     else:
-        logger.error("❌ GPU资源释放测试失败")
+        logger.error("ERR GPU资源释放测试失败")

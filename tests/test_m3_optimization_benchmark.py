@@ -169,8 +169,8 @@ class TestM3OptimizationBenchmark:
         print("\nM3优化内存安全验证:")
         print("  生成私钥数: 10")
         print(f"  不同私钥数: {len(unique_keys)}")
-        print("  私钥清零机制: ✓ 正常")
-        print("  内存安全性: ✓ 通过")
+        print("  私钥清零机制: [OK] 正常")
+        print("  内存安全性: [OK] 通过")
 
 
 class TestM3OptimizationComparison:

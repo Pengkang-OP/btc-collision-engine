@@ -164,10 +164,10 @@ def module_coverage(module_files: list[str], mod_name: str = "") -> dict:
         combined = result.stdout + "\n" + result.stderr
         return parse_coverage_table(combined)
     except subprocess.TimeoutExpired:
-        print("  ⚠️ 超时")
+        print("  WARN 超时")
         return {}
     except Exception as e:
-        print(f"  ⚠️ 错误: {e}")
+        print(f"  WARN 错误: {e}")
         return {}
 
 
@@ -181,7 +181,7 @@ def main():
         if not patterns:
             continue
         print(f"\n{'=' * 60}")
-        print(f"📦 模块: {mod_name} ({len(patterns)} 测试文件)")
+        print(f"[PACKAGE] 模块: {mod_name} ({len(patterns)} 测试文件)")
         print(f"{'=' * 60}")
         cov_data = module_coverage(patterns, mod_name)
 
@@ -212,7 +212,7 @@ def main():
         )
 
     print(f"\n\n{'=' * 60}")
-    print("📊 汇总：按覆盖率从低到高")
+    print("STATS 汇总：按覆盖率从低到高")
     print(f"{'=' * 60}")
     print(f"{'模块':<15} {'覆盖%':>8} {'覆盖行':>10} {'总行数':>8} {'文件数':>8}")
     print("-" * 55)

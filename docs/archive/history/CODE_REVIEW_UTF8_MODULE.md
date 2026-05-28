@@ -6,7 +6,7 @@
 
 ---
 
-## 📊 总体评价
+## [CHART] 总体评价
 
 ### 评分: **7.5/10** - 良好
 
@@ -14,33 +14,33 @@ UTF-8共享模块设计合理，解决了代码重复问题，测试覆盖基本
 
 ---
 
-## ✅ 优点
+## [OK_CHECK] 优点
 
 ### 1. 模块化设计优秀
-- ✅ 单一职责原则：模块专注于UTF-8编码设置
-- ✅ 接口简洁：一行代码即可完成设置
-- ✅ 跨平台安全：使用 `sys.platform == 'win32'` 条件判断
+- [OK_CHECK] 单一职责原则：模块专注于UTF-8编码设置
+- [OK_CHECK] 接口简洁：一行代码即可完成设置
+- [OK_CHECK] 跨平台安全：使用 `sys.platform == 'win32'` 条件判断
 
 ### 2. 版本管理完善
-- ✅ 模块级版本信息（`__version__`, `__author__`, `__date__`）
-- ✅ 文档字符串完整
-- ✅ 使用示例清晰
+- [OK_CHECK] 模块级版本信息（`__version__`, `__author__`, `__date__`）
+- [OK_CHECK] 文档字符串完整
+- [OK_CHECK] 使用示例清晰
 
 ### 3. 测试策略正确
-- ✅ 使用mock避免修改真实的全局状态
-- ✅ 测试独立性良好
-- ✅ 覆盖Windows和Linux平台
+- [OK_CHECK] 使用mock避免修改真实的全局状态
+- [OK_CHECK] 测试独立性良好
+- [OK_CHECK] 覆盖Windows和Linux平台
 
 ### 4. 异常处理合理
-- ✅ 精确捕获 `OSError` 和 `AttributeError`
-- ✅ 不会因为API失败而中断程序
-- ✅ `errors='replace'` 防止编码错误崩溃
+- [OK_CHECK] 精确捕获 `OSError` 和 `AttributeError`
+- [OK_CHECK] 不会因为API失败而中断程序
+- [OK_CHECK] `errors='replace'` 防止编码错误崩溃
 
 ---
 
-## 🔍 发现的问题
+## [SEARCH] 发现的问题
 
-### ❌ 严重问题（必须修复）
+### [CROSS] 严重问题（必须修复）
 
 #### 问题1: 集成方式导致代码重复和路径混乱
 
@@ -48,7 +48,7 @@ UTF-8共享模块设计合理，解决了代码重复问题，测试覆盖基本
 
 **问题描述**:
 ```python
-# ❌ 当前实现 - 混乱且重复
+# [CROSS] 当前实现 - 混乱且重复
 import sys
 from pathlib import Path
 # 添加工具目录到路径
@@ -72,7 +72,7 @@ setup_windows_utf8()
 
 **修复建议**:
 ```python
-# ✅ 推荐实现
+# [OK_CHECK] 推荐实现
 # 在文件头部（其他import之后）
 from tools.utf8_helper import setup_windows_utf8
 setup_windows_utf8()
@@ -88,7 +88,7 @@ setup_windows_utf8()
 
 **问题描述**:
 ```python
-# ❌ 缺少类型注解
+# [CROSS] 缺少类型注解
 def setup_windows_utf8():
     """..."""
     pass
@@ -110,7 +110,7 @@ def get_console_encoding():
 
 **修复建议**:
 ```python
-# ✅ 添加类型注解
+# [OK_CHECK] 添加类型注解
 def setup_windows_utf8() -> None:
     """设置Windows控制台UTF-8编码"""
     pass
@@ -126,7 +126,7 @@ def get_console_encoding() -> str | None:
 
 ---
 
-### ⚠️ 中等问题（建议修复）
+### [WARN] 中等问题（建议修复）
 
 #### 问题3: 测试覆盖不够全面
 
@@ -136,7 +136,7 @@ def get_console_encoding() -> str | None:
 
 1. **异常处理测试**:
 ```python
-# ❌ 缺失：测试Windows API调用失败
+# [CROSS] 缺失：测试Windows API调用失败
 @patch('sys.platform', 'win32')
 @patch('tools.utf8_helper.ctypes.windll.kernel32.SetConsoleOutputCP', 
        side_effect=OSError("Access denied"))
@@ -149,17 +149,17 @@ def test_handles_api_failure(self, mock_api):
 
 2. **errors='replace'参数测试**:
 ```python
-# ❌ 缺失：验证TextIOWrapper使用正确的参数
+# [CROSS] 缺失：验证TextIOWrapper使用正确的参数
 ```
 
 3. **is_utf8_setup_needed函数测试**:
 ```python
-# ❌ 缺失：测试不同编码场景
+# [CROSS] 缺失：测试不同编码场景
 ```
 
 4. **get_console_encoding函数测试**:
 ```python
-# ❌ 缺失：测试返回值正确性
+# [CROSS] 缺失：测试返回值正确性
 ```
 
 **建议补充**: 至少添加4-6个测试用例覆盖上述场景
@@ -175,7 +175,7 @@ def test_handles_api_failure(self, mock_api):
 except (OSError, AttributeError):
     # 如果API调用失败，继续执行
     # TextIOWrapper仍然可以工作
-    pass  # ❌ 静默失败
+    pass  # [CROSS] 静默失败
 ```
 
 **问题分析**:
@@ -228,7 +228,7 @@ def is_utf8_setup_needed() -> bool:
 
 ---
 
-### 💡 低优先级问题（可选改进）
+### [TIP] 低优先级问题（可选改进）
 
 #### 问题6: 可以添加更多实用工具函数
 
@@ -245,8 +245,8 @@ def ensure_utf8_output(func):
 def print_utf8_test():
     """打印UTF-8测试字符串，验证编码设置是否成功"""
     test_strings = [
-        "✅ 中文测试",
-        "🎉 Emoji测试",
+        "[OK_CHECK] 中文测试",
+        "[DONE] Emoji测试",
         "αβγ 希腊字母",
         "日本語测试"
     ]
@@ -272,7 +272,7 @@ from tools.utf8_helper import (
 
 # 1. 基本使用
 setup_windows_utf8()
-print("✅ UTF-8设置完成")
+print("[OK_CHECK] UTF-8设置完成")
 
 # 2. 检查是否需要设置
 if is_utf8_setup_needed():
@@ -286,57 +286,57 @@ print(f"当前编码: {encoding}")
 
 ---
 
-## 📋 代码规范性检查
+## [CHECKLIST] 代码规范性检查
 
-### ✅ 符合规范的项目
+### [OK_CHECK] 符合规范的项目
 
-1. **Import顺序**: ✅ 正确（标准库在前）
-2. **命名规范**: ✅ 函数名使用snake_case
-3. **文档字符串**: ✅ 所有函数都有docstring
-4. **版本信息**: ✅ 完整的模块级版本信息
-5. **异常处理**: ✅ 使用精确的异常类型
+1. **Import顺序**: [OK_CHECK] 正确（标准库在前）
+2. **命名规范**: [OK_CHECK] 函数名使用snake_case
+3. **文档字符串**: [OK_CHECK] 所有函数都有docstring
+4. **版本信息**: [OK_CHECK] 完整的模块级版本信息
+5. **异常处理**: [OK_CHECK] 使用精确的异常类型
 
-### ⚠️ 需要改进的项目
+### [WARN] 需要改进的项目
 
-1. **类型注解**: ❌ 缺失（Python 3.14特性未充分利用）
-2. **Import重复**: ❌ check_document_quality.py中重复导入
-3. **sys.path操作**: ❌ 手动修改不够优雅
-4. **日志记录**: ⚠️ 异常处理静默失败
+1. **类型注解**: [CROSS] 缺失（Python 3.14特性未充分利用）
+2. **Import重复**: [CROSS] check_document_quality.py中重复导入
+3. **sys.path操作**: [CROSS] 手动修改不够优雅
+4. **日志记录**: [WARN] 异常处理静默失败
 
 ---
 
-## 🧪 测试质量评估
+## [TEST] 测试质量评估
 
 ### 当前测试覆盖
 
 | 测试项 | 状态 | 备注 |
 |--------|------|------|
-| 函数存在性 | ✅ | 已覆盖 |
-| 版本信息 | ✅ | 已覆盖 |
-| 文档字符串 | ✅ | 已覆盖 |
-| Windows API调用 | ✅ | 使用mock |
-| 跨平台兼容 | ✅ | 使用mock |
-| 异常处理 | ❌ | 缺失 |
-| 参数验证 | ❌ | 缺失 |
-| 辅助函数 | ❌ | 缺失 |
+| 函数存在性 | [OK_CHECK] | 已覆盖 |
+| 版本信息 | [OK_CHECK] | 已覆盖 |
+| 文档字符串 | [OK_CHECK] | 已覆盖 |
+| Windows API调用 | [OK_CHECK] | 使用mock |
+| 跨平台兼容 | [OK_CHECK] | 使用mock |
+| 异常处理 | [CROSS] | 缺失 |
+| 参数验证 | [CROSS] | 缺失 |
+| 辅助函数 | [CROSS] | 缺失 |
 
 **测试覆盖率**: 约60%（建议达到80%+）
 
 ### 测试优点
 
-- ✅ 使用mock避免副作用
-- ✅ 测试独立性好
-- ✅ 代码清晰易懂
+- [OK_CHECK] 使用mock避免副作用
+- [OK_CHECK] 测试独立性好
+- [OK_CHECK] 代码清晰易懂
 
 ### 测试不足
 
-- ❌ 缺少异常场景测试
-- ❌ 缺少边界条件测试
-- ❌ 辅助函数未测试
+- [CROSS] 缺少异常场景测试
+- [CROSS] 缺少边界条件测试
+- [CROSS] 辅助函数未测试
 
 ---
 
-## 🎯 最佳实践建议
+## [TARGET] 最佳实践建议
 
 ### 1. 使用类型注解（强烈推荐）
 
@@ -372,7 +372,7 @@ def setup_windows_utf8() -> None:
     Example:
         >>> from tools.utf8_helper import setup_windows_utf8
         >>> setup_windows_utf8()
-        >>> print("✅ 中文正常显示")
+        >>> print("[OK_CHECK] 中文正常显示")
     """
 ```
 
@@ -430,20 +430,20 @@ def test_integration_with_actual_output():
 
 ---
 
-## 📊 改进优先级
+## [CHART] 改进优先级
 
 | 优先级 | 问题 | 工作量 | 影响 |
 |--------|------|--------|------|
-| 🔴 高 | 修复集成方式（问题1） | 30分钟 | 代码质量 |
-| 🔴 高 | 添加类型注解（问题2） | 1小时 | 可维护性 |
-| 🟡 中 | 补充测试用例（问题3） | 2小时 | 代码覆盖率 |
-| 🟡 中 | 添加错误日志（问题4） | 30分钟 | 可调试性 |
-| 🟢 低 | 统一docstring格式（问题5） | 1小时 | 文档质量 |
-| 🟢 低 | 添加工具函数（问题6） | 2小时 | 功能性 |
+| [RED] 高 | 修复集成方式（问题1） | 30分钟 | 代码质量 |
+| [RED] 高 | 添加类型注解（问题2） | 1小时 | 可维护性 |
+| [YELLOW] 中 | 补充测试用例（问题3） | 2小时 | 代码覆盖率 |
+| [YELLOW] 中 | 添加错误日志（问题4） | 30分钟 | 可调试性 |
+| [GREEN] 低 | 统一docstring格式（问题5） | 1小时 | 文档质量 |
+| [GREEN] 低 | 添加工具函数（问题6） | 2小时 | 功能性 |
 
 ---
 
-## ✅ 修复清单
+## [OK_CHECK] 修复清单
 
 ### 必须修复（严重问题）
 - [ ] 修复check_document_quality.py的导入方式
@@ -462,7 +462,7 @@ def test_integration_with_actual_output():
 
 ---
 
-## 🎓 代码质量对比
+## [GUIDE] 代码质量对比
 
 ### 改进前
 ```python
@@ -491,15 +491,15 @@ setup_windows_utf8()
 ```
 
 **优点**:
-- ✅ 无重复代码
-- ✅ 类型注解完整（待添加）
-- ✅ 单元测试覆盖（待补充）
-- ✅ 精确异常处理
-- ✅ 跨平台安全
+- [OK_CHECK] 无重复代码
+- [OK_CHECK] 类型注解完整（待添加）
+- [OK_CHECK] 单元测试覆盖（待补充）
+- [OK_CHECK] 精确异常处理
+- [OK_CHECK] 跨平台安全
 
 ---
 
-## 📝 总体结论
+## [MEMO] 总体结论
 
 ### 审查结论: **有条件通过**
 
@@ -538,5 +538,5 @@ UTF-8共享模块设计合理，解决了核心的代码重复问题，测试策
 ---
 
 **审查完成时间**: 2026-04-21  
-**审查结论**: ⚠️ 有条件通过（需修复严重问题）  
+**审查结论**: [WARN] 有条件通过（需修复严重问题）  
 **建议操作**: 修复严重问题后合并到主分支  

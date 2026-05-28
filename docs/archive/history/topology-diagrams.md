@@ -329,8 +329,8 @@ flowchart LR
     subgraph Match["匹配层"]
         M1["生成地址.lower()"]
         M2{"in targets?<br/>字符串比较"}
-        M3["✅ 匹配成功"]
-        M4["❌ 继续下一个"]
+        M3["[OK_CHECK] 匹配成功"]
+        M4["[CROSS] 继续下一个"]
     end
 
     I1 --> R1
@@ -395,11 +395,11 @@ flowchart LR
 
 ### 验证结论
 
-✅ 所有输入格式统一转换为P2PKH地址字符串
-✅ 地址字符串转换为小写后存储到Set[str]
-✅ 碰撞匹配时使用小写地址字符串进行比较
-✅ **Hash160仅作为中间计算结果，不用于最终匹配**
-✅ 使用Python Set实现O(1)时间复杂度的地址查找
+[OK_CHECK] 所有输入格式统一转换为P2PKH地址字符串
+[OK_CHECK] 地址字符串转换为小写后存储到Set[str]
+[OK_CHECK] 碰撞匹配时使用小写地址字符串进行比较
+[OK_CHECK] **Hash160仅作为中间计算结果，不用于最终匹配**
+[OK_CHECK] 使用Python Set实现O(1)时间复杂度的地址查找
 
 ---
 

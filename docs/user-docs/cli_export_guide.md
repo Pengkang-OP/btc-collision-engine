@@ -1,11 +1,11 @@
-# 📤 导出功能使用指南
+# [OUTBOX] 导出功能使用指南
 
 > **版本**: v4.2.2 | **最后更新**: 2026-05-15
 > **相关文档**: [CLI快速参考](CLI_QUICK_REFERENCE.md) | [GPU引擎指南](gpu-engine-guide.md)
 
 ---
 
-## 📋 目录
+## [CHECKLIST] 目录
 
 1. [导出功能概述](#导出功能概述)
 
@@ -19,7 +19,7 @@
 
 ---
 
-## 🔍 导出功能概述
+## [CHECK] 导出功能概述
 
 BTC碰撞引擎提供两个专用的数据导出参数，可在运行结束后将进度统计与匹配结果保存为结构化JSON文件，便于后续分析、可视化和自动化处理。
 
@@ -36,16 +36,16 @@ BTC碰撞引擎提供两个专用的数据导出参数，可在运行结束后�
 
 | 碰撞模式 | `--export-progress` | `--export-matches` | 备注 |
 |---------|--------------------|--------------------|------|
-| `random`（随机） | ✅ | ✅ | 无总范围，不含进度百分比 |
-| `range`（范围扫描） | ✅ | ✅ | 含 `total_range` 和 `progress_percent` |
-| `brute_force`（暴力穷举） | ✅ | ✅ | 含 `total_range` 和 `progress_percent` |
-| CPU引擎 | ✅ | ✅ | `engine_type: "cpu"` |
-| 单GPU引擎 | ✅ | ✅ | `engine_type: "gpu"` |
-| 多GPU引擎 | ✅ | ✅ | `engine_type: "multi_gpu"` |
+| `random`（随机） | [OK] | [OK] | 无总范围，不含进度百分比 |
+| `range`（范围扫描） | [OK] | [OK] | 含 `total_range` 和 `progress_percent` |
+| `brute_force`（暴力穷举） | [OK] | [OK] | 含 `total_range` 和 `progress_percent` |
+| CPU引擎 | [OK] | [OK] | `engine_type: "cpu"` |
+| 单GPU引擎 | [OK] | [OK] | `engine_type: "gpu"` |
+| 多GPU引擎 | [OK] | [OK] | `engine_type: "multi_gpu"` |
 
 ---
 
-## 🚀 使用方法
+## [QUICK] 使用方法
 
 ### 示例1：随机模式 + 导出进度
 
@@ -119,7 +119,7 @@ python key_collision_cli.py \
 
 ---
 
-## 📄 JSON输出格式
+## [FILE] JSON输出格式
 
 ### `--export-progress` 输出格式
 
@@ -138,10 +138,10 @@ python key_collision_cli.py \
 | `speed` | string | 格式化速度 | `"15.0K/s"` |
 | `matches_count` | int | 匹配数量 | `0` |
 | `matches` | array | 匹配结果列表（见下方） | `[]` |
-| `total_range` ⚠️ | int | 总搜索范围（仅 range/brute_force 模式） | `1099511627775` |
-| `progress_percent` ⚠️ | float | 完成百分比，最大100.0（仅 range/brute_force 模式） | `12.34` |
+| `total_range` [WARN] | int | 总搜索范围（仅 range/brute_force 模式） | `1099511627775` |
+| `progress_percent` [WARN] | float | 完成百分比，最大100.0（仅 range/brute_force 模式） | `12.34` |
 
-> ⚠️ 带此标记的字段仅在 `range` 或 `brute_force` 模式下存在。
+> [WARN] 带此标记的字段仅在 `range` 或 `brute_force` 模式下存在。
 
 **输出示例（随机模式）**
 
@@ -229,11 +229,11 @@ python key_collision_cli.py \
 
 ```
 
-> 💡 **脱敏说明**：配合 `--sensitive-mode masked` 时，`private_key` 仅显示首尾各8位，其余用 `*` 掩码；`--sensitive-mode hash_only` 时显示为 `[SHA256:xxxx...]` 哈希摘要。
+> [TIP] **脱敏说明**：配合 `--sensitive-mode masked` 时，`private_key` 仅显示首尾各8位，其余用 `*` 掩码；`--sensitive-mode hash_only` 时显示为 `[SHA256:xxxx...]` 哈希摘要。
 
 ---
 
-## 🐍 数据分析示例
+## [SNAKE] 数据分析示例
 
 以下Python脚本演示如何读取导出的JSON文件进行简单统计分析：
 
@@ -255,7 +255,7 @@ def analyze_progress(progress_file: str) -> None:
         data = json.load(f)
 
     print("=" * 50)
-    print("📊 进度统计摘要")
+    print("[CHART] 进度统计摘要")
     print("=" * 50)
     print(f"  碰撞模式    : {data['mode']}")
     print(f"  引擎类型    : {data['engine_type']}")
@@ -294,7 +294,7 @@ def analyze_matches(matches_file: str) -> None:
         data = json.load(f)
 
     print("=" * 50)
-    print("🎯 匹配结果汇总")
+    print("[TARGET] 匹配结果汇总")
     print("=" * 50)
     print(f"  总匹配数    : {data['total_matches']}")
 
@@ -329,7 +329,7 @@ python analyze_export.py
 
 ---
 
-## ⚠️ 注意事项
+## [WARN] 注意事项
 
 1. **文件会被覆盖**
 
@@ -360,7 +360,7 @@ python analyze_export.py
 
 ---
 
-## 📚 相关参考
+## [DOCS] 相关参考
 
 - 完整参数帮助: `python key_collision_cli.py --help`
 

@@ -392,10 +392,11 @@ class HealthChecker:
             检查结果字典 {检查项: (是否通过, 详细信息)}
 
         """
-        print("=" * 70)
-        print("BTC碰撞引擎 - 系统健康检查")
-        print("=" * 70)
-        print()
+        lines = []
+        lines.append("=" * 70)
+        lines.append("BTC碰撞引擎 - 系统健康检查")
+        lines.append("=" * 70)
+        lines.append("")
 
         checks = [
             ("Python版本", self.check_python_version),
@@ -423,22 +424,25 @@ class HealthChecker:
                 self.results[check_name] = (passed, message)
 
                 status = "[成功]" if passed else "[失败]"
-                print(f"{status} {check_name}: {message}")
+                lines.append(f"{status} {check_name}: {message}")
 
                 if not passed:
                     all_passed = False
             except Exception as e:
                 self.results[check_name] = (False, str(e))
-                print(f"[错误] {check_name}: {e}")
+                lines.append(f"[错误] {check_name}: {e}")
                 all_passed = False
 
-        print()
-        print("=" * 70)
+        lines.append("")
+        lines.append("=" * 70)
         if all_passed:
-            print("[成功] 所有检查通过！系统状态健康。")
+            lines.append("[成功] 所有检查通过！系统状态健康。")
         else:
-            print("[警告] 部分检查未通过，请查看上述详细信息。")
-        print("=" * 70)
+            lines.append("[警告] 部分检查未通过，请查看上述详细信息。")
+        lines.append("=" * 70)
+
+        output = "\n".join(lines)
+        logger.info("\n" + output)
 
         return self.results
 
@@ -447,7 +451,7 @@ class HealthChecker:
         lines = ["系统健康检查报告", "=" * 70, ""]
 
         for check_name, (passed, message) in self.results.items():
-            status = "✓ 通过" if passed else "✗ 失败"
+            status = "OK 通过" if passed else "FAIL 失败"
             lines.append(f"{check_name}: {status}")
             lines.append(f"  详情: {message}")
             lines.append("")
@@ -483,7 +487,7 @@ def main() -> None:
         report = checker.generate_report()
         pathlib.Path(args.report).write_text(report, encoding="utf-8")
         if not args.quiet:
-            print(f"\n报告已保存: {args.report}")
+            logger.info("报告已保存: %s", args.report)
 
     # 返回退出码
     all_passed = all(passed for passed, _ in results.values())

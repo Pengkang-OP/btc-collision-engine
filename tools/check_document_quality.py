@@ -30,10 +30,10 @@ _ = setup_windows_utf8()
 class Severity(Enum):
     """问题严重程度."""
 
-    ERROR = "❌"
-    WARNING = "⚠️"
-    INFO = "ℹ️"
-    SUCCESS = "✅"
+    ERROR = "ERR"
+    WARNING = "WARN"
+    INFO = "INFO"
+    SUCCESS = "OK"
 
 
 class IssueType:
@@ -181,7 +181,7 @@ class DocumentQualityChecker:
             )
 
             if result.returncode != 0:
-                print(f"⚠️  Git命令执行失败: {result.stderr}")
+                print(f"WARN Git命令执行失败: {result.stderr}")
                 return []
 
             # 解析输出，只保留.md文件
@@ -193,7 +193,7 @@ class DocumentQualityChecker:
             return changed_files
 
         except (subprocess.TimeoutExpired, FileNotFoundError, OSError) as e:
-            print(f"⚠️  无法获取Git变更: {e}")
+            print(f"WARN 无法获取Git变更: {e}")
             return []
 
     def check_all(self, changed_only: bool = False) -> list[DocumentScore]:
@@ -202,7 +202,7 @@ class DocumentQualityChecker:
         Args:
             changed_only: 是否只检查变更的文档
         """
-        print("🔍 开始检查文档质量...\n")
+        print("SEARCH 开始检查文档质量...\n")
 
         md_files = list(self.docs_dir.glob("*.md"))
         # 排除archive目录中的文件
@@ -210,15 +210,15 @@ class DocumentQualityChecker:
 
         # 增量检查模式
         if changed_only:
-            print("🔄 增量检查模式: 只检查Git变更的文档")
+            print("REFRESH 增量检查模式: 只检查Git变更的文档")
             changed_files = self.get_changed_docs(self.docs_dir)
             if not changed_files:
-                print("ℹ️  没有检测到变更的文档，检查所有文档")
+                print("INFO 没有检测到变更的文档，检查所有文档")
             else:
                 md_files = [f for f in md_files if f in changed_files]
-                print(f"📝 检测到 {len(md_files)} 个变更文档\n")
+                print(f"[NOTE] 检测到 {len(md_files)} 个变更文档\n")
         else:
-            print(f"📁 找到 {len(md_files)} 个核心文档\n")
+            print(f"[FOLDER] 找到 {len(md_files)} 个核心文档\n")
 
         for md_file in sorted(md_files):
             score = self.check_document(md_file)
@@ -256,7 +256,7 @@ class DocumentQualityChecker:
         except KeyboardInterrupt:
             raise
         except Exception as e:
-            print(f"❌ {file_path.name}: 检查失败 - {e}")
+            print(f"ERR {file_path.name}: 检查失败 - {e}")
             return DocumentScore(
                 file=str(file_path),
                 score=0.0,
@@ -479,7 +479,7 @@ class DocumentQualityChecker:
             bonus += version_bonus
 
         # 详细日志输出
-        print("\n📊 评分详情:")
+        print("\nSTATS 评分详情:")
         print(f"  问题统计: ERROR={error_count}, WARNING={warning_count}, INFO={info_count}")
         print(f"  分类统计: 代码块={code_block_issues}, 链接={link_issues}, 标题={heading_issues}")
         print("  扣分详情:")
@@ -509,7 +509,7 @@ class DocumentQualityChecker:
 
     def print_document_result(self, file_path: Path, score: float):
         """打印单个文档的检查结果."""
-        emoji = "✅" if score >= 8.5 else "⚠️" if score >= 7.0 else "❌"
+        emoji = "OK" if score >= 8.5 else "WARN" if score >= 7.0 else "ERR"
 
         print(f"{emoji} {file_path.name} - 质量评分: {score}/10")
 
@@ -522,7 +522,7 @@ class DocumentQualityChecker:
     def print_summary(self):
         """打印总体统计."""
         print("=" * 60)
-        print("📊 文档质量检查报告")
+        print("STATS 文档质量检查报告")
         print("=" * 60)
 
         if not self.scores:
@@ -539,27 +539,27 @@ class DocumentQualityChecker:
         print(f"\n核心文档总数: {total_docs}")
         print(f"平均质量评分: {avg_score:.1f}/10")
         print("\n质量分布:")
-        print(f"  ✅ 优秀 (≥8.5): {excellent} 个")
-        print(f"  ⚠️  良好 (7.0-8.4): {good} 个")
-        print(f"  ❌ 需改进 (<7.0): {poor} 个")
+        print(f"  OK 优秀 (≥8.5): {excellent} 个")
+        print(f"  WARN 良好 (7.0-8.4): {good} 个")
+        print(f"  ERR 需改进 (<7.0): {poor} 个")
 
         # 列出需要改进的文档
         poor_docs = [s for s in self.scores if s.score < 6.0]
         if poor_docs:
-            print("\n⚠️  需要改进的文档:")
+            print("\nWARN 需要改进的文档:")
             for doc in poor_docs:
                 print(f"  - {Path(doc.file).name}: {doc.score}/10")
 
         # 总体评价
         print("\n总体评价: ", end="")
         if avg_score >= 9.0:
-            print("✅ 优秀")
+            print("OK 优秀")
         elif avg_score >= 8.0:
-            print("✅ 良好")
+            print("OK 良好")
         elif avg_score >= 7.0:
-            print("⚠️  需改进")
+            print("WARN 需改进")
         else:
-            print("❌ 不合格")
+            print("ERR 不合格")
 
         print("=" * 60)
 
@@ -581,7 +581,7 @@ def main():
     docs_dir = Path(args.docs_dir) if args.docs_dir else project_root / "docs"
 
     if not docs_dir.exists():
-        print(f"❌ 文档目录不存在: {docs_dir}")
+        print(f"ERR 文档目录不存在: {docs_dir}")
         sys.exit(1)
 
     # 加载配置
@@ -590,15 +590,15 @@ def main():
         config_path = Path(args.config)
         if config_path.exists():
             config = ScoringConfig.from_file(str(config_path))
-            print(f"📝 使用配置文件: {config_path}")
+            print(f"NOTE 使用配置文件: {config_path}")
         else:
-            print(f"⚠️  配置文件不存在: {config_path}，使用默认配置")
+            print(f"WARN 配置文件不存在: {config_path}，使用默认配置")
 
     # 保存配置（如果指定）
     if args.save_config:
         default_config = ScoringConfig()
         default_config.save_to_file(args.save_config)
-        print(f"✅ 配置已保存到: {args.save_config}")
+        print(f"OK 配置已保存到: {args.save_config}")
         sys.exit(0)
 
     checker = DocumentQualityChecker(str(docs_dir), config)

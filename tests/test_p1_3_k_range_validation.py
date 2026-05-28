@@ -28,7 +28,7 @@ class TestP1_3_KeyRangeValidation:
         # 检查 uint256_is_zero 和 k>=N 在同一条件中
         assert "uint256_is_zero(&k) || uint256_cmp(&k, &n_val) >= 0" in source, "应组合检查 k==0 和 k>=N"
 
-        print("\n[P1-3-A ✓] batch_check: k>=N 验证代码存在")
+        print("\n[P1-3-A [OK]] batch_check: k>=N 验证代码存在")
 
     def test_kernel_source_no_old_k_zero_only(self):
         """P1-3-B: 确认旧代码（仅检查k==0）已被替换."""
@@ -67,7 +67,7 @@ class TestP1_3_KeyRangeValidation:
             f"旧代码 'if (uint256_is_zero(&k)) {{{{' 应已被替换，但仍找到 {len(old_pattern)} 处"
         )
 
-        print("\n[P1-3-B ✓] 旧独占条件已全部替换")
+        print("\n[P1-3-B [OK]] 旧独占条件已全部替换")
 
     def test_n_val_loaded_from_constant(self):
         """P1-3-C: n_val 从 SECP256K1_N 常量正确加载."""
@@ -82,13 +82,13 @@ class TestP1_3_KeyRangeValidation:
         import re
 
         load_loops = re.findall(
-            r"for\s*\(\s*int\s+i\s*=\s*0\s*;\s*i\s*<\s*8\s*;\s*i\+\+\s*\)\s*n_val\.d\[i\]\s*=\s*SECP256K1_N\[i\]",  # noqa: E501
+            r"for\s*\(\s*int\s+i\s*=\s*0\s*;\s*i\s*<\s*8\s*;\s*i\+\+\s*\)\s*n_val\.d\[i\]\s*=\s*SECP256K1_N\[i\]",
             source,
         )
         # 应该有4处（kernel.py和.cl各两个内核）
         assert len(load_loops) >= 2, f"不应少于2处N值加载循环，找到{len(load_loops)}处"
 
-        print(f"\n[P1-3-C ✓] n_val加载正确 (找到{len(load_loops)}处)")
+        print(f"\n[P1-3-C [OK]] n_val加载正确 (找到{len(load_loops)}处)")
 
     def test_both_kernel_variants_fixed(self):
         """P1-3-D: batch_check 和 batch_check_local_mem 均已修复."""
@@ -120,9 +120,9 @@ class TestP1_3_KeyRangeValidation:
 
                 assert "SECP256K1_N" in kernel_body, f"{kernel_name} 内核应引用 SECP256K1_N"
 
-                print(f"  [{kernel_name}] ✓ k>=N 验证存在")
+                print(f"  [{kernel_name}] [OK] k>=N 验证存在")
 
-        print("\n[P1-3-D ✓] 所有batch_check变体均已修复")
+        print("\n[P1-3-D [OK]] 所有batch_check变体均已修复")
 
     def test_n_boundary_values(self):
         """P1-3-F: 验证 N 常量值正确性."""
@@ -154,7 +154,7 @@ class TestP1_3_KeyRangeValidation:
         for i, (actual, expected) in enumerate(zip(n_values, expected_n, strict=False)):
             assert actual == expected, f"N[{i}] = {hex(actual)} 不等于预期 {hex(expected)}"
 
-        print("\n[P1-3-F ✓] SECP256K1_N 常量值正确")
+        print("\n[P1-3-F [OK]] SECP256K1_N 常量值正确")
 
 
 if __name__ == "__main__":

@@ -133,8 +133,8 @@ void ec_scalar_multiply(k) {
 ### 步骤3: 正确性验证
 
 ```
-k=1: rx 匹配 Gx ✅
-k=2: rx 匹配 2Gx ✅
+k=1: rx 匹配 Gx [OK_CHECK]
+k=2: rx 匹配 2Gx [OK_CHECK]
 ```
 
 ### 步骤4: 性能测试
@@ -160,7 +160,7 @@ v2.5.0 (仿射坐标, LSB-first, 错误):
 | v2.3.0 | 仿射坐标，优化 | ~60k keys/s | 错误（P0 bug） |
 | v2.4.0 | 仿射坐标，w=4窗口，P0修复 | 81,887 keys/s | 错误（LSB-first）|
 | v2.5.0 | 仿射坐标，w=5窗口 | 81,493 keys/s | 错误（LSB-first）|
-| **v3.0.0** | **雅可比坐标，MSB-first，w=5** | **485,784 keys/s** | **✅ 正确** |
+| **v3.0.0** | **雅可比坐标，MSB-first，w=5** | **485,784 keys/s** | **[OK_CHECK] 正确** |
 
 ---
 

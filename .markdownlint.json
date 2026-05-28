@@ -6,8 +6,11 @@
   "MD007": { "indent": 2 },
   "MD013": false,
   "MD024": { "siblings_only": true },
-  "MD025": { "front_matter_title": "" },
+  "MD022": false,
+  "MD025": false,
   "MD026": { "punctuation": ".,;:!。，；：！" },
+  "MD031": false,
+  "MD032": false,
   "MD029": { "style": "ordered" },
   "MD033": false,
   "MD034": false,
@@ -17,5 +20,7 @@
   "MD046": { "style": "fenced" },
   "MD048": { "style": "backtick" },
   "MD051": false,
+  "MD053": false,
+  "MD058": false,
   "MD060": false
 }

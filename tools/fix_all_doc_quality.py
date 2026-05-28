@@ -82,12 +82,12 @@ def main():
             if fix_version_header(original) != fix_version_header(content):
                 fixed_ver += 1
                 if not printed:
-                    print(f"  ✅ {fpath.name}")
+                    print(f"  OK {fpath.name}")
                     printed = True
             else:
                 fixed_lang += 1
                 if not printed:
-                    print(f"  ✅ {fpath.name}")
+                    print(f"  OK {fpath.name}")
                     printed = True
 
     print(f"\n总计: {total_docs} 个文档")

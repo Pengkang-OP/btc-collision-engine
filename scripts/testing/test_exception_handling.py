@@ -42,7 +42,7 @@ def test_1_exception_handling_code_review():
 
     all_passed = True
     for check_name, result in checks.items():
-        status = "✅" if result else "❌"
+        status = "OK" if result else "ERR"
         print(f"  {status} {check_name}")
         if not result:
             all_passed = False
@@ -73,7 +73,7 @@ def test_2_timeout_monitor_optimization():
 
     all_passed = True
     for check_name, result in checks.items():
-        status = "✅" if result else "❌"
+        status = "OK" if result else "ERR"
         print(f"  {status} {check_name}")
         if not result:
             all_passed = False
@@ -107,7 +107,7 @@ def test_3_race_condition_fix():
 
     all_passed = True
     for check_name, result in checks.items():
-        status = "✅" if result else "❌"
+        status = "OK" if result else "ERR"
         print(f"  {status} {check_name}")
         if not result:
             all_passed = False
@@ -134,8 +134,8 @@ def test_4_max_iterations_calculation():
     # 验证计算逻辑
     assert expected_max_iterations == 310, f"预期310,实际{expected_max_iterations}"
 
-    print("  ✅ 最大迭代次数计算正确")
-    print("  ✅ 包含10次容错缓冲")
+    print("  OK 最大迭代次数计算正确")
+    print("  OK 包含10次容错缓冲")
 
     return True
 
@@ -161,7 +161,7 @@ def test_5_polling_interval_performance():
 
     assert overhead_percent < 0.01, f"性能影响过大: {overhead_percent}%"
 
-    print("  ✅ 性能影响极小(<0.001%)")
+    print("  OK 性能影响极小(<0.001%)")
 
     return True
 
@@ -176,19 +176,19 @@ def test_6_exception_types_coverage():
         import pyopencl as cl
 
         print(f"  PyOpenCL版本: {cl.VERSION_TEXT}")
-        print("  ✅ command_execution_status枚举可用")
-        print("  ✅ cl.Error异常类型可用")
+        print("  OK command_execution_status枚举可用")
+        print("  OK cl.Error异常类型可用")
 
         # 验证异常类型
         assert hasattr(cl, "Error"), "cl.Error不存在"
         assert hasattr(cl, "command_execution_status"), "command_execution_status不存在"
 
-        print("  ✅ 异常处理所需的API完整")
+        print("  OK 异常处理所需的API完整")
 
         return True
 
     except ImportError as e:
-        print(f"  ❌ PyOpenCL导入失败: {e}")
+        print(f"  ERR PyOpenCL导入失败: {e}")
         return False
 
 
@@ -216,7 +216,7 @@ def main():
             result = test_func()
             results.append((test_name, result))
         except Exception as e:
-            print(f"\n  ❌ 测试异常: {e}")
+            print(f"\n  ERR 测试异常: {e}")
             import traceback
 
             traceback.print_exc()
@@ -231,16 +231,16 @@ def main():
     total = len(results)
 
     for test_name, result in results:
-        status = "✅ 通过" if result else "❌ 失败"
+        status = "OK 通过" if result else "ERR 失败"
         print(f"  {status}: {test_name}")
 
     print("=" * 70)
     print(f"总计: {passed}/{total} 通过")
 
     if passed == total:
-        print("✅ 所有测试通过! 异常处理修复验证成功!")
+        print("OK 所有测试通过! 异常处理修复验证成功!")
         return 0
-    print("❌ 部分测试失败,请检查修复代码")
+    print("ERR 部分测试失败,请检查修复代码")
     return 1
 
 

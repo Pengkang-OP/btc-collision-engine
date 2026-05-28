@@ -19,8 +19,8 @@ from typing import Any
 
 # 添加项目根目录到路径
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
-from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
-from src.monitoring.gpu_performance_monitor import GPUPerformanceMonitor  # noqa: E402
+from src.collision.gpu.engine import GPUCollisionEngine
+from src.monitoring.gpu_performance_monitor import GPUPerformanceMonitor
 
 
 class StabilityTestRunner:
@@ -102,7 +102,7 @@ class StabilityTestRunner:
         has_leak = growth_rate > 10.0
 
         if has_leak:
-            print("\n⚠️  警告: 检测到显存泄漏!")
+            print("\nWARN  警告: 检测到显存泄漏!")
             print(f"   初始显存: {initial_memory:.2f} MB")
             print(f"   当前显存: {current_memory:.2f} MB")
             print(f"   增长率: {growth_rate:.2f}%")
@@ -125,7 +125,7 @@ class StabilityTestRunner:
         is_stable = decline_rate < 10.0  # 下降超过10%视为不稳定
 
         if not is_stable:
-            print("\n⚠️  警告: 检测到性能下降!")
+            print("\nWARN  警告: 检测到性能下降!")
             print(f"   初始吞吐量: {initial_throughput:,.0f} keys/s")
             print(f"   当前吞吐量: {current_throughput:,.0f} keys/s")
             print(f"   下降率: {decline_rate:.2f}%")
@@ -141,7 +141,7 @@ class StabilityTestRunner:
         is_ok = latest_error_rate == 0.0
 
         if not is_ok:
-            print("\n❌ 错误: 检测到错误率 > 0!")
+            print("\nERR 错误: 检测到错误率 > 0!")
             print(f"   当前错误率: {latest_error_rate:.2f}%")
 
         return is_ok
@@ -206,7 +206,7 @@ class StabilityTestRunner:
         print("  目标地址: 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
         print(f"\n开始时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print(
-            f"预计结束: {(datetime.now() + timedelta(hours=self.duration_hours)).strftime('%Y-%m-%d %H:%M:%S')}",  # noqa: E501
+            f"预计结束: {(datetime.now() + timedelta(hours=self.duration_hours)).strftime('%Y-%m-%d %H:%M:%S')}",
         )
 
         # 初始化引擎
@@ -272,14 +272,14 @@ class StabilityTestRunner:
 
                 # 检查异常
                 if not self.check_memory_leak():
-                    print("❌ 测试失败: 检测到内存泄漏")
+                    print("ERR 测试失败: 检测到内存泄漏")
                     break
 
                 if not self.check_performance_stability():
-                    print("⚠️  警告: 性能下降,继续观察...")
+                    print("WARN  警告: 性能下降,继续观察...")
 
                 if not self.check_error_rate():
-                    print("❌ 测试失败: 检测到错误")
+                    print("ERR 测试失败: 检测到错误")
                     break
 
             # 停止引擎
@@ -348,7 +348,7 @@ class StabilityTestRunner:
             print(f"中间数据已保存: {self.test_data_dir / 'stability_test_intermediate.json'}")
 
         except KeyboardInterrupt:
-            print("\n\n⚠️  用户中断测试")
+            print("\n\nWARN  用户中断测试")
             if self.engine:
                 self.engine.stop()
             if self._monitor:

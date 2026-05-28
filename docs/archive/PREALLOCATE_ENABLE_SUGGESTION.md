@@ -17,7 +17,7 @@ if self._gpu_memory_pool:
         ],
         count_per_size=2
     )
-    logger.info("✅ GPU内存池预分配完成")
+    logger.info("[OK_CHECK] GPU内存池预分配完成")
 ```
 
 ## 预期收益

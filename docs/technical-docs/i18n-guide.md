@@ -83,8 +83,8 @@ python key_collision_cli.py -t <地址> -m random
 
 | 语言代码 | 语言名称 | 语言文件 | 状态 |
 |----------|----------|----------|------|
-| `zh_CN`  | 简体中文 | `src/i18n/locales/zh_CN.json` | ✅ 完整支持 |
-| `en_US`  | 英文（美国） | `src/i18n/locales/en_US.json` | ✅ 完整支持 |
+| `zh_CN`  | 简体中文 | `src/i18n/locales/zh_CN.json` | [OK] 完整支持 |
+| `en_US`  | 英文（美国） | `src/i18n/locales/en_US.json` | [OK] 完整支持 |
 
 两个语言文件均包含约 700 行翻译条目，覆盖所有模块（CLI、GPU、碰撞引擎、监控系统等）。
 

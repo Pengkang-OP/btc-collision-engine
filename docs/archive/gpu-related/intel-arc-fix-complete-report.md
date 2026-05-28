@@ -2,11 +2,11 @@
 
 **问题**: Intel Arc A770 GPU间歇性运行不正常  
 **诊断日期**: 2026-04-21  
-**状态**: ✅ 已修复
+**状态**: [OK_CHECK] 已修复
 
 ---
 
-## 🔍 问题根因
+## [SEARCH] 问题根因
 
 ### 发现: 多GPU环境冲突
 
@@ -23,13 +23,13 @@
 
 **前置条件验证**:
 
-- ✅ 驱动已更新
-- ✅ 温度正常 (<80°C)
-- ✅ 电源正常 (650W+)
+- [OK_CHECK] 驱动已更新
+- [OK_CHECK] 温度正常 (<80°C)
+- [OK_CHECK] 电源正常 (650W+)
 
 ---
 
-## 🛠️ 修复方案
+## [TOOL] 修复方案
 
 ### 核心修复: 指定正确的GPU设备索引
 
@@ -72,7 +72,7 @@
 
 ---
 
-## 📋 使用步骤
+## [CHECKLIST] 使用步骤
 
 ### 方法1: 使用新配置运行 (推荐)
 
@@ -109,7 +109,7 @@ engine = GPUCollisionEngine(
 
 ---
 
-## ✅ 验证修复
+## [OK_CHECK] 验证修复
 
 ### 步骤1: 运行GPU诊断
 
@@ -158,7 +158,7 @@ python key_collision_cli.py --config config.intel_arc.json
 
 ---
 
-## 📊 预期效果
+## [CHART] 预期效果
 
 ### 修复前
 
@@ -172,7 +172,7 @@ GPU: 可能错误使用NVIDIA GTX 1660 Ti
 ### 修复后
 
 ```
-GPU: Intel Arc A770 (索引1) ✓
+GPU: Intel Arc A770 (索引1) [OK]
 稳定性: 大幅提升
 吞吐量: 100k-150k keys/s (批次128k)
 错误率: 0.00%
@@ -181,7 +181,7 @@ GPU: Intel Arc A770 (索引1) ✓
 
 ---
 
-## 🎯 关键优化点
+## [TARGET] 关键优化点
 
 ### 1. GPU设备选择
 
@@ -215,7 +215,7 @@ GPU: Intel Arc A770 (索引1) ✓
 
 ---
 
-## 📁 生成的文件
+## [DIR] 生成的文件
 
 | 文件 | 路径 | 说明 |
 |------|------|------|
@@ -226,7 +226,7 @@ GPU: Intel Arc A770 (索引1) ✓
 
 ---
 
-## 🔧 故障排查
+## [WRENCH] 故障排查
 
 ### 问题1: 仍然间歇性崩溃
 
@@ -273,7 +273,7 @@ for i, d in enumerate(devices):
 
 ---
 
-## 📈 性能对比
+## [PERF] 性能对比
 
 ### NVIDIA GTX 1660 Ti (GPU 0)
 
@@ -295,7 +295,7 @@ for i, d in enumerate(devices):
 
 ---
 
-## ✅ 检查清单
+## [OK_CHECK] 检查清单
 
 - [x] 识别多GPU环境
 - [x] 确定Intel Arc A770索引(1)
@@ -310,7 +310,7 @@ for i, d in enumerate(devices):
 
 ---
 
-## 🚀 下一步
+## [QUICK] 下一步
 
 ### 立即执行
 
@@ -341,7 +341,7 @@ python tests/test_stability_24h.py --hours 24 --interval 300
 
 ---
 
-## 📞 技术支持
+## [TELEPHONE] 技术支持
 
 如仍有问题,请提供:
 
@@ -356,7 +356,7 @@ python tools/configure_intel_arc.py > config_diag.txt 2>&1
 
 ---
 
-**修复状态**: ✅ 完成  
+**修复状态**: [OK_CHECK] 完成  
 **配置文件**: config.intel_arc.json  
 **文档版本**: v1.0  
 **最后更新**: 2026-04-21

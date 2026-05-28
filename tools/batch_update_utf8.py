@@ -36,32 +36,32 @@ def update_file(file_path: str) -> bool:
     """更新单个文件."""
     path = Path(file_path)
     if not path.exists():
-        print(f"⚠️  文件不存在: {file_path}")
+        print(f"WARN 文件不存在: {file_path}")
         return False
 
     content = path.read_text(encoding="utf-8")
 
     # 检查是否已经更新过
     if "from tools.utf8_helper import setup_windows_utf8" in content:
-        print(f"✅ 已更新: {file_path}")
+        print(f"OK 已更新: {file_path}")
         return True
 
     # 查找并替换
     new_content = re.sub(OLD_PATTERN, NEW_CODE, content, flags=re.DOTALL)
 
     if new_content == content:
-        print(f"⚠️  未找到匹配代码: {file_path}")
+        print(f"WARN 未找到匹配代码: {file_path}")
         return False
 
     # 保存更新
     path.write_text(new_content, encoding="utf-8")
-    print(f"✅ 已更新: {file_path}")
+    print(f"OK 已更新: {file_path}")
     return True
 
 
 def main():
     """主函数."""
-    print("🔧 开始批量更新工具文件...\n")
+    print("TOOL 开始批量更新工具文件...\n")
 
     success_count = 0
     for tool in TOOLS_TO_UPDATE:
@@ -69,9 +69,9 @@ def main():
             success_count += 1
 
     print(f"\n{'=' * 60}")
-    print("📊 更新报告")
+    print("STATS 更新报告")
     print(f"{'=' * 60}")
-    print(f"\n✅ 成功更新: {success_count}/{len(TOOLS_TO_UPDATE)}")
+    print(f"\nOK 成功更新: {success_count}/{len(TOOLS_TO_UPDATE)}")
 
     return success_count == len(TOOLS_TO_UPDATE)
 

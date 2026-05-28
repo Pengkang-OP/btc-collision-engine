@@ -306,7 +306,7 @@ class SecureKeyGenerator:
 ```
 
 ```python
-# ✅ 正确示例（参考 src/core/key_generator.py）
+# [OK] 正确示例（参考 src/core/key_generator.py）
 import os
 import secrets
 import threading
@@ -359,12 +359,12 @@ from .secure_key_manager import SecureKeyManager
 ### 7.3 禁止模式
 
 ```python
-# ❌ 绝对禁止
+# [FAIL] 绝对禁止
 except:  ...                              # 裸 except
 except Exception:  pass                    # 静默吞异常
 except Exception:  logger.error("...")     # 无 raise（L1 路径）
 
-# ❌ 条件禁止
+# [FAIL] 条件禁止
 logger.error(f"操作失败: {e}")            # 使用 f-string，应改用 %s
 logger.warning("内核执行失败: %s", e)      # L1 路径用 warning 级别
 
@@ -373,11 +373,11 @@ logger.warning("内核执行失败: %s", e)      # L1 路径用 warning 级别
 ### 7.4 资源清理
 
 ```python
-# ✅ 推荐使用上下文管理器
+# [OK] 推荐使用上下文管理器
 with GPUMockFactory.patch_gpu_collision_engine() as mocks:
     engine = GPUCollisionEngine(targets)
 
-# ✅ 无上下文管理器时使用 try/finally
+# [OK] 无上下文管理器时使用 try/finally
 gpu_device = None
 try:
     gpu_device = GPUDevice(config)

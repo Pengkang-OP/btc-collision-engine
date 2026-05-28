@@ -560,7 +560,7 @@ class AsyncLogger:
             is_threshold = dropped in warning_thresholds
             is_periodic = dropped > 1000000 and (dropped - 1000000) % 5000000 == 0
             if is_threshold or is_periodic:
-                sys.stderr.write(f"⚠️ 异步日志队列已满，已丢弃 {dropped:,} 条记录\n")
+                sys.stderr.write(f"[WARN] 异步日志队列已满，已丢弃 {dropped:,} 条记录\n")
 
     def close(self) -> None:
         """关闭异步日志器，等待队列清空."""

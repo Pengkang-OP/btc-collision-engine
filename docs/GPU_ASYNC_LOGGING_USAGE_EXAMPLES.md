@@ -100,9 +100,9 @@ if engine._async_log_handler:
     
     # 告警检查
     if stats['queue_size'] > 5000:
-        print("⚠️ 警告: 异步日志队列积压严重")
+        print("[WARN] 警告: 异步日志队列积压严重")
     if stats['dropped_count'] > 100:
-        print("❌ 错误: 异步日志丢弃过多")
+        print("[FAIL] 错误: 异步日志丢弃过多")
 
 ```
 
@@ -232,13 +232,13 @@ sampled_logger = SampledLogger(logger, sample_rate=100)
 **解决方案**:
 
 ```python
-# ✅ 正确做法
+# [OK] 正确做法
 try:
     engine.run()
 finally:
     engine.cleanup()  # 这会等待队列清空再关闭
 
-# ❌ 错误做法
+# [FAIL] 错误做法
 engine.run()
 # 忘记调用cleanup()，队列中的日志会丢失
 

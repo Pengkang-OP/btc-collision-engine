@@ -154,11 +154,11 @@ CPU处理结果:          [处理匹配]        [处理匹配]        [处理匹
 
 | 检查项 | 结论 |
 |--------|------|
-| vendor 匹配逻辑正确性 | ✅ 正确，与工程其他模块保持一致 |
-| 误匹配风险 | ✅ 极低，vendor 来自 OpenCL 驱动字符串 |
-| AMD 匹配 `'advanced micro'` | ✅ 合理必要，兼容完整厂商名 |
-| 缓存 key 不变 | ✅ `device_key = f"{vendor}_{name}"` 未改动 |
-| A770 配置安全性 | ✅ 异步模式下已实测 520k keys/s |
+| vendor 匹配逻辑正确性 | [OK_CHECK] 正确，与工程其他模块保持一致 |
+| 误匹配风险 | [OK_CHECK] 极低，vendor 来自 OpenCL 驱动字符串 |
+| AMD 匹配 `'advanced micro'` | [OK_CHECK] 合理必要，兼容完整厂商名 |
+| 缓存 key 不变 | [OK_CHECK] `device_key = f"{vendor}_{name}"` 未改动 |
+| A770 配置安全性 | [OK_CHECK] 异步模式下已实测 520k keys/s |
 
 **审查结论**：**通过，无 P0/P1/P2 缺陷**
 
@@ -166,18 +166,18 @@ CPU处理结果:          [处理匹配]        [处理匹配]        [处理匹
 
 | 测试层次 | 测试数 | 通过 | 状态 |
 |---------|--------|------|------|
-| Python 直接验证（9 场景） | 9 | 9 | ✅ 100% |
-| 单元测试套件（4 文件） | 121 | 121 | ✅ 100% |
+| Python 直接验证（9 场景） | 9 | 9 | [OK_CHECK] 100% |
+| 单元测试套件（4 文件） | 121 | 121 | [OK_CHECK] 100% |
 
 **关键场景覆盖**：
 
 | 场景 | 分支 | enable_async | batch_size | 结果 |
 |------|------|-------------|-----------|------|
-| `Intel(R) Corporation` | INTEL | True | 262144 | ✅ |
-| `NVIDIA Corporation` | NVIDIA | True | 32768 | ✅ |
-| `Advanced Micro Devices, Inc.` | AMD | True | 131072 | ✅ |
-| `SomeOtherVendor` | UNKNOWN | False | 32768 | ✅ |
-| `（空字符串）` | UNKNOWN | False | 32768 | ✅ |
+| `Intel(R) Corporation` | INTEL | True | 262144 | [OK_CHECK] |
+| `NVIDIA Corporation` | NVIDIA | True | 32768 | [OK_CHECK] |
+| `Advanced Micro Devices, Inc.` | AMD | True | 131072 | [OK_CHECK] |
+| `SomeOtherVendor` | UNKNOWN | False | 32768 | [OK_CHECK] |
+| `（空字符串）` | UNKNOWN | False | 32768 | [OK_CHECK] |
 
 ---
 
@@ -363,11 +363,11 @@ scripts/verify_vendor_match_fix.py  +79 lines (new)
 
 v3.1.0 通过修复 **单行 vendor 匹配 Bug**，成功启用了 Intel Arc A770 的异步双缓冲机制，实现：
 
-- ✅ **端对端速度提升 +122%**（233k → 520k keys/s）
-- ✅ **相对 CPU 加速 5,913x**
-- ✅ **零回归**（121 个测试全部通过）
-- ✅ **代码审查通过**（无 P0/P1/P2 缺陷）
-- ✅ **性能稳定**（速度波动 ±2.6%）
+- [OK_CHECK] **端对端速度提升 +122%**（233k → 520k keys/s）
+- [OK_CHECK] **相对 CPU 加速 5,913x**
+- [OK_CHECK] **零回归**（121 个测试全部通过）
+- [OK_CHECK] **代码审查通过**（无 P0/P1/P2 缺陷）
+- [OK_CHECK] **性能稳定**（速度波动 ±2.6%）
 
 **v3.1.0 已具备发布条件。**
 

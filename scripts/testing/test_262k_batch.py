@@ -6,7 +6,7 @@ import time
 
 # 添加项目根目录到路径
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
+from src.collision.gpu.engine import GPUCollisionEngine
 
 
 def test_262k_batch():

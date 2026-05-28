@@ -9,7 +9,7 @@
 
 ## 1. 总体评估
 
-### 代码质量评分: **9.3/10** ⭐⭐⭐⭐⭐
+### 代码质量评分: **9.3/10** [STAR][STAR][STAR][STAR][STAR]
 
 **总体评价**:
 
@@ -29,7 +29,7 @@
 
 ## 2. 关键发现
 
-### 🔴 关键发现1: 私钥哈希实现完全正确 ⭐⭐⭐⭐⭐
+### [RED] 关键发现1: 私钥哈希实现完全正确 [STAR][STAR][STAR][STAR][STAR]
 
 **位置**: `src/gpu/data_monitor.py:459-467`
 
@@ -45,16 +45,16 @@ else:
 
 **审查意见**:
 
-- ✅ 完全消除明文私钥存储
-- ✅ 性能优化到位（if-else代替三元表达式）
-- ✅ 兼容str和bytes两种类型
-- ✅ 日志中仅使用哈希前缀8位
+- [OK_CHECK] 完全消除明文私钥存储
+- [OK_CHECK] 性能优化到位（if-else代替三元表达式）
+- [OK_CHECK] 兼容str和bytes两种类型
+- [OK_CHECK] 日志中仅使用哈希前缀8位
 
-**安全评分**: ⭐⭐⭐⭐⭐ (10/10)
+**安全评分**: [STAR][STAR][STAR][STAR][STAR] (10/10)
 
 ---
 
-### 🟢 关键发现2: 异常分类策略优秀 ⭐⭐⭐⭐⭐
+### [GREEN] 关键发现2: 异常分类策略优秀 [STAR][STAR][STAR][STAR][STAR]
 
 **亮点**: 按场景分类处理，非一刀切
 
@@ -70,7 +70,7 @@ else:
 
 ---
 
-### 🟢 关键发现3: 异常变量命名语义化 ⭐⭐⭐⭐⭐
+### [GREEN] 关键发现3: 异常变量命名语义化 [STAR][STAR][STAR][STAR][STAR]
 
 **策略**: 按场景使用不同变量名
 
@@ -90,15 +90,15 @@ except (ValueError, TypeError) as e:
 
 **审查意见**:
 
-- ✅ 语义清晰，提高可读性
-- ✅ 便于搜索和统计
-- ✅ 符合Python最佳实践
+- [OK_CHECK] 语义清晰，提高可读性
+- [OK_CHECK] 便于搜索和统计
+- [OK_CHECK] 符合Python最佳实践
 
 ---
 
 ## 3. 高优先级问题 (P0)
 
-### ❌ 无高优先级问题
+### [CROSS] 无高优先级问题
 
 所有29处修复均无安全风险或功能缺陷，可以安全部署。
 
@@ -117,13 +117,13 @@ except (ValueError, TypeError) as e:
 import logging
 
 # 使用时直接用模块级别函数
-logging.debug(...)  # ⚠️ 不是最佳实践
+logging.debug(...)  # [WARN] 不是最佳实践
 ```
 
 **其他文件对比**:
 
 ```python
-# gpu_selector.py ✅ 正确做法
+# gpu_selector.py [OK_CHECK] 正确做法
 import logging
 logger = logging.getLogger(__name__)
 logger.warning(...)
@@ -227,9 +227,9 @@ self.logger.debug(f"清理临时文件失败（可忽略）: {temp_file} - {clea
 
 ---
 
-## 6. 优秀实践 ✅
+## 6. 优秀实践 [OK_CHECK]
 
-### 6.1 分类修复策略 ⭐⭐⭐⭐⭐
+### 6.1 分类修复策略 [STAR][STAR][STAR][STAR][STAR]
 
 **评价**: 展现了深入的代码理解能力
 
@@ -251,29 +251,29 @@ except (ValueError, TypeError) as e:
 
 ---
 
-### 6.2 私钥安全加固 ⭐⭐⭐⭐⭐
+### 6.2 私钥安全加固 [STAR][STAR][STAR][STAR][STAR]
 
 **评价**: 安全加固完美，符合NIST标准
 
 ```python
-# ✅ 完全消除明文存储
+# [OK_CHECK] 完全消除明文存储
 private_key_hash = hashlib.sha256(private_key).hexdigest()
 
-# ✅ 日志中仅使用哈希前缀
+# [OK_CHECK] 日志中仅使用哈希前缀
 message=f"检测到重复的私钥: hash={private_key_hash[:8]}..."
 
-# ✅ 内存中存储哈希
+# [OK_CHECK] 内存中存储哈希
 stats['seen_keys'].add(private_key_hash)
 ```
 
 ---
 
-### 6.3 性能优化意识 ⭐⭐⭐⭐⭐
+### 6.3 性能优化意识 [STAR][STAR][STAR][STAR][STAR]
 
 **评价**: 在安全修复中仍考虑性能
 
 ```python
-# ✅ 性能优化: if-else代替三元表达式
+# [OK_CHECK] 性能优化: if-else代替三元表达式
 if isinstance(private_key, str):
     private_key_hash = hashlib.sha256(private_key.encode()).hexdigest()
 else:
@@ -284,33 +284,33 @@ else:
 
 ---
 
-### 6.4 日志消息清晰 ⭐⭐⭐⭐
+### 6.4 日志消息清晰 [STAR][STAR][STAR][STAR]
 
 **评价**: 日志信息有助于调试
 
 ```python
-# ✅ 包含上下文信息
+# [OK_CHECK] 包含上下文信息
 logging.debug(f"GPU {device_idx} 吞吐量解析失败: {e}")
 
-# ✅ 说明可忽略
+# [OK_CHECK] 说明可忽略
 logger.debug(f"清理临时文件失败（可忽略）: {cleanup_error}")
 
-# ✅ 说明不影响功能
+# [OK_CHECK] 说明不影响功能
 logger.debug(f"Windows权限设置失败（不影响功能）: {perm_error}")
 ```
 
 ---
 
-### 6.5 异常处理完整 ⭐⭐⭐⭐⭐
+### 6.5 异常处理完整 [STAR][STAR][STAR][STAR][STAR]
 
 **评价**: 所有异常都有处理，零静默失败
 
 ```python
-# ✅ 修复前: 25处静默失败
+# [OK_CHECK] 修复前: 25处静默失败
 except Exception:
     pass
 
-# ✅ 修复后: 0处静默失败
+# [OK_CHECK] 修复后: 0处静默失败
 except Exception as e:
     logger.debug(f"操作失败: {e}")
 ```
@@ -374,25 +374,25 @@ logger.debug(f"清理临时文件失败（可忽略）: {temp_file} - {cleanup_e
 
 ## 8. 安全性深度审查
 
-### 私钥处理安全性 ⭐⭐⭐⭐⭐
+### 私钥处理安全性 [STAR][STAR][STAR][STAR][STAR]
 
 | 检查项 | 状态 | 详细说明 |
 |--------|------|---------|
-| **明文存储** | ✅ 已消除 | 内存中使用SHA256哈希 |
-| **日志泄露** | ✅ 已消除 | 仅记录哈希前缀8位 |
-| **哈希算法** | ✅ 安全 | SHA-256 (NIST标准) |
-| **碰撞概率** | ✅ 极低 | 2^-128 |
-| **类型兼容** | ✅ 完善 | 支持str和bytes |
-| **性能优化** | ✅ 到位 | -60%开销 |
+| **明文存储** | [OK_CHECK] 已消除 | 内存中使用SHA256哈希 |
+| **日志泄露** | [OK_CHECK] 已消除 | 仅记录哈希前缀8位 |
+| **哈希算法** | [OK_CHECK] 安全 | SHA-256 (NIST标准) |
+| **碰撞概率** | [OK_CHECK] 极低 | 2^-128 |
+| **类型兼容** | [OK_CHECK] 完善 | 支持str和bytes |
+| **性能优化** | [OK_CHECK] 到位 | -60%开销 |
 
-### 异常处理安全性 ⭐⭐⭐⭐⭐
+### 异常处理安全性 [STAR][STAR][STAR][STAR][STAR]
 
 | 检查项 | 状态 | 详细说明 |
 |--------|------|---------|
-| **异常吞没** | ✅ 已修复 | 所有异常都有日志 |
-| **错误掩盖** | ✅ 已修复 | 使用具体异常类型 |
-| **调试信息** | ✅ 充分 | DEBUG级别详细日志 |
-| **生产安全** | ✅ 保证 | DEBUG日志不影响性能 |
+| **异常吞没** | [OK_CHECK] 已修复 | 所有异常都有日志 |
+| **错误掩盖** | [OK_CHECK] 已修复 | 使用具体异常类型 |
+| **调试信息** | [OK_CHECK] 充分 | DEBUG级别详细日志 |
+| **生产安全** | [OK_CHECK] 保证 | DEBUG日志不影响性能 |
 
 ---
 
@@ -448,13 +448,13 @@ logger.debug(f"清理临时文件失败（可忽略）: {temp_file} - {cleanup_e
 
 | 测试模块 | 测试数 | 状态 |
 |---------|-------|------|
-| test_multiprocess_security | 30 | ✅ 通过 |
-| test_gpu_memory_pool | 11 | ✅ 通过 |
-| test_gpu_recovery | 20 | ✅ 通过 |
-| test_alert_system | 18 | ✅ 通过 |
-| test_address_import | 7 | ✅ 通过 |
-| test_gpu_device_helper | 59 | ✅ 通过 |
-| **总计** | **145** | **✅ 100%** |
+| test_multiprocess_security | 30 | [OK_CHECK] 通过 |
+| test_gpu_memory_pool | 11 | [OK_CHECK] 通过 |
+| test_gpu_recovery | 20 | [OK_CHECK] 通过 |
+| test_alert_system | 18 | [OK_CHECK] 通过 |
+| test_address_import | 7 | [OK_CHECK] 通过 |
+| test_gpu_device_helper | 59 | [OK_CHECK] 通过 |
+| **总计** | **145** | **[OK_CHECK] 100%** |
 
 ### 建议补充测试
 
@@ -487,35 +487,35 @@ def test_gpu_selector_fallback():
 
 ## 12. 审查结论
 
-### 总体评级: **优秀 (9.3/10)** ⭐⭐⭐⭐⭐
+### 总体评级: **优秀 (9.3/10)** [STAR][STAR][STAR][STAR][STAR]
 
 **核心优势**:
 
-1. ✅ 分类修复策略，非一刀切
-2. ✅ 私钥完全哈希化，安全加固完美
-3. ✅ 异常类型精准，代码健壮
-4. ✅ 性能优化意识，开销<0.1%
-5. ✅ 注释清晰统一，可维护性强
+1. [OK_CHECK] 分类修复策略，非一刀切
+2. [OK_CHECK] 私钥完全哈希化，安全加固完美
+3. [OK_CHECK] 异常类型精准，代码健壮
+4. [OK_CHECK] 性能优化意识，开销<0.1%
+5. [OK_CHECK] 注释清晰统一，可维护性强
 
 **需要改进**:
 
-1. ⚠️ logger实例化不一致 (1处)
-2. ⚠️ C类异常类型可精简 (1处)
-3. ⚠️ 日志消息可增强 (可选)
+1. [WARN] logger实例化不一致 (1处)
+2. [WARN] C类异常类型可精简 (1处)
+3. [WARN] 日志消息可增强 (可选)
 
 ### 部署建议
 
-**✅ 可以安全部署到生产环境**
+**[OK_CHECK] 可以安全部署到生产环境**
 
 理由:
 
-- ✅ 无高优先级问题
-- ✅ 中优先级问题不影响功能
-- ✅ 测试覆盖100% (145/145)
-- ✅ 性能影响可忽略 (<0.1%)
-- ✅ 安全性大幅提升 (-95%风险)
+- [OK_CHECK] 无高优先级问题
+- [OK_CHECK] 中优先级问题不影响功能
+- [OK_CHECK] 测试覆盖100% (145/145)
+- [OK_CHECK] 性能影响可忽略 (<0.1%)
+- [OK_CHECK] 安全性大幅提升 (-95%风险)
 
-### 合并建议: **批准合并** ✅
+### 合并建议: **批准合并** [OK_CHECK]
 
 ---
 
@@ -550,7 +550,7 @@ def test_gpu_selector_fallback():
 
 **审查完成时间**: 2026-04-22 23:35  
 **审查人员**: AI代码审查助手  
-**审查结论**: ✅ **通过 - 建议合并**
+**审查结论**: [OK_CHECK] **通过 - 建议合并**
 
 ---
 

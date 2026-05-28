@@ -30,9 +30,9 @@
 
 ### 前置条件
 
-- ✅ 已安装项目（使用 `scripts/install/install.bat` 或 `bash scripts/install/install.sh`）
+- [OK] 已安装项目（使用 `scripts/install/install.bat` 或 `bash scripts/install/install.sh`）
 
-- ✅ 已运行健康检查（`python -m src.utils.health_check`）
+- [OK] 已运行健康检查（`python -m src.utils.health_check`）
 
 ### 步骤
 
@@ -121,9 +121,9 @@ A: 这是正常的！比特币地址空间太大（2^256），随机碰撞的概
 
 ### 前置条件
 
-- ✅ 已安装GPU依赖（`pip install pyopencl`）
+- [OK] 已安装GPU依赖（`pip install pyopencl`）
 
-- ✅ GPU支持OpenCL 1.2+
+- [OK] GPU支持OpenCL 1.2+
 
 ### 步骤
 
@@ -335,11 +335,11 @@ for addr in addresses:
     if is_valid:
         valid_count += 1
         result = resolver.resolve(addr)
-        print(f"✅ {addr}")
+        print(f"[OK] {addr}")
         print(f"   解析: {result}")
     else:
         invalid_count += 1
-        print(f"❌ {addr} - 无效地址")
+        print(f"[FAIL] {addr} - 无效地址")
     print()
 
 print(f"\n验证结果:")
@@ -360,13 +360,13 @@ python validate_addresses.py
 ```bash
 待验证地址数: 5
 
-✅ 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
+[OK] 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
    解析: 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
 
-✅ 3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy
+[OK] 3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy
    解析: 3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy
 
-❌ invalid_address - 无效地址
+[FAIL] invalid_address - 无效地址
 
 验证结果:
   有效: 3
@@ -452,9 +452,9 @@ python key_collision_cli.py -f valid_addresses.txt -m random --checkpoint --dura
 
 ### 前置条件
 
-- ✅ 2个或更多GPU
+- [OK] 2个或更多GPU
 
-- ✅ 已安装pyopencl
+- [OK] 已安装pyopencl
 
 ### 步骤
 

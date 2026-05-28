@@ -7,7 +7,7 @@
 
 ## 目录
 
-- [📋 目录](#-目录)
+- [[CHECKLIST] 目录](#-目录)
 
 - [GPU加速概述](#gpu加速概述)
 
@@ -93,7 +93,7 @@
 
 - [参考资源](#参考资源)
 
-## 📋 目录
+## [CHECKLIST] 目录
 
 1. [GPU加速概述](#gpu加速概述)
 
@@ -189,9 +189,9 @@ from src.collision.gpu.engine import GPUCollisionEngine
 
 # 检查GPU是否可用
 if GPUCollisionEngine.is_gpu_available():
-    print("✅ GPU可用")
+    print("[OK] GPU可用")
 else:
-    print("❌ GPU不可用")
+    print("[FAIL] GPU不可用")
 
 # 列出所有GPU设备
 GPUCollisionEngine.list_devices()
@@ -646,7 +646,7 @@ v4.2.2重构后，GPU引擎采用分层组件化架构：
 | 职责数量 | 10+ | 2 | 职责分离 |
 | 可测试性 | 困难 | 各组件独立可测 | 显著提升 |
 | 可扩展性 | 受限 | 模块化设计 | 灵活扩展 |
-| 向后兼容 | - | ✅ 完全兼容 | API不变 |
+| 向后兼容 | - | [OK] 完全兼容 | API不变 |
 
 ### 配置优先级
 

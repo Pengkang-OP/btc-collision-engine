@@ -6,15 +6,15 @@
 
 ---
 
-## 📊 审查总结
+## [CHART] 审查总结
 
-### 总体评价: ✅ 优秀 (8.5/10)
+### 总体评价: [OK_CHECK] 优秀 (8.5/10)
 
 UTF-8编码修复工作整体质量很高，成功解决了Windows平台的中文和emoji显示问题。经过审查和修复，所有发现的问题都已解决。
 
 ---
 
-## ✅ 优点
+## [OK_CHECK] 优点
 
 ### 1. 解决方案设计优秀
 - **双层防护**: Python脚本内置 + 包装器脚本，覆盖所有使用场景
@@ -37,9 +37,9 @@ UTF-8编码修复工作整体质量很高，成功解决了Windows平台的中�
 
 ---
 
-## 🔍 发现的问题及修复
+## [SEARCH] 发现的问题及修复
 
-### 问题1: Import位置不当（中等严重程度）✅ 已修复
+### 问题1: Import位置不当（中等严重程度）[OK_CHECK] 已修复
 
 **影响文件**:
 - tools/fix_broken_links.py
@@ -47,7 +47,7 @@ UTF-8编码修复工作整体质量很高，成功解决了Windows平台的中�
 
 **问题描述**:
 ```python
-# ❌ 错误：import在条件块内
+# [CROSS] 错误：import在条件块内
 if sys.platform == 'win32':
     try:
         import ctypes  # 违反PEP 8
@@ -56,18 +56,18 @@ if sys.platform == 'win32':
 
 **修复方案**:
 ```python
-import ctypes  # ✅ 正确：在文件顶部导入
+import ctypes  # [OK_CHECK] 正确：在文件顶部导入
 
 if sys.platform == 'win32':
     try:
         ctypes.windll.kernel32.SetConsoleOutputCP(65001)
 ```
 
-**修复状态**: ✅ 已完成
+**修复状态**: [OK_CHECK] 已完成
 
 ---
 
-### 问题2: PowerShell包装器安全性（低严重程度）⚠️ 需要注意
+### 问题2: PowerShell包装器安全性（低严重程度）[WARN] 需要注意
 
 **影响文件**: tools/run_utf8.ps1
 
@@ -86,7 +86,7 @@ param(
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
 # 执行脚本
-Invoke-Expression $Script  # ⚠️ 可能执行恶意命令
+Invoke-Expression $Script  # [WARN] 可能执行恶意命令
 ```
 
 **风险评估**: 
@@ -119,18 +119,18 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 
 ---
 
-### 问题3: 文档中遗漏的文件（低严重程度）✅ 已修复
+### 问题3: 文档中遗漏的文件（低严重程度）[OK_CHECK] 已修复
 
 **问题描述**: 
 审查发现还有2个文件需要修复但未在文档中列出：
 - tools/fix_broken_links.py
 - tools/fix_code_blocks_v2.py
 
-**修复状态**: ✅ 已完成修复
+**修复状态**: [OK_CHECK] 已完成修复
 
 ---
 
-### 问题4: 缺少错误反馈机制（低严重程度）💡 建议改进
+### 问题4: 缺少错误反馈机制（低严重程度）[TIP] 建议改进
 
 **影响文件**: 所有Python脚本
 
@@ -143,7 +143,7 @@ try:
     ctypes.windll.kernel32.SetConsoleOutputCP(65001)
     ctypes.windll.kernel32.SetConsoleCP(65001)
 except (OSError, AttributeError):
-    pass  # ⚠️ 静默失败
+    pass  # [WARN] 静默失败
 ```
 
 **建议改进** (可选):
@@ -165,9 +165,9 @@ except (OSError, AttributeError) as e:
 
 ---
 
-## 🛡️ 安全性评估
+## [SHIELD] 安全性评估
 
-### 1. Windows API调用 ✅ 安全
+### 1. Windows API调用 [OK_CHECK] 安全
 
 **评估**:
 - `SetConsoleOutputCP` 和 `SetConsoleCP` 是标准Windows API
@@ -177,7 +177,7 @@ except (OSError, AttributeError) as e:
 
 **风险等级**: 无风险
 
-### 2. ctypes导入 ✅ 安全
+### 2. ctypes导入 [OK_CHECK] 安全
 
 **评估**:
 - ctypes是Python标准库
@@ -187,7 +187,7 @@ except (OSError, AttributeError) as e:
 
 **风险等级**: 无风险
 
-### 3. PowerShell执行策略 ⚠️ 需要注意
+### 3. PowerShell执行策略 [WARN] 需要注意
 
 **评估**:
 - 用户可能需要设置执行策略才能运行.ps1脚本
@@ -201,7 +201,7 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 
 **风险等级**: 低（用户可自行解决）
 
-### 4. 命令注入风险 ⚠️ 理论存在
+### 4. 命令注入风险 [WARN] 理论存在
 
 **评估**:
 - `run_utf8.ps1` 使用 `Invoke-Expression`
@@ -218,31 +218,31 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 
 ---
 
-## 📋 代码规范性检查
+## [CHECKLIST] 代码规范性检查
 
-### ✅ 符合规范的项目
+### [OK_CHECK] 符合规范的项目
 
 1. **PEP 8 - Import顺序**
-   - ✅ 标准库import在顶部
-   - ✅ import分组正确（os, re, sys, io, ctypes）
-   - ✅ 第三方库import在标准库之后
+   - [OK_CHECK] 标准库import在顶部
+   - [OK_CHECK] import分组正确（os, re, sys, io, ctypes）
+   - [OK_CHECK] 第三方库import在标准库之后
 
 2. **PEP 8 - 命名规范**
-   - ✅ 变量名使用snake_case
-   - ✅ 类名使用PascalCase
-   - ✅ 常量使用UPPER_CASE
+   - [OK_CHECK] 变量名使用snake_case
+   - [OK_CHECK] 类名使用PascalCase
+   - [OK_CHECK] 常量使用UPPER_CASE
 
 3. **代码注释**
-   - ✅ 文件头注释完整
-   - ✅ 函数有docstring
-   - ✅ 复杂逻辑有注释
+   - [OK_CHECK] 文件头注释完整
+   - [OK_CHECK] 函数有docstring
+   - [OK_CHECK] 复杂逻辑有注释
 
 4. **异常处理**
-   - ✅ 使用精确的异常类型
-   - ✅ 不捕获BaseException
-   - ✅ 异常处理范围最小化
+   - [OK_CHECK] 使用精确的异常类型
+   - [OK_CHECK] 不捕获BaseException
+   - [OK_CHECK] 异常处理范围最小化
 
-### ⚠️ 需要改进的项目
+### [WARN] 需要改进的项目
 
 1. **重复代码**
    - 8个文件都有相同的编码修复代码
@@ -254,7 +254,7 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 
 ---
 
-## 🎯 最佳实践建议
+## [TARGET] 最佳实践建议
 
 ### 1. 提取共享模块（推荐）
 
@@ -331,22 +331,22 @@ __utf8_support__ = True
 
 ---
 
-## 📊 修复统计
+## [CHART] 修复统计
 
 ### 修复的文件清单
 
 | 文件 | 修复内容 | 状态 |
 |------|---------|------|
-| tools/check_document_quality.py | import优化 + 精确异常 | ✅ |
-| tools/fix_heading_levels.py | import优化 + 精确异常 | ✅ |
-| tools/fix_code_blocks.py | import优化 + 精确异常 | ✅ |
-| tools/check_broken_links.py | import优化 + 精确异常 | ✅ |
-| tools/add_version_info.py | import优化 + 精确异常 | ✅ |
-| tools/add_table_of_contents.py | import优化 + 精确异常 | ✅ |
-| tools/fix_broken_links.py | import优化 + 精确异常 | ✅ 审查中发现并修复 |
-| tools/fix_code_blocks_v2.py | import优化 + 精确异常 | ✅ 审查中发现并修复 |
-| audit_resource_cleanup.py | 新增UTF-8支持 | ✅ |
-| check_pr_status.py | 新增UTF-8支持 | ✅ |
+| tools/check_document_quality.py | import优化 + 精确异常 | [OK_CHECK] |
+| tools/fix_heading_levels.py | import优化 + 精确异常 | [OK_CHECK] |
+| tools/fix_code_blocks.py | import优化 + 精确异常 | [OK_CHECK] |
+| tools/check_broken_links.py | import优化 + 精确异常 | [OK_CHECK] |
+| tools/add_version_info.py | import优化 + 精确异常 | [OK_CHECK] |
+| tools/add_table_of_contents.py | import优化 + 精确异常 | [OK_CHECK] |
+| tools/fix_broken_links.py | import优化 + 精确异常 | [OK_CHECK] 审查中发现并修复 |
+| tools/fix_code_blocks_v2.py | import优化 + 精确异常 | [OK_CHECK] 审查中发现并修复 |
+| audit_resource_cleanup.py | 新增UTF-8支持 | [OK_CHECK] |
+| check_pr_status.py | 新增UTF-8支持 | [OK_CHECK] |
 
 **总计**: 10个Python脚本
 
@@ -354,33 +354,33 @@ __utf8_support__ = True
 
 | 文件 | 用途 | 状态 |
 |------|------|------|
-| tools/run_utf8.ps1 | PowerShell包装器 | ✅ |
-| tools/run_utf8.bat | CMD包装器 | ✅ |
-| tools/UTF8_ENCODING_GUIDE.md | 完整技术指南 | ✅ |
-| tools/UTF8_QUICK_REFERENCE.md | 快速参考 | ✅ |
-| tools/UTF8_FIX_SUMMARY.md | 修复总结 | ✅ |
+| tools/run_utf8.ps1 | PowerShell包装器 | [OK_CHECK] |
+| tools/run_utf8.bat | CMD包装器 | [OK_CHECK] |
+| tools/UTF8_ENCODING_GUIDE.md | 完整技术指南 | [OK_CHECK] |
+| tools/UTF8_QUICK_REFERENCE.md | 快速参考 | [OK_CHECK] |
+| tools/UTF8_FIX_SUMMARY.md | 修复总结 | [OK_CHECK] |
 
 **总计**: 5个新文件
 
 ---
 
-## 🧪 测试验证
+## [TEST] 测试验证
 
 ### 测试用例及结果
 
 | 测试场景 | 命令 | 结果 |
 |---------|------|------|
-| 直接运行 | `python tools/check_document_quality.py` | ✅ 正常 |
-| PowerShell管道 | `.\tools\run_utf8.ps1 -Script "python ..." \| Select-Object -First 20` | ✅ 正常 |
-| 过滤输出 | `...\| Select-String "总体评价"` | ✅ 显示"总体评价: ✅ 优秀" |
-| 版本信息工具 | `.\tools\run_utf8.ps1 -Script "python tools/add_version_info.py --dry-run"` | ✅ 正常 |
-| 断裂链接检查 | `python tools/check_broken_links.py` | ✅ 正常 |
+| 直接运行 | `python tools/check_document_quality.py` | [OK_CHECK] 正常 |
+| PowerShell管道 | `.\tools\run_utf8.ps1 -Script "python ..." \| Select-Object -First 20` | [OK_CHECK] 正常 |
+| 过滤输出 | `...\| Select-String "总体评价"` | [OK_CHECK] 显示"总体评价: [OK_CHECK] 优秀" |
+| 版本信息工具 | `.\tools\run_utf8.ps1 -Script "python tools/add_version_info.py --dry-run"` | [OK_CHECK] 正常 |
+| 断裂链接检查 | `python tools/check_broken_links.py` | [OK_CHECK] 正常 |
 
 **测试通过率**: 100% (5/5)
 
 ---
 
-## 📈 改进对比
+## [PERF] 改进对比
 
 ### 修复前
 ```
@@ -392,15 +392,15 @@ __utf8_support__ = True
 
 ### 修复后
 ```
-🔧 开始添加版本信息...
-⚠️  模拟运行模式
-❌ api-reference.md - 质量评分: 6.5/10
+[WRENCH] 开始添加版本信息...
+[WARN]  模拟运行模式
+[CROSS] api-reference.md - 质量评分: 6.5/10
 ```
 **效果**: 完美显示
 
 ---
 
-## 🎓 技术亮点
+## [GUIDE] 技术亮点
 
 ### 1. 双层防护设计
 - **第一层**: Python脚本内置UTF-8支持（解决直接运行）
@@ -425,7 +425,7 @@ __utf8_support__ = True
 
 ---
 
-## ⚠️ 已知限制
+## [WARN] 已知限制
 
 ### 1. PowerShell执行策略
 **问题**: 部分系统可能禁止运行.ps1脚本  
@@ -444,25 +444,25 @@ __utf8_support__ = True
 
 ---
 
-## 🎯 总体评价
+## [TARGET] 总体评价
 
-### 评分: 8.5/10 ✅ 优秀
+### 评分: 8.5/10 [OK_CHECK] 优秀
 
 **优点** (9/10):
-- ✅ 解决方案设计优秀
-- ✅ 代码质量高
-- ✅ 文档完善
-- ✅ 测试充分
-- ✅ 跨平台兼容
+- [OK_CHECK] 解决方案设计优秀
+- [OK_CHECK] 代码质量高
+- [OK_CHECK] 文档完善
+- [OK_CHECK] 测试充分
+- [OK_CHECK] 跨平台兼容
 
 **改进空间** (8/10):
-- ⚠️ 可以提取共享模块减少重复
-- ⚠️ 可以添加单元测试
-- ⚠️ PowerShell包装器可考虑更安全的方式
+- [WARN] 可以提取共享模块减少重复
+- [WARN] 可以添加单元测试
+- [WARN] PowerShell包装器可考虑更安全的方式
 
 ### 审查结论
 
-**✅ 通过审查**
+**[OK_CHECK] 通过审查**
 
 UTF-8编码修复工作质量优秀，成功解决了Windows平台的显示问题。所有发现的问题都已修复或已有缓解措施。代码符合Python最佳实践，文档完善，测试充分。
 
@@ -470,7 +470,7 @@ UTF-8编码修复工作质量优秀，成功解决了Windows平台的显示问�
 
 ---
 
-## 📝 审查清单
+## [MEMO] 审查清单
 
 - [x] 所有Python脚本都已修复
 - [x] import语句符合PEP 8
@@ -486,5 +486,5 @@ UTF-8编码修复工作质量优秀，成功解决了Windows平台的显示问�
 ---
 
 **审查完成时间**: 2026-04-21  
-**审查结论**: ✅ 通过  
+**审查结论**: [OK_CHECK] 通过  
 **建议操作**: 合并到主分支  

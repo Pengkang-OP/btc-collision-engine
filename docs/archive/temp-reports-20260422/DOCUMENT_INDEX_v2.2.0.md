@@ -4,20 +4,20 @@
 >
 > **版本**: v2.2.0 | **最后更新**: 2026-04-21
 >
-> 📢 **v2.2.0重大更新**: 新增8个性能优化模块，综合性能提升30-50%，GPU性能达200k+ keys/s
+> [ANNOUNCE] **v2.2.0重大更新**: 新增8个性能优化模块，综合性能提升30-50%，GPU性能达200k+ keys/s
 
 ---
 
-## 📚 文档分类导航
+## [BOOKS] 文档分类导航
 
-### 🚀 1. 快速开始（新用户必读）
+### [QUICK] 1. 快速开始（新用户必读）
 
 | 文档 | 路径 | 说明 | 优先级 |
 |------|------|------|--------|
-| 项目概述 | [README.md](../README.md) | 功能特性、快速开始、安装指南 | ⭐⭐⭐ |
-| 快速使用指南 | [USAGE_GUIDE_v2.2.0.md](USAGE_GUIDE_v2.2.0.md) | v2.2.0 API使用和配置示例 | ⭐⭐⭐ |
-| 发布说明 | [RELEASE_NOTES_v2.2.0.md](../RELEASE_NOTES_v2.2.0.md) | v2.2.0新功能和变更 | ⭐⭐ |
-| 变更日志 | [CHANGELOG.md](../CHANGELOG.md) | 完整版本历史记录 | ⭐⭐ |
+| 项目概述 | [README.md](../README.md) | 功能特性、快速开始、安装指南 | [STAR][STAR][STAR] |
+| 快速使用指南 | [USAGE_GUIDE_v2.2.0.md](USAGE_GUIDE_v2.2.0.md) | v2.2.0 API使用和配置示例 | [STAR][STAR][STAR] |
+| 发布说明 | [RELEASE_NOTES_v2.2.0.md](../RELEASE_NOTES_v2.2.0.md) | v2.2.0新功能和变更 | [STAR][STAR] |
+| 变更日志 | [CHANGELOG.md](../CHANGELOG.md) | 完整版本历史记录 | [STAR][STAR] |
 
 **快速开始路径**:
 
@@ -27,16 +27,16 @@
 
 ---
 
-### ⚡ 2. 性能优化（v2.2.0核心）
+### [BOLT] 2. 性能优化（v2.2.0核心）
 
 #### 2.1 实施报告
 
 | 文档 | 路径 | 内容 | 状态 |
 |------|------|------|------|
-| 最终实施报告 | [v2.2.0-final-implementation-report.md](v2.2.0-final-implementation-report.md) | 5步执行计划完成总结 | ✅ |
-| 实施报告 | [optimization-implementation-report.md](optimization-implementation-report.md) | 6阶段优化方案详情 | ✅ |
-| 实施总结 | [optimization-implementation-summary.md](optimization-implementation-summary.md) | 2000+行代码总结 | ✅ |
-| 进度报告 | [optimization-progress-report.md](optimization-progress-report.md) | 阶段一、二完成状态 | ✅ |
+| 最终实施报告 | [v2.2.0-final-implementation-report.md](v2.2.0-final-implementation-report.md) | 5步执行计划完成总结 | [OK_CHECK] |
+| 实施报告 | [optimization-implementation-report.md](optimization-implementation-report.md) | 6阶段优化方案详情 | [OK_CHECK] |
+| 实施总结 | [optimization-implementation-summary.md](optimization-implementation-summary.md) | 2000+行代码总结 | [OK_CHECK] |
+| 进度报告 | [optimization-progress-report.md](optimization-progress-report.md) | 阶段一、二完成状态 | [OK_CHECK] |
 
 #### 2.2 性能验证
 
@@ -56,11 +56,11 @@
 | 内存分配 | **-60%延迟** | 对象池复用 |
 | GPU内存 | **-60%开销** | 缓冲区复用 |
 
-> ⚠️ **注意**: `optimization-implementation-report.md` 中的部分数据是安装依赖前的旧数据，请以 `performance-verification-report.md` 为准。
+> [WARN] **注意**: `optimization-implementation-report.md` 中的部分数据是安装依赖前的旧数据，请以 `performance-verification-report.md` 为准。
 
 ---
 
-### 🎮 3. GPU加速
+### [GAME] 3. GPU加速
 
 #### 3.1 GPU集成测试
 
@@ -74,22 +74,22 @@
 | 文档 | 路径 | 问题级别 |
 |------|------|---------|
 | 监控实施报告 | [gpu-monitoring-implementation-report.md](gpu-monitoring-implementation-report.md) | v2.2.1新功能 |
-| P0修复报告 | [gpu-monitor-p0-fix-report.md](gpu-monitor-p0-fix-report.md) | 🔴 资源泄漏修复 |
-| P1优化报告 | [gpu-monitor-p1-optimization-report.md](gpu-monitor-p1-optimization-report.md) | 🟡 数据准确性优化 |
+| P0修复报告 | [gpu-monitor-p0-fix-report.md](gpu-monitor-p0-fix-report.md) | [RED] 资源泄漏修复 |
+| P1优化报告 | [gpu-monitor-p1-optimization-report.md](gpu-monitor-p1-optimization-report.md) | [YELLOW] 数据准确性优化 |
 
 #### 3.3 GPU性能数据（Intel Arc A770实测）
 
 | 指标 | 数值 | 状态 |
 |------|------|------|
-| 平均吞吐量 | **203,434 keys/s** | ✅ |
-| 峰值吞吐量 | **240,031 keys/s** | ✅ |
-| 平均执行时间 | 49.5 ms | ✅ |
-| 错误率 | 0.00% | ✅ |
-| 显存使用/批次 | 0.42 MB | ✅ |
+| 平均吞吐量 | **203,434 keys/s** | [OK_CHECK] |
+| 峰值吞吐量 | **240,031 keys/s** | [OK_CHECK] |
+| 平均执行时间 | 49.5 ms | [OK_CHECK] |
+| 错误率 | 0.00% | [OK_CHECK] |
+| 显存使用/批次 | 0.42 MB | [OK_CHECK] |
 
 ---
 
-### 🖥️ 4. GUI/CLI集成
+### [DESKTOP] 4. GUI/CLI集成
 
 | 文档 | 路径 | 内容 |
 |------|------|------|
@@ -104,7 +104,7 @@
 
 ---
 
-### 🏗️ 5. 架构与设计
+### [BUILD] 5. 架构与设计
 
 | 文档 | 路径 | 说明 |
 |------|------|------|
@@ -115,7 +115,7 @@
 
 ---
 
-### 🔒 6. 安全特性
+### [LOCK] 6. 安全特性
 
 | 文档 | 路径 | 说明 |
 |------|------|------|
@@ -125,7 +125,7 @@
 
 ---
 
-### 📊 7. 监控系统
+### [CHART] 7. 监控系统
 
 | 文档 | 路径 | 说明 |
 |------|------|------|
@@ -135,7 +135,7 @@
 
 ---
 
-### ⚙️ 8. 配置与部署
+### [CONFIG] 8. 配置与部署
 
 | 文档 | 路径 | 说明 |
 |------|------|------|
@@ -144,7 +144,7 @@
 
 ---
 
-### 🎨 9. 界面使用
+### [ART] 9. 界面使用
 
 | 文档 | 路径 | 说明 |
 |------|------|------|
@@ -152,7 +152,7 @@
 
 ---
 
-### 🔧 10. 故障排除
+### [WRENCH] 10. 故障排除
 
 | 文档 | 路径 | 说明 |
 |------|------|------|
@@ -160,7 +160,7 @@
 
 ---
 
-## 🎯 按使用场景导航
+## [TARGET] 按使用场景导航
 
 ### 新用户入门
 
@@ -194,7 +194,7 @@
 
 ---
 
-## 📦 Archive文档归档
+## [PACKAGE] Archive文档归档
 
 `archive/` 目录包含历史开发记录，按主题分类：
 
@@ -208,7 +208,7 @@
 
 ---
 
-## 📊 文档统计（v2.2.0）
+## [CHART] 文档统计（v2.2.0）
 
 | 类别 | 文档数量 | 总大小 | 说明 |
 |------|---------|--------|------|
@@ -225,15 +225,15 @@
 
 ---
 
-## ⚠️ 已知文档问题
+## [WARN] 已知文档问题
 
-### 🔴 需要修复
+### [RED] 需要修复
 
 1. **版本号不一致**: DOCUMENT_INDEX.md 仍标记为 v1.2.0（应为 v2.2.0）
 2. **性能数据过时**: `optimization-implementation-report.md` 包含旧数据
 3. **文档缺失**: 8个v2.2.0新文档未添加到旧索引
 
-### 🟡 建议改进
+### [YELLOW] 建议改进
 
 1. 添加文档创建时间戳（精确到小时）
 2. 统一性能数据格式（统一使用百分比或倍数）
@@ -241,7 +241,7 @@
 
 ---
 
-## 🔄 文档更新记录
+## [REFRESH] 文档更新记录
 
 | 日期 | 更新内容 | 版本 | 负责人 |
 |------|---------|------|--------|
@@ -251,7 +251,7 @@
 
 ---
 
-## 💡 使用建议
+## [TIP] 使用建议
 
 1. **首次使用**: 从"新用户入门"路径开始
 2. **性能优化**: 优先查看 `optimization-quick-reference.md`
@@ -262,7 +262,7 @@
 
 ---
 
-## 📝 文档维护说明
+## [MEMO] 文档维护说明
 
 - **主文档**: 保持最新，反映当前状态（v2.2.0）
 - **Archive文档**: 历史记录，不建议修改

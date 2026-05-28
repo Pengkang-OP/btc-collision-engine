@@ -427,20 +427,20 @@ class DataAnalysisModule:
         high_issues = [i for i in issues if i.severity == Severity.HIGH]
 
         if critical_issues:
-            recommendations.append("⚠️ 发现严重问题，必须立即修复")
+            recommendations.append("WARN 发现严重问题，必须立即修复")
 
         if high_issues:
-            recommendations.append("🔴 高优先级问题需要尽快处理")
+            recommendations.append("[RED] 高优先级问题需要尽快处理")
 
         # 基于统计生成建议
         if statistics.get("quality_score", 100) < 80:
-            recommendations.append("📊 建议进行代码质量改进")
+            recommendations.append("[CHART] 建议进行代码质量改进")
 
         if statistics.get("complexity_score", 0) > 30:
-            recommendations.append("🔄 建议降低代码复杂度")
+            recommendations.append("[REFRESH] 建议降低代码复杂度")
 
         if not recommendations:
-            recommendations.append("✅ 代码质量良好，保持当前标准")
+            recommendations.append("OK 代码质量良好，保持当前标准")
 
         return recommendations
 

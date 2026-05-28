@@ -52,7 +52,7 @@ def pytest_collection_modifyitems(config, items):
     if not PYOPENCL_AVAILABLE:
         reason = "需要 GPU 硬件 (pyopencl 不可用)"
     else:
-        reason = "需要 coincurve 库 (GPU 地址匹配不可用)"  # noqa: E501
+        reason = "需要 coincurve 库 (GPU 地址匹配不可用)"
 
     skip_gpu = pytest.mark.skip(reason=reason)
     for item in items:

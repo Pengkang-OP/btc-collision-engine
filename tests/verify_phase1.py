@@ -34,12 +34,12 @@ def test_module_imports():
     for module_name in modules:
         try:
             __import__(module_name)
-            print(f"  ✅ {module_name}")
+            print(f"  OK {module_name}")
         except ImportError as e:
-            print(f"  ❌ {module_name}: {e}")
+            print(f"  ERR {module_name}: {e}")
             return False
 
-    print("\n  ✅ 所有模块导入成功\n")
+    print("\n  OK 所有模块导入成功\n")
     return True
 
 
@@ -56,10 +56,10 @@ def test_no_circular_dependency():
 
     # 尝试导入
     try:
-        print("  ✅ 无循环依赖检测通过\n")
+        print("  OK 无循环依赖检测通过\n")
         return True
     except ImportError as e:
-        print(f"  ❌ 检测到循环依赖: {e}\n")
+        print(f"  ERR 检测到循环依赖: {e}\n")
         return False
 
 
@@ -82,11 +82,11 @@ def test_protocol_definitions():
         result = CollisionResult(matches=[], execution_time_ms=50.0, batch_size=1000)
         assert result.execution_time_ms == 50.0
 
-        print("  ✅ 接口协议定义正确\n")
+        print("  OK 接口协议定义正确\n")
         return True
 
     except Exception as e:
-        print(f"  ❌ 接口定义测试失败: {e}\n")
+        print(f"  ERR 接口定义测试失败: {e}\n")
         return False
 
 
@@ -104,23 +104,23 @@ def test_component_instantiation():
         # 测试实例化
         monitoring = PerformanceMonitoringPipeline(engine=None, config={})
         assert monitoring is not None
-        print("  ✅ PerformanceMonitoringPipeline 实例化成功")
+        print("  OK PerformanceMonitoringPipeline 实例化成功")
 
         targets = {"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"}
         core = CollisionCore(targets=targets, config={})
         assert core is not None
-        print("  ✅ CollisionCore 实例化成功")
+        print("  OK CollisionCore 实例化成功")
 
         # 测试厂商工厂
         intel_strategy = VendorOptimizationFactory.create("intel")
         assert intel_strategy is not None
-        print("  ✅ VendorOptimizationFactory 创建Intel策略成功")
+        print("  OK VendorOptimizationFactory 创建Intel策略成功")
 
         print()
         return True
 
     except Exception as e:
-        print(f"  ❌ 组件实例化失败: {e}\n")
+        print(f"  ERR 组件实例化失败: {e}\n")
         import traceback
 
         traceback.print_exc()
@@ -146,18 +146,18 @@ def test_vendor_factory():
         for vendor in ["intel", "nvidia", "amd"]:
             strategy = VendorOptimizationFactory.create(vendor)
             assert strategy is not None
-            print(f"  ✅ {vendor} 策略创建成功")
+            print(f"  OK {vendor} 策略创建成功")
 
         # 测试未知厂商
         unknown = VendorOptimizationFactory.create("unknown")
         assert isinstance(unknown, DefaultOptimizationStrategy)
-        print("  ✅ 未知厂商回退到默认策略成功")
+        print("  OK 未知厂商回退到默认策略成功")
 
         print()
         return True
 
     except Exception as e:
-        print(f"  ❌ 厂商工厂测试失败: {e}\n")
+        print(f"  ERR 厂商工厂测试失败: {e}\n")
         import traceback
 
         traceback.print_exc()
@@ -186,7 +186,7 @@ def main():
             success = test_func()
             results.append((test_name, success))
         except Exception as e:
-            print(f"  ❌ 测试 {test_name} 异常: {e}")
+            print(f"  ERR 测试 {test_name} 异常: {e}")
             results.append((test_name, False))
 
     # 汇总结果
@@ -199,16 +199,16 @@ def main():
     total = len(results)
 
     for test_name, success in results:
-        status = "✅ 通过" if success else "❌ 失败"
+        status = "OK 通过" if success else "ERR 失败"
         print(f"  {status} - {test_name}")
 
     print()
     print(f"总计: {passed}/{total} 通过")
 
     if passed == total:
-        print("\n🎉 所有测试通过！Phase 1 实施成功！\n")
+        print("\n[DONE] 所有测试通过！Phase 1 实施成功！\n")
         return 0
-    print(f"\n⚠️  {total - passed} 个测试失败，请检查错误\n")
+    print(f"\nWARN  {total - passed} 个测试失败，请检查错误\n")
     return 1
 
 

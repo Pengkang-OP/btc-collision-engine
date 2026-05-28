@@ -32,7 +32,7 @@ def cmd_list_devices(args):
     devices = selector.detect_all_devices(force_refresh=True)
 
     if not devices:
-        print("❌ 未检测到GPU设备")
+        print("ERR 未检测到GPU设备")
         print("\n请检查:")
         print("  1. GPU驱动是否正确安装")
         print("  2. pyopencl是否安装: pip install pyopencl")
@@ -53,10 +53,10 @@ def cmd_auto_select(args):
     best_device = selector.select_best_device()
 
     if not best_device:
-        print("❌ 未找到可用GPU")
+        print("ERR 未找到可用GPU")
         return 1
 
-    print("✅ 自动选择最佳GPU:")
+    print("OK 自动选择最佳GPU:")
     print(selector.format_device_info(best_device, detailed=True))
 
     # 生成配置建议
@@ -79,17 +79,17 @@ def cmd_test_multi(args):
     devices = selector.detect_all_devices()
 
     if not devices:
-        print("❌ 未检测到GPU设备")
+        print("ERR 未检测到GPU设备")
         return 1
 
     if len(devices) < 2:
-        print(f"⚠️  仅检测到 {len(devices)} 个GPU,多GPU模式需要至少2个GPU")
+        print(f"WARN 仅检测到 {len(devices)} 个GPU,多GPU模式需要至少2个GPU")
         print("但可以测试单GPU功能:")
         device_count = 1
     else:
         device_count = min(len(devices), args.gpu_count)
 
-    print(f"🚀 测试多GPU模式: {device_count}个GPU")
+    print(f"FAST 测试多GPU模式: {device_count}个GPU")
     print(f"   GPU列表: {[d['name'] for d in devices[:device_count]]}")
 
     # 创建多GPU引擎
@@ -97,10 +97,10 @@ def cmd_test_multi(args):
 
     # 初始化
     if not engine.initialize(device_count=device_count, strategy="performance"):
-        print("❌ 多GPU引擎初始化失败")
+        print("ERR 多GPU引擎初始化失败")
         return 1
 
-    print("✅ 多GPU引擎初始化成功")
+    print("OK 多GPU引擎初始化成功")
 
     # 显示设备信息
     for device in engine.get_devices():
@@ -112,11 +112,11 @@ def cmd_test_multi(args):
     balancer = engine.get_load_balancer()
     if balancer:
         weights = balancer.calculate_weights()
-        print("\n📊 负载分配:")
+        print("\nSTATS 负载分配:")
         for idx, weight in weights.items():
             print(f"  GPU {idx}: {weight:.1%}")
 
-    print("\n✅ 多GPU测试通过!")
+    print("\nOK 多GPU测试通过!")
 
     # 清理
     engine.cleanup()
@@ -132,7 +132,7 @@ def cmd_generate_config(args):
     devices = selector.detect_all_devices()
 
     if not devices:
-        print("❌ 未检测到GPU设备")
+        print("ERR 未检测到GPU设备")
         return 1
 
     # 生成简单配置 (config_validator 模块已移除)
@@ -161,7 +161,7 @@ def cmd_generate_config(args):
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(config, f, indent=2, ensure_ascii=False)
 
-    print(f"✅ 配置文件已生成: {output_path}")
+    print(f"OK 配置文件已生成: {output_path}")
     print("\n配置内容:")
     print(json.dumps(config, indent=2, ensure_ascii=False))
 
@@ -232,7 +232,7 @@ def main():
     try:
         return args.func(args)
     except Exception as e:
-        print(f"❌ 命令执行失败: {e}")
+        print(f"ERR 命令执行失败: {e}")
         import traceback
 
         traceback.print_exc()

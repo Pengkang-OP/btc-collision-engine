@@ -2,31 +2,31 @@
 
 **实施日期**: 2026-04-21  
 **版本**: v2.2.0  
-**状态**: ✅ 已完成
+**状态**: [OK_CHECK] 已完成
 
 ---
 
-## 📋 问题背景
+## [CHECKLIST] 问题背景
 
 从终端输出可以看到性能退化警告:
 
 ```
-2026-04-21 18:55:48,294 - PerformanceMonitor - WARNING - ⚠️ 检测到性能退化: 当前=58 addr/s, 峰值=75 addr/s, 退化率=77.16%
-2026-04-21 18:56:20,914 - PerformanceMonitor - WARNING - ⚠️ 检测到性能退化: 当前=58 addr/s, 峰值=75 addr/s, 退化率=77.46%
-2026-04-21 18:57:21,756 - PerformanceMonitor - WARNING - ⚠️ 检测到性能退化: 当前=59 addr/s, 峰值=75 addr/s, 退化率=79.32%
+2026-04-21 18:55:48,294 - PerformanceMonitor - WARNING - [WARN] 检测到性能退化: 当前=58 addr/s, 峰值=75 addr/s, 退化率=77.16%
+2026-04-21 18:56:20,914 - PerformanceMonitor - WARNING - [WARN] 检测到性能退化: 当前=58 addr/s, 峰值=75 addr/s, 退化率=77.46%
+2026-04-21 18:57:21,756 - PerformanceMonitor - WARNING - [WARN] 检测到性能退化: 当前=59 addr/s, 峰值=75 addr/s, 退化率=79.32%
 ```
 
 **问题**: 这是**CPU模式**的性能监控,缺少**GPU模式**的专门监控模块。
 
 ---
 
-## ✅ 解决方案
+## [OK_CHECK] 解决方案
 
 创建专用的**GPU性能监控模块**,实时监控GPU碰撞引擎的运行状态。
 
 ---
 
-## 📦 交付成果
+## [PACKAGE] 交付成果
 
 ### 1. GPU性能监控模块
 
@@ -34,13 +34,13 @@
 
 **核心功能**:
 
-- ✅ 实时监控GPU内核执行性能
-- ✅ 跟踪显存使用情况和泄漏检测
-- ✅ 记录批次执行时间和吞吐量
-- ✅ 监控内存池命中率
-- ✅ 性能退化自动检测
-- ✅ 错误率监控和告警
-- ✅ JSON/CSV数据导出
+- [OK_CHECK] 实时监控GPU内核执行性能
+- [OK_CHECK] 跟踪显存使用情况和泄漏检测
+- [OK_CHECK] 记录批次执行时间和吞吐量
+- [OK_CHECK] 监控内存池命中率
+- [OK_CHECK] 性能退化自动检测
+- [OK_CHECK] 错误率监控和告警
+- [OK_CHECK] JSON/CSV数据导出
 
 **关键类**:
 
@@ -90,7 +90,7 @@ class GPUPerformanceMonitor:
 # 14. 初始化GPU性能监控器 (v2.2.1新增)
 self.gpu_performance_monitor = get_gpu_performance_monitor(engine=self)
 self.gpu_performance_monitor.start()
-logger.info("✅ GPU性能监控器已启动")
+logger.info("[OK_CHECK] GPU性能监控器已启动")
 ```
 
 #### 2.2 GPU内核执行时记录指标
@@ -167,7 +167,7 @@ print(f"峰值吞吐量: {report.peak_throughput_keys_per_sec:,.0f} keys/s")
 ```python
 # 注册性能退化回调
 def on_degradation(metrics, ratio):
-    print(f"⚠️ 性能退化: {metrics.keys_per_second:,.0f} keys/s, "
+    print(f"[WARN] 性能退化: {metrics.keys_per_second:,.0f} keys/s, "
           f"退化率={ratio:.2%}")
 
 monitor.on_degradation(on_degradation)
@@ -221,10 +221,10 @@ print(f"GPU加速比: {speedup:.2f}x")
 
 **测试类**:
 
-- ✅ `TestGPUKernelMetrics` - GPU内核指标测试 (2个测试)
-- ✅ `TestGPUMemoryMetrics` - GPU显存指标测试 (2个测试)
-- ✅ `TestGPUPerformanceMonitor` - GPU监控器测试 (13个测试)
-- ✅ `TestGPUPerformanceReport` - GPU性能报告测试 (2个测试)
+- [OK_CHECK] `TestGPUKernelMetrics` - GPU内核指标测试 (2个测试)
+- [OK_CHECK] `TestGPUMemoryMetrics` - GPU显存指标测试 (2个测试)
+- [OK_CHECK] `TestGPUPerformanceMonitor` - GPU监控器测试 (13个测试)
+- [OK_CHECK] `TestGPUPerformanceReport` - GPU性能报告测试 (2个测试)
 
 **测试内容**:
 
@@ -246,7 +246,7 @@ print(f"GPU加速比: {speedup:.2f}x")
 
 ---
 
-## 🎯 监控功能详解
+## [TARGET] 监控功能详解
 
 ### 1. 内核执行监控
 
@@ -286,7 +286,7 @@ keys_per_second = batch_size / execution_time_ms * 1000
 ```python
 # 检查最近50个样本的趋势
 if (avg_second_half - avg_first_half) / avg_first_half > 0.2:
-    logger.warning("⚠️ 检测到可能的显存泄漏")
+    logger.warning("[WARN] 检测到可能的显存泄漏")
 ```
 
 ---
@@ -300,7 +300,7 @@ degradation_threshold = 0.75  # 相对于峰值的75%
 
 if current_throughput < peak_throughput * degradation_threshold:
     # 触发性能退化告警
-    logger.warning(f"⚠️ GPU性能退化: "
+    logger.warning(f"[WARN] GPU性能退化: "
                   f"当前={current:,.0f} keys/s, "
                   f"峰值={peak:,.0f} keys/s, "
                   f"退化率={ratio:.2%}")
@@ -326,7 +326,7 @@ monitor.on_degradation(on_degradation)
 error_rate = (total_errors / total_batches) * 100
 
 if error_rate > 5.0:  # 错误率超过5%
-    logger.warning(f"⚠️ GPU错误率过高: {error_rate:.2f}%")
+    logger.warning(f"[WARN] GPU错误率过高: {error_rate:.2f}%")
 ```
 
 **错误回调**:
@@ -377,7 +377,7 @@ report.performance_stability_percent # 性能稳定性
 
 ---
 
-## 📊 使用效果
+## [CHART] 使用效果
 
 ### 实时监控示例
 
@@ -401,7 +401,7 @@ report.performance_stability_percent # 性能稳定性
 ### 性能报告示例
 
 ```
-📊 GPU性能报告:
+[CHART] GPU性能报告:
   设备: Intel(R) Arc(TM) A770 Graphics
   厂商: Intel Corporation
   监控时长: 60.0秒
@@ -418,7 +418,7 @@ report.performance_stability_percent # 性能稳定性
 
 ---
 
-## 🔧 配置参数
+## [WRENCH] 配置参数
 
 ### GPUPerformanceMonitor参数
 
@@ -441,7 +441,7 @@ monitor = GPUPerformanceMonitor(
 
 ---
 
-## 📈 监控数据导出
+## [PERF] 监控数据导出
 
 ### JSON格式
 
@@ -464,7 +464,7 @@ csv_data = monitor.export_metrics(format='csv')
 
 ---
 
-## 🎉 测试结果
+## [DONE] 测试结果
 
 ### 单元测试
 
@@ -478,7 +478,7 @@ $ pytest tests/test_gpu_performance_monitor.py -v
 
 ---
 
-## 📚 相关文档
+## [BOOKS] 相关文档
 
 1. [gpu_performance_monitor.py](file:///f:/Qoder/btc-collision-engine/src/monitoring/gpu_performance_monitor.py) - GPU性能监控模块
 2. [gpu_performance_monitoring_demo.py](file:///f:/Qoder/btc-collision-engine/examples/gpu_performance_monitoring_demo.py) - 使用示例
@@ -487,7 +487,7 @@ $ pytest tests/test_gpu_performance_monitor.py -v
 
 ---
 
-## 🚀 下一步
+## [QUICK] 下一步
 
 ### 已规划
 
@@ -504,37 +504,37 @@ $ pytest tests/test_gpu_performance_monitor.py -v
 
 ---
 
-## ✅ 总结
+## [OK_CHECK] 总结
 
 ### 完成的工作
 
 | 任务 | 状态 | 文件/代码行数 |
 |------|------|--------------|
-| 创建GPU性能监控模块 | ✅ | gpu_performance_monitor.py (670行) |
-| 集成到GPU引擎 | ✅ | gpu_collision_engine.py (+38行) |
-| 创建使用示例 | ✅ | gpu_performance_monitoring_demo.py (293行) |
-| 编写单元测试 | ✅ | test_gpu_performance_monitor.py (359行, 19测试) |
-| 修复dataclass错误 | ✅ | 字段顺序修复 |
+| 创建GPU性能监控模块 | [OK_CHECK] | gpu_performance_monitor.py (670行) |
+| 集成到GPU引擎 | [OK_CHECK] | gpu_collision_engine.py (+38行) |
+| 创建使用示例 | [OK_CHECK] | gpu_performance_monitoring_demo.py (293行) |
+| 编写单元测试 | [OK_CHECK] | test_gpu_performance_monitor.py (359行, 19测试) |
+| 修复dataclass错误 | [OK_CHECK] | 字段顺序修复 |
 
 ### 监控能力
 
-- ✅ GPU内核执行性能监控
-- ✅ 显存使用和泄漏检测
-- ✅ 性能退化自动告警
-- ✅ 错误率监控
-- ✅ 内存池命中率跟踪
-- ✅ 性能报告生成
-- ✅ JSON/CSV数据导出
+- [OK_CHECK] GPU内核执行性能监控
+- [OK_CHECK] 显存使用和泄漏检测
+- [OK_CHECK] 性能退化自动告警
+- [OK_CHECK] 错误率监控
+- [OK_CHECK] 内存池命中率跟踪
+- [OK_CHECK] 性能报告生成
+- [OK_CHECK] JSON/CSV数据导出
 
 ### 验证结果
 
-- ✅ 19/19单元测试通过(100%)
-- ✅ GPU引擎自动启动监控
-- ✅ 每个批次自动记录指标
-- ✅ 性能退化检测正常工作
+- [OK_CHECK] 19/19单元测试通过(100%)
+- [OK_CHECK] GPU引擎自动启动监控
+- [OK_CHECK] 每个批次自动记录指标
+- [OK_CHECK] 性能退化检测正常工作
 
 ---
 
-**v2.2.1 GPU性能监控模块已完成!** 🎊
+**v2.2.1 GPU性能监控模块已完成!** [CONFETTI]
 
 现在GPU模式的运行状态可以被实时监控,确保GPU发挥预期性能。

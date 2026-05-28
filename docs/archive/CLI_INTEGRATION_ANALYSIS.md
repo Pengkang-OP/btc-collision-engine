@@ -36,10 +36,10 @@
 
 | 分析维度 | 评分 | 权重 | 加权分 |
 |----------|------|------|--------|
-| 交互性（Interactivity） | ⭐⭐⭐⭐ 8/10 | 35% | 2.80 |
-| 人性化（Humanization） | ⭐⭐⭐⭐⭐ 9/10 | 35% | 3.15 |
-| 工程化（Engineering） | ⭐⭐⭐⭐ 8/10 | 30% | 2.40 |
-| **综合评分** | **⭐⭐⭐⭐ 8.5/10** | 100% | **8.35** |
+| 交互性（Interactivity） | [STAR][STAR][STAR][STAR] 8/10 | 35% | 2.80 |
+| 人性化（Humanization） | [STAR][STAR][STAR][STAR][STAR] 9/10 | 35% | 3.15 |
+| 工程化（Engineering） | [STAR][STAR][STAR][STAR] 8/10 | 30% | 2.40 |
+| **综合评分** | **[STAR][STAR][STAR][STAR] 8.5/10** | 100% | **8.35** |
 
 ---
 
@@ -234,7 +234,7 @@ ETA 计算逻辑（`main.py` 第 484-494 行）：以秒/分钟/小时三档自�
 | `OSError` | 系统调用失败 | `错误: 系统调用失败 - {e}` | 1 |
 | `Exception`（兜底） | 未预期异常 | `错误: 未预期的异常 - {type}: {e}` | 2 |
 
-**评分**：⭐⭐⭐⭐ 8/10  
+**评分**：[STAR][STAR][STAR][STAR] 8/10  
 **不足**：缺少网络超时、磁盘空间预警、GPU 显存不足的专项提示（来源：`CLI_AUDIT_SUMMARY.md` 第 143-147 行）
 
 ---
@@ -363,14 +363,14 @@ def deep_merge(base: dict, override: dict) -> None:
 
 | # | 用户场景 | 支撑命令/参数 | 验证状态 |
 |---|----------|---------------|----------|
-| 1 | 新手首次使用 | `--quick-start`、首次运行向导自动触发 | ✅ 通过 |
-| 2 | 单地址随机碰撞 | `-t <地址> -m random` | ✅ 通过 |
-| 3 | 批量地址文件碰撞 | `-f targets.txt -m random` | ✅ 通过 |
-| 4 | 长时间断点续传 | `--checkpoint --duration 86400` | ✅ 通过 |
-| 5 | GPU 加速碰撞 | `--use-gpu` / `--multi-gpu` | ✅ 通过 |
-| 6 | 指定范围私钥扫描 | `-m range --start 1 --end FFFFFFFF` | ✅ 通过 |
-| 7 | 系统配置检查 | `--config-check`、`--health-check` | ✅ 通过 |
-| 8 | 匹配结果导出 | `--export-matches FILE` | ✅ 通过 |
+| 1 | 新手首次使用 | `--quick-start`、首次运行向导自动触发 | [OK_CHECK] 通过 |
+| 2 | 单地址随机碰撞 | `-t <地址> -m random` | [OK_CHECK] 通过 |
+| 3 | 批量地址文件碰撞 | `-f targets.txt -m random` | [OK_CHECK] 通过 |
+| 4 | 长时间断点续传 | `--checkpoint --duration 86400` | [OK_CHECK] 通过 |
+| 5 | GPU 加速碰撞 | `--use-gpu` / `--multi-gpu` | [OK_CHECK] 通过 |
+| 6 | 指定范围私钥扫描 | `-m range --start 1 --end FFFFFFFF` | [OK_CHECK] 通过 |
+| 7 | 系统配置检查 | `--config-check`、`--health-check` | [OK_CHECK] 通过 |
+| 8 | 匹配结果导出 | `--export-matches FILE` | [OK_CHECK] 通过 |
 
 ### 2.5 32 项功能实现验证
 
@@ -378,55 +378,55 @@ def deep_merge(base: dict, override: dict) -> None:
 
 | # | 功能 | 实现方式 | 状态 |
 |---|------|----------|------|
-| 1 | 单地址输入 | `-t ADDRESS`（`main.py` 第 133-138 行） | ✅ |
-| 2 | 多地址输入 | `-t ADDR1 ADDR2 ...`（nargs="+"） | ✅ |
-| 3 | 文件批量加载 | `-f FILE` + `TargetResolver.load_from_file()` | ✅ |
-| 4 | random 碰撞模式 | `-m random`（默认）（第 147-152 行） | ✅ |
-| 5 | range 扫描模式 | `-m range --start --end` | ✅ |
-| 6 | brute_force 模式 | `-m brute_force --start` | ✅ |
-| 7 | CPU 引擎 | `KeyCollisionEngine`（第 582-596 行） | ✅ |
-| 8 | 单 GPU 引擎 | `GPUCollisionEngine`（第 563-579 行） | ✅ |
-| 9 | 多 GPU 引擎 | `MultiGPUCollisionEngine`（第 544-560 行） | ✅ |
-| 10 | 地址格式验证 | `--validate-addresses`（第 297-302 行） | ✅ |
+| 1 | 单地址输入 | `-t ADDRESS`（`main.py` 第 133-138 行） | [OK_CHECK] |
+| 2 | 多地址输入 | `-t ADDR1 ADDR2 ...`（nargs="+"） | [OK_CHECK] |
+| 3 | 文件批量加载 | `-f FILE` + `TargetResolver.load_from_file()` | [OK_CHECK] |
+| 4 | random 碰撞模式 | `-m random`（默认）（第 147-152 行） | [OK_CHECK] |
+| 5 | range 扫描模式 | `-m range --start --end` | [OK_CHECK] |
+| 6 | brute_force 模式 | `-m brute_force --start` | [OK_CHECK] |
+| 7 | CPU 引擎 | `KeyCollisionEngine`（第 582-596 行） | [OK_CHECK] |
+| 8 | 单 GPU 引擎 | `GPUCollisionEngine`（第 563-579 行） | [OK_CHECK] |
+| 9 | 多 GPU 引擎 | `MultiGPUCollisionEngine`（第 544-560 行） | [OK_CHECK] |
+| 10 | 地址格式验证 | `--validate-addresses`（第 297-302 行） | [OK_CHECK] |
 
 #### 高级功能组（10 项）
 
 | # | 功能 | 参数 | 状态 |
 |---|------|------|------|
-| 11 | 断点续传启用 | `--checkpoint` | ✅ |
-| 12 | 断点续传间隔配置 | `--checkpoint-interval SECS` | ✅ |
-| 13 | 去重过滤启用 | `--dedup` | ✅ |
-| 14 | 去重容量配置 | `--dedup-max-size N` | ✅ |
-| 15 | 预计算表优化 | `--window-size N` | ✅ |
-| 16 | SIMD 哈希优化 | `--no-simd`（反向开关） | ✅ |
-| 17 | 内存池优化 | `--no-memory-pool`（反向开关） | ✅ |
-| 18 | 运行时长限制 | `--duration SECS` | ✅ |
-| 19 | 进度导出 | `--export-progress FILE` | ✅ |
-| 20 | 匹配结果导出 | `--export-matches FILE` | ✅ |
+| 11 | 断点续传启用 | `--checkpoint` | [OK_CHECK] |
+| 12 | 断点续传间隔配置 | `--checkpoint-interval SECS` | [OK_CHECK] |
+| 13 | 去重过滤启用 | `--dedup` | [OK_CHECK] |
+| 14 | 去重容量配置 | `--dedup-max-size N` | [OK_CHECK] |
+| 15 | 预计算表优化 | `--window-size N` | [OK_CHECK] |
+| 16 | SIMD 哈希优化 | `--no-simd`（反向开关） | [OK_CHECK] |
+| 17 | 内存池优化 | `--no-memory-pool`（反向开关） | [OK_CHECK] |
+| 18 | 运行时长限制 | `--duration SECS` | [OK_CHECK] |
+| 19 | 进度导出 | `--export-progress FILE` | [OK_CHECK] |
+| 20 | 匹配结果导出 | `--export-matches FILE` | [OK_CHECK] |
 
 #### GPU 加速组（6 项）
 
 | # | 功能 | 参数 | 状态 |
 |---|------|------|------|
-| 21 | 单 GPU 模式 | `--use-gpu` | ✅ |
-| 22 | 多 GPU 模式 | `--multi-gpu` | ✅ |
-| 23 | GPU 设备选择 | `--gpu-device INDEX` | ✅ |
-| 24 | GPU 批次控制 | `--gpu-batch-size N` | ✅ |
-| 25 | 多 GPU 数量控制 | `--gpu-count N` | ✅ |
-| 26 | 多 GPU 索引指定 | `--gpu-indices IDX ...` | ✅ |
+| 21 | 单 GPU 模式 | `--use-gpu` | [OK_CHECK] |
+| 22 | 多 GPU 模式 | `--multi-gpu` | [OK_CHECK] |
+| 23 | GPU 设备选择 | `--gpu-device INDEX` | [OK_CHECK] |
+| 24 | GPU 批次控制 | `--gpu-batch-size N` | [OK_CHECK] |
+| 25 | 多 GPU 数量控制 | `--gpu-count N` | [OK_CHECK] |
+| 26 | 多 GPU 索引指定 | `--gpu-indices IDX ...` | [OK_CHECK] |
 
 #### 实用工具组（8 项）
 
 | # | 功能 | 参数 | 所属子组 | 状态 |
 |---|------|------|----------|------|
-| 27 | 交互式快速引导 | `--quick-start` | 工具 | ✅ ⭐ |
-| 28 | 示例展示 | `--examples` | 工具 | ✅ ⭐ |
-| 29 | 配置状态检查 | `--config-check` | 工具 | ✅ ⭐ |
-| 30 | 系统健康检查 | `--health-check` | 工具 | ✅ |
-| 31 | 跨平台兼容检查 | `--platform-check` | 工具 | ✅ |
-| 32 | 数据清理 | `--cleanup [--dry-run]` | 工具 | ✅ |
-| 33 | 首次运行向导 | 自动触发 | 用户体验 | ✅ ⭐ |
-| 34 | 可视化进度条 | `format_progress()` | 用户体验 | ✅ ⭐ |
+| 27 | 交互式快速引导 | `--quick-start` | 工具 | [OK_CHECK] [STAR] |
+| 28 | 示例展示 | `--examples` | 工具 | [OK_CHECK] [STAR] |
+| 29 | 配置状态检查 | `--config-check` | 工具 | [OK_CHECK] [STAR] |
+| 30 | 系统健康检查 | `--health-check` | 工具 | [OK_CHECK] |
+| 31 | 跨平台兼容检查 | `--platform-check` | 工具 | [OK_CHECK] |
+| 32 | 数据清理 | `--cleanup [--dry-run]` | 工具 | [OK_CHECK] |
+| 33 | 首次运行向导 | 自动触发 | 用户体验 | [OK_CHECK] [STAR] |
+| 34 | 可视化进度条 | `format_progress()` | 用户体验 | [OK_CHECK] [STAR] |
 
 > **注**：原审计报告将功能统计为 32 项，上表扩展计算至 34 项（`--template` 模板系统与 `--recommend` 参数推荐未含在原始 32 项清单中）。核心 32 项验证通过率：**32/32 = 100%**。
 
@@ -503,7 +503,7 @@ src/utils/
 
 | 文件 | 总行数 | 函数数 | 类数 | 导入层延迟加载 |
 |------|--------|--------|------|----------------|
-| `main.py` | 1270 | 13+2闭包 | 0 | ✅（GPU 引擎、各命令处理器） |
+| `main.py` | 1270 | 13+2闭包 | 0 | [OK_CHECK]（GPU 引擎、各命令处理器） |
 | `advanced_features.py` | 385 | 6 | 1（GPUErrorHandler） | 无需 |
 | `first_run_wizard.py` | 349 | 11 | 1（FirstRunWizard） | 无需 |
 | `security_log_filter.py` | 218 | 6 | 1（SecurityLogFilter） | 无需 |
@@ -536,7 +536,7 @@ src/utils/
 |------|------|------|
 | 函数类型注解覆盖率 | ~90% | `main.py` 所有顶层函数均有类型注解；内嵌闭包未注解 |
 | 文档字符串覆盖率 | 100% | 所有模块、类、函数均有 docstring |
-| 模块级文档 | ✅ | `main.py` 第 1-19 行含使用示例 |
+| 模块级文档 | [OK_CHECK] | `main.py` 第 1-19 行含使用示例 |
 | 内联注释 | 良好 | 关键逻辑（进度条计算、ETA 计算、范围验证）均有注释 |
 
 ### 3.3 测试覆盖
@@ -545,12 +545,12 @@ src/utils/
 
 | # | 测试名称 | 命令 | 预期行为 | 结果 |
 |---|----------|------|----------|------|
-| 1 | `--examples` 命令 | `python key_collision_cli.py --examples` | 输出含 `[Examples]` 或 `📚` | ✅ 通过 |
-| 2 | `--config-check` 命令 | `python key_collision_cli.py --config-check` | 输出含 `[Config Check]` 或 `🔧` | ✅ 通过 |
-| 3 | 无参数错误提示 | `python key_collision_cli.py` | 退出非 0，输出含 `[Tip]` 或 `💡` | ✅ 通过 |
-| 4 | range 模式缺 --start | `... -m range`（无 --start） | 退出非 0，输出含示例 | ✅ 通过 |
-| 5 | 帮助含新参数 | `... --help` | 输出含 `--quick-start` | ✅ 通过 |
-| 6 | --quick-start 参数说明 | `... --help` | 输出含 `启动交互式快速引导模式` | ✅ 通过 |
+| 1 | `--examples` 命令 | `python key_collision_cli.py --examples` | 输出含 `[Examples]` 或 `[BOOKS]` | [OK_CHECK] 通过 |
+| 2 | `--config-check` 命令 | `python key_collision_cli.py --config-check` | 输出含 `[Config Check]` 或 `[WRENCH]` | [OK_CHECK] 通过 |
+| 3 | 无参数错误提示 | `python key_collision_cli.py` | 退出非 0，输出含 `[Tip]` 或 `[TIP]` | [OK_CHECK] 通过 |
+| 4 | range 模式缺 --start | `... -m range`（无 --start） | 退出非 0，输出含示例 | [OK_CHECK] 通过 |
+| 5 | 帮助含新参数 | `... --help` | 输出含 `--quick-start` | [OK_CHECK] 通过 |
+| 6 | --quick-start 参数说明 | `... --help` | 输出含 `启动交互式快速引导模式` | [OK_CHECK] 通过 |
 
 **通过率**：6/6 = **100%**
 
@@ -617,10 +617,10 @@ def _mask_key(self, key_hex: str) -> str:
 
 | 保护措施 | 状态 | 说明 |
 |----------|------|------|
-| 私钥日志防泄漏 | ✅ 已实现 | `SecurityLogFilter` 全链路过滤 |
+| 私钥日志防泄漏 | [OK_CHECK] 已实现 | `SecurityLogFilter` 全链路过滤 |
 | 私钥内存清零 | 部分 | 引擎层按最佳实践处理，CLI 层无额外保护 |
-| 匹配输出安全性 | ⚠️ 待改进 | `on_match_callback()` 直接 print 私钥 Hex（第 601-606 行） |
-| 去重过滤器内存上限 | ✅ 已实现 | `--dedup-max-size` 默认 100 万条（第 189-191 行） |
+| 匹配输出安全性 | [WARN] 待改进 | `on_match_callback()` 直接 print 私钥 Hex（第 601-606 行） |
+| 去重过滤器内存上限 | [OK_CHECK] 已实现 | `--dedup-max-size` 默认 100 万条（第 189-191 行） |
 
 **安全测试通过情况**：根据 `CLI_AUDIT_SUMMARY.md`（第 42-46 行）记载，共 8 项安全措施已实施，13 个安全测试通过。
 
@@ -653,10 +653,10 @@ CLI 采用**延迟导入（Lazy Import）策略**，将重型依赖的导入推�
 
 | 维度 | 评分 | 核心依据 |
 |------|------|----------|
-| **交互性（Interactivity）** | ⭐⭐⭐⭐ **8/10** | 7 组参数分类清晰；9 种异常类型完整覆盖；进度条含 ETA；3 种目标输入方式 |
-| **人性化（Humanization）** | ⭐⭐⭐⭐⭐ **9/10** | 首次运行向导自动触发；`--quick-start` 4 步引导；8 场景示例；参数智能推荐；4 套配置模板 |
-| **工程化（Engineering）** | ⭐⭐⭐⭐ **8/10** | 工厂/命令/策略/观察者 4 种设计模式；~90% 类型注解；100% 文档字符串；80% 测试覆盖率；3 种敏感格式安全过滤 |
-| **综合评分** | ⭐⭐⭐⭐ **8.5/10** | 加权均值（35%+35%+30%）= 8.35，与审计报告一致 |
+| **交互性（Interactivity）** | [STAR][STAR][STAR][STAR] **8/10** | 7 组参数分类清晰；9 种异常类型完整覆盖；进度条含 ETA；3 种目标输入方式 |
+| **人性化（Humanization）** | [STAR][STAR][STAR][STAR][STAR] **9/10** | 首次运行向导自动触发；`--quick-start` 4 步引导；8 场景示例；参数智能推荐；4 套配置模板 |
+| **工程化（Engineering）** | [STAR][STAR][STAR][STAR] **8/10** | 工厂/命令/策略/观察者 4 种设计模式；~90% 类型注解；100% 文档字符串；80% 测试覆盖率；3 种敏感格式安全过滤 |
+| **综合评分** | [STAR][STAR][STAR][STAR] **8.5/10** | 加权均值（35%+35%+30%）= 8.35，与审计报告一致 |
 
 ### 4.2 与审计报告对标验证
 
@@ -664,12 +664,12 @@ CLI 采用**延迟导入（Lazy Import）策略**，将重型依赖的导入推�
 
 | 审计报告声明 | 实际验证 | 状态 |
 |-------------|----------|---------|
-| 32 项功能全部实现，100% 覆盖率 | 逐项查验 `parse_args()` + `_run_main()` 调度块，确认 32 项均有对应参数/命令（其中 2 项进阶参数 `--template`/`--recommend` 在审计后新增） | ✅ 验证通过 |
-| 新手上手时间降至 5-10 分钟 | `_cmd_quick_start()` 4 步引导流程，最短可在 2 分钟内生成可执行命令 | ✅ 合理 |
-| 首次运行成功率提升至 85% | 向导触发逻辑（第 1050-1066 行）自动检测首次运行并强制引导 | ✅ 有机制保障 |
-| 错误提示质量从 5/10 升至 9/10 | `validate_args()` 每条错误均附带 `[Tip]` 解决建议（第 386-441 行） | ✅ 验证通过 |
-| 测试覆盖率从 65% 升至 80% | 改进测试套件 6/6 通过；高级功能 32/32 通过 | ✅ 验证通过 |
-| 8 项安全措施已实施 | `SecurityLogFilter`（3 种格式）+ 4 层输入验证 + 内存保护部分实施 = 共 8 项 | ✅ 基本一致 |
+| 32 项功能全部实现，100% 覆盖率 | 逐项查验 `parse_args()` + `_run_main()` 调度块，确认 32 项均有对应参数/命令（其中 2 项进阶参数 `--template`/`--recommend` 在审计后新增） | [OK_CHECK] 验证通过 |
+| 新手上手时间降至 5-10 分钟 | `_cmd_quick_start()` 4 步引导流程，最短可在 2 分钟内生成可执行命令 | [OK_CHECK] 合理 |
+| 首次运行成功率提升至 85% | 向导触发逻辑（第 1050-1066 行）自动检测首次运行并强制引导 | [OK_CHECK] 有机制保障 |
+| 错误提示质量从 5/10 升至 9/10 | `validate_args()` 每条错误均附带 `[Tip]` 解决建议（第 386-441 行） | [OK_CHECK] 验证通过 |
+| 测试覆盖率从 65% 升至 80% | 改进测试套件 6/6 通过；高级功能 32/32 通过 | [OK_CHECK] 验证通过 |
+| 8 项安全措施已实施 | `SecurityLogFilter`（3 种格式）+ 4 层输入验证 + 内存保护部分实施 = 共 8 项 | [OK_CHECK] 基本一致 |
 
 ### 4.3 改进前后对比
 
@@ -679,11 +679,11 @@ CLI 采用**延迟导入（Lazy Import）策略**，将重型依赖的导入推�
 
 | # | 问题 | 严重程度 | 影响 |
 |---|------|----------|------|
-| 1 | 新手引导不足：`first_run_wizard.py` 存在但未集成到 CLI 入口 | ⚠️ 严重 | 学习曲线陡峭，新手需 30-60 分钟 |
-| 2 | 错误提示不友好：仅显示错误，无解决方案 | ⚠️ 中等 | 用户遇错无从下手 |
-| 3 | 参数组合复杂度高：依赖关系不透明 | ⚠️ 中等 | 组合错误率高，需多次尝试 |
-| 4 | 缺乏交互式配置：无 `--quick-start` / `--setup` | ⚠️ 中等 | 不适合习惯图形界面的用户 |
-| 5 | 示例和模板不足：无 `--examples` / `--templates` | ⚠️ 中等 | 用户自行摸索，学习成本高 |
+| 1 | 新手引导不足：`first_run_wizard.py` 存在但未集成到 CLI 入口 | [WARN] 严重 | 学习曲线陡峭，新手需 30-60 分钟 |
+| 2 | 错误提示不友好：仅显示错误，无解决方案 | [WARN] 中等 | 用户遇错无从下手 |
+| 3 | 参数组合复杂度高：依赖关系不透明 | [WARN] 中等 | 组合错误率高，需多次尝试 |
+| 4 | 缺乏交互式配置：无 `--quick-start` / `--setup` | [WARN] 中等 | 不适合习惯图形界面的用户 |
+| 5 | 示例和模板不足：无 `--examples` / `--templates` | [WARN] 中等 | 用户自行摸索，学习成本高 |
 
 #### v3.2.3+（评分 8.5/10）的 5 项改进成果
 
@@ -755,11 +755,11 @@ perf_group.add_argument("-d", "--duration", ...)      # -d 作为 --duration 别
 def on_match_callback(private_key: bytes, address: str, wif: str) -> None:
     pk_hex = private_key.hex()
     print("\n" + "=" * 70)
-    print("🎯 发现匹配!")
+    print("[TARGET] 发现匹配!")
     print(f"  地址     : {address}")
     print(f"  私钥 Hex : {pk_hex}")  # 建议：写入加密文件而非直接打印
     print(f"  WIF      : {wif}")
-    print("⚠️  警告: 请立即将私钥保存到安全位置，并从屏幕上清除")
+    print("[WARN]  警告: 请立即将私钥保存到安全位置，并从屏幕上清除")
     print("=" * 70 + "\n")
 ```
 

@@ -6,20 +6,20 @@
 
 ---
 
-## 📊 一、现状分析
+## [CHART] 一、现状分析
 
 ### 1.1 耦合度评估
 
 **核心指标**:
 
-- 📁 **文件大小**: 58.8KB (项目最大单文件)
-- 📝 **代码行数**: 1466行
-- 📦 **导入模块**: 49个 (标准库8个 + 本地41个)
-- 🔗 **直接依赖**: 12个模块
-- 🔀 **间接依赖**: 20+个模块
-- 🏗️ **职责数量**: 8+个核心职责
+- [DIR] **文件大小**: 58.8KB (项目最大单文件)
+- [MEMO] **代码行数**: 1466行
+- [PACKAGE] **导入模块**: 49个 (标准库8个 + 本地41个)
+- [LINK] **直接依赖**: 12个模块
+- [SHUFFLE] **间接依赖**: 20+个模块
+- [BUILD] **职责数量**: 8+个核心职责
 
-**耦合度评级**: ⚠️ **严重高耦合** (超过可维护阈值3倍)
+**耦合度评级**: [WARN] **严重高耦合** (超过可维护阈值3倍)
 
 ### 1.2 职责分析
 
@@ -103,35 +103,35 @@ GPUCollisionEngine (58.8KB, 49 imports)
 
 - **现象**: 一个类管理设备、上下文、内核、异步执行、性能监控、厂商优化、断点续传等
 - **影响**: 修改任一职责都可能影响其他功能，测试困难
-- **严重度**: 🔴 **高**
+- **严重度**: [RED] **高**
 
 #### 问题2: 循环依赖风险
 
 - **现象**: 导入41个本地模块，存在潜在循环依赖
 - **实例**: GPU引擎→监控→数据日志→引擎 (已通过MonitorConfig解耦，但风险仍在)
-- **严重度**: 🟡 **中**
+- **严重度**: [YELLOW] **中**
 
 #### 问题3: 测试复杂度高
 
 - **现象**: 测试需要Mock 7+层依赖 (见conftest.py L148-169)
 - **影响**: 测试编写困难，运行缓慢
-- **严重度**: 🟡 **中**
+- **严重度**: [YELLOW] **中**
 
 #### 问题4: Intel特定逻辑耦合
 
 - **现象**: Intel优化代码直接嵌入主类 (_apply_intel_specific_optimizations等)
 - **影响**: 增加其他厂商适配难度
-- **严重度**: 🟡 **中**
+- **严重度**: [YELLOW] **中**
 
 #### 问题5: 配置传递混乱
 
 - **现象**: config参数在多个组件间传递，部分使用getattr(self, 'config', {})
 - **影响**: 配置来源不清晰，调试困难
-- **严重度**: 🟢 **低**
+- **严重度**: [GREEN] **低**
 
 ---
 
-## 🎯 二、重构目标
+## [TARGET] 二、重构目标
 
 ### 2.1 核心原则
 
@@ -178,7 +178,7 @@ GPUCollisionEngine (协调器)
 
 ---
 
-## 🏗️ 三、重构方案设计
+## [BUILD] 三、重构方案设计
 
 ### 3.1 分层架构设计
 
@@ -391,13 +391,13 @@ class GPUCollisionEngine(BaseCollisionEngine):
 
 **优势**:
 
-- ✅ 测试友好，可轻松Mock
-- ✅ 依赖关系明确
-- ✅ 符合依赖倒置原则
+- [OK_CHECK] 测试友好，可轻松Mock
+- [OK_CHECK] 依赖关系明确
+- [OK_CHECK] 符合依赖倒置原则
 
 **劣势**:
 
-- ⚠️ 构造函数参数较多
+- [WARN] 构造函数参数较多
 
 #### **方案B: 依赖容器** (可选)
 
@@ -438,7 +438,7 @@ engine = GPUCollisionEngine(targets, container=container)
 #### **当前问题**: Intel优化代码嵌入主类
 
 ```python
-# ❌ 重构前: 耦合在主类中
+# [CROSS] 重构前: 耦合在主类中
 class GPUCollisionEngine:
     def _apply_intel_specific_optimizations(self):
         if self._intel_optimizer is None:
@@ -449,7 +449,7 @@ class GPUCollisionEngine:
 #### **重构方案**: 策略模式 + 工厂
 
 ```python
-# ✅ 重构后: 独立策略
+# [OK_CHECK] 重构后: 独立策略
 class VendorOptimizationStrategy(Protocol):
     """厂商优化策略接口"""
     def apply_optimizations(self, context: dict) -> None: ...
@@ -495,7 +495,7 @@ class GPUEngineFacade:
 
 ---
 
-## 📋 四、实施计划
+## [CHECKLIST] 四、实施计划
 
 ### 4.1 分阶段策略
 
@@ -505,7 +505,7 @@ class GPUEngineFacade:
 
 **任务**:
 
-1. ✅ 创建新的模块结构
+1. [OK_CHECK] 创建新的模块结构
 
    ```
    src/collision/gpu/
@@ -516,7 +516,7 @@ class GPUEngineFacade:
    └── vendor_strategy.py     # VendorOptimizationFactory
    ```
 
-2. ✅ 定义接口和协议
+2. [OK_CHECK] 定义接口和协议
 
    ```python
    # src/collision/gpu/protocols.py
@@ -525,7 +525,7 @@ class GPUEngineFacade:
    class IMonitoringPipeline(Protocol): ...
    ```
 
-3. ✅ 编写集成测试框架
+3. [OK_CHECK] 编写集成测试框架
 
    ```python
    # tests/test_gpu_engine_refactored.py
@@ -544,16 +544,16 @@ class GPUEngineFacade:
 
 **任务**:
 
-1. ✅ 实现GPUEngineFacade
+1. [OK_CHECK] 实现GPUEngineFacade
    - 设备管理委托给GPUDeviceManager
    - 内核执行委托给GPUKernelExecutor
    - 异步调度委托给AsyncExecutionPipeline
 
-2. ✅ 实现依赖注入
+2. [OK_CHECK] 实现依赖注入
    - 构造函数注入各组件
    - 提供默认工厂方法
 
-3. ✅ 编写单元测试
+3. [OK_CHECK] 编写单元测试
    - Mock底层GPU依赖
    - 测试初始化和清理流程
 
@@ -567,16 +567,16 @@ class GPUEngineFacade:
 
 **任务**:
 
-1. ✅ 实现PerformanceMonitoringPipeline
+1. [OK_CHECK] 实现PerformanceMonitoringPipeline
    - 整合GPUPerformanceMonitor
    - 整合GPUEngineMonitor
    - 整合DataLogger
 
-2. ✅ 实现厂商特定监控
+2. [OK_CHECK] 实现厂商特定监控
    - IntelMemoryMonitor
    - AdaptiveTimeoutManager
 
-3. ✅ 编写测试
+3. [OK_CHECK] 编写测试
 
 **验收标准**:
 
@@ -588,13 +588,13 @@ class GPUEngineFacade:
 
 **任务**:
 
-1. ✅ 实现CollisionCore
+1. [OK_CHECK] 实现CollisionCore
    - 碰撞统计管理
    - 断点续传
    - 去重过滤
    - 搜索模式协调
 
-2. ✅ 编写测试
+2. [OK_CHECK] 编写测试
 
 **验收标准**:
 
@@ -606,18 +606,18 @@ class GPUEngineFacade:
 
 **任务**:
 
-1. ✅ 重构GPUCollisionEngine
+1. [OK_CHECK] 重构GPUCollisionEngine
    - 删除直接GPU管理代码
    - 使用Facade层
    - 使用Monitoring层
    - 使用Core层
 
-2. ✅ 保持向后兼容
+2. [OK_CHECK] 保持向后兼容
    - 保持构造函数签名不变
    - 保持所有公共方法不变
    - 添加弃用警告 (如需要)
 
-3. ✅ 完整测试
+3. [OK_CHECK] 完整测试
    - 单元测试
    - 集成测试
    - 性能基准测试
@@ -632,26 +632,26 @@ class GPUEngineFacade:
 
 **任务**:
 
-1. ✅ 运行完整测试套件
+1. [OK_CHECK] 运行完整测试套件
 
    ```bash
    pytest tests/ -v --tb=short
    pytest tests/ -m gpu_unit -v
    ```
 
-2. ✅ 性能基准对比
+2. [OK_CHECK] 性能基准对比
 
    ```bash
    python benchmarks/benchmark_gpu_engine.py
    ```
 
-3. ✅ 实际运行测试
+3. [OK_CHECK] 实际运行测试
 
    ```bash
    python key_collision_cli.py -t 1A1z... -m random --duration 60
    ```
 
-4. ✅ 文档更新
+4. [OK_CHECK] 文档更新
    - 更新架构文档
    - 更新API文档
    - 编写迁移指南
@@ -688,7 +688,7 @@ class GPUEngineFacade:
 
 ---
 
-## 🔍 五、测试策略
+## [SEARCH] 五、测试策略
 
 ### 5.1 单元测试
 
@@ -798,7 +798,7 @@ def test_backward_compatible_api():
 
 ---
 
-## 📈 六、预期收益
+## [PERF] 六、预期收益
 
 ### 6.1 代码质量提升
 
@@ -853,41 +853,41 @@ def test_backward_compatible_api():
 
 ---
 
-## ⚠️ 七、注意事项
+## [WARN] 七、注意事项
 
 ### 7.1 不要重构的部分
 
 以下代码**不应**在此次重构中修改:
 
-1. ✅ **OpenCL内核源码** (`src/gpu/kernel.py`)
+1. [OK_CHECK] **OpenCL内核源码** (`src/gpu/kernel.py`)
    - 已优化，性能关键
    - 独立文件，无耦合问题
 
-2. ✅ **搜索模式实现** (`src/gpu/search_modes/`)
+2. [OK_CHECK] **搜索模式实现** (`src/gpu/search_modes/`)
    - 已解耦为独立模块
    - 功能稳定
 
-3. ✅ **加密核心** (`src/core/`)
+3. [OK_CHECK] **加密核心** (`src/core/`)
    - 基础库，不应改动
    - 性能已优化
 
 ### 7.2 必须保留的兼容性
 
-1. ✅ **构造函数签名**: 所有参数保持不变
-2. ✅ **公共方法**: start/stop/get_stats等方法签名不变
-3. ✅ **回调接口**: on_progress/on_match/on_complete保持不变
-4. ✅ **配置格式**: config.json结构不变
+1. [OK_CHECK] **构造函数签名**: 所有参数保持不变
+2. [OK_CHECK] **公共方法**: start/stop/get_stats等方法签名不变
+3. [OK_CHECK] **回调接口**: on_progress/on_match/on_complete保持不变
+4. [OK_CHECK] **配置格式**: config.json结构不变
 
 ### 7.3 迁移期间的注意事项
 
-1. ✅ **分支策略**: 在`feature/gpu-engine-refactor`分支开发
-2. ✅ **频繁提交**: 每完成一个Phase就提交
-3. ✅ **持续集成**: 每次提交运行完整测试
-4. ✅ **性能监控**: 每个Phase完成后运行基准测试
+1. [OK_CHECK] **分支策略**: 在`feature/gpu-engine-refactor`分支开发
+2. [OK_CHECK] **频繁提交**: 每完成一个Phase就提交
+3. [OK_CHECK] **持续集成**: 每次提交运行完整测试
+4. [OK_CHECK] **性能监控**: 每个Phase完成后运行基准测试
 
 ---
 
-## 📚 八、参考资源
+## [BOOKS] 八、参考资源
 
 ### 8.1 设计模式
 
@@ -911,25 +911,25 @@ def test_backward_compatible_api():
 
 ---
 
-## 🎯 九、总结
+## [TARGET] 九、总结
 
 ### 9.1 核心价值
 
 重构GPUCollisionEngine的核心价值:
 
-1. ✅ **降低复杂度**: 从1466行上帝类拆分为4个<400行的专注类
-2. ✅ **提高可测试性**: Mock层从7+降低到1-2层
-3. ✅ **增强可维护性**: 职责清晰，修改风险降低70%
-4. ✅ **促进扩展性**: 厂商适配从3天缩短到1天
-5. ✅ **保持性能**: 理论开销<1%，实测目标回退<5%
+1. [OK_CHECK] **降低复杂度**: 从1466行上帝类拆分为4个<400行的专注类
+2. [OK_CHECK] **提高可测试性**: Mock层从7+降低到1-2层
+3. [OK_CHECK] **增强可维护性**: 职责清晰，修改风险降低70%
+4. [OK_CHECK] **促进扩展性**: 厂商适配从3天缩短到1天
+5. [OK_CHECK] **保持性能**: 理论开销<1%，实测目标回退<5%
 
 ### 9.2 关键成功因素
 
-1. ✅ **分阶段实施**: 6个Phase，每阶段可独立验证
-2. ✅ **协同重构**: 一次性完成，避免中间状态不一致
-3. ✅ **测试驱动**: 每阶段测试覆盖率>80%
-4. ✅ **向后兼容**: API不变，用户无感知
-5. ✅ **性能保障**: 持续基准测试，回退>5%立即回滚
+1. [OK_CHECK] **分阶段实施**: 6个Phase，每阶段可独立验证
+2. [OK_CHECK] **协同重构**: 一次性完成，避免中间状态不一致
+3. [OK_CHECK] **测试驱动**: 每阶段测试覆盖率>80%
+4. [OK_CHECK] **向后兼容**: API不变，用户无感知
+5. [OK_CHECK] **性能保障**: 持续基准测试，回退>5%立即回滚
 
 ### 9.3 下一步行动
 

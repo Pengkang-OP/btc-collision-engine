@@ -4,7 +4,7 @@
 
 ---
 
-## 🚀 快速启动（3种方式）
+## [QUICK] 快速启动（3种方式）
 
 ### 方式1: 交互式向导（推荐新手）
 
@@ -31,7 +31,7 @@ python key_collision_cli.py -t targets.txt -m random
 
 ---
 
-## ⌨️ 命令别名（仅Windows）
+## [KEYBOARD] 命令别名（仅Windows）
 
 | 命令 | 功能 | 说明 |
 |------|------|------|
@@ -44,7 +44,7 @@ python key_collision_cli.py -t targets.txt -m random
 
 ---
 
-## 📋 常用参数
+## [CHECKLIST] 常用参数
 
 ### 基本参数
 
@@ -80,7 +80,7 @@ python key_collision_cli.py -t targets.txt -m random
 
 ---
 
-## 📁 重要文件
+## [DIR] 重要文件
 
 | 文件 | 用途 | 位置 |
 |------|------|------|
@@ -92,7 +92,7 @@ python key_collision_cli.py -t targets.txt -m random
 
 ---
 
-## 📝 创建targets.txt
+## [CONFIG] 创建targets.txt
 
 ```bash
 # 我的目标地址
@@ -104,17 +104,17 @@ bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh
 
 **规则**:
 
-- ✅ 每行一个地址
+- [OK] 每行一个地址
 
-- ✅ 支持`#`注释
+- [OK] 支持`#`注释
 
-- ✅ 支持空行
+- [OK] 支持空行
 
-- ✅ 支持3种地址格式（1开头、3开头、bc1开头）
+- [OK] 支持3种地址格式（1开头、3开头、bc1开头）
 
 ---
 
-## 🎯 典型使用场景
+## [TARGET] 典型使用场景
 
 ### 场景1: 新手第一次使用
 
@@ -174,7 +174,7 @@ nohup python key_collision_cli.py --quick-run > log.txt 2>&1 &
 
 ---
 
-## 🔍 进度显示
+## [CHECK] 进度显示
 
 运行时显示：
 
@@ -203,7 +203,7 @@ nohup python key_collision_cli.py --quick-run > log.txt 2>&1 &
 
 ---
 
-## ❓ 快速故障排查
+## [MISS] 快速故障排查
 
 ### 问题: 找不到targets.txt
 
@@ -248,23 +248,23 @@ pip install -r requirements-gpu.txt
 
 ---
 
-## 💡 提示
+## [TIP] 提示
 
-- ✅ **新手**: 使用`start.bat qs`交互式向导
+- [OK] **新手**: 使用`start.bat qs`交互式向导
 
-- ✅ **熟练**: 使用`start.bat qr`快速模式
+- [OK] **熟练**: 使用`start.bat qr`快速模式
 
-- ✅ **测试**: 先用少量地址测试
+- [OK] **测试**: 先用少量地址测试
 
-- ✅ **性能**: 启用GPU可提速10-100倍
+- [OK] **性能**: 启用GPU可提速10-100倍
 
-- ✅ **安全**: 启用断点续传防止进度丢失
+- [OK] **安全**: 启用断点续传防止进度丢失
 
-- ✅ **效率**: 启用去重过滤避免重复检查
+- [OK] **效率**: 启用去重过滤避免重复检查
 
 ---
 
-## 📚 完整文档
+## [DOCS] 完整文档
 
 - [用户使用指南](docs/USER_GUIDE.md) - 详细使用指南
 
@@ -276,4 +276,4 @@ pip install -r requirements-gpu.txt
 
 ---
 
-**打印此页作为桌面参考！** 📄
+**打印此页作为桌面参考！** [FILE]

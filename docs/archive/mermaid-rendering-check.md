@@ -5,106 +5,106 @@
 
 ## 目录
 
-- [📊 图表统计总览](#-图表统计总览)
+- [[CHART] 图表统计总览](#-图表统计总览)
   - [architecture.md（17个图表）](#architecturemd17个图表)
   - [workflow_diagrams.md（7个图表）](#workflow_diagramsmd7个图表)
-- [✅ 语法检查结果](#-语法检查结果)
+- [[OK_CHECK] 语法检查结果](#-语法检查结果)
   - [1. 基础语法检查](#1-基础语法检查)
   - [2. 中文显示检查](#2-中文显示检查)
   - [3. 颜色标注检查](#3-颜色标注检查)
   - [4. 特殊符号检查](#4-特殊符号检查)
-- [🔍 详细图表质量评估](#-详细图表质量评估)
-  - [优秀图表（⭐⭐⭐⭐⭐）](#优秀图表)
+- [[SEARCH] 详细图表质量评估](#-详细图表质量评估)
+  - [优秀图表（[STAR][STAR][STAR][STAR][STAR]）](#优秀图表)
     - [1. 图8.1 程序运行依赖拓扑图（101行）](#1-图81-程序运行依赖拓扑图101行)
     - [2. 图7.1 程序运行完整流程图（71行）](#2-图71-程序运行完整流程图71行)
     - [3. 图3.1 随机碰撞序列图（40行）](#3-图31-随机碰撞序列图40行)
-  - [良好图表（⭐⭐⭐⭐）](#良好图表)
+  - [良好图表（[STAR][STAR][STAR][STAR]）](#良好图表)
     - [4. 图20.2 GPU碰撞数据流（46行）](#4-图202-gpu碰撞数据流46行)
     - [5. 图22.2 完整系统架构图（83行）](#5-图222-完整系统架构图83行)
-  - [需改进图表（⭐⭐⭐）](#需改进图表)
+  - [需改进图表（[STAR][STAR][STAR]）](#需改进图表)
     - [6. 图9.1 P2PKH地址生成流程](#6-图91-p2pkh地址生成流程)
     - [7. 部分sequenceDiagram](#7-部分sequencediagram)
-- [🐛 发现的问题](#-发现的问题)
+- [[DEBUG] 发现的问题](#-发现的问题)
   - [严重问题（P0）](#严重问题p0)
   - [中等问题（P1）](#中等问题p1)
   - [轻微问题（P2）](#轻微问题p2)
-- [📋 渲染兼容性检查](#-渲染兼容性检查)
+- [[CHECKLIST] 渲染兼容性检查](#-渲染兼容性检查)
   - [Mermaid版本兼容性](#mermaid版本兼容性)
   - [平台兼容性](#平台兼容性)
-- [🎯 优化建议](#-优化建议)
+- [[TARGET] 优化建议](#-优化建议)
   - [短期优化（本次可完成）](#短期优化本次可完成)
   - [中期优化（建议后续完成）](#中期优化建议后续完成)
   - [长期优化（可选）](#长期优化可选)
-- [✅ 总体评价](#-总体评价)
-  - [图表质量：**优秀** ⭐⭐⭐⭐⭐](#图表质量优秀-)
-- [📝 结论](#-结论)
+- [[OK_CHECK] 总体评价](#-总体评价)
+  - [图表质量：**优秀** [STAR][STAR][STAR][STAR][STAR]](#图表质量优秀-)
+- [[MEMO] 结论](#-结论)
 **生成时间**: 2026-04-20  
 **检查范围**: architecture.md + workflow_diagrams.md  
 **图表总数**: 24个Mermaid图表
 
 ---
 
-## 📊 图表统计总览
+## [CHART] 图表统计总览
 
 ### architecture.md（17个图表）
 
 | 章节 | 图表名称 | 类型 | 行数 | 状态 |
 |------|---------|------|------|------|
-| 3.1 | 核心模块依赖图 | graph TD | 15行 | ✅ 正常 |
-| 3.2 | CPU碰撞引擎组件关系 | graph TD | 19行 | ✅ 正常 |
-| 4.6 | 多加密后端架构 | graph TD | 25行 | ✅ 正常 |
-| 5.3 | 碰撞模式对比 | flowchart LR | 27行 | ✅ 正常 |
-| 6.1 | 监控系统架构 | graph TD | 24行 | ✅ 正常 |
-| 8.1 | 程序运行依赖拓扑图 | graph TB | 101行 | ✅ 正常 |
-| 9.1 | P2PKH地址生成流程 | flowchart TD | 19行 | ✅ 正常 |
-| 9.2 | 碰撞检测数据流 | graph LR | 28行 | ✅ 正常 |
-| 9.3 | 断点保存序列图 | sequenceDiagram | 31行 | ✅ 正常 |
-| 20.1 | GPU引擎架构 | graph TB | 19行 | ✅ 正常 |
-| 20.2 | GPU碰撞数据流 | graph TD | 46行 | ✅ 正常 |
-| 20.3 | 监控系统架构图 | graph TB | 40行 | ✅ 正常 |
-| 22.1 | 数据流向图 | flowchart LR | 33行 | ✅ 正常 |
-| 22.2 | 完整系统架构图 | graph TB | 83行 | ✅ 正常 |
-| 22.3 | 地址生成序列图 | flowchart LR | 34行 | ✅ 正常 |
-| 4.6.2 | SecureKeyManager安全流程 | graph TD | 41行 | ✅ 正常 |
-| 4.7 | 碰撞模式选择 | graph TD | 27行 | ✅ 正常 |
+| 3.1 | 核心模块依赖图 | graph TD | 15行 | [OK_CHECK] 正常 |
+| 3.2 | CPU碰撞引擎组件关系 | graph TD | 19行 | [OK_CHECK] 正常 |
+| 4.6 | 多加密后端架构 | graph TD | 25行 | [OK_CHECK] 正常 |
+| 5.3 | 碰撞模式对比 | flowchart LR | 27行 | [OK_CHECK] 正常 |
+| 6.1 | 监控系统架构 | graph TD | 24行 | [OK_CHECK] 正常 |
+| 8.1 | 程序运行依赖拓扑图 | graph TB | 101行 | [OK_CHECK] 正常 |
+| 9.1 | P2PKH地址生成流程 | flowchart TD | 19行 | [OK_CHECK] 正常 |
+| 9.2 | 碰撞检测数据流 | graph LR | 28行 | [OK_CHECK] 正常 |
+| 9.3 | 断点保存序列图 | sequenceDiagram | 31行 | [OK_CHECK] 正常 |
+| 20.1 | GPU引擎架构 | graph TB | 19行 | [OK_CHECK] 正常 |
+| 20.2 | GPU碰撞数据流 | graph TD | 46行 | [OK_CHECK] 正常 |
+| 20.3 | 监控系统架构图 | graph TB | 40行 | [OK_CHECK] 正常 |
+| 22.1 | 数据流向图 | flowchart LR | 33行 | [OK_CHECK] 正常 |
+| 22.2 | 完整系统架构图 | graph TB | 83行 | [OK_CHECK] 正常 |
+| 22.3 | 地址生成序列图 | flowchart LR | 34行 | [OK_CHECK] 正常 |
+| 4.6.2 | SecureKeyManager安全流程 | graph TD | 41行 | [OK_CHECK] 正常 |
+| 4.7 | 碰撞模式选择 | graph TD | 27行 | [OK_CHECK] 正常 |
 
 ### workflow_diagrams.md（7个图表）
 
 | 章节 | 图表名称 | 类型 | 行数 | 状态 |
 |------|---------|------|------|------|
-| 1 | 系统整体架构 | graph TD | 70行 | ✅ 正常 |
-| 2.1 | CLI启动序列图 | sequenceDiagram | 29行 | ✅ 正常 |
-| 2.2 | GUI启动序列图 | sequenceDiagram | 20行 | ✅ 正常 |
-| 3.1 | 随机碰撞序列图 | sequenceDiagram | 40行 | ✅ 正常 |
-| 3.2 | 范围扫描序列图 | sequenceDiagram | 34行 | ✅ 正常 |
-| 7.1 | 程序运行完整流程图 | flowchart TD | 71行 | ✅ 正常 |
-| 6.1 | GPU碰撞流程 | sequenceDiagram | 25行 | ⚠️ 需检查 |
+| 1 | 系统整体架构 | graph TD | 70行 | [OK_CHECK] 正常 |
+| 2.1 | CLI启动序列图 | sequenceDiagram | 29行 | [OK_CHECK] 正常 |
+| 2.2 | GUI启动序列图 | sequenceDiagram | 20行 | [OK_CHECK] 正常 |
+| 3.1 | 随机碰撞序列图 | sequenceDiagram | 40行 | [OK_CHECK] 正常 |
+| 3.2 | 范围扫描序列图 | sequenceDiagram | 34行 | [OK_CHECK] 正常 |
+| 7.1 | 程序运行完整流程图 | flowchart TD | 71行 | [OK_CHECK] 正常 |
+| 6.1 | GPU碰撞流程 | sequenceDiagram | 25行 | [WARN] 需检查 |
 
 ---
 
-## ✅ 语法检查结果
+## [OK_CHECK] 语法检查结果
 
 ### 1. 基础语法检查
 
-- ✅ 所有代码块使用 ```mermaid 标记
-- ✅ 图表类型使用正确（graph/flowchart/sequenceDiagram）
-- ✅ 节点定义使用双引号包含中文
-- ✅ 箭头符号使用正确（-->、-->>、-.->）
-- ✅ 子图使用 subgraph...end 包裹
-- ✅ style语法正确
+- [OK_CHECK] 所有代码块使用 ```mermaid 标记
+- [OK_CHECK] 图表类型使用正确（graph/flowchart/sequenceDiagram）
+- [OK_CHECK] 节点定义使用双引号包含中文
+- [OK_CHECK] 箭头符号使用正确（-->、-->>、-.->）
+- [OK_CHECK] 子图使用 subgraph...end 包裹
+- [OK_CHECK] style语法正确
 
 ### 2. 中文显示检查
 
-- ✅ 所有中文节点使用双引号包裹
-- ✅ 使用 `<br/>` 进行换行
-- ✅ 节点名称格式统一：`中文<br/>English`
-- ⚠️ 部分图表节点名仅中文（建议补充英文）
+- [OK_CHECK] 所有中文节点使用双引号包裹
+- [OK_CHECK] 使用 `<br/>` 进行换行
+- [OK_CHECK] 节点名称格式统一：`中文<br/>English`
+- [WARN] 部分图表节点名仅中文（建议补充英文）
 
 ### 3. 颜色标注检查
 
-- ✅ style使用正确的fill颜色
-- ✅ 颜色代码格式正确（#e1f5ff格式）
-- ✅ 关键节点有颜色区分：
+- [OK_CHECK] style使用正确的fill颜色
+- [OK_CHECK] 颜色代码格式正确（#e1f5ff格式）
+- [OK_CHECK] 关键节点有颜色区分：
   - 蓝色 `#e1f5ff`：起点/终点/主要组件
   - 橙色 `#fff3e0`：决策点/中间层
   - 绿色 `#e8f5e9`：成功/完成状态
@@ -113,29 +113,29 @@
 
 ### 4. 特殊符号检查
 
-- ✅ 花括号 `{}` 用于决策节点
-- ✅ 圆括号 `()` 用于普通节点
-- ✅ 方括号 `[]` 用于矩形节点
-- ✅ 双括号 `([` `])` 用于圆角起点/终点
-- ✅ 条件分支使用 `|标签|` 格式
+- [OK_CHECK] 花括号 `{}` 用于决策节点
+- [OK_CHECK] 圆括号 `()` 用于普通节点
+- [OK_CHECK] 方括号 `[]` 用于矩形节点
+- [OK_CHECK] 双括号 `([` `])` 用于圆角起点/终点
+- [OK_CHECK] 条件分支使用 `|标签|` 格式
 
 ---
 
-## 🔍 详细图表质量评估
+## [SEARCH] 详细图表质量评估
 
-### 优秀图表（⭐⭐⭐⭐⭐）
+### 优秀图表（[STAR][STAR][STAR][STAR][STAR]）
 
 #### 1. 图8.1 程序运行依赖拓扑图（101行）
 **优点**：
-- ✅ 7个子图清晰分层（UI/Engine/Crypto/Core/Monitor/Data/GPU）
-- ✅ 使用emoji增强可读性
-- ✅ 依赖关系完整且准确
-- ✅ 虚线表示可选依赖（-.->）
-- ✅ 颜色标注区分层级
+- [OK_CHECK] 7个子图清晰分层（UI/Engine/Crypto/Core/Monitor/Data/GPU）
+- [OK_CHECK] 使用emoji增强可读性
+- [OK_CHECK] 依赖关系完整且准确
+- [OK_CHECK] 虚线表示可选依赖（-.->）
+- [OK_CHECK] 颜色标注区分层级
 
 **示例**：
 ```mermaid
-subgraph UI["🖥️ 用户界面层"]
+subgraph UI["[DESKTOP] 用户界面层"]
     CLI["key_collision_cli.py<br/>命令行界面"]
     GUI["key_collision_gui.py<br/>图形界面 Tkinter"]
 end
@@ -143,11 +143,11 @@ end
 
 #### 2. 图7.1 程序运行完整流程图（71行）
 **优点**：
-- ✅ 完整展示5个运行阶段
-- ✅ 决策节点清晰（菱形）
-- ✅ 颜色标注关键节点
-- ✅ 包含详细流程说明
-- ✅ 中英双语标注
+- [OK_CHECK] 完整展示5个运行阶段
+- [OK_CHECK] 决策节点清晰（菱形）
+- [OK_CHECK] 颜色标注关键节点
+- [OK_CHECK] 包含详细流程说明
+- [OK_CHECK] 中英双语标注
 
 **示例**：
 ```mermaid
@@ -158,10 +158,10 @@ CheckMatch -->|否| ClearKey["私钥自动清零<br/>Auto Clear Key"]
 
 #### 3. 图3.1 随机碰撞序列图（40行）
 **优点**：
-- ✅ 完整展示SecureKeyManager私钥清零流程
-- ✅ 使用alt/else条件分支
-- ✅ Note标注关键安全操作
-- ✅ loop循环清晰
+- [OK_CHECK] 完整展示SecureKeyManager私钥清零流程
+- [OK_CHECK] 使用alt/else条件分支
+- [OK_CHECK] Note标注关键安全操作
+- [OK_CHECK] loop循环清晰
 
 **示例**：
 ```mermaid
@@ -180,26 +180,26 @@ else 重复
 end
 ```markdown
 
-### 良好图表（⭐⭐⭐⭐）
+### 良好图表（[STAR][STAR][STAR][STAR]）
 
 #### 4. 图20.2 GPU碰撞数据流（46行）
 **优点**：
-- ✅ 完整的GPU工作流程
-- ✅ 包含错误处理路径
-- ⚠️ 建议增加GPU与CPU的对比说明
+- [OK_CHECK] 完整的GPU工作流程
+- [OK_CHECK] 包含错误处理路径
+- [WARN] 建议增加GPU与CPU的对比说明
 
 #### 5. 图22.2 完整系统架构图（83行）
 **优点**：
-- ✅ 6层架构清晰
-- ✅ 依赖关系完整
-- ⚠️ 部分节点名称较长，建议精简
+- [OK_CHECK] 6层架构清晰
+- [OK_CHECK] 依赖关系完整
+- [WARN] 部分节点名称较长，建议精简
 
-### 需改进图表（⭐⭐⭐）
+### 需改进图表（[STAR][STAR][STAR]）
 
 #### 6. 图9.1 P2PKH地址生成流程
 **问题**：
-- ⚠️ 第710行："匠缩" 应为 "压缩"（typo）
-- ⚠️ 第729行："匠缩格式" 应为 "压缩格式"
+- [WARN] 第710行："匠缩" 应为 "压缩"（typo）
+- [WARN] 第729行："匠缩格式" 应为 "压缩格式"
 
 **建议修复**：
 ```mermaid
@@ -208,12 +208,12 @@ D["公钥输出<br/>压缩/非压缩"]  # 修正错别字
 
 #### 7. 部分sequenceDiagram
 **问题**：
-- ⚠️ 节点名称过长可能影响渲染
-- ⚠️ 建议统一participant命名风格
+- [WARN] 节点名称过长可能影响渲染
+- [WARN] 建议统一participant命名风格
 
 ---
 
-## 🐛 发现的问题
+## [DEBUG] 发现的问题
 
 ### 严重问题（P0）
 
@@ -244,30 +244,30 @@ D["公钥输出<br/>压缩/非压缩"]  # 修正错别字
 
 ---
 
-## 📋 渲染兼容性检查
+## [CHECKLIST] 渲染兼容性检查
 
 ### Mermaid版本兼容性
 
-- ✅ 使用标准语法，兼容mermaid v10+
-- ✅ graph TD/LR/TB 标准支持
-- ✅ flowchart TD/LR 标准支持
-- ✅ sequenceDiagram 标准支持
-- ✅ subgraph 嵌套支持
-- ✅ style 样式支持
+- [OK_CHECK] 使用标准语法，兼容mermaid v10+
+- [OK_CHECK] graph TD/LR/TB 标准支持
+- [OK_CHECK] flowchart TD/LR 标准支持
+- [OK_CHECK] sequenceDiagram 标准支持
+- [OK_CHECK] subgraph 嵌套支持
+- [OK_CHECK] style 样式支持
 
 ### 平台兼容性
 
 | 平台 | 支持情况 | 备注 |
 |------|---------|------|
-| GitHub | ✅ 完全支持 | 原生支持Mermaid |
-| GitLab | ✅ 完全支持 | v13.8+ |
-| VS Code | ✅ 完全支持 | 需安装插件 |
-| Markdown Preview | ⚠️ 部分支持 | 需mermaid插件 |
-| 在线编辑器 | ✅ 完全支持 | mermaid.live |
+| GitHub | [OK_CHECK] 完全支持 | 原生支持Mermaid |
+| GitLab | [OK_CHECK] 完全支持 | v13.8+ |
+| VS Code | [OK_CHECK] 完全支持 | 需安装插件 |
+| Markdown Preview | [WARN] 部分支持 | 需mermaid插件 |
+| 在线编辑器 | [OK_CHECK] 完全支持 | mermaid.live |
 
 ---
 
-## 🎯 优化建议
+## [TARGET] 优化建议
 
 ### 短期优化（本次可完成）
 
@@ -301,16 +301,16 @@ D["公钥输出<br/>压缩/非压缩"]  # 修正错别字
 
 ---
 
-## ✅ 总体评价
+## [OK_CHECK] 总体评价
 
-### 图表质量：**优秀** ⭐⭐⭐⭐⭐
+### 图表质量：**优秀** [STAR][STAR][STAR][STAR][STAR]
 
 **优点**：
-1. ✅ 语法正确率：100%
-2. ✅ 结构清晰，层次分明
-3. ✅ 中英双语标注，专业性强
-4. ✅ 颜色标注合理，易于理解
-5. ✅ 详细说明补充完整
+1. [OK_CHECK] 语法正确率：100%
+2. [OK_CHECK] 结构清晰，层次分明
+3. [OK_CHECK] 中英双语标注，专业性强
+4. [OK_CHECK] 颜色标注合理，易于理解
+5. [OK_CHECK] 详细说明补充完整
 
 **图表数量**：
 - architecture.md：17个图表（约786行）
@@ -318,16 +318,16 @@ D["公钥输出<br/>压缩/非压缩"]  # 修正错别字
 - **总计：24个图表，约1126行**
 
 **覆盖度**：
-- ✅ 系统架构：完整
-- ✅ 数据流向：完整
-- ✅ 程序运行流程：完整
-- ✅ 依赖关系：完整
-- ✅ 安全特性：完整
-- ⚠️ 碰撞模式细节：部分（第4-6章待转换）
+- [OK_CHECK] 系统架构：完整
+- [OK_CHECK] 数据流向：完整
+- [OK_CHECK] 程序运行流程：完整
+- [OK_CHECK] 依赖关系：完整
+- [OK_CHECK] 安全特性：完整
+- [WARN] 碰撞模式细节：部分（第4-6章待转换）
 
 ---
 
-## 📝 结论
+## [MEMO] 结论
 
 **所有已完成的Mermaid图表语法正确，渲染效果良好，可以正常使用。**
 
@@ -338,5 +338,5 @@ D["公钥输出<br/>压缩/非压缩"]  # 修正错别字
 ---
 
 **报告生成人**: AI Assistant  
-**审核状态**: ✅ 通过（P1问题需修复）  
+**审核状态**: [OK_CHECK] 通过（P1问题需修复）  
 **建议操作**: 修复错别字后正式发布

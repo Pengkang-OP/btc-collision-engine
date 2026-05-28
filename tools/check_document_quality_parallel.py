@@ -17,7 +17,7 @@ from utf8_helper import setup_windows_utf8
 
 setup_windows_utf8()
 
-from tools.check_document_quality import DocumentScore  # noqa: E402
+from tools.check_document_quality import DocumentScore
 
 
 def check_single_doc(args) -> DocumentScore:
@@ -57,7 +57,7 @@ def parallel_check(docs_dir: str, workers: int = None, config_dict: dict = None)
 
     docs_path = Path(docs_dir)
     if not docs_path.exists():
-        print(f"❌ 文档目录不存在: {docs_dir}")
+        print(f"ERR 文档目录不存在: {docs_dir}")
         sys.exit(1)
 
     # 获取所有.md文件
@@ -65,13 +65,13 @@ def parallel_check(docs_dir: str, workers: int = None, config_dict: dict = None)
     md_files = [f for f in md_files if "archive" not in str(f)]
 
     if not md_files:
-        print("❌ 没有找到文档文件")
+        print("ERR 没有找到文档文件")
         sys.exit(1)
 
-    print("🔍 开始并行检查文档质量...")
-    print(f"📁 文档目录: {docs_dir}")
-    print(f"📝 文档总数: {len(md_files)}")
-    print(f"⚡ 工作进程: {workers}")
+    print("SEARCH 开始并行检查文档质量...")
+    print(f"FOLDER 文档目录: {docs_dir}")
+    print(f"NOTE 文档总数: {len(md_files)}")
+    print(f"BOLT 工作进程: {workers}")
     print()
 
     # 默认配置
@@ -90,26 +90,26 @@ def parallel_check(docs_dir: str, workers: int = None, config_dict: dict = None)
         with Pool(processes=workers) as pool:
             scores = pool.map(check_single_doc, tasks, chunksize=1)
     except BrokenProcessPool as e:
-        print(f"\n❌ 进程池损坏: {e}")
-        print("💡 建议: 尝试减少工作进程数 (--workers 4)")
+        print(f"\nERR 进程池损坏: {e}")
+        print("TIP 建议: 尝试减少工作进程数 (--workers 4)")
         sys.exit(1)
     except KeyboardInterrupt:
-        print("\n⚠️  用户中断并行检查")
+        print("\nWARN 用户中断并行检查")
         sys.exit(130)
     except RuntimeError as e:
         # 捕获其他运行时错误（如资源不足）
-        print(f"\n❌ 并行检查运行时错误: {e}")
-        print("💡 建议: 检查系统资源或减少工作进程数")
+        print(f"\nERR 并行检查运行时错误: {e}")
+        print("TIP 建议: 检查系统资源或减少工作进程数")
         sys.exit(1)
 
     elapsed = time.time() - start_time
 
     # 打印结果
     if elapsed > 0:
-        print(f"\n✅ 检查完成! 耗时: {elapsed:.2f}秒")
-        print(f"⚡ 平均速度: {len(md_files) / elapsed:.1f} 文档/秒")
+        print(f"\nOK 检查完成! 耗时: {elapsed:.2f}秒")
+        print(f"BOLT 平均速度: {len(md_files) / elapsed:.1f} 文档/秒")
     else:
-        print("\n✅ 检查完成! 耗时: <0.01秒")
+        print("\nOK 检查完成! 耗时: <0.01秒")
 
     return scores
 
@@ -122,7 +122,7 @@ def print_summary(scores: list[DocumentScore]):
     avg_score = sum(s.score for s in scores) / len(scores)
 
     print(f"\n{'=' * 60}")
-    print("📊 文档质量检查报告")
+    print("STATS 文档质量检查报告")
     print(f"{'=' * 60}")
 
     print(f"\n核心文档总数: {len(scores)}")
@@ -134,24 +134,24 @@ def print_summary(scores: list[DocumentScore]):
     needs_improvement = sum(1 for s in scores if s.score < 7.0)
 
     print("\n质量分布:")
-    print(f"  ✅ 优秀 (≥8.5): {excellent} 个 ({excellent / len(scores) * 100:.1f}%)")
-    print(f"  ⚠️  良好 (7.0-8.4): {good} 个 ({good / len(scores) * 100:.1f}%)")
-    print(f"  ❌ 需改进 (<7.0): {needs_improvement} 个 ({needs_improvement / len(scores) * 100:.1f}%)")
+    print(f"  OK 优秀 (≥8.5): {excellent} 个 ({excellent / len(scores) * 100:.1f}%)")
+    print(f"  WARN 良好 (7.0-8.4): {good} 个 ({good / len(scores) * 100:.1f}%)")
+    print(f"  ERR 需改进 (<7.0): {needs_improvement} 个 ({needs_improvement / len(scores) * 100:.1f}%)")
 
     # 需改进的文档
     if needs_improvement > 0:
-        print("\n⚠️  需要改进的文档:")
+        print("\nWARN 需要改进的文档:")
         for score in sorted(scores, key=lambda s: s.score):
             if score.score < 7.0:
                 print(f"  - {Path(score.file).name}: {score.score}/10")
 
     # 总体评价
     if avg_score >= 8.5:
-        print("\n总体评价: ✅ 优秀")
+        print("\n总体评价: OK 优秀")
     elif avg_score >= 7.0:
-        print("\n总体评价: ⚠️  良好")
+        print("\n总体评价: WARN 良好")
     else:
-        print("\n总体评价: ❌ 需要改进")
+        print("\n总体评价: ERR 需要改进")
 
     print(f"{'=' * 60}")
 
@@ -176,9 +176,9 @@ def main():
         if config_path.exists():
             with open(config_path, encoding="utf-8") as f:
                 config_dict = json.load(f)
-            print(f"📝 使用配置文件: {config_path}")
+            print(f"NOTE 使用配置文件: {config_path}")
         else:
-            print(f"⚠️  配置文件不存在: {config_path}，使用默认配置")
+            print(f"WARN 配置文件不存在: {config_path}，使用默认配置")
 
     # 并行检查
     scores = parallel_check(args.docs_dir, args.workers, config_dict)

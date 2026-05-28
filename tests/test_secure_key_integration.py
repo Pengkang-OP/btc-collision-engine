@@ -35,7 +35,7 @@ def test_secure_integration():
 
     def on_match(pk, addr, wif):
         matches.append((pk, addr, wif))
-        print("\n🎯 找到匹配!")
+        print("\nTARGET 找到匹配!")
         print(f"   地址: {addr}")
         print(f"   WIF: {wif[:20]}...")
 
@@ -59,7 +59,7 @@ def test_secure_integration():
         )
 
         if matches:
-            print("\n✅ 找到匹配!")
+            print("\nOK 找到匹配!")
             break
 
         time.sleep(0.5)
@@ -166,7 +166,7 @@ def test_memory_safety():
             cleared = all(b == 0 for b in key_mgr._key)
             print(f"  测试 {i + 1}: {'[OK] 已清零' if cleared else '[FAIL] 未清零'}")
         else:
-            print(f"  测试 {i + 1}: ❌ 密钥对象不存在")
+            print(f"  测试 {i + 1}: ERR 密钥对象不存在")
 
     print("\n[OK] 所有私钥都已安全清零")
     return True

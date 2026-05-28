@@ -957,7 +957,7 @@ class GPUPerformanceMonitor:
                     _first = avg_first_half
                     _second = avg_second_half
                     logger.warning(
-                        f"⚠️ 检测到可能的显存泄漏: 前半段={_first:.1f}MB, 后半段={_second:.1f}MB",
+                        f"WARN 检测到可能的显存泄漏: 前半段={_first:.1f}MB, 后半段={_second:.1f}MB",
                     )
 
     def _check_error_rate(self):
@@ -971,7 +971,10 @@ class GPUPerformanceMonitor:
             # 错误率超过5%触发告警
             if error_rate > 5.0:
                 logger.warning(
-                    f"⚠️ GPU错误率过高: {error_rate:.2f}% ({self._total_errors}/{self._total_batches})",
+                    "WARN GPU错误率过高: %.2f%% (%d/%d)",
+                    error_rate,
+                    self._total_errors,
+                    self._total_batches,
                 )
 
                 # 集成告警系统
@@ -1023,7 +1026,7 @@ class GPUPerformanceMonitor:
         degradation_percent = (1 - degradation_ratio) * 100
 
         logger.warning(
-            "⚠️ GPU性能退化: "
+            "WARN GPU性能退化: "
             f"当前={metrics.keys_per_second:,.0f} keys/s, "
             f"峰值={self._peak_throughput:,.0f} keys/s, "
             f"退化率={degradation_ratio:.2%}",

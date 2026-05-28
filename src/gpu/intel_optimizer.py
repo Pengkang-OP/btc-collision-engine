@@ -171,11 +171,13 @@ class IntelGPUOptimizer:
                 min_timeout=10.0,
                 max_timeout=120.0,
             )
-            self._logger.info("✅ 自适应超时管理器已初始化")
+            self._logger.info("[OK] 自适应超时管理器已初始化")
         except (RuntimeError, ValueError, TypeError, AttributeError) as e:
             self._logger.warning(
-                f"⚠️ 自适应超时管理器初始化失败（非致命）: {type(e).__name__}: {e}\n"
+                "[WARN] 自适应超时管理器初始化失败（非致命）: %s: %s\n"
                 "   超时管理功能将被禁用，使用固定超时保护",
+                type(e).__name__,
+                e,
                 exc_info=True,
             )
 
@@ -188,14 +190,14 @@ class IntelGPUOptimizer:
             device_info = self._device.device_info
             if not isinstance(device_info, dict):
                 self._logger.warning(
-                    f"⚠️ device_info 类型异常: {type(device_info).__name__}, 跳过显存监控器初始化\n"
-                    "   显存监控功能将被禁用",
+                    "WARN device_info 类型异常: %s, 跳过显存监控器初始化\n   显存监控功能将被禁用",
+                    type(device_info).__name__,
                 )
                 return
             total_memory = device_info.get("global_mem_size", 0)
             if total_memory <= 0:
                 self._logger.warning(
-                    "⚠️ 无法获取显存大小（global_mem_size=0），跳过显存监控器初始化\n"
+                    "[WARN] 无法获取显存大小（global_mem_size=0），跳过显存监控器初始化\n"
                     "   显存监控功能将被禁用",
                 )
                 return
@@ -205,13 +207,14 @@ class IntelGPUOptimizer:
                 safe_usage_ratio=effective_ratio,
             )
             self._logger.info(
-                "✅ 显存监控器已初始化 "
-                f"(总显存: {total_memory / 1024**3:.1f}GB, "
-                f"安全比例: {effective_ratio * 100:.0f}%)",
+                "[OK] 显存监控器已初始化 (总显存: %.1fGB, 安全比例: %.0f%%)",
+                total_memory / 1024**3,
+                effective_ratio * 100,
             )
         except (RuntimeError, ValueError, TypeError, AttributeError) as e:
             self._logger.warning(
-                f"⚠️ 显存监控器初始化失败（非致命）: {type(e).__name__}\n   显存监控功能将被禁用",
+                "[WARN] 显存监控器初始化失败（非致命）: %s\n   显存监控功能将被禁用",
+                type(e).__name__,
                 exc_info=True,
             )
 
@@ -222,10 +225,11 @@ class IntelGPUOptimizer:
             return
         try:
             self._benchmark_suite = benchmark_cls(engine)
-            self._logger.info("✅ 基准测试套件已初始化")
+            self._logger.info("[OK] 基准测试套件已初始化")
         except (RuntimeError, ValueError, TypeError, AttributeError) as e:
             self._logger.warning(
-                f"⚠️ 基准测试套件初始化失败（非致命）: {type(e).__name__}\n   基准测试功能将被禁用",
+                "[WARN] 基准测试套件初始化失败（非致命）: %s\n   基准测试功能将被禁用",
+                type(e).__name__,
                 exc_info=True,
             )
 
@@ -236,10 +240,11 @@ class IntelGPUOptimizer:
             return
         try:
             self._auto_tuner = tuner_cls(engine)
-            self._logger.info("✅ 自动调优器已初始化")
+            self._logger.info("[OK] 自动调优器已初始化")
         except (RuntimeError, ValueError, TypeError, AttributeError) as e:
             self._logger.warning(
-                f"⚠️ 自动调优器初始化失败（非致命）: {type(e).__name__}\n   自动调优功能将被禁用",
+                "[WARN] 自动调优器初始化失败（非致命）: %s\n   自动调优功能将被禁用",
+                type(e).__name__,
                 exc_info=True,
             )
 
@@ -250,10 +255,11 @@ class IntelGPUOptimizer:
             return
         try:
             self._performance_reporter = reporter_cls()
-            self._logger.info("✅ 性能报告生成器已初始化")
+            self._logger.info("[OK] 性能报告生成器已初始化")
         except (RuntimeError, ValueError, TypeError, AttributeError) as e:
             self._logger.warning(
-                f"⚠️ 性能报告生成器初始化失败（非致命）: {type(e).__name__}\n   性能报告功能将被禁用",
+                "[WARN] 性能报告生成器初始化失败（非致命）: %s\n   性能报告功能将被禁用",
+                type(e).__name__,
                 exc_info=True,
             )
 
@@ -269,22 +275,23 @@ class IntelGPUOptimizer:
             ],
         )
         if initialized_count == 5:
-            self._logger.info("✅ 所有 5 个监控和调优组件初始化成功\n")
+            self._logger.info("OK 所有 5 个监控和调优组件初始化成功\n")
         elif initialized_count > 0:
             self._logger.warning(
-                f"⚠️ {initialized_count}/5 个组件初始化成功，"
-                f"{5 - initialized_count} 个组件被禁用\n"
+                "[WARN] %d/5 个组件初始化成功，%d 个组件被禁用\n"
                 "   引擎仍可正常运行，但部分监控功能不可用\n",
+                initialized_count,
+                5 - initialized_count,
             )
         else:
             self._logger.error(
-                "❌ 所有监控和调优组件初始化失败\n   引擎将使用默认配置运行，无监控和调优功能\n",
+                "[ERR] 所有监控和调优组件初始化失败\n   引擎将使用默认配置运行，无监控和调优功能\n",
             )
-        self._logger.info("✅ Intel GPU 监控和调优组件初始化完成\n")
+        self._logger.info("OK Intel GPU 监控和调优组件初始化完成\n")
 
     def init_monitoring_and_tuning(self, engine_context: dict[str, Any]) -> dict[str, Any]:
         """初始化 Intel GPU 监控和调优组件（P1/P2）。."""
-        self._logger.info("\n📊 初始化 Intel GPU 监控和调优组件...")
+        self._logger.info("\n[STATS] 初始化 Intel GPU 监控和调优组件...")
         engine = engine_context.get("engine")
 
         timeout_cls, memory_cls, benchmark_cls, tuner_cls, reporter_cls = self._lazy_import_components()
@@ -374,15 +381,15 @@ class IntelGPUOptimizer:
                 "__constant const uint *seed" in kernel_source  # PRNG mode (seed 也是 uint*)
             )
             if not has_uint32_workaround:
-                self._logger.error("❌ 内核未使用 uint32 workaround")
+                self._logger.error("ERR 内核未使用 uint32 workaround")
                 return False
 
-            self._logger.info("✅ 内核源码使用 uint32 workaround")
+            self._logger.info("OK 内核源码使用 uint32 workaround")
             # 由于 _verify() 已经成功验证了 GPU 内核，说明 workaround 已经正常工作
             # 这里只需确认即可，不需要再次运行测试
-            self._logger.info("✅ Intel uint32 workaround 验证通过 (已在GPU内核验证中确认)")
+            self._logger.info("OK Intel uint32 workaround 验证通过 (已在GPU内核验证中确认)")
             return True
 
         except Exception as e:
-            self._logger.error(f"❌ Intel workaround 测试失败: {type(e).__name__}: {e}")
+            self._logger.error("[ERR] Intel workaround 测试失败: %s: %s", type(e).__name__, e)
             return False

@@ -38,7 +38,7 @@
 
 ## 已知问题与 Bug
 
-### 🔴 高优先级问题
+### [RED] 高优先级问题
 
 #### 1. global char* / uchar* Hang Bug
 
@@ -52,11 +52,11 @@
 
 **解决方案** (已实施):
 ```c
-// ❌ 避免: __global const uchar *target_hash160s
-// ✅ 使用: __global const uint *target_hash160s
+// [CROSS] 避免: __global const uchar *target_hash160s
+// [OK_CHECK] 使用: __global const uint *target_hash160s
 ```
 
-**项目状态**: ✅ 已修复 - 内核中使用 `uint*` 替代 `uchar*`
+**项目状态**: [OK_CHECK] 已修复 - 内核中使用 `uint*` 替代 `uchar*`
 
 ---
 
@@ -70,7 +70,7 @@
 - 使用 `CLK_LOCAL_MEM_FENCE` 而非 `CLK_GLOBAL_MEM_FENCE`
 - 确保 barrier 在所有工作项路径中被调用
 
-**项目状态**: ✅ 已优化 - `batch_check_local_mem` 内核中 barrier 使用已最小化
+**项目状态**: [OK_CHECK] 已优化 - `batch_check_local_mem` 内核中 barrier 使用已最小化
 
 ---
 
@@ -86,7 +86,7 @@
 
 ---
 
-### 🟡 中优先级问题
+### [YELLOW] 中优先级问题
 
 #### 4. 有符号整数溢出
 
@@ -95,11 +95,11 @@
 
 **解决方案** (已实施):
 ```c
-// ❌ 避免: int result = a - b;  // 可能负数溢出
-// ✅ 使用: ulong result = (ulong)a - (ulong)b;  // 安全
+// [CROSS] 避免: int result = a - b;  // 可能负数溢出
+// [OK_CHECK] 使用: ulong result = (ulong)a - (ulong)b;  // 安全
 ```
 
-**项目状态**: ✅ 已修复 - 使用 `ulong` 进行减法运算
+**项目状态**: [OK_CHECK] 已修复 - 使用 `ulong` 进行减法运算
 
 ---
 
@@ -124,15 +124,15 @@ export SYCL_DEVICE_FILTER=opencl:gpu
 
 | 规则 | 说明 | 项目应用 |
 |------|------|----------|
-| 最小访问单位 32-bit | 避免 char/short 逐个访问 | ✅ 使用 uint |
-| 地址对齐 | 确保 32-bit 对齐 | ✅ 已对齐 |
-| 批量加载 | 每次 2-4 个 32-bit | ✅ 已优化 |
-| Local 内存 Bank | 避免 bank 冲突 | ⚠️ 可优化 |
+| 最小访问单位 32-bit | 避免 char/short 逐个访问 | [OK_CHECK] 使用 uint |
+| 地址对齐 | 确保 32-bit 对齐 | [OK_CHECK] 已对齐 |
+| 批量加载 | 每次 2-4 个 32-bit | [OK_CHECK] 已优化 |
+| Local 内存 Bank | 避免 bank 冲突 | [WARN] 可优化 |
 
 #### 优化 Hash160 Target 扫描
 
 ```c
-// ✅ 当前实现 - 已向量化
+// [OK_CHECK] 当前实现 - 已向量化
 uint h0 = (uint)hash160_result[0]  | ((uint)hash160_result[1]  << 8) | 
           ((uint)hash160_result[2]  << 16) | ((uint)hash160_result[3]  << 24);
 ```
@@ -216,12 +216,12 @@ build_options = [
 
 | 优化项 | 状态 | 说明 |
 |--------|------|------|
-| uint32 替代 uchar | ✅ | 避免 global char* hang bug |
-| ulong 算术 | ✅ | 避免有符号溢出 |
-| 批量哈希 | ✅ | sha256_single_block_33 |
-| Local 内存缓存 | ✅ | batch_check_local_mem |
-| 预计算表 | ✅ | 31 点预计算 |
-| early-exit | ✅ | 渐进式比较 |
+| uint32 替代 uchar | [OK_CHECK] | 避免 global char* hang bug |
+| ulong 算术 | [OK_CHECK] | 避免有符号溢出 |
+| 批量哈希 | [OK_CHECK] | sha256_single_block_33 |
+| Local 内存缓存 | [OK_CHECK] | batch_check_local_mem |
+| 预计算表 | [OK_CHECK] | 31 点预计算 |
+| early-exit | [OK_CHECK] | 渐进式比较 |
 
 ### 建议进一步优化
 
@@ -324,9 +324,9 @@ set INTEL_XESS_MEMORY_COMPRESSION=1
 
 | 版本 | 日期 | 状态 | 说明 |
 |------|------|------|------|
-| **32.0.101.8724** | 2026-01 | ⭐ 推荐 | 最新稳定版 |
-| 32.0.101.5500 | 2025-10 | ✅ 良好 | 成熟稳定 |
-| 31.0.101.4500 | 2025-05 | ✅ 良好 | 已知稳定 |
+| **32.0.101.8724** | 2026-01 | [STAR] 推荐 | 最新稳定版 |
+| 32.0.101.5500 | 2025-10 | [OK_CHECK] 良好 | 成熟稳定 |
+| 31.0.101.4500 | 2025-05 | [OK_CHECK] 良好 | 已知稳定 |
 
 ### 获取最新驱动
 
@@ -372,9 +372,9 @@ https://www.intel.com/content/www/cn/zh/products/sku/229151/intel-arc-a770-graph
 
 | GPU | 预期吞吐量 | 性价比 | 备注 |
 |-----|-----------|--------|------|
-| **Intel Arc A770** | 1500万/s | ⭐⭐⭐⭐ | OpenCL 优化 |
-| NVIDIA RTX 3060 | 5000万/s | ⭐⭐⭐⭐⭐ | CUDA 原生 |
-| AMD RX 6600 | 3000万/s | ⭐⭐⭐⭐ | GCN 优化 |
+| **Intel Arc A770** | 1500万/s | [STAR][STAR][STAR][STAR] | OpenCL 优化 |
+| NVIDIA RTX 3060 | 5000万/s | [STAR][STAR][STAR][STAR][STAR] | CUDA 原生 |
+| AMD RX 6600 | 3000万/s | [STAR][STAR][STAR][STAR] | GCN 优化 |
 
 ### 性能限制因素
 
@@ -425,7 +425,7 @@ https://www.intel.com/content/www/cn/zh/products/sku/229151/intel-arc-a770-graph
 3. 电源不足
 
 **解决方案**:
-1. ✅ 确保使用 `uint*` 替代 `uchar*`
+1. [OK_CHECK] 确保使用 `uint*` 替代 `uchar*`
 2. 更新到最新驱动
 3. 检查电源供应 (225W TDP)
 
@@ -450,18 +450,18 @@ https://www.intel.com/content/www/cn/zh/products/sku/229151/intel-arc-a770-graph
 
 ## 总结
 
-### 已实施优化 ✅
+### 已实施优化 [OK_CHECK]
 
 | 优化项 | 效果 | 状态 |
 |--------|------|------|
-| uint32 替代 uchar | 避免 hang bug | ✅ |
-| ulong 算术 | 避免溢出 | ✅ |
-| 异步执行 | +61% 性能 | ✅ |
-| 双缓冲 | 隐藏延迟 | ✅ |
-| 预计算表 | 减少运算 | ✅ |
-| sha256 单块优化 | -40% 指令 | ✅ |
+| uint32 替代 uchar | 避免 hang bug | [OK_CHECK] |
+| ulong 算术 | 避免溢出 | [OK_CHECK] |
+| 异步执行 | +61% 性能 | [OK_CHECK] |
+| 双缓冲 | 隐藏延迟 | [OK_CHECK] |
+| 预计算表 | 减少运算 | [OK_CHECK] |
+| sha256 单块优化 | -40% 指令 | [OK_CHECK] |
 
-### 建议实施优化 🔧
+### 建议实施优化 [WRENCH]
 
 | 优化项 | 预期提升 | 难度 |
 |--------|----------|------|

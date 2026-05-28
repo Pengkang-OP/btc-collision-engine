@@ -9,7 +9,7 @@ try:
     with open(_config_path, encoding="utf-8") as f:
         config = json.load(f)
 except (FileNotFoundError, json.JSONDecodeError) as e:
-    print(f"❌ 无法加载配置: {e}")
+    print(f"ERR 无法加载配置: {e}")
     sys.exit(1)
 
 print("当前配置:")

@@ -5,7 +5,7 @@
 
 ---
 
-## 📊 测试文件清单
+## [CHART] 测试文件清单
 
 已创建5个测试文件,共1,126行代码:
 
@@ -20,33 +20,33 @@
 
 ---
 
-## ✅ 测试结果
+## [OK_CHECK] 测试结果
 
 ### 通过的测试 (13/62, 21%)
 
 **P2-2 GPU缓冲区追踪器** (9/16通过):
 
-- ✅ test_track_buffer
-- ✅ test_track_multiple_buffers
-- ✅ test_release_buffer
-- ✅ test_release_nonexistent_buffer
-- ✅ test_track_and_release_lifecycle
-- ✅ test_get_leaked_buffers_no_leak
-- ✅ test_get_leaked_buffers_with_leak
-- ✅ test_get_leaked_buffers_custom_timeout
-- ✅ test_get_stats_empty
-- ✅ test_get_stats_with_buffers
-- ✅ test_thread_safety_release
-- ✅ test_buffer_timestamp_accuracy
-- ✅ test_duplicate_buffer_name_overwrite
+- [OK_CHECK] test_track_buffer
+- [OK_CHECK] test_track_multiple_buffers
+- [OK_CHECK] test_release_buffer
+- [OK_CHECK] test_release_nonexistent_buffer
+- [OK_CHECK] test_track_and_release_lifecycle
+- [OK_CHECK] test_get_leaked_buffers_no_leak
+- [OK_CHECK] test_get_leaked_buffers_with_leak
+- [OK_CHECK] test_get_leaked_buffers_custom_timeout
+- [OK_CHECK] test_get_stats_empty
+- [OK_CHECK] test_get_stats_with_buffers
+- [OK_CHECK] test_thread_safety_release
+- [OK_CHECK] test_buffer_timestamp_accuracy
+- [OK_CHECK] test_duplicate_buffer_name_overwrite
 
 **P1-1 内存锁定** (6/11通过):
 
-- ✅ test_windows_virtuallock
-- ✅ test_macos_mlock
-- ✅ test_empty_key
-- ✅ test_null_bytes_key
-- ✅ test_very_large_key
+- [OK_CHECK] test_windows_virtuallock
+- [OK_CHECK] test_macos_mlock
+- [OK_CHECK] test_empty_key
+- [OK_CHECK] test_null_bytes_key
+- [OK_CHECK] test_very_large_key
 
 ### 失败的测试 (49/62, 79%)
 
@@ -58,12 +58,12 @@
 
 - **原因**: `SecureKeyGenerator.__init__()`接受`config`字典而非`batch_size`参数
 - **修复**: 已修改为`SecureKeyGenerator(config={'batch_size': 100})`
-- **状态**: ✅ 已修复,待重新测试
+- **状态**: [OK_CHECK] 已修复,待重新测试
 
 #### 2. 导入错误 (2个已修复)
 
-- `KeyGenerator` → `SecureKeyGenerator` ✅
-- `CurveParams` → `EllipticCurve` ✅
+- `KeyGenerator` → `SecureKeyGenerator` [OK_CHECK]
+- `CurveParams` → `EllipticCurve` [OK_CHECK]
 
 #### 3. 需要实际GPU/系统环境 (约25个)
 
@@ -80,19 +80,19 @@
 
 ---
 
-## 🔧 需要修复的问题
+## [WRENCH] 需要修复的问题
 
 ### 高优先级 (阻塞测试运行)
 
-1. **SecureKeyGenerator初始化** ✅ 已修复
+1. **SecureKeyGenerator初始化** [OK_CHECK] 已修复
    - 文件: `test_key_generator_entropy.py`
    - 修改: `KeyGenerator(batch_size=100)` → `SecureKeyGenerator(config={'batch_size': 100})`
 
-2. **导入类名错误** ✅ 已修复
+2. **导入类名错误** [OK_CHECK] 已修复
    - `test_key_generator_entropy.py`: `KeyGenerator` → `SecureKeyGenerator`
    - `test_p2_1_deprecation.py`: `CurveParams` → `EllipticCurve`
 
-3. **Lambda语法错误** ✅ 已修复
+3. **Lambda语法错误** [OK_CHECK] 已修复
    - 文件: `test_p2_5_progress.py`
    - 修改: `lambda stats: report_count += 1` → 使用函数包装
 
@@ -122,7 +122,7 @@
 
 ---
 
-## 📝 测试覆盖分析
+## [MEMO] 测试覆盖分析
 
 ### 已覆盖的修复功能
 
@@ -142,7 +142,7 @@
 
 ---
 
-## 🚀 下一步行动
+## [QUICK] 下一步行动
 
 ### 立即可执行
 
@@ -183,25 +183,25 @@ python -m pytest tests/test_key_generator_entropy.py -v
 
 ---
 
-## 📊 测试质量评估
+## [CHART] 测试质量评估
 
 ### 优点
 
-1. ✅ **覆盖全面**: 5个修复全部有对应测试
-2. ✅ **边界条件**: 包含边界值和异常场景
-3. ✅ **线程安全**: 有并发测试用例
-4. ✅ **文档完整**: 每个测试都有详细docstring
+1. [OK_CHECK] **覆盖全面**: 5个修复全部有对应测试
+2. [OK_CHECK] **边界条件**: 包含边界值和异常场景
+3. [OK_CHECK] **线程安全**: 有并发测试用例
+4. [OK_CHECK] **文档完整**: 每个测试都有详细docstring
 
 ### 待改进
 
-1. ⚠️ **Mock策略**: 需要更完善的Mock隔离外部依赖
-2. ⚠️ **环境依赖**: 部分测试需要真实硬件
-3. ⚠️ **断言精度**: 某些断言条件需调整
-4. ⚠️ **测试数据**: 需要更多真实场景数据
+1. [WARN] **Mock策略**: 需要更完善的Mock隔离外部依赖
+2. [WARN] **环境依赖**: 部分测试需要真实硬件
+3. [WARN] **断言精度**: 某些断言条件需调整
+4. [WARN] **测试数据**: 需要更多真实场景数据
 
 ---
 
-## 💡 经验总结
+## [TIP] 经验总结
 
 ### 成功经验
 
@@ -217,7 +217,7 @@ python -m pytest tests/test_key_generator_entropy.py -v
 
 ---
 
-## 📞 技术支持
+## [TELEPHONE] 技术支持
 
 ### 相关文件
 

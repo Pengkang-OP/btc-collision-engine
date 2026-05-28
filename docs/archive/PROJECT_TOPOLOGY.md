@@ -11,21 +11,21 @@
 ```mermaid
 graph TB
     %% ==================== 入口层 ====================
-    subgraph "🚀 入口层 Entry Layer"
+    subgraph "[QUICK] 入口层 Entry Layer"
         CLI[key_collision_cli.py<br/>命令行入口]
         GUI[key_collision_gui.py<br/>图形界面入口]
         OLD[key_collision.py<br/>旧版主引擎]
     end
 
     %% ==================== CLI模块 ====================
-    subgraph "📟 CLI模块 CLI Module"
+    subgraph "[PAGER] CLI模块 CLI Module"
         CLI_MAIN[src/cli/main.py<br/>CLI主控制器]
         ARGPARSE[参数解析器<br/>argparse]
         SIGNAL[信号处理<br/>SIGINT/SIGTERM]
     end
 
     %% ==================== 配置管理层 ====================
-    subgraph "⚙️ 配置管理层 Configuration Layer"
+    subgraph "[CONFIG] 配置管理层 Configuration Layer"
         CONFIG_MGR[src/config/config_manager.py<br/>配置管理器]
         CONFIG_FILE[config.json<br/>配置文件]
         CRYPTO_CFG[src/config/crypto_config.py<br/>加密配置]
@@ -34,7 +34,7 @@ graph TB
     end
 
     %% ==================== 碰撞引擎层 ====================
-    subgraph "🔧 碰撞引擎层 Collision Engine Layer"
+    subgraph "[WRENCH] 碰撞引擎层 Collision Engine Layer"
         BASE_ENGINE[src/collision/base_engine.py<br/>引擎基类]
         
         subgraph "CPU引擎"
@@ -58,7 +58,7 @@ graph TB
     end
 
     %% ==================== 核心加密层 ====================
-    subgraph "🔐 核心加密层 Core Crypto Layer"
+    subgraph "[LOCK] 核心加密层 Core Crypto Layer"
         SECP256K1[src/core/secp256k1.py<br/>椭圆曲线运算]
         ADDR_GEN[src/core/address_generator.py<br/>地址生成器]
         OPT_ADDR_GEN[src/core/optimized_address_generator.py<br/>优化地址生成器]
@@ -81,7 +81,7 @@ graph TB
     end
 
     %% ==================== GPU模块集群 ====================
-    subgraph "🎮 GPU模块集群 GPU Module Cluster"
+    subgraph "[GAME] GPU模块集群 GPU Module Cluster"
         GPU_DEVICE[src/gpu/device.py<br/>设备管理]
         GPU_CONTEXT[src/gpu/context.py<br/>上下文管理]
         GPU_KERNEL[src/gpu/kernel.py<br/>内核编程]
@@ -112,7 +112,7 @@ graph TB
     end
 
     %% ==================== 监控系统层 ====================
-    subgraph "📊 监控系统层 Monitoring Layer"
+    subgraph "[CHART] 监控系统层 Monitoring Layer"
         MONITORING_SYS[src/monitoring/monitoring_system.py<br/>监控系统主类<br/>1072行]
         DATA_LOGGER[src/monitoring/data_logger.py<br/>数据日志器<br/>34.7KB]
         ENHANCED_MON[src/monitoring/enhanced_monitoring.py<br/>增强监控]
@@ -132,7 +132,7 @@ graph TB
     end
 
     %% ==================== 工具模块层 ====================
-    subgraph "🛠️ 工具模块层 Utils Layer"
+    subgraph "[TOOL] 工具模块层 Utils Layer"
         LOGGER[src/utils/logger.py<br/>日志系统]
         LOGGING_CFG[src/utils/logging_config.py<br/>日志配置]
         EXCEPT_HANDLER[src/utils/exception_handler.py<br/>异常处理]
@@ -159,7 +159,7 @@ graph TB
     end
 
     %% ==================== 数据存储层 ====================
-    subgraph "💾 数据存储层 Data Storage"
+    subgraph "[E] 数据存储层 Data Storage"
         DATA_LOGS[data_logs/<br/>数据日志目录]
         CURRENT_DATA[data_logs/current_data.json<br/>当前状态]
         HISTORY_DATA[data_logs/history_data.json<br/>历史数据]
@@ -172,7 +172,7 @@ graph TB
     end
 
     %% ==================== 外部依赖 ====================
-    subgraph "📦 外部依赖 External Dependencies"
+    subgraph "[PACKAGE] 外部依赖 External Dependencies"
         COINCURVE[coincurve<br/>libsecp256k1绑定]
         PYOPENCL[pyopencl<br/>OpenCL计算]
         GMPY2[gmpy2<br/>大整数运算]
@@ -331,7 +331,7 @@ graph TB
 
 ## 架构层次详解
 
-### 1️⃣ 入口层 (Entry Layer)
+### 1⃣ 入口层 (Entry Layer)
 
 **职责**: 提供用户交互入口,支持多种运行模式
 
@@ -347,7 +347,7 @@ graph TB
 
 ---
 
-### 2️⃣ CLI模块 (CLI Module)
+### 2⃣ CLI模块 (CLI Module)
 
 **职责**: 命令行参数解析、信号处理、运行流程控制
 
@@ -365,7 +365,7 @@ graph TB
 
 ---
 
-### 3️⃣ 配置管理层 (Configuration Layer)
+### 3⃣ 配置管理层 (Configuration Layer)
 
 **职责**: 统一管理应用配置,支持JSON Schema验证
 
@@ -386,7 +386,7 @@ graph TB
 
 ---
 
-### 4️⃣ 碰撞引擎层 (Collision Engine Layer)
+### 4⃣ 碰撞引擎层 (Collision Engine Layer)
 
 **职责**: 核心碰撞逻辑实现,支持CPU和GPU双引擎
 
@@ -434,7 +434,7 @@ graph TB
 
 ---
 
-### 5️⃣ 核心加密层 (Core Crypto Layer)
+### 5⃣ 核心加密层 (Core Crypto Layer)
 
 **职责**: 比特币密码学运算实现,支持多种地址类型
 
@@ -467,7 +467,7 @@ graph TB
 
 ---
 
-### 6️⃣ GPU模块集群 (GPU Module Cluster)
+### 6⃣ GPU模块集群 (GPU Module Cluster)
 
 **职责**: 完整的GPU计算基础设施,支持多厂商设备
 
@@ -511,7 +511,7 @@ graph TB
 
 ---
 
-### 7️⃣ 监控系统层 (Monitoring Layer)
+### 7⃣ 监控系统层 (Monitoring Layer)
 
 **职责**: 实时性能监控、异常检测、告警通知
 
@@ -545,7 +545,7 @@ graph TB
 
 ---
 
-### 8️⃣ 工具模块层 (Utils Layer)
+### 8⃣ 工具模块层 (Utils Layer)
 
 **职责**: 提供通用工具函数和基础设施
 
@@ -590,7 +590,7 @@ graph TB
 
 ---
 
-### 9️⃣ 数据存储层 (Data Storage)
+### 9⃣ 数据存储层 (Data Storage)
 
 **职责**: 持久化引擎状态、历史数据、日志文件
 
@@ -613,7 +613,7 @@ graph TB
 
 ---
 
-### 🔟 外部依赖 (External Dependencies)
+### [FREE] 外部依赖 (External Dependencies)
 
 | 依赖 | 版本 | 用途 | 性能影响 |
 |------|------|------|----------|
@@ -943,7 +943,7 @@ class CollisionStats:
 
 ## 项目特色与创新
 
-### ✅ 技术亮点
+### [OK_CHECK] 技术亮点
 
 1. **双引擎架构**: CPU多线程 + GPU OpenCL并行计算
 2. **v2.2.0性能优化**: 预计算点表(+46%)、gmpy2大整数(+1455%)、SIMD哈希(+200%)、内存池(-60%延迟)
@@ -956,7 +956,7 @@ class CollisionStats:
 9. **负载均衡**: 多GPU智能任务分配
 10. **JSON Schema验证**: 配置文件严格校验
 
-### 📊 代码规模统计
+### [CHART] 代码规模统计
 
 | 模块 | 文件数 | 代码行数 | 复杂度 |
 |------|--------|----------|--------|

@@ -1,6 +1,6 @@
 # CLI 命令行工具完整使用指南
 
-## 📋 目录
+## [CHECKLIST] 目录
 
 1. [基础用法](#基础用法)
 
@@ -20,7 +20,7 @@
 
 ---
 
-## 🚀 基础用法
+## [QUICK] 基础用法
 
 ### 基本语法
 
@@ -45,7 +45,7 @@ python key_collision_cli.py --examples
 
 ---
 
-## 🎮 GPU加速选项
+## [GAME] GPU加速选项
 
 ### 自动检测GPU类型（推荐）
 
@@ -91,7 +91,7 @@ python key_collision_cli.py -f targets.txt --multi-gpu --gpu-indices 0 1
 
 ---
 
-## ⚡ 性能调优
+## [BOLT] 性能调优
 
 ### 核心优化选项
 
@@ -123,7 +123,7 @@ python key_collision_cli.py -f targets.txt --progress-interval 3
 
 ---
 
-## 📊 性能监控
+## [CHART] 性能监控
 
 ### 实时监控面板
 
@@ -165,7 +165,7 @@ python key_collision_cli.py -f targets.txt --use-gpu --stats-file performance.lo
 
 ---
 
-## 🔧 工具命令
+## [TOOL] 工具命令
 
 ### 系统检测
 
@@ -214,7 +214,7 @@ python key_collision_cli.py --cleanup --dry-run
 
 ---
 
-## 🔍 搜索模式
+## [CHECK] 搜索模式
 
 ### 随机搜索（默认）
 
@@ -262,7 +262,7 @@ python key_collision_cli.py -f targets.txt --use-gpu \
 
 ---
 
-## ⚙️ 配置文件
+## [CONFIG] 配置文件
 
 ### 配置文件结构
 
@@ -302,7 +302,7 @@ python key_collision_cli.py --template gpu-performance > config.json
 
 ---
 
-## 📝 完整示例
+## [CONFIG] 完整示例
 
 ### 示例1：Intel Arc A770 优化运行
 
@@ -366,7 +366,7 @@ python key_collision_cli.py \
 
 ---
 
-## 🎯 推荐配置
+## [TARGET] 推荐配置
 
 ### Intel Arc A770
 
@@ -401,7 +401,7 @@ python key_collision_cli.py -f targets.txt \
 
 ---
 
-## 🔑 参数优先级
+## [KEY] 参数优先级
 
 1. **命令行参数**（最高优先级）
 
@@ -413,7 +413,7 @@ python key_collision_cli.py -f targets.txt \
 
 ---
 
-## 📌 快捷键
+## [PIN] 快捷键
 
 | 按键 | 功能 |
 |------|------|
@@ -422,7 +422,7 @@ python key_collision_cli.py -f targets.txt \
 
 ---
 
-## 📁 输出文件
+## [DIR] 输出文件
 
 | 文件 | 说明 |
 |------|------|
@@ -434,4 +434,4 @@ python key_collision_cli.py -f targets.txt \
 
 ---
 
-**🎉 更多帮助：** `python key_collision_cli.py --help`
+**[DONE] 更多帮助：** `python key_collision_cli.py --help`

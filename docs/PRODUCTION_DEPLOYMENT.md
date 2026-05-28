@@ -6,7 +6,7 @@
 
 ---
 
-## 📦 已创建的文件
+## [PACKAGE] 已创建的文件
 
 ### 1. systemd服务部署
 
@@ -46,7 +46,7 @@
 
 ---
 
-## 🚀 快速部署
+## [QUICK] 快速部署
 
 ### 方式1：systemd服务（推荐用于专用服务器）
 
@@ -66,15 +66,15 @@ journalctl -u btc-collision-engine -f
 
 **优势：**
 
-- ✅ 原生Linux服务管理
+- [OK] 原生Linux服务管理
 
-- ✅ 自动重启和开机自启
+- [OK] 自动重启和开机自启
 
-- ✅ 系统级资源控制
+- [OK] 系统级资源控制
 
-- ✅ 与系统集成度高
+- [OK] 与系统集成度高
 
-- ✅ 性能开销最小
+- [OK] 性能开销最小
 
 **适用场景：**
 
@@ -107,15 +107,15 @@ docker-compose --profile gpu --profile nvidia --profile monitoring up -d
 
 **优势：**
 
-- ✅ 环境隔离
+- [OK] 环境隔离
 
-- ✅ 快速部署和迁移
+- [OK] 快速部署和迁移
 
-- ✅ 版本控制
+- [OK] 版本控制
 
-- ✅ 易于扩展
+- [OK] 易于扩展
 
-- ✅ 一键监控栈
+- [OK] 一键监控栈
 
 **适用场景：**
 
@@ -129,7 +129,7 @@ docker-compose --profile gpu --profile nvidia --profile monitoring up -d
 
 ---
 
-## 📊 功能对比
+## [CHART] 功能对比
 
 | 特性 | systemd | Docker |
 |------|---------|--------|
@@ -140,39 +140,39 @@ docker-compose --profile gpu --profile nvidia --profile monitoring up -d
 | **迁移难度** | 较高 | 极低 |
 | **多版本共存** | 困难 | 简单 |
 | **监控集成** | journal | Prometheus/Grafana |
-| **自动重启** | ✅ | ✅ |
+| **自动重启** | [OK] | [OK] |
 | **日志管理** | journalctl | docker logs |
 | **GPU支持** | 需配置 | 内置支持 |
 
 ---
 
-## ✅ 验收测试
+## [OK] 验收测试
 
 ### 生产验收测试状态
 
 **测试时间**: 2026-04-28
-**测试结果**: ✅ PASSED (18/18, 100%)
+**测试结果**: [OK] PASSED (18/18, 100%)
 
 ### 测试覆盖
 
 | 测试类别 | 测试数 | 通过 | 状态 |
 |----------|--------|------|------|
-| 关键功能测试 | 10 | 10 | ✅ |
-| 扩展功能测试 | 8 | 8 | ✅ |
-| **总计** | **18** | **18** | ✅ |
+| 关键功能测试 | 10 | 10 | [OK] |
+| 扩展功能测试 | 8 | 8 | [OK] |
+| **总计** | **18** | **18** | [OK] |
 
 ### 关键验证项
 
 | 验证项 | 状态 | 说明 |
 |--------|------|------|
-| 核心加密功能 | ✅ | Bitcoin密钥生成和验证 |
-| 配置管理系统 | ✅ | 配置读写和持久化 |
-| 日志和安全 | ✅ | 安全日志过滤 |
-| 检查点功能 | ✅ | 状态保存和恢复 |
-| 碰撞引擎 | ✅ | 核心碰撞计算 |
-| 安全功能 | ✅ | 密钥安全处理 |
-| 真实碰撞运行 | ✅ | 315 keys / 3.17s |
-| 性能压力测试 | ✅ | 1,387 keys / 10.5s |
+| 核心加密功能 | [OK] | Bitcoin密钥生成和验证 |
+| 配置管理系统 | [OK] | 配置读写和持久化 |
+| 日志和安全 | [OK] | 安全日志过滤 |
+| 检查点功能 | [OK] | 状态保存和恢复 |
+| 碰撞引擎 | [OK] | 核心碰撞计算 |
+| 安全功能 | [OK] | 密钥安全处理 |
+| 真实碰撞运行 | [OK] | 315 keys / 3.17s |
+| 性能压力测试 | [OK] | 1,387 keys / 10.5s |
 
 ### 运行验收测试
 
@@ -198,7 +198,7 @@ cat data_logs/acceptance_test/acceptance_test_summary.md
 
 ---
 
-## 🔧 配置说明
+## [TOOL] 配置说明
 
 ### 生产配置优化（config.production.json）
 
@@ -227,7 +227,7 @@ cat data_logs/acceptance_test/acceptance_test_summary.md
 
 ---
 
-## 📈 监控方案
+## [PERF] 监控方案
 
 ### 1. 系统级监控（systemd）
 
@@ -305,7 +305,7 @@ cat deploy/prometheus/rules/btc-collision-alerts.yml
 
 ---
 
-## 🔒 安全加固
+## [LOCK] 安全加固
 
 ### systemd安全选项
 
@@ -355,7 +355,7 @@ chmod 755 src/
 
 ---
 
-## 🎯 推荐部署方案
+## [TARGET] 推荐部署方案
 
 ### 场景1：个人研究（单机）
 
@@ -423,7 +423,7 @@ az container create --resource-group myRG --name btc-engine --image btc-engine:l
 
 ---
 
-## 📝 运维手册
+## [CONFIG] 运维手册
 
 ### 日常检查
 
@@ -515,7 +515,7 @@ systemd服务已配置以下资源限制：
 
 ---
 
-## 📚 相关文档
+## [DOCS] 相关文档
 
 - [README.md](../README.md) - 项目主文档
 
@@ -529,7 +529,7 @@ systemd服务已配置以下资源限制：
 
 ---
 
-## ✅ 部署检查清单
+## [OK] 部署检查清单
 
 ### systemd部署
 
@@ -577,7 +577,7 @@ systemd服务已配置以下资源限制：
 
 ---
 
-## 🎓 最佳实践
+## [GUIDE] 最佳实践
 
 1. **始终使用生产配置**：不要使用config.example.json直接运行
 
@@ -597,7 +597,7 @@ systemd服务已配置以下资源限制：
 
 ---
 
-## 📞 技术支持
+## [SUPPORT] 技术支持
 
 - **问题反馈**：GitHub Issues
 

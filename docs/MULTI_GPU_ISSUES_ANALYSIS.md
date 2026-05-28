@@ -267,7 +267,7 @@ def _aggregate_stats(self) -> None:
     with self._workers_lock:
         workers = dict(self._workers)  # 鈿狅笍 澶嶅埗鍚庯紝涓诲瓧鍏稿彲鑳界户缁彉鍖?
     
-    # 浣嗘槸鑱氬悎杩囩▼涓紝涓诲瓧鍏稿彲鑳芥鍦ㄨ淇敼
+    # 浣嗘槸鑱氬悎杩囩[E]涓紝涓诲瓧鍏稿彲鑳芥鍦ㄨ淇敼
 
     for device_idx, worker in workers.items():
 
@@ -517,7 +517,7 @@ def _redistribute_workload(self, failed_gpu_id: int):
 
 **涓ラ噸绋嬪害**: 馃煛 杞诲井
 
-**闂**: 鎬ц兘鍘嗗彶鏁版嵁闄愬埗涓?00鏉★紝楂樿礋杞戒笅鍙兘涓㈠け閲嶈鐩戞帶鏁版嵁銆?
+**闂**: 鎬ц兘鍘嗗彶鏁版嵁闄愬埗涓?00鏉[STAR]紝楂樿礋杞戒笅鍙兘涓㈠け閲嶈鐩戞帶鏁版嵁銆?
 
 **浠ｇ爜浣嶇疆**: `src/gpu/multi_gpu_engine.py` - 绗?39琛?
 

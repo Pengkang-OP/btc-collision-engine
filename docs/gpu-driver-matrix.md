@@ -10,10 +10,10 @@
 
 | GPU 厂商 | 架构 | 最低驱动版本 | OpenCL 版本 | 性能等级 | 备注 |
 |---------|------|------------|------------|---------|------|
-| **NVIDIA** | CUDA | 11.0+ | 1.2+ | ⭐⭐⭐⭐⭐ | 首选平台 |
-| **AMD** | RDNA 1/2/3 | 21.x+ | 1.2+ | ⭐⭐⭐⭐ | Linux 推荐 ROCm |
-| **Intel** | Arc/Xe | 31.0.101.4146+ | 1.2+ | ⭐⭐⭐⭐ | ARC 系列性能优异 |
-| **Intel** | UHD/HD | 最新驱动 | 1.2+ | ⭐⭐ | 仅测试用 |
+| **NVIDIA** | CUDA | 11.0+ | 1.2+ | ***** | 首选平台 |
+| **AMD** | RDNA 1/2/3 | 21.x+ | 1.2+ | **** | Linux 推荐 ROCm |
+| **Intel** | Arc/Xe | 31.0.101.4146+ | 1.2+ | **** | ARC 系列性能优异 |
+| **Intel** | UHD/HD | 最新驱动 | 1.2+ | ** | 仅测试用 |
 
 ## 详细驱动要求
 
@@ -78,10 +78,10 @@ python -c "import pyopencl; print([d.name for p in pyopencl.get_platforms() for 
 
 | 配置 | 支持 | 说明 |
 |------|------|------|
-| 多块同型号 GPU | ✅ | 负载均衡 |
-| 多块不同型号 GPU | ⚠️ | 可能性能不均衡 |
-| NVIDIA + AMD 混合 | ❌ | OpenCL 平台冲突 |
-| GPU + CPU 混合 | ✅ | HybridCollisionEngine |
+| 多块同型号 GPU | [OK] | 负载均衡 |
+| 多块不同型号 GPU | [WARN] | 可能性能不均衡 |
+| NVIDIA + AMD 混合 | [FAIL] | OpenCL 平台冲突 |
+| GPU + CPU 混合 | [OK] | HybridCollisionEngine |
 
 ## 常见问题
 

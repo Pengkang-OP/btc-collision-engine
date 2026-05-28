@@ -122,9 +122,9 @@ def test_optimized_engine():
 if __name__ == "__main__":
     try:
         speedup = test_optimized_engine()
-        print(f"\n✅ 测试通过! 性能提升: {speedup:.2f}x")
+        print(f"\nOK 测试通过! 性能提升: {speedup:.2f}x")
     except Exception as e:
-        print(f"\n❌ 测试失败: {e}")
+        print(f"\nERR 测试失败: {e}")
         import traceback
 
         traceback.print_exc()

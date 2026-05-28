@@ -263,36 +263,36 @@ def main():
     try:
         results["precomputed_table"] = benchmark_precomputed_table(100)
     except Exception as e:  # noqa: BLE001 (基准测试容错)
-        print(f"  ❌ 测试失败: {e}")
+        print(f"  ERR 测试失败: {e}")
         results["precomputed_table"] = 0
 
     try:
         results["simd_hash"] = benchmark_simd_hash(100000)
     except Exception as e:  # noqa: BLE001 (基准测试容错)
-        print(f"  ❌ 测试失败: {e}")
+        print(f"  ERR 测试失败: {e}")
         results["simd_hash"] = 0
 
     try:
         results["memory_pool"] = benchmark_memory_pool(1000)
     except Exception as e:  # noqa: BLE001 (基准测试容错)
-        print(f"  ❌ 测试失败: {e}")
+        print(f"  ERR 测试失败: {e}")
         results["memory_pool"] = 0
 
     try:
         results["batch_hash160"] = benchmark_batch_hash160(10000)
     except Exception as e:  # noqa: BLE001 (基准测试容错)
-        print(f"  ❌ 测试失败: {e}")
+        print(f"  ERR 测试失败: {e}")
         results["batch_hash160"] = 0
 
     try:
         results["gpu_scale"] = benchmark_gpu_scale()
     except Exception as e:  # noqa: BLE001 (基准测试容错)
-        print(f"  ❌ 测试失败: {e}")
+        print(f"  ERR 测试失败: {e}")
         results["gpu_scale"] = 0
 
     # 汇总结果
     print("\n" + "=" * 80)
-    print("📊 性能优化汇总")
+    print("STATS 性能优化汇总")
     print("=" * 80)
 
     test_names = {

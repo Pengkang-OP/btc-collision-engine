@@ -7,7 +7,7 @@
 
 ---
 
-## 📋 问题清单
+## [CHECKLIST] 问题清单
 
 | 编号 | 问题 | 严重度 | 影响范围 | 预计工时 |
 |------|------|--------|---------|---------|
@@ -17,7 +17,7 @@
 
 ---
 
-## 🔧 修复方案 P1-1: DataLogger解耦
+## [WRENCH] 修复方案 P1-1: DataLogger解耦
 
 ### 问题分析
 
@@ -41,10 +41,10 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
 **问题**:
 
-1. ❌ 引擎直接依赖DataLogger实现，无法替换为Mock
-2. ❌ EnhancedMonitoringSystem需要engine引用，形成循环依赖
-3. ❌ 单元测试时必须启动完整的监控系统
-4. ❌ 违反依赖倒置原则 (DIP)
+1. [CROSS] 引擎直接依赖DataLogger实现，无法替换为Mock
+2. [CROSS] EnhancedMonitoringSystem需要engine引用，形成循环依赖
+3. [CROSS] 单元测试时必须启动完整的监控系统
+4. [CROSS] 违反依赖倒置原则 (DIP)
 
 ---
 
@@ -64,7 +64,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
 └──────────────┬──────────────────────────────┘
                │
                │ 发布/订阅
-               ▼
+               [E]
 ┌─────────────────────────────────────────────┐
 │          事件总线 (EventBus)                 │
 │                                             │
@@ -74,7 +74,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
 └──────────────┬──────────────────────────────┘
                │
     ┌──────────┼──────────┐
-    ▼          ▼          ▼
+    [E]          [E]          [E]
 ┌──────┐  ┌──────┐  ┌──────┐
 │Data- │  │Alert │  │Custom│
 │Logger│  │System│  │Handler│
@@ -533,16 +533,16 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
 | 维度 | 当前架构 (紧耦合) | 新架构 (事件驱动) |
 |------|------------------|------------------|
-| **可测试性** | ❌ 需要完整监控系统 | ✅ 可Mock EventBus |
-| **可扩展性** | ❌ 修改引擎代码 | ✅ 添加订阅者即可 |
-| **解耦度** | ❌ 引擎直接依赖DataLogger | ✅ 通过事件总线 |
-| **向后兼容** | - | ✅ 保留旧回调 |
-| **性能** | - | ✅ 异步事件处理 |
+| **可测试性** | [CROSS] 需要完整监控系统 | [OK_CHECK] 可Mock EventBus |
+| **可扩展性** | [CROSS] 修改引擎代码 | [OK_CHECK] 添加订阅者即可 |
+| **解耦度** | [CROSS] 引擎直接依赖DataLogger | [OK_CHECK] 通过事件总线 |
+| **向后兼容** | - | [OK_CHECK] 保留旧回调 |
+| **性能** | - | [OK_CHECK] 异步事件处理 |
 | **代码复杂度** | 中 | 中+ (增加事件层) |
 
 ---
 
-## 🔧 修复方案 P1-2: 回调函数类型提示统一
+## [WRENCH] 修复方案 P1-2: 回调函数类型提示统一
 
 ### 问题分析
 
@@ -557,9 +557,9 @@ def __init__(self, targets: Set[str],
 
 # GPU引擎 - 无类型提示
 def __init__(self, targets: Set[str],
-             on_progress: Optional[Callable] = None,  # ❌ 缺少参数类型
-             on_match: Optional[Callable] = None,     # ❌ 缺少参数类型
-             on_complete: Optional[Callable] = None): # ❌ 缺少参数类型
+             on_progress: Optional[Callable] = None,  # [CROSS] 缺少参数类型
+             on_match: Optional[Callable] = None,     # [CROSS] 缺少参数类型
+             on_complete: Optional[Callable] = None): # [CROSS] 缺少参数类型
 ```
 
 ---
@@ -598,9 +598,9 @@ from .types import ProgressCallback, MatchCallback, CompleteCallback
 
 class KeyCollisionEngine(BaseCollisionEngine):
     def __init__(self, targets: Set[str],
-                 on_progress: Optional[ProgressCallback] = None,  # ✅ 统一
-                 on_match: Optional[MatchCallback] = None,        # ✅ 统一
-                 on_complete: Optional[CompleteCallback] = None,  # ✅ 统一
+                 on_progress: Optional[ProgressCallback] = None,  # [OK_CHECK] 统一
+                 on_match: Optional[MatchCallback] = None,        # [OK_CHECK] 统一
+                 on_complete: Optional[CompleteCallback] = None,  # [OK_CHECK] 统一
                  ...):
 ```
 
@@ -616,9 +616,9 @@ class GPUCollisionEngine(BaseCollisionEngine):
     def __init__(self, targets: Set[str],
                  device_index: int = 1,
                  batch_size: int = None,
-                 on_progress: Optional[ProgressCallback] = None,  # ✅ 统一
-                 on_match: Optional[MatchCallback] = None,        # ✅ 统一
-                 on_complete: Optional[CompleteCallback] = None,  # ✅ 统一
+                 on_progress: Optional[ProgressCallback] = None,  # [OK_CHECK] 统一
+                 on_match: Optional[MatchCallback] = None,        # [OK_CHECK] 统一
+                 on_complete: Optional[CompleteCallback] = None,  # [OK_CHECK] 统一
                  ...):
 ```
 
@@ -648,14 +648,14 @@ class BaseCollisionEngine:
 
 | 维度 | 修复前 | 修复后 |
 |------|--------|--------|
-| **类型安全** | ❌ GPU引擎无类型检查 | ✅ 全部类型检查 |
-| **IDE提示** | ❌ 参数不明确 | ✅ 完整参数提示 |
-| **一致性** | ❌ CPU/GPU不一致 | ✅ 完全一致 |
-| **文档生成** | ❌ 无法自动生成 | ✅ 可自动生成 |
+| **类型安全** | [CROSS] GPU引擎无类型检查 | [OK_CHECK] 全部类型检查 |
+| **IDE提示** | [CROSS] 参数不明确 | [OK_CHECK] 完整参数提示 |
+| **一致性** | [CROSS] CPU/GPU不一致 | [OK_CHECK] 完全一致 |
+| **文档生成** | [CROSS] 无法自动生成 | [OK_CHECK] 可自动生成 |
 
 ---
 
-## 🔧 修复方案 P1-3: 引入依赖注入
+## [WRENCH] 修复方案 P1-3: 引入依赖注入
 
 ### 问题分析
 
@@ -794,7 +794,7 @@ class TestKeyCollisionEngine:
 
 ---
 
-## 📊 实施计划
+## [CHART] 实施计划
 
 ### 阶段1: 事件总线 (4小时)
 
@@ -824,7 +824,7 @@ class TestKeyCollisionEngine:
 
 ---
 
-## ✅ 验收标准
+## [OK_CHECK] 验收标准
 
 ### P1-1: DataLogger解耦
 
@@ -851,7 +851,7 @@ class TestKeyCollisionEngine:
 
 ---
 
-## 🎯 预期收益
+## [TARGET] 预期收益
 
 | 指标 | 改进前 | 改进后 | 提升 |
 |------|--------|--------|------|
@@ -862,7 +862,7 @@ class TestKeyCollisionEngine:
 
 ---
 
-## 📝 风险评估
+## [MEMO] 风险评估
 
 | 风险 | 概率 | 影响 | 缓解措施 |
 |------|------|------|---------|

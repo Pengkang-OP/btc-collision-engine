@@ -22,7 +22,7 @@ import pytest
 
 pytestmark = pytest.mark.gpu  # 需要真实GPU硬件
 
-from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine  # noqa: E402
+from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
 
 # 配置日志
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")

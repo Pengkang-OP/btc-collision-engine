@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""快速演示: 使用多格式多GPU引擎.
-"""
+"""快速演示: 使用多格式多GPU引擎."""
 
 import os
 import secrets
@@ -19,7 +18,7 @@ print("=" * 80)
 print("\n1. 创建多格式多GPU引擎...")
 
 engine = create_engine()
-print("   ✅ 引擎创建成功!")
+print("   OK 引擎创建成功!")
 
 # 2. 添加多种格式的目标地址
 print("\n2. 添加多种格式的目标地址...")
@@ -35,7 +34,7 @@ targets = [
 
 for addr in targets:
     engine.add_target(addr)
-print(f"   ✅ 已添加 {len(targets)} 个目标地址")
+print(f"   OK 已添加 {len(targets)} 个目标地址")
 
 # 3. 显示格式统计
 print("\n3. 格式统计...")
@@ -55,9 +54,9 @@ print("   私钥: 1")
 is_match, matches = engine.check_match_all(known_private_key)
 
 if is_match:
-    print(f"\n   🎉 找到 {len(matches)} 个匹配!")
+    print(f"\n   PARTY 找到 {len(matches)} 个匹配!")
     for addr, fmt in matches:
-        print(f"      ✅ {fmt.upper()}: {addr}")
+        print(f"      OK {fmt.upper()}: {addr}")
 else:
     print("\n   没有找到匹配 (应该找到的，让我检查一下...)")
 
@@ -66,7 +65,7 @@ else:
     all_addresses = gen.generate_all_formats(known_private_key)
     for fmt, addr in all_addresses.items():
         in_targets = addr in engine._format_manager.get_all_targets()
-        print(f"      {fmt}: {addr} {'✅ 在目标中' if in_targets else '❌ 不在目标中'}")
+        print(f"      {fmt}: {addr} {'OK 在目标中' if in_targets else 'ERR 不在目标中'}")
 
 # 5. 测试随机私钥
 print("\n5. 测试随机私钥...")
@@ -76,7 +75,7 @@ for i in range(3):
     is_match, matches = engine.check_match_all(test_key)
 
     if is_match:
-        print(f"   私钥 {i + 1}: 🎉 找到匹配!")
+        print(f"   私钥 {i + 1}: PARTY 找到匹配!")
         for addr, fmt in matches:
             print(f"      {fmt}: {addr}")
     else:
@@ -85,12 +84,12 @@ for i in range(3):
 # 6. 清理
 print("\n6. 清理...")
 engine.cleanup()
-print("   ✅ 清理完成")
+print("   OK 清理完成")
 
 print("\n" + "=" * 80)
-print("🎉 演示完成!")
+print("PARTY 演示完成!")
 print("=" * 80)
-print("\n📋 使用示例:")
+print("\nCLIPBOARD 使用示例:")
 print("""
 # 基本使用
 from src.gpu.multi_format_multi_gpu_engine import create_engine

@@ -51,7 +51,7 @@ def test_format_manager():
 
     for addr in test_addresses:
         success = manager.add_target(addr)
-        print(f"  添加 {addr[:20]}... → {'✅ 成功' if success else '❌ 失败'}")
+        print(f"  添加 {addr[:20]}... → {'OK 成功' if success else 'ERR 失败'}")
 
     # 获取格式统计
     stats = manager.get_format_stats()
@@ -63,7 +63,7 @@ def test_format_manager():
     assert stats["bech32"] == 1, "Bech32统计错误"
     assert stats["taproot"] == 1, "Taproot统计错误"
 
-    print("\n✅ 测试1通过: 多格式目标管理器")
+    print("\nOK 测试1通过: 多格式目标管理器")
     return manager
 
 
@@ -87,7 +87,7 @@ def test_engine_creation():
     assert hasattr(engine, "add_target"), "缺少add_target方法"
     assert hasattr(engine, "check_match_all"), "缺少check_match_all方法"
 
-    print("\n✅ 测试2通过: 引擎创建")
+    print("\nOK 测试2通过: 引擎创建")
     return engine
 
 
@@ -146,7 +146,7 @@ def test_multi_format_matching(engine):
     assert is_match_all, "应该有匹配"
     assert len(matches) >= 1, "至少应该有一个匹配"
 
-    print("\n✅ 测试3通过: 多格式地址匹配")
+    print("\nOK 测试3通过: 多格式地址匹配")
 
     return addresses
 
@@ -201,7 +201,7 @@ def test_post_processing(engine):
 
     print("\n后处理结果:")
     if extra_matches:
-        print("  ✅ 发现额外匹配:")
+        print("  OK 发现额外匹配:")
         for addr, fmt in extra_matches:
             print(f"    {fmt}: {addr}")
 
@@ -209,9 +209,9 @@ def test_post_processing(engine):
         bech32_found = any(fmt == "bech32" for _, fmt in extra_matches)
         assert bech32_found, "应该找到Bech32匹配"
     else:
-        print("  ❌ 没有找到Bech32匹配")
+        print("  ERR 没有找到Bech32匹配")
 
-    print("\n✅ 测试4通过: 后处理检查其他格式")
+    print("\nOK 测试4通过: 后处理检查其他格式")
 
 
 @pytest.mark.gpu
@@ -253,7 +253,7 @@ def test_format_stats(engine):
     print("\n引擎统计:")
     print(f"  格式统计: {engine_stats.get('format_stats', {})}")
 
-    print("\n✅ 测试5通过: 格式统计")
+    print("\nOK 测试5通过: 格式统计")
 
 
 @pytest.mark.gpu
@@ -302,14 +302,14 @@ def test_integration_scenario():
         if is_match:
             print(f"\n  找到匹配! 私钥 {i + 1}:")
             for addr, fmt in matches:
-                print(f"    ✓ {fmt}: {addr}")
+                print(f"    [OK] {fmt}: {addr}")
         else:
             print(f"  私钥 {i + 1}: 无匹配")
 
     # 清理
     engine.cleanup()
 
-    print("\n✅ 测试6通过: 集成场景测试")
+    print("\nOK 测试6通过: 集成场景测试")
 
 
 def main():
@@ -328,23 +328,23 @@ def main():
         test_integration_scenario()
 
         print("\n" + "=" * 80)
-        print("🎉 所有测试通过!")
+        print("[DONE] 所有测试通过!")
         print("=" * 80)
 
-        print("\n📊 总结:")
-        print("  ✅ 多格式目标管理 - 正常工作")
-        print("  ✅ 引擎创建和初始化 - 正常工作")
-        print("  ✅ 多格式地址匹配 - 正常工作")
-        print("  ✅ 后处理检查其他格式 - 正常工作")
-        print("  ✅ 格式统计和监控 - 正常工作")
-        print("  ✅ 集成场景测试 - 正常工作")
+        print("\nSTATS 总结:")
+        print("  OK 多格式目标管理 - 正常工作")
+        print("  OK 引擎创建和初始化 - 正常工作")
+        print("  OK 多格式地址匹配 - 正常工作")
+        print("  OK 后处理检查其他格式 - 正常工作")
+        print("  OK 格式统计和监控 - 正常工作")
+        print("  OK 集成场景测试 - 正常工作")
 
-        print("\n🚀 集成完成! 多格式多GPU引擎已就绪!")
+        print("\nFAST 集成完成! 多格式多GPU引擎已就绪!")
 
         return 0
 
     except Exception as e:
-        print(f"\n❌ 测试失败: {type(e).__name__}: {e}")
+        print(f"\nERR 测试失败: {type(e).__name__}: {e}")
         import traceback
 
         traceback.print_exc()

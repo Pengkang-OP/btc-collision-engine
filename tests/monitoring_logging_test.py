@@ -72,9 +72,9 @@ def main():
         # 测试监控系统
         test_monitoring_system()
 
-        logger.info("✅ 监控和日志系统测试成功")
+        logger.info("OK 监控和日志系统测试成功")
     except Exception as e:
-        logger.error("❌ 测试过程中出现错误: %s", e)
+        logger.error("ERR 测试过程中出现错误: %s", e)
         import traceback
 
         traceback.print_exc()

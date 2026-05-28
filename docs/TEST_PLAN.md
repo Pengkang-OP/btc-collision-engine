@@ -276,12 +276,12 @@ CHECKPOINT_CREATED → [版本不匹配] → VERSION_MISMATCH → WARNING + FRES
 
 | 测试 | 目标格式 | 生成地址 | 预期匹配 |
 |------|---------|---------|---------|
-| 格式隔离 P2PKH → P2PKH | P2PKH | P2PKH | ✅ |
-| 格式隔离 P2PKH → Bech32 | P2PKH | Bech32 | ❌ |
-| 格式隔离 Bech32 → P2PKH | Bech32 | P2PKH | ❌ |
-| 全格式检查 | P2PKH+P2SH+Bech32+Taproot | 4 种格式 | ✅ 仅对应格式 |
-| 大写地址 | `BC1Q...` | Bech32 | ✅ 大小写不敏感 |
-| 混合目标集 | 2 P2PKH + 1 Bech32 | P2PKH | ✅ 只匹配 P2PKH |
+| 格式隔离 P2PKH → P2PKH | P2PKH | P2PKH | [OK] |
+| 格式隔离 P2PKH → Bech32 | P2PKH | Bech32 | [FAIL] |
+| 格式隔离 Bech32 → P2PKH | Bech32 | P2PKH | [FAIL] |
+| 全格式检查 | P2PKH+P2SH+Bech32+Taproot | 4 种格式 | [OK] 仅对应格式 |
+| 大写地址 | `BC1Q...` | Bech32 | [OK] 大小写不敏感 |
+| 混合目标集 | 2 P2PKH + 1 Bech32 | P2PKH | [OK] 只匹配 P2PKH |
 
 ### 3.5 多 GPU 配置测试
 

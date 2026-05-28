@@ -6,22 +6,22 @@
 
 ---
 
-## 📊 诊断结果
+## [CHART] 诊断结果
 
 ### GPU稳定性测试
 
 | 指标 | 结果 | 状态 |
 |------|------|------|
-| 吞吐量 | 44,293 keys/s | ✅ 稳定 |
-| 错误率 | 0.00% | ✅ 正常 |
-| 显存使用 | 2.70 MB | ✅ 正常 |
-| 运行时长 | 30秒 | ✅ 通过 |
+| 吞吐量 | 44,293 keys/s | [OK_CHECK] 稳定 |
+| 错误率 | 0.00% | [OK_CHECK] 正常 |
+| 显存使用 | 2.70 MB | [OK_CHECK] 正常 |
+| 运行时长 | 30秒 | [OK_CHECK] 通过 |
 
 **结论**: GPU硬件工作正常,间歇性问题可能由以下原因导致。
 
 ---
 
-## 🔍 可能原因分析
+## [SEARCH] 可能原因分析
 
 ### 1. 驱动版本过旧 (最可能)
 
@@ -256,7 +256,7 @@ batch_size = 262144  # 256k
 
 ---
 
-## 🛠️ 快速诊断脚本
+## [TOOL] 快速诊断脚本
 
 运行以下脚本快速定位问题:
 
@@ -277,7 +277,7 @@ python tests/test_stability_24h.py --hours 1 --interval 60
 
 ---
 
-## 📋 排查清单
+## [CHECKLIST] 排查清单
 
 ### 软件检查
 
@@ -306,7 +306,7 @@ python tests/test_stability_24h.py --hours 1 --interval 60
 
 ---
 
-## 🔧 推荐配置
+## [WRENCH] 推荐配置
 
 ### 稳定优先配置
 
@@ -372,7 +372,7 @@ python tests/test_stability_24h.py --hours 1 --interval 60
 
 ---
 
-## 📊 性能与稳定性对比
+## [CHART] 性能与稳定性对比
 
 | 配置 | 吞吐量 | 显存 | 稳定性 | 推荐场景 |
 |------|--------|------|--------|---------|
@@ -382,7 +382,7 @@ python tests/test_stability_24h.py --hours 1 --interval 60
 
 ---
 
-## 🚨 紧急恢复
+## [ALERT] 紧急恢复
 
 如果GPU完全无法工作:
 
@@ -422,7 +422,7 @@ Remove-Item -Path "C:\Windows\System32\DriverStore\FileRepository\*arc*" -Recurs
 
 ---
 
-## 📞 技术支持
+## [TELEPHONE] 技术支持
 
 如果以上方案都无法解决问题:
 
@@ -450,7 +450,7 @@ Remove-Item -Path "C:\Windows\System32\DriverStore\FileRepository\*arc*" -Recurs
 
 ---
 
-## 📝 更新日志
+## [MEMO] 更新日志
 
 | 日期 | 更新内容 |
 |------|---------|

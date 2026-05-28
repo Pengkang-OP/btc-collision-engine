@@ -57,12 +57,12 @@ class PerformanceBaseline:
         """保存性能基线."""
         with open(self.BASELINE_FILE, "w", encoding="utf-8") as f:
             json.dump(self.results, f, indent=2, ensure_ascii=False)
-        print(f"✅ 基线已保存: {self.BASELINE_FILE}")
+        print(f"OK 基线已保存: {self.BASELINE_FILE}")
 
     def compare_with_baseline(self) -> dict:
         """与基线对比."""
         if not self.baseline:
-            print("⚠️  无基线数据,请先运行 --save-baseline")
+            print("WARN 无基线数据,请先运行 --save-baseline")
             return {}
 
         comparison = {}
@@ -77,7 +77,7 @@ class PerformanceBaseline:
                         "baseline": baseline_value,
                         "current": current_value,
                         "change_percent": change,
-                        "status": "✅ 提升" if change >= 0 else "❌ 下降",
+                        "status": "OK 提升" if change >= 0 else "ERR 下降",
                     }
 
         return comparison
@@ -86,7 +86,7 @@ class PerformanceBaseline:
         """测试CPU地址生成性能."""
         from src.core.optimized_address_generator import OptimizedP2PKHAddressGenerator
 
-        print("\n🔍 测试CPU地址生成性能...")
+        print("\nSEARCH 测试CPU地址生成性能...")
         generator = OptimizedP2PKHAddressGenerator()
 
         # 预热
@@ -111,14 +111,14 @@ class PerformanceBaseline:
             "unit": "keys/s",
         }
 
-        print(f"  ✅ 完成: {throughput:,.0f} keys/s")
+        print(f"  OK 完成: {throughput:,.0f} keys/s")
         return result
 
     def test_memory_pool_performance(self, iterations=50000) -> dict:
         """测试内存池性能."""
         from src.core.memory_pool import get_pool_manager
 
-        print("\n🔍 测试内存池性能...")
+        print("\nSEARCH 测试内存池性能...")
         pool_manager = get_pool_manager()
         pool_manager.initialize()
         ecpoint_pool = pool_manager.get_ecpoint_pool()
@@ -149,7 +149,7 @@ class PerformanceBaseline:
             "unit": "x加速",
         }
 
-        print(f"  ✅ 完成: {speedup:.2f}x加速")
+        print(f"  OK 完成: {speedup:.2f}x加速")
         return result
 
     def test_precomputed_table_performance(self, iterations=5000) -> dict:
@@ -157,7 +157,7 @@ class PerformanceBaseline:
         from src.core.precomputed_table import get_precomputed_table
         from src.core.secp256k1 import ECPoint, EllipticCurve, Secp256k1
 
-        print("\n🔍 测试预计算表性能...")
+        print("\nSEARCH 测试预计算表性能...")
         ec = EllipticCurve(Secp256k1)
         G = ECPoint(Secp256k1.Gx, Secp256k1.Gy)
 
@@ -187,7 +187,7 @@ class PerformanceBaseline:
             "unit": "x加速",
         }
 
-        print(f"  ✅ 完成: {speedup:.2f}x加速")
+        print(f"  OK 完成: {speedup:.2f}x加速")
         return result
 
     def test_gpu_performance(self, batch_size=10000, duration=10) -> dict | None:
@@ -197,12 +197,12 @@ class PerformanceBaseline:
 
             from src.gpu.device import GPUDeviceDetector
 
-            print("\n🔍 测试GPU性能...")
+            print("\nSEARCH 测试GPU性能...")
 
             # 检测GPU
             devices = GPUDeviceDetector.detect_devices()
             if not devices:
-                print("  ⚠️  未检测到GPU,跳过GPU测试")
+                print("  WARN 未检测到GPU,跳过GPU测试")
                 return None
 
             # 初始化GPU引擎
@@ -237,17 +237,17 @@ class PerformanceBaseline:
                 "unit": "keys/s",
             }
 
-            print(f"  ✅ 完成: {throughput:,.0f} keys/s")
+            print(f"  OK 完成: {throughput:,.0f} keys/s")
             return result
 
         except Exception as e:
-            print(f"  ⚠️  GPU测试失败: {e}")
+            print(f"  WARN GPU测试失败: {e}")
             return None
 
     def run_all_tests(self, cpu_only=False, gpu_only=False):
         """运行所有测试."""
         print("=" * 80)
-        print("🚀 性能基线测试")
+        print("FAST 性能基线测试")
         print("=" * 80)
 
         if not gpu_only:
@@ -268,7 +268,7 @@ class PerformanceBaseline:
     def print_summary(self):
         """打印测试总结."""
         print("\n" + "=" * 80)
-        print("📊 性能测试总结")
+        print("STATS 性能测试总结")
         print("=" * 80)
 
         for test_name, result in self.results.items():
@@ -278,7 +278,7 @@ class PerformanceBaseline:
         # 与基线对比
         if self.baseline:
             print("\n" + "=" * 80)
-            print("📈 与基线对比")
+            print("UP 与基线对比")
             print("=" * 80)
 
             comparison = self.compare_with_baseline()
@@ -316,7 +316,7 @@ def main():
             # 检查是否有性能下降
             regressions = [k for k, v in comparison.items() if v["change_percent"] < -5]
             if regressions:
-                print(f"\n⚠️  发现性能下降的测试: {', '.join(regressions)}")
+                print(f"\nWARN 发现性能下降的测试: {', '.join(regressions)}")
                 sys.exit(1)
 
 

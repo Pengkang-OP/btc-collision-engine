@@ -18,7 +18,7 @@ from utf8_helper import setup_windows_utf8
 
 setup_windows_utf8()
 
-from tools.check_document_quality import DocumentQualityChecker  # noqa: E402
+from tools.check_document_quality import DocumentQualityChecker
 
 
 def benchmark_check(docs_dir: str, iterations: int = 10) -> dict:
@@ -35,9 +35,9 @@ def benchmark_check(docs_dir: str, iterations: int = 10) -> dict:
     doc_counts = []
     scores = []
 
-    print("🔧 开始性能基准测试...")
-    print(f"📁 文档目录: {docs_dir}")
-    print(f"🔄 迭代次数: {iterations}\n")
+    print("TOOL 开始性能基准测试...")
+    print(f"[FOLDER] 文档目录: {docs_dir}")
+    print(f"[REFRESH] 迭代次数: {iterations}\n")
 
     for i in range(1, iterations + 1):
         start = time.time()
@@ -60,12 +60,12 @@ def benchmark_check(docs_dir: str, iterations: int = 10) -> dict:
 
     # 计算统计
     if not times:
-        print("❌ 没有有效的测试数据")
+        print("ERR 没有有效的测试数据")
         sys.exit(1)
 
     avg_time = statistics.mean(times)
     if avg_time == 0:
-        print("⚠️  测试耗时为0，无法计算吞吐量")
+        print("WARN 测试耗时为0，无法计算吞吐量")
         throughput = 0
     else:
         throughput = doc_counts[0] / avg_time if doc_counts else 0
@@ -94,26 +94,26 @@ def benchmark_check(docs_dir: str, iterations: int = 10) -> dict:
 def print_report(stats: dict):
     """打印性能报告."""
     print(f"\n{'=' * 60}")
-    print("📊 性能基准测试报告")
+    print("STATS 性能基准测试报告")
     print(f"{'=' * 60}")
 
-    print("\n📁 测试配置:")
+    print("\n[FOLDER] 测试配置:")
     print(f"  迭代次数: {stats['iterations']}")
     print(f"  文档数量: {stats['doc_count']:.0f}个")
 
-    print("\n⏱️  时间统计:")
+    print("\n[TIMER] 时间统计:")
     print(f"  平均: {stats['time']['avg']:.2f}秒")
     print(f"  中位数: {stats['time']['median']:.2f}秒")
     print(f"  最小: {stats['time']['min']:.2f}秒")
     print(f"  最大: {stats['time']['max']:.2f}秒")
     print(f"  标准差: {stats['time']['stdev']:.2f}秒")
 
-    print("\n📈 评分统计:")
+    print("\nUP 评分统计:")
     print(f"  平均: {stats['score']['avg']:.1f}/10")
     print(f"  最小: {stats['score']['min']:.1f}/10")
     print(f"  最大: {stats['score']['max']:.1f}/10")
 
-    print("\n⚡ 吞吐量:")
+    print("\nBOLT 吞吐量:")
     print(f"  {stats['throughput']:.1f} 文档/秒")
     print(f"  {stats['throughput'] * 60:.1f} 文档/分钟")
 
@@ -132,7 +132,7 @@ def main():
 
     docs_dir = Path(args.docs_dir)
     if not docs_dir.exists():
-        print(f"❌ 文档目录不存在: {docs_dir}")
+        print(f"ERR 文档目录不存在: {docs_dir}")
         sys.exit(1)
 
     # 运行基准测试
@@ -142,16 +142,16 @@ def main():
     print_report(stats)
 
     # 性能建议
-    print("\n💡 性能建议:")
+    print("\nTIP 性能建议:")
     avg_time = stats["time"]["avg"]
     if avg_time < 1.0:
-        print(f"  ✅ 性能优秀！平均{avg_time:.2f}秒")
+        print(f"  OK 性能优秀！平均{avg_time:.2f}秒")
     elif avg_time < 5.0:
-        print(f"  ✅ 性能良好，平均{avg_time:.2f}秒")
+        print(f"  OK 性能良好，平均{avg_time:.2f}秒")
     elif avg_time < 10.0:
-        print("  ⚠️  性能可接受，但可以考虑优化")
+        print("  WARN 性能可接受，但可以考虑优化")
     else:
-        print("  ❌ 性能较慢，建议优化")
+        print("  ERR 性能较慢，建议优化")
         print("     - 检查文档数量是否过多")
         print("     - 考虑增量检查模式")
         print("     - 优化链接检查逻辑")

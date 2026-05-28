@@ -9,7 +9,7 @@
 
 ## 解决方案
 
-### 1. Python脚本内置修复（✅ 已完成）
+### 1. Python脚本内置修复（[OK_CHECK] 已完成）
 
 所有工具脚本已内置Windows UTF-8编码支持：
 
@@ -28,14 +28,14 @@ if sys.platform == 'win32':
 ```
 
 **修复的文件**：
-- ✅ `tools/check_document_quality.py`
-- ✅ `tools/fix_heading_levels.py`
-- ✅ `tools/fix_code_blocks.py`
-- ✅ `tools/check_broken_links.py`
-- ✅ `tools/add_version_info.py`
-- ✅ `tools/add_table_of_contents.py`
-- ✅ `audit_resource_cleanup.py`
-- ✅ `check_pr_status.py`
+- [OK_CHECK] `tools/check_document_quality.py`
+- [OK_CHECK] `tools/fix_heading_levels.py`
+- [OK_CHECK] `tools/fix_code_blocks.py`
+- [OK_CHECK] `tools/check_broken_links.py`
+- [OK_CHECK] `tools/add_version_info.py`
+- [OK_CHECK] `tools/add_table_of_contents.py`
+- [OK_CHECK] `audit_resource_cleanup.py`
+- [OK_CHECK] `check_pr_status.py`
 
 ### 2. 管道问题解决方案
 
@@ -84,10 +84,10 @@ tools\run_utf8.bat python tools\add_version_info.py --dry-run | more
 如果只需要查看完整输出，不使用管道：
 
 ```powershell
-# ✅ 推荐：直接运行
+# [OK_CHECK] 推荐：直接运行
 python tools/check_document_quality.py
 
-# ❌ 避免：使用管道
+# [CROSS] 避免：使用管道
 python tools/check_document_quality.py | Select-Object -First 20
 ```
 
@@ -200,9 +200,9 @@ python tools/check_broken_links.py
 
 ```powershell
 # 测试emoji和中文字符
-.\tools\run_utf8.ps1 -Script "python -c \"print('✅ 中文测试：文档质量检查')\""
+.\tools\run_utf8.ps1 -Script "python -c \"print('[OK_CHECK] 中文测试：文档质量检查')\""
 
-# 应该看到：✅ 中文测试：文档质量检查
+# 应该看到：[OK_CHECK] 中文测试：文档质量检查
 # 而不是：馃敡 涓枃娴嬭瘯锛氭枃妗ｈ川閲忔鏌?
 ```
 

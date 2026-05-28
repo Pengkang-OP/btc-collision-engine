@@ -7,47 +7,47 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Contributions](https://img.shields.io/badge/Contributions-Welcome-orange.svg)](CONTRIBUTING.md)
 
-**📚 想参与开发？查看 [贡献指南](CONTRIBUTING.md)**
+**[BOOKS] 想参与开发？查看 [贡献指南](CONTRIBUTING.md)**
 
 ## 功能特性
 
-- ✅ **交互式向导** (成熟稳定模块化架构)
+- [OK] **交互式向导** (成熟稳定模块化架构)
   - 4 步引导流程 (目标地址 → 碰撞模式 → 功能选项 → GPU加速)
   - 模块化策略组件 (目标/模式/选项/GPU 选择器)
   - 自动设备检测与推荐
   - 配置预览与一键执行
-- ✅ 多种碰撞模式
+- [OK] 多种碰撞模式
   - 随机碰撞：随机生成私钥进行匹配
   - 范围扫描：在指定范围内顺序扫描
   - 暴力穷举：从指定起点开始递增
-- ✅ GPU加速（OpenCL）
+- [OK] GPU加速（OpenCL）
   - 支持NVIDIA、AMD、Intel显卡
   - 批量并行计算
   - 异步流水线优化
   - 自动内存优化
-- ✅ **多格式地址智能匹配** (稳定支持)
+- [OK] **多格式地址智能匹配** (稳定支持)
   - 自动检测目标地址格式
   - 按需生成对应格式地址
   - P2PKH只匹配P2PKH目标，Bech32只匹配Bech32目标
   - 支持完整检查所有格式
-- ✅ 多地址类型支持
+- [OK] 多地址类型支持
   - P2PKH地址（1开头）
   - P2SH地址（3开头）
   - Bech32地址（bc1q开头，SegWit v0）
   - Taproot地址（bc1p开头，SegWit v1）
   - WIF私钥、公钥、Hash160
-- ✅ 断点续传
+- [OK] 断点续传
   - 自动保存进度
   - 支持从断点恢复
-- ✅ 去重过滤
+- [OK] 去重过滤
   - Bloom过滤器去重
   - 防止重复检测
-- ✅ 实时监控
+- [OK] 实时监控
   - 性能指标统计
   - 进度可视化
   - 数据日志记录
-- ✅ **代码规范统一** (v5.0.1) — 28项治理 + ruff/pre-commit + PERF-2修复
-- ✅ **性能优化** (v5.0.0)
+- [OK] **代码规范统一** (v5.0.1) — 28项治理 + ruff/pre-commit + PERF-2修复
+- [OK] **性能优化** (v5.0.0)
   - GPU PRNG 私钥生成（消除 CPU→GPU 传输瓶颈）
   - secp256k1 预计算表常数化（`__constant` 内存）
   - 模逆加法链优化（mul 减少 89%）
@@ -55,41 +55,41 @@
   - **GPU 引擎架构重构** (协议层+外观层+核心层+监控管道+厂商策略)
   - Intel Arc A770: **4.89M keys/s**（异步模式,峰值5.08M）
   - **引擎代码复杂度 -73%** (1466→<400行), 导入模块 -70% (49→<15)
-- ✅ **GPU 引擎架构重构** (2026-05)
+- [OK] **GPU 引擎架构重构** (2026-05)
   - 协议层+外观层+核心层+监控管道+厂商策略 完整解耦
   - 代码复杂度 -73%（1466→<400行），导入模块 -70%（49→<15）
   - Shim 层 100% 向后兼容，29 个专项测试全部通过
   - 新增 search_mode_coordinator / data_logger_adapter 等 5 个子模块
 
-> 📢 **v5.0.1 代码规范统一**: 28 项代码治理全闭环 — 死配置清除、依赖降级、PYOPENCL 单源化、绝对导入统一、常量整合、ruff 规范、pre-commit 配置。Intel Arc A770 profiling 序列化修复。详见 [CHANGELOG](CHANGELOG.md)。
-> 📢 **v4.4.0 安全修复**: 新增多项安全修复（安全清零、侧信道安全、敏感数据脱敏、线程安全统计等）。详见 [SECURITY_IMPROVEMENTS](docs/SECURITY_IMPROVEMENTS.md)。
-> 📢 **v4.3.0 多格式地址支持**: 新增格式感知目标管理器，支持P2PKH/P2SH/Bech32/Taproot格式智能匹配，按需生成地址提升性能。
-> 📢 **v5.0.0 重大重构**: GPU 引擎架构重构完成（引擎行数 -73%, 导入模块 -70%）, 29 项专项测试全通过。详见 [CHANGELOG](CHANGELOG.md)。
-> 📢 **v5.0.0 全栈优化**: 全模块类型提示补全 (104 文件)、配置热重载、多渠道告警系统。详见 [CHANGELOG](CHANGELOG.md)。
+> [INFO] **v5.0.1 代码规范统一**: 28 项代码治理全闭环 — 死配置清除、依赖降级、PYOPENCL 单源化、绝对导入统一、常量整合、ruff 规范、pre-commit 配置。Intel Arc A770 profiling 序列化修复。详见 [CHANGELOG](CHANGELOG.md)。
+> [INFO] **v4.4.0 安全修复**: 新增多项安全修复（安全清零、侧信道安全、敏感数据脱敏、线程安全统计等）。详见 [SECURITY_IMPROVEMENTS](docs/SECURITY_IMPROVEMENTS.md)。
+> [INFO] **v4.3.0 多格式地址支持**: 新增格式感知目标管理器，支持P2PKH/P2SH/Bech32/Taproot格式智能匹配，按需生成地址提升性能。
+> [INFO] **v5.0.0 重大重构**: GPU 引擎架构重构完成（引擎行数 -73%, 导入模块 -70%）, 29 项专项测试全通过。详见 [CHANGELOG](CHANGELOG.md)。
+> [INFO] **v5.0.0 全栈优化**: 全模块类型提示补全 (104 文件)、配置热重载、多渠道告警系统。详见 [CHANGELOG](CHANGELOG.md)。
 
 ### 安全特性 (v4.4.0)
 
-- ✅ **安全清零实现** (C-1)
+- [OK] **安全清零实现** (C-1)
   - 使用 `ctypes.memset` 直接清零内存，防止编译器优化导致清零被跳过
   - 添加清零验证步骤，确保内存被正确清零
   - 失败时抛出 `SecureMemoryError` 异常
 
-- ✅ **侧信道安全** (C-2)
+- [OK] **侧信道安全** (C-2)
   - OpenSSL 后端不可用时拒绝回退到非恒定时间实现
   - `scalar_multiply()` 抛出异常而不是静默回退
   - 确保密码学操作符合安全要求
 
-- ✅ **敏感数据脱敏** (H-4)
+- [OK] **敏感数据脱敏** (H-4)
   - 使用 `SensitiveDataFilter` 对错误消息进行敏感数据过滤
   - 保留异常类型用于诊断，隐藏私钥等敏感信息
   - 避免敏感数据泄露到日志文件
 
-- ✅ **线程安全统计** (C-3)
+- [OK] **线程安全统计** (C-3)
   - 使用 `threading.Lock` 保护类级别统计变量
   - 确保清零统计的原子更新
   - 解决多线程并发访问时的竞态条件
 
-- ✅ **配置值边界验证** (M-3)
+- [OK] **配置值边界验证** (M-3)
   - 验证 `worker_join_timeout`、`workload_monitor_interval`、`total_pool_mb` 等参数
   - 超出范围时自动使用默认值并记录警告
   - 避免无效配置导致的问题
@@ -110,17 +110,17 @@ python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random
 
 ## 目标地址格式支持
 
-### 📋 支持的地址格式 (v4.3.0+)
+### [LIST] 支持的地址格式 (v4.3.0+)
 
 | 格式 | 前缀 | GPU支持 | CPU支持 | 说明 |
 |------|------|--------|---------|------|
-| **P2PKH** | `1` | ✅ | ✅ | 标准比特币地址，hash160(pubkey) |
-| **Bech32 P2WPKH** | `bc1q` | ✅ | ✅ | SegWit v0，witness_program = hash160(pubkey) |
-| **P2SH** | `3` | ❌ | ❌ | 脚本哈希，无法通过私钥碰撞匹配 |
-| **Bech32 P2WSH** | `bc1q` (42+字符) | ❌ | ❌ | SegWit v0脚本哈希，无法匹配 |
-| **Taproot** | `bc1p` | ❌ | ❌ | SegWit v1，密钥路径不同，无法匹配 |
+| **P2PKH** | `1` | [OK] | [OK] | 标准比特币地址，hash160(pubkey) |
+| **Bech32 P2WPKH** | `bc1q` | [OK] | [OK] | SegWit v0，witness_program = hash160(pubkey) |
+| **P2SH** | `3` | [FAIL] | [FAIL] | 脚本哈希，无法通过私钥碰撞匹配 |
+| **Bech32 P2WSH** | `bc1q` (42+字符) | [FAIL] | [FAIL] | SegWit v0脚本哈希，无法匹配 |
+| **Taproot** | `bc1p` | [FAIL] | [FAIL] | SegWit v1，密钥路径不同，无法匹配 |
 
-### 🔐 密码学原理
+### [LOCK] 密码学原理
 
 **可匹配的格式**:
 
@@ -138,14 +138,14 @@ python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa -m random
 **不可匹配的格式**:
 
 ```
-P2SH: payload = hash160(redeemScript) ≠ hash160(pubkey) ❌
-P2WSH: payload = sha256(redeemScript) ≠ hash160(pubkey) ❌
-Taproot: x-only pubkey + 密钥路径 ≠ 标准公钥 ❌
+P2SH: payload = hash160(redeemScript) ≠ hash160(pubkey) [FAIL]
+P2WSH: payload = sha256(redeemScript) ≠ hash160(pubkey) [FAIL]
+Taproot: x-only pubkey + 密钥路径 ≠ 标准公钥 [FAIL]
 ```
 
-### 💡 使用建议
+### [TIP] 使用建议
 
-**✅ 推荐的目标格式**:
+**[OK] 推荐的目标格式**:
 
 ```bash
 # P2PKH地址 (最常用)
@@ -161,7 +161,7 @@ python key_collision_cli.py -t bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4 --use-
 python key_collision_cli.py -t targets.txt --use-gpu
 ```
 
-**❌ 不推荐的目标格式** (会显示警告并被跳过):
+**[FAIL] 不推荐的目标格式** (会显示警告并被跳过):
 
 ```bash
 # P2SH地址 - 无法匹配
@@ -173,34 +173,34 @@ python key_collision_cli.py -t bc1p5d7rjq7g6rdk2yhzks9smlaqtedr4dekq08ge8qt2acpp
 # 输出: WARNING - Taproot无法通过私钥碰撞匹配
 ```
 
-### 📊 格式检测示例
+### [STATS] 格式检测示例
 
 引擎会自动检测地址格式:
 
 ```
 输入: 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
-检测: P2PKH ✅
+检测: P2PKH [OK]
 引擎: 生成hash160(pubkey)进行比较
 
 输入: bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4
-检测: Bech32 P2WPKH ✅
+检测: Bech32 P2WPKH [OK]
 引擎: 提取witness_program作为hash160比较
 
 输入: 3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy
-检测: P2SH ⚠️
+检测: P2SH [WARN]
 引擎: 跳过 (显示警告)
 
 输入: bc1p5d7rjq7g6rdk2yhzks9smlaqtedr4dekq08ge8qt2acpp2yx7tqsp6h3m
-检测: Taproot ⚠️
+检测: Taproot [WARN]
 引擎: 跳过 (显示警告)
 ```
 
-### 🔧 引擎差异
+### [TOOL] 引擎差异
 
 | 特性 | GPU引擎 | CPU引擎 |
 |------|---------|---------|
-| P2PKH支持 | ✅ | ✅ |
-| Bech32 P2WPKH支持 | ✅ (v4.3.0+) | ✅ |
+| P2PKH支持 | [OK] | [OK] |
+| Bech32 P2WPKH支持 | [OK] (v4.3.0+) | [OK] |
 | 匹配算法 | hash160直接比较 | 格式感知地址生成 |
 | 性能 | ~2-5M keys/s | ~100-1K keys/s |
 | 内存占用 | GPU显存 | 系统内存 |
@@ -226,7 +226,7 @@ btc-collision-engine/
 │   ├── collision/            # 碰撞引擎
 │   │   ├── key_collision_engine.py    # CPU碰撞引擎
 │   │   ├── gpu_collision_engine.py    # GPU碰撞引擎 (Shim层, v6.0.0)
-│   │   ├── gpu/                       # GPU引擎重构模块 (Phase 1-6 ✅)
+│   │   ├── gpu/                       # GPU引擎重构模块 (Phase 1-6 [OK])
 │   │   │   ├── engine.py              # 引擎协调器 (Phase 6, <400行)
 │   │   │   ├── __init__.py            # 模块入口+工厂函数 (8个get_*)
 │   │   │   ├── protocols.py           # 核心协议定义 (5个接口)
@@ -282,11 +282,11 @@ bash scripts/install/install.sh
 
 安装脚本会自动完成：
 
-- ✅ Python版本检查（需要3.12+）
-- ✅ 虚拟环境创建和激活
-- ✅ 依赖安装（基础+可选GPU）
-- ✅ 配置文件初始化
-- ✅ 依赖验证和目录创建
+- [OK] Python版本检查（需要3.12+）
+- [OK] 虚拟环境创建和激活
+- [OK] 依赖安装（基础+可选GPU）
+- [OK] 配置文件初始化
+- [OK] 依赖验证和目录创建
 
 ### 方法二：手动安装（高级用户）
 
@@ -309,7 +309,7 @@ source venv/bin/activate
 pip install -r requirements-base.txt
 ```
 
-> 💡 **提示**: `requirements.txt` 包含所有依赖（包括开发工具），普通用户使用 `requirements-base.txt` 即可。
+> [TIP] **提示**: `requirements.txt` 包含所有依赖（包括开发工具），普通用户使用 `requirements-base.txt` 即可。
 
 #### 第三步：初始化配置文件
 
@@ -327,7 +327,7 @@ cp config.example.json config.json
 
 > **要求**：Python 3.12+、已安装 GPU 驱动、支持 OpenCL 1.2+
 >
-> **详细配置指南请查看：[⚙️ GPU配置指南](GPU_CONFIG_GUIDE.md)
+> **详细配置指南请查看：[GPU配置指南](GPU_CONFIG_GUIDE.md)
 
 #### NVIDIA GPU
 
@@ -549,7 +549,7 @@ engine = KeyCollisionEngine(
 | GPU内存池 | **-60%开销** | 缓冲区复用 |
 | **GPU PRNG** | **70x 总提升** | **Intel Arc A770: 3.07M keys/s** |
 
-> 📊 查看完整性能数据: [性能优化文档](docs/technical-docs/performance-optimization.md)
+> [STATS] 查看完整性能数据: [性能优化文档](docs/technical-docs/performance-optimization.md)
 
 ### 安装优化依赖
 
@@ -577,17 +577,17 @@ pip install pytest-benchmark>=4.0   # 性能测试
 ├──────────────┬────────┬─────────┤
 │ 测试类别     │ 用例数 │ 通过率  │
 ├──────────────┼────────┼─────────┤
-│ 核心加密     │ 25     │ 100% ✅ │
-│ 碰撞引擎     │ 14     │ 100% ✅ │
-│ 配置管理     │ 33     │ 100% ✅ │
-│ 异常处理     │ 42     │ 100% ✅ │
-│ GPU引擎      │ 8      │ 100% ✅ │
-│ CLI工具      │ 7      │ 100% ✅ │
-│ 性能基准     │ 16     │ 100% ✅ │
-│ 安全合规     │ 16     │ 100% ✅ │
-│ 其他         │ 100    │ 95%+ ✅ │
+│ 核心加密     │ 25     │ 100% [OK] │
+│ 碰撞引擎     │ 14     │ 100% [OK] │
+│ 配置管理     │ 33     │ 100% [OK] │
+│ 异常处理     │ 42     │ 100% [OK] │
+│ GPU引擎      │ 8      │ 100% [OK] │
+│ CLI工具      │ 7      │ 100% [OK] │
+│ 性能基准     │ 16     │ 100% [OK] │
+│ 安全合规     │ 16     │ 100% [OK] │
+│ 其他         │ 100    │ 95%+ [OK] │
 ├──────────────┼────────┼─────────┤
-│ **总计**     │ **261**| **97%+**✅│
+│ **总计**     │ **261**| **97%+**[OK]│
 └──────────────┴────────┴─────────┘
 ```
 
@@ -628,14 +628,14 @@ pytest --cov=src --cov-report=html
 
 | 维度 | 评分 | 说明 |
 |------|------|------|
-| 代码结构 | ⭐⭐⭐⭐⭐ | 模块化设计 |
-| 类型安全 | ⭐⭐⭐⭐⭐ | 完整类型注解 |
-| 文档质量 | ⭐⭐⭐⭐⭐ | 详细文档字符串 |
-| 线程安全 | ⭐⭐⭐⭐⭐ | 无竞态条件 |
-| 安全设计 | ⭐⭐⭐⭐ | 使用安全随机源 |
-| 测试覆盖 | ⭐⭐⭐⭐⭐ | 97%+通过率 |
+| 代码结构 | [STAR][STAR][STAR][STAR][STAR] | 模块化设计 |
+| 类型安全 | [STAR][STAR][STAR][STAR][STAR] | 完整类型注解 |
+| 文档质量 | [STAR][STAR][STAR][STAR][STAR] | 详细文档字符串 |
+| 线程安全 | [STAR][STAR][STAR][STAR][STAR] | 无竞态条件 |
+| 安全设计 | [STAR][STAR][STAR][STAR] | 使用安全随机源 |
+| 测试覆盖 | [STAR][STAR][STAR][STAR][STAR] | 97%+通过率 |
 
-**综合评分**: ⭐⭐⭐⭐⭐ (5.0/5.0)
+**综合评分**: [STAR][STAR][STAR][STAR][STAR] (5.0/5.0)
 
 ```bash
 # 验证gmpy2性能
@@ -818,20 +818,20 @@ python test_checkpoint_resume.py
 - 高端GPU (RTX 3080): ~200,000-500,000 次/秒
 - 旗舰GPU (RTX 4090): ~1,000,000+ 次/秒
 
-> 📊 查看完整GPU测试指南: [GPU引擎指南](docs/gpu-engine-guide.md)
+> [STATS] 查看完整GPU测试指南: [GPU引擎指南](docs/gpu-engine-guide.md)
 
 *实际性能取决于批次大小、目标数量和设备性能*
 
 ## 安全注意事项
 
-⚠️ **重要提示**
+[WARN] **重要提示**
 
 - 本项目仅用于学习和研究
 - 不要用于非法用途
 - 碰撞真实地址的概率极低（2^-256）
 - 发现的私钥应立即安全处理
 
-> 📚 **v4.4.0 安全改进**: 本版本包含多项安全修复，详见 [安全改进文档](docs/SECURITY_IMPROVEMENTS.md)。
+> [BOOKS] **v4.4.0 安全改进**: 本版本包含多项安全修复，详见 [安全改进文档](docs/SECURITY_IMPROVEMENTS.md)。
 
 ## 技术架构
 
@@ -926,10 +926,10 @@ A:
 
 ## 文档
 
-- [📚 文档索引](docs/DOCUMENT_INDEX.md) - 完整文档导航
-- [🚀 GPU引擎使用指南](docs/gpu-engine-guide.md) - GPU加速详细指南
-- [⚙️ GPU配置指南](GPU_CONFIG_GUIDE.md) - GPU配置优化指南（新增）
-- [🔑 Bech32/P2SH地址支持](docs/bech32-p2sh-support.md) - 多地址类型支持
-- [📖 API参考](docs/api-reference.md) - 完整API文档
-- [⚡ 性能优化](docs/technical-docs/performance-optimization.md) - 性能调优指南
-- [🔒 安全指南](docs/security-guidelines.md) - 安全最佳实践
+- [[BOOKS] 文档索引](docs/DOCUMENT_INDEX.md) - 完整文档导航
+- [[FAST] GPU引擎使用指南](docs/gpu-engine-guide.md) - GPU加速详细指南
+- [GPU配置指南](GPU_CONFIG_GUIDE.md) - GPU配置优化指南（新增）
+- [[KEY] Bech32/P2SH地址支持](docs/bech32-p2sh-support.md) - 多地址类型支持
+- [[DOC] API参考](docs/api-reference.md) - 完整API文档
+- [[BOLT] 性能优化](docs/technical-docs/performance-optimization.md) - 性能调优指南
+- [[SECURE] 安全指南](docs/security-guidelines.md) - 安全最佳实践

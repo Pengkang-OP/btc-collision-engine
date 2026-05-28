@@ -59,7 +59,7 @@ def test_stats_consistency():
     assert stats.elapsed > 0, "运行时间应大于0"
     assert stats.speed > 0, "速度应大于0"
 
-    print("\n✅ 统计信息一致性测试通过")
+    print("\nOK 统计信息一致性测试通过")
     return True
 
 
@@ -112,7 +112,7 @@ def test_data_logging_thread_safety():
 
     assert stats.total_checked > 0, "高并发下总检查数应大于0"
 
-    print("\n✅ 数据日志线程安全测试通过")
+    print("\nOK 数据日志线程安全测试通过")
 
 
 def test_error_logging_rate_limit():
@@ -171,7 +171,7 @@ def test_error_logging_rate_limit():
         # 验证限频：2秒内新增错误不应该大于10条
         assert new_error_count < 10, f"本次测试新增错误日志条数过多: {new_error_count}，限频可能未生效"
 
-    print("\n✅ 错误记录限频测试通过")
+    print("\nOK 错误记录限频测试通过")
     return True
 
 
@@ -286,7 +286,7 @@ def test_data_save_frequency():
         # 3秒运行，1秒间隔，应该约有3条记录（但只保存1次）
         print("  保存频率: 每3次记录保存1次")
 
-    print("\n✅ 数据保存频率测试通过")
+    print("\nOK 数据保存频率测试通过")
     return True
 
 
@@ -316,10 +316,10 @@ def main():
                 passed += 1
             else:
                 failed += 1
-                print(f"\n❌ {name} 测试失败")
+                print(f"\nERR {name} 测试失败")
         except Exception as e:
             failed += 1
-            print(f"\n❌ {name} 测试异常: {e}")
+            print(f"\nERR {name} 测试异常: {e}")
             import traceback
 
             traceback.print_exc()
@@ -333,9 +333,9 @@ def main():
     print("=" * 60)
 
     if failed == 0:
-        print("\n✅ 所有测试通过！优化后的代码正确性验证成功！")
+        print("\nOK 所有测试通过！优化后的代码正确性验证成功！")
     else:
-        print(f"\n❌ {failed} 个测试失败，需要检查")
+        print(f"\nERR {failed} 个测试失败，需要检查")
 
     return failed == 0
 

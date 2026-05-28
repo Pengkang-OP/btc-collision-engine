@@ -4,7 +4,7 @@
 
 ---
 
-## 📋 目录
+## [LIST] 目录
 
 - [开发环境设置](#开发环境设置)
 - [Python 版本约束](#python-版本约束)
@@ -54,14 +54,14 @@ pre-commit run --all-files
 
 **pre-commit钩子会自动检查**:
 
-- ✅ 导入路径规范
-- ✅ 代码格式化（Black）
-- ✅ 代码质量（Flake8）
-- ✅ 运行关键测试
-- ✅ 提交消息格式
-- ✅ 文件末尾换行符
-- ✅ YAML/JSON格式
-- ✅ 合并冲突检测
+- [OK] 导入路径规范
+- [OK] 代码格式化（Black）
+- [OK] 代码质量（Flake8）
+- [OK] 运行关键测试
+- [OK] 提交消息格式
+- [OK] 文件末尾换行符
+- [OK] YAML/JSON格式
+- [OK] 合并冲突检测
 
 ### 5. 运行测试
 
@@ -151,11 +151,11 @@ def resolve_address(address: str) -> str:
 
 ## 导入规范
 
-### ⚠️ 重要：TargetResolver导入路径
+### [WARN] 重要：TargetResolver导入路径
 
 本项目已完成导入路径重构，请使用以下规范：
 
-### ✅ 推荐的导入方式
+### [OK] 推荐的导入方式
 
 ```python
 # 方式1: 通过包导入（推荐，最简洁）
@@ -168,10 +168,10 @@ from src.collision.targets.resolver import TargetResolver
 from src.collision.targets import TargetResolver, AddressMatcher, AddressCache
 ```
 
-### ❌ 避免使用的导入方式
+### [FAIL] 避免使用的导入方式
 
 ```python
-# ❌ 此路径已在 v3.x 中删除，不再可用
+# [FAIL] 此路径已在 v3.x 中删除，不再可用
 # from src.collision.targets.resolver import TargetResolver
 ```
 
@@ -269,12 +269,12 @@ FAQ部分
 
 #### 2. 文档质量标准
 
-- ✅ **准确性**: 所有信息必须准确无误
-- ✅ **完整性**: 覆盖所有重要功能和场景
-- ✅ **时效性**: 与当前代码版本同步
-- ✅ **可读性**: 使用清晰的语言和结构
-- ✅ **可查找**: 包含关键词和交叉引用
-- ✅ **可维护**: 模块化，易于更新
+- [OK] **准确性**: 所有信息必须准确无误
+- [OK] **完整性**: 覆盖所有重要功能和场景
+- [OK] **时效性**: 与当前代码版本同步
+- [OK] **可读性**: 使用清晰的语言和结构
+- [OK] **可查找**: 包含关键词和交叉引用
+- [OK] **可维护**: 模块化，易于更新
 
 #### 3. Markdown规范
 
@@ -287,14 +287,14 @@ FAQ部分
 #### 4. 代码示例规范
 
 ```python
-# ✅ 好的示例 - 完整可运行
+# [OK] 好的示例 - 完整可运行
 from src.collision import TargetResolver
 
 resolver = TargetResolver()
 result = resolver.resolve_address("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
 print(f"解析结果: {result}")
 
-# ❌ 不好的示例 - 不完整
+# [FAIL] 不好的示例 - 不完整
 resolver.resolve_address("...")  # 缺少导入和上下文
 ```
 
@@ -636,4 +636,4 @@ A:
 
 ---
 
-感谢你的贡献！🎉
+感谢你的贡献！[DONE]

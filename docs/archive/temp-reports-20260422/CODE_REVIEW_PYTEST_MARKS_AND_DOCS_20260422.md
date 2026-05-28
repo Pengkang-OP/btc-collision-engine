@@ -7,7 +7,7 @@
 
 ---
 
-## 📊 审查总览
+## [CHART] 审查总览
 
 ### 修复内容
 
@@ -30,9 +30,9 @@
 
 ---
 
-## ✅ 优点与亮点
+## [OK_CHECK] 优点与亮点
 
-### 1. pytest标记设计优秀 ⭐⭐⭐⭐⭐
+### 1. pytest标记设计优秀 [STAR][STAR][STAR][STAR][STAR]
 
 #### 1.1 标记分层清晰
 
@@ -66,12 +66,12 @@
 
 | 标记 | 命名规范 | 评分 |
 |------|---------|------|
-| `unit` | ✅ 小写,简洁 | 10/10 |
-| `integration` | ✅ 小写,描述性强 | 10/10 |
-| `security` | ✅ 小写,清晰 | 10/10 |
-| `thread_safety` | ✅ 小写+下划线 | 10/10 |
-| `cross_platform` | ✅ 小写+下划线 | 10/10 |
-| `p1_high` | ✅ 优先级+级别 | 10/10 |
+| `unit` | [OK_CHECK] 小写,简洁 | 10/10 |
+| `integration` | [OK_CHECK] 小写,描述性强 | 10/10 |
+| `security` | [OK_CHECK] 小写,清晰 | 10/10 |
+| `thread_safety` | [OK_CHECK] 小写+下划线 | 10/10 |
+| `cross_platform` | [OK_CHECK] 小写+下划线 | 10/10 |
+| `p1_high` | [OK_CHECK] 优先级+级别 | 10/10 |
 
 **评价**: 所有标记遵循小写+下划线规范,无缩写,可读性强。
 
@@ -83,7 +83,7 @@
 
 **评价**: 标记数量恰到好处,既不过度标记,也不缺少关键分类。
 
-### 2. 文档修复准确 ⭐⭐⭐⭐⭐
+### 2. 文档修复准确 [STAR][STAR][STAR][STAR][STAR]
 
 #### 2.1 L1修复: 类名更新
 
@@ -99,7 +99,7 @@
 """测试SecureKeyGenerator的熵池检测功能"""
 ```
 
-**评价**: ✅ 准确对应实际类名,消除混淆。
+**评价**: [OK_CHECK] 准确对应实际类名,消除混淆。
 
 #### 2.2 L2修复: Lambda文档字符串
 
@@ -119,9 +119,9 @@ def count_progress(stats):
     report_count[0] += 1
 ```
 
-**评价**: ✅ 文档字符串清晰,区分不同场景,IDE提示友好。
+**评价**: [OK_CHECK] 文档字符串清晰,区分不同场景,IDE提示友好。
 
-### 3. 标记应用一致性 ⭐⭐⭐⭐⭐
+### 3. 标记应用一致性 [STAR][STAR][STAR][STAR][STAR]
 
 #### 3.1 同优先级测试标记一致
 
@@ -159,7 +159,7 @@ def count_progress(stats):
 @pytest.mark.p2_medium
 ```
 
-**评价**: ✅ 标记应用高度一致,优先级标记统一。
+**评价**: [OK_CHECK] 标记应用高度一致,优先级标记统一。
 
 #### 3.2 特殊场景标记恰当
 
@@ -168,7 +168,7 @@ def count_progress(stats):
 ```python
 @pytest.mark.unit
 @pytest.mark.gpu
-@pytest.mark.thread_safety  # ✅ 特殊标记
+@pytest.mark.thread_safety  # [OK_CHECK] 特殊标记
 @pytest.mark.p2_medium
 ```
 
@@ -178,7 +178,7 @@ def count_progress(stats):
 @pytest.mark.unit
 @pytest.mark.security
 @pytest.mark.p1_high
-@pytest.mark.cross_platform  # ✅ 特殊标记
+@pytest.mark.cross_platform  # [OK_CHECK] 特殊标记
 ```
 
 **边界条件测试**:
@@ -187,14 +187,14 @@ def count_progress(stats):
 @pytest.mark.unit
 @pytest.mark.security
 @pytest.mark.p1_high
-@pytest.mark.edge_cases  # ✅ 特殊标记
+@pytest.mark.edge_cases  # [OK_CHECK] 特殊标记
 ```
 
-**评价**: ✅ 特殊标记使用恰当,增强测试分类精度。
+**评价**: [OK_CHECK] 特殊标记使用恰当,增强测试分类精度。
 
 ---
 
-## ⚠️ 发现的问题
+## [WARN] 发现的问题
 
 ### Medium优先级 (1个)
 
@@ -289,7 +289,7 @@ markers =
 ```python
 @pytest.mark.unit
 @pytest.mark.deprecation
-@pytest.mark.cryptography  # ✅ 新增: 密码学相关
+@pytest.mark.cryptography  # [OK_CHECK] 新增: 密码学相关
 @pytest.mark.p2_medium
 ```
 
@@ -304,36 +304,36 @@ markers =
 
 ---
 
-## 📈 标记可用性评估
+## [PERF] 标记可用性评估
 
 ### 选择性执行测试
 
 修复后可以灵活选择测试:
 
 ```bash
-# ✅ 按优先级运行
+# [OK_CHECK] 按优先级运行
 pytest -m p1_high -v                    # 所有P1修复 (26个测试)
 pytest -m p2_medium -v                  # 所有P2修复 (35个测试)
 
-# ✅ 按功能域运行
+# [OK_CHECK] 按功能域运行
 pytest -m security -v                   # 安全测试 (12个测试)
 pytest -m gpu -v                        # GPU测试 (15个测试)
 pytest -m entropy -v                    # 熵池测试 (14个测试)
 
-# ✅ 按测试类型运行
+# [OK_CHECK] 按测试类型运行
 pytest -m unit -v                       # 单元测试 (61个测试)
 pytest -m integration -v                # 集成测试 (2个测试)
 
-# ✅ 组合标记 (AND逻辑)
+# [OK_CHECK] 组合标记 (AND逻辑)
 pytest -m "security and p1_high" -v     # P1安全测试 (12个测试)
 pytest -m "gpu and thread_safety" -v    # GPU线程安全 (15个测试)
 
-# ✅ 排除标记
+# [OK_CHECK] 排除标记
 pytest -m "not integration" -v          # 非集成测试 (59个测试)
 pytest -m "p1_high and not security" -v # P1非安全 (14个测试)
 ```
 
-**评价**: ✅ 标记系统提供强大的测试选择能力。
+**评价**: [OK_CHECK] 标记系统提供强大的测试选择能力。
 
 ### CI/CD集成示例
 
@@ -355,11 +355,11 @@ jobs:
         run: pytest -v --tb=short
 ```
 
-**评价**: ✅ 标记系统完美支持CI/CD分级测试。
+**评价**: [OK_CHECK] 标记系统完美支持CI/CD分级测试。
 
 ---
 
-## 📊 质量评估
+## [CHART] 质量评估
 
 ### pytest标记设计评分
 
@@ -373,7 +373,7 @@ jobs:
 | **可用性** | 10/10 | 支持灵活选择测试 |
 | **可维护性** | 9/10 | 结构清晰,建议注册标记 |
 
-**综合评分**: **9.7/10** ⭐⭐⭐⭐⭐
+**综合评分**: **9.7/10** [STAR][STAR][STAR][STAR][STAR]
 
 ### 文档修复评分
 
@@ -384,11 +384,11 @@ jobs:
 | **清晰度** | 10/10 | 文档字符串清晰明确 |
 | **一致性** | 10/10 | 文档风格统一 |
 
-**综合评分**: **10/10** ⭐⭐⭐⭐⭐
+**综合评分**: **10/10** [STAR][STAR][STAR][STAR][STAR]
 
 ---
 
-## 🎯 改进建议
+## [TARGET] 改进建议
 
 ### 立即实施 (合并前)
 
@@ -435,7 +435,7 @@ jobs:
 
 ---
 
-## 📝 标记体系总结
+## [MEMO] 标记体系总结
 
 ### 标记分类矩阵
 
@@ -470,26 +470,26 @@ jobs:
 
 ---
 
-## ✅ 总体评价
+## [OK_CHECK] 总体评价
 
-### 质量评分: **9.7/10** ⭐⭐⭐⭐⭐
+### 质量评分: **9.7/10** [STAR][STAR][STAR][STAR][STAR]
 
 **优秀方面**:
 
-- ✅ 标记分层设计优秀(三层体系)
-- ✅ 标记命名100%规范
-- ✅ 标记应用高度一致
-- ✅ 文档修复准确完整
-- ✅ 测试选择能力强大
-- ✅ 完美支持CI/CD集成
+- [OK_CHECK] 标记分层设计优秀(三层体系)
+- [OK_CHECK] 标记命名100%规范
+- [OK_CHECK] 标记应用高度一致
+- [OK_CHECK] 文档修复准确完整
+- [OK_CHECK] 测试选择能力强大
+- [OK_CHECK] 完美支持CI/CD集成
 
 **需改进**:
 
-- ⚠️ M1: 未注册自定义标记(会产生警告)
-- ⚠️ L4: 标记顺序可优化
-- ⚠️ L5: 可补充更多功能标记
+- [WARN] M1: 未注册自定义标记(会产生警告)
+- [WARN] L4: 标记顺序可优化
+- [WARN] L5: 可补充更多功能标记
 
-### 合并建议: **✅ 可以合并 (建议先修复M1)**
+### 合并建议: **[OK_CHECK] 可以合并 (建议先修复M1)**
 
 **理由**:
 
@@ -508,7 +508,7 @@ jobs:
 
 ---
 
-## 📋 检查清单
+## [CHECKLIST] 检查清单
 
 ### 必须项 (合并前)
 
@@ -516,7 +516,7 @@ jobs:
 - [x] L2: Lambda文档字符串已添加
 - [x] L3: pytest标记已添加
 - [x] 所有61个测试100%通过
-- [ ] M1: 创建pytest.ini注册标记 ⚠️
+- [ ] M1: 创建pytest.ini注册标记 [WARN]
 
 ### 建议项 (合并后)
 
@@ -527,17 +527,17 @@ jobs:
 
 ---
 
-## 🏆 结论
+## [TROPHY] 结论
 
 **pytest标记和文档修复质量优秀,可以合并到主分支。**
 
 **核心成果**:
 
-- ✅ 41个pytest标记设计完美(9.7/10)
-- ✅ 文档修复准确完整(10/10)
-- ✅ 测试选择能力+80%
-- ✅ CI/CD集成就绪
-- ✅ 所有测试100%通过
+- [OK_CHECK] 41个pytest标记设计完美(9.7/10)
+- [OK_CHECK] 文档修复准确完整(10/10)
+- [OK_CHECK] 测试选择能力+80%
+- [OK_CHECK] CI/CD集成就绪
+- [OK_CHECK] 所有测试100%通过
 
 **建议**:
 

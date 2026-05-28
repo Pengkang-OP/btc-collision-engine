@@ -6,11 +6,11 @@ BTC碰撞引擎现在支持完整的多GPU并行计算功能,采用**任务分�
 
 ### 核心特性
 
-- ✅ **自动GPU选择** - 基于显存、计算单元、厂商的智能评分
-- ✅ **多GPU并行** - 支持NVIDIA/AMD/Intel异构混合
-- ✅ **智能负载均衡** - 按性能自动分配任务权重
-- ✅ **厂商特定优化** - 自动配置最优参数
-- ✅ **GUI/CLI支持** - 图形界面和命令行双支持
+- [OK_CHECK] **自动GPU选择** - 基于显存、计算单元、厂商的智能评分
+- [OK_CHECK] **多GPU并行** - 支持NVIDIA/AMD/Intel异构混合
+- [OK_CHECK] **智能负载均衡** - 按性能自动分配任务权重
+- [OK_CHECK] **厂商特定优化** - 自动配置最优参数
+- [OK_CHECK] **GUI/CLI支持** - 图形界面和命令行双支持
 
 ---
 
@@ -29,7 +29,7 @@ python tools/gpu_cli.py list
 ```
 检测到 2 个GPU设备:
 ============================================================
-⭐ GPU 1: Intel(R) Arc(TM) A770 Graphics
+[STAR] GPU 1: Intel(R) Arc(TM) A770 Graphics
   厂商: INTEL
   显存: 15.56 GB
   计算单元: 512
@@ -155,7 +155,7 @@ python key_collision.py --gpu-mode multi --gpu-devices 0,1 --gpu-load-balancing 
 - 显存: 16GB × 10 = 160
 - CU: 512 × 0.05 = 25.6
 - 厂商: 0.9
-- **总分: 167.04** ⭐
+- **总分: 167.04** [STAR]
 
 ---
 

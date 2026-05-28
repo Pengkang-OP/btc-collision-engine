@@ -630,7 +630,7 @@
     },
     "targets": {
         "format_breakdown": "Target address format distribution: {breakdown}",
-        "incompatible_warning": "⚠ Detected {count} non-P2PKH format target addresses",
+        "incompatible_warning": "Detected {count} non-P2PKH format target addresses",
         "incompatible_detail": "The engine currently only generates P2PKH (1-prefix) address format. P2SH, Bech32, and Taproot format target addresses cannot be matched in the current version.",
         "incompatible_suggestion": "Suggestion: Remove incompatible format addresses, or use key Hash160 matching mode."
     },

@@ -27,13 +27,13 @@ def test_crypto_backend_in_gpu():
         from src.core.crypto_backend import BackendType, crypto_manager
 
         backend = crypto_manager.current_backend
-        print(f"  ✅ 当前后端: {backend.name}")
-        print(f"  ✅ 恒定时间: {backend.is_constant_time()}")
+        print(f"  OK 当前后端: {backend.name}")
+        print(f"  OK 恒定时间: {backend.is_constant_time()}")
         print(
-            f"  ✅ 可用后端: {[bt.name for bt, b in crypto_manager._backends.items() if b.is_available]}",
+            f"  OK 可用后端: {[bt.name for bt, b in crypto_manager._backends.items() if b.is_available]}",
         )
     except Exception as e:
-        print(f"  ❌ crypto_backend初始化失败: {e}")
+        print(f"  ERR crypto_backend初始化失败: {e}")
         return False
 
     # 2. 测试GPU引擎导入
@@ -41,9 +41,9 @@ def test_crypto_backend_in_gpu():
     try:
         from src.collision.gpu.engine import GPUCollisionEngine
 
-        print("  ✅ GPUCollisionEngine导入成功")
+        print("  OK GPUCollisionEngine导入成功")
     except Exception as e:
-        print(f"  ❌ GPU引擎导入失败: {e}")
+        print(f"  ERR GPU引擎导入失败: {e}")
         return False
 
     # 3. 测试后端切换功能
@@ -52,12 +52,12 @@ def test_crypto_backend_in_gpu():
         # 测试切换到Pure Python
         crypto_manager.set_backend(BackendType.PURE_PYTHON)
         pp_backend = crypto_manager.current_backend
-        print(f"  ✅ 切换到Pure Python: {pp_backend.name}")
+        print(f"  OK 切换到Pure Python: {pp_backend.name}")
 
         # 测试切换到coincurve
         crypto_manager.set_backend(BackendType.COINCURVE)
         cc_backend = crypto_manager.current_backend
-        print(f"  ✅ 切换到coincurve: {cc_backend.name}")
+        print(f"  OK 切换到coincurve: {cc_backend.name}")
 
         # 性能对比
         test_key = bytes([1] * 32)
@@ -76,13 +76,13 @@ def test_crypto_backend_in_gpu():
             crypto_manager.current_backend.generate_public_key(test_key)
         cc_time = (time.perf_counter() - start) * 1000
 
-        print("\n  📊 性能对比 (10次公钥生成):")
+        print("\n  STATS 性能对比 (10次公钥生成):")
         print(f"     Pure Python: {pp_time:.2f}ms")
         print(f"     Coincurve:   {cc_time:.2f}ms")
         print(f"     性能提升:    {pp_time / cc_time:.0f}倍")
 
     except Exception as e:
-        print(f"  ❌ 后端切换测试失败: {e}")
+        print(f"  ERR 后端切换测试失败: {e}")
         import traceback
 
         traceback.print_exc()
@@ -124,19 +124,19 @@ def test_crypto_backend_in_gpu():
                 batch_size=65536,
             )
 
-            print("  ✅ GPU引擎初始化成功")
-            print(f"  ✅ 批次大小: {engine._batch_size or '自动计算'}")
+            print("  OK GPU引擎初始化成功")
+            print(f"  OK 批次大小: {engine._batch_size or '自动计算'}")
 
             # 清理
             engine.cleanup()
-            print("  ✅ GPU引擎清理成功")
+            print("  OK GPU引擎清理成功")
 
     except Exception as e:
-        print(f"  ⚠️ GPU引擎初始化测试失败 (可能需要真实GPU): {e}")
-        print("  ℹ️  这不影响crypto_backend迁移验证")
+        print(f"  WARN GPU引擎初始化测试失败 (可能需要真实GPU): {e}")
+        print("  [INFO]  这不影响crypto_backend迁移验证")
 
     print("\n" + "=" * 70)
-    print("✅ 测试完成: crypto_backend迁移验证通过")
+    print("OK 测试完成: crypto_backend迁移验证通过")
     print("=" * 70)
 
     return True
@@ -157,22 +157,22 @@ def test_cpu_engine_performance():
             targets={"1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"},
             max_workers=2,
         )
-        print("  ✅ CPU引擎创建成功")
+        print("  OK CPU引擎创建成功")
 
         print("\n[2/2] 验证后端配置...")
         backend = crypto_manager.current_backend
-        print(f"  ✅ 当前后端: {backend.name}")
-        print(f"  ✅ 恒定时间: {backend.is_constant_time()}")
+        print(f"  OK 当前后端: {backend.name}")
+        print(f"  OK 恒定时间: {backend.is_constant_time()}")
 
     except Exception as e:
-        print(f"  ❌ CPU引擎测试失败: {e}")
+        print(f"  ERR CPU引擎测试失败: {e}")
         import traceback
 
         traceback.print_exc()
         return False
 
     print("\n" + "=" * 70)
-    print("✅ CPU引擎测试完成")
+    print("OK CPU引擎测试完成")
     print("=" * 70)
 
     return True
@@ -181,7 +181,7 @@ def test_cpu_engine_performance():
 def generate_performance_report():
     """生成性能报告."""
     print("\n" + "=" * 70)
-    print("📊 性能报告总结")
+    print("STATS 性能报告总结")
     print("=" * 70)
 
     from src.core.crypto_backend import crypto_manager
@@ -190,32 +190,32 @@ def generate_performance_report():
     _ = crypto_manager.current_backend
 
     print("""
-🎯 crypto_backend迁移成果:
+TARGET crypto_backend迁移成果:
 
    当前后端:     {backend.name}
    恒定时间:     {backend.is_constant_time()}
    性能提升:     283倍 (vs Pure Python)
 
    测试结果:
-   ✅ 16/16 单元测试通过
-   ✅ GPU引擎导入成功
-   ✅ CPU引擎导入成功
-   ✅ 后端切换功能正常
-   ✅ 性能对比验证通过
+   OK 16/16 单元测试通过
+   OK GPU引擎导入成功
+   OK CPU引擎导入成功
+   OK 后端切换功能正常
+   OK 性能对比验证通过
 
    预期影响:
-   📈 CPU引擎: +200-250% 性能提升
-   📈 GPU引擎: +10-15% 后处理性能提升
-   🔒 安全性: 从教学级升级到生产级
+   UP CPU引擎: +200-250% 性能提升
+   UP GPU引擎: +10-15% 后处理性能提升
+   [LOCK] 安全性: 从教学级升级到生产级
 
-   生产就绪度: ✅ 是
+   生产就绪度: OK 是
 """)
 
     print("=" * 70)
 
 
 if __name__ == "__main__":
-    print("\n🚀 开始GPU实际性能测试 (crypto_backend迁移验证)\n")
+    print("\nFAST 开始GPU实际性能测试 (crypto_backend迁移验证)\n")
 
     # 运行测试
     success = True
@@ -230,8 +230,8 @@ if __name__ == "__main__":
     generate_performance_report()
 
     if success:
-        print("\n✅ 所有测试通过！crypto_backend迁移成功！\n")
+        print("\nOK 所有测试通过！crypto_backend迁移成功！\n")
         sys.exit(0)
     else:
-        print("\n⚠️ 部分测试失败，请检查日志\n")
+        print("\nWARN 部分测试失败，请检查日志\n")
         sys.exit(1)

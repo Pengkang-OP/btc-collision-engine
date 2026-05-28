@@ -34,7 +34,7 @@ print(f"Bech32目标: {addrs['bech32']}")
 is_match, matched_addr, matched_fmt = manager.check_match(test_key)
 
 print("\n匹配结果:")
-print(f"  匹配: {'✓' if is_match else '✗'}")
+print(f"  匹配: {'[OK]' if is_match else '[FAIL]'}")
 print(f"  地址: {matched_addr}")
 print(f"  格式: {matched_fmt}")
 
@@ -66,7 +66,7 @@ print(f"Bech32目标: {addrs['bech32']}")
 is_match2, matched_addr2, matched_fmt2 = manager2.check_match(test_key)
 
 print("\n匹配结果:")
-print(f"  匹配: {'✓' if is_match2 else '✗'}")
+print(f"  匹配: {'[OK]' if is_match2 else '[FAIL]'}")
 print(f"  地址: {matched_addr2}")
 print(f"  格式: {matched_fmt2}")
 
@@ -78,7 +78,7 @@ print("     - 检查是否在目标中: 是")
 print("     - 匹配成功！")
 print("  3. P2SH和Taproot有0个目标 → 跳过")
 
-print("\n✓ 优化效果: 只生成了1个格式（Bech32），跳过了3个空格式！")
+print("\n[OK] 优化效果: 只生成了1个格式（Bech32），跳过了3个空格式！")
 
 print("\n" + "=" * 80)
 print("场景3: 目标包含所有4种格式")
@@ -96,7 +96,7 @@ print("所有格式都有目标")
 is_match3, matched_addr3, matched_fmt3 = manager3.check_match(test_key)
 
 print("\n匹配结果:")
-print(f"  匹配: {'✓' if is_match3 else '✗'}")
+print(f"  匹配: {'[OK]' if is_match3 else '[FAIL]'}")
 print(f"  地址: {matched_addr3}")
 print(f"  格式: {matched_fmt3}")
 
@@ -129,11 +129,11 @@ print(f"目标格式: {manager4.get_format_stats()}")
 is_match4, matched_addr4, matched_fmt4 = manager4.check_match(test_key)
 
 print("\n匹配结果:")
-print(f"  匹配: {'✓' if is_match4 else '✗'}")
+print(f"  匹配: {'[OK]' if is_match4 else '[FAIL]'}")
 print(f"  地址: {matched_addr4}")
 print(f"  格式: {matched_fmt4}")
 
-print("\n✓ 正确匹配了Bech32地址！")
+print("\n[OK] 正确匹配了Bech32地址！")
 
 print("\n" + "=" * 80)
 print("总结")

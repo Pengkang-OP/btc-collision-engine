@@ -9,8 +9,8 @@ from pathlib import Path
 # 添加项目根目录
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.core.address_generator import P2PKHAddressGenerator  # noqa: E402
-from src.core.optimized_address_generator import OptimizedP2PKHAddressGenerator  # noqa: E402
+from src.core.address_generator import P2PKHAddressGenerator
+from src.core.optimized_address_generator import OptimizedP2PKHAddressGenerator
 
 
 def example_1_basic_usage():
@@ -112,21 +112,29 @@ def example_4_custom_config():
 
     # 只启用预计算表,禁用其他优化
     gen1 = OptimizedP2PKHAddressGenerator(
-        use_precomputed_table=True, use_simd_hash=False, use_memory_pool=False, window_size=6,
+        use_precomputed_table=True,
+        use_simd_hash=False,
+        use_memory_pool=False,
+        window_size=6,
     )
     print("  配置1: 仅预计算表(w=6)")
     print(f"    {gen1.get_optimization_info()}")
 
     # 只启用SIMD哈希
     gen2 = OptimizedP2PKHAddressGenerator(
-        use_precomputed_table=False, use_simd_hash=True, use_memory_pool=False,
+        use_precomputed_table=False,
+        use_simd_hash=True,
+        use_memory_pool=False,
     )
     print("\n  配置2: 仅SIMD哈希")
     print(f"    {gen2.get_optimization_info()}")
 
     # 全部启用
     gen3 = OptimizedP2PKHAddressGenerator(
-        use_precomputed_table=True, use_simd_hash=True, use_memory_pool=True, window_size=8,
+        use_precomputed_table=True,
+        use_simd_hash=True,
+        use_memory_pool=True,
+        window_size=8,
     )
     print("\n  配置3: 全部优化(w=8)")
     print(f"    {gen3.get_optimization_info()}")

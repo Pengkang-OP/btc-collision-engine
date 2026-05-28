@@ -110,10 +110,10 @@ def format_size(size_mb):
 def print_monitor_header():
     """打印监控头."""
     print("\n" + "=" * 80)
-    print("🎮 NVIDIA GPU 实时监控面板")
+    print("GPU NVIDIA GPU 实时监控面板")
     print("=" * 80)
-    print(f"⏰ 监控开始时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("📊 刷新间隔: 2秒")
+    print(f"[CLOCK] 监控开始时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print("STATS 刷新间隔: 2秒")
     print("按 Ctrl+C 停止监控")
     print("=" * 80)
 
@@ -121,15 +121,15 @@ def print_monitor_header():
 def print_gpu_stats(stats, iteration):
     """打印GPU统计信息."""
     print(f"\n{'─' * 80}")
-    print(f"📈 监控周期 #{iteration} - {datetime.now().strftime('%H:%M:%S')}")
+    print(f"UP 监控周期 #{iteration} - {datetime.now().strftime('%H:%M:%S')}")
     print(f"{'─' * 80}")
 
     if "error" in stats:
-        print(f"❌ GPU状态获取失败: {stats['error']}")
+        print(f"ERR GPU状态获取失败: {stats['error']}")
         return
 
     # GPU信息
-    print("\n🎮 GPU信息:")
+    print("\nGPU GPU信息:")
     print(f"   型号: {stats['gpu_name']}")
     print(f"   使用率: {stats['gpu_utilization']:.1f}%")
     print(f"   温度: {stats['temperature']:.1f}°C")
@@ -137,25 +137,25 @@ def print_gpu_stats(stats, iteration):
 
     # 显存信息
     memory_percent = (stats["memory_used_mb"] / stats["memory_total_mb"]) * 100
-    print("\n💾 显存使用:")
+    print("\nSAVE 显存使用:")
     print(f"   已用: {format_size(stats['memory_used_mb'])}")
     print(f"   总计: {format_size(stats['memory_total_mb'])}")
     print(f"   使用率: {memory_percent:.1f}%")
 
     # 状态指示
     if stats["gpu_utilization"] > 80:
-        gpu_status = "🔴 高负载"
+        gpu_status = "RED 高负载"
     elif stats["gpu_utilization"] > 50:
-        gpu_status = "🟡 中负载"
+        gpu_status = "YELLOW 中负载"
     else:
-        gpu_status = "🟢 正常"
+        gpu_status = "GREEN 正常"
 
     if stats["temperature"] > 85:
-        temp_status = "🔴 过热"
+        temp_status = "RED 过热"
     elif stats["temperature"] > 70:
-        temp_status = "🟡 警告"
+        temp_status = "YELLOW 警告"
     else:
-        temp_status = "🟢 正常"
+        temp_status = "GREEN 正常"
 
     print(f"\n状态: GPU {gpu_status} | 温度 {temp_status}")
 
@@ -163,10 +163,10 @@ def print_gpu_stats(stats, iteration):
 def print_process_info(proc_info):
     """打印进程信息."""
     if not proc_info:
-        print("\n⚠️  未检测到碰撞引擎进程")
+        print("\nWARN 未检测到碰撞引擎进程")
         return
 
-    print("\n🔧 碰撞引擎进程:")
+    print("\nTOOL 碰撞引擎进程:")
     print(f"   PID: {proc_info['pid']}")
     print(f"   内存: {proc_info['memory_mb']:.1f} MB")
     print(f"   CPU时间: {proc_info['cpu_seconds']:.1f}s")
@@ -175,10 +175,10 @@ def print_process_info(proc_info):
 def print_errors(errors):
     """打印错误信息."""
     if not errors:
-        print("\n✅ 最近无错误")
+        print("\nOK 最近无错误")
         return
 
-    print(f"\n❌ 最近错误 ({len(errors)}个):")
+    print(f"\nERR 最近错误 ({len(errors)}个):")
     for error in errors:
         # 截取错误信息
         if len(error) > 100:
@@ -215,7 +215,7 @@ def main():
 
             # 运行时间
             elapsed = time.time() - start_time
-            print(f"\n⏱️  监控运行时间: {elapsed:.0f}秒")
+            print(f"\n[TIMER] 监控运行时间: {elapsed:.0f}秒")
 
             # 等待2秒
             time.sleep(2)
@@ -223,9 +223,9 @@ def main():
     except KeyboardInterrupt:
         elapsed = time.time() - start_time
         print(f"\n\n{'=' * 80}")
-        print("✅ 监控已停止")
-        print(f"📊 总监控时间: {elapsed:.0f}秒")
-        print(f"📈 监控周期数: {iteration}")
+        print("OK 监控已停止")
+        print(f"STATS 总监控时间: {elapsed:.0f}秒")
+        print(f"UP 监控周期数: {iteration}")
         print(f"{'=' * 80}")
 
 

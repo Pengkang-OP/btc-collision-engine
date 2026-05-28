@@ -357,7 +357,7 @@ class GPURecoveryManager:
 
             self._fallback_to_cpu = True
 
-        logger.critical("🚨 GPU引擎降级到CPU模式: %s", reason)
+        logger.critical("CRIT GPU引擎降级到CPU模式: %s", reason)
 
         # 调用降级回调
         with self._fallback_lock:

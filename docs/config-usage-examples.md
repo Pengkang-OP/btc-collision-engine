@@ -48,7 +48,7 @@ if errors:
         for error in error_list:
             print(f"  {manager}: {error}")
 else:
-    print("✅ 所有配置验证通过")
+    print("[OK] 所有配置验证通过")
 
 ```markdown
 
@@ -106,9 +106,9 @@ coordinator.set('crypto.constant_time', True)
 
 # 保存所有配置
 if coordinator.save_all():
-    print("✅ 配置保存成功")
+    print("[OK] 配置保存成功")
 else:
-    print("❌ 配置保存失败")
+    print("[FAIL] 配置保存失败")
 
 ```markdown
 
@@ -221,9 +221,9 @@ cm.set('crypto.backend', 'coincurve')
 
 # 保存到文件
 if cm.save_config():
-    print("✅ 配置保存成功")
+    print("[OK] 配置保存成功")
 else:
-    print("❌ 配置保存失败")
+    print("[FAIL] 配置保存失败")
 
 ```markdown
 
@@ -247,7 +247,7 @@ new_config = {
 
 cm.merge_config(new_config)
 cm.save_config()
-print("✅ 配置合并并保存成功")
+print("[OK] 配置合并并保存成功")
 
 ```markdown
 
@@ -262,11 +262,11 @@ cm = ConfigManager('config.json')
 errors = cm.validate()
 
 if errors:
-    print("❌ 配置验证失败:")
+    print("[FAIL] 配置验证失败:")
     for key, error in errors.items():
         print(f"  {key}: {error}")
 else:
-    print("✅ 所有配置验证通过")
+    print("[OK] 所有配置验证通过")
 
 ```python
 
@@ -296,7 +296,7 @@ errors = crypto.validate()
 if errors:
     print(f"配置验证失败: {errors}")
 else:
-    print("✅ Crypto配置验证通过")
+    print("[OK] Crypto配置验证通过")
 
 ```markdown
 
@@ -331,9 +331,9 @@ coordinator = ConfigCoordinator('config.json')
 
 # 应用Crypto配置到加密管理器
 if coordinator.apply_crypto_config():
-    print("✅ Crypto配置已应用到加密管理器")
+    print("[OK] Crypto配置已应用到加密管理器")
 else:
-    print("❌ 应用Crypto配置失败")
+    print("[FAIL] 应用Crypto配置失败")
 
 ```python
 
@@ -365,7 +365,7 @@ errors = gpu_config.validate()
 if errors:
     print(f"配置验证失败: {errors}")
 else:
-    print("✅ GPU配置验证通过")
+    print("[OK] GPU配置验证通过")
 
 ```markdown
 
@@ -402,9 +402,9 @@ from src.gpu.config import GPUConfig
 gpu_config = GPUConfig()
 
 if gpu_config.is_gpu_available():
-    print("✅ GPU可用")
+    print("[OK] GPU可用")
 else:
-    print("❌ GPU不可用")
+    print("[FAIL] GPU不可用")
 
 ```markdown
 
@@ -419,9 +419,9 @@ gpu_config = GPUConfig()
 targets = {'1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'}
 try:
     engine = gpu_config.create_gpu_engine(targets)
-    print("✅ GPU引擎创建成功")
+    print("[OK] GPU引擎创建成功")
 except RuntimeError as e:
-    print(f"❌ GPU引擎创建失败: {e}")
+    print(f"[FAIL] GPU引擎创建失败: {e}")
 
 ```python
 
@@ -447,9 +447,9 @@ if errors:
     for manager, error_list in errors.items():
         print(f"\n{manager}:")
         for error in error_list:
-            print(f"  ❌ {error}")
+            print(f"  [FAIL] {error}")
 else:
-    print("✅ 所有配置验证通过")
+    print("[OK] 所有配置验证通过")
 
 ```markdown
 
@@ -467,7 +467,7 @@ if cm_errors:
     for key, error in cm_errors.items():
         print(f"  {key}: {error}")
 else:
-    print("✅ ConfigManager验证通过")
+    print("[OK] ConfigManager验证通过")
 
 # 验证CryptoConfig
 crypto_errors = coordinator.crypto_config.validate()
@@ -476,7 +476,7 @@ if crypto_errors:
     for error in crypto_errors:
         print(f"  {error}")
 else:
-    print("✅ CryptoConfig验证通过")
+    print("[OK] CryptoConfig验证通过")
 
 # 验证GPUConfig
 gpu_errors = coordinator.gpu_config.validate()
@@ -485,7 +485,7 @@ if gpu_errors:
     for error in gpu_errors:
         print(f"  {error}")
 else:
-    print("✅ GPUConfig验证通过")
+    print("[OK] GPUConfig验证通过")
 
 ```markdown
 
@@ -499,23 +499,23 @@ cm = ConfigManager('config.json')
 # 验证GPU配置
 gpu_batch_size = cm.get('gpu.batch_size')
 if not isinstance(gpu_batch_size, int) or gpu_batch_size <= 0:
-    print("❌ gpu.batch_size必须是正整数")
+    print("[FAIL] gpu.batch_size必须是正整数")
 else:
-    print(f"✅ gpu.batch_size有效: {gpu_batch_size}")
+    print(f"[OK] gpu.batch_size有效: {gpu_batch_size}")
 
 gpu_memory_ratio = cm.get('gpu.memory_usage_ratio')
 if not isinstance(gpu_memory_ratio, (int, float)) or not (0 < gpu_memory_ratio <= 1.0):
-    print("❌ gpu.memory_usage_ratio必须在(0, 1]范围内")
+    print("[FAIL] gpu.memory_usage_ratio必须在(0, 1]范围内")
 else:
-    print(f"✅ gpu.memory_usage_ratio有效: {gpu_memory_ratio}")
+    print(f"[OK] gpu.memory_usage_ratio有效: {gpu_memory_ratio}")
 
 # 验证Crypto配置
 crypto_backend = cm.get('crypto.backend')
 valid_backends = ['auto', 'pure_python', 'pure_python_const_time', 'openssl', 'coincurve', 'ecdsa']
 if crypto_backend not in valid_backends:
-    print(f"❌ crypto.backend必须是以下值之一: {', '.join(valid_backends)}")
+    print(f"[FAIL] crypto.backend必须是以下值之一: {', '.join(valid_backends)}")
 else:
-    print(f"✅ crypto.backend有效: {crypto_backend}")
+    print(f"[OK] crypto.backend有效: {crypto_backend}")
 
 ```python
 
@@ -560,7 +560,7 @@ coordinator = ConfigCoordinator('config.json')
 config = coordinator.get_unified_config()
 with open('exported_config.json', 'w', encoding='utf-8') as f:
     json.dump(config, f, indent=2, ensure_ascii=False)
-print("✅ 配置导出成功")
+print("[OK] 配置导出成功")
 
 # 从JSON导入配置
 with open('exported_config.json', 'r', encoding='utf-8') as f:
@@ -568,7 +568,7 @@ with open('exported_config.json', 'r', encoding='utf-8') as f:
 
 coordinator.config_manager.merge_config(imported_config)
 coordinator.config_manager.save_config()
-print("✅ 配置导入成功")
+print("[OK] 配置导入成功")
 
 ```markdown
 
@@ -587,7 +587,7 @@ class ConfigWatcher:
         current_config = self.coordinator.get_unified_config()
 
         if current_config != self._last_config:
-            print("⚠️ 配置已更改")
+            print("[WARN] 配置已更改")
 
             # 找出变更的配置项
             self._find_changes(self._last_config, current_config)
@@ -642,7 +642,7 @@ class MultiEnvConfig:
     def load_env(self, env_name, env_config_file):
         """加载环境配置"""
         self.env_coordinators[env_name] = ConfigCoordinator(env_config_file)
-        print(f"✅ 加载{env_name}环境配置: {env_config_file}")
+        print(f"[OK] 加载{env_name}环境配置: {env_config_file}")
 
     def get_coordinator(self, env_name='default'):
         """获取指定环境的配置协调器"""
@@ -653,7 +653,7 @@ class MultiEnvConfig:
     def switch_env(self, env_name):
         """切换到指定环境"""
         coordinator = self.get_coordinator(env_name)
-        print(f"🔄 切换到{env_name}环境")
+        print(f"[REFRESH] 切换到{env_name}环境")
         return coordinator
 
 # 使用示例
@@ -677,7 +677,7 @@ print(f"生产环境batch_size: {prod_coordinator.get('gpu.batch_size')}")
 
 ### 8.1 推荐做法
 
-✅ **使用ConfigCoordinator作为统一入口**
+[OK] **使用ConfigCoordinator作为统一入口**
 
 ```python
 # 推荐
@@ -687,7 +687,7 @@ config = coordinator.get_unified_config()
 
 ```python
 
-✅ **启动时验证配置**
+[OK] **启动时验证配置**
 
 ```python
 coordinator = ConfigCoordinator('config.json')
@@ -697,7 +697,7 @@ if errors:
 
 ```python
 
-✅ **使用点号路径访问配置**
+[OK] **使用点号路径访问配置**
 
 ```python
 # 推荐
@@ -709,7 +709,7 @@ batch_size = gpu_config['batch_size']
 
 ```python
 
-✅ **修改配置后及时保存**
+[OK] **修改配置后及时保存**
 
 ```python
 coordinator.set('gpu.batch_size', 131072)
@@ -719,7 +719,7 @@ coordinator.save_all()  # 立即保存
 
 ## 8.2 避免的做法
 
-❌ **直接修改内部配置字典**
+[FAIL] **直接修改内部配置字典**
 
 ```python
 # 错误做法
@@ -730,7 +730,7 @@ coordinator.set('gpu.batch_size', 131072)
 
 ```python
 
-❌ **忽略配置验证错误**
+[FAIL] **忽略配置验证错误**
 
 ```python
 # 错误做法
@@ -746,7 +746,7 @@ if errors:
 
 ```python
 
-❌ **频繁保存配置**
+[FAIL] **频繁保存配置**
 
 ```python
 # 错误做法

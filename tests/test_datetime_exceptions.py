@@ -16,10 +16,10 @@ print("=" * 60)
 for test, expected in test_cases:
     try:
         result = datetime.datetime.fromisoformat(test)
-        print(f"✅ {test!r:30} -> {result}")
+        print(f"OK {test!r:30} -> {result}")
     except Exception as e:
         actual = type(e).__name__
-        status = "✅" if actual == expected else "⚠️"
+        status = "OK" if actual == expected else "WARN"
         print(f"{status} {test!r:30} -> {actual}: {e}")
 
 print("\n" + "=" * 60)

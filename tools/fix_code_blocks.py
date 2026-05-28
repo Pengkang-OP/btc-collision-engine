@@ -150,13 +150,13 @@ def main():
 
     docs_dir = Path(args.docs_dir)
     if not docs_dir.exists():
-        print(f"❌ 文档目录不存在: {docs_dir}")
+        print(f"ERR 文档目录不存在: {docs_dir}")
         sys.exit(1)
 
-    print("🔧 开始修复代码块语言类型...\n")
+    print("TOOL 开始修复代码块语言类型...\n")
 
     if args.dry_run:
-        print("⚠️  模拟运行模式 - 不会修改文件\n")
+        print("WARN 模拟运行模式 - 不会修改文件\n")
 
     md_files = list(docs_dir.glob("*.md"))
     # 排除archive目录
@@ -176,28 +176,28 @@ def main():
 
     # 打印统计信息
     print("=" * 60)
-    print("📊 代码块修复报告")
+    print("STATS 代码块修复报告")
     print("=" * 60)
 
     if not file_stats:
-        print("\n✅ 所有代码块都已指定语言类型！")
+        print("\nOK 所有代码块都已指定语言类型！")
     else:
-        print(f"\n📁 扫描文件数: {len(md_files)}")
-        print(f"🔧 修复文件数: {total_files}")
-        print(f"✨ 修复代码块数: {total_fixed}")
+        print(f"\n[FOLDER] 扫描文件数: {len(md_files)}")
+        print(f"TOOL 修复文件数: {total_files}")
+        print(f"[NEW] 修复代码块数: {total_fixed}")
         print("\n修复详情:")
 
         for file_name, fixed, lines in sorted(file_stats, key=lambda x: -x[1]):
             percentage = (fixed / lines * 100) if lines > 0 else 0
-            print(f"  📄 {file_name}")
+            print(f"  [FILE] {file_name}")
             print(f"     修复: {fixed}个代码块 ({percentage:.1f}%的行数)")
 
     print("\n" + "=" * 60)
 
     if args.dry_run:
-        print("\n💡 这是模拟运行。移除 --dry-run 参数以实际修复。")
+        print("\nTIP 这是模拟运行。移除 --dry-run 参数以实际修复。")
     else:
-        print(f"\n✅ 修复完成！共修复 {total_fixed} 个代码块。")
+        print(f"\nOK 修复完成！共修复 {total_fixed} 个代码块。")
 
     return total_fixed
 

@@ -17,7 +17,7 @@ from utf8_helper import setup_windows_utf8
 setup_windows_utf8()
 
 # 导入重试工具
-from retry_helper import read_with_retry  # noqa: E402
+from retry_helper import read_with_retry
 
 
 def analyze_project(docs_dir: str) -> dict:
@@ -45,7 +45,7 @@ def analyze_project(docs_dir: str) -> dict:
     for f in md_files:
         content = read_with_retry(f)
         if content is None:
-            print(f"⚠️  无法读取文件 {f.name} (重试3次后失败)")
+            print(f"WARN 无法读取文件 {f.name} (重试3次后失败)")
             continue
         if "## 目录" in content or "## TOC" in content or "## Table of Contents" in content:
             has_toc_count += 1
@@ -164,24 +164,24 @@ def recommend_config(features: dict) -> tuple[str, dict]:
 def print_recommendation(features: dict, config_name: str, config: dict):
     """打印推荐结果."""
     print(f"\n{'=' * 60}")
-    print("🤖 智能配置推荐系统")
+    print("BOT 智能配置推荐系统")
     print(f"{'=' * 60}")
 
-    print("\n📊 项目特征分析:")
+    print("\nSTATS 项目特征分析:")
     print(f"  文档数量: {features.get('doc_count', 0)} 个")
     print(f"  平均大小: {features.get('avg_size_kb', 0):.1f} KB")
     print(f"  目录覆盖率: {features.get('toc_ratio', 0) * 100:.1f}%")
     print(f"  版本信息覆盖率: {features.get('version_ratio', 0) * 100:.1f}%")
     print(f"  代码块比例: {features.get('code_ratio', 0) * 100:.1f}%")
 
-    print(f"\n🎯 推荐配置: {config_name}")
+    print(f"\nTARGET 推荐配置: {config_name}")
 
     if config:
-        print("\n📝 配置详情:")
+        print("\nNOTE 配置详情:")
         for key, value in config.items():
             print(f"  {key}: {value}")
 
-        print("\n💡 使用方式:")
+        print("\nTIP 使用方式:")
         print(
             f"  python tools/check_document_quality.py "
             f"--config tools/scoring_{config_name[:4].lower()}.json",
@@ -201,7 +201,7 @@ def main():
     args = parser.parse_args()
 
     # 分析项目
-    print("🔍 分析项目特征...")
+    print("SEARCH 分析项目特征...")
     features = analyze_project(args.docs_dir)
 
     # 推荐配置
@@ -216,9 +216,9 @@ def main():
             config_file = Path("tools/scoring_recommended.json")
             with open(config_file, "w", encoding="utf-8") as f:
                 json.dump(config, f, indent=2, ensure_ascii=False)
-            print(f"\n✅ 配置已保存到: {config_file}")
+            print(f"\nOK 配置已保存到: {config_file}")
         except (OSError, PermissionError) as e:
-            print(f"\n❌ 无法保存配置: {e}")
+            print(f"\nERR 无法保存配置: {e}")
             sys.exit(1)
 
 

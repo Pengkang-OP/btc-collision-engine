@@ -922,7 +922,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
         # 记录匹配发现
         format_type = "压缩" if matched_compressed else "非压缩"
-        logger.info("🎯 发现匹配! 地址=%s (格式: %s)", matched_address, format_type)
+        logger.info("[MATCH] 发现匹配! 地址=%s (格式: %s)", matched_address, format_type)
 
         # 批量提交匹配结果（v4.2.2 H6重构: 提取到 _flush_match_batch）
         should_continue, stop_flag = self._flush_match_batch(
@@ -1495,7 +1495,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
                 self._stop_event.set()
 
             format_type = "压缩" if matched_compressed else "非压缩"
-            logger.info("🎯 发现匹配! 地址=%s (格式: %s)", matched_address, format_type)
+            logger.info("发现匹配! 地址=%s (格式: %s)", matched_address, format_type)
 
             try:
                 self.event_bus.publish(

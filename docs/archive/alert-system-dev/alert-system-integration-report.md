@@ -2,17 +2,17 @@
 
 **集成时间**: 2026-04-21 22:50-22:52  
 **任务优先级**: P2 (中)  
-**集成状态**: ✅ 完成  
+**集成状态**: [OK_CHECK] 完成  
 
 ---
 
-## 📋 集成概述
+## [CHECKLIST] 集成概述
 
 将性能监控告警系统集成到GPU性能监控器,实现自动性能异常检测和告警触发。
 
 ---
 
-## 🎯 集成点
+## [TARGET] 集成点
 
 ### 1. 性能退化检测
 
@@ -95,7 +95,7 @@ except Exception as e:
 
 ---
 
-## 🛡️ 防御性设计
+## [SHIELD] 防御性设计
 
 ### 降级处理
 
@@ -112,13 +112,13 @@ except Exception as e:
 
 **优势**:
 
-- ✅ 告警系统失败不影响GPU引擎运行
-- ✅ 即使告警模块缺失,监控器仍正常工作
-- ✅ 异常捕获避免级联故障
+- [OK_CHECK] 告警系统失败不影响GPU引擎运行
+- [OK_CHECK] 即使告警模块缺失,监控器仍正常工作
+- [OK_CHECK] 异常捕获避免级联故障
 
 ---
 
-## 📊 测试验证
+## [CHART] 测试验证
 
 ### 测试文件
 
@@ -128,13 +128,13 @@ except Exception as e:
 
 | 测试项 | 状态 | 说明 |
 |--------|------|------|
-| test_performance_degradation_triggers_alert | ✅ | 性能退化触发告警 |
-| test_high_error_rate_triggers_alert | ✅ | 高错误率触发告警 |
-| test_alert_integration_does_not_break_monitor | ✅ | 集成不影响监控器 |
-| test_alert_system_import_fallback | ✅ | 导入失败降级处理 |
-| test_cooldown_mechanism_in_integration | ✅ | 冷却机制生效 |
+| test_performance_degradation_triggers_alert | [OK_CHECK] | 性能退化触发告警 |
+| test_high_error_rate_triggers_alert | [OK_CHECK] | 高错误率触发告警 |
+| test_alert_integration_does_not_break_monitor | [OK_CHECK] | 集成不影响监控器 |
+| test_alert_system_import_fallback | [OK_CHECK] | 导入失败降级处理 |
+| test_cooldown_mechanism_in_integration | [OK_CHECK] | 冷却机制生效 |
 
-**测试结果**: ✅ 5 passed in 0.74s
+**测试结果**: [OK_CHECK] 5 passed in 0.74s
 
 ### 测试场景
 
@@ -188,7 +188,7 @@ monitor.record_kernel_metrics(...)
 
 ---
 
-## 📈 集成效果
+## [PERF] 集成效果
 
 ### 自动告警触发
 
@@ -217,7 +217,7 @@ GPU性能监控
 
 ---
 
-## 🔧 技术实现
+## [WRENCH] 技术实现
 
 ### 懒加载导入
 
@@ -233,9 +233,9 @@ def _on_performance_degradation(self, metrics):
 
 **优势**:
 
-- ✅ 避免模块循环依赖
-- ✅ 延迟加载,提高启动速度
-- ✅ 支持告警模块可选
+- [OK_CHECK] 避免模块循环依赖
+- [OK_CHECK] 延迟加载,提高启动速度
+- [OK_CHECK] 支持告警模块可选
 
 ### 指标数据映射
 
@@ -249,7 +249,7 @@ def _on_performance_degradation(self, metrics):
 
 ---
 
-## ✅ 验收标准
+## [OK_CHECK] 验收标准
 
 - [x] 性能退化检测集成告警
 - [x] 错误率检查集成告警
@@ -261,7 +261,7 @@ def _on_performance_degradation(self, metrics):
 
 ---
 
-## 📝 代码质量
+## [MEMO] 代码质量
 
 | 维度 | 评分 | 说明 |
 |------|------|------|
@@ -273,7 +273,7 @@ def _on_performance_degradation(self, metrics):
 
 ---
 
-## 🔄 后续计划
+## [REFRESH] 后续计划
 
 ### 短期 (本周)
 
@@ -289,7 +289,7 @@ def _on_performance_degradation(self, metrics):
 
 ---
 
-## 📊 Git提交
+## [CHART] Git提交
 
 **提交哈希**: 62a6bdb  
 **提交信息**: feat: 集成告警系统到GPU性能监控  
@@ -297,7 +297,7 @@ def _on_performance_degradation(self, metrics):
 
 ---
 
-## 🎓 技术总结
+## [GUIDE] 技术总结
 
 ### 集成亮点
 

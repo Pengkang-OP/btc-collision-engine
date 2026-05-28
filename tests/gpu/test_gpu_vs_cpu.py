@@ -18,7 +18,7 @@ from src.collision.targets.resolver import TargetResolver
 def run_cpu_test(targets, duration=15):
     """运行CPU模式测试."""
     print("\n" + "=" * 70)
-    print("🔵 开始 CPU 模式测试")
+    print("[BLUE] 开始 CPU 模式测试")
     print("=" * 70)
 
     engine = KeyCollisionEngine(
@@ -47,7 +47,7 @@ def run_cpu_test(targets, duration=15):
     stats = engine.get_stats()
     elapsed = time.time() - start_time
 
-    print("\n✅ CPU测试完成:")
+    print("\nOK CPU测试完成:")
     print(f"  总检查数: {stats.total_checked:,}")
     print(f"  运行时间: {elapsed:.2f}秒")
     print(f"  平均速度: {stats.total_checked / elapsed:.2f} keys/s")
@@ -64,7 +64,7 @@ def run_cpu_test(targets, duration=15):
 def run_gpu_test(targets, duration=15):
     """运行GPU模式测试."""
     print("\n" + "=" * 70)
-    print("🟢 开始 GPU 模式测试")
+    print("GREEN 开始 GPU 模式测试")
     print("=" * 70)
 
     try:
@@ -92,7 +92,7 @@ def run_gpu_test(targets, duration=15):
         stats = engine.get_stats()
         elapsed = time.time() - start_time
 
-        print("\n✅ GPU测试完成:")
+        print("\nOK GPU测试完成:")
         print(f"  总检查数: {stats.total_checked:,}")
         print(f"  运行时间: {elapsed:.2f}秒")
         print(f"  平均速度: {stats.total_checked / elapsed:.2f} keys/s")
@@ -105,7 +105,7 @@ def run_gpu_test(targets, duration=15):
             "device": "auto-detected",
         }
     except Exception as e:
-        print(f"\n❌ GPU测试失败: {e}")
+        print(f"\nERR GPU测试失败: {e}")
         import traceback
 
         traceback.print_exc()
@@ -115,7 +115,7 @@ def run_gpu_test(targets, duration=15):
 def compare_results(cpu_result, gpu_result):
     """对比CPU和GPU结果."""
     print("\n" + "=" * 70)
-    print("📊 性能对比分析")
+    print("STATS 性能对比分析")
     print("=" * 70)
 
     print(f"\n{'指标':<20} {'CPU模式':<20} {'GPU模式':<20}")
@@ -138,13 +138,13 @@ def compare_results(cpu_result, gpu_result):
 
     if gpu_result:
         speedup = gpu_result["speed"] / cpu_result["speed"]
-        print(f"\n🚀 GPU加速比: {speedup:.2f}x")
+        print(f"\nFAST GPU加速比: {speedup:.2f}x")
 
         if speedup > 1:
             improvement = (speedup - 1) * 100
-            print(f"✅ GPU性能提升: {improvement:.1f}%")
+            print(f"OK GPU性能提升: {improvement:.1f}%")
         else:
-            print("⚠️  GPU性能未超越CPU")
+            print("WARN  GPU性能未超越CPU")
 
     print("\n" + "=" * 70)
 
@@ -178,7 +178,7 @@ def main():
     with pathlib.Path(output_file).open("w", encoding="utf-8") as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
 
-    print(f"\n📝 测试结果已保存: {output_file}")
+    print(f"\nNOTE 测试结果已保存: {output_file}")
 
 
 if __name__ == "__main__":
@@ -188,7 +188,7 @@ if __name__ == "__main__":
         print("\n\n用户中断测试")
         sys.exit(0)
     except Exception as e:
-        print(f"\n\n❌ 测试失败: {e}")
+        print(f"\n\nERR 测试失败: {e}")
         import traceback
 
         traceback.print_exc()

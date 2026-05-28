@@ -18,16 +18,16 @@ GPU配置管理器（GPUConfigManager）是重构后独立的核心组件，位�
 │  └────────┬─────────┘  └────────┬─────────┘                │
 │           │                     │                          │
 │           └─────────┬───────────┘                          │
-│                     ▼                                       │
+│                     [E]                                       │
 │           ┌──────────────────┐                             │
 │           │   配置合并引擎    │                             │
 │           │   (优先级处理)    │                             │
 │           └────────┬─────────┘                             │
-│                    ▼                                       │
+│                    [E]                                       │
 │           ┌──────────────────┐                             │
 │           │   配置验证器      │                             │
 │           └────────┬─────────┘                             │
-│                    ▼                                       │
+│                    [E]                                       │
 │           ┌──────────────────┐                             │
 │           │   应用配置        │                             │
 │           └──────────────────┘                             │
@@ -305,12 +305,12 @@ test_config = {
 errors = config_manager.validate_config_detailed(test_config)
 
 for error in errors:
-    print(f"❌ {error}")
+    print(f"[CROSS] {error}")
 
 # 输出:
-# ❌ batch_size=500 过小，建议 >= 1024
-# ❌ work_group_size=2048 过大，建议 <= 1024
-# ❌ memory_usage_ratio=0.95 过高，建议 <= 0.85
+# [CROSS] batch_size=500 过小，建议 >= 1024
+# [CROSS] work_group_size=2048 过大，建议 <= 1024
+# [CROSS] memory_usage_ratio=0.95 过高，建议 <= 0.85
 ```
 
 ### 配置回滚
@@ -330,7 +330,7 @@ config_manager.apply_config(new_config)
 # 如果出现问题，回滚
 if something_wrong:
     config_manager.restore_checkpoint('before_optimization')
-    print("✅ 已回滚到优化前配置")
+    print("[OK_CHECK] 已回滚到优化前配置")
 ```
 
 ## 配置模板
@@ -514,7 +514,7 @@ print(f"推荐batch_size: {results['optimal_batch_size']:,}")
 
 ## 最佳实践
 
-### ✅ 推荐做法
+### [OK_CHECK] 推荐做法
 
 1. **始终启用异步执行**（v4.2.1+）
 
@@ -537,24 +537,24 @@ print(f"推荐batch_size: {results['optimal_batch_size']:,}")
    - 目标: > 70%
    - 如果 < 50%，增大batch_size
 
-### ❌ 避免做法
+### [CROSS] 避免做法
 
 1. **不要设置过高的memory_usage_ratio**
 
    ```json
-   {"gpu": {"memory_usage_ratio": 0.95}}  // ❌ 危险
+   {"gpu": {"memory_usage_ratio": 0.95}}  // [CROSS] 危险
    ```
 
 2. **不要禁用Intel Arc的uint32_workaround**
 
    ```json
-   {"optimization": {"uint32_workaround": false}}  // ❌ 会导致卡死
+   {"optimization": {"uint32_workaround": false}}  // [CROSS] 会导致卡死
    ```
 
 3. **不要使用过小的batch_size**
 
    ```json
-   {"gpu": {"batch_size": 1024}}  // ❌ 性能极差
+   {"gpu": {"batch_size": 1024}}  // [CROSS] 性能极差
    ```
 
 ## 相关文档
@@ -568,18 +568,18 @@ print(f"推荐batch_size: {results['optimal_batch_size']:,}")
 
 ### v4.2.2 (2026-05-15)
 
-- ✅ P1修复: mod_inverse Binary GCD 2^256溢出
-- ✅ 版本号全局统一 v4.2.2
-- ✅ 生产验收测试全通过
+- [OK_CHECK] P1修复: mod_inverse Binary GCD 2^256溢出
+- [OK_CHECK] 版本号全局统一 v4.2.2
+- [OK_CHECK] 生产验收测试全通过
 
 ### v4.2.1 (2026-05-12)
 
-- ✅ 新增异步双缓冲优化
-- ✅ 性能提升30-50%
-- ✅ 完善配置验证机制
-- ✅ 引入GPUConfigManager
-- ✅ CODE-1修复完成
-- ✅ 配置合并优先级策略
+- [OK_CHECK] 新增异步双缓冲优化
+- [OK_CHECK] 性能提升30-50%
+- [OK_CHECK] 完善配置验证机制
+- [OK_CHECK] 引入GPUConfigManager
+- [OK_CHECK] CODE-1修复完成
+- [OK_CHECK] 配置合并优先级策略
 
 ---
 

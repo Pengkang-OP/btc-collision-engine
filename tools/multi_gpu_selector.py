@@ -20,7 +20,7 @@ def detect_all_gpus():
     try:
         import pyopencl as cl
 
-        print("🔍 正在检测GPU设备...\n")
+        print("SEARCH 正在检测GPU设备...\n")
 
         # 获取所有平台
         platforms = cl.get_platforms()
@@ -30,7 +30,7 @@ def detect_all_gpus():
             platform_name = platform.get_info(cl.platform_info.NAME)
             platform_vendor = platform.get_info(cl.platform_info.VENDOR)
 
-            print(f"📦 平台 {platform_idx}: {platform_name} ({platform_vendor})")
+            print(f"[PACKAGE] 平台 {platform_idx}: {platform_name} ({platform_vendor})")
             print("-" * 80)
 
             try:
@@ -64,7 +64,7 @@ def detect_all_gpus():
                     all_devices.append(device_info)
 
                     # 打印设备信息
-                    print(f"\n  🎮 GPU {len(all_devices) - 1}: {device_name}")
+                    print(f"\n  GPU GPU {len(all_devices) - 1}: {device_name}")
                     print(f"     厂商: {device_vendor}")
                     print(f"     显存: {global_mem / (1024**3):.2f} GB")
                     print(f"     计算单元: {max_compute_units}")
@@ -73,17 +73,17 @@ def detect_all_gpus():
                     print(f"     本地内存: {local_mem_size / 1024:.0f} KB")
 
             except Exception as e:
-                print(f"  ⚠️  获取设备失败: {e}")
+                print(f"  WARN 获取设备失败: {e}")
 
             print()
 
         return all_devices
 
     except ImportError:
-        print("❌ pyopencl未安装")
+        print("ERR pyopencl未安装")
         return []
     except Exception as e:
-        print(f"❌ GPU检测失败: {e}")
+        print(f"ERR GPU检测失败: {e}")
         return []
 
 
@@ -180,20 +180,20 @@ def generate_config(device, devices, output_file="config.multi_gpu.json"):
 def print_summary(devices, recommended, recommendation_text):
     """打印总结."""
     print("\n" + "=" * 80)
-    print("📊 GPU检测总结")
+    print("STATS GPU检测总结")
     print("=" * 80)
 
-    print(f"\n🔢 检测到GPU数量: {len(devices)}")
+    print(f"\n[NUM] 检测到GPU数量: {len(devices)}")
 
     if devices:
-        print("\n📋 所有GPU设备:")
+        print("\n[LIST] 所有GPU设备:")
         for i, device in enumerate(devices):
             scores = device["scores"]
-            recommended_marker = "⭐" if device == recommended else "  "
+            recommended_marker = "[STAR]" if device == recommended else "    "
             print(f"  {recommended_marker} GPU {i}: {device['name']}")
             print(f"      显存: {device['global_mem_gb']:.2f} GB | 分数: {scores['total_score']:.1f}")
 
-        print("\n🏆 推荐GPU:")
+        print("\nTROPHY 推荐GPU:")
         print(f"  {recommended['name']}")
         print(f"  全局索引: {recommended['global_index']}")
         print(f"  {recommendation_text}")
@@ -203,7 +203,7 @@ def print_summary(devices, recommended, recommendation_text):
         print(f"    - 计算单元得分: {recommended['scores']['cu_score']:.1f}")
         print(f"    - 厂商得分: {recommended['scores']['vendor_score']:.1f}")
 
-        print("\n💡 使用方式:")
+        print("\nTIP 使用方式:")
         print("  方式1: 修改config.json")
         print(f'    "gpu_device_index": {recommended["global_index"]}')
         print()
@@ -225,7 +225,7 @@ def main():
     args = parser.parse_args()
 
     print("=" * 80)
-    print("🎮 多GPU环境检测与选择工具")
+    print("GPU 多GPU环境检测与选择工具")
     print("=" * 80)
     print()
 
@@ -233,7 +233,7 @@ def main():
     devices = detect_all_gpus()
 
     if not devices:
-        print("\n❌ 未检测到GPU设备")
+        print("\nERR 未检测到GPU设备")
         print("请检查:")
         print("  1. 是否正确安装GPU驱动")
         print("  2. 是否安装pyopencl: pip install pyopencl")
@@ -248,9 +248,9 @@ def main():
 
     # 生成配置文件
     if args.generate_config:
-        print("\n📝 生成配置文件...")
+        print("\n[NOTE] 生成配置文件...")
         config_path = generate_config(recommended, devices, args.output)
-        print(f"✅ 配置文件已生成: {config_path}")
+        print(f"OK 配置文件已生成: {config_path}")
         print(f"   使用方式: python key_collision_cli.py --config {config_path}")
 
 

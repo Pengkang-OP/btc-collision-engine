@@ -1,11 +1,11 @@
-# ⚡ GPU配置最佳实践
+# [BOLT] GPU配置最佳实践
 
 > **版本**: v4.2.2 | **最后更新**: 2026-05-15
 > **相关文档**: [GPU引擎指南](gpu-engine-guide.md) | [CLI快速参考](CLI_QUICK_REFERENCE.md) | [配置说明](CONFIG.md)
 
 ---
 
-## 📋 目录
+## [CHECKLIST] 目录
 
 1. [GPU配置快速指南](#gpu配置快速指南)
 
@@ -21,7 +21,7 @@
 
 ---
 
-## 🧭 GPU配置快速指南
+## [COMPASS] GPU配置快速指南
 
 使用以下决策树快速确定适合您场景的GPU配置策略：
 
@@ -56,7 +56,7 @@
 
 ---
 
-## 📐 批次大小调优
+## [RULER] 批次大小调优
 
 `batch_size`（`--gpu-batch-size`）是影响GPU性能的最关键参数，直接决定每次GPU并行计算的私钥数量。
 
@@ -70,7 +70,7 @@
 | 8~12GB | `300000` ~ `600000` | 250K ~ 600K 次/秒 | RTX 2080, RX 6700 XT |
 | 16GB+ | `1048576` ~ `2000000` | **3.07M 次/秒**（Intel Arc A770 v4.2.1） | RTX 3090, Intel Arc A770, A100 |
 
-> 💡 **推荐做法**：首次运行不指定 `--gpu-batch-size`，系统会根据显存自动计算最优值。若出现显存不足错误，再手动减小该参数。
+> [TIP] **推荐做法**：首次运行不指定 `--gpu-batch-size`，系统会根据显存自动计算最优值。若出现显存不足错误，再手动减小该参数。
 
 ### 调优步骤
 
@@ -97,11 +97,11 @@ python key_collision_cli.py -t <地址> -m random --use-gpu --gpu-batch-size 200
 
 ```
 
-> ⚠️ 值设为 `-1` 表示自动计算（默认）。
+> [WARN] 值设为 `-1` 表示自动计算（默认）。
 
 ---
 
-## 📦 配置模板对比
+## [PACKAGE] 配置模板对比
 
 使用 `--template` 参数可以一键应用预设配置，避免手动修改 `config.json`。
 
@@ -118,15 +118,15 @@ python key_collision_cli.py --template gpu-performance
 | **中文名** | GPU性能优化 | 多GPU负载均衡 | 长时间运行 | 快速测试 |
 | **适用场景** | 单GPU高性能碰撞 | 多GPU并行碰撞 | 7×24小时持续运行 | 功能测试与验证 |
 | **GPU模式** | `single` | `multi` | 不设定 | 不设定 |
-| **性能优化** | ✅ 开启 | ✅ 开启 | ✅ 开启 | ❌ 关闭 |
-| **SIMD哈希** | ✅ 开启 | ✅ 开启 | 不设定 | 不设定 |
-| **内存池** | ✅ 开启 | ✅ 开启 | 不设定 | 不设定 |
+| **性能优化** | [OK] 开启 | [OK] 开启 | [OK] 开启 | [FAIL] 关闭 |
+| **SIMD哈希** | [OK] 开启 | [OK] 开启 | 不设定 | 不设定 |
+| **内存池** | [OK] 开启 | [OK] 开启 | 不设定 | 不设定 |
 | **window_size** | 8 | 8 | 不设定 | 不设定 |
-| **自动调优** | ✅ 开启 | ✅ 开启 | 不设定 | 不设定 |
-| **厂商优化** | ✅ 开启 | ✅ 开启 | 不设定 | 不设定 |
+| **自动调优** | [OK] 开启 | [OK] 开启 | 不设定 | 不设定 |
+| **厂商优化** | [OK] 开启 | [OK] 开启 | 不设定 | 不设定 |
 | **负载均衡策略** | 不设定 | `performance` | 不设定 | 不设定 |
 | **断点续传间隔** | 不设定 | 不设定 | 每60秒 | 每10秒 |
-| **监控系统** | 不设定 | 不设定 | ✅ 开启（10s采样） | ❌ 关闭 |
+| **监控系统** | 不设定 | 不设定 | [OK] 开启（10s采样） | [FAIL] 关闭 |
 | **日志级别** | 不设定 | 不设定 | `INFO` | `DEBUG` |
 | **日志轮转** | 不设定 | 不设定 | 50MB/10份 | 不设定 |
 | **自动清理** | 不设定 | 不设定 | 7天后清理 | 不设定 |
@@ -162,7 +162,7 @@ python key_collision_cli.py -t <地址> -m random \
 
 ---
 
-## 🔒 `--sensitive-mode` 使用指南
+## [LOCK] `--sensitive-mode` 使用指南
 
 `--sensitive-mode` 参数控制匹配结果中私钥信息的显示和导出方式，适用于多人协作、截图分享、日志留存等需要保护敏感数据的场景。
 
@@ -178,19 +178,19 @@ python key_collision_cli.py -t <地址> -m random \
 
 ```
 # full 模式（默认）
-🎯 发现匹配!
+[TARGET] 发现匹配!
   地址     : 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
   私钥 Hex : 0000000000000000000000000000000000000000000000000000000000000001
   WIF      : KwDiBf89QgGbjEhKnhXJuH7LrciVrZi3qYjgd9M7rFU73sVHnoWn
 
 # masked 模式
-🎯 发现匹配!
+[TARGET] 发现匹配!
   地址     : 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
   私钥 Hex : 00000000********************************00000001
   WIF      : KwDi****************************oWn
 
 # hash_only 模式
-🎯 发现匹配!
+[TARGET] 发现匹配!
   地址     : 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
   私钥 Hex : [SHA256:5feceb66ffc86f38...]
   WIF      : [已隐藏]
@@ -199,11 +199,11 @@ python key_collision_cli.py -t <地址> -m random \
 
 ### 安全建议
 
-- 🟢 **本地单人使用**：使用默认 `full` 模式，确保找到碰撞后可立即获取完整私钥。
+- [GREEN] **本地单人使用**：使用默认 `full` 模式，确保找到碰撞后可立即获取完整私钥。
 
-- 🟡 **团队协作 / 截图留存**：使用 `masked` 模式，防止私钥在通讯记录中泄露。
+- [YELLOW] **团队协作 / 截图留存**：使用 `masked` 模式，防止私钥在通讯记录中泄露。
 
-- 🔴 **高安全合规场景**：使用 `hash_only` 模式，仅记录碰撞存在的证据，不保存私钥。
+- [RED] **高安全合规场景**：使用 `hash_only` 模式，仅记录碰撞存在的证据，不保存私钥。
 
 ```bash
 # 配合导出使用（保护导出文件中的私钥）
@@ -215,11 +215,11 @@ python key_collision_cli.py -f targets.txt -m random \
 
 ```
 
-> ⚠️ **重要**：`hash_only` 模式下，匹配到的私钥将**无法恢复**。如果您需要实际使用发现的私钥，请勿使用此模式，或在验证后改回 `full` 模式重新运行。
+> [WARN] **重要**：`hash_only` 模式下，匹配到的私钥将**无法恢复**。如果您需要实际使用发现的私钥，请勿使用此模式，或在验证后改回 `full` 模式重新运行。
 
 ---
 
-## 🔧 性能优化参数
+## [TOOL] 性能优化参数
 
 以下参数允许对CPU端性能优化策略进行精细控制，在特殊硬件或调试场景下使用。
 
@@ -277,7 +277,7 @@ python key_collision_cli.py -f targets.txt -m random \
 
 ---
 
-## ❓ 常见问题
+## [MISS] 常见问题
 
 ### Q1: GPU不可用 / 初始化失败
 
@@ -377,7 +377,7 @@ python key_collision_cli.py -t <地址> -m random \
 
 ```
 
-> 💡 引擎已内置30秒超时保护机制，GPU Hang会被自动检测并恢复，无需手动干预。
+> [TIP] 引擎已内置30秒超时保护机制，GPU Hang会被自动检测并恢复，无需手动干预。
 
 ---
 
@@ -399,14 +399,14 @@ platforms = cl.get_platforms()
 for p in platforms:
     for d in p.get_devices(cl.device_type.GPU):
         ctx = cl.Context([d])
-        print(f'✅ {d.name} 上下文创建成功')
+        print(f'[OK] {d.name} 上下文创建成功')
 "
 
 ```
 
 ---
 
-## 📚 相关参考
+## [DOCS] 相关参考
 
 - GPU引擎详细说明：[gpu-engine-guide.md](gpu-engine-guide.md)
 

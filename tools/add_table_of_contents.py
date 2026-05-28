@@ -136,13 +136,13 @@ def main():
 
     docs_dir = Path(args.docs_dir)
     if not docs_dir.exists():
-        print(f"❌ 文档目录不存在: {docs_dir}")
+        print(f"ERR 文档目录不存在: {docs_dir}")
         sys.exit(1)
 
-    print("🔧 开始为长文档添加目录...\n")
+    print("TOOL 开始为长文档添加目录...\n")
 
     if args.dry_run:
-        print("⚠️  模拟运行模式 - 不会修改文件\n")
+        print("WARN 模拟运行模式 - 不会修改文件\n")
 
     md_files = list(docs_dir.glob("*.md"))
     md_files = [f for f in md_files if "archive" not in str(f)]
@@ -169,29 +169,29 @@ def main():
 
             if not args.dry_run:
                 md_file.write_text(new_content, encoding="utf-8")
-                print(f"✅ {md_file.name}: 添加目录 ({line_count}行, {headings_count}个标题)")
+                print(f"OK {md_file.name}: 添加目录 ({line_count}行, {headings_count}个标题)")
             else:
-                print(f"📄 {md_file.name}: 将添加目录 ({line_count}行, {headings_count}个标题)")
+                print(f"[FILE] {md_file.name}: 将添加目录 ({line_count}行, {headings_count}个标题)")
 
     print(f"\n{'=' * 60}")
-    print("📊 目录添加报告")
+    print("STATS 目录添加报告")
     print(f"{'=' * 60}")
 
-    print(f"\n📁 扫描文件: {len(md_files)}")
-    print(f"⏭️  跳过(行数不足): {total_skipped}")
-    print(f"✨ 添加目录: {total_added}")
+    print(f"\n[FOLDER] 扫描文件: {len(md_files)}")
+    print(f"[SKIP] 跳过(行数不足): {total_skipped}")
+    print(f"[NEW] 添加目录: {total_added}")
 
     if file_stats:
         print("\n添加详情:")
         for file_name, lines, headings in sorted(file_stats, key=lambda x: -x[1]):
-            print(f"  📄 {file_name}: {lines}行, {headings}个标题")
+            print(f"  [FILE] {file_name}: {lines}行, {headings}个标题")
 
     print(f"\n{'=' * 60}")
 
     if args.dry_run:
-        print("\n💡 这是模拟运行。移除 --dry-run 参数以实际添加。")
+        print("\nTIP 这是模拟运行。移除 --dry-run 参数以实际添加。")
     else:
-        print(f"\n✅ 添加完成！共为 {total_added} 个文档添加目录。")
+        print(f"\nOK 添加完成！共为 {total_added} 个文档添加目录。")
 
     return total_added
 

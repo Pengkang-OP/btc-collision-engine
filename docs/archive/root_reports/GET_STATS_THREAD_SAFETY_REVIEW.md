@@ -3,11 +3,11 @@
 **审查日期**: 2026-04-23 02:45:00  
 **审查范围**: `get_stats()`方法修复  
 **审查类型**: 线程安全性与数据一致性专项审查  
-**审查结论**: ⚠️ 发现3个问题，需要改进
+**审查结论**: [WARN] 发现3个问题，需要改进
 
 ---
 
-## 📋 审查概览
+## [CHECKLIST] 审查概览
 
 ### 修复内容
 
@@ -31,14 +31,14 @@ def get_stats(self) -> CollisionStats:
 ### 审查结论
 
 **评分**: 7/10  
-**状态**: ⚠️ 基本可用，存在改进空间  
+**状态**: [WARN] 基本可用，存在改进空间  
 **严重性**: 中（不影响功能，但有设计缺陷）
 
 ---
 
-## 🔍 详细审查
+## [SEARCH] 详细审查
 
-### 问题1: 违反CollisionStats的线程安全模型 🔴 高
+### 问题1: 违反CollisionStats的线程安全模型 [RED] 高
 
 **严重程度**: 高  
 **影响**: 可能导致数据不一致
@@ -62,9 +62,9 @@ class CollisionStats:
 
 ```python
 def get_stats(self):
-    with self._state_lock:  # ❌ 使用引擎的锁
-        self.stats.total_checked += live_count  # ❌ 直接修改，未使用stats._lock
-        self.stats.speed = ...  # ❌ 直接修改，未使用stats._lock
+    with self._state_lock:  # [CROSS] 使用引擎的锁
+        self.stats.total_checked += live_count  # [CROSS] 直接修改，未使用stats._lock
+        self.stats.speed = ...  # [CROSS] 直接修改，未使用stats._lock
 ```
 
 **问题**:
@@ -109,13 +109,13 @@ def get_stats(self) -> CollisionStats:
 
 **优点**:
 
-- ✅ 使用CollisionStats自己的锁
-- ✅ 遵循封装原则
-- ✅ update()会同时更新speed和elapsed
+- [OK_CHECK] 使用CollisionStats自己的锁
+- [OK_CHECK] 遵循封装原则
+- [OK_CHECK] update()会同时更新speed和elapsed
 
 **缺点**:
 
-- ⚠️ update()需要知道total_checked（需要先从stats读取）
+- [WARN] update()需要知道total_checked（需要先从stats读取）
 
 **方案B: 双重锁保护**
 
@@ -138,17 +138,17 @@ def get_stats(self) -> CollisionStats:
 
 **优点**:
 
-- ✅ 正确使用双重锁
-- ✅ 避免竞态条件
+- [OK_CHECK] 正确使用双重锁
+- [OK_CHECK] 避免竞态条件
 
 **缺点**:
 
-- ⚠️ 嵌套锁可能导致性能问题
-- ⚠️ 需要访问stats._lock（打破封装）
+- [WARN] 嵌套锁可能导致性能问题
+- [WARN] 需要访问stats._lock（打破封装）
 
 ---
 
-### 问题2: 返回值是可变引用 🟡 中
+### 问题2: 返回值是可变引用 [YELLOW] 中
 
 **严重程度**: 中  
 **影响**: 外部代码可能意外修改内部状态
@@ -157,7 +157,7 @@ def get_stats(self) -> CollisionStats:
 
 ```python
 def get_stats(self) -> CollisionStats:
-    return self.stats  # ❌ 返回可变对象的引用
+    return self.stats  # [CROSS] 返回可变对象的引用
 ```
 
 **风险**:
@@ -165,7 +165,7 @@ def get_stats(self) -> CollisionStats:
 ```python
 # 外部代码
 stats = engine.get_stats()
-stats.total_checked = 0  # ❌ 意外修改了引擎内部状态！
+stats.total_checked = 0  # [CROSS] 意外修改了引擎内部状态！
 ```
 
 **现有代码的使用方式**:
@@ -180,7 +180,7 @@ print(format_progress(stats, ...))  # 只读，安全
 **进度回调使用**（key_collision_engine.py:743）:
 
 ```python
-self.on_progress(self.stats.snapshot())  # ✅ 使用快照，安全
+self.on_progress(self.stats.snapshot())  # [OK_CHECK] 使用快照，安全
 ```
 
 **问题**:
@@ -211,14 +211,14 @@ def get_stats(self) -> CollisionStats:
 
 **优点**:
 
-- ✅ 完全线程安全
-- ✅ 外部无法修改内部状态
-- ✅ 快照是时间点的完整状态
+- [OK_CHECK] 完全线程安全
+- [OK_CHECK] 外部无法修改内部状态
+- [OK_CHECK] 快照是时间点的完整状态
 
 **缺点**:
 
-- ⚠️ 每次调用都创建新对象（性能开销）
-- ⚠️ 但CLI每5秒调用一次，影响可忽略
+- [WARN] 每次调用都创建新对象（性能开销）
+- [WARN] 但CLI每5秒调用一次，影响可忽略
 
 **方案B: 文档警告（当前方案+注释）**
 
@@ -227,7 +227,7 @@ def get_stats(self) -> CollisionStats:
     """
     获取当前统计信息
     
-    ⚠️ 注意: 返回的是内部对象的引用，不应修改！
+    [WARN] 注意: 返回的是内部对象的引用，不应修改！
              如需线程安全快照，请使用 stats.snapshot()
     """
     # ... 现有代码 ...
@@ -236,17 +236,17 @@ def get_stats(self) -> CollisionStats:
 
 **优点**:
 
-- ✅ 零性能开销
-- ✅ 保持向后兼容
+- [OK_CHECK] 零性能开销
+- [OK_CHECK] 保持向后兼容
 
 **缺点**:
 
-- ❌ 依赖调用者遵守约定
-- ❌ 不是真正的线程安全
+- [CROSS] 依赖调用者遵守约定
+- [CROSS] 不是真正的线程安全
 
 ---
 
-### 问题3: 重复计算速度 🟡 中
+### 问题3: 重复计算速度 [YELLOW] 中
 
 **严重程度**: 中  
 **影响**: 速度计算可能不准确
@@ -301,13 +301,13 @@ def get_stats(self) -> CollisionStats:
 
 **优点**:
 
-- ✅ speed计算集中在一处
-- ✅ update()会同时更新elapsed
-- ✅ 逻辑更清晰
+- [OK_CHECK] speed计算集中在一处
+- [OK_CHECK] update()会同时更新elapsed
+- [OK_CHECK] 逻辑更清晰
 
 ---
 
-### 问题4: 边界条件处理 🟢 低
+### 问题4: 边界条件处理 [GREEN] 低
 
 **严重程度**: 低  
 **影响**: 极端情况下可能出错
@@ -316,12 +316,12 @@ def get_stats(self) -> CollisionStats:
 
 | 边界条件 | 当前处理 | 状态 |
 |---------|---------|------|
-| `self.stats`为None | `if self.stats` | ✅ 安全 |
-| `_live_range_count`不存在 | `hasattr()` | ✅ 安全 |
-| `_live_range_count`为0 | `if live_count > 0` | ✅ 安全 |
-| `start_time`为0 | `if self.stats.start_time > 0` | ✅ 安全 |
-| `elapsed`为0 | `if elapsed > 0` | ✅ 安全 |
-| 多线程同时调用 | 使用_state_lock | ⚠️ 部分安全 |
+| `self.stats`为None | `if self.stats` | [OK_CHECK] 安全 |
+| `_live_range_count`不存在 | `hasattr()` | [OK_CHECK] 安全 |
+| `_live_range_count`为0 | `if live_count > 0` | [OK_CHECK] 安全 |
+| `start_time`为0 | `if self.stats.start_time > 0` | [OK_CHECK] 安全 |
+| `elapsed`为0 | `if elapsed > 0` | [OK_CHECK] 安全 |
+| 多线程同时调用 | 使用_state_lock | [WARN] 部分安全 |
 
 #### 潜在问题
 
@@ -334,7 +334,7 @@ with self._state_lock:
     self.stats.speed = ...  # 正在计算
 
 # Thread B: worker thread
-self.stats.update(5000)  # ❌ 也在修改total_checked和speed
+self.stats.update(5000)  # [CROSS] 也在修改total_checked和speed
 ```
 
 **但实际情况**:
@@ -343,11 +343,11 @@ self.stats.update(5000)  # ❌ 也在修改total_checked和speed
 - 只在`random_search()`结束时调用（第767行）
 - 运行时不会冲突
 
-**结论**: ⚠️ 理论上可能，实际不会发生
+**结论**: [WARN] 理论上可能，实际不会发生
 
 ---
 
-## 📊 线程安全性分析
+## [CHART] 线程安全性分析
 
 ### 锁的使用情况
 
@@ -366,7 +366,7 @@ Worker Threads                    Main Thread (CLI)
      |                                      v
      |                              with _state_lock:
      |                                  stats.total_checked += ...
-     |                                  stats.speed = ...  ← ❌ 未用stats._lock
+     |                                  stats.speed = ...  ← [CROSS] 未用stats._lock
      |
      +--> stats.update()  ← 只在结束时调用
           (with stats._lock)
@@ -376,18 +376,18 @@ Worker Threads                    Main Thread (CLI)
 
 | 场景 | 可能性 | 影响 | 风险等级 |
 |------|--------|------|---------|
-| get_stats()并发调用 | 低 | 低 | 🟢 低 |
-| get_stats() + stats.update()并发 | 极低 | 中 | 🟡 中 |
-| get_stats()修改stats时其他线程读取 | 中 | 中 | 🟡 中 |
-| _live_range_count重复计算 | 已防止 | - | 🟢 无 |
+| get_stats()并发调用 | 低 | 低 | [GREEN] 低 |
+| get_stats() + stats.update()并发 | 极低 | 中 | [YELLOW] 中 |
+| get_stats()修改stats时其他线程读取 | 中 | 中 | [YELLOW] 中 |
+| _live_range_count重复计算 | 已防止 | - | [GREEN] 无 |
 
 ---
 
-## 🎯 改进建议
+## [TARGET] 改进建议
 
 ### 建议1: 使用stats.update()（强烈推荐）
 
-**优先级**: 🔴 高  
+**优先级**: [RED] 高  
 **工作量**: 5分钟
 
 ```python
@@ -407,16 +407,16 @@ def get_stats(self) -> CollisionStats:
 
 **理由**:
 
-1. ✅ 遵循CollisionStats的设计意图
-2. ✅ 使用stats自己的锁
-3. ✅ 同时更新speed和elapsed
-4. ✅ 避免重复代码
+1. [OK_CHECK] 遵循CollisionStats的设计意图
+2. [OK_CHECK] 使用stats自己的锁
+3. [OK_CHECK] 同时更新speed和elapsed
+4. [OK_CHECK] 避免重复代码
 
 ---
 
 ### 建议2: 返回快照（推荐）
 
-**优先级**: 🟡 中  
+**优先级**: [YELLOW] 中  
 **工作量**: 2分钟
 
 ```python
@@ -436,9 +436,9 @@ def get_stats(self) -> CollisionStats:
 
 **理由**:
 
-1. ✅ 完全线程安全
-2. ✅ 符合最小权限原则
-3. ✅ 与进度回调一致（都使用snapshot）
+1. [OK_CHECK] 完全线程安全
+2. [OK_CHECK] 符合最小权限原则
+3. [OK_CHECK] 与进度回调一致（都使用snapshot）
 
 **性能影响**:
 
@@ -450,7 +450,7 @@ def get_stats(self) -> CollisionStats:
 
 ### 建议3: 添加文档说明
 
-**优先级**: 🟢 低  
+**优先级**: [GREEN] 低  
 **工作量**: 3分钟
 
 ```python
@@ -477,7 +477,7 @@ def get_stats(self) -> CollisionStats:
 
 ---
 
-## 📝 修复优先级
+## [MEMO] 修复优先级
 
 ### P0 - 必须修复（影响正确性）
 
@@ -495,7 +495,7 @@ def get_stats(self) -> CollisionStats:
 
 ---
 
-## 🧪 测试建议
+## [TEST] 测试建议
 
 ### 测试1: 并发访问测试
 
@@ -572,7 +572,7 @@ def test_snapshot_isolation():
 
 ---
 
-## 📊 总结评分
+## [CHART] 总结评分
 
 | 维度 | 评分 | 说明 |
 |------|------|------|
@@ -586,24 +586,24 @@ def test_snapshot_isolation():
 
 ---
 
-## ✅ 最终结论
+## [OK_CHECK] 最终结论
 
-### 审查结果: ⚠️ **有条件通过**
+### 审查结果: [WARN] **有条件通过**
 
 **可以部署，但建议尽快改进**
 
 #### 优点
 
-- ✅ 解决了核心问题（进度显示为0）
-- ✅ 使用了_state_lock保护
-- ✅ 避免了重复计算（重置_live_range_count）
-- ✅ 边界条件处理完善
+- [OK_CHECK] 解决了核心问题（进度显示为0）
+- [OK_CHECK] 使用了_state_lock保护
+- [OK_CHECK] 避免了重复计算（重置_live_range_count）
+- [OK_CHECK] 边界条件处理完善
 
 #### 缺点
 
-- ⚠️ 绕过了CollisionStats的锁机制
-- ⚠️ 返回可变引用
-- ⚠️ 速度计算重复
+- [WARN] 绕过了CollisionStats的锁机制
+- [WARN] 返回可变引用
+- [WARN] 速度计算重复
 
 #### 建议行动
 

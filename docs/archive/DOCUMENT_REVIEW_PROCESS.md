@@ -5,7 +5,7 @@
 
 ## 目录
 
-- [📋 目录](#-目录)
+- [[CHECKLIST] 目录](#-目录)
 - [审查流程概述](#审查流程概述)
   - [为什么需要文档审查？](#为什么需要文档审查)
   - [审查范围](#审查范围)
@@ -58,7 +58,7 @@
 - [相关文档](#相关文档)
 ---
 
-## 📋 目录
+## [CHECKLIST] 目录
 
 - [审查流程概述](#审查流程概述)
 - [审查角色和职责](#审查角色和职责)
@@ -73,11 +73,11 @@
 
 ### 为什么需要文档审查？
 
-- ✅ 确保文档准确性和完整性
-- ✅ 保持文档风格一致性
-- ✅ 提高文档可读性和可维护性
-- ✅ 减少用户困惑和支持成本
-- ✅ 促进知识共享和团队协作
+- [OK_CHECK] 确保文档准确性和完整性
+- [OK_CHECK] 保持文档风格一致性
+- [OK_CHECK] 提高文档可读性和可维护性
+- [OK_CHECK] 减少用户困惑和支持成本
+- [OK_CHECK] 促进知识共享和团队协作
 
 ### 审查范围
 
@@ -398,9 +398,9 @@ graph TD
 python tools/check_document_quality.py
 
 # 输出示例:
-# ✅ architecture.md - 质量评分: 9.5/10
-# ⚠️  api-reference.md - 质量评分: 7.2/10 (3个断裂链接)
-# ❌  new-doc.md - 质量评分: 5.0/10 (缺少版本信息)
+# [OK_CHECK] architecture.md - 质量评分: 9.5/10
+# [WARN]  api-reference.md - 质量评分: 7.2/10 (3个断裂链接)
+# [CROSS]  new-doc.md - 质量评分: 5.0/10 (缺少版本信息)
 ```python
 
 **检查项目**:
@@ -417,9 +417,9 @@ python tools/check_document_quality.py
 python tools/check_broken_links.py
 
 # 输出示例:
-# 🔍 扫描 32 个文档...
-# ✅ 找到 458 个链接
-# ⚠️  发现 3 个断裂链接:
+# [SEARCH] 扫描 32 个文档...
+# [OK_CHECK] 找到 458 个链接
+# [WARN]  发现 3 个断裂链接:
 #    - docs/guide.md:45 - links to missing-file.md
 #    - docs/api.md:120 - external link 404
 #    - docs/faq.md:78 - anchor not found
@@ -432,7 +432,7 @@ python tools/check_broken_links.py
 python tools/generate_doc_stats.py
 
 # 输出示例:
-# 📊 文档统计报告
+# [CHART] 文档统计报告
 # 核心文档: 32个
 # 归档文档: 43个
 # 总行数: 45,678

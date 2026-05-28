@@ -14,16 +14,16 @@
 
 | 文件 | 通过 | 失败 | 错误 | 状态 |
 |------|------|------|------|------|
-| `test_acceptance_aux_data.py` | 43 | 0 | 0 | ✅ 全部通过 |
-| `test_acceptance_aux_functions.py` | 39 | 0 | 0 | ✅ 全部通过 |
-| `test_acceptance_crypto.py` | 25 | 19 | 1 | ⚠️ 部分通过 |
-| `test_acceptance_data.py` | 12 | 3 | 0 | ⚠️ 部分通过 |
-| `test_acceptance_e2e.py` | 0 | 15 | 0 | ❌ 全部失败 |
-| `test_acceptance_engine.py` | 4 | 26 | 0 | ❌ 大量失败 |
-| `test_acceptance_gpu.py` | 0 | 0 | 27 | ❌ 全部错误 |
-| `test_acceptance_integration.py` | 3 | 11 | 0 | ⚠️ 部分通过 |
-| `test_acceptance_lifecycle.py` | 16 | 8 | 5 | ⚠️ 部分通过 |
-| `test_acceptance_pipeline.py` | 5 | 4 | 2 | ⚠️ 部分通过 |
+| `test_acceptance_aux_data.py` | 43 | 0 | 0 | [OK] 全部通过 |
+| `test_acceptance_aux_functions.py` | 39 | 0 | 0 | [OK] 全部通过 |
+| `test_acceptance_crypto.py` | 25 | 19 | 1 | [WARN] 部分通过 |
+| `test_acceptance_data.py` | 12 | 3 | 0 | [WARN] 部分通过 |
+| `test_acceptance_e2e.py` | 0 | 15 | 0 | [FAIL] 全部失败 |
+| `test_acceptance_engine.py` | 4 | 26 | 0 | [FAIL] 大量失败 |
+| `test_acceptance_gpu.py` | 0 | 0 | 27 | [FAIL] 全部错误 |
+| `test_acceptance_integration.py` | 3 | 11 | 0 | [WARN] 部分通过 |
+| `test_acceptance_lifecycle.py` | 16 | 8 | 5 | [WARN] 部分通过 |
+| `test_acceptance_pipeline.py` | 5 | 4 | 2 | [WARN] 部分通过 |
 
 ## 主要修复内容
 

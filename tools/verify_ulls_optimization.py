@@ -39,9 +39,9 @@ def run_ulls_verification_test(duration=60):
     try:
         from src.config.config_manager import ConfigManager
 
-        print("✅ GPU引擎加载成功")
+        print("OK GPU引擎加载成功")
     except ImportError as e:
-        print(f"❌ GPU引擎加载失败: {e}")
+        print(f"ERR GPU引擎加载失败: {e}")
         print("请确保已安装必要的依赖")
         return None
 
@@ -49,9 +49,9 @@ def run_ulls_verification_test(duration=60):
     config_file = Path("config.intel_arc.json")
     if config_file.exists():
         ConfigManager(config_file=str(config_file))
-        print(f"✅ 配置文件加载: {config_file}")
+        print(f"OK 配置文件加载: {config_file}")
     else:
-        print("⚠️  使用默认配置")
+        print("WARN 使用默认配置")
 
     print()
     print("=" * 80)
@@ -165,22 +165,22 @@ def generate_verification_report(performance_data, comparison):
         print()
 
         if comparison.get("meets_expectation", False):
-            print("  ✅ 达到预期效果 (14-31%提升)")
+            print("  OK 达到预期效果 (14-31%提升)")
         else:
             improvement = comparison.get("peak_improvement", 0)
             if improvement > 31:
-                print(f"  ⚠️  超出预期 ({improvement:.2f}% > 31%)")
+                print(f"  WARN 超出预期 ({improvement:.2f}% > 31%)")
                 print("     可能原因:")
                 print("     - 其他优化同时生效")
                 print("     - 测试环境变化")
             elif improvement > 0:
-                print(f"  ⚠️  未达到预期 ({improvement:.2f}% < 14%)")
+                print(f"  WARN 未达到预期 ({improvement:.2f}% < 14%)")
                 print("     可能原因:")
                 print("     - ULLS未完全禁用")
                 print("     - 其他性能瓶颈")
                 print("     - 测试时间不足")
             else:
-                print(f"  ❌ 性能下降 ({improvement:.2f}%)")
+                print(f"  ERR 性能下降 ({improvement:.2f}%)")
                 print("     建议:")
                 print("     - 检查ULLS设置")
                 print("     - 重新测试")
@@ -192,12 +192,12 @@ def generate_verification_report(performance_data, comparison):
     print("【建议】")
     print("-" * 80)
     if comparison and comparison.get("meets_expectation", False):
-        print("  ✅ ULLS优化成功!")
+        print("  OK ULLS优化成功!")
         print("     - 保持当前配置")
         print("     - 定期监控性能")
         print("     - 记录优化效果")
     else:
-        print("  ⚠️  需要进一步验证")
+        print("  WARN 需要进一步验证")
         print("     - 确认ULLS已正确禁用")
         print("     - 延长测试时间至5分钟")
         print("     - 检查其他性能瓶颈")
@@ -255,9 +255,9 @@ if __name__ == "__main__":
         try:
             with open(args.before, encoding="utf-8") as f:
                 before_data = json.load(f)
-            print(f"✅ 加载优化前数据: {args.before}")
+            print(f"OK 加载优化前数据: {args.before}")
         except Exception as e:
-            print(f"⚠️  加载优化前数据失败: {e}")
+            print(f"WARN 加载优化前数据失败: {e}")
 
     # 运行测试
     after_data = run_ulls_verification_test(duration=args.duration)

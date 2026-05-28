@@ -14,19 +14,19 @@
 
   - [文档导航](#文档导航)
 
-    - [📖 入门指南 (3个)](#-入门指南-3个)
+    - [[BOOK] 入门指南 (3个)](#-入门指南-3个)
 
-    - [🏗️ 架构设计 (2个)](#️-架构设计-2个)
+    - [[BUILD] 架构设计 (2个)](#-架构设计-2个)
 
-    - [💻 API和界面 (1个)](#-api和界面-1个)
+    - [[PC] API和界面 (1个)](#-api和界面-1个)
 
-    - [🔒 安全和性能 (3个)](#-安全和性能-3个)
+    - [[LOCK] 安全和性能 (3个)](#-安全和性能-3个)
 
-    - [🔧 运维和监控 (4个)](#-运维和监控-4个)
+    - [[TOOL] 运维和监控 (4个)](#-运维和监控-4个)
 
-    - [📦 功能特性 (4个)](#-功能特性-4个)
+    - [[PACKAGE] 功能特性 (4个)](#-功能特性-4个)
 
-    - [📦 归档文档](#-归档文档)
+    - [[PACKAGE] 归档文档](#-归档文档)
 
   - [系统概览](#系统概览)
 
@@ -40,45 +40,45 @@
 
 ## 快速入口
 
-- 🚀 [快速开始指南](getting-started.md) - 5分钟上手
+- [QUICK] [快速开始指南](getting-started.md) - 5分钟上手
 
-- 📊 [项目状态总览](project-status.md) - 当前状态
+- [CHART] [项目状态总览](project-status.md) - 当前状态
 
-- 🔍 [审计报告](audit-reports/) - 多维度技术审计报告
+- [CHECK] [审计报告](audit-reports/) - 多维度技术审计报告
 
-- 📦 [历史归档](archive/) - 历史过程文档
+- [PACKAGE] [历史归档](archive/) - 历史过程文档
 
 ---
 
 ## 文档导航
 
-### 📖 入门指南 (3个)
+### [BOOK] 入门指南 (3个)
 
-- [getting-started.md](getting-started.md) - 快速开始与部署指南 ⭐
+- [getting-started.md](getting-started.md) - 快速开始与部署指南 *
 
-- [project-status.md](project-status.md) - 项目状态总览 ⭐
+- [project-status.md](project-status.md) - 项目状态总览 *
 
 - [requirements.md](developer-docs/requirements.md) - 需求规格和功能规划
 
-### 🏗️ 架构设计 (2个)
+### [BUILD] 架构设计 (2个)
 
-- [architecture.md](architecture.md) - 系统架构设计（含代码审核和算法）⭐
+- [architecture.md](architecture.md) - 系统架构设计（含代码审核和算法）*
 
 - [workflow_diagrams.md](technical-docs/workflow_diagrams.md) - 工作流程图
 
-### 💻 API和界面 (1个)
+### [PC] API和界面 (1个)
 
-- [api-reference.md](api-reference.md) - 完整API文档 ⭐
+- [api-reference.md](api-reference.md) - 完整API文档 *
 
-### 🔒 安全和性能 (3个)
+### [LOCK] 安全和性能 (3个)
 
-- [security-guidelines.md](security-guidelines.md) - 安全最佳实践（含审计发现） ⭐
+- [security-guidelines.md](security-guidelines.md) - 安全最佳实践（含审计发现） *
 
 - [secure-key-management.md](secure-key-management.md) - 私钥安全管理指南
 
 - [performance-optimization.md](technical-docs/performance-optimization.md) - 性能调优指南
 
-### 🔧 运维和监控 (4个)
+### [TOOL] 运维和监控 (4个)
 
 - [troubleshooting.md](troubleshooting.md) - 故障排除指南
 
@@ -86,7 +86,7 @@
 
 - [monitoring-system-guide.md](monitoring-system-guide.md) - 监控系统指南
 
-### 📦 功能特性 (4个)
+### [PACKAGE] 功能特性 (4个)
 
 - [checkpoint-resume-feature.md](feature-docs/checkpoint-resume-feature.md) - 断点续传功能
 
@@ -96,7 +96,7 @@
 
 - [quick-reference-private-key-security.md](feature-docs/quick-reference-private-key-security.md) - 私钥安全快速参考
 
-### 📦 归档文档
+### [PACKAGE] 归档文档
 
 历史过程文档已归档到 [archive/](archive/) 目录，包括各Phase完成报告、代码审查、迁移报告等 38 个文件。
 
@@ -106,19 +106,19 @@
 
 ```python
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  CLI      │────▶│   Engine    │────▶│   Crypto    │
+│  CLI      │────[PLAY]│   Engine    │────[PLAY]│   Crypto    │
 │   界面层     │     │   碰撞引擎   │     │   核心算法   │
 └─────────────┘     └─────────────┘     └─────────────┘
                            │
                     ┌──────┴────────────┐
-                    ▼                   ▼
+                    [E]                   [E]
               ┌─────────┐     ┌─────────┐
               │  Stats  │     │Checkpoint│
               │  统计   │     │  断点   │
               └─────────┘     └─────────┘
                            │
                     ┌──────┴────────────┐
-                    ▼                   ▼
+                    [E]                   [E]
               ┌─────────┐     ┌─────────┐
               │ Config  │     │Monitoring│
               │  配置   │     │  监控   │
@@ -128,58 +128,58 @@
 
 ## 核心特性
 
-- ✅ 三种碰撞模式：随机、范围扫描、暴力穷举
+- [OK] 三种碰撞模式：随机、范围扫描、暴力穷举
 
-- ✅ 多格式目标解析：地址、WIF、公钥
+- [OK] 多格式目标解析：地址、WIF、公钥
 
-- ✅ 断点续传：JSON格式持久化
+- [OK] 断点续传：JSON格式持久化
 
-- ✅ 去重过滤：滑动窗口+指纹
+- [OK] 去重过滤：滑动窗口+指纹
 
-- ✅ 多后端加密：PurePython/OpenSSL/coincurve/ecdsa
+- [OK] 多后端加密：PurePython/OpenSSL/coincurve/ecdsa
 
-- ✅ 实时统计：速度、进度、ETA
+- [OK] 实时统计：速度、进度、ETA
 
-- ✅ 单界面：CLI命令行
+- [OK] 单界面：CLI命令行
 
-- ✅ 配置管理：统一的配置系统
+- [OK] 配置管理：统一的配置系统
 
-- ✅ 监控系统：实时监控碰撞过程
+- [OK] 监控系统：实时监控碰撞过程
 
-- ✅ 数据日志：自动记录性能指标和引擎状态
+- [OK] 数据日志：自动记录性能指标和引擎状态
 
-- ✅ 294+单元测试（99.7%+通过率）
+- [OK] 294+单元测试（99.7%+通过率）
 
 ## 代码质量
 
 | 维度 | 评分 | 审计得分 |
 |------|------|----------|
-| 代码结构 | ★★★★★ | 9.5/10 |
-| 类型安全 | ★★★★★ | 9.8/10 |
-| 文档质量 | ★★★★☆ | 8.8/10 |
-| 线程安全 | ★★★★★ | 9.7/10 |
-| 安全设计 | ★★★★★ | 9.7/10 |
-| 测试覆盖 | ★★★★★ | 9.7/10 |
-| 算法正确性 | ★★★★★ | 9.8/10 |
-| 性能优化 | ★★★★★ | 9.0/10 |
+| 代码结构 | [STAR][STAR][STAR][STAR][STAR] | 9.5/10 |
+| 类型安全 | [STAR][STAR][STAR][STAR][STAR] | 9.8/10 |
+| 文档质量 | [STAR][STAR][STAR][STAR][ESTAR] | 8.8/10 |
+| 线程安全 | [STAR][STAR][STAR][STAR][STAR] | 9.7/10 |
+| 安全设计 | [STAR][STAR][STAR][STAR][STAR] | 9.7/10 |
+| 测试覆盖 | [STAR][STAR][STAR][STAR][STAR] | 9.7/10 |
+| 算法正确性 | [STAR][STAR][STAR][STAR][STAR] | 9.8/10 |
+| 性能优化 | [STAR][STAR][STAR][STAR][STAR] | 9.0/10 |
 
-**综合评分: 9.2/10 ⭐⭐⭐⭐⭐** (详见[审计报告](audit-reports/))
+**综合评分: 9.2/10 ******* (详见[审计报告](audit-reports/))
 
-> 📦 **注意**: 历史过程文档已归档到 [archive/](archive/) 目录。
+> [PACKAGE] **注意**: 历史过程文档已归档到 [archive/](archive/) 目录。
 
 ## 测试状态
 
 ```python
-✅ 400+ 单元测试 - 97%+通过率
-✅ 48 secp256k1扩展测试 - 100%通过
-✅ 16 crypto_backend测试 - 100%通过
-✅ 53 gpu_memory_utils测试 - 100%通过
-✅ 性能基准测试 - 100%通过
-✅ 安全测试 - 100%通过
+[OK] 400+ 单元测试 - 97%+通过率
+[OK] 48 secp256k1扩展测试 - 100%通过
+[OK] 16 crypto_backend测试 - 100%通过
+[OK] 53 gpu_memory_utils测试 - 100%通过
+[OK] 性能基准测试 - 100%通过
+[OK] 安全测试 - 100%通过
 
 ```
 
-**测试通过率**: ✅ **97%+** (400+用例)
+**测试通过率**: [OK] **97%+** (400+用例)
 
 ## 文件结构
 
@@ -187,14 +187,14 @@
 f:/BTC/
 ├── docs/                          # 文档目录 (50+个核心文档 + 38个归档文档)
 │   ├── README.md                  # 文档导航（本文档）
-│   ├── getting-started.md         # 快速开始与部署指南 ⭐
-│   ├── project-status.md          # 项目状态总览 ⭐
+│   ├── getting-started.md         # 快速开始与部署指南 *
+│   ├── project-status.md          # 项目状态总览 *
 │   ├── requirements.md            # 需求规格
-│   ├── architecture.md            # 架构文档（含代码审核和算法）⭐
+│   ├── architecture.md            # 架构文档（含代码审核和算法）*
 │   ├── workflow_diagrams.md       # 工作流程图
-│   ├── api-reference.md           # API参考 ⭐
+│   ├── api-reference.md           # API参考 *
 │   ├── user-interface.md          # GUI使用指南
-│   ├── security-guidelines.md     # 安全指南（含审计发现）⭐
+│   ├── security-guidelines.md     # 安全指南（含审计发现）*
 │   ├── secure-key-management.md   # 私钥安全管理指南
 │   ├── performance-optimization.md # 性能优化
 │   ├── troubleshooting.md         # 故障排除

@@ -14,7 +14,7 @@ import time
 
 # 添加项目根目录到路径
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
+from src.collision.gpu.engine import GPUCollisionEngine
 
 
 def test_config(config_name, batch_size, test_duration=30):
@@ -40,7 +40,7 @@ def test_config(config_name, batch_size, test_duration=30):
         )
 
     def on_match(match_info):
-        print(f"  🎯 发现匹配! 私钥: {match_info.get('private_key', 'N/A')}")
+        print(f"  TARGET 发现匹配! 私钥: {match_info.get('private_key', 'N/A')}")
 
     try:
         start_init = time.time()

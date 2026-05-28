@@ -5,7 +5,7 @@
 
 ## 目录
 
-- [📋 目录](#-目录)
+- [[CHECKLIST] 目录](#-目录)
 - [系统架构概述](#系统架构概述)
   - [架构图](#架构图)
 - [核心组件](#核心组件)
@@ -54,7 +54,7 @@
 
 ---
 
-## 📋 目录
+## [CHECKLIST] 目录
 
 1. [系统架构概述](#系统架构概述)
 2. [核心组件](#核心组件)
@@ -99,10 +99,10 @@ BTC碰撞引擎监控系统采用**模块化设计**和**依赖注入模式**，
 
 **特性**:
 
-- ✅ 原子写入（防止数据损坏）
-- ✅ JSON损坏自动恢复
-- ✅ 数据量限制（历史1000条，错误500条）
-- ✅ 线程安全
+- [OK_CHECK] 原子写入（防止数据损坏）
+- [OK_CHECK] JSON损坏自动恢复
+- [OK_CHECK] 数据量限制（历史1000条，错误500条）
+- [OK_CHECK] 线程安全
 
 **文件**:
 
@@ -367,9 +367,9 @@ print(f"建议: {report['recommendations']}")
 ### 什么是依赖注入？
 
 依赖注入是一种设计模式，通过将依赖对象作为参数传入，而不是在类内部创建，实现：
-- ✅ 降低耦合度
-- ✅ 提高可测试性
-- ✅ 支持灵活组合
+- [OK_CHECK] 降低耦合度
+- [OK_CHECK] 提高可测试性
+- [OK_CHECK] 支持灵活组合
 
 ### 监控系统的依赖关系
 
@@ -456,14 +456,14 @@ class ReportGenerator:
 ### 1. 始终检查依赖
 
 ```python
-# ✅ 正确做法
+# [OK_CHECK] 正确做法
 def generate_report(self):
     if self.storage is None:
         return {"error": "storage未初始化"}
 
     data = self.storage.get_history_data()
 
-# ❌ 错误做法
+# [CROSS] 错误做法
 def generate_report(self):
     data = self.storage.get_history_data()  # 可能崩溃
 ```markdown
@@ -471,34 +471,34 @@ def generate_report(self):
 ## 2. 使用try-except保护
 
 ```python
-# ✅ 正确做法
+# [OK_CHECK] 正确做法
 try:
     history = self.storage.get_history_data()
 except Exception as e:
     logger.error(f"读取失败: {e}")
     return {"error": str(e)}
 
-# ❌ 错误做法
+# [CROSS] 错误做法
 history = self.storage.get_history_data()  # 可能抛出异常
 ```markdown
 
 ## 3. 实现降级方案
 
 ```python
-# ✅ 正确做法
+# [OK_CHECK] 正确做法
 if self.detector is not None:
     trends = self.detector.analyze_trends(data)
 else:
     trends = self._simple_trend_analysis(data)  # 降级
 
-# ❌ 错误做法
+# [CROSS] 错误做法
 trends = self.detector.analyze_trends(data)  # detector可能为None
 ```markdown
 
 ## 4. 原子写入保证数据完整性
 
 ```python
-# ✅ 正确做法
+# [OK_CHECK] 正确做法
 def save_data(self, data):
     temp_file = file_path + '.tmp'
     try:
@@ -517,23 +517,23 @@ def save_data(self, data):
 ## 5. 限制数据量防止内存溢出
 
 ```python
-# ✅ 正确做法
+# [OK_CHECK] 正确做法
 history.append(new_data)
 if len(history) > 1000:
     history = history[-1000:]  # 保留最近1000条
 
-# ❌ 错误做法
+# [CROSS] 错误做法
 history.append(new_data)  # 无限增长
 ```markdown
 
 ## 6. 使用Optional类型提示
 
 ```python
-# ✅ 正确做法
+# [OK_CHECK] 正确做法
 def __init__(self, storage: Optional['DataStorage'] = None):
     self.storage = storage
 
-# ❌ 错误做法
+# [CROSS] 错误做法
 def __init__(self, storage: DataStorage = None):  # 类型提示不准确
     self.storage = storage
 ```markdown

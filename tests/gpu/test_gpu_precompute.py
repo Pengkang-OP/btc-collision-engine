@@ -18,7 +18,7 @@ _mock_context = MagicMock()
 _mock_context.GPUContext = MagicMock()
 sys.modules["src.gpu.context"] = _mock_context
 
-from src.gpu.precompute import (  # 架构必要：sys.modules mock 注入后立即导入  # noqa: E402
+from src.gpu.precompute import (  # 架构必要：sys.modules mock 注入后立即导入
     _int_to_uint32_le,
     _point_add,
     generate_secp256k1_precomp_table,

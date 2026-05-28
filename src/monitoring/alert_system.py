@@ -435,7 +435,7 @@ class AlertSystem:
                     self._trigger_alert(alert)
                     triggered_alerts.append(alert)
 
-                    logger.warning(f"⚠️ 告警触发 [{rule.level.value.upper()}]: {rule.message}")
+                    logger.warning("WARN 告警触发 [%s]: %s", rule.level.value.upper(), rule.message)
 
             except Exception as e:
                 logger.error(f"检查告警规则 {rule.name} 时出错: {e}")

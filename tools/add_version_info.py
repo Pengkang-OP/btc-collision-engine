@@ -106,13 +106,13 @@ def main():
 
     docs_dir = Path(args.docs_dir)
     if not docs_dir.exists():
-        print(f"❌ 文档目录不存在: {docs_dir}")
+        print(f"ERR 文档目录不存在: {docs_dir}")
         sys.exit(1)
 
-    print("🔧 开始添加版本信息...\n")
+    print("TOOL 开始添加版本信息...\n")
 
     if args.dry_run:
-        print("⚠️  模拟运行模式 - 不会修改文件\n")
+        print("WARN 模拟运行模式 - 不会修改文件\n")
 
     md_files = list(docs_dir.glob("*.md"))
     # 排除archive目录
@@ -141,26 +141,26 @@ def main():
 
     # 打印统计信息
     print("=" * 60)
-    print("📊 版本信息添加报告")
+    print("STATS 版本信息添加报告")
     print("=" * 60)
 
-    print(f"\n📁 扫描文件数: {len(md_files)}")
-    print(f"✅ 已有版本信息: {total_skipped}")
-    print(f"✨ 添加版本信息: {total_added}")
+    print(f"\n[FOLDER] 扫描文件数: {len(md_files)}")
+    print(f"OK 已有版本信息: {total_skipped}")
+    print(f"[NEW] 添加版本信息: {total_added}")
 
     if file_stats:
         print("\n添加详情:")
         for file_name, audience in sorted(file_stats):
-            print(f"  📄 {file_name}")
+            print(f"  [FILE] {file_name}")
             print(f"     面向: {audience}")
 
     print("\n" + "=" * 60)
 
     if args.dry_run:
-        print(f"\n💡 这是模拟运行。发现 {total_added} 个文档需要添加版本信息。")
+        print(f"\nTIP 这是模拟运行。发现 {total_added} 个文档需要添加版本信息。")
         print("   移除 --dry-run 参数以实际添加。")
     else:
-        print(f"\n✅ 添加完成！共为 {total_added} 个文档添加版本信息。")
+        print(f"\nOK 添加完成！共为 {total_added} 个文档添加版本信息。")
         print(f"   版本号: {args.version}")
         print(f"   日期: {datetime.now().strftime('%Y-%m-%d')}")
 

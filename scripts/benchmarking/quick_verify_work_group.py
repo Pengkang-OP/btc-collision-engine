@@ -26,11 +26,11 @@ print("=" * 70)
 
 # 验证
 if config["work_group_size"] == 512:
-    print("✅ work_group_size优化已生效 (256 → 512)")
+    print("OK work_group_size优化已生效 (256 → 512)")
 else:
-    print(f"❌ work_group_size未优化: {config['work_group_size']} (期望512)")
+    print(f"ERR work_group_size未优化: {config['work_group_size']} (期望512)")
 
 if config["batch_size"] == 262144:
-    print("✅ batch_size配置正确 (262K)")
+    print("OK batch_size配置正确 (262K)")
 else:
-    print(f"❌ batch_size错误: {config['batch_size']} (期望262144)")
+    print(f"ERR batch_size错误: {config['batch_size']} (期望262144)")

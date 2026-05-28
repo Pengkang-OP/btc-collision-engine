@@ -6,7 +6,7 @@
 
 ## ROADMAP #5 — 配置 Schema 单一真相源
 
-**状态**: ✅ 已完成  
+**状态**: [OK] 已完成  
 **描述**: CONFIG_SCHEMA 从 Python 模块迁移至 `config.schema.json`，所有配置验证统一从 JSON Schema 文件加载。  
 **涉及文件**: `src/config/config_manager.py`, `tools/validate_config.py`, `scripts/dev/check_config_consistency.py`
 
@@ -14,7 +14,7 @@
 
 ## ROADMAP #11 — 统一入口错误处理
 
-**状态**: 🔄 进行中  
+**状态**: [INPROGRESS] 进行中  
 **描述**: 确保所有入口路径（`key_collision_cli.py` / `-m` / `btc-collision`）的兜底逻辑一致。  
 **涉及文件**: `src/cli/main.py`
 
@@ -22,7 +22,7 @@
 
 ## ROADMAP #13 — 协议接口消除反向依赖
 
-**状态**: 🔄 进行中  
+**状态**: [INPROGRESS] 进行中  
 **描述**: 使用 `GPUEngineProtocol` 替代 `src/gpu/` → `src/collision/gpu/engine` 的 TYPE_CHECKING 反向依赖。  
 **涉及文件**: `src/gpu/_engine_protocol.py`, `src/gpu/search_modes/*.py`, `src/gpu/engine_monitor.py`, `src/gpu/search_mode_coordinator.py`
 
@@ -30,7 +30,7 @@
 
 ## ROADMAP #15 — Docstring 渐进收紧
 
-**状态**: ✅ src/ 已完成  
+**状态**: [OK] src/ 已完成  
 **描述**: Docstring (D) rules 启用 Google convention。  
 - Phase 1: 修复 7841 D415 + 5 D301（已通过 `ruff --fix --unsafe-fixes`）  
 - Phase 2: 从 blanket `"**/*.py" = ["D"]` 改为目录级豁免  
@@ -41,7 +41,7 @@
 
 ## P2-23 — mypy Strict 逐步启用计划
 
-**状态**: 🔄 进行中  
+**状态**: [INPROGRESS] 进行中  
 **当前**: 6 个 `[[tool.mypy.overrides]]` block，45+ 文件豁免  
 **路线**（override blocks 全部消除后按顺序启用）:
 
@@ -57,14 +57,14 @@
 
 ## numpy 2.x 迁移评估
 
-**状态**: ⏳ 待评估  
+**状态**: [PENDING] 待评估  
 **描述**: numpy 当前锁定 1.x。numpy 2.x 含破坏性变更，需评估对 GPU 数值计算的影响后迁移。
 
 ---
 
 ## PERF-2 — Intel Arc profiling 序列化修复
 
-**状态**: ✅ 已完成 (2026-05-28)  
+**状态**: [OK] 已完成 (2026-05-28)  
 **问题**: Intel Arc GPU 利用率呈尖刺/齿轮状（每批次完成→等待→下一批次）。  
 **根因**: `device.py` 创建 OOO 命令队列时附加了 `PROFILING_ENABLE` 标志。  
 Intel compute-runtime FAQ 确认此标志在 OOO 队列上强制内核串行执行。  

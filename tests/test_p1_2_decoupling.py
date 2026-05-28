@@ -23,9 +23,9 @@ def test_all():
     try:
         from src.gpu.kernel_protocol import GPUKernelFactory, GPUKernelProtocol
 
-        print("  ✅ 导入成功")
-        print(f"  ✅ 接口定义: {GPUKernelProtocol}")
-        print(f"  ✅ 工厂类: {GPUKernelFactory}")
+        print("  OK 导入成功")
+        print(f"  OK 接口定义: {GPUKernelProtocol}")
+        print(f"  OK 工厂类: {GPUKernelFactory}")
 
         # 验证类型提示
         import inspect
@@ -33,9 +33,9 @@ def test_all():
         sig = inspect.signature(GPUKernelFactory.register)
         annotation = str(sig.parameters["kernel_class"].annotation)
         assert "Type" in annotation
-        print("  ✅ 类型提示正确")
+        print("  OK 类型提示正确")
     except Exception as e:
-        print(f"  ❌ 失败: {e}")
+        print(f"  ERR 失败: {e}")
         return False
     print()
 
@@ -45,14 +45,14 @@ def test_all():
         from src.monitoring.monitor_config import PRODUCTION_CONFIG, TESTING_CONFIG, MonitorConfig
 
         config = MonitorConfig(data_logging_enabled=True)
-        print("  ✅ 配置创建成功")
-        print(f"  ✅ 生产配置间隔: {PRODUCTION_CONFIG.data_logging_interval}s")
-        print(f"  ✅ 测试配置禁用日志: {not TESTING_CONFIG.data_logging_enabled}")
+        print("  OK 配置创建成功")
+        print(f"  OK 生产配置间隔: {PRODUCTION_CONFIG.data_logging_interval}s")
+        print(f"  OK 测试配置禁用日志: {not TESTING_CONFIG.data_logging_enabled}")
 
         # 验证__post_init__
-        print("  ✅ __post_init__自动验证已执行")
+        print("  OK __post_init__自动验证已执行")
     except Exception as e:
-        print(f"  ❌ 失败: {e}")
+        print(f"  ERR 失败: {e}")
         return False
     print()
 
@@ -65,16 +65,16 @@ def test_all():
         config = MonitorConfig(data_logging_enabled=True, enable_monitoring_data=False)
         monitoring = EnhancedMonitoringSystem(None, config=config)
 
-        print("  ✅ EnhancedMonitoringSystem初始化成功")
-        print(f"  ✅ data_logger创建: {monitoring.data_logger is not None}")
-        print(f"  ✅ 配置对象类型: {type(monitoring.config).__name__}")
+        print("  OK EnhancedMonitoringSystem初始化成功")
+        print(f"  OK data_logger创建: {monitoring.data_logger is not None}")
+        print(f"  OK 配置对象类型: {type(monitoring.config).__name__}")
         assert monitoring.data_logger is not None
-        print("  ✅ P0修复验证通过（无TypeError）")
+        print("  OK P0修复验证通过（无TypeError）")
     except TypeError as e:
-        print(f"  ❌ P0修复失败: {e}")
+        print(f"  ERR P0修复失败: {e}")
         return False
     except Exception as e:
-        print(f"  ❌ 失败: {e}")
+        print(f"  ERR 失败: {e}")
         return False
     print()
 
@@ -92,9 +92,9 @@ def test_all():
         print(f"  merged.alert_threshold: {merged.alert_threshold}")
 
         assert merged.alert_threshold == 0.9, f"merge失败: {merged.alert_threshold} != 0.9"
-        print("  ✅ P2修复验证通过（merge逻辑正确）")
+        print("  OK P2修复验证通过（merge逻辑正确）")
     except Exception as e:
-        print(f"  ❌ 失败: {e}")
+        print(f"  ERR 失败: {e}")
         return False
     print()
 
@@ -105,10 +105,10 @@ def test_all():
 
         # 创建无效配置（应记录警告）
         bad_config = MonitorConfig(alert_threshold=1.5)  # noqa: F841
-        print("  ✅ 无效配置创建成功（警告已记录）")
-        print("  ✅ P3优化验证通过（自动验证执行）")
+        print("  OK 无效配置创建成功（警告已记录）")
+        print("  OK P3优化验证通过（自动验证执行）")
     except Exception as e:
-        print(f"  ❌ 失败: {e}")
+        print(f"  ERR 失败: {e}")
         return False
     print()
 
@@ -120,10 +120,10 @@ def test_all():
         from src.monitoring.enhanced_monitoring import EnhancedMonitoringSystem
         from src.monitoring.monitor_config import MonitorConfig
 
-        print("  ✅ 所有模块导入成功")
-        print("  ✅ 无循环依赖")
+        print("  OK 所有模块导入成功")
+        print("  OK 无循环依赖")
     except ImportError as e:
-        print(f"  ❌ 导入失败（可能存在循环依赖）: {e}")
+        print(f"  ERR 导入失败（可能存在循环依赖）: {e}")
         return False
     print()
 
@@ -135,10 +135,10 @@ if __name__ == "__main__":
 
     print("=" * 60)
     if success:
-        print("✅ 所有P1-2解耦核心功能验证通过！")
+        print("OK 所有P1-2解耦核心功能验证通过！")
         print("=" * 60)
         sys.exit(0)
     else:
-        print("❌ 部分验证失败，请检查错误信息")
+        print("ERR 部分验证失败，请检查错误信息")
         print("=" * 60)
         sys.exit(1)

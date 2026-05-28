@@ -48,7 +48,7 @@ def main():
         exit_code = pytest.main(args)
         return exit_code
     except Exception as e:
-        print(f"\n❌ pytest运行失败: {e}")
+        print(f"\nERR pytest运行失败: {e}")
         import traceback
 
         traceback.print_exc()

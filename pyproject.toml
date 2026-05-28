@@ -61,6 +61,7 @@ dev = [
     "pytest-timeout>=2.0,<3.0.0",        # L1: 添加上限
     "memory-profiler>=0.61,<1.0.0",      # L1: 添加上限
     "bandit>=1.7.0,<2.0.0",              # L1: 添加上限
+    "ruff>=0.9.0,<2.0.0",                # 统一：与 requirements-dev.txt 一致
     "mypy>=1.0.0,<2.0.0",                # L1: 添加上限
     # P0-4: black/flake8 已废弃，由 ruff (format+lint) 替代
     "sphinx>=7.0.0,<9.0.0",              # L1: 添加上限

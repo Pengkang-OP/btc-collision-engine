@@ -8,7 +8,7 @@
 
 ---
 
-## 📊 当前依赖关系分析
+## [CHART] 当前依赖关系分析
 
 ### 1. 识别的循环依赖
 
@@ -73,7 +73,7 @@ graph TB
 
 ---
 
-## 🎯 解耦策略
+## [TARGET] 解耦策略
 
 ### 策略1: 依赖注入（Dependency Injection）
 
@@ -108,7 +108,7 @@ graph TB
 
 ---
 
-## 📋 实施方案
+## [CHECKLIST] 实施方案
 
 ### 阶段1: 解耦GPU引擎和GPU内核（1-2天）
 
@@ -292,9 +292,9 @@ class GPUCollisionEngine:
 
 **效果**:
 
-- ✅ GPU引擎依赖接口而非具体实现
-- ✅ 易于测试（可以注入Mock内核）
-- ✅ 支持多内核实现（OpenCL, CUDA, etc.）
+- [OK_CHECK] GPU引擎依赖接口而非具体实现
+- [OK_CHECK] 易于测试（可以注入Mock内核）
+- [OK_CHECK] 支持多内核实现（OpenCL, CUDA, etc.）
 
 ---
 
@@ -565,7 +565,7 @@ class EnhancedMonitoringSystem:
 
 ---
 
-## 📊 解耦效果对比
+## [CHART] 解耦效果对比
 
 ### 解耦前
 
@@ -585,10 +585,10 @@ graph TB
 
 **问题**:
 
-- ❌ 循环依赖2处
-- ❌ 模块紧耦合
-- ❌ 难以单独测试
-- ❌ 难以替换实现
+- [CROSS] 循环依赖2处
+- [CROSS] 模块紧耦合
+- [CROSS] 难以单独测试
+- [CROSS] 难以替换实现
 
 ---
 
@@ -609,32 +609,32 @@ graph TB
 
 **优势**:
 
-- ✅ 零循环依赖
-- ✅ 接口隔离
-- ✅ 依赖注入
-- ✅ 事件驱动
-- ✅ 易于测试
-- ✅ 支持多实现
+- [OK_CHECK] 零循环依赖
+- [OK_CHECK] 接口隔离
+- [OK_CHECK] 依赖注入
+- [OK_CHECK] 事件驱动
+- [OK_CHECK] 易于测试
+- [OK_CHECK] 支持多实现
 
 ---
 
-## 🎯 实施计划
+## [TARGET] 实施计划
 
 ### 第1天: GPU引擎解耦
 
 **上午**（3小时）:
 
-1. ✅ 创建`src/gpu/device_helper.py`
-2. ✅ 迁移`GPUDeviceHelper`类
-3. ✅ 更新所有导入路径
-4. ✅ 运行测试验证
+1. [OK_CHECK] 创建`src/gpu/device_helper.py`
+2. [OK_CHECK] 迁移`GPUDeviceHelper`类
+3. [OK_CHECK] 更新所有导入路径
+4. [OK_CHECK] 运行测试验证
 
 **下午**（3小时）:
 
-1. ✅ 创建`src/gpu/kernel_protocol.py`
-2. ✅ 定义`GPUKernelProtocol`接口
-3. ✅ 更新`GPUKernel`实现接口
-4. ✅ 更新`GPUCollisionEngine`使用接口
+1. [OK_CHECK] 创建`src/gpu/kernel_protocol.py`
+2. [OK_CHECK] 定义`GPUKernelProtocol`接口
+3. [OK_CHECK] 更新`GPUKernel`实现接口
+4. [OK_CHECK] 更新`GPUCollisionEngine`使用接口
 
 ---
 
@@ -642,17 +642,17 @@ graph TB
 
 **上午**（3小时）:
 
-1. ✅ 创建`src/monitoring/monitor_config.py`
-2. ✅ 迁移配置到`MonitorConfig`对象
-3. ✅ 更新`EnhancedMonitoringSystem`
-4. ✅ 更新`DataLogger`
+1. [OK_CHECK] 创建`src/monitoring/monitor_config.py`
+2. [OK_CHECK] 迁移配置到`MonitorConfig`对象
+3. [OK_CHECK] 更新`EnhancedMonitoringSystem`
+4. [OK_CHECK] 更新`DataLogger`
 
 **下午**（3小时）:
 
-1. ✅ 创建`src/utils/event_bus.py`（可选）
-2. ✅ 更新错误处理使用事件总线
-3. ✅ 运行完整测试套件
-4. ✅ 修复回归问题
+1. [OK_CHECK] 创建`src/utils/event_bus.py`（可选）
+2. [OK_CHECK] 更新错误处理使用事件总线
+3. [OK_CHECK] 运行完整测试套件
+4. [OK_CHECK] 修复回归问题
 
 ---
 
@@ -660,15 +660,15 @@ graph TB
 
 **全天**（6小时）:
 
-1. ✅ 编写解耦后的单元测试
-2. ✅ 验证无循环依赖
-3. ✅ 性能基准测试
-4. ✅ 文档更新
-5. ✅ 代码审查
+1. [OK_CHECK] 编写解耦后的单元测试
+2. [OK_CHECK] 验证无循环依赖
+3. [OK_CHECK] 性能基准测试
+4. [OK_CHECK] 文档更新
+5. [OK_CHECK] 代码审查
 
 ---
 
-## 📈 预期收益
+## [PERF] 预期收益
 
 ### 代码质量提升
 
@@ -676,8 +676,8 @@ graph TB
 |------|--------|--------|------|
 | 循环依赖数 | 2 | 0 | -100% |
 | 模块耦合度 | 高 | 低 | -40% |
-| 可测试性 | ⭐⭐ | ⭐⭐⭐⭐⭐ | +150% |
-| 可维护性 | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | +67% |
+| 可测试性 | [STAR][STAR] | [STAR][STAR][STAR][STAR][STAR] | +150% |
+| 可维护性 | [STAR][STAR][STAR] | [STAR][STAR][STAR][STAR][STAR] | +67% |
 
 ### 开发效率提升
 
@@ -693,12 +693,12 @@ graph TB
 ```
 当前健康度: 87/100
   ↓ +3 (模块解耦)
-90/100 ✅
+90/100 [OK_CHECK]
 ```
 
 ---
 
-## ⚠️ 风险和缓解
+## [WARN] 风险和缓解
 
 ### 风险1: 回归测试失败
 
@@ -706,9 +706,9 @@ graph TB
 
 **缓解**:
 
-- ✅ 分步实施，每步都运行测试
-- ✅ 保持向后兼容的API
-- ✅ 充分的单元测试覆盖
+- [OK_CHECK] 分步实施，每步都运行测试
+- [OK_CHECK] 保持向后兼容的API
+- [OK_CHECK] 充分的单元测试覆盖
 
 ---
 
@@ -718,9 +718,9 @@ graph TB
 
 **缓解**:
 
-- ✅ 使用简单DI容器（非反射）
-- ✅ 事件总线异步处理
-- ✅ 性能基准测试验证
+- [OK_CHECK] 使用简单DI容器（非反射）
+- [OK_CHECK] 事件总线异步处理
+- [OK_CHECK] 性能基准测试验证
 
 ---
 
@@ -730,13 +730,13 @@ graph TB
 
 **缓解**:
 
-- ✅ 详细文档和示例
-- ✅ 渐进式迁移
-- ✅ 代码审查指导
+- [OK_CHECK] 详细文档和示例
+- [OK_CHECK] 渐进式迁移
+- [OK_CHECK] 代码审查指导
 
 ---
 
-## 📝 验收标准
+## [MEMO] 验收标准
 
 ### 功能验收
 
@@ -761,7 +761,7 @@ graph TB
 
 ---
 
-## 🚀 后续优化
+## [QUICK] 后续优化
 
 ### 长期优化（1-2个月）
 
@@ -772,7 +772,7 @@ graph TB
 
 ---
 
-## 📚 参考资料
+## [BOOKS] 参考资料
 
 - [依赖注入原则](https://en.wikipedia.org/wiki/Dependency_injection)
 - [接口隔离原则](https://en.wikipedia.org/wiki/Interface_segregation_principle)
@@ -783,6 +783,6 @@ graph TB
 
 **文档创建时间**: 2026-04-22  
 **作者**: AI Assistant  
-**状态**: 📝 设计完成，待实施  
+**状态**: [MEMO] 设计完成，待实施  
 **预计开始**: 2026-04-23  
 **预计完成**: 2026-04-25

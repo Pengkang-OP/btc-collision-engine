@@ -54,7 +54,7 @@ class BrokenLinkChecker:
 
     def check_all(self):
         """检查所有文档."""
-        print("🔍 开始检查文档链接...\n")
+        print("SEARCH 开始检查文档链接...\n")
 
         md_files = list(self.docs_dir.glob("*.md"))
         # 也包括子目录中的md文件
@@ -62,7 +62,7 @@ class BrokenLinkChecker:
         # 去重
         md_files = list(set(md_files))
 
-        print(f"📁 找到 {len(md_files)} 个文档\n")
+        print(f"FOLDER 找到 {len(md_files)} 个文档\n")
 
         for md_file in sorted(md_files):
             self.check_file(md_file)
@@ -86,7 +86,7 @@ class BrokenLinkChecker:
                 self.check_link(link, file_path.parent)
 
         except Exception as e:
-            print(f"❌ 读取文件失败 {file_path}: {e}")
+            print(f"ERR 读取文件失败 {file_path}: {e}")
 
     def extract_links(self, content: str, file_path: str) -> list[LinkInfo]:
         """提取文档中的所有链接."""
@@ -214,15 +214,15 @@ class BrokenLinkChecker:
     def print_summary(self):
         """打印总结报告."""
         print("=" * 60)
-        print("📊 链接检查报告")
+        print("STATS 链接检查报告")
         print("=" * 60)
 
-        print(f"\n📁 检查文件数: {self.checked_files}")
-        print(f"🔗 总链接数: {self.total_links}")
-        print(f"❌ 断裂链接: {len(self.broken_links)}")
+        print(f"\n[FOLDER] 检查文件数: {self.checked_files}")
+        print(f"[LINK] 总链接数: {self.total_links}")
+        print(f"ERR 断裂链接: {len(self.broken_links)}")
 
         if self.broken_links:
-            print("\n⚠️  断裂链接详情:\n")
+            print("\nWARN 断裂链接详情:\n")
 
             # 按文件分组
             by_file: dict[str, list[BrokenLink]] = {}
@@ -233,13 +233,13 @@ class BrokenLinkChecker:
                 by_file[file_name].append(broken)
 
             for file_name, links in sorted(by_file.items()):
-                print(f"📄 {file_name}:")
+                print(f"[FILE] {file_name}:")
                 for broken in links:
                     print(f"   行 {broken.link.line}: [{broken.link.text}]({broken.link.url})")
                     print(f"      原因: {broken.reason}")
                 print()
         else:
-            print("\n✅ 所有链接都有效！")
+            print("\nOK 所有链接都有效！")
 
         print("=" * 60)
 
@@ -259,7 +259,7 @@ def main():
     docs_dir = project_root / args.docs_dir
 
     if not docs_dir.exists():
-        print(f"❌ 文档目录不存在: {docs_dir}")
+        print(f"ERR 文档目录不存在: {docs_dir}")
         sys.exit(1)
 
     checker = BrokenLinkChecker(str(docs_dir), args.check_external)

@@ -4337,9 +4337,9 @@ print(f"清零成功率: {stats['success_rate']:.2f}%")
 
 | 后端 | 清零方法 | 内存锁定 | 推荐度 |
 |------|---------|---------|--------|
-| cryptography | cryptography.hazmat.primitives.zeroize | 支持 | ⭐⭐⭐⭐⭐ |
-| PyNaCl | nacl.secret | 支持 | ⭐⭐⭐⭐ |
-| ctypes | ctypes.memset | 支持 | ⭐⭐⭐ |
+| cryptography | cryptography.hazmat.primitives.zeroize | 支持 | ***** |
+| PyNaCl | nacl.secret | 支持 | **** |
+| ctypes | ctypes.memset | 支持 | *** |
 
 ---
 

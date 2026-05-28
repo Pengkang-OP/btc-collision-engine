@@ -105,20 +105,20 @@ engine.shutdown()
 
 ## 错误的模块路径
 
-### ❌ 错误: CPUCollisionEngine
+### [FAIL] 错误: CPUCollisionEngine
 
 **错误示例**:
 ```python
 # 这些都是错误的！
-from src.collision.cpu.engine import CPUCollisionEngine  # ❌ 不存在
-from src.cpu.collision.engine import CPUCollisionEngine  # ❌ 不存在
+from src.collision.cpu.engine import CPUCollisionEngine  # [FAIL] 不存在
+from src.cpu.collision.engine import CPUCollisionEngine  # [FAIL] 不存在
 ```
 
 **原因**: 项目中没有 `src/collision/cpu/` 目录，CPU引擎实际上叫 `KeyCollisionEngine`。
 
 ---
 
-### ✅ 正确的模块总结
+### [OK] 正确的模块总结
 
 | 引擎类型 | 正确模块路径 | 类名 |
 |---------|------------|------|
@@ -154,10 +154,10 @@ python key_collision_cli.py -t 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa --multi-gpu
 ```
 src/
 ├── collision/
-│   ├── key_collision_engine.py  # CPU引擎 (KeyCollisionEngine) ✅
+│   ├── key_collision_engine.py  # CPU引擎 (KeyCollisionEngine) [OK]
 │   ├── multiprocess_engine.py     # 多进程引擎
 │   └── gpu/
-│       ├── engine.py              # GPU引擎 (GPUCollisionEngine) ✅
+│       ├── engine.py              # GPU引擎 (GPUCollisionEngine) [OK]
 │       ├── facade.py              # GPU Facade
 │       └── ...
 └── gpu/

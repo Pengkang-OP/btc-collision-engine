@@ -17,7 +17,7 @@
 Intel Arc存在global char* hang bug, 已启用uint32 workaround
 ```
 
-**状态**: ✅ 正常（预期行为）
+**状态**: [OK_CHECK] 正常（预期行为）
 
 **说明**: 
 - 这是 Intel Arc GPU 的已知问题
@@ -30,7 +30,7 @@ Intel Arc存在global char* hang bug, 已启用uint32 workaround
 慢操作检测: GPU引擎初始化 耗时 22197.85ms > 1000ms
 ```
 
-**状态**: ⚠️ 阈值配置不合理
+**状态**: [WARN] 阈值配置不合理
 
 **原因分析**:
 1. **首次编译时间长**: OpenCL 内核首次编译通常需要 10-30 秒
@@ -83,7 +83,7 @@ python verify_performance_config.py
 ```
 配置文件路径: F:\Qoder\btc-collision-engine\config.json
 从 config.json 读取的阈值: 5000ms
-✅ 配置已正确加载!
+[OK_CHECK] 配置已正确加载!
 
 说明:
   - 配置文件已成功更新为 5000ms
@@ -99,7 +99,7 @@ python verify_performance_config.py
 python -m pytest tests/test_performance_monitor.py -v
 ```
 
-**结果**: ✅ 15 个测试全部通过
+**结果**: [OK_CHECK] 15 个测试全部通过
 
 ## 预期效果
 
@@ -143,9 +143,9 @@ python -m pytest tests/test_performance_monitor.py -v
 - 监控硬件问题
 
 将阈值设置为 5 秒可以：
-- ✅ 捕获异常慢的操作（> 5秒）
-- ✅ 忽略正常的 GPU 初始化（首次编译除外）
-- ✅ 在性能问题时及时告警
+- [OK_CHECK] 捕获异常慢的操作（> 5秒）
+- [OK_CHECK] 忽略正常的 GPU 初始化（首次编译除外）
+- [OK_CHECK] 在性能问题时及时告警
 
 ## 建议
 
@@ -163,9 +163,9 @@ python -m pytest tests/test_performance_monitor.py -v
 
 本次优化通过调整性能监控阈值，解决了不合理的性能警告问题：
 
-- ✅ Intel Arc workaround 警告：正常，无需修复
-- ✅ 性能警告阈值：从 1秒 调整为 5秒，更合理
-- ✅ 配置文件已更新，下次启动生效
-- ✅ 所有测试通过，无回归问题
+- [OK_CHECK] Intel Arc workaround 警告：正常，无需修复
+- [OK_CHECK] 性能警告阈值：从 1秒 调整为 5秒，更合理
+- [OK_CHECK] 配置文件已更新，下次启动生效
+- [OK_CHECK] 所有测试通过，无回归问题
 
 GPU 内核编译首次运行需要 10-30 秒是**正常现象**，不是性能问题。后续运行会使用缓存，速度会显著提升。

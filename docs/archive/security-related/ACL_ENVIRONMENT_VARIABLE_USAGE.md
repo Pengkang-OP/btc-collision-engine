@@ -1,12 +1,12 @@
 # Windows ACL环境变量控制使用说明
 
-## 📋 概述
+## [CHECKLIST] 概述
 
 BTC碰撞引擎 v2.2.0 引入了环境变量 `BTC_ENGINE_SKIP_ACL`,用于控制Windows平台上的断点文件ACL(访问控制列表)设置行为。
 
 ---
 
-## 🎯 环境变量
+## [TARGET] 环境变量
 
 ### 名称
 
@@ -25,13 +25,13 @@ BTC_ENGINE_SKIP_ACL
 ### 示例值
 
 ```bash
-✅ true, True, TRUE  → 跳过ACL
-✅ false, False, FALSE → 使用ACL
+[OK_CHECK] true, True, TRUE  → 跳过ACL
+[OK_CHECK] false, False, FALSE → 使用ACL
 ```
 
 ---
 
-## 🔧 配置方法
+## [WRENCH] 配置方法
 
 ### 方法1: 命令行临时设置
 
@@ -106,7 +106,7 @@ from src.collision import KeyCollisionEngine
 
 ---
 
-## 📖 使用场景
+## [BOOK] 使用场景
 
 ### 场景1: 测试环境(推荐跳过ACL)
 
@@ -181,7 +181,7 @@ BTC_ENGINE_SKIP_ACL = false
 
 ---
 
-## 🔍 如何判断是否需要ACL?
+## [SEARCH] 如何判断是否需要ACL?
 
 ### 快速检查清单
 
@@ -218,32 +218,32 @@ BTC_ENGINE_SKIP_ACL = false
 
 ---
 
-## ⚠️ 安全说明
+## [WARN] 安全说明
 
 ### 断点文件内容
 
 **包含的信息**:
 
-- ✅ 目标比特币地址列表
-- ✅ 碰撞进度(已检查数量)
-- ✅ 运行模式(random/range/brute_force)
-- ✅ 匹配地址(不包含私钥)
-- ✅ private_key_hash(哈希值,不可逆)
+- [OK_CHECK] 目标比特币地址列表
+- [OK_CHECK] 碰撞进度(已检查数量)
+- [OK_CHECK] 运行模式(random/range/brute_force)
+- [OK_CHECK] 匹配地址(不包含私钥)
+- [OK_CHECK] private_key_hash(哈希值,不可逆)
 
 **不包含的信息**:
 
-- ❌ 私钥本身
-- ❌ 私钥的十六进制表示
-- ❌ 任何可用于恢复私钥的信息
+- [CROSS] 私钥本身
+- [CROSS] 私钥的十六进制表示
+- [CROSS] 任何可用于恢复私钥的信息
 
 ### 安全风险评估
 
 | 环境 | 风险级别 | 建议 |
 |------|---------|------|
-| 个人电脑,跳过ACL | 🟢 低 | 可接受 |
-| 多用户,跳过ACL | 🟡 中 | 建议启用ACL |
-| 共享目录,跳过ACL | 🔴 高 | 必须启用ACL |
-| 任何环境,启用ACL | 🟢 低 | 推荐 |
+| 个人电脑,跳过ACL | [GREEN] 低 | 可接受 |
+| 多用户,跳过ACL | [YELLOW] 中 | 建议启用ACL |
+| 共享目录,跳过ACL | [RED] 高 | 必须启用ACL |
+| 任何环境,启用ACL | [GREEN] 低 | 推荐 |
 
 ### 为什么断点文件需要保护?
 
@@ -256,7 +256,7 @@ BTC_ENGINE_SKIP_ACL = false
 
 ---
 
-## 📊 性能对比
+## [CHART] 性能对比
 
 ### 断点保存性能
 
@@ -274,7 +274,7 @@ BTC_ENGINE_SKIP_ACL = false
 
 ---
 
-## 🐛 故障排除
+## [DEBUG] 故障排除
 
 ### 问题1: 设置环境变量后不生效
 
@@ -337,7 +337,7 @@ icacls "collision_checkpoint.json"
 
 ---
 
-## 📝 最佳实践
+## [MEMO] 最佳实践
 
 ### 开发环境
 
@@ -381,7 +381,7 @@ BTC_ENGINE_SKIP_ACL = false
 
 ---
 
-## 🔗 相关文档
+## [LINK] 相关文档
 
 - [断点续传功能测试报告](./checkpoint_comprehensive_test_report.md)
 - [checkpoint_manager.py 代码审查](./code_review_acl.md)
@@ -389,7 +389,7 @@ BTC_ENGINE_SKIP_ACL = false
 
 ---
 
-## 📞 获取帮助
+## [TELEPHONE] 获取帮助
 
 如果遇到问题:
 
@@ -418,7 +418,7 @@ BTC_ENGINE_SKIP_ACL = false
 
 ---
 
-## 📅 版本历史
+## [E] 版本历史
 
 | 版本 | 日期 | 变更 |
 |------|------|------|

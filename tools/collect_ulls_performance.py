@@ -12,14 +12,14 @@ print()
 # 从日志文件提取性能数据
 log_file = Path("logs/collision.log")
 if not log_file.exists():
-    print("❌ 日志文件不存在")
+    print("ERR 日志文件不存在")
     sys.exit(1)
 
 with open(log_file, encoding="utf-8") as f:
     lines = f.readlines()
 
 # 查找性能数据
-import re  # noqa: E402
+import re
 
 throughput_pattern = r"吞吐量:\s+([0-9,]+)\s*keys/s"
 peak_pattern = r"峰值=([0-9,]+)\s*keys/s"
@@ -76,13 +76,13 @@ if peaks:
     print()
 
     if 14 <= peak_improvement <= 31:
-        print("  ✅ 达到预期效果 (14-31%提升)")
+        print("  OK 达到预期效果 (14-31%提升)")
     elif peak_improvement > 31:
-        print(f"  ⚠️  超出预期 ({peak_improvement:.2f}% > 31%)")
+        print(f"  WARN 超出预期 ({peak_improvement:.2f}% > 31%)")
     elif peak_improvement > 0:
-        print(f"  ⚠️  未达到预期 ({peak_improvement:.2f}% < 14%)")
+        print(f"  WARN 未达到预期 ({peak_improvement:.2f}% < 14%)")
     else:
-        print(f"  ❌ 性能下降 ({peak_improvement:.2f}%)")
+        print(f"  ERR 性能下降 ({peak_improvement:.2f}%)")
 
 print()
 print("=" * 80)

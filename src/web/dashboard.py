@@ -152,19 +152,23 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         }
         h1 { color: #58a6ff; font-size: 1.8em; margin-bottom: 10px; }
         .subtitle { color: #8b949e; font-size: 0.9em; margin-bottom: 24px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px; }  # noqa: E501
+        .grid { display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px; margin-bottom: 24px; }
         .card {
             background: #161b22; border: 1px solid #30363d;
             border-radius: 8px; padding: 20px;
         }
-        .card h3 { color: #58a6ff; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; } # noqa: E501
+        .card h3 { color: #58a6ff; font-size: 0.85em;
+            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
         .card .value { font-size: 2.2em; font-weight: 700; color: #f0f6fc; }
         .card .label { color: #8b949e; font-size: 0.8em; margin-top: 4px; }
         .status-ok { color: #3fb950; }
         .status-warn { color: #d29922; }
         .status-error { color: #f85149; }
         .section { margin-bottom: 24px; }
-        .section h2 { color: #58a6ff; font-size: 1.2em; margin-bottom: 12px; border-bottom: 1px solid #30363d; padding-bottom: 8px; } # noqa: E501
+        .section h2 { color: #58a6ff; font-size: 1.2em;
+            margin-bottom: 12px; border-bottom: 1px solid #30363d; padding-bottom: 8px; }
         table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
         th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid #21262d; }
         th { color: #8b949e; font-weight: 600; background: #161b22; }
@@ -180,16 +184,18 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
     </style>
 </head>
 <body>
-    <h1>🔑 BTC 碰撞引擎 - 监控仪表板</h1>
+    <h1>BTC 碰撞引擎 - 监控仪表板</h1>
     <p class="subtitle">实时运行状态 | 自动刷新: 30秒 | 生成时间: {{ generated_at }}</p>
 
     <!-- 核心指标 -->
-    <div class="section"><h2>📊 核心指标</h2>
+    <div class="section"><h2>核心指标</h2>
     <div class="grid">
         <div class="card">
             <h3>检测速率</h3>
-            <div class="value">{{ "%.0f"|format(stats.get('speed', 0)) }}<span style="font-size:0.5em">/s</span></div>  # noqa: E501
-            <div class="label">平均: {{ "%.0f"|format(stats.get('avg_speed', 0)) }}/s | 最大: {{ "%.0f"|format(stats.get('max_speed', 0)) }}/s</div>  # noqa: E501
+            <div class="value">{{ "%.0f"|format(stats.get('speed', 0)) }}
+                <span style="font-size:0.5em">/s</span></div>
+            <div class="label">平均: {{ "%.0f"|format(stats.get('avg_speed', 0)) }}/s
+                | 最大: {{ "%.0f"|format(stats.get('max_speed', 0)) }}/s</div>
         </div>
         <div class="card">
             <h3>已检测总数</h3>
@@ -200,7 +206,8 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
             <h3>运行时间</h3>
             <div class="value">{{ uptime_display }}</div>
             <div class="label">引擎状态:
-                <span class="{% if stats.get('is_running', false) %}status-ok{% else %}status-warn{% endif %}">  # noqa: E501
+                <span class="{% if stats.get('is_running', false) %}
+                    status-ok{% else %}status-warn{% endif %}">
                     {{ "运行中" if stats.get('is_running', false) else "已停止" }}
                 </span>
             </div>
@@ -215,11 +222,12 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
     </div></div>
 
     <!-- 引擎信息 -->
-    <div class="section"><h2>⚙️ 引擎信息</h2>
+    <div class="section"><h2>引擎信息</h2>
     <div class="grid">
         <div class="card">
             <h3>运行模式</h3>
-            <div class="value" style="font-size:1.2em"><span class="badge badge-info">{{ engine.mode or "N/A" }}</span></div>  # noqa: E501
+            <div class="value" style="font-size:1.2em">
+                <span class="badge badge-info">{{ engine.mode or "N/A" }}</span></div>
         </div>
         <div class="card">
             <h3>目标地址</h3>
@@ -227,25 +235,27 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         </div>
         <div class="card">
             <h3>当前位置</h3>
-            <div class="value" style="font-size:1.2em">{{ "{:,}".format(engine.current_position or 0) }}</div>  # noqa: E501
+            <div class="value" style="font-size:1.2em">
+                {{ "{:,}".format(engine.current_position or 0) }}</div>
         </div>
         <div class="card">
             <h3>操作系统</h3>
             <div class="value" style="font-size:1.2em">{{ system.os or "N/A" }}</div>
-            <div class="label">Python {{ system.python_version or "N/A" }} | PID: {{ system.pid or "N/A" }}</div>  # noqa: E501
+            <div class="label">Python {{ system.python_version or "N/A" }}
+                | PID: {{ system.pid or "N/A" }}</div>
         </div>
     </div></div>
 
     <!-- 安全审计 -->
-    <div class="section"><h2>🔒 安全审计状态</h2>
+    <div class="section"><h2>安全审计状态</h2>
     <div class="grid">
         <div class="card">
             <h3>日志安全过滤器</h3>
             <div class="value" style="font-size:1.2em">
                 {% if security_audit.security_filter_enabled %}
-                <span class="status-ok">✅ 已启用</span>
+                <span class="status-ok">已启用</span>
                 {% else %}
-                <span class="status-error">❌ 未启用</span>
+                <span class="status-error">未启用</span>
                 {% endif %}
             </div>
             <div class="label">自动屏蔽私钥/WIF/地址等敏感信息</div>
@@ -265,7 +275,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
             <h3>审计日志文件</h3>
             <div class="value" style="font-size:1.2em">
                 {% if security_audit.audit_log_exists %}
-                <span class="status-ok">📄 存在</span>
+                <span class="status-ok">存在</span>
                 {% else %}
                 <span style="color:#8b949e">暂无</span>
                 {% endif %}
@@ -276,9 +286,9 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
             <h3>加密后端安全</h3>
             <div class="value" style="font-size:1.1em">
                 {% if security_audit.crypto_backend_ready %}
-                <span class="status-ok">✅ 通过</span>
+                <span class="status-ok">通过</span>
                 {% else %}
-                <span class="status-error">❌ 未通过</span>
+                <span class="status-error">未通过</span>
                 {% endif %}
             </div>
             <div class="label">
@@ -293,21 +303,25 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
                 {% else %}
                 {{ security_audit.crypto_backend_security_level }}
                 {% endif %}
-                {% if security_audit.crypto_backend_constant_time %}<br><span class="status-ok">恒定时间: 是</span>{% endif %}
+                {% if security_audit.crypto_backend_constant_time %}
+                <br><span class="status-ok">恒定时间: 是</span>{% endif %}
             </div>
         </div>
         <div class="card">
             <h3>整体安全状态</h3>
             <div class="value" style="font-size:1.2em">
                 {% if security_audit.has_critical_alert %}
-                <span class="status-error">⚠ 有告警</span>
+                <span class="status-error">有告警</span>
                 {% elif security_audit.has_warning_alert %}
-                <span class="status-warn">⚡ 需关注</span>
+                <span class="status-warn">需关注</span>
                 {% else %}
-                <span class="status-ok">✅ 正常</span>
+                <span class="status-ok">正常</span>
                 {% endif %}
             </div>
-            <div class="label">{% set alert_count = (security_audit.audit_alerts or [])|length %}{% if alert_count > 0 %}{{ alert_count }} 条告警{% else %}无安全告警{% endif %}</div>
+            <div class="label">
+                {% set alert_count = (security_audit.audit_alerts or [])|length %}
+                {%- if alert_count > 0 %}{{ alert_count }} 条告警{% else %}无安全告警{% endif %}
+            </div>
         </div>
     </div>
 
@@ -315,9 +329,12 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
     {% if alerts|length > 0 %}
     <div style="margin-top:12px">
     {% for alert in alerts %}
-    <div style="background:#161b22;border:1px solid {% if alert.level == 'critical' %}#f85149{% else %}#d29922{% endif %};border-radius:6px;padding:8px 14px;margin-bottom:6px;font-size:0.85em">
-        <span style="font-weight:600;color:{% if alert.level == 'critical' %}#f85149{% else %}#d29922{% endif %}">
-            {{ "🔴" if alert.level == 'critical' else "🟡" }} {{ alert.level|upper }}
+    <div style="background:#161b22;border:1px solid
+        {%- if alert.level == 'critical' %}#f85149{% else %}#d29922{% endif %};
+        border-radius:6px;padding:8px 14px;margin-bottom:6px;font-size:0.85em">
+        <span style="font-weight:600;
+            color:{% if alert.level == 'critical' %}#f85149{% else %}#d29922{% endif %}">
+            {{ alert.level|upper }}
         </span>: {{ alert.message }}
     </div>
     {% endfor %}
@@ -354,7 +371,8 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
     {% if security_audit.recent_audit_events %}
     <div style="margin-top:12px">
     <details>
-    <summary style="color:#8b949e;cursor:pointer;font-size:0.9em;margin-bottom:8px">📋 最近审计事件 ({{ security_audit.recent_audit_events|length }})</summary>
+    <summary style="color:#8b949e;cursor:pointer;font-size:0.9em;margin-bottom:8px">
+        最近审计事件 ({{ security_audit.recent_audit_events|length }})</summary>
     <table style="font-size:0.85em">
         <thead><tr><th>时间</th><th>操作</th><th>级别</th><th>详情</th></tr></thead>
         <tbody>
@@ -363,7 +381,8 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
             <td>{{ e.timestamp or "N/A" }}</td>
             <td><span class="badge badge-info">{{ e.operation or "N/A" }}</span></td>
             <td>
-                {% if e.level == 'critical' %}<span class="badge" style="background:#f8514933;color:#f85149">严重</span>
+                {% if e.level == 'critical' %}
+                <span class="badge" style="background:#f8514933;color:#f85149">严重</span>
                 {% elif e.level == 'warning' %}<span class="badge badge-warn">警告</span>
                 {% else %}<span class="badge badge-info">信息</span>
                 {% endif %}
@@ -379,7 +398,7 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
     </div>
 
     <!-- 错误日志 -->
-    <div class="section"><h2>⚠️ 最近错误 ({{ errors|length }})</h2>
+    <div class="section"><h2>最近错误 ({{ errors|length }})</h2>
     {% if errors %}
     <table>
         <thead><tr><th>时间</th><th>类型</th><th>消息</th><th>异常</th></tr></thead>
@@ -395,11 +414,11 @@ DASHBOARD_TEMPLATE = """<!DOCTYPE html>
         </tbody>
     </table>
     {% else %}
-    <p class="empty">✅ 暂无错误记录</p>
+    <p class="empty">暂无错误记录</p>
     {% endif %}</div>
 
     <!-- 历史数据 -->
-    <div class="section"><h2>📈 最近历史数据 ({{ history|length }} 条)</h2>
+    <div class="section"><h2>最近历史数据 ({{ history|length }} 条)</h2>
     {% if history %}
     <table>
         <thead><tr><th>时间</th><th>速度/s</th><th>总数</th><th>匹配</th><th>CPU%</th><th>内存MB</th></tr></thead>
@@ -646,7 +665,10 @@ def _parse_audit_log_entries(log_path: Path, limit: int = 20) -> list[dict[str, 
     """解析 key_audit.log 文件，提取最近 N 条审计条目（已脱敏）.
 
     日志格式示例:
-    2026-05-20 12:00:00,000 - src.utils.key_audit - INFO - [KEY_AUDIT] 2026-05-20T12:00:00 | Operation: display | Level: info | Address: 1A1zP1...eP5Q | KeyHash: a1b2c3d4e5f6... | DisplayMode: masked | Details: 私钥已脱敏显示
+    2026-05-20 12:00:00 - src.utils.key_audit - INFO - [KEY_AUDIT]
+    2026-05-20T12:00:00 |
+    Operation: display | Level: info | Address: 1A1zP1...eP5Q | KeyHash: a1b2c3d4e5f6... |
+    DisplayMode: masked | Details: 私钥已脱敏显示
 
     注意：所有敏感信息已在日志写入时被 SecurityLogFilter 脱敏处理。
     此处仅解析和聚合，不暴露私钥相关敏感内容。
@@ -730,12 +752,13 @@ def create_app(data_dir: Path | None = None, debug: bool = False) -> "Flask":
     # 在生产环境（非debug模式）中使用 CRITICAL 级别
     elif not debug:
         logger.critical(
-            "⚠️ 生产环境安全警告: Web 仪表板未设置 API Key，所有端点可公开访问！"
+            "[WARN] 生产环境安全警告: Web 仪表板未设置 API Key，所有端点可公开访问！"
             "请通过 --api-key 参数或 DASHBOARD_API_KEY 环境变量设置密钥。",
         )
     else:
         logger.warning(
-            "Web 仪表板未设置 API Key，所有端点可公开访问。请通过 --api-key 参数或 DASHBOARD_API_KEY 环境变量设置密钥。",
+            "Web 仪表板未设置 API Key，所有端点可公开访问。"
+            "请通过 --api-key 参数或 DASHBOARD_API_KEY 环境变量设置密钥。",
         )
 
     # 从 web 包元数据获取版本号（避免硬编码和触发 OpenCL 初始化）

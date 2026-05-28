@@ -183,8 +183,8 @@ class BTCKeyAddressVerifier:
             # 这是 Bitcoin Wiki 上的标准测试案例
             "private_key": "0000000000000000000000000000000000000000000000000000000000000001",
             # 私钥 1 -> 公钥 = G (生成元)
-            "public_key_compressed": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",  # noqa: E501
-            "public_key_uncompressed": "0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8",  # noqa: E501
+            "public_key_compressed": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+            "public_key_uncompressed": "0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8",
             # 使用 Bitcoin wiki 测试向量地址 (注意: 不同工具可能产生不同地址)
             "address_p2pkh": "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH",  # 从私钥1正确派生
             "address_p2sh": "3LRW7jeCvQCRdPF8S3yUCfRAx4eqXFmdcr",  # P2SH-P2WPKH
@@ -195,7 +195,7 @@ class BTCKeyAddressVerifier:
             "private_key": "0000000000000000000000000000000000000000000000000000000000000002",
             # 这个私钥的公钥 (计算得出)
             "public_key_compressed": "02d4635d30c419f3936f30f2e9b9d4a4f28ec1a8f8c9e4b6e5a1d2c3b4a59687d",
-            "public_key_uncompressed": "04d4635d30c419f3936f30f2e9b9d4a4f28ec1a8f8c9e4b6e5a1d2c3b4a59687d4a8f8c9e4b6e5a1d2c3b4a59687d4a8f8c9e4b6e5a1d2c3b4a59687d",  # noqa: E501
+            "public_key_uncompressed": "04d4635d30c419f3936f30f2e9b9d4a4f28ec1a8f8c9e4b6e5a1d2c3b4a59687d4a8f8c9e4b6e5a1d2c3b4a59687d4a8f8c9e4b6e5a1d2c3b4a59687d",
             "address_p2pkh": "1Cii5sCWiHhp3CZiX75r6vHkfq7B3quqBL",  # 验证后填充
             "address_p2sh": "3QZ2C1fMhBNFRkbt9XfWR4bfNAfYqLrYqR",  # 验证后填充
             "address_bech32": "bc1qkm8l53flq4pspy32fxyw9pl00d2uq0l4d7qn3c",  # 验证后填充
@@ -217,8 +217,8 @@ class BTCKeyAddressVerifier:
         if self.verbose:
             # 使用 ASCII 兼容字符避免 Windows 编码问题
             safe_message = (
-                message.replace("✓", "[OK]")
-                .replace("✗", "[FAIL]")
+                message.replace("[OK]", "[OK]")
+                .replace("[FAIL]", "[FAIL]")
                 .replace("─", "-")
                 .replace("═", "=")
                 .replace("│", "|")
@@ -297,7 +297,7 @@ class BTCKeyAddressVerifier:
             VerificationStep(
                 name="私钥范围验证",
                 input_data=f"1 <= {k} < N",
-                output_data="✓ 验证通过",
+                output_data="[OK] 验证通过",
                 expected="1 <= k < N",
                 is_correct=True,
             ),

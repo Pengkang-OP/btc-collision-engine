@@ -137,7 +137,7 @@ class MultiGPUCollisionEngine:
 
         # 状态管理 (使用锁保护)
         #
-        # 🔒 锁顺序约定 (MUST follow to avoid deadlock):
+        # [LOCK] 锁顺序约定 (MUST follow to avoid deadlock):
         #    _state_lock → _workers_lock → _matches_lock
         #    即: 如果同一方法需要获取多把锁,必须按此顺序获取。
         self._state_lock = threading.RLock()  # P2修复: 可重入锁防止回调路径死锁

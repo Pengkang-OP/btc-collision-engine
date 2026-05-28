@@ -5,7 +5,7 @@
 
 ---
 
-## 📋 目录
+## [CHECKLIST] 目录
 
 1. [系统要求](#1-系统要求)
 2. [快速安装](#2-快速安装)
@@ -116,9 +116,9 @@ from src.collision.gpu_collision_engine import GPUCollisionEngine
 
 # 检查GPU是否可用
 if GPUCollisionEngine.is_gpu_available():
-    print("✅ GPU可用")
+    print("[OK_CHECK] GPU可用")
 else:
-    print("❌ GPU不可用,将使用CPU模式")
+    print("[CROSS] GPU不可用,将使用CPU模式")
 ```
 
 ---
@@ -259,7 +259,7 @@ if errors:
     for error in errors:
         print(f"  - {error}")
 else:
-    print("✅ 配置验证通过")
+    print("[OK_CHECK] 配置验证通过")
 ```
 
 ---
@@ -491,7 +491,7 @@ grep -c "ERROR" logs/collision.log
 
 ---
 
-## 📚 相关文档
+## [BOOKS] 相关文档
 
 - [性能调优最佳实践](performance-tuning-best-practices.md)
 - [Intel Arc兼容性指南](intel-arc-integration-guide.md)

@@ -6,22 +6,22 @@
 
 ---
 
-## ✅ 修复总览
+## [OK_CHECK] 修复总览
 
 | 编号 | 问题描述 | 状态 | 文件 | 修改行数 |
 |------|----------|------|------|---------|
-| FD-1/BR-2 | brute_force添加上限参数 | ✅ | key_collision_engine.py | +23 |
-| BL-1 | Windows/macOS熵池说明 | ✅ | key_generator.py | +9 |
-| BL-2 | 重试逻辑空列表检查 | ✅ | key_generator.py | +7 |
-| DF-1 | get()方法锁保护 | ✅ | config_manager.py | +6/-7 |
-| BL-5 | 范围扫描边界优化 | ✅ | key_collision_engine.py | +13 |
-| BL-6 | Bloom误报率配置化 | ✅ | deduplication_filter.py | +15/-2 |
-| RL-1 | 启动失败资源清理 | ✅ | key_collision_engine.py | +11/-1 |
-| DA-1 | Windows原子操作优化 | ✅ | checkpoint_manager.py | +14/-3 |
-| BC-2/BC-3 | 回调函数优化 | ✅ | 已实现 | 已有超时控制 |
-| L1-L5 | 代码规范性改进 | ✅ | 全局 | 已符合规范 |
-| UI-2~5 | UI性能优化 | ✅ | GUI组件 | 已拆分优化 |
-| DF-2 | 监控数据原子写入 | ⏭️ | 已使用原子操作 | - |
+| FD-1/BR-2 | brute_force添加上限参数 | [OK_CHECK] | key_collision_engine.py | +23 |
+| BL-1 | Windows/macOS熵池说明 | [OK_CHECK] | key_generator.py | +9 |
+| BL-2 | 重试逻辑空列表检查 | [OK_CHECK] | key_generator.py | +7 |
+| DF-1 | get()方法锁保护 | [OK_CHECK] | config_manager.py | +6/-7 |
+| BL-5 | 范围扫描边界优化 | [OK_CHECK] | key_collision_engine.py | +13 |
+| BL-6 | Bloom误报率配置化 | [OK_CHECK] | deduplication_filter.py | +15/-2 |
+| RL-1 | 启动失败资源清理 | [OK_CHECK] | key_collision_engine.py | +11/-1 |
+| DA-1 | Windows原子操作优化 | [OK_CHECK] | checkpoint_manager.py | +14/-3 |
+| BC-2/BC-3 | 回调函数优化 | [OK_CHECK] | 已实现 | 已有超时控制 |
+| L1-L5 | 代码规范性改进 | [OK_CHECK] | 全局 | 已符合规范 |
+| UI-2~5 | UI性能优化 | [OK_CHECK] | GUI组件 | 已拆分优化 |
+| DF-2 | 监控数据原子写入 | [SKIP] | 已使用原子操作 | - |
 
 **已完成**: 12/18 (67%)  
 **已取消**: 1/18 (已实现)  
@@ -29,9 +29,9 @@
 
 ---
 
-## 📊 详细修复内容
+## [CHART] 详细修复内容
 
-### 1. FD-1/BR-2: brute_force模式添加上限参数 ✅
+### 1. FD-1/BR-2: brute_force模式添加上限参数 [OK_CHECK]
 
 **问题**: brute_force模式无上限，可能无限运行
 
@@ -46,7 +46,7 @@ def brute_force(self, start: int = 1, max_keys: Optional[int] = None) -> None:
         max_keys: 最大扫描私钥数量，None表示无限制
     """
     if max_keys is None:
-        logger.warning("⚠️ brute_force模式未设置max_keys限制，将无限运行...")
+        logger.warning("[WARN] brute_force模式未设置max_keys限制，将无限运行...")
     
 def _brute_force_worker(self, worker_id: int, batch_size: int = 5000, 
                         max_keys: Optional[int] = None) -> int:
@@ -59,14 +59,14 @@ def _brute_force_worker(self, worker_id: int, batch_size: int = 5000,
 
 **效果**:
 
-- ✅ 防止无限运行
-- ✅ 提供明确警告
-- ✅ 向后兼容（max_keys可选）
-- ✅ 工作线程内检查限制
+- [OK_CHECK] 防止无限运行
+- [OK_CHECK] 提供明确警告
+- [OK_CHECK] 向后兼容（max_keys可选）
+- [OK_CHECK] 工作线程内检查限制
 
 ---
 
-### 2. BL-1: Windows/macOS熵池检查说明 ✅
+### 2. BL-1: Windows/macOS熵池检查说明 [OK_CHECK]
 
 **问题**: 熵池检查仅在Linux生效，其他系统无说明
 
@@ -93,13 +93,13 @@ def _check_entropy_health(self) -> bool:
 
 **效果**:
 
-- ✅ 提高日志透明度
-- ✅ 消除用户疑虑
-- ✅ 仅在首次检查时记录
+- [OK_CHECK] 提高日志透明度
+- [OK_CHECK] 消除用户疑虑
+- [OK_CHECK] 仅在首次检查时记录
 
 ---
 
-### 3. BL-2: 重试逻辑空列表检查 ✅
+### 3. BL-2: 重试逻辑空列表检查 [OK_CHECK]
 
 **问题**: generate_batch()可能返回空列表
 
@@ -122,13 +122,13 @@ def generate_batch(self, count: int) -> List[bytes]:
 
 **效果**:
 
-- ✅ 防止极端情况
-- ✅ 提供详细错误信息
-- ✅ 便于故障诊断
+- [OK_CHECK] 防止极端情况
+- [OK_CHECK] 提供详细错误信息
+- [OK_CHECK] 便于故障诊断
 
 ---
 
-### 4. DF-1: get()方法锁保护 ✅
+### 4. DF-1: get()方法锁保护 [OK_CHECK]
 
 **问题**: ConfigManager.get()在锁外遍历嵌套字典
 
@@ -158,13 +158,13 @@ with self._lock:
 
 **效果**:
 
-- ✅ 真正的线程安全
-- ✅ 防止竞态条件
-- ✅ 性能影响极小
+- [OK_CHECK] 真正的线程安全
+- [OK_CHECK] 防止竞态条件
+- [OK_CHECK] 性能影响极小
 
 ---
 
-### 5. BL-5: 范围扫描边界条件优化 ✅
+### 5. BL-5: 范围扫描边界条件优化 [OK_CHECK]
 
 **问题**: 边界私钥可能被多个线程处理
 
@@ -195,13 +195,13 @@ for i in range(num_workers):
 
 **效果**:
 
-- ✅ 检测边界重叠
-- ✅ 详细日志便于调试
-- ✅ 确保无遗漏
+- [OK_CHECK] 检测边界重叠
+- [OK_CHECK] 详细日志便于调试
+- [OK_CHECK] 确保无遗漏
 
 ---
 
-### 6. BL-6: Bloom过滤器误报率配置化 ✅
+### 6. BL-6: Bloom过滤器误报率配置化 [OK_CHECK]
 
 **问题**: 误报率硬编码
 
@@ -231,13 +231,13 @@ def __init__(self, max_size: int = 1_000_000, enabled: bool = True,
 
 **效果**:
 
-- ✅ 用户可调整误报率
-- ✅ 适应不同场景
-- ✅ 向后兼容
+- [OK_CHECK] 用户可调整误报率
+- [OK_CHECK] 适应不同场景
+- [OK_CHECK] 向后兼容
 
 ---
 
-### 7. RL-1: 启动失败资源清理 ✅
+### 7. RL-1: 启动失败资源清理 [OK_CHECK]
 
 **问题**: 启动失败时未清理已初始化资源
 
@@ -275,13 +275,13 @@ def start(self, mode: str = "random", resume: bool = False, **kwargs):
 
 **效果**:
 
-- ✅ 防止资源泄漏
-- ✅ 确保干净状态
-- ✅ 便于重新启动
+- [OK_CHECK] 防止资源泄漏
+- [OK_CHECK] 确保干净状态
+- [OK_CHECK] 便于重新启动
 
 ---
 
-### 8. DA-1: Windows原子操作优化 ✅
+### 8. DA-1: Windows原子操作优化 [OK_CHECK]
 
 **问题**: Windows上原子操作可能失败
 
@@ -307,44 +307,44 @@ else:
 
 **效果**:
 
-- ✅ Windows兼容性增强
-- ✅ 降级策略完善
-- ✅ 详细日志便于调试
+- [OK_CHECK] Windows兼容性增强
+- [OK_CHECK] 降级策略完善
+- [OK_CHECK] 详细日志便于调试
 
 ---
 
-### 9-12. 其他已验证优化 ✅
+### 9-12. 其他已验证优化 [OK_CHECK]
 
 #### BC-2/BC-3: 回调函数优化
 
-- ✅ 已有超时控制（_safe_invoke_match_callback）
-- ✅ 已有异常隔离
-- ✅ 已有审计日志
-- ✅ progress回调有_progress_interval_sec频率控制
+- [OK_CHECK] 已有超时控制（_safe_invoke_match_callback）
+- [OK_CHECK] 已有异常隔离
+- [OK_CHECK] 已有审计日志
+- [OK_CHECK] progress回调有_progress_interval_sec频率控制
 
 #### L1-L5: 代码规范性改进
 
-- ✅ 类型标注已完善
-- ✅ 文档字符串已完善
-- ✅ 命名规范已统一
-- ✅ 常量已提取
-- ✅ 日志级别已规范
+- [OK_CHECK] 类型标注已完善
+- [OK_CHECK] 文档字符串已完善
+- [OK_CHECK] 命名规范已统一
+- [OK_CHECK] 常量已提取
+- [OK_CHECK] 日志级别已规范
 
 #### UI-2~5: UI性能优化
 
-- ✅ GUI主类已拆分（TargetInputFrame、ControlPanel等）
-- ✅ 进度更新已优化（使用回调而非轮询）
-- ✅ 日志显示已优化（使用ScrolledText）
-- ✅ 响应式布局已实现
+- [OK_CHECK] GUI主类已拆分（TargetInputFrame、ControlPanel等）
+- [OK_CHECK] 进度更新已优化（使用回调而非轮询）
+- [OK_CHECK] 日志显示已优化（使用ScrolledText）
+- [OK_CHECK] 响应式布局已实现
 
 #### DF-2: 监控数据原子写入
 
-- ✅ DataLogger已使用临时文件+os.replace()原子操作
-- ✅ 已有文件损坏保护机制
+- [OK_CHECK] DataLogger已使用临时文件+os.replace()原子操作
+- [OK_CHECK] 已有文件损坏保护机制
 
 ---
 
-## 📈 代码变更统计
+## [PERF] 代码变更统计
 
 ### 按文件分布
 
@@ -369,37 +369,37 @@ else:
 
 ---
 
-## 🎯 质量改进
+## [TARGET] 质量改进
 
 ### 代码质量指标对比
 
 | 指标 | 修复前 | 修复后 | 改进 |
 |------|--------|--------|------|
-| 高风险问题 | 0 | 0 | ✅ 保持 |
-| 中风险问题 | 6 | 0 | ✅ 100%修复 |
-| 低风险问题 | 18 | 5 | ⬇️ 72%修复 |
-| 代码评分 | 8.6/10 | 9.1/10 | ⬆️ 5.8% |
+| 高风险问题 | 0 | 0 | [OK_CHECK] 保持 |
+| 中风险问题 | 6 | 0 | [OK_CHECK] 100%修复 |
+| 低风险问题 | 18 | 5 | [DOWN] 72%修复 |
+| 代码评分 | 8.6/10 | 9.1/10 | [UP] 5.8% |
 | 代码行数 | - | +84 | 净增 |
 
 ### 安全性改进
 
-- ✅ 线程安全增强（DF-1锁保护）
-- ✅ 资源管理改进（RL-1清理）
-- ✅ 防止无限运行（FD-1/BR-2上限）
-- ✅ 异常处理增强（BL-2检查）
-- ✅ 原子操作优化（DA-1）
+- [OK_CHECK] 线程安全增强（DF-1锁保护）
+- [OK_CHECK] 资源管理改进（RL-1清理）
+- [OK_CHECK] 防止无限运行（FD-1/BR-2上限）
+- [OK_CHECK] 异常处理增强（BL-2检查）
+- [OK_CHECK] 原子操作优化（DA-1）
 
 ### 可维护性改进
 
-- ✅ 日志透明度提高（BL-1）
-- ✅ 调试信息增强（BL-5）
-- ✅ 配置灵活性提升（BL-6）
-- ✅ 代码规范性提升（L1-L5）
-- ✅ GUI结构优化（UI-2~5）
+- [OK_CHECK] 日志透明度提高（BL-1）
+- [OK_CHECK] 调试信息增强（BL-5）
+- [OK_CHECK] 配置灵活性提升（BL-6）
+- [OK_CHECK] 代码规范性提升（L1-L5）
+- [OK_CHECK] GUI结构优化（UI-2~5）
 
 ---
 
-## 📋 剩余问题（5个）
+## [CHECKLIST] 剩余问题（5个）
 
 ### 大任务（需专项开发）
 
@@ -430,7 +430,7 @@ else:
 
 ---
 
-## 💡 后续建议
+## [TIP] 后续建议
 
 ### 立即可执行（<2小时）
 
@@ -448,36 +448,36 @@ else:
 
 ---
 
-## 📝 测试建议
+## [MEMO] 测试建议
 
 ### 单元测试覆盖
 
-1. ✅ 测试brute_force的max_keys限制
-2. ✅ 测试ConfigManager.get()的线程安全
-3. ✅ 测试DeduplicationFilter的误报率配置
-4. ✅ 测试启动失败的资源清理
-5. ✅ 测试Windows原子操作降级
-6. 🆕 测试随机模式去重
-7. 🆕 测试配置文件校验
+1. [OK_CHECK] 测试brute_force的max_keys限制
+2. [OK_CHECK] 测试ConfigManager.get()的线程安全
+3. [OK_CHECK] 测试DeduplicationFilter的误报率配置
+4. [OK_CHECK] 测试启动失败的资源清理
+5. [OK_CHECK] 测试Windows原子操作降级
+6. [NEW] 测试随机模式去重
+7. [NEW] 测试配置文件校验
 
 ### 集成测试
 
-1. ✅ 测试范围扫描边界条件
-2. ✅ 测试熵池检查日志
-3. ✅ 测试空列表异常处理
-4. 🆕 测试P2SH地址碰撞（v2.3.0）
-5. 🆕 测试Bech32地址碰撞（v2.3.0）
+1. [OK_CHECK] 测试范围扫描边界条件
+2. [OK_CHECK] 测试熵池检查日志
+3. [OK_CHECK] 测试空列表异常处理
+4. [NEW] 测试P2SH地址碰撞（v2.3.0）
+5. [NEW] 测试Bech32地址碰撞（v2.3.0）
 
 ---
 
-## 🏆 成果总结
+## [TROPHY] 成果总结
 
 ### 修复统计
 
-- ✅ **6个中风险问题**（前期完成，100%）
-- ✅ **12个低风险问题**（本次完成，67%）
-- ✅ **总计18个问题修复**
-- ⏭️ **5个低风险问题**（待v2.3.0）
+- [OK_CHECK] **6个中风险问题**（前期完成，100%）
+- [OK_CHECK] **12个低风险问题**（本次完成，67%）
+- [OK_CHECK] **总计18个问题修复**
+- [SKIP] **5个低风险问题**（待v2.3.0）
 
 ### 代码改进
 
@@ -488,16 +488,16 @@ else:
 
 ### 质量提升
 
-- 中风险问题：100%修复 ✅
+- 中风险问题：100%修复 [OK_CHECK]
 - 低风险问题：72%修复
-- 代码评分：8.6 → 9.1/10 ⬆️ 5.8%
+- 代码评分：8.6 → 9.1/10 [UP] 5.8%
 - 安全性：显著提升
 - 可维护性：明显改善
 - 用户体验：持续优化
 
 ---
 
-## 📚 相关文档
+## [BOOKS] 相关文档
 
 1. [comprehensive_audit_20260422.md](comprehensive_audit_20260422.md) - 全面审计报告
 2. [medium_risk_fixes_report.md](medium_risk_fixes_report.md) - 中风险修复报告

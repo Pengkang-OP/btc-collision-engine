@@ -61,8 +61,8 @@ class GPUPerformanceTester:
         # 取前N个地址
         test_addresses = set(list(addresses)[:count])
 
-        print(f"✓ 从文件加载 {len(addresses)} 个地址")
-        print(f"✓ 使用 {len(test_addresses)} 个地址进行测试")
+        print(f"[OK] 从文件加载 {len(addresses)} 个地址")
+        print(f"[OK] 使用 {len(test_addresses)} 个地址进行测试")
 
         return test_addresses
 
@@ -85,7 +85,7 @@ class GPUPerformanceTester:
             )
 
         def on_match(match_info):
-            print(f"  🎯 发现匹配: {match_info.get('address', 'N/A')}")
+            print(f"  TARGET 发现匹配: {match_info.get('address', 'N/A')}")
 
         start_init = time.time()
 
@@ -115,12 +115,12 @@ class GPUPerformanceTester:
             "initialization_time": init_time,
         }
 
-        print(f"✓ GPU设备: {device_info.get('name', 'Unknown')}")
-        print(f"✓ 显存: {device_info.get('global_mem_gb', 0):.2f} GB")
-        print(f"✓ 计算单元: {device_info.get('compute_units', 0)}")
-        print(f"✓ 显存效率: {memory_efficiency * 100:.0f}%")
-        print(f"✓ 批次大小: {engine.batch_size:,}")
-        print(f"✓ 初始化时间: {init_time:.2f}秒")
+        print(f"[OK] GPU设备: {device_info.get('name', 'Unknown')}")
+        print(f"[OK] 显存: {device_info.get('global_mem_gb', 0):.2f} GB")
+        print(f"[OK] 计算单元: {device_info.get('compute_units', 0)}")
+        print(f"[OK] 显存效率: {memory_efficiency * 100:.0f}%")
+        print(f"[OK] 批次大小: {engine.batch_size:,}")
+        print(f"[OK] 初始化时间: {init_time:.2f}秒")
 
         return engine, stats_history
 
@@ -315,7 +315,7 @@ class GPUPerformanceTester:
         print("=" * 80)
 
         # 设备信息
-        print("\n📊 GPU设备信息:")
+        print("\nSTATS GPU设备信息:")
         print(f"  设备名称: {self.results['device_info'].get('name', 'N/A')}")
         print(f"  厂商: {self.results['device_info'].get('vendor', 'N/A')}")
         print(f"  显存: {self.results['device_info'].get('global_mem_gb', 0):.2f} GB")
@@ -324,7 +324,7 @@ class GPUPerformanceTester:
 
         # 基准测试
         if "avg_speed" in self.results.get("benchmark", {}):
-            print(f"\n🏁 基准测试 ({self.results['benchmark']['duration']}秒):")
+            print(f"\n[FINISH] 基准测试 ({self.results['benchmark']['duration']}秒):")
             print(f"  总检查数: {self.results['benchmark']['total_keys']:>12,} keys")
             print(f"  平均速度: {self.results['benchmark']['avg_speed']:>12,.2f} keys/s")
             print(f"  峰值速度: {self.results['benchmark']['max_speed']:>12,.2f} keys/s")
@@ -332,7 +332,7 @@ class GPUPerformanceTester:
 
         # 压力测试
         if "avg_speed" in self.results.get("stress_test", {}):
-            print(f"\n💪 压力测试 ({self.results['stress_test']['duration']}秒):")
+            print(f"\n[STRESS] 压力测试 ({self.results['stress_test']['duration']}秒):")
             print(f"  总检查数: {self.results['stress_test']['total_keys']:>12,} keys")
             print(f"  平均速度: {self.results['stress_test']['avg_speed']:>12,.2f} keys/s")
             print(f"  峰值速度: {self.results['stress_test']['max_speed']:>12,.2f} keys/s")
@@ -341,40 +341,40 @@ class GPUPerformanceTester:
 
         # 稳定性测试
         if "overall_avg_speed" in self.results.get("stability", {}):
-            print("\n📈 稳定性测试:")
+            print("\nUP 稳定性测试:")
             print(f"  平均速度: {self.results['stability']['overall_avg_speed']:>12,.2f} keys/s")
             print(f"  变异系数: {self.results['stability']['coefficient_of_variation']:>12.2f}%")
 
         # 综合评估
-        print("\n⭐ 综合评估:")
+        print("\n[STAR] 综合评估:")
 
         benchmark_speed = self.results.get("benchmark", {}).get("avg_speed", 0)
         stability_cv = self.results.get("stability", {}).get("coefficient_of_variation", 100)
 
         # 性能评级
         if benchmark_speed > 100000:
-            perf_rating = "优秀 ⭐⭐⭐⭐⭐"
+            perf_rating = "优秀 *****"
         elif benchmark_speed > 50000:
-            perf_rating = "良好 ⭐⭐⭐⭐"
+            perf_rating = "良好 [4星]"
         elif benchmark_speed > 10000:
-            perf_rating = "中等 ⭐⭐⭐"
+            perf_rating = "中等 ***"
         elif benchmark_speed > 1000:
-            perf_rating = "一般 ⭐⭐"
+            perf_rating = "一般 [2星]"
         else:
-            perf_rating = "较差 ⭐"
+            perf_rating = "较差 *"
 
         print(f"  性能评级: {perf_rating}")
         print(f"  基准速度: {benchmark_speed:,.2f} keys/s")
 
         # 稳定性评级
         if stability_cv < 5:
-            stab_rating = "非常稳定 ⭐⭐⭐⭐⭐"
+            stab_rating = "非常稳定 [5星]"
         elif stability_cv < 10:
-            stab_rating = "稳定 ⭐⭐⭐⭐"
+            stab_rating = "稳定 ****"
         elif stability_cv < 20:
-            stab_rating = "一般 ⭐⭐⭐"
+            stab_rating = "一般 [3星]"
         else:
-            stab_rating = "不稳定 ⭐⭐"
+            stab_rating = "不稳定 [2星]"
 
         print(f"  稳定性评级: {stab_rating}")
 
@@ -393,7 +393,7 @@ class GPUPerformanceTester:
         with pathlib.Path(report_file).open("w", encoding="utf-8") as f:
             json.dump(self.results, f, indent=2, ensure_ascii=False)
 
-        print(f"\n📄 详细报告已保存: {report_file}")
+        print(f"\n[DOCUMENT] 详细报告已保存: {report_file}")
         print("=" * 80)
 
     def run_all_tests(self):
@@ -425,9 +425,9 @@ class GPUPerformanceTester:
             self.generate_report()
 
         except KeyboardInterrupt:
-            print("\n\n⚠️  测试被用户中断")
+            print("\n\nWARN  测试被用户中断")
         except Exception as e:
-            print(f"\n\n❌ 测试过程出错: {e}")
+            print(f"\n\nERR 测试过程出错: {e}")
             import traceback
 
             traceback.print_exc()
@@ -438,7 +438,7 @@ class GPUPerformanceTester:
                 if hasattr(engine, "_gpu_device"):
                     engine._gpu_device.cleanup()
 
-            print("\n✓ 测试完成，资源已清理")
+            print("\n[OK] 测试完成，资源已清理")
 
 
 def main():

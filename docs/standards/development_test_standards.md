@@ -78,13 +78,13 @@ class TestBatchSizeCalculation:       # 对应特定功能
 测试方法使用 `snake_case`，格式为 `test_<功能描述>_<预期结果>`：
 
 ```python
-# ✅ 正确：清晰描述测试场景和预期结果
+# [OK] 正确：清晰描述测试场景和预期结果
 def test_generate_batch_returns_correct_count(self):
 def test_generate_batch_raises_when_count_is_zero(self):
 def test_gpu_init_fails_without_opencl(self):
 def test_batch_size_capped_at_max_when_mem_is_small(self):
 
-# ❌ 避免：命名过于模糊
+# [FAIL] 避免：命名过于模糊
 def test_generate(self):
 def test_error(self):
 def test_1(self):
@@ -134,7 +134,7 @@ def mock_gpu_chain():
 def mock_gpu_chain_module():
     """模块级共享的GPU Mock链（适用于只读集成测试）
 
-    ⚠️ 注意：此 Fixture 在模块内共享，不适合修改 Mock 状态的测试！
+    [WARN] 注意：此 Fixture 在模块内共享，不适合修改 Mock 状态的测试！
     """
     mock_device, mock_context, mock_kernel = _create_mock_gpu_objects()
     with _apply_gpu_patches(mock_device, mock_context, mock_kernel) as mocks:
@@ -239,7 +239,7 @@ def test_intel_workaround(mock_gpu_chain_intel):
 `pyopencl.Buffer` 需要真实 OpenCL 上下文，**必须通过 `sys.modules` patch**：
 
 ```python
-# ✅ 正确（参考 tests/conftest.py _apply_gpu_patches）
+# [OK] 正确（参考 tests/conftest.py _apply_gpu_patches）
 mock_cl_module = Mock()
 mock_cl_module.Buffer = Mock(return_value=Mock())
 mock_cl_module.mem_flags = Mock()
@@ -251,7 +251,7 @@ with patch.dict('sys.modules', {
 }):
     ...
 
-# ❌ 错误（无法拦截函数级 import）
+# [FAIL] 错误（无法拦截函数级 import）
 with patch('pyopencl.Buffer', return_value=Mock()):
     ...  # 仅在模块级 import 时有效，函数级 import 无效
 
@@ -402,7 +402,7 @@ test_data/
 - 敏感测试数据（私钥、种子）使用 `secrets` 模块生成，不硬编码
 
 ```python
-# ✅ 正确：动态生成测试数据
+# [OK] 正确：动态生成测试数据
 @pytest.fixture
 def sample_target_addresses():
     """生成测试用目标地址集合"""
@@ -411,7 +411,7 @@ def sample_target_addresses():
         "1BpEi6DfDAUFd153wiGrvkiKW1J1t1V8U",
     }
 
-# ✅ 正确：读取项目测试数据文件
+# [OK] 正确：读取项目测试数据文件
 @pytest.fixture
 def valid_address_list(tmp_path):
     src = Path("valid_addresses.txt")
@@ -496,10 +496,10 @@ pytest tests/ --cov=src --cov-report=html -q
 部分 GPU 集成脚本（`scripts/testing/test_gpu_*.py`）需要直接运行：
 
 ```bash
-# ❌ 不通过 pytest 运行
+# [FAIL] 不通过 pytest 运行
 pytest scripts/testing/test_gpu_collision_actual.py
 
-# ✅ 直接运行
+# [OK] 直接运行
 python scripts/testing/test_gpu_collision_actual.py
 
 ```

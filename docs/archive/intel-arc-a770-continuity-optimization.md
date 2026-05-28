@@ -1,6 +1,6 @@
 # Intel Arc A770 GPU运算连续性优化指南
 
-## 📊 问题诊断
+## [CHART] 问题诊断
 
 ### 症状
 
@@ -30,7 +30,7 @@
 
 ---
 
-## ✅ 已实施的软件优化
+## [OK_CHECK] 已实施的软件优化
 
 ### 1. 双命令队列并发执行
 
@@ -142,11 +142,11 @@ __kernel void batch_check(
 
 ---
 
-## 🔧 需要手动实施的优化
+## [WRENCH] 需要手动实施的优化
 
 ### 优化1: 禁用ULLS(Ultra Low Latency Submission)
 
-**重要性**: ⭐⭐⭐⭐⭐  
+**重要性**: [STAR][STAR][STAR][STAR][STAR]  
 **预期提升**: Compute性能+14-31%
 
 **操作步骤**:
@@ -175,7 +175,7 @@ python run_async_test.py
 
 ### 优化2: 启用硬件加速GPU调度
 
-**重要性**: ⭐⭐⭐⭐  
+**重要性**: [STAR][STAR][STAR][STAR]  
 **预期提升**: 减少CPU开销,提升GPU利用率
 
 **操作步骤**:
@@ -200,7 +200,7 @@ Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" -Name 
 
 ### 优化3: 更新到最新驱动
 
-**重要性**: ⭐⭐⭐⭐  
+**重要性**: [STAR][STAR][STAR][STAR]  
 **预期提升**: 修复已知问题,持续性能优化
 
 **操作步骤**:
@@ -216,7 +216,7 @@ Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" -Name 
 
 ### 优化4: 高性能电源模式
 
-**重要性**: ⭐⭐⭐  
+**重要性**: [STAR][STAR][STAR]  
 **预期提升**: 稳定的GPU频率,减少性能波动
 
 **操作步骤**:
@@ -261,16 +261,16 @@ self.compute_queues = [
 
 ---
 
-## 📈 性能基准对比
+## [PERF] 性能基准对比
 
 ### 优化前
 
 | 指标 | 数值 |
 |------|------|
 | batch_size | 262,144 |
-| 异步执行 | ❌ 禁用 |
-| 双队列 | ❌ 禁用 |
-| ULLS | ✅ 启用(慢) |
+| 异步执行 | [CROSS] 禁用 |
+| 双队列 | [CROSS] 禁用 |
+| ULLS | [OK_CHECK] 启用(慢) |
 | **峰值吞吐量** | **44,731 keys/s** |
 | GPU利用率 | 40-60% |
 
@@ -279,9 +279,9 @@ self.compute_queues = [
 | 指标 | 数值 | 提升 |
 |------|------|------|
 | batch_size | 1,000,000 | +282% |
-| 异步执行 | ✅ 启用 | - |
-| 双队列 | ✅ 启用 | - |
-| ULLS | ❓ 待禁用 | - |
+| 异步执行 | [OK_CHECK] 启用 | - |
+| 双队列 | [OK_CHECK] 启用 | - |
+| ULLS | [QUESTION] 待禁用 | - |
 | **峰值吞吐量** | **2,890,767 keys/s** | **+6,361%** |
 | GPU利用率 | 80-95%(峰值) | +50% |
 
@@ -295,7 +295,7 @@ self.compute_queues = [
 
 ---
 
-## 🔍 验证工具
+## [SEARCH] 验证工具
 
 ### 1. 连续性优化工具
 
@@ -327,9 +327,9 @@ python tools/diagnose_gui_performance.py
 
 ---
 
-## 📋 优化检查清单
+## [CHECKLIST] 优化检查清单
 
-### 软件优化(已完成✅)
+### 软件优化(已完成[OK_CHECK])
 
 - [x] 双命令队列并发执行
 - [x] 异步双缓冲机制
@@ -338,7 +338,7 @@ python tools/diagnose_gui_performance.py
 - [x] 内存池复用
 - [x] 配置自动读取
 
-### 驱动优化(需手动⚠️)
+### 驱动优化(需手动[WARN])
 
 - [ ] 禁用ULLS
 - [ ] 启用硬件GPU调度
@@ -346,7 +346,7 @@ python tools/diagnose_gui_performance.py
 - [ ] 高性能电源模式
 - [ ] 关闭节能选项
 
-### 高级优化(可选🔧)
+### 高级优化(可选[WRENCH])
 
 - [ ] 增加命令队列深度
 - [ ] 优化OpenCL内核局部内存使用
@@ -355,7 +355,7 @@ python tools/diagnose_gui_performance.py
 
 ---
 
-## 🎯 预期效果
+## [TARGET] 预期效果
 
 ### 保守估计
 
@@ -373,7 +373,7 @@ python tools/diagnose_gui_performance.py
 
 ---
 
-## 📚 参考资源
+## [BOOKS] 参考资源
 
 ### Intel官方文档
 
@@ -396,7 +396,7 @@ python tools/diagnose_gui_performance.py
 
 ---
 
-## 💡 最佳实践总结
+## [TIP] 最佳实践总结
 
 1. **大批次 + 低频率** 优于 小批次 + 高频率
 2. **禁用ULLS** 可提升Compute性能14-31%

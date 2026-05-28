@@ -296,7 +296,7 @@ def mock_gpu_device():
 def mock_gpu_device_module():
     """模块级别的GPU设备Mock(多个测试共享).
 
-    ⚠️ 注意: 此fixture在模块内共享,不适合修改Mock状态的测试!
+    WARN 注意: 此fixture在模块内共享,不适合修改Mock状态的测试!
 
     适用场景:
         - 只读测试(不修改Mock返回值)
@@ -343,7 +343,7 @@ def mock_gpu_device_module():
 def mock_gpu_chain_module():
     """模块级别的完整GPU Mock链.
 
-    ⚠️ 注意: 此fixture在模块内共享7层Mock链!
+    WARN 注意: 此fixture在模块内共享7层Mock链!
 
     适用场景:
         - 模块内多个测试使用相同Mock配置
@@ -380,7 +380,7 @@ def mock_gpu_chain_module():
 def clear_gpu_detector_cache():
     """清除GPUDeviceDetector的所有缓存.
 
-    ⚠️ 警告: 此fixture修改类级别缓存,不建议在并发测试中使用!
+    WARN 警告: 此fixture修改类级别缓存,不建议在并发测试中使用!
 
     当使用pytest-xdist进行并行测试时,多个测试进程可能同时修改
     类级别的缓存,导致测试不稳定。

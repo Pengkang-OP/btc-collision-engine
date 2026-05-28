@@ -190,14 +190,14 @@ def print_optimization_report(optimizations):
     print("-" * 80)
     if optimizations["applied"]:
         for i, opt in enumerate(optimizations["applied"], 1):
-            print(f"  {i}. ✅ {opt['name']}")
+            print(f"  {i}. OK {opt['name']}")
             if "detail" in opt:
                 print(f"     详情: {opt['detail']}")
             if "expected_improvement" in opt:
                 print(f"     预期改进: {opt['expected_improvement']}")
             print()
     else:
-        print("  ⚠️  无已应用的优化")
+        print("  WARN 无已应用的优化")
         print()
 
     # 警告
@@ -205,10 +205,10 @@ def print_optimization_report(optimizations):
     print("-" * 80)
     if optimizations["warnings"]:
         for i, warn in enumerate(optimizations["warnings"], 1):
-            print(f"  {i}. ⚠️  {warn}")
+            print(f"  {i}. WARN {warn}")
         print()
     else:
-        print("  ✅ 无警告")
+        print("  OK 无警告")
         print()
 
     # 建议
@@ -217,7 +217,7 @@ def print_optimization_report(optimizations):
     if optimizations["recommendations"]:
         for i, rec in enumerate(optimizations["recommendations"], 1):
             if isinstance(rec, dict):
-                print(f"  {i}. 💡 [{rec.get('category', '通用')}] {rec['item']}")
+                print(f"  {i}. TIP [{rec.get('category', '通用')}] {rec['item']}")
                 if "detail" in rec:
                     print(f"     说明: {rec['detail']}")
                 if "how_to" in rec:
@@ -225,10 +225,10 @@ def print_optimization_report(optimizations):
                 if "expected_improvement" in rec:
                     print(f"     预期改进: {rec['expected_improvement']}")
             else:
-                print(f"  {i}. 💡 {rec}")
+                print(f"  {i}. TIP {rec}")
             print()
     else:
-        print("  ✅ 无额外建议")
+        print("  OK 无额外建议")
         print()
 
     # 总结
@@ -247,14 +247,14 @@ def print_optimization_report(optimizations):
     print()
 
     if applied_count >= 3:
-        print("  ✅ GPU运算连续性优化良好!")
+        print("  OK GPU运算连续性优化良好!")
         print("     预期GPU利用率: 80-95%")
         print("     预期性能波动: <5%")
     elif applied_count >= 1:
-        print("  ⚠️  部分优化已应用")
+        print("  WARN 部分优化已应用")
         print("     建议实施更多优化以提升GPU连续性")
     else:
-        print("  ❌ 未应用关键优化")
+        print("  ERR 未应用关键优化")
         print("     GPU运算间隔问题可能持续存在")
 
     print()

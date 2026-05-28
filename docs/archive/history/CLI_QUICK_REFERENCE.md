@@ -1,6 +1,6 @@
 # CLI快速参考指南
 
-## 🚀 快速开始
+## [QUICK] 快速开始
 
 ### 新手用户（推荐）
 
@@ -63,7 +63,7 @@ python key_collision_cli.py --cleanup            # 执行
 
 ---
 
-## 📋 参数速查表
+## [CHECKLIST] 参数速查表
 
 ### 目标地址（必需，二选一）
 
@@ -96,7 +96,7 @@ python key_collision_cli.py --cleanup            # 执行
 | `--multi-gpu` | 启用多GPU |
 | `--gpu-device INDEX` | 指定GPU索引 |
 
-### 新增功能 ⭐
+### 新增功能 [STAR]
 
 | 参数 | 说明 |
 |------|------|
@@ -106,7 +106,7 @@ python key_collision_cli.py --cleanup            # 执行
 
 ---
 
-## 🎯 常见场景
+## [TARGET] 常见场景
 
 ### 场景1: 第一次使用
 
@@ -152,7 +152,7 @@ python key_collision_cli.py -t <地址> -m range --start 1 --end FFFFFFFF --dura
 
 ---
 
-## ⚠️ 常见问题
+## [WARN] 常见问题
 
 ### Q1: 提示"需要指定目标地址"
 
@@ -193,7 +193,7 @@ python key_collision_cli.py --config-check
 
 ---
 
-## 📚 更多信息
+## [BOOKS] 更多信息
 
 - 完整帮助: `python key_collision_cli.py --help`
 - 使用示例: `python key_collision_cli.py --examples`

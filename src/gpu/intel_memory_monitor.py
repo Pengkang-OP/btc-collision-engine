@@ -240,7 +240,7 @@ class IntelMemoryMonitor:
         # 显存使用率警告
         if status["status"] == MemoryStatus.EMERGENCY:
             warnings.append(
-                f"🚨 显存紧急: {status['usage_percent']:.1f}% "
+                f"[CRIT] 显存紧急: {status['usage_percent']:.1f}% "
                 f"({status['current_mb']:.0f}MB / {status['safe_limit_mb']:.0f}MB)",
             )
         elif status["status"] == MemoryStatus.CRITICAL:
@@ -250,7 +250,7 @@ class IntelMemoryMonitor:
             )
         elif status["status"] == MemoryStatus.WARNING:
             warnings.append(
-                f"💡 显存警告: {status['usage_percent']:.1f}% "
+                f"[TIP] 显存警告: {status['usage_percent']:.1f}% "
                 f"({status['current_mb']:.0f}MB / {status['safe_limit_mb']:.0f}MB)",
             )
 
@@ -258,7 +258,7 @@ class IntelMemoryMonitor:
         leak_detected = self._detect_memory_leak()
         if leak_detected:
             warnings.append(
-                "🔍 疑似显存泄漏: "
+                "[SEARCH] 疑似显存泄漏: "
                 f"分配={self.total_allocations}, "
                 f"释放={self.total_deallocations}, "
                 f"未释放={self.total_allocations - self.total_deallocations}",
@@ -395,7 +395,7 @@ class IntelMemoryMonitor:
 
         report_lines = [
             "=" * 60,
-            "📊 Intel GPU 显存使用报告",
+            "STATS Intel GPU 显存使用报告",
             "=" * 60,
             f"总显存: {status['total_memory_gb']:.1f} GB",
             f"安全限制: {status['safe_limit_mb']:.0f} MB ({self.safe_usage_ratio * 100:.0f}%)",

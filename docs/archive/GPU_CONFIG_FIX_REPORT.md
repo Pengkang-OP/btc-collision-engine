@@ -10,31 +10,31 @@
 
 ---
 
-## 📊 修复前状态
+## [CHART] 修复前状态
 
 | 配置文件 | 修复前评分 | 缺失参数 | 问题 |
 |---------|-----------|---------|------|
-| config.intel_arc.json | 100/100 ✅ | 无 | 无 |
-| config.json | 37.5/100 ❌ | 5项 | 缺少关键优化参数 |
-| config.optimized.json | 75/100 ⚠️ | 2项 | 参数冲突和过时命名 |
+| config.intel_arc.json | 100/100 [OK_CHECK] | 无 | 无 |
+| config.json | 37.5/100 [CROSS] | 5项 | 缺少关键优化参数 |
+| config.optimized.json | 75/100 [WARN] | 2项 | 参数冲突和过时命名 |
 
-**平均评分**: 70.8/100 ⚠️
+**平均评分**: 70.8/100 [WARN]
 
 ---
 
-## ✅ 修复后状态
+## [OK_CHECK] 修复后状态
 
 | 配置文件 | 修复后评分 | 状态 |
 |---------|-----------|------|
-| config.intel_arc.json | 100/100 ✅ | 优秀 |
-| config.json | 100/100 ✅ | 优秀 |
-| config.optimized.json | 100/100 ✅ | 优秀 |
+| config.intel_arc.json | 100/100 [OK_CHECK] | 优秀 |
+| config.json | 100/100 [OK_CHECK] | 优秀 |
+| config.optimized.json | 100/100 [OK_CHECK] | 优秀 |
 
-**平均评分**: 100.0/100 ✅
+**平均评分**: 100.0/100 [OK_CHECK]
 
 ---
 
-## 🔧 修复详情
+## [WRENCH] 修复详情
 
 ### 1. config.json 修复
 
@@ -155,27 +155,27 @@
 
 **删除参数**：
 
-- ❌ `memory_limit_percent: 45` - 过时命名，统一使用 `memory_usage_ratio: 0.70`
+- [CROSS] `memory_limit_percent: 45` - 过时命名，统一使用 `memory_usage_ratio: 0.70`
 
 ---
 
-## 🎯 配置一致性改进
+## [TARGET] 配置一致性改进
 
 ### 修复前的差异
 
 | 参数 | config.intel_arc.json | config.json | config.optimized.json |
 |------|----------------------|-------------|----------------------|
-| async_execution | ✅ true | ❌ 缺失 | ❌ false |
-| uint32_workaround | ✅ true | ❌ 缺失 | ✅ true |
-| memory_usage_ratio | 0.70 | 0.50 | ❌ 使用memory_limit_percent |
+| async_execution | [OK_CHECK] true | [CROSS] 缺失 | [CROSS] false |
+| uint32_workaround | [OK_CHECK] true | [CROSS] 缺失 | [OK_CHECK] true |
+| memory_usage_ratio | 0.70 | 0.50 | [CROSS] 使用memory_limit_percent |
 | batch_size | 1,048,576 | 65,536 | 131,072 |
 
 ### 修复后的差异
 
 | 参数 | config.intel_arc.json | config.json | config.optimized.json |
 |------|----------------------|-------------|----------------------|
-| async_execution | ✅ true | ✅ true | ✅ true |
-| uint32_workaround | ✅ true | ✅ true | ✅ true |
+| async_execution | [OK_CHECK] true | [OK_CHECK] true | [OK_CHECK] true |
+| uint32_workaround | [OK_CHECK] true | [OK_CHECK] true | [OK_CHECK] true |
 | memory_usage_ratio | 0.70 | 0.70 | 0.70 |
 | batch_size | 1,048,576 | 1,048,576 | 1,048,576 |
 
@@ -188,60 +188,60 @@
 
 ---
 
-## 📝 修改的文件
+## [MEMO] 修改的文件
 
 ### 1. config.json
 
 - **修改行数**: +36行, -14行
 - **主要变更**:
-  - ✅ 新增5项关键GPU优化参数
-  - ✅ 新增optimization配置节（4项参数）
-  - ✅ 优化memory_usage_ratio: 0.50 → 0.70
-  - ✅ 优化batch_size: 65K → 1M
-  - ✅ 重构collision → engine配置节
+  - [OK_CHECK] 新增5项关键GPU优化参数
+  - [OK_CHECK] 新增optimization配置节（4项参数）
+  - [OK_CHECK] 优化memory_usage_ratio: 0.50 → 0.70
+  - [OK_CHECK] 优化batch_size: 65K → 1M
+  - [OK_CHECK] 重构collision → engine配置节
 
 ### 2. config.optimized.json
 
 - **修改行数**: +5行, -5行
 - **主要变更**:
-  - ✅ 新增memory_usage_ratio参数
-  - ✅ 新增enable_vendor_optimizations参数
-  - ✅ 启用async_execution: false → true
-  - ✅ 优化内存池配置（200 buffers, 8GB）
-  - ✅ 删除过时的memory_limit_percent参数
-  - ✅ 优化batch_size: 128K → 1M
+  - [OK_CHECK] 新增memory_usage_ratio参数
+  - [OK_CHECK] 新增enable_vendor_optimizations参数
+  - [OK_CHECK] 启用async_execution: false → true
+  - [OK_CHECK] 优化内存池配置（200 buffers, 8GB）
+  - [OK_CHECK] 删除过时的memory_limit_percent参数
+  - [OK_CHECK] 优化batch_size: 128K → 1M
 
 ### 3. verify_gpu_config.py (新建)
 
 - **文件行数**: 333行
 - **功能**: GPU配置完整性验证工具
 - **特性**:
-  - ✅ 验证8项必需参数
-  - ✅ 验证4项推荐参数
-  - ✅ 检查参数值范围
-  - ✅ 检测参数冲突
-  - ✅ 比较配置文件一致性
-  - ✅ 生成详细报告
+  - [OK_CHECK] 验证8项必需参数
+  - [OK_CHECK] 验证4项推荐参数
+  - [OK_CHECK] 检查参数值范围
+  - [OK_CHECK] 检测参数冲突
+  - [OK_CHECK] 比较配置文件一致性
+  - [OK_CHECK] 生成详细报告
 
 ---
 
-## ✅ 验证结果
+## [OK_CHECK] 验证结果
 
 ### 配置完整性验证
 
 ```
-🔍 GPU配置完整性验证工具
+[SEARCH] GPU配置完整性验证工具
 ============================================================
-✅ 已加载: config.intel_arc.json
-✅ 已加载: config.json
-✅ 已加载: config.optimized.json
+[OK_CHECK] 已加载: config.intel_arc.json
+[OK_CHECK] 已加载: config.json
+[OK_CHECK] 已加载: config.optimized.json
 
-📋 config.intel_arc.json: 100/100 (✅ 优秀) - 通过
-📋 config.json: 100/100 (✅ 优秀) - 通过
-📋 config.optimized.json: 100/100 (✅ 优秀) - 通过
+[CHECKLIST] config.intel_arc.json: 100/100 ([OK_CHECK] 优秀) - 通过
+[CHECKLIST] config.json: 100/100 ([OK_CHECK] 优秀) - 通过
+[CHECKLIST] config.optimized.json: 100/100 ([OK_CHECK] 优秀) - 通过
 
 平均完整性评分: 100.0/100
-✅ 所有配置验证通过
+[OK_CHECK] 所有配置验证通过
 ```
 
 ### 配置一致性评分
@@ -249,14 +249,14 @@
 ```
 一致性评分: 96/100
 
-⚠️ 发现 2 个参数差异（有意为之）:
+[WARN] 发现 2 个参数差异（有意为之）:
   - conservative_memory_policy (false vs true)
   - disable_async_transfer (false vs true)
 ```
 
 ---
 
-## 🚀 性能提升预期
+## [QUICK] 性能提升预期
 
 ### 使用config.json（默认配置）
 
@@ -279,7 +279,7 @@
 
 ---
 
-## 📋 验证清单
+## [CHECKLIST] 验证清单
 
 ### 配置参数完整性
 
@@ -309,7 +309,7 @@
 
 ---
 
-## 💡 使用建议
+## [TIP] 使用建议
 
 ### 1. 选择合适的配置文件
 
@@ -336,7 +336,7 @@ python verify_gpu_config.py
 期望输出：
 
 ```
-✅ 所有配置验证通过
+[OK_CHECK] 所有配置验证通过
 平均完整性评分: 100.0/100
 ```
 
@@ -351,23 +351,23 @@ python start_collision_full.py
 观察日志：
 
 ```
-✅ GPU异步执行已启用 - 双缓冲优化
-✅ 启用uint32 workaround
-✅ 启用超时保护机制: 30秒
-✅ Intel GPU内存效率: 70%
+[OK_CHECK] GPU异步执行已启用 - 双缓冲优化
+[OK_CHECK] 启用uint32 workaround
+[OK_CHECK] 启用超时保护机制: 30秒
+[OK_CHECK] Intel GPU内存效率: 70%
 GPU自动配置生成: batch_size=1,048,576
 ```
 
 ---
 
-## 🎯 总结
+## [TARGET] 总结
 
 ### 修复成果
 
-✅ **完整性提升**: 70.8 → 100.0 (+41.3%)  
-✅ **性能提升**: 50K → 242K keys/s (+384%)  
-✅ **稳定性提升**: 新增超时保护和Intel workaround  
-✅ **一致性提升**: 96/100（仅2个有意差异）  
+[OK_CHECK] **完整性提升**: 70.8 → 100.0 (+41.3%)  
+[OK_CHECK] **性能提升**: 50K → 242K keys/s (+384%)  
+[OK_CHECK] **稳定性提升**: 新增超时保护和Intel workaround  
+[OK_CHECK] **一致性提升**: 96/100（仅2个有意差异）  
 
 ### 关键改进
 
@@ -387,6 +387,6 @@ GPU自动配置生成: batch_size=1,048,576
 ---
 
 **修复完成时间**: 2026-04-24 04:45:00  
-**验证通过**: ✅ 所有配置文件完整性评分 100/100  
+**验证通过**: [OK_CHECK] 所有配置文件完整性评分 100/100  
 **工具**: verify_gpu_config.py  
 **项目版本**: v3.2.0

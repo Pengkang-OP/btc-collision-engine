@@ -45,14 +45,14 @@ BTC碰撞引擎是一款用于 Bitcoin私钥碰撞检测 的开源研究工具�
 
 ```
                     core  collision  gpu  monitoring  utils  config  cli
-core                 -       ✓        -       -        -      -      -
-collision            ✓       -        ✓       ✓        ✓      ✓      -
-gpu                  -       -        -       -        ✓      -      -
-monitoring           -       -        -       -        ✓      ✓      -
+core                 -       [OK]        -       -        -      -      -
+collision            [OK]       -        [OK]       [OK]        [OK]      [OK]      -
+gpu                  -       -        -       -        [OK]      -      -
+monitoring           -       -        -       -        [OK]      [OK]      -
 utils                -       -        -       -        -      -      -
-config               -       -        -       -        ✓      -      -
-cli                  -       ✓        -       -        ✓      ✓      -
-wizard               -       -        -       -        ✓      ✓      -
+config               -       -        -       -        [OK]      -      -
+cli                  -       [OK]        -       -        [OK]      [OK]      -
+wizard               -       -        -       -        [OK]      [OK]      -
 ```
 
 ### 2.2 加密后端策略模式 (crypto_backend.py)

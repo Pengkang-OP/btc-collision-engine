@@ -4,7 +4,7 @@
 
 本文档提供BTC碰撞引擎的systemd服务部署详细说明。
 
-## 📋 目录
+## [CHECKLIST] 目录
 
 - [快速开始](#快速开始)
 
@@ -56,21 +56,21 @@ sudo bash deploy/install-systemd.sh
 
 安装脚本会自动完成以下操作：
 
-1. ✅ 创建`btc-engine`用户和组
+1. [OK] 创建`btc-engine`用户和组
 
-2. ✅ 创建目录结构（`/opt/btc-collision-engine`）
+2. [OK] 创建目录结构（`/opt/btc-collision-engine`）
 
-3. ✅ 复制应用文件（排除开发和测试文件）
+3. [OK] 复制应用文件（排除开发和测试文件）
 
-4. ✅ 创建Python虚拟环境
+4. [OK] 创建Python虚拟环境
 
-5. ✅ 安装依赖包
+5. [OK] 安装依赖包
 
-6. ✅ 安装systemd服务文件
+6. [OK] 安装systemd服务文件
 
-7. ✅ 配置生产环境
+7. [OK] 配置生产环境
 
-8. ✅ 启用并启动服务
+8. [OK] 启用并启动服务
 
 ### 安装后验证
 

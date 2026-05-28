@@ -11,9 +11,9 @@ Write-Output ""
 Write-Output "[1/4] 检查Python环境..."
 try {
     $pythonVersion = & python --version 2>&1
-    Write-Output "✓ Python已找到: $pythonVersion"
+    Write-Output "[OK] Python已找到: $pythonVersion"
 } catch {
-    Write-Output "✗ Python未找到，请先安装Python 3.7+"
+    Write-Output "[FAIL] Python未找到，请先安装Python 3.7+"
     exit 1
 }
 
@@ -22,10 +22,10 @@ Write-Output ""
 Write-Output "[2/4] 检查PyOpenCL..."
 try {
     & python -c "import pyopencl; print('PyOpenCL版本:', pyopencl.VERSION_TEXT)" 2>$null
-    Write-Output "✓ PyOpenCL已安装"
+    Write-Output "[OK] PyOpenCL已安装"
     $pyopencl_installed = $true
 } catch {
-    Write-Output "✗ PyOpenCL未安装"
+    Write-Output "[FAIL] PyOpenCL未安装"
     $pyopencl_installed = $false
 }
 
@@ -53,10 +53,10 @@ except Exception as e:
 " 2>&1
 
 if ($gpu_info) {
-    Write-Output "✓ OpenCL驱动正常"
+    Write-Output "[OK] OpenCL驱动正常"
     Write-Output $gpu_info
 } else {
-    Write-Output "⚠ 无法检测OpenCL驱动"
+    Write-Output "[WARN] 无法检测OpenCL驱动"
 }
 
 # 安装建议
@@ -65,7 +65,7 @@ Write-Output "[4/4] 安装建议"
 Write-Output ""
 
 if ($pyopencl_installed) {
-    Write-Output "✓ PyOpenCL已安装，GPU监控可以直接使用！"
+    Write-Output "[OK] PyOpenCL已安装，GPU监控可以直接使用！"
     Write-Output ""
     Write-Output "测试GPU监控："
     Write-Output "  python src\monitoring\gpu_monitor.py"
@@ -97,13 +97,13 @@ if ($pyopencl_installed) {
         & python -m pip install pyopencl
         if ($LASTEXITCODE -eq 0) {
             Write-Output ""
-            Write-Output "✓ PyOpenCL安装成功！"
+            Write-Output "[OK] PyOpenCL安装成功！"
             Write-Output ""
             Write-Output "测试GPU监控："
             Write-Output "  python src\monitoring\gpu_monitor.py"
         } else {
             Write-Output ""
-            Write-Output "✗ PyOpenCL安装失败"
+            Write-Output "[FAIL] PyOpenCL安装失败"
             Write-Output ""
             Write-Output "请尝试上述其他安装方法"
         }

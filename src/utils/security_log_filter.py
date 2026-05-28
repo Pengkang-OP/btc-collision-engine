@@ -238,7 +238,7 @@ def setup_security_logging() -> None:
             _processed_loggers.add(id(logger_ref))
 
     logging.info(
-        "✅ 日志安全过滤器已启用 (显式模块: %d, 自动发现: %d, 总计: %d)",
+        "OK 日志安全过滤器已启用 (显式模块: %d, 自动发现: %d, 总计: %d)",
         len(critical_module_loggers),
         len(_processed_loggers) - len(critical_module_loggers) - 1,
         len(_processed_loggers) - 1,

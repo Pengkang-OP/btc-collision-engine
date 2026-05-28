@@ -71,14 +71,14 @@ def main():
         print()
 
         if all_found:
-            print("[SUCCESS] ✅ 异步优化已完全启用!")
+            print("[SUCCESS] OK 异步优化已完全启用!")
             print()
             print("下一步:")
             print("  1. 观察5-10分钟")
             print("  2. 检查吞吐量是否达到80k+ keys/s")
             print("  3. 确认无间歇性停顿")
         else:
-            print("[WARN] ⚠️ 异步优化未完全启用")
+            print("[WARN] WARN 异步优化未完全启用")
             print()
             print("可能原因:")
             print("  1. 程序未重启(需要重启加载新代码)")

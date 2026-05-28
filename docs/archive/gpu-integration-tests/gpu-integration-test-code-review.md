@@ -7,21 +7,21 @@
 
 ---
 
-## 📊 审查概览
+## [CHART] 审查概览
 
 | 问题级别 | 数量 | 状态 |
 |---------|------|------|
-| P0 (严重) | 2 | ❌ 需立即修复 |
-| P1 (重要) | 3 | ⚠️ 建议修复 |
-| P2 (优化) | 2 | 💡 可选改进 |
+| P0 (严重) | 2 | [CROSS] 需立即修复 |
+| P1 (重要) | 3 | [WARN] 建议修复 |
+| P2 (优化) | 2 | [TIP] 可选改进 |
 
 ---
 
-## 🔴 P0问题 (必须修复)
+## [RED] P0问题 (必须修复)
 
 ### P0-1: 异常处理导致测试函数返回False但子项通过
 
-**严重程度**: 🔴 P0  
+**严重程度**: [RED] P0  
 **位置**: 所有测试函数 (test_02 ~ test_07)  
 **行号**: 119-123, 165-169, 230-234等
 
@@ -35,7 +35,7 @@
 
 **但问题是**: 在异常发生前,已经通过`print_result`记录了部分成功的子项。这导致:
 
-- 子项显示"✅ 通过"
+- 子项显示"[OK_CHECK] 通过"
 - 但整体测试函数返回False
 - 测试报告混乱,难以定位真正失败的原因
 
@@ -45,28 +45,28 @@
 def test_02_gpu_engine_initialization(self):
     try:
         # 这些子项都通过了
-        self.print_result("引擎创建", True)  # ✅
-        self.print_result("GPU内核初始化", True)  # ✅
-        self.print_result("内存池初始化", True)  # ✅
+        self.print_result("引擎创建", True)  # [OK_CHECK]
+        self.print_result("GPU内核初始化", True)  # [OK_CHECK]
+        self.print_result("内存池初始化", True)  # [OK_CHECK]
         # ... 更多子项通过
         
-        engine.stop()  # ❌ 这里可能抛出异常
+        engine.stop()  # [CROSS] 这里可能抛出异常
         
         return all_initialized  # 永远不会执行到这里
         
     except Exception as e:
-        self.print_result("GPU引擎初始化", False, str(e))  # ❌ 整体失败
+        self.print_result("GPU引擎初始化", False, str(e))  # [CROSS] 整体失败
         return False  # 导致整个测试失败
 ```
 
 **实际运行结果**:
 
 ```
-✅ 通过 - 引擎创建
-✅ 通过 - GPU内核初始化
-✅ 通过 - 内存池初始化
+[OK_CHECK] 通过 - 引擎创建
+[OK_CHECK] 通过 - GPU内核初始化
+[OK_CHECK] 通过 - 内存池初始化
 ... (所有子项都通过)
-❌ 失败 - GPU引擎初始化  # 但整体测试失败!
+[CROSS] 失败 - GPU引擎初始化  # 但整体测试失败!
 ```
 
 **根本原因**:
@@ -176,14 +176,14 @@ def test_02_gpu_engine_initialization(self):
             try:
                 engine.stop()
             except Exception as e:
-                print(f"⚠️ 清理资源时出错: {e}")
+                print(f"[WARN] 清理资源时出错: {e}")
 ```
 
 ---
 
 ### P0-2: 重复调用engine.stop()可能导致异常
 
-**严重程度**: 🔴 P0  
+**严重程度**: [RED] P0  
 **位置**: test_04, test_06  
 **行号**: 226, 325
 
@@ -203,7 +203,7 @@ def test_04_performance_metrics_accuracy(self):
         
         # 获取报告...
         
-        engine.stop()  # ❌ 第2次停止 - 可能抛出异常!
+        engine.stop()  # [CROSS] 第2次停止 - 可能抛出异常!
         
         return all_valid
 ```
@@ -261,11 +261,11 @@ def test_04_performance_metrics_accuracy(self):
 
 ---
 
-## 🟡 P1问题 (建议修复)
+## [YELLOW] P1问题 (建议修复)
 
 ### P1-1: 异常信息不够详细
 
-**严重程度**: 🟡 P1  
+**严重程度**: [YELLOW] P1  
 **位置**: 所有except块  
 **行号**: 119-123, 165-169, 230-234等
 
@@ -295,7 +295,7 @@ except Exception as e:
     # 记录详细堆栈到日志
     import traceback
     tb = traceback.format_exc()
-    print(f"  📋 详细堆栈:\n{tb}")
+    print(f"  [CHECKLIST] 详细堆栈:\n{tb}")
     
     return False
 ```
@@ -304,7 +304,7 @@ except Exception as e:
 
 ### P1-2: 缺少finally块确保资源清理
 
-**严重程度**: 🟡 P1  
+**严重程度**: [YELLOW] P1  
 **位置**: 所有测试函数
 
 **问题**:
@@ -325,7 +325,7 @@ def test_03_monitor_lifecycle(self):
     except Exception as e:
         self.print_result("监控器生命周期", False, str(e))
         return False
-    # ❌ 没有finally块
+    # [CROSS] 没有finally块
     # 如果中间抛出异常,engine1和engine2可能没有被stop()
 ```
 
@@ -356,14 +356,14 @@ def test_03_monitor_lifecycle(self):
                 try:
                     eng.stop()
                 except Exception as e:
-                    print(f"⚠️ 清理资源时出错: {e}")
+                    print(f"[WARN] 清理资源时出错: {e}")
 ```
 
 ---
 
 ### P1-3: 线程join超时后未检查线程状态
 
-**严重程度**: 🟡 P1  
+**严重程度**: [YELLOW] P1  
 **位置**: test_04, test_06  
 **行号**: 195, 322
 
@@ -377,7 +377,7 @@ time.sleep(3)
 engine.stop()
 thread.join(timeout=5)  # 等待5秒
 
-# ❌ 没有检查thread是否真的结束了
+# [CROSS] 没有检查thread是否真的结束了
 # 如果thread还在运行,可能导致资源泄漏
 
 report = monitor.get_performance_report()
@@ -390,7 +390,7 @@ thread.join(timeout=5)
 
 # 检查线程是否真的结束
 if thread.is_alive():
-    print("⚠️ 警告: 引擎线程未在5秒内停止")
+    print("[WARN] 警告: 引擎线程未在5秒内停止")
     # 可以选择记录警告,但不一定失败
     self.print_result("线程停止", False, "线程未在5秒内停止")
 else:
@@ -399,7 +399,7 @@ else:
 
 ---
 
-## 💡 P2问题 (可选优化)
+## [TIP] P2问题 (可选优化)
 
 ### P2-1: 硬编码的魔法数字
 
@@ -441,7 +441,7 @@ class GPUIntegrationValidator:
 def test_04_performance_metrics_accuracy(self):
     # 前置条件检查
     if not GPUCollisionEngine.is_gpu_available():
-        print("⚠️  GPU不可用,跳过此测试")
+        print("[WARN]  GPU不可用,跳过此测试")
         self.print_result("性能指标准确性", False, "GPU不可用")
         return False  # 或者返回True并标记为skipped
     
@@ -450,7 +450,7 @@ def test_04_performance_metrics_accuracy(self):
 
 ---
 
-## 📋 修复优先级建议
+## [CHECKLIST] 修复优先级建议
 
 ### 立即修复 (P0)
 
@@ -477,15 +477,15 @@ def test_04_performance_metrics_accuracy(self):
 
 ---
 
-## 🎯 修复后的预期效果
+## [TARGET] 修复后的预期效果
 
 ### 修复前
 
 ```
 测试总结:
   总测试数: 7
-  ✅ 通过: 2
-  ❌ 失败: 5
+  [OK_CHECK] 通过: 2
+  [CROSS] 失败: 5
   通过率: 28.6%
 
 问题: 子项都通过,但整体测试失败,难以定位原因
@@ -496,8 +496,8 @@ def test_04_performance_metrics_accuracy(self):
 ```
 测试总结:
   总测试数: 7
-  ✅ 通过: 6
-  ❌ 失败: 1
+  [OK_CHECK] 通过: 6
+  [CROSS] 失败: 1
   通过率: 85.7%
 
 改进:
@@ -509,7 +509,7 @@ def test_04_performance_metrics_accuracy(self):
 
 ---
 
-## 📝 代码修改建议汇总
+## [MEMO] 代码修改建议汇总
 
 | 修改项 | 影响范围 | 代码行数 | 优先级 |
 |--------|---------|---------|--------|
@@ -525,7 +525,7 @@ def test_04_performance_metrics_accuracy(self):
 
 ---
 
-## ✅ 总结
+## [OK_CHECK] 总结
 
 ### 核心问题
 
@@ -549,4 +549,4 @@ def test_04_performance_metrics_accuracy(self):
 
 ---
 
-**审查完成!** 建议优先修复P0问题,可立即提升测试通过率和准确性。 🚀
+**审查完成!** 建议优先修复P0问题,可立即提升测试通过率和准确性。 [QUICK]

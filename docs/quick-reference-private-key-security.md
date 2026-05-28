@@ -5,13 +5,13 @@
 
 ## 目录
 
-- [🚀 快速开始](#-快速开始)
+- [[QUICK] 快速开始](#-快速开始)
 
   - [最简用法（推荐）](#最简用法推荐)
 
-- [📦 安装](#-安装)
+- [[PACKAGE] 安装](#-安装)
 
-- [🔧 常用模式](#-常用模式)
+- [[TOOL] 常用模式](#-常用模式)
 
   - [1. 单次使用](#1-单次使用)
 
@@ -21,21 +21,21 @@
 
   - [4. 已知私钥](#4-已知私钥)
 
-- [✅ DO / ❌ DON'T](#-do---dont)
+- [[OK] DO / [FAIL] DON'T](#-do---dont)
 
-  - [✅ 应该做](#-应该做)
+  - [[OK] 应该做](#-应该做)
 
-  - [❌ 不应该做](#-不应该做)
+  - [[FAIL] 不应该做](#-不应该做)
 
-- [🔍 验证](#-验证)
+- [[CHECK] 验证](#-验证)
 
-- [📊 安全等级](#-安全等级)
+- [[CHART] 安全等级](#-安全等级)
 
-- [📚 更多信息](#-更多信息)
+- [[DOCS] 更多信息](#-更多信息)
 
-- [⚠️ Python限制](#-python限制)
+- [[WARN] Python限制](#-python限制)
 
-## 🚀 快速开始
+## [QUICK] 快速开始
 
 ### 最简用法（推荐）
 
@@ -46,24 +46,24 @@ with SecureKeyManager() as key_mgr:
     key_mgr.generate_key()
     private_key = key_mgr.get_key()
     # 使用私钥...
-# 自动清零 ✅
+# 自动清零 [OK]
 
 ```python
 
 ---
 
-## 📦 安装
+## [PACKAGE] 安装
 
 ```bash
 # 已安装（requirements.txt中）
-pip install cryptography  # ✅ 已安装
-pip install pynacl        # ✅ 已安装
+pip install cryptography  # [OK] 已安装
+pip install pynacl        # [OK] 已安装
 
 ```python
 
 ---
 
-## 🔧 常用模式
+## [TOOL] 常用模式
 
 ### 1. 单次使用
 
@@ -94,7 +94,7 @@ try:
         km.generate_key()
         risky_operation(km.get_key())
 except:
-    pass  # 仍然清零 ✅
+    pass  # 仍然清零 [OK]
 
 ```markdown
 
@@ -109,9 +109,9 @@ with SecureKeyManager() as km:
 
 ---
 
-## ✅ DO / ❌ DON'T
+## [OK] DO / [FAIL] DON'T
 
-### ✅ 应该做
+### [OK] 应该做
 
 - 使用上下文管理器 `with SecureKeyManager()`
 
@@ -123,7 +123,7 @@ with SecureKeyManager() as km:
 
 - 异常也要清零
 
-### ❌ 不应该做
+### [FAIL] 不应该做
 
 - 不要记录私钥到日志
 
@@ -137,31 +137,31 @@ with SecureKeyManager() as km:
 
 ---
 
-## 🔍 验证
+## [CHECK] 验证
 
 ```python
 # 验证已清零
 with SecureKeyManager() as km:
     km.generate_key()
 
-assert all(b == 0 for b in km._key)  # ✅
+assert all(b == 0 for b in km._key)  # [OK]
 
 ```
 
 ---
 
-## 📊 安全等级
+## [CHART] 安全等级
 
 | 场景 | 方案 | 安全度 |
 |------|------|--------|
-| 测试 | bytearray+memset | ⭐⭐⭐ |
-| 个人 | SecureKeyManager | ⭐⭐⭐⭐ |
-| 商业 | + cryptography | ⭐⭐⭐⭐⭐ |
-| 金融 | HSM | ⭐⭐⭐⭐⭐⭐ |
+| 测试 | bytearray+memset | *** |
+| 个人 | SecureKeyManager | **** |
+| 商业 | + cryptography | ***** |
+| 金融 | HSM | ****** |
 
 ---
 
-## 📚 更多信息
+## [DOCS] 更多信息
 
 - **完整指南**: `docs/secure-key-management.md`
 
@@ -171,14 +171,14 @@ assert all(b == 0 for b in km._key)  # ✅
 
 ---
 
-## ⚠️ Python限制
+## [WARN] Python限制
 
 即使使用最佳方案，仍有以下限制：
 
-1. ❌ GC可能复制对象
+1. [FAIL] GC可能复制对象
 
-2. ❌ 交换文件可能包含数据
+2. [FAIL] 交换文件可能包含数据
 
-3. ❌ CPU缓存可能残留
+3. [FAIL] CPU缓存可能残留
 
 **最高安全要求必须使用HSM硬件！**

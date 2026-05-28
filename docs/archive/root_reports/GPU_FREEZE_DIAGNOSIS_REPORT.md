@@ -2,19 +2,19 @@
 
 **诊断时间**: 2026-04-23 01:41  
 **问题类型**: UI卡死检测  
-**诊断状态**: ⚠️ 程序可能卡顿  
+**诊断状态**: [WARN] 程序可能卡顿  
 
 ---
 
-## 📊 诊断结果
+## [CHART] 诊断结果
 
 ### 1. 进程状态
 
 | 项目 | 状态 | 详情 |
 |------|------|------|
-| **GUI进程** | ✅ 运行中 | PID: 22248 |
-| **启动时间** | ✅ 正常 | 2026-04-23 01:37:20 |
-| **运行时长** | ⚠️ 较长 | 3分52秒 |
+| **GUI进程** | [OK_CHECK] 运行中 | PID: 22248 |
+| **启动时间** | [OK_CHECK] 正常 | 2026-04-23 01:37:20 |
+| **运行时长** | [WARN] 较长 | 3分52秒 |
 
 ---
 
@@ -22,10 +22,10 @@
 
 | 文件 | 最后更新 | 距今 | 状态 |
 |------|---------|------|------|
-| **logs/collision.log** | 01:39:01 | 2分12秒 | ⚠️ 停滞 |
-| **data_logs/current_data.json** | 00:35:57 | 1小时5分 | ❌ 未更新 |
-| **data_logs/history_data.json** | 00:35:52 | 1小时5分 | ❌ 未更新 |
-| **checkpoint.json** | 2026-04-20 | 2天前 | ❌ 未更新 |
+| **logs/collision.log** | 01:39:01 | 2分12秒 | [WARN] 停滞 |
+| **data_logs/current_data.json** | 00:35:57 | 1小时5分 | [CROSS] 未更新 |
+| **data_logs/history_data.json** | 00:35:52 | 1小时5分 | [CROSS] 未更新 |
+| **checkpoint.json** | 2026-04-20 | 2天前 | [CROSS] 未更新 |
 
 ---
 
@@ -34,26 +34,26 @@
 **最后日志输出** (01:39:01):
 
 ```
-2026-04-23 01:39:01,535 - GPUPerformanceMonitor - WARNING - ⚠️ GPU性能退化: 
+2026-04-23 01:39:01,535 - GPUPerformanceMonitor - WARNING - [WARN] GPU性能退化: 
 当前=49,516 keys/s, 峰值=2,288,100 keys/s, 退化率=2.16%
 ```
 
 **关键发现**:
 
-- ✅ GPU对撞已启动（01:38:39）
-- ✅ 使用Intel Arc A770 GPU
-- ✅ 启用异步双缓冲模式
-- ✅ 批次大小: 1,000,000
-- ⚠️ 性能退化警告（49,516 keys/s vs 峰值2,288,100 keys/s）
-- ❌ 之后无任何日志输出（已停滞2分12秒）
+- [OK_CHECK] GPU对撞已启动（01:38:39）
+- [OK_CHECK] 使用Intel Arc A770 GPU
+- [OK_CHECK] 启用异步双缓冲模式
+- [OK_CHECK] 批次大小: 1,000,000
+- [WARN] 性能退化警告（49,516 keys/s vs 峰值2,288,100 keys/s）
+- [CROSS] 之后无任何日志输出（已停滞2分12秒）
 
 ---
 
-## 🔍 问题分析
+## [SEARCH] 问题分析
 
 ### 可能的原因
 
-#### 1. GPU计算阻塞（最可能）⭐⭐⭐⭐⭐
+#### 1. GPU计算阻塞（最可能）[STAR][STAR][STAR][STAR][STAR]
 
 **症状**:
 
@@ -70,13 +70,13 @@
 **证据**:
 
 ```
-⚠️ Intel Arc存在global char* hang bug, 已启用uint32 workaround
-✅ 启用超时保护机制: 30秒
+[WARN] Intel Arc存在global char* hang bug, 已启用uint32 workaround
+[OK_CHECK] 启用超时保护机制: 30秒
 ```
 
 ---
 
-#### 2. 私钥生成线程阻塞（可能）⭐⭐⭐⭐
+#### 2. 私钥生成线程阻塞（可能）[STAR][STAR][STAR][STAR]
 
 **症状**:
 
@@ -99,7 +99,7 @@ if gen_thread.is_alive():
 
 ---
 
-#### 3. 进度回调未触发（可能）⭐⭐⭐
+#### 3. 进度回调未触发（可能）[STAR][STAR][STAR]
 
 **症状**:
 
@@ -122,7 +122,7 @@ if current_time - self._last_progress_time >= self._progress_interval_sec:
 
 ---
 
-#### 4. UI事件队列堆积（较少可能）⭐⭐
+#### 4. UI事件队列堆积（较少可能）[STAR][STAR]
 
 **症状**:
 
@@ -147,17 +147,17 @@ def _schedule_stats_update(self):
 
 ---
 
-## 🛠️ 诊断工具
+## [TOOL] 诊断工具
 
 已创建诊断工具：
 [tools/check_ui_freeze.py](file:///f:/Qoder/btc-collision-engine/tools/check_ui_freeze.py)
 
 **功能**:
 
-1. ✅ 检测GUI进程状态
-2. ✅ 检查日志文件更新时间
-3. ✅ 检查checkpoint文件
-4. ✅ 综合判断是否卡死
+1. [OK_CHECK] 检测GUI进程状态
+2. [OK_CHECK] 检查日志文件更新时间
+3. [OK_CHECK] 检查checkpoint文件
+4. [OK_CHECK] 综合判断是否卡死
 
 **使用**:
 
@@ -167,9 +167,9 @@ python tools/check_ui_freeze.py
 
 ---
 
-## 💡 解决方案
+## [TIP] 解决方案
 
-### 方案1: 等待观察（推荐）⭐⭐⭐⭐⭐
+### 方案1: 等待观察（推荐）[STAR][STAR][STAR][STAR][STAR]
 
 **适用**: 如果GPU正在繁忙计算
 
@@ -181,8 +181,8 @@ python tools/check_ui_freeze.py
 
 **判断标准**:
 
-- ✅ 如果日志继续更新 → 正常，只是计算慢
-- ❌ 如果5分钟后仍无日志 → 确实卡死
+- [OK_CHECK] 如果日志继续更新 → 正常，只是计算慢
+- [CROSS] 如果5分钟后仍无日志 → 确实卡死
 
 ---
 
@@ -233,7 +233,7 @@ if gen_thread.is_alive():
 
 ---
 
-## 📋 建议操作
+## [CHECKLIST] 建议操作
 
 ### 立即操作
 
@@ -257,16 +257,16 @@ if gen_thread.is_alive():
 
 ---
 
-## 🎯 结论
+## [TARGET] 结论
 
-### 当前状态: ⚠️ 程序可能卡顿
+### 当前状态: [WARN] 程序可能卡顿
 
 **证据**:
 
-- ✅ GUI进程运行中
-- ❌ 日志停滞2分12秒
-- ❌ Checkpoint未更新
-- ⚠️ GPU性能退化严重
+- [OK_CHECK] GUI进程运行中
+- [CROSS] 日志停滞2分12秒
+- [CROSS] Checkpoint未更新
+- [WARN] GPU性能退化严重
 
 ### 最可能原因: GPU计算阻塞
 

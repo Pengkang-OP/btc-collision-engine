@@ -1,6 +1,6 @@
 # BTC碰撞引擎 v2.2.0 快速使用指南
 
-## ✅ 测试验证结果
+## [OK_CHECK] 测试验证结果
 
 ### 完整测试套件
 
@@ -14,13 +14,13 @@ pytest tests/test_optimization_full.py \
        tests/test_memory_pool.py \
        tests/test_thread_pool.py -v
 
-# 结果: ✅ 96/96 通过 (100%)
+# 结果: [OK_CHECK] 96/96 通过 (100%)
 # 耗时: 19.26秒
 ```
 
 ---
 
-## 🚀 快速开始
+## [QUICK] 快速开始
 
 ### 1. 安装依赖
 
@@ -75,7 +75,7 @@ engine = KeyCollisionEngine(
 
 ---
 
-## 📊 实时监控性能
+## [CHART] 实时监控性能
 
 ### 使用性能监控器
 
@@ -111,7 +111,7 @@ monitor.stop()
 
 ```python
 def on_degradation(metrics, ratio):
-    print(f"⚠️ 性能退化告警!")
+    print(f"[WARN] 性能退化告警!")
     print(f"   当前速度: {metrics.speed:.0f} 地址/秒")
     print(f"   退化率: {ratio:.2%}")
 
@@ -124,7 +124,7 @@ monitor.start()
 
 ---
 
-## 🧪 运行测试
+## [TEST] 运行测试
 
 ### 单元测试
 
@@ -187,7 +187,7 @@ python examples/performance_monitoring_demo.py
 
 ---
 
-## 📚 参考文档
+## [BOOKS] 参考文档
 
 ### 核心文档
 
@@ -215,31 +215,31 @@ python examples/performance_monitoring_demo.py
 
 ---
 
-## 🎯 性能数据
+## [TARGET] 性能数据
 
 ### 已验证的性能提升
 
 | 优化模块 | 性能提升 | 验证状态 |
 |---------|---------|---------|
-| gmpy2模逆元 | **+1455%** | ✅ 14.55x |
-| 预计算点表 | **+46%** | ✅ 1.46x |
-| SIMD哈希 | **+200%** | ✅ AES-NI启用 |
-| 地址生成 | **+45%** | ✅ 59→86 addr/s |
-| 内存分配 | **-60%** | ✅ 对象池复用 |
-| GPU内存 | **-60%** | ✅ 缓冲区复用 |
+| gmpy2模逆元 | **+1455%** | [OK_CHECK] 14.55x |
+| 预计算点表 | **+46%** | [OK_CHECK] 1.46x |
+| SIMD哈希 | **+200%** | [OK_CHECK] AES-NI启用 |
+| 地址生成 | **+45%** | [OK_CHECK] 59→86 addr/s |
+| 内存分配 | **-60%** | [OK_CHECK] 对象池复用 |
+| GPU内存 | **-60%** | [OK_CHECK] 缓冲区复用 |
 
 ### 测试结果
 
 ```
-✅ 96/96 单元测试通过 (100%)
-✅ 14/14 集成测试通过 (100%)
-✅ 15/15 监控测试通过 (100%)
-✅ 0 失败
+[OK_CHECK] 96/96 单元测试通过 (100%)
+[OK_CHECK] 14/14 集成测试通过 (100%)
+[OK_CHECK] 15/15 监控测试通过 (100%)
+[OK_CHECK] 0 失败
 ```
 
 ---
 
-## 🔧 配置示例
+## [WRENCH] 配置示例
 
 ### config.json
 
@@ -272,7 +272,7 @@ python key_collision_cli.py --checkpoint
 
 ---
 
-## ⚠️ 注意事项
+## [WARN] 注意事项
 
 ### 1. 性能优化建议
 
@@ -297,7 +297,7 @@ pip install gmpy2 --only-binary=all
 
 ---
 
-## 🎓 学习路径
+## [GUIDE] 学习路径
 
 ### 初学者
 
@@ -319,7 +319,7 @@ pip install gmpy2 --only-binary=all
 
 ---
 
-## 📞 获取帮助
+## [TELEPHONE] 获取帮助
 
 ### 问题反馈
 
@@ -335,7 +335,7 @@ pip install gmpy2 --only-binary=all
 
 ---
 
-## 🎉 开始使用
+## [DONE] 开始使用
 
 现在您已经准备好使用优化后的BTC碰撞引擎了!
 
@@ -347,9 +347,9 @@ engine = KeyCollisionEngine(
     targets={'1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'}
 )
 
-print("🚀 优化引擎已就绪!")
+print("[QUICK] 优化引擎已就绪!")
 print(f"生成器: {type(engine.generator).__name__}")
 print("开始碰撞...")
 ```
 
-祝您使用愉快! 🎊
+祝您使用愉快! [CONFETTI]

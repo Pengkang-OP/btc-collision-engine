@@ -36,7 +36,7 @@ for fname in sorted(d.name for d in docs):
     has_version = "版本" in content[:500] or "Version" in content[:500]
     heading_jumps = sum(1 for i in range(1, len(headings)) if headings[i] - headings[i - 1] > 1)
 
-    print(f"{'✅' if no_lang_blocks == 0 else '⚠️'} {fname}")
+    print(f"{'OK' if no_lang_blocks == 0 else 'WARN'} {fname}")
     print(
         f"   代码块: {code_blocks} | 无语言: {no_lang_blocks} | "
         f"标题跳跃: {heading_jumps} | 目录: {'有' if has_toc else '无'} | "

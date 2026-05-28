@@ -1,16 +1,16 @@
-# 🚀 快速创建GitHub Release v2.2.0
+# [QUICK] 快速创建GitHub Release v2.2.0
 
-## ⚡ 5分钟快速指南
+## [BOLT] 5分钟快速指南
 
-### 1️⃣ 打开Release创建页面
+### 1⃣ 打开Release创建页面
 
 点击以下链接（已预填标签v2.2.0）：
 
-👉 **[https://github.com/pengkang2017/btc-collision-engine/releases/new?tag=v2.2.0](https://github.com/pengkang2017/btc-collision-engine/releases/new?tag=v2.2.0)**
+[RIGHT] **[https://github.com/pengkang2017/btc-collision-engine/releases/new?tag=v2.2.0](https://github.com/pengkang2017/btc-collision-engine/releases/new?tag=v2.2.0)**
 
 ---
 
-### 2️⃣ 填写3个字段
+### 2⃣ 填写3个字段
 
 #### 字段1：Release title
 
@@ -24,23 +24,23 @@ v2.2.0 - 性能优化与GPU监控增强
 
 #### 字段3：选项
 
-✅ 勾选 "Set as the latest release"
+[OK_CHECK] 勾选 "Set as the latest release"
 
 ---
 
-### 3️⃣ 发布
+### 3⃣ 发布
 
 点击 **"Publish release"** 按钮
 
 ---
 
-## ✅ 完成
+## [OK_CHECK] 完成
 
 访问查看：<https://github.com/pengkang2017/btc-collision-engine/releases>
 
 ---
 
-## 📊 关键数据（用于验证）
+## [CHART] 关键数据（用于验证）
 
 ### 性能
 
@@ -66,14 +66,14 @@ v2.2.0 - 性能优化与GPU监控增强
 
 ---
 
-## 📁 相关文件
+## [DIR] 相关文件
 
-- 📖 详细指南: `GITHUB_RELEASE_CREATION_GUIDE_v2.2.0.md`
-- 📝 发布说明: `RELEASE_NOTES_v2.2.0.md`
-- 📋 变更日志: `CHANGELOG.md`
+- [BOOK] 详细指南: `GITHUB_RELEASE_CREATION_GUIDE_v2.2.0.md`
+- [MEMO] 发布说明: `RELEASE_NOTES_v2.2.0.md`
+- [CHECKLIST] 变更日志: `CHANGELOG.md`
 
 ---
 
-**准备状态**: ✅ 完全就绪  
+**准备状态**: [OK_CHECK] 完全就绪  
 **预计时间**: 5分钟  
-**难度**: ⭐ 简单
+**难度**: [STAR] 简单

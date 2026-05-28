@@ -6,7 +6,7 @@
 
 ---
 
-## 📋 目录
+## [CHECKLIST] 目录
 
 1. [GPU选择与配置](#1-gpu选择与配置)
 2. [批次大小优化](#2-批次大小优化)
@@ -387,7 +387,7 @@ engine = GPUCollisionEngine(
 
 ---
 
-## 📊 性能优化检查清单
+## [CHART] 性能优化检查清单
 
 ### 启动前检查
 
@@ -415,7 +415,7 @@ engine = GPUCollisionEngine(
 
 ---
 
-## 🔗 相关文档
+## [LINK] 相关文档
 
 - [GPU碰撞引擎架构](architecture.md)
 - [Intel Arc兼容性指南](intel-arc-integration-guide.md)

@@ -31,13 +31,13 @@
 
 ```mermaid
 graph TD
-    subgraph UI["🖥️ 用户界面层 User Interface Layer"]
+    subgraph UI["[DESKTOP] 用户界面层 User Interface Layer"]
         CLI["CLI界面<br/>命令行交互"]
         GUI["GUI界面<br/>Tkinter图形界面"]
         API["API接口<br/>可编程调用"]
     end
     
-    subgraph Engine["⚙️ 碰撞引擎层 Collision Engine Layer"]
+    subgraph Engine["[CONFIG] 碰撞引擎层 Collision Engine Layer"]
         KCE["KeyCollisionEngine<br/>私钥碰撞引擎"]
         RS["random_search<br/>随机碰撞"]
         RScan["range_scan<br/>范围扫描"]
@@ -48,7 +48,7 @@ graph TD
         DF["DedupFilter<br/>去重过滤"]
     end
     
-    subgraph Core["🧮 核心算法层 Core Algorithm Layer"]
+    subgraph Core["[ABACUS] 核心算法层 Core Algorithm Layer"]
         CBM["CryptoBackendManager<br/>加密后端管理器"]
         PP["PurePython<br/>纯Python实现"]
         OS["OpenSSL<br/>cryptography库"]

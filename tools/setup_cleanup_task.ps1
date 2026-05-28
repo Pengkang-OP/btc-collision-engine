@@ -18,17 +18,17 @@ Write-Output ""
 # 检查Python是否可用
 try {
     $pythonVersion = & $PythonPath --version 2>&1
-    Write-Output "✓ Python已找到: $pythonVersion"
+    Write-Output "[OK] Python已找到: $pythonVersion"
 } catch {
-    Write-Output "✗ 错误: 找不到Python，请先安装Python或修改PythonPath"
+    Write-Output "[FAIL] 错误: 找不到Python，请先安装Python或修改PythonPath"
     exit 1
 }
 
 # 检查清理脚本是否存在
 if (Test-Path $ScriptPath) {
-    Write-Output "✓ 清理脚本已找到: $ScriptPath"
+    Write-Output "[OK] 清理脚本已找到: $ScriptPath"
 } else {
-    Write-Output "✗ 错误: 清理脚本不存在: $ScriptPath"
+    Write-Output "[FAIL] 错误: 清理脚本不存在: $ScriptPath"
     exit 1
 }
 
@@ -75,7 +75,7 @@ try {
 
     Write-Output ""
     Write-Output "============================================"
-    Write-Output "✓ 任务计划创建成功！"
+    Write-Output "[OK] 任务计划创建成功！"
     Write-Output "============================================"
     Write-Output ""
     Write-Output "任务详情："
@@ -92,7 +92,7 @@ try {
 
 } catch {
     Write-Output ""
-    Write-Output "✗ 创建任务计划失败: $_"
+    Write-Output "[FAIL] 创建任务计划失败: $_"
     Write-Output ""
     Write-Output "提示: 请以管理员权限运行此脚本"
     exit 1

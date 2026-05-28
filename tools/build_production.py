@@ -166,7 +166,7 @@ def get_git_info():
             "branch": branch,
         }
     except Exception as e:
-        print(f"⚠️  无法获取Git信息: {e}")
+        print(f"WARN 无法获取Git信息: {e}")
         return {
             "commit_hash": "unknown",
             "short_hash": "unknown",
@@ -206,7 +206,7 @@ def copy_production_files(source_dir: Path, target_dir: Path):
     skipped_count = 0
     total_size = 0
 
-    print("\n📦 开始复制生产环境文件...")
+    print("\n[PACKAGE] 开始复制生产环境文件...")
     print(f"   源目录: {source_dir}")
     print(f"   目标目录: {target_dir}")
     print()
@@ -230,7 +230,7 @@ def copy_production_files(source_dir: Path, target_dir: Path):
                 copied_count += 1
                 total_size += item.stat().st_size
         except Exception as e:
-            print(f"  ⚠️  复制失败 {item.name}: {e}")
+            print(f"  WARN 复制失败 {item.name}: {e}")
 
     return copied_count, skipped_count, total_size
 
@@ -249,7 +249,7 @@ def generate_version_info(target_dir: Path, git_info: dict):
     with open(version_file, "w", encoding="utf-8") as f:
         json.dump(version_info, f, indent=2, ensure_ascii=False)
 
-    print(f"\n✅ 版本信息已生成: {version_file}")
+    print(f"\nOK 版本信息已生成: {version_file}")
     return version_info
 
 
@@ -342,7 +342,7 @@ btc-collision-engine/
     with open(notes_file, "w", encoding="utf-8") as f:
         f.write(release_notes)
 
-    print(f"✅ 发布说明已生成: {notes_file}")
+    print(f"OK 发布说明已生成: {notes_file}")
 
 
 def main():
@@ -358,11 +358,11 @@ def main():
     target_dir = Path(args.output)
 
     print("=" * 80)
-    print("🚀 BTC碰撞引擎 - 生产环境打包工具")
+    print("FAST BTC碰撞引擎 - 生产环境打包工具")
     print("=" * 80)
 
     # 获取Git信息
-    print("\n📋 获取版本信息...")
+    print("\n[NOTE] 获取版本信息...")
     git_info = get_git_info()
     print(f"   版本: {git_info['tag']}")
     print(f"   Commit: {git_info['short_hash']}")
@@ -371,7 +371,7 @@ def main():
     # 清理目标目录
     if target_dir.exists():
         if args.clean or args.yes:
-            print(f"\n🧹 清理目标目录: {target_dir}")
+            print(f"\n[CLEAN] 清理目标目录: {target_dir}")
             try:
                 shutil.rmtree(target_dir)
             except PermissionError:
@@ -385,16 +385,16 @@ def main():
 
                 shutil.rmtree(target_dir, onerror=_remove_readonly)
         else:
-            print(f"\n⚠️  目标目录已存在: {target_dir}")
+            print(f"\nWARN 目标目录已存在: {target_dir}")
             response = input("   是否继续? (y/n): ")
             if response.lower() != "y":
-                print("❌ 取消打包")
+                print("ERR 取消打包")
                 return
             shutil.rmtree(target_dir)
 
     # 创建目标目录
     target_dir.mkdir(parents=True, exist_ok=True)
-    print(f"\n✅ 创建目标目录: {target_dir}")
+    print(f"\nOK 创建目标目录: {target_dir}")
 
     # 复制文件
     copied, skipped, size = copy_production_files(source_dir, target_dir)
@@ -407,14 +407,14 @@ def main():
 
     # 打印总结
     print("\n" + "=" * 80)
-    print("✅ 打包完成!")
+    print("OK 打包完成!")
     print("=" * 80)
-    print("\n📊 统计信息:")
+    print("\nSTATS 统计信息:")
     print(f"   复制文件/目录: {copied}")
     print(f"   跳过文件/目录: {skipped}")
     print(f"   总大小: {size / 1024 / 1024:.2f} MB")
-    print(f"\n📁 输出目录: {target_dir}")
-    print("\n🎯 下一步:")
+    print(f"\n[FOLDER] 输出目录: {target_dir}")
+    print("\n[TARGET] 下一步:")
     print("   1. 在输出目录中安装依赖: pip install -r requirements.txt")
     print("   2. 编辑配置文件: config.json")
     print("   3. 运行程序: python key_collision_cli.py")  # M-NEW3修复: 更新为CLI入口

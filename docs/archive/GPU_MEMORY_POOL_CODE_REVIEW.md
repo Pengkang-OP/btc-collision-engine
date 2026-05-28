@@ -7,7 +7,7 @@
 
 ---
 
-## 📋 审查概览
+## [CHECKLIST] 审查概览
 
 ### 审查文件
 
@@ -26,17 +26,17 @@
 
 ---
 
-## 🔴 高优先级问题 (0个)
+## [RED] 高优先级问题 (0个)
 
-✅ **无高优先级问题** - 代码逻辑正确，无崩溃或内存泄漏风险
+[OK_CHECK] **无高优先级问题** - 代码逻辑正确，无崩溃或内存泄漏风险
 
 ---
 
-## 🟡 中优先级问题 (3个)
+## [YELLOW] 中优先级问题 (3个)
 
 ### 问题1: 内存标志传递不一致
 
-**严重程度**: ⭐⭐⭐⭐  
+**严重程度**: [STAR][STAR][STAR][STAR]  
 **位置**: `memory_pool.py:L189` vs `gpu_collision_engine.py:L643, L661`
 
 **问题描述**:
@@ -72,7 +72,7 @@ memory_pool.allocate(match_buf_size, cl.mem_flags.WRITE_ONLY) # 只写
 
 ### 问题2: 缓冲区释放时未归还到内存池
 
-**严重程度**: ⭐⭐⭐⭐  
+**严重程度**: [STAR][STAR][STAR][STAR]  
 **位置**: `gpu_collision_engine.py:L1010-1018`
 
 **问题描述**:
@@ -81,7 +81,7 @@ memory_pool.allocate(match_buf_size, cl.mem_flags.WRITE_ONLY) # 只写
 # 当前释放逻辑
 if buf is not None:
     try:
-        buf.release()  # ❌ 直接释放，未归还到内存池
+        buf.release()  # [CROSS] 直接释放，未归还到内存池
         logger.debug(f"已释放 {buf_name}")
         if hasattr(self, '_buffer_tracker'):
             self._buffer_tracker.release_buffer(buf_name)
@@ -91,9 +91,9 @@ if buf is not None:
 
 **风险**:
 
-- ❌ 缓冲区被直接释放，无法复用
-- ❌ 内存池的复用率永远无法提升
-- ❌ 预分配的优势被抵消
+- [CROSS] 缓冲区被直接释放，无法复用
+- [CROSS] 内存池的复用率永远无法提升
+- [CROSS] 预分配的优势被抵消
 
 **影响**: 高（内存池功能失效）
 
@@ -125,7 +125,7 @@ if buf is not None:
 
 ### 问题3: 缓冲区大小追踪不一致
 
-**严重程度**: ⭐⭐⭐  
+**严重程度**: [STAR][STAR][STAR]  
 **位置**: `gpu_collision_engine.py:L640, L658` vs `memory_pool.py:L112`
 
 **问题描述**:
@@ -168,11 +168,11 @@ self._buffer_tracker.track_buffer("_keys_buf", self._keys_buf, aligned_keys_size
 
 ---
 
-## 🟢 低优先级问题 (4个)
+## [GREEN] 低优先级问题 (4个)
 
 ### 问题4: 日志级别使用不当
 
-**严重程度**: ⭐⭐  
+**严重程度**: [STAR][STAR]  
 **位置**: `gpu_collision_engine.py:L644, L662`
 
 **问题描述**:
@@ -200,7 +200,7 @@ logger.info(f"使用内存池分配匹配缓冲区: {match_buf_size/1024/1024:.2
 
 ### 问题5: 缺少内存池可用性检查
 
-**严重程度**: ⭐⭐  
+**严重程度**: [STAR][STAR]  
 **位置**: `gpu_collision_engine.py:L637`
 
 **问题描述**:
@@ -229,7 +229,7 @@ if memory_pool and not hasattr(memory_pool, 'allocate'):
 
 ### 问题6: 魔法数字未提取为常量
 
-**严重程度**: ⭐  
+**严重程度**: [STAR]  
 **位置**: `gpu_collision_engine.py:L640, L658`
 
 **问题描述**:
@@ -256,7 +256,7 @@ match_buf_size = self.max_batch_size * BYTES_PER_MATCH_FLAG
 
 ### 问题7: 预分配失败时缺少回退日志
 
-**严重程度**: ⭐  
+**严重程度**: [STAR]  
 **位置**: `memory_pool.py:L194-196`
 
 **问题描述**:
@@ -282,11 +282,11 @@ except Exception as e:
 
 ---
 
-## 💡 优化建议 (5个)
+## [TIP] 优化建议 (5个)
 
-### 优化1: 添加内存池归还机制 ⭐⭐⭐⭐⭐
+### 优化1: 添加内存池归还机制 [STAR][STAR][STAR][STAR][STAR]
 
-**当前状态**: ❌ 缺失  
+**当前状态**: [CROSS] 缺失  
 **预期收益**: 复用率从0%提升到85%+  
 **实现难度**: 低
 
@@ -295,9 +295,9 @@ except Exception as e:
 
 ---
 
-### 优化2: 缓冲区大小缓存 ⭐⭐⭐
+### 优化2: 缓冲区大小缓存 [STAR][STAR][STAR]
 
-**当前状态**: ⚠️ 重复计算  
+**当前状态**: [WARN] 重复计算  
 **预期收益**: 减少计算开销  
 **实现难度**: 低
 
@@ -313,9 +313,9 @@ class GPUKernel:
 
 ---
 
-### 优化3: 内存池预热统计 ⭐⭐⭐
+### 优化3: 内存池预热统计 [STAR][STAR][STAR]
 
-**当前状态**: ⚠️ 缺乏验证  
+**当前状态**: [WARN] 缺乏验证  
 **预期收益**: 确保预分配生效  
 **实现难度**: 低
 
@@ -332,9 +332,9 @@ if prealloc_stats['pooled_buffers'] < 4:
 
 ---
 
-### 优化4: 内存池配置验证 ⭐⭐
+### 优化4: 内存池配置验证 [STAR][STAR]
 
-**当前状态**: ⚠️ 未验证配置合理性  
+**当前状态**: [WARN] 未验证配置合理性  
 **预期收益**: 避免配置错误  
 **实现难度**: 中
 
@@ -357,9 +357,9 @@ def _validate_pool_config(self):
 
 ---
 
-### 优化5: 内存池健康监测 ⭐⭐
+### 优化5: 内存池健康监测 [STAR][STAR]
 
-**当前状态**: ⚠️ 无健康检查  
+**当前状态**: [WARN] 无健康检查  
 **预期收益**: 提前发现问题  
 **实现难度**: 中
 
@@ -381,9 +381,9 @@ def _check_pool_health(self):
 
 ---
 
-## ✅ 优秀实践 (6个)
+## [OK_CHECK] 优秀实践 (6个)
 
-### 1. ✅ 智能回退机制
+### 1. [OK_CHECK] 智能回退机制
 
 ```python
 if memory_pool:
@@ -396,7 +396,7 @@ else:
 
 ---
 
-### 2. ✅ 256字节对齐优化
+### 2. [OK_CHECK] 256字节对齐优化
 
 ```python
 aligned_size = ((size + 255) // 256) * 256
@@ -406,7 +406,7 @@ aligned_size = ((size + 255) // 256) * 256
 
 ---
 
-### 3. ✅ 线程安全保护
+### 3. [OK_CHECK] 线程安全保护
 
 ```python
 with self._lock:
@@ -417,7 +417,7 @@ with self._lock:
 
 ---
 
-### 4. ✅ 完整的缓冲区追踪
+### 4. [OK_CHECK] 完整的缓冲区追踪
 
 ```python
 self._buffer_tracker.track_buffer("_keys_buf", self._keys_buf, keys_buf_size)
@@ -427,7 +427,7 @@ self._buffer_tracker.track_buffer("_keys_buf", self._keys_buf, keys_buf_size)
 
 ---
 
-### 5. ✅ 详细的日志记录
+### 5. [OK_CHECK] 详细的日志记录
 
 ```python
 logger.info(
@@ -441,7 +441,7 @@ logger.info(
 
 ---
 
-### 6. ✅ 异常处理完善
+### 6. [OK_CHECK] 异常处理完善
 
 ```python
 try:
@@ -456,9 +456,9 @@ except Exception as e:
 
 ---
 
-## 📊 代码质量评分
+## [CHART] 代码质量评分
 
-### 综合评分: 8.5/10 ⭐⭐⭐⭐
+### 综合评分: 8.5/10 [STAR][STAR][STAR][STAR]
 
 | 维度 | 评分 | 说明 |
 |------|------|------|
@@ -470,7 +470,7 @@ except Exception as e:
 
 ---
 
-## 🎯 修复优先级
+## [TARGET] 修复优先级
 
 ### P0 - 立即修复 (阻断性问题)
 
@@ -508,21 +508,21 @@ except Exception as e:
 
 ---
 
-## 📝 总结
+## [MEMO] 总结
 
 ### 优点
 
-1. ✅ **核心逻辑正确**: 内存池分配逻辑实现正确
-2. ✅ **回退机制完善**: 内存池禁用时自动降级
-3. ✅ **线程安全**: 使用锁保护并发操作
-4. ✅ **异常处理**: 预分配失败不影响主流程
-5. ✅ **文档完整**: 注释清晰，日志详细
+1. [OK_CHECK] **核心逻辑正确**: 内存池分配逻辑实现正确
+2. [OK_CHECK] **回退机制完善**: 内存池禁用时自动降级
+3. [OK_CHECK] **线程安全**: 使用锁保护并发操作
+4. [OK_CHECK] **异常处理**: 预分配失败不影响主流程
+5. [OK_CHECK] **文档完整**: 注释清晰，日志详细
 
 ### 关键问题
 
-1. ❌ **缓冲区未归还到内存池**: 导致复用率永远为0%（**必须修复**）
-2. ⚠️ **内存标志不一致**: 预分配和实际使用标志不同
-3. ⚠️ **大小追踪不一致**: 原始大小与对齐大小不匹配
+1. [CROSS] **缓冲区未归还到内存池**: 导致复用率永远为0%（**必须修复**）
+2. [WARN] **内存标志不一致**: 预分配和实际使用标志不同
+3. [WARN] **大小追踪不一致**: 原始大小与对齐大小不匹配
 
 ### 建议行动
 
@@ -546,7 +546,7 @@ except Exception as e:
 
 ---
 
-## 🔍 测试建议
+## [SEARCH] 测试建议
 
 ### 必须测试
 
@@ -592,7 +592,7 @@ except Exception as e:
 
 ---
 
-## 📚 参考资料
+## [BOOKS] 参考资料
 
 - OpenCL内存管理规范
 - GPU内存池最佳实践
@@ -603,4 +603,4 @@ except Exception as e:
 
 **审查完成时间**: 2026-04-24 04:05:00  
 **下次审查**: v3.2.1版本（缓冲区归还修复后）  
-**审查状态**: ✅ 完成
+**审查状态**: [OK_CHECK] 完成

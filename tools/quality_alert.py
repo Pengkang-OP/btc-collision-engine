@@ -14,8 +14,8 @@ from utf8_helper import setup_windows_utf8
 
 setup_windows_utf8()
 
-from tools.check_document_quality import DocumentQualityChecker  # noqa: E402
-from tools.quality_trend import QualityTrendAnalyzer  # noqa: E402
+from tools.check_document_quality import DocumentQualityChecker
+from tools.quality_trend import QualityTrendAnalyzer
 
 
 class QualityAlertSystem:
@@ -84,22 +84,22 @@ class QualityAlertSystem:
     def print_alerts(self, alerts: list[dict]):
         """打印告警信息."""
         if not alerts:
-            print("\n✅ 无告警 - 文档质量良好")
+            print("\nOK 无告警 - 文档质量良好")
             return
 
         print(f"\n{'=' * 60}")
-        print("🚨 质量告警")
+        print("CRIT 质量告警")
         print(f"{'=' * 60}")
 
         for i, alert in enumerate(alerts, 1):
             severity = alert["severity"]
-            icon = "❌" if severity == "ERROR" else "⚠️"
+            icon = "ERR" if severity == "ERROR" else "WARN"
 
             print(f"\n{i}. {icon} [{severity}] {alert['type']}")
             print(f"   {alert['message']}")
 
         print(f"\n{'=' * 60}")
-        print("💡 建议:")
+        print("TIP 建议:")
 
         # 根据告警类型给出建议
         for alert in alerts:
@@ -142,27 +142,27 @@ def main():
     args = parser.parse_args()
 
     # 执行质量检查
-    print("🔍 执行质量检查...")
+    print("SEARCH 执行质量检查...")
     try:
         checker = DocumentQualityChecker(args.docs_dir)
         scores = checker.check_all()
     except FileNotFoundError as e:
-        print(f"❌ 文档目录不存在: {e}")
+        print(f"ERR 文档目录不存在: {e}")
         sys.exit(1)
     except PermissionError as e:
-        print(f"❌ 权限不足，无法访问文档: {e}")
+        print(f"ERR 权限不足，无法访问文档: {e}")
         sys.exit(1)
     except Exception as e:
-        print(f"❌ 质量检查失败: {e}")
+        print(f"ERR 质量检查失败: {e}")
         sys.exit(1)
 
     if not scores:
-        print("❌ 没有文档可检查")
+        print("ERR 没有文档可检查")
         sys.exit(1)
 
     # 计算平均评分
     avg_score = sum(s.score for s in scores) / len(scores)
-    print(f"\n📊 当前平均评分: {avg_score:.1f}/10")
+    print(f"\nSTATS 当前平均评分: {avg_score:.1f}/10")
 
     # 记录到历史
     analyzer = QualityTrendAnalyzer(args.history_file)
@@ -186,10 +186,10 @@ def main():
     # CI模式
     if args.ci_mode:
         if alert_system.should_fail_ci(alerts):
-            print("\n❌ CI失败 - 存在ERROR级别告警")
+            print("\nERR CI失败 - 存在ERROR级别告警")
             sys.exit(1)
         else:
-            print("\n✅ CI通过")
+            print("\nOK CI通过")
             sys.exit(0)
 
 

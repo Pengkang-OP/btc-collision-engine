@@ -68,10 +68,10 @@
 ### 1.4 P0/P1修复验证
 
 以下P0级别修复均通过测试验证：
-- `test_core_fixes_verification.py::test_secp256k1_deprecation_warning` ✓ PASS
-- `test_core_fixes_verification.py::test_threadsafe_logger_deprecation` ✓ PASS  
-- `test_core_fixes_verification.py::test_sampled_logger_counter_overflow` ✓ PASS
-- 碰撞统计线程安全测试（concurrent_add_match, concurrent_update）✓ PASS
+- `test_core_fixes_verification.py::test_secp256k1_deprecation_warning` [OK] PASS
+- `test_core_fixes_verification.py::test_threadsafe_logger_deprecation` [OK] PASS  
+- `test_core_fixes_verification.py::test_sampled_logger_counter_overflow` [OK] PASS
+- 碰撞统计线程安全测试（concurrent_add_match, concurrent_update）[OK] PASS
 
 ---
 
@@ -192,23 +192,23 @@ hashlib.md5(source.encode(), usedforsecurity=False)
 
 | 验证项 | 结果 |
 |--------|------|
-| secp256k1废弃警告向后兼容 | ✓ PASS |
-| ThreadsafeLogger废弃路径 | ✓ PASS |
-| SampledLogger计数器溢出修复 | ✓ PASS |
-| ConfigManager Schema验证 | ✓ PASS（无格式破坏性变更） |
-| Base58/WIF编解码稳定性 | ✓ PASS（全部往返测试通过） |
-| 加密地址生成一致性 | ✓ PASS（已知测试向量通过） |
+| secp256k1废弃警告向后兼容 | [OK] PASS |
+| ThreadsafeLogger废弃路径 | [OK] PASS |
+| SampledLogger计数器溢出修复 | [OK] PASS |
+| ConfigManager Schema验证 | [OK] PASS（无格式破坏性变更） |
+| Base58/WIF编解码稳定性 | [OK] PASS（全部往返测试通过） |
+| 加密地址生成一致性 | [OK] PASS（已知测试向量通过） |
 
 ### 4.2 异常处理验证
 
 | 场景 | 处理结果 |
 |------|---------|
-| 加载损坏JSON配置 | 记录错误，返回默认值 ✓ |
-| 加载空配置文件 | 记录错误，返回默认值 ✓ |
-| Base58Check校验和失败 | 抛出ValueError，上层捕获记录 ✓ |
-| GPU初始化失败 | 抛出RuntimeError，提供恢复建议 ✓ |
+| 加载损坏JSON配置 | 记录错误，返回默认值 [OK] |
+| 加载空配置文件 | 记录错误，返回默认值 [OK] |
+| Base58Check校验和失败 | 抛出ValueError，上层捕获记录 [OK] |
+| GPU初始化失败 | 抛出RuntimeError，提供恢复建议 [OK] |
 | CLI stdin读取（pytest环境） | 捕获OSError，保持测试隔离 |
-| 邮件/Webhook连接失败 | 记录警告，不中断主流程 ✓ |
+| 邮件/Webhook连接失败 | 记录警告，不中断主流程 [OK] |
 
 ### 4.3 CLI stdin测试失败分析
 
@@ -246,11 +246,11 @@ hashlib.md5(source.encode(), usedforsecurity=False)
 
 | 项目 | 状态 |
 |------|------|
-| GitHub Actions CI | ✓ 已配置（.github/workflows/ci.yml） |
-| Docker支持 | ✓ Dockerfile + docker-compose.yml |
-| AMD GPU Dockerfile | ✓ Dockerfile.amd |
-| pre-commit钩子 | ✓ .pre-commit-config.yaml |
-| pyproject.toml | ✓（版本号需更新至3.2.x） |
+| GitHub Actions CI | [OK] 已配置（.github/workflows/ci.yml） |
+| Docker支持 | [OK] Dockerfile + docker-compose.yml |
+| AMD GPU Dockerfile | [OK] Dockerfile.amd |
+| pre-commit钩子 | [OK] .pre-commit-config.yaml |
+| pyproject.toml | [OK]（版本号需更新至3.2.x） |
 
 ### 5.4 主要残留风险
 
@@ -270,15 +270,15 @@ hashlib.md5(source.encode(), usedforsecurity=False)
 
 | 文档类型 | 状态 | 说明 |
 |---------|------|------|
-| README.md | ✓ 存在 | 版本badge不一致（显示2.2.0） |
-| CHANGELOG.md | ✓ 存在 | 版本历史完整 |
-| CONTRIBUTING.md | ✓ 存在 | 贡献指南完整 |
-| docs/api-reference.md | ✓ 存在 | API文档 |
-| docs/architecture.md | ✓ 存在 | 架构文档 |
-| docs/CONFIG.md | ✓ 存在 | 配置文档 |
-| docs/DOCKER_DEPLOYMENT.md | ✓ 存在 | 部署文档 |
-| docs/CLI_QUICK_REFERENCE.md | ✓ 存在 | CLI快速参考 |
-| STARTUP_GUIDE.md（根目录） | ✗ 不存在 | 上下文中提及但已移至docs/ |
+| README.md | [OK] 存在 | 版本badge不一致（显示2.2.0） |
+| CHANGELOG.md | [OK] 存在 | 版本历史完整 |
+| CONTRIBUTING.md | [OK] 存在 | 贡献指南完整 |
+| docs/api-reference.md | [OK] 存在 | API文档 |
+| docs/architecture.md | [OK] 存在 | 架构文档 |
+| docs/CONFIG.md | [OK] 存在 | 配置文档 |
+| docs/DOCKER_DEPLOYMENT.md | [OK] 存在 | 部署文档 |
+| docs/CLI_QUICK_REFERENCE.md | [OK] 存在 | CLI快速参考 |
+| STARTUP_GUIDE.md（根目录） | [FAIL] 不存在 | 上下文中提及但已移至docs/ |
 
 ### 6.2 代码注释覆盖率
 

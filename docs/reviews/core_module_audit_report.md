@@ -72,10 +72,10 @@ ruff check src/core/  # 假设已配置 pyproject.toml
 
 ### 2.2 导入组织
 
-- ✅ Google-style docstring 已广泛使用（符合项目约定）
-- ✅ `from typing import Any` 使用较少（~25 处，远好于 collision/ 的 130+ 处）
-- ⚠️ `crypto_backend.py` 中 `Any` 主要用于 `ec.backend` 类型（可接受但可优化）
-- ⚠️ `precomputed_table.py` 的 `ec: Any` 参数（L72）——本应是 `EllipticCurve` 类型
+- [OK] Google-style docstring 已广泛使用（符合项目约定）
+- [OK] `from typing import Any` 使用较少（~25 处，远好于 collision/ 的 130+ 处）
+- [WARN] `crypto_backend.py` 中 `Any` 主要用于 `ec.backend` 类型（可接受但可优化）
+- [WARN] `precomputed_table.py` 的 `ec: Any` 参数（L72）——本应是 `EllipticCurve` 类型
 
 ### 2.3 per-file-ignores 评估
 
@@ -101,7 +101,7 @@ ruff check src/core/  # 假设已配置 pyproject.toml
 | 最大文件 | `crypto_backend.py` (993 行) | 可接受，Strategy 模式需要多个后端实现 |
 | 超标函数 | `bitcoin_key_validator.validate_address()` 等 | 已通过辅助方法拆分（`_detect_address_type`, `_validate_legacy_address` 等） |
 | 冗余代码 | `memory_pool.py` 中 `ByteArrayPool.release()` 安全清除 | 可接受，不同池类型需要不同清除逻辑 |
-| 死代码 | **无**显著死代码 | ✅ 优于 collision/ 模块 |
+| 死代码 | **无**显著死代码 | [OK] 优于 collision/ 模块 |
 
 ### 3.3 重复代码
 
@@ -113,12 +113,12 @@ ruff check src/core/  # 假设已配置 pyproject.toml
 
 | 模式 | 文件 | 使用评估 |
 |------|------|----------|
-| Strategy | `crypto_backend.py` | ✅ 恰当 — 4 个后端实现 + 自动检测 |
-| Singleton | `crypto_backend.py`, `memory_pool.py`, `precomputed_table.py` | ✅ 合理，双重检查锁 |
-| Object Pool | `memory_pool.py` | ✅ 有效减少 GC 压力 |
-| Work Stealing | `thread_pool.py` | ✅ 合理实现 |
-| Template Method | `address_generator.py` | ✅ 基类 + 子类扩展 |
-| Adapter (别名) | `simd_optimizer.py` L419 | ⚠️ `SIMDVectorizedOperations = BatchOptimizer` 别名易混淆 |
+| Strategy | `crypto_backend.py` | [OK] 恰当 — 4 个后端实现 + 自动检测 |
+| Singleton | `crypto_backend.py`, `memory_pool.py`, `precomputed_table.py` | [OK] 合理，双重检查锁 |
+| Object Pool | `memory_pool.py` | [OK] 有效减少 GC 压力 |
+| Work Stealing | `thread_pool.py` | [OK] 合理实现 |
+| Template Method | `address_generator.py` | [OK] 基类 + 子类扩展 |
+| Adapter (别名) | `simd_optimizer.py` L419 | [WARN] `SIMDVectorizedOperations = BatchOptimizer` 别名易混淆 |
 
 ---
 
@@ -140,17 +140,17 @@ priority = [
 ]
 ```
 
-✅ **合理** — 自动选择最快可用后端，纯 Python 作为兜底。  
-⚠️ **注意**: `is_constant_time()` 对 OpenSSL 和 ECDSA 保守返回 `False`，虽然略显保守但安全。
+[OK] **合理** — 自动选择最快可用后端，纯 Python 作为兜底。  
+[WARN] **注意**: `is_constant_time()` 对 OpenSSL 和 ECDSA 保守返回 `False`，虽然略显保守但安全。
 
 #### 4.1.2 secp256k1.py 教学实现设计
 
-✅ **合理** — 文件头部明确警告"仅供教学参考"，`scalar_multiply()` 运行时禁用，Montgomery Ladder 作为备选。  
-⚠️ **风险**: 如果碰撞引擎意外调用 `scalar_multiply()`（禁用版本），会抛出 RuntimeError 导致进程中断。但设计如此，应确保所有代码路径使用 `scalar_multiply_const_time()` 或 crypto_backend。
+[OK] **合理** — 文件头部明确警告"仅供教学参考"，`scalar_multiply()` 运行时禁用，Montgomery Ladder 作为备选。  
+[WARN] **风险**: 如果碰撞引擎意外调用 `scalar_multiply()`（禁用版本），会抛出 RuntimeError 导致进程中断。但设计如此，应确保所有代码路径使用 `scalar_multiply_const_time()` 或 crypto_backend。
 
 #### 4.1.3 SIMD 命名误导
 
-❌ **核心问题**: `simd_optimizer.py` 和 `simd_hash.py` 的名称含有"SIMD"，但实际实现是**纯 Python 列表推导式批量处理**，并非真正的 SIMD 指令。文档也承认（L20-26）：
+[FAIL] **核心问题**: `simd_optimizer.py` 和 `simd_hash.py` 的名称含有"SIMD"，但实际实现是**纯 Python 列表推导式批量处理**，并非真正的 SIMD 指令。文档也承认（L20-26）：
 
 ```python
 # Note:
@@ -164,20 +164,20 @@ priority = [
 
 | 依赖 | 必要性 | 使用方式 |
 |------|--------|----------|
-| `hashlib` | ✅ 必须 | 标准库，SHA-256 / RIPEMD-160 |
-| `ctypes` | ✅ 必须 | 安全内存清除，内存锁定 |
-| `secrets` | ✅ 必须 | CSPRNG 私钥生成 |
-| `threading` | ✅ 必须 | 线程安全 |
-| `coincurve` | ⚠️ 可选 | Taproot 地址生成必需 |
-| `psutil` | ⚠️ 可选 | 自动内存检测 |
-| `cryptography` / `PyNaCl` | ⚠️ 可选 | 安全清除后端 |
+| `hashlib` | [OK] 必须 | 标准库，SHA-256 / RIPEMD-160 |
+| `ctypes` | [OK] 必须 | 安全内存清除，内存锁定 |
+| `secrets` | [OK] 必须 | CSPRNG 私钥生成 |
+| `threading` | [OK] 必须 | 线程安全 |
+| `coincurve` | [WARN] 可选 | Taproot 地址生成必需 |
+| `psutil` | [WARN] 可选 | 自动内存检测 |
+| `cryptography` / `PyNaCl` | [WARN] 可选 | 安全清除后端 |
 
 ### 4.3 松耦合设计
 
-- ✅ `crypto_backend.py` 通过 `CryptoBackendManager` 提供统一接口，各后端互不影响
-- ✅ `address_generator.py` 使用抽象基类，子类只需实现 `private_key_to_public_key()`
-- ✅ `secure_key_manager.py` 通过 `HAS_CRYPTOGRAPHY` / `HAS_PYNACL` 标志实现条件导入
-- ⚠️ `multi_format_generator.py` 中 `generate_taproot_address()` 硬依赖 `coincurve`，无纯 Python 备选
+- [OK] `crypto_backend.py` 通过 `CryptoBackendManager` 提供统一接口，各后端互不影响
+- [OK] `address_generator.py` 使用抽象基类，子类只需实现 `private_key_to_public_key()`
+- [OK] `secure_key_manager.py` 通过 `HAS_CRYPTOGRAPHY` / `HAS_PYNACL` 标志实现条件导入
+- [WARN] `multi_format_generator.py` 中 `generate_taproot_address()` 硬依赖 `coincurve`，无纯 Python 备选
 
 ---
 
@@ -205,11 +205,11 @@ def scalar_multiply_const_time(self, k, point):
             R1 = self.point_add(R1, R1)
 ```
 
-⚠️ **注意**: 上述实现使用了 `if/else` 分支基于密钥位，这是**非恒定时间**的。需要确认真正的实现是否使用了 `_const_time_select()` 位掩码方式。如果使用 `if/else`，则存在时序侧信道风险。
+[WARN] **注意**: 上述实现使用了 `if/else` 分支基于密钥位，这是**非恒定时间**的。需要确认真正的实现是否使用了 `_const_time_select()` 位掩码方式。如果使用 `if/else`，则存在时序侧信道风险。
 
 #### 5.1.2 hmac.compare_digest 在地址匹配中使用
 
-✅ `bitcoin_key_validator.py` L718:
+[OK] `bitcoin_key_validator.py` L718:
 ```python
 if hmac.compare_digest(address, target):
 ```
@@ -217,7 +217,7 @@ if hmac.compare_digest(address, target):
 
 #### 5.1.3 私钥验证范围检查
 
-✅ `bitcoin_key_validator.py` L187-193:
+[OK] `bitcoin_key_validator.py` L187-193:
 ```python
 if k < 1:
     result.add_error("Private key value is 0, invalid")
@@ -228,7 +228,7 @@ elif k >= Secp256k1.N:
 
 #### 5.1.4 公钥生成验证
 
-✅ 四点检查：
+[OK] 四点检查：
 1. 是否无穷远点（L227）
 2. 是否在曲线上（L232）
 3. 压缩/非压缩格式前缀验证（L246-L258）
@@ -238,42 +238,42 @@ elif k >= Secp256k1.N:
 
 #### 5.2.1 安全清除三段策略
 
-✅ `secure_key_manager.py` 实现三级清除策略：
+[OK] `secure_key_manager.py` 实现三级清除策略：
 1. **cryptography 后端**: 随机覆写 + memset + 验证（最安全）
 2. **PyNaCl 后端**: 随机覆写 + memset + 重试回退
 3. **ctypes 后端**: memset + Python 级覆写
 
 #### 5.2.2 内存锁定
 
-✅ 跨平台 mlock/VirtualLock 支持，异常时日志警告。
+[OK] 跨平台 mlock/VirtualLock 支持，异常时日志警告。
 
 ### 5.3 线程安全逻辑
 
 | 组件 | 锁机制 | 评估 |
 |------|--------|------|
-| `CryptoBackendManager` | `threading.RLock` | ✅ 正确的可重入锁 |
-| `GlobalPoolManager` | `threading.Lock` | ✅ 双重检查锁定 |
-| `GlobalThreadPoolManager` | `threading.Lock` | ✅ |
-| `SecureKeyManager` 统计 | 类级 `threading.Lock` | ✅ 覆盖类变量操作 |
-| `BatchCollisionProcessor` | 无 | ⚠️ 如果多线程调用需加锁 |
+| `CryptoBackendManager` | `threading.RLock` | [OK] 正确的可重入锁 |
+| `GlobalPoolManager` | `threading.Lock` | [OK] 双重检查锁定 |
+| `GlobalThreadPoolManager` | `threading.Lock` | [OK] |
+| `SecureKeyManager` 统计 | 类级 `threading.Lock` | [OK] 覆盖类变量操作 |
+| `BatchCollisionProcessor` | 无 | [WARN] 如果多线程调用需加锁 |
 
 ### 5.4 边界条件
 
 | 场景 | 处理方式 | 评估 |
 |------|----------|------|
-| 空公钥 | ECPoint(None, None) 无穷远 | ✅ |
-| 空私钥 | `len(private_key) != 32` 检查 | ✅ |
-| 无效 WIF | 捕获 decode 异常 | ✅ |
-| 熵池耗尽 | `entropy_check` 日志警告但不阻塞 | ⚠️ 发出弱密钥风险 |
-| 批量化空列表 | `private_keys` 为空返回空列表 | ✅ |
-| 零值私钥 | `k < 1` 检查返回错误 | ✅ |
+| 空公钥 | ECPoint(None, None) 无穷远 | [OK] |
+| 空私钥 | `len(private_key) != 32` 检查 | [OK] |
+| 无效 WIF | 捕获 decode 异常 | [OK] |
+| 熵池耗尽 | `entropy_check` 日志警告但不阻塞 | [WARN] 发出弱密钥风险 |
+| 批量化空列表 | `private_keys` 为空返回空列表 | [OK] |
+| 零值私钥 | `k < 1` 检查返回错误 | [OK] |
 
 ### 5.5 异常处理
 
-- ✅ `bitcoin_key_validator.py` 中 `generate_public_key()` 捕获通用 `Exception` — 合理，因为密码学操作可能产生多种底层异常
-- ✅ `crypto_backend.py` 中后端初始化捕获 `ImportError` — 正确的条件导入模式
-- ✅ `secure_key_manager.py` `__del__()` 中使用 `suppress()` 静默处理解释器关闭时的异常
-- ⚠️ `key_generator.py` `generate_batch()` 中的 `Exception` 捕获过于宽泛（L248）
+- [OK] `bitcoin_key_validator.py` 中 `generate_public_key()` 捕获通用 `Exception` — 合理，因为密码学操作可能产生多种底层异常
+- [OK] `crypto_backend.py` 中后端初始化捕获 `ImportError` — 正确的条件导入模式
+- [OK] `secure_key_manager.py` `__del__()` 中使用 `suppress()` 静默处理解释器关闭时的异常
+- [WARN] `key_generator.py` `generate_batch()` 中的 `Exception` 捕获过于宽泛（L248）
 
 ---
 
@@ -287,7 +287,7 @@ elif k >= Secp256k1.N:
 | 完整注解比例 | ~85% |
 | 返回值注解比例 | ~90% |
 | `Any` 类型使用 | ~25 处 |
-| `# type: ignore` | **0 处** ✅ |
+| `# type: ignore` | **0 处** [OK] |
 
 ### 6.2 `Any` 类型分布
 
@@ -304,9 +304,9 @@ elif k >= Secp256k1.N:
 
 | 文件 | `__all__` 定义 | 评估 |
 |------|---------------|------|
-| `__init__.py` | ✅ 46 个导出符号 | 完整，按功能分类 |
-| `secp256k1.py` | ✅ 10 个符号 | 合理 |
-| 其余 15 个文件 | ❌ 缺失 | 需要补充 |
+| `__init__.py` | [OK] 46 个导出符号 | 完整，按功能分类 |
+| `secp256k1.py` | [OK] 10 个符号 | 合理 |
+| 其余 15 个文件 | [FAIL] 缺失 | 需要补充 |
 
 ### 6.4 mypy 兼容性
 
@@ -323,7 +323,7 @@ cmd /c mypy src/core/
 
 #### 7.1.1 Base58Check 编码
 
-✅ `base58.py` L145:
+[OK] `base58.py` L145:
 ```python
 checksum = HashUtils.double_sha256(versioned)[:4]
 return Base58.encode(versioned + checksum)
@@ -332,7 +332,7 @@ return Base58.encode(versioned + checksum)
 
 #### 7.1.2 WIF 编码
 
-✅ `wif.py`:
+[OK] `wif.py`:
 - 版本字节 `0x80`（主网）
 - 压缩标志追加 `0x01`
 - 双 SHA-256 校验和
@@ -342,33 +342,33 @@ return Base58.encode(versioned + checksum)
 
 | 地址类型 | 实现 | 正确性 |
 |----------|------|--------|
-| P2PKH | `Hash160(pubkey)` + Base58Check(0x00) | ✅ |
-| P2SH | 创建赎回脚本 + Hash160 + Base58Check(0x05) | ✅ |
-| Bech32 | Hash160(pubkey) + bech32_encode(bc, 0, pk_hash) | ✅ |
-| Taproot | xonly_pubkey + bech32m_encode(bc, 1, xonly) | ⚠️ 需 coincurve |
+| P2PKH | `Hash160(pubkey)` + Base58Check(0x00) | [OK] |
+| P2SH | 创建赎回脚本 + Hash160 + Base58Check(0x05) | [OK] |
+| Bech32 | Hash160(pubkey) + bech32_encode(bc, 0, pk_hash) | [OK] |
+| Taproot | xonly_pubkey + bech32m_encode(bc, 1, xonly) | [WARN] 需 coincurve |
 
 ### 7.2 输入验证
 
 | 文件 | 验证级别 | 评估 |
 |------|----------|------|
-| `bitcoin_key_validator.py` | 严格（长度+范围+曲线验证） | ✅ |
-| `base58.py` | 校验和验证 | ✅ |
-| `wif.py` | 版本字节+校验和 | ✅ |
-| `key_generator.py` | 熵池健康检查 | ✅ |
-| `address_generator.py` | 私钥长度和范围 | ✅ |
+| `bitcoin_key_validator.py` | 严格（长度+范围+曲线验证） | [OK] |
+| `base58.py` | 校验和验证 | [OK] |
+| `wif.py` | 版本字节+校验和 | [OK] |
+| `key_generator.py` | 熵池健康检查 | [OK] |
+| `address_generator.py` | 私钥长度和范围 | [OK] |
 
 ### 7.3 时序侧信道风险
 
 | 操作 | 检测结果 | 评估 |
 |------|----------|------|
-| 地址比较（匹配） | `hmac.compare_digest` | ✅ 恒定时间 |
-| 标量乘法 | Montgomery Ladder 或 native 后端 | ⚠️ 需确认 Ladder 真正的实现方式 |
-| WIF 格式验证 | 无秘密依赖比较 | ✅ |
-| 哈希计算 | 标准库实现 | ✅ |
+| 地址比较（匹配） | `hmac.compare_digest` | [OK] 恒定时间 |
+| 标量乘法 | Montgomery Ladder 或 native 后端 | [WARN] 需确认 Ladder 真正的实现方式 |
+| WIF 格式验证 | 无秘密依赖比较 | [OK] |
+| 哈希计算 | 标准库实现 | [OK] |
 
 ### 7.4 配置数据校验
 
-✅ `key_generator.py` 中：
+[OK] `key_generator.py` 中：
 - `batch_size` 默认值 1000
 - `rate_limit` 默认 0（不限速）
 - `min_entropy_bits` 默认 1000

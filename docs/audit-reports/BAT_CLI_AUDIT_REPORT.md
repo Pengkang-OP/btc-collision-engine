@@ -12,14 +12,14 @@
 
 | 脚本 | 行数 | 功能 | 状态 |
 |------|------|------|------|
-| `common.bat` | 108 | 共享库函数 | ✅ 保留 |
-| `install.bat` | 150 | 安装程序 | ✅ 保留 |
-| `start.bat` | 135 | 交互菜单 | ✅ 重构 |
-| `start_async_optimized.bat` | 47 | GPU异步启动 | ✅ 保留 |
-| `start_engine.bat` | 7 | 快速启动重定向 | ✅ 简化为重定向 |
-| `tools/cleanup_scheduler.bat` | 26 | 清理调度 | ✅ 保留 |
-| `tools/fix_console_encoding.bat` | 36 | UTF-8编码设置 | ✅ 优化 |
-| `tools/run_utf8.bat` | 14 | UTF-8命令包装 | ✅ 精简 |
+| `common.bat` | 108 | 共享库函数 | [OK] 保留 |
+| `install.bat` | 150 | 安装程序 | [OK] 保留 |
+| `start.bat` | 135 | 交互菜单 | [OK] 重构 |
+| `start_async_optimized.bat` | 47 | GPU异步启动 | [OK] 保留 |
+| `start_engine.bat` | 7 | 快速启动重定向 | [OK] 简化为重定向 |
+| `tools/cleanup_scheduler.bat` | 26 | 清理调度 | [OK] 保留 |
+| `tools/fix_console_encoding.bat` | 36 | UTF-8编码设置 | [OK] 优化 |
+| `tools/run_utf8.bat` | 14 | UTF-8命令包装 | [OK] 精简 |
 
 ### 1.2 问题识别
 

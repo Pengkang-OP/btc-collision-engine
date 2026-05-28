@@ -8,7 +8,7 @@
 
 本报告是对 `btc-collision-engine` 项目的**第二轮全面复检**。第一轮分析（同日早期版本）共发现 28 个问题，覆盖 Critical×5、High×9、Medium×14。经过修复工作后，本轮复检结果显示：
 
-- **28 个已知问题已全部确认修复** ✅
+- **28 个已知问题已全部确认修复** [OK_CHECK]
 - **新发现问题 7 个**：Critical×1、High×2、Medium×3、Low×1
 - **模块完整度从约 70% 提升至 98/100（A+）**
 - **总体评分：从 72/100 跃升至约 90/100**
@@ -23,23 +23,23 @@
 
 | 级别 | 第一轮数量 | 本轮新发现 | 状态 |
 |------|-----------|-----------|------|
-| 🔴 Critical | 5 | **1** | 第一轮全部修复；新增 1 个 |
-| 🟠 High | 9 | **2** | 第一轮全部修复；新增 2 个 |
-| 🟡 Medium | 14 | **3** | 第一轮全部修复；新增 3 个 |
-| 🔵 Low | 0 | **1** | 新增 1 个 |
+| [RED] Critical | 5 | **1** | 第一轮全部修复；新增 1 个 |
+| [ORANGE] High | 9 | **2** | 第一轮全部修复；新增 2 个 |
+| [YELLOW] Medium | 14 | **3** | 第一轮全部修复；新增 3 个 |
+| [BLUE] Low | 0 | **1** | 新增 1 个 |
 | **合计** | **28（已修复）** | **7（新发现）** | |
 
 ### 1.2 模块完整性总览（本轮）
 
 | 模块 | 第一轮状态 | 本轮状态 | 变化 |
 |------|-----------|---------|------|
-| CLI 入口 | 95% / 完全可用 | 100% / 完全可用 | ⬆️ +5% |
-| CPU 碰撞引擎 | 100% / 完全可用 | 100% / 完全可用 | ➡️ 保持 |
-| 加密核心 | 100% / 完全可用 | 100% / 完全可用 | ➡️ 保持 |
-| GPU 加速 | 95% / 条件可用 | 100% / 条件可用 | ⬆️ +5% |
-| 监控系统 | 95% / 完全可用 | 100% / 完全可用 | ⬆️ +5% |
-| 配置管理 | 100% / 完全可用 | 100% / 完全可用 | ➡️ 保持 |
-| **GUI 界面** | **0% / 完全不可用** | **已明确移除/转CLI** | ✅ 问题消解 |
+| CLI 入口 | 95% / 完全可用 | 100% / 完全可用 | [UP] +5% |
+| CPU 碰撞引擎 | 100% / 完全可用 | 100% / 完全可用 | [RIGHT] 保持 |
+| 加密核心 | 100% / 完全可用 | 100% / 完全可用 | [RIGHT] 保持 |
+| GPU 加速 | 95% / 条件可用 | 100% / 条件可用 | [UP] +5% |
+| 监控系统 | 95% / 完全可用 | 100% / 完全可用 | [UP] +5% |
+| 配置管理 | 100% / 完全可用 | 100% / 完全可用 | [RIGHT] 保持 |
+| **GUI 界面** | **0% / 完全不可用** | **已明确移除/转CLI** | [OK_CHECK] 问题消解 |
 
 ### 1.3 关键质量指标
 
@@ -60,34 +60,34 @@
 
 | 编号 | 问题描述 | 修复状态 | 说明 |
 |------|---------|---------|------|
-| C1 | GUI 模块完全缺失 | ✅ **已解决** | GUI 已明确移除，项目转为纯 CLI 架构，架构设计合理 |
-| C2 | key_collision.py 导入失败 | ✅ **已修复** | 不存在的模块导入已清理 |
-| C3 | start.bat 引用不存在文件 | ✅ **已修复** | start.bat 已更新为正确入口 |
-| C4 | 关键依赖包未在 requirements.txt 声明 | ✅ **已修复** | requirements-base.txt 已包含全部必要依赖 |
-| C5 | CLI 入口无顶层异常捕获 | ✅ **已修复** | key_collision_cli.py 已添加 8 层异常分类处理 |
-| H1 | 配置文件初始化流程缺失 | ✅ **已修复** | README 已包含 config.example.json → config.json 步骤 |
-| H2 | 跨平台启动脚本缺失 | ✅ **已修复** | start.sh 已创建并包含激活/环境检测逻辑 |
-| H3 | 虚拟环境指南缺失 | ✅ **已修复** | README 虚拟环境指南完整准确 |
-| H4 | Intel GPU 日志泄洪 | ✅ **已修复** | Intel Arc 适配模块已添加频率限制 |
-| H5 | 配置参数 batch_size/num_workers 无上限验证 | ✅ **已修复** | 配置层已加 JSON Schema 上限验证 |
-| H6 | 缺少 setup.py / pyproject.toml | ✅ **已修复** | pyproject.toml 已创建（见新 Critical 问题 C-NEW1） |
-| H7 | GPU 安装步骤说明不足 | ✅ **已修复** | README 已补充各厂商 GPU 安装说明 |
-| H8 | PyOpenCL 依赖在 GPU 不可用时缺少明确提示 | ✅ **已修复** | GPU 降级时已输出友好提示 |
-| H9 | collision_stats.py 边界情况数据不一致 | ✅ **已修复** | 统计模块已添加 Lock 保护 |
-| M1 | 依赖版本约束不完整 | ✅ **已修复** | pyproject.toml 已为关键依赖添加上下界约束 |
-| M2 | 缺少 CONFIG.md 配置文档 | ✅ **已修复** | docs/ 目录已补充配置说明文档 |
-| M3 | 故障排除指南缺失 | ✅ **已修复** | docs/FAQ.md 已创建 |
-| M4 | requirements.lock 包含无关包 | ✅ **已修复** | requirements 已拆分三层（base/gpu/dev） |
-| M5 | 可选依赖无分组机制 | ✅ **已修复** | requirements-base.txt / requirements-gpu.txt / requirements-dev.txt 完整拆分 |
-| M6 | GUI 文档完全缺失 | ✅ **已解决** | GUI 已移除，相关文档说明已更新 |
-| M7 | 多 GPU 配置文档缺失 | ✅ **已修复** | 多 GPU 配置已补充文档 |
-| M8 | Intel Arc 配置文档过时 | ✅ **已修复** | Intel Arc 配置和文档已同步更新 |
-| M9 | Bloom 过滤器描述不准确 | ✅ **已修复** | Bloom 过滤器相关描述已更正 |
-| M10 | 内存不足/磁盘满处理不足 | ✅ **已修复** | 磁盘满已添加优雅降级处理 |
-| M11 | MemoryError 未捕获 | ✅ **已修复** | 内存不足已实现自动降批机制 |
-| M12 | 缺少主动磁盘空间检查 | ✅ **已修复** | 启动时已添加磁盘空间检查 |
-| M13 | 内存监控自动降级机制缺失 | ✅ **已修复** | 内存监控已实现自动降级逻辑 |
-| M14 | 安装失败时缺少自助诊断工具 | ✅ **已修复** | diagnose_engine_issue.py 等诊断工具已提供 |
+| C1 | GUI 模块完全缺失 | [OK_CHECK] **已解决** | GUI 已明确移除，项目转为纯 CLI 架构，架构设计合理 |
+| C2 | key_collision.py 导入失败 | [OK_CHECK] **已修复** | 不存在的模块导入已清理 |
+| C3 | start.bat 引用不存在文件 | [OK_CHECK] **已修复** | start.bat 已更新为正确入口 |
+| C4 | 关键依赖包未在 requirements.txt 声明 | [OK_CHECK] **已修复** | requirements-base.txt 已包含全部必要依赖 |
+| C5 | CLI 入口无顶层异常捕获 | [OK_CHECK] **已修复** | key_collision_cli.py 已添加 8 层异常分类处理 |
+| H1 | 配置文件初始化流程缺失 | [OK_CHECK] **已修复** | README 已包含 config.example.json → config.json 步骤 |
+| H2 | 跨平台启动脚本缺失 | [OK_CHECK] **已修复** | start.sh 已创建并包含激活/环境检测逻辑 |
+| H3 | 虚拟环境指南缺失 | [OK_CHECK] **已修复** | README 虚拟环境指南完整准确 |
+| H4 | Intel GPU 日志泄洪 | [OK_CHECK] **已修复** | Intel Arc 适配模块已添加频率限制 |
+| H5 | 配置参数 batch_size/num_workers 无上限验证 | [OK_CHECK] **已修复** | 配置层已加 JSON Schema 上限验证 |
+| H6 | 缺少 setup.py / pyproject.toml | [OK_CHECK] **已修复** | pyproject.toml 已创建（见新 Critical 问题 C-NEW1） |
+| H7 | GPU 安装步骤说明不足 | [OK_CHECK] **已修复** | README 已补充各厂商 GPU 安装说明 |
+| H8 | PyOpenCL 依赖在 GPU 不可用时缺少明确提示 | [OK_CHECK] **已修复** | GPU 降级时已输出友好提示 |
+| H9 | collision_stats.py 边界情况数据不一致 | [OK_CHECK] **已修复** | 统计模块已添加 Lock 保护 |
+| M1 | 依赖版本约束不完整 | [OK_CHECK] **已修复** | pyproject.toml 已为关键依赖添加上下界约束 |
+| M2 | 缺少 CONFIG.md 配置文档 | [OK_CHECK] **已修复** | docs/ 目录已补充配置说明文档 |
+| M3 | 故障排除指南缺失 | [OK_CHECK] **已修复** | docs/FAQ.md 已创建 |
+| M4 | requirements.lock 包含无关包 | [OK_CHECK] **已修复** | requirements 已拆分三层（base/gpu/dev） |
+| M5 | 可选依赖无分组机制 | [OK_CHECK] **已修复** | requirements-base.txt / requirements-gpu.txt / requirements-dev.txt 完整拆分 |
+| M6 | GUI 文档完全缺失 | [OK_CHECK] **已解决** | GUI 已移除，相关文档说明已更新 |
+| M7 | 多 GPU 配置文档缺失 | [OK_CHECK] **已修复** | 多 GPU 配置已补充文档 |
+| M8 | Intel Arc 配置文档过时 | [OK_CHECK] **已修复** | Intel Arc 配置和文档已同步更新 |
+| M9 | Bloom 过滤器描述不准确 | [OK_CHECK] **已修复** | Bloom 过滤器相关描述已更正 |
+| M10 | 内存不足/磁盘满处理不足 | [OK_CHECK] **已修复** | 磁盘满已添加优雅降级处理 |
+| M11 | MemoryError 未捕获 | [OK_CHECK] **已修复** | 内存不足已实现自动降批机制 |
+| M12 | 缺少主动磁盘空间检查 | [OK_CHECK] **已修复** | 启动时已添加磁盘空间检查 |
+| M13 | 内存监控自动降级机制缺失 | [OK_CHECK] **已修复** | 内存监控已实现自动降级逻辑 |
+| M14 | 安装失败时缺少自助诊断工具 | [OK_CHECK] **已修复** | diagnose_engine_issue.py 等诊断工具已提供 |
 
 **结论：第一轮 28/28 个问题全部确认修复。**
 
@@ -95,19 +95,19 @@
 
 | 编号 | 级别 | 问题描述 | 文件 | 行号 |
 |------|------|---------|------|------|
-| C-NEW1 | 🔴 Critical | pyproject.toml build-backend 路径错误 | `pyproject.toml` | 3 |
-| H-NEW1 | 🟠 High | jsonschema 未在任何 requirements 文件声明 | `src/config/config_manager.py` | 18-19 |
-| H-NEW2 | 🟠 High | examples/business_logic_demo.py 导入路径过时 | `examples/business_logic_demo.py` | 22-27 |
-| M-NEW1 | 🟡 Medium | FAQ.md 与 README.md 关于 Bech32 支持的描述矛盾 | `docs/FAQ.md:271`、`README.md:26` | — |
-| M-NEW2 | 🟡 Medium | 范围扫描参数缺少 start > end 边界验证 | `src/cli/main.py` | 469-473 |
-| M-NEW3 | 🟡 Medium | build_production.py 仍引用已移除的 GUI 文件 | `build_production.py` | 31, 299, 313, 433 |
-| L-NEW1 | 🔵 Low | GPU batch_size 上限检查配置层与引擎层不一致 | GPU 引擎模块 | — |
+| C-NEW1 | [RED] Critical | pyproject.toml build-backend 路径错误 | `pyproject.toml` | 3 |
+| H-NEW1 | [ORANGE] High | jsonschema 未在任何 requirements 文件声明 | `src/config/config_manager.py` | 18-19 |
+| H-NEW2 | [ORANGE] High | examples/business_logic_demo.py 导入路径过时 | `examples/business_logic_demo.py` | 22-27 |
+| M-NEW1 | [YELLOW] Medium | FAQ.md 与 README.md 关于 Bech32 支持的描述矛盾 | `docs/FAQ.md:271`、`README.md:26` | — |
+| M-NEW2 | [YELLOW] Medium | 范围扫描参数缺少 start > end 边界验证 | `src/cli/main.py` | 469-473 |
+| M-NEW3 | [YELLOW] Medium | build_production.py 仍引用已移除的 GUI 文件 | `build_production.py` | 31, 299, 313, 433 |
+| L-NEW1 | [BLUE] Low | GPU batch_size 上限检查配置层与引擎层不一致 | GPU 引擎模块 | — |
 
 ---
 
 ## 三、当前 Critical 级问题
 
-### 🔴 C-NEW1 - pyproject.toml build-backend 配置路径错误
+### [RED] C-NEW1 - pyproject.toml build-backend 配置路径错误
 
 - **来源**：Researcher Alex（安装流程）
 - **文件**：`pyproject.toml`，第 3 行
@@ -130,7 +130,7 @@
 
 ## 四、当前 High 级问题
 
-### 🟠 H-NEW1 - jsonschema 未在任何 requirements 文件中声明
+### [ORANGE] H-NEW1 - jsonschema 未在任何 requirements 文件中声明
 
 - **来源**：Researcher Alex（安装流程）
 - **文件**：`src/config/config_manager.py`，第 18-19 行
@@ -152,7 +152,7 @@
 
 ---
 
-### 🟠 H-NEW2 - examples/business_logic_demo.py 导入路径过时（ImportError）
+### [ORANGE] H-NEW2 - examples/business_logic_demo.py 导入路径过时（ImportError）
 
 - **来源**：Researcher Tina（文档与错误处理）
 - **文件**：`examples/business_logic_demo.py`，第 22-27 行
@@ -176,7 +176,7 @@
 
 ## 五、当前 Medium 级问题
 
-### 🟡 M-NEW1 - FAQ.md 与 README.md 关于 Bech32 支持描述矛盾
+### [YELLOW] M-NEW1 - FAQ.md 与 README.md 关于 Bech32 支持描述矛盾
 
 - **来源**：Researcher Tina（文档与错误处理）
 - **文件**：
@@ -189,7 +189,7 @@
 
 ---
 
-### 🟡 M-NEW2 - 范围扫描参数缺少 start > end 边界验证
+### [YELLOW] M-NEW2 - 范围扫描参数缺少 start > end 边界验证
 
 - **来源**：Researcher Tina（文档与错误处理）
 - **文件**：`src/cli/main.py`，第 469-473 行
@@ -213,7 +213,7 @@
 
 ---
 
-### 🟡 M-NEW3 - build_production.py 仍引用已移除的 GUI 文件
+### [YELLOW] M-NEW3 - build_production.py 仍引用已移除的 GUI 文件
 
 - **来源**：Researcher Alex（安装流程）
 - **文件**：`build_production.py`，第 31、299、313、433 行
@@ -232,7 +232,7 @@
 
 ## 六、当前 Low 级问题
 
-### 🔵 L-NEW1 - GPU batch_size 上限检查配置层与引擎层不一致
+### [BLUE] L-NEW1 - GPU batch_size 上限检查配置层与引擎层不一致
 
 - **来源**：Researcher Tina（文档与错误处理）
 - **文件**：配置管理模块 vs GPU 引擎模块
@@ -252,7 +252,7 @@
 
 - **预计工作量**：1-2 小时
 
-### 🔵 L-NEW2 - 模块导出名称与文档期望不一致（低影响）
+### [BLUE] L-NEW2 - 模块导出名称与文档期望不一致（低影响）
 
 - **来源**：Researcher Jack（模块完整性）
 - **文件**：`src/crypto/` 地址生成模块
@@ -270,14 +270,14 @@
 
 | 模块类别 | 组件总数 | 已实现 | 实现率 | 评级 |
 |---------|---------|--------|--------|------|
-| 碰撞引擎（CPU + GPU 三种模式） | 10 | 10 | **100%** | ⭐⭐⭐⭐⭐ |
-| 加密核心（4 种后端 + 优化器） | 14 | 14 | **100%** | ⭐⭐⭐⭐⭐ |
-| GPU 加速模块 | 30 | 30 | **100%** | ⭐⭐⭐⭐⭐ |
-| 监控系统 | 12 | 12 | **100%** | ⭐⭐⭐⭐⭐ |
-| 配置管理 | 6 | 6 | **100%** | ⭐⭐⭐⭐⭐ |
-| 工具库 | 16 | 16 | **100%** | ⭐⭐⭐⭐⭐ |
-| CLI 入口 | 1 | 1 | **100%** | ⭐⭐⭐⭐⭐ |
-| **总计** | **89** | **89** | **100%** | ⭐⭐⭐⭐⭐ |
+| 碰撞引擎（CPU + GPU 三种模式） | 10 | 10 | **100%** | [STAR][STAR][STAR][STAR][STAR] |
+| 加密核心（4 种后端 + 优化器） | 14 | 14 | **100%** | [STAR][STAR][STAR][STAR][STAR] |
+| GPU 加速模块 | 30 | 30 | **100%** | [STAR][STAR][STAR][STAR][STAR] |
+| 监控系统 | 12 | 12 | **100%** | [STAR][STAR][STAR][STAR][STAR] |
+| 配置管理 | 6 | 6 | **100%** | [STAR][STAR][STAR][STAR][STAR] |
+| 工具库 | 16 | 16 | **100%** | [STAR][STAR][STAR][STAR][STAR] |
+| CLI 入口 | 1 | 1 | **100%** | [STAR][STAR][STAR][STAR][STAR] |
+| **总计** | **89** | **89** | **100%** | [STAR][STAR][STAR][STAR][STAR] |
 
 **综合模块完整度评分：98/100（A+）**（扣分项：导出别名不一致 -1，弃用代码保留 -1）
 
@@ -285,11 +285,11 @@
 
 | 指标 | 状态 | 说明 |
 |------|------|------|
-| 循环依赖 | ✅ 无 | 导入链无循环 |
-| 导入链完整性 | ✅ 100% | 所有模块可正常导入 |
-| 加密后端降级链 | ✅ 4 级完整 | Coincurve → OpenSSL → ECDSA → PurePython |
-| GPU → CPU 降级 | ✅ 完整 | PyOpenCL 不可用时自动切换 CPU |
-| 抽象基类设计 | ✅ 合理 | BaseNotifier._send_notification() 抛出 NotImplementedError 属于正确抽象设计 |
+| 循环依赖 | [OK_CHECK] 无 | 导入链无循环 |
+| 导入链完整性 | [OK_CHECK] 100% | 所有模块可正常导入 |
+| 加密后端降级链 | [OK_CHECK] 4 级完整 | Coincurve → OpenSSL → ECDSA → PurePython |
+| GPU → CPU 降级 | [OK_CHECK] 完整 | PyOpenCL 不可用时自动切换 CPU |
+| 抽象基类设计 | [OK_CHECK] 合理 | BaseNotifier._send_notification() 抛出 NotImplementedError 属于正确抽象设计 |
 
 ### 7.3 弃用代码说明
 
@@ -305,15 +305,15 @@
 
 | 步骤 | 操作 | 文档覆盖 | 状态 |
 |------|------|---------|------|
-| 1 | 确认 Python 3.7+ 版本 | ✅ README 已说明 | ✅ 通过 |
-| 2 | 创建虚拟环境 `python -m venv venv` | ✅ README 已说明 | ✅ 通过 |
-| 3 | 激活虚拟环境 | ✅ Windows/Linux 均有说明 | ✅ 通过 |
-| 4 | `pip install -r requirements-base.txt` | ✅ README 已说明 | ✅ 通过 |
-| 5 | GPU 用户：`pip install -r requirements-gpu.txt` | ✅ README 已说明 | ✅ 通过 |
-| 6 | `copy config.example.json config.json` | ✅ README 已说明 | ✅ 通过 |
-| 7 | 安装 GPU 驱动（按厂商） | ✅ 分厂商说明 | ✅ 通过 |
-| 8 | 启动：`python key_collision_cli.py` | ✅ start.bat/start.sh 均可用 | ✅ 通过 |
-| **⚠️ 缺失** | **`pip install .`（标准包安装）** | ⚠️ 有文档但执行失败 | ❌ 因 C-NEW1 导致失败 |
+| 1 | 确认 Python 3.7+ 版本 | [OK_CHECK] README 已说明 | [OK_CHECK] 通过 |
+| 2 | 创建虚拟环境 `python -m venv venv` | [OK_CHECK] README 已说明 | [OK_CHECK] 通过 |
+| 3 | 激活虚拟环境 | [OK_CHECK] Windows/Linux 均有说明 | [OK_CHECK] 通过 |
+| 4 | `pip install -r requirements-base.txt` | [OK_CHECK] README 已说明 | [OK_CHECK] 通过 |
+| 5 | GPU 用户：`pip install -r requirements-gpu.txt` | [OK_CHECK] README 已说明 | [OK_CHECK] 通过 |
+| 6 | `copy config.example.json config.json` | [OK_CHECK] README 已说明 | [OK_CHECK] 通过 |
+| 7 | 安装 GPU 驱动（按厂商） | [OK_CHECK] 分厂商说明 | [OK_CHECK] 通过 |
+| 8 | 启动：`python key_collision_cli.py` | [OK_CHECK] start.bat/start.sh 均可用 | [OK_CHECK] 通过 |
+| **[WARN] 缺失** | **`pip install .`（标准包安装）** | [WARN] 有文档但执行失败 | [CROSS] 因 C-NEW1 导致失败 |
 
 **文档覆盖率：约 85%**（较第一轮 25% 大幅提升；剩余缺口主要为 C-NEW1 导致的 pip install 失败）
 
@@ -321,11 +321,11 @@
 
 | 依赖文件 | 包含内容 | 状态 |
 |---------|---------|------|
-| `requirements-base.txt` | 核心运行依赖 | ✅ 完整有效 |
-| `requirements-gpu.txt` | GPU 加速可选依赖 | ✅ 完整有效 |
-| `requirements-dev.txt` | 开发测试工具 | ✅ 完整有效 |
-| `requirements.txt` | 向后兼容入口 | ✅ 存在 |
-| ⚠️ jsonschema | 配置验证依赖 | ❌ 未在任何文件声明（H-NEW1） |
+| `requirements-base.txt` | 核心运行依赖 | [OK_CHECK] 完整有效 |
+| `requirements-gpu.txt` | GPU 加速可选依赖 | [OK_CHECK] 完整有效 |
+| `requirements-dev.txt` | 开发测试工具 | [OK_CHECK] 完整有效 |
+| `requirements.txt` | 向后兼容入口 | [OK_CHECK] 存在 |
+| [WARN] jsonschema | 配置验证依赖 | [CROSS] 未在任何文件声明（H-NEW1） |
 
 ---
 
@@ -347,16 +347,16 @@
 
 | 场景 | 本轮状态 | 说明 |
 |------|---------|------|
-| GPU 不可用 | ✅ 自动降级 + 明确提示 | 完善 |
-| 内存不足 | ✅ 自动降批重试 | 完善 |
-| 磁盘空间满 | ✅ 优雅降级 + 提示 | 完善 |
-| 配置参数越界 | ✅ Schema 验证拒绝 | 完善（引擎层仍有缺口，见 L-NEW1） |
-| 用户 Ctrl+C 中断 | ✅ KeyboardInterrupt 捕获 | 完善 |
-| 加密后端不可用 | ✅ 4 级降级链 | 完善 |
-| 非法配置文件 | ✅ 详细错误定位 | 完善 |
-| 并发安全 | ✅ Lock + 原子操作 | 完善 |
-| 范围扫描逆序参数 | ❌ 未验证 | 缺口（M-NEW2） |
-| 范围扫描超大范围 | ❌ 未验证 | 缺口（M-NEW2） |
+| GPU 不可用 | [OK_CHECK] 自动降级 + 明确提示 | 完善 |
+| 内存不足 | [OK_CHECK] 自动降批重试 | 完善 |
+| 磁盘空间满 | [OK_CHECK] 优雅降级 + 提示 | 完善 |
+| 配置参数越界 | [OK_CHECK] Schema 验证拒绝 | 完善（引擎层仍有缺口，见 L-NEW1） |
+| 用户 Ctrl+C 中断 | [OK_CHECK] KeyboardInterrupt 捕获 | 完善 |
+| 加密后端不可用 | [OK_CHECK] 4 级降级链 | 完善 |
+| 非法配置文件 | [OK_CHECK] 详细错误定位 | 完善 |
+| 并发安全 | [OK_CHECK] Lock + 原子操作 | 完善 |
+| 范围扫描逆序参数 | [CROSS] 未验证 | 缺口（M-NEW2） |
+| 范围扫描超大范围 | [CROSS] 未验证 | 缺口（M-NEW2） |
 
 ---
 
@@ -405,22 +405,22 @@
 
 | 维度 | 第一轮 | 本轮 | 进步幅度 |
 |------|--------|------|---------|
-| 未修复严重问题 | 5 Critical + 9 High | **1 Critical + 2 High** | 🔽 大幅改善 |
+| 未修复严重问题 | 5 Critical + 9 High | **1 Critical + 2 High** | [DOWN] 大幅改善 |
 | 总体评分 | 72/100 | **~90/100** | **+18 分** |
 | 模块完整度 | ~70% | **100%（89/89）** | **+30 点** |
 | 安装文档覆盖率 | 25% | **~85%** | **+60 点** |
-| 生产就绪度 | CLI 勉强可用 | **CLI 生产级就绪** | ✅ |
+| 生产就绪度 | CLI 勉强可用 | **CLI 生产级就绪** | [OK_CHECK] |
 
 ### 生产就绪度评估
 
 | 场景 | 状态 | 条件 |
 |------|------|------|
-| CLI 命令行使用 | ✅ **生产就绪** | 修复 C-NEW1 后可完整安装 |
-| CPU 碰撞计算 | ✅ **生产就绪** | 无需额外操作 |
-| GPU 加速计算 | ✅ **生产就绪** | 需安装 PyOpenCL 和对应驱动 |
-| 监控与告警 | ✅ **生产就绪** | 无需额外操作 |
-| 标准包安装（pip install .） | ⚠️ **1行修复后就绪** | 需修复 C-NEW1 |
-| 示例代码演示 | ⚠️ **需更新** | 需修复 H-NEW2 |
+| CLI 命令行使用 | [OK_CHECK] **生产就绪** | 修复 C-NEW1 后可完整安装 |
+| CPU 碰撞计算 | [OK_CHECK] **生产就绪** | 无需额外操作 |
+| GPU 加速计算 | [OK_CHECK] **生产就绪** | 需安装 PyOpenCL 和对应驱动 |
+| 监控与告警 | [OK_CHECK] **生产就绪** | 无需额外操作 |
+| 标准包安装（pip install .） | [WARN] **1行修复后就绪** | 需修复 C-NEW1 |
+| 示例代码演示 | [WARN] **需更新** | 需修复 H-NEW2 |
 
 **最终建议**：立即修复 `pyproject.toml` build-backend（15 分钟工作量），补充 jsonschema 依赖声明（30 分钟），项目即可达到完整生产级就绪状态。其余问题可纳入下一个迭代周期统一处理。
 

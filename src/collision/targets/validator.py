@@ -36,7 +36,7 @@ class ValidationResult:
     状态组合示例:
         - valid=True, validated=True: 验证通过 [OK]
         - valid=False, validated=True: 验证失败（格式错误、校验和失败等） [ERR]
-        - valid=False, validated=False: 未验证（批量中止、未处理等） ⏸️
+        - valid=False, validated=False: 未验证（批量中止、未处理等） [PAUSE]
 
     使用示例:
         >>> result = ValidationResult(
@@ -61,7 +61,10 @@ class ValidationResult:
         if self.valid:
             return f"ValidationResult({self.address[:10]}..., valid=True, format={self.format_type})"
         if not self.validated:
-            return f"ValidationResult({self.address[:10]}..., valid=False, validated=False, error={self.error})"
+            return (
+                f"ValidationResult({self.address[:10]}..., "
+                f"valid=False, validated=False, error={self.error})"
+            )
         return f"ValidationResult({self.address[:10]}..., valid=False, error={self.error})"
 
 

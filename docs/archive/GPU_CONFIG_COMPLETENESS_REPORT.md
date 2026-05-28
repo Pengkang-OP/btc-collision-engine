@@ -15,32 +15,32 @@
 
 ---
 
-## 🔍 配置完整性检查结果
+## [SEARCH] 配置完整性检查结果
 
 ### 核心优化参数（8项）
 
 | 序号 | 优化参数 | config.intel_arc.json | config.json | config.optimized.json | 代码实现 | 状态 |
 |------|---------|----------------------|-------------|----------------------|---------|------|
-| 1 | **async_execution**<br>异步执行 | ✅ true | ❌ 缺失 | ✅ false | ✅ 完整 | ⚠️ 不一致 |
-| 2 | **uint32_workaround**<br>Intel workaround | ✅ true | ❌ 缺失 | ✅ true | ✅ 完整 | ✅ |
-| 3 | **timeout_protection**<br>超时保护 | ✅ true<br>30秒 | ❌ 缺失 | ✅ true<br>30秒 | ✅ 完整 | ✅ |
-| 4 | **memory_usage_ratio**<br>显存效率 | ✅ 0.70 | ⚠️ 0.50 | ❌ 使用memory_limit_percent 45% | ✅ 完整 | ⚠️ 不一致 |
-| 5 | **gpu_memory_pool**<br>GPU内存池 | ✅ true<br>200 buffers<br>8192 MB | ❌ 缺失 | ✅ true<br>100 buffers<br>512 MB | ✅ 完整 | ⚠️ 差异大 |
-| 6 | **enable_vendor_optimizations**<br>厂商优化 | ✅ true | ✅ true | ❌ 缺失 | ✅ 完整 | ✅ |
-| 7 | **adaptive_timeout**<br>自适应超时 | ✅ true | ❌ 缺失 | ✅ true | ✅ 完整 | ✅ |
-| 8 | **batch_size**<br>批次大小 | ✅ 1,048,576 | ⚠️ 65,536<br>(gpu_batch_size) | ⚠️ 131,072 | ✅ 完整 | ⚠️ 差异大 |
+| 1 | **async_execution**<br>异步执行 | [OK_CHECK] true | [CROSS] 缺失 | [OK_CHECK] false | [OK_CHECK] 完整 | [WARN] 不一致 |
+| 2 | **uint32_workaround**<br>Intel workaround | [OK_CHECK] true | [CROSS] 缺失 | [OK_CHECK] true | [OK_CHECK] 完整 | [OK_CHECK] |
+| 3 | **timeout_protection**<br>超时保护 | [OK_CHECK] true<br>30秒 | [CROSS] 缺失 | [OK_CHECK] true<br>30秒 | [OK_CHECK] 完整 | [OK_CHECK] |
+| 4 | **memory_usage_ratio**<br>显存效率 | [OK_CHECK] 0.70 | [WARN] 0.50 | [CROSS] 使用memory_limit_percent 45% | [OK_CHECK] 完整 | [WARN] 不一致 |
+| 5 | **gpu_memory_pool**<br>GPU内存池 | [OK_CHECK] true<br>200 buffers<br>8192 MB | [CROSS] 缺失 | [OK_CHECK] true<br>100 buffers<br>512 MB | [OK_CHECK] 完整 | [WARN] 差异大 |
+| 6 | **enable_vendor_optimizations**<br>厂商优化 | [OK_CHECK] true | [OK_CHECK] true | [CROSS] 缺失 | [OK_CHECK] 完整 | [OK_CHECK] |
+| 7 | **adaptive_timeout**<br>自适应超时 | [OK_CHECK] true | [CROSS] 缺失 | [OK_CHECK] true | [OK_CHECK] 完整 | [OK_CHECK] |
+| 8 | **batch_size**<br>批次大小 | [OK_CHECK] 1,048,576 | [WARN] 65,536<br>(gpu_batch_size) | [WARN] 131,072 | [OK_CHECK] 完整 | [WARN] 差异大 |
 
 ### 配置完整性评分
 
 | 配置文件 | 完整性评分 | 说明 |
 |---------|-----------|------|
-| **config.intel_arc.json** | **100/100** ✅ | 所有8项核心参数完整配置 |
-| **config.json** | **37.5/100** ❌ | 仅3项参数，5项缺失 |
-| **config.optimized.json** | **75/100** ⚠️ | 6项参数，2项缺失，1项命名不同 |
+| **config.intel_arc.json** | **100/100** [OK_CHECK] | 所有8项核心参数完整配置 |
+| **config.json** | **37.5/100** [CROSS] | 仅3项参数，5项缺失 |
+| **config.optimized.json** | **75/100** [WARN] | 6项参数，2项缺失，1项命名不同 |
 
 ---
 
-## ⚠️ 发现的问题
+## [WARN] 发现的问题
 
 ### P1: 重要问题（影响性能或稳定性）
 
@@ -49,11 +49,11 @@
 **问题描述**：
 `config.json` 作为默认配置文件，缺少5项关键GPU优化参数：
 
-- ❌ `async_execution`（异步执行）
-- ❌ `uint32_workaround`（Intel workaround）
-- ❌ `timeout_protection`（超时保护）
-- ❌ `adaptive_timeout`（自适应超时）
-- ❌ `gpu_memory_pool`（GPU内存池）
+- [CROSS] `async_execution`（异步执行）
+- [CROSS] `uint32_workaround`（Intel workaround）
+- [CROSS] `timeout_protection`（超时保护）
+- [CROSS] `adaptive_timeout`（自适应超时）
+- [CROSS] `gpu_memory_pool`（GPU内存池）
 
 **影响**：
 
@@ -147,9 +147,9 @@ config['memory_usage_ratio'] = 0.70
 
 **问题描述**：
 
-- `config.intel_arc.json`: 1,048,576 (1M) ✅ 最优
-- `config.json`: 65,536 (64K) ⚠️ 过低
-- `config.optimized.json`: 131,072 (128K) ⚠️ 偏低
+- `config.intel_arc.json`: 1,048,576 (1M) [OK_CHECK] 最优
+- `config.json`: 65,536 (64K) [WARN] 过低
+- `config.optimized.json`: 131,072 (128K) [WARN] 偏低
 
 **影响**：
 
@@ -177,8 +177,8 @@ config['memory_usage_ratio'] = 0.70
 
 **问题描述**：
 
-- `config.intel_arc.json`: `async_execution: true` ✅
-- `config.optimized.json`: `async_execution: false` ❌
+- `config.intel_arc.json`: `async_execution: true` [OK_CHECK]
+- `config.optimized.json`: `async_execution: false` [CROSS]
 
 **影响**：
 
@@ -299,40 +299,40 @@ python -m src.cli check-config
 输出：
 
 ```
-✅ GPU配置检查完成
-  - async_execution: ✅ 已配置
-  - uint32_workaround: ✅ 已配置
-  - timeout_protection: ✅ 已配置
-  - memory_usage_ratio: ✅ 已配置 (0.70)
-  - gpu_memory_pool: ✅ 已配置 (200 buffers, 8192 MB)
-  - batch_size: ✅ 已配置 (1,048,576)
+[OK_CHECK] GPU配置检查完成
+  - async_execution: [OK_CHECK] 已配置
+  - uint32_workaround: [OK_CHECK] 已配置
+  - timeout_protection: [OK_CHECK] 已配置
+  - memory_usage_ratio: [OK_CHECK] 已配置 (0.70)
+  - gpu_memory_pool: [OK_CHECK] 已配置 (200 buffers, 8192 MB)
+  - batch_size: [OK_CHECK] 已配置 (1,048,576)
 
-⚠️ 建议:
+[WARN] 建议:
   - 更新 config.json 添加缺失参数
 ```
 
 ---
 
-## ✅ 配置优点
+## [OK_CHECK] 配置优点
 
 ### 1. Intel Arc优化完整
 
 `config.intel_arc.json` 包含所有Intel Arc A770必要的优化参数：
 
-- ✅ uint32_workaround（避免hang bug）
-- ✅ 超时保护（30秒）
-- ✅ 显存效率（70%）
-- ✅ 异步执行（双缓冲）
-- ✅ 自适应超时
+- [OK_CHECK] uint32_workaround（避免hang bug）
+- [OK_CHECK] 超时保护（30秒）
+- [OK_CHECK] 显存效率（70%）
+- [OK_CHECK] 异步执行（双缓冲）
+- [OK_CHECK] 自适应超时
 
 ### 2. 自动配置系统完善
 
 `src/gpu/auto_config.py` 实现了完整的自动配置：
 
-- ✅ 按厂商生成配置（NVIDIA/AMD/Intel）
-- ✅ 按显存调整批次大小
-- ✅ 配置缓存机制
-- ✅ 显存验证和调整
+- [OK_CHECK] 按厂商生成配置（NVIDIA/AMD/Intel）
+- [OK_CHECK] 按显存调整批次大小
+- [OK_CHECK] 配置缓存机制
+- [OK_CHECK] 显存验证和调整
 
 ### 3. 配置加载容错性好
 
@@ -357,15 +357,15 @@ enable_async = False  # 保守默认
 代码在运行时验证配置并输出日志：
 
 ```
-✅ GPU异步执行已启用(配置文件 config.intel_arc.json) - 双缓冲优化
-✅ 启用uint32 workaround(避免Intel Arc global char* hang bug)
-✅ 启用超时保护机制: 30秒
-✅ Intel GPU内存效率: 70% (v2.2.1优化)
+[OK_CHECK] GPU异步执行已启用(配置文件 config.intel_arc.json) - 双缓冲优化
+[OK_CHECK] 启用uint32 workaround(避免Intel Arc global char* hang bug)
+[OK_CHECK] 启用超时保护机制: 30秒
+[OK_CHECK] Intel GPU内存效率: 70% (v2.2.1优化)
 ```
 
 ---
 
-## 💡 改进建议
+## [TIP] 改进建议
 
 ### 建议1: 更新config.json为完整配置
 
@@ -525,39 +525,39 @@ def migrate_config(old_config_path: str, new_config_path: str):
 
 ---
 
-## 📊 评分
+## [CHART] 评分
 
 ### 配置完整性评分
 
 | 维度 | 评分 | 说明 |
 |------|------|------|
-| **config.intel_arc.json** | **100/100** ⭐⭐⭐⭐⭐ | 所有参数完整，配置合理 |
-| **config.json** | **37.5/100** ❌ | 仅3/8参数，缺少关键优化 |
-| **config.optimized.json** | **75/100** ⚠️ | 大部分参数，但有冲突和过时命名 |
-| **代码实现** | **95/100** ⭐⭐⭐⭐⭐ | 容错性好，缺少验证器 |
-| **配置一致性** | **60/100** ⚠️ | 文件间差异大，需统一 |
+| **config.intel_arc.json** | **100/100** [STAR][STAR][STAR][STAR][STAR] | 所有参数完整，配置合理 |
+| **config.json** | **37.5/100** [CROSS] | 仅3/8参数，缺少关键优化 |
+| **config.optimized.json** | **75/100** [WARN] | 大部分参数，但有冲突和过时命名 |
+| **代码实现** | **95/100** [STAR][STAR][STAR][STAR][STAR] | 容错性好，缺少验证器 |
+| **配置一致性** | **60/100** [WARN] | 文件间差异大，需统一 |
 
 ### 代码质量评分
 
 | 维度 | 评分 | 说明 |
 |------|------|------|
-| **配置加载逻辑** | 90/100 ⭐⭐⭐⭐ | 多层降级，容错性好 |
-| **参数验证** | 40/100 ❌ | 缺少完整性验证 |
-| **错误处理** | 85/100 ⭐⭐⭐⭐ | 异常处理完善 |
-| **日志输出** | 95/100 ⭐⭐⭐⭐⭐ | 运行时验证日志充分 |
-| **可维护性** | 80/100 ⭐⭐⭐⭐ | 代码结构清晰 |
+| **配置加载逻辑** | 90/100 [STAR][STAR][STAR][STAR] | 多层降级，容错性好 |
+| **参数验证** | 40/100 [CROSS] | 缺少完整性验证 |
+| **错误处理** | 85/100 [STAR][STAR][STAR][STAR] | 异常处理完善 |
+| **日志输出** | 95/100 [STAR][STAR][STAR][STAR][STAR] | 运行时验证日志充分 |
+| **可维护性** | 80/100 [STAR][STAR][STAR][STAR] | 代码结构清晰 |
 
 ### 综合评分
 
 | 项目 | 评分 | 等级 |
 |------|------|------|
-| **配置完整性** | **73.5/100** | ⭐⭐⭐ 中等 |
-| **代码质量** | **78/100** | ⭐⭐⭐⭐ 良好 |
-| **总体评分** | **75.75/100** | ⭐⭐⭐ 中等偏上 |
+| **配置完整性** | **73.5/100** | [STAR][STAR][STAR] 中等 |
+| **代码质量** | **78/100** | [STAR][STAR][STAR][STAR] 良好 |
+| **总体评分** | **75.75/100** | [STAR][STAR][STAR] 中等偏上 |
 
 ---
 
-## 🎯 优先级行动清单
+## [TARGET] 优先级行动清单
 
 ### 立即修复（P1）
 
@@ -579,27 +579,27 @@ def migrate_config(old_config_path: str, new_config_path: str):
 
 ---
 
-## 📝 总结
+## [MEMO] 总结
 
-### ✅ 优点
+### [OK_CHECK] 优点
 
 1. **Intel Arc专用配置完整**：`config.intel_arc.json` 包含所有必要优化参数
 2. **代码实现优秀**：自动配置系统完善，容错性好
 3. **运行时验证充分**：日志输出清晰，便于调试
 
-### ⚠️ 问题
+### [WARN] 问题
 
 1. **默认配置不完整**：`config.json` 缺少5项关键参数
 2. **配置不一致**：三个配置文件差异较大
 3. **缺少验证机制**：未验证配置完整性
 
-### 💡 建议
+### [TIP] 建议
 
 1. **优先更新 `config.json`**：补充缺失参数，确保默认配置可用
 2. **添加配置验证器**：在启动时验证配置完整性
 3. **统一配置命名**：消除不一致的参数名
 
-### 🎯 结论
+### [TARGET] 结论
 
 **GPU优化参数配置的代码实现质量优秀（78/100），但配置文件完整性中等（73.5/100）。**
 

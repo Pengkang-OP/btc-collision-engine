@@ -10,9 +10,9 @@ import pytest
 
 pytestmark = pytest.mark.gpu  # 需要真实GPU硬件
 
-from src.collision.gpu.engine import GPUCollisionEngine  # noqa: E402
-from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine  # noqa: E402
-from src.utils import get_configured_logger, init_logging  # noqa: E402
+from src.collision.gpu.engine import GPUCollisionEngine
+from src.gpu.multi_gpu_engine import MultiGPUCollisionEngine
+from src.utils import get_configured_logger, init_logging
 
 # 配置日志
 init_logging()
@@ -65,10 +65,10 @@ def test_single_gpu_production():
         stats = engine.get_stats()
         logger.info("碰撞检测统计: %s", stats)
 
-        logger.info("✅ 单GPU生产模式测试成功")
+        logger.info("OK 单GPU生产模式测试成功")
         return True
     except Exception as e:
-        logger.error("❌ 单GPU生产模式测试失败: %s", e)
+        logger.error("ERR 单GPU生产模式测试失败: %s", e)
         import traceback
 
         traceback.print_exc()
@@ -109,7 +109,7 @@ def test_multi_gpu_production():
         # 初始化设备
         init_result = engine.initialize(device_count=2)
         if not init_result:
-            logger.error("❌ 多GPU设备初始化失败")
+            logger.error("ERR 多GPU设备初始化失败")
             return False
 
         logger.info("多GPU引擎初始化成功")
@@ -129,7 +129,7 @@ def test_multi_gpu_production():
             total_keys=100000000,
         )  # 1亿次碰撞检测
         if not start_result:
-            logger.error("❌ 多GPU碰撞检测启动失败")
+            logger.error("ERR 多GPU碰撞检测启动失败")
             return False
 
         # 等待60秒
@@ -145,10 +145,10 @@ def test_multi_gpu_production():
         stats = engine.get_combined_stats()
         logger.info("碰撞检测统计: %s", stats)
 
-        logger.info("✅ 多GPU生产模式测试成功")
+        logger.info("OK 多GPU生产模式测试成功")
         return True
     except Exception as e:
-        logger.error("❌ 多GPU生产模式测试失败: %s", e)
+        logger.error("ERR 多GPU生产模式测试失败: %s", e)
         import traceback
 
         traceback.print_exc()
@@ -172,11 +172,11 @@ def main():
         multi_gpu_result = test_multi_gpu_production()
 
         if single_gpu_result and multi_gpu_result:
-            logger.info("✅ 生产模式测试全部成功")
+            logger.info("OK 生产模式测试全部成功")
         else:
-            logger.error("❌ 生产模式测试部分失败")
+            logger.error("ERR 生产模式测试部分失败")
     except Exception as e:
-        logger.error("❌ 测试过程中出现错误: %s", e)
+        logger.error("ERR 测试过程中出现错误: %s", e)
         import traceback
 
         traceback.print_exc()

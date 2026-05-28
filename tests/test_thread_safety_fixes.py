@@ -213,7 +213,7 @@ class TestThreadSafetyFixes:
         print(f"  实际计数: {actual_count}")
         print(f"  耗时: {elapsed:.3f}秒")
         print(f"  吞吐量: {expected_count / elapsed:.0f} 次/秒")
-        print(f"  计数准确性: {'✓ 通过' if actual_count == expected_count else '✗ 失败'}")
+        print(f"  计数准确性: {'[OK] 通过' if actual_count == expected_count else '[FAIL] 失败'}")
 
     def test_error_log_rate_limit_accuracy(self):
         """测试错误日志限频准确性（M2修复验证）."""
@@ -269,7 +269,7 @@ class TestThreadSafetyFixes:
         print(f"  实际记录: {call_count[0]}")
         print(f"  限频间隔: {engine._error_log_interval}秒")
         print(f"  测试时长: {elapsed:.3f}秒")
-        print(f"  限频准确性: {'✓ 通过' if call_count[0] == 1 else '✗ 失败'}")
+        print(f"  限频准确性: {'[OK] 通过' if call_count[0] == 1 else '[FAIL] 失败'}")
 
 
 if __name__ == "__main__":

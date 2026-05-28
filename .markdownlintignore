@@ -1,0 +1,2 @@
+# 忽略 .codebuddy/ 自动生成的计划文件
+.codebuddy/**

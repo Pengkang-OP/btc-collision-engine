@@ -6,7 +6,7 @@
 
 ---
 
-## 📖 快速导航
+## [BOOK] 快速导航
 
 - [5分钟快速开始](#5分钟快速开始)
 
@@ -18,7 +18,7 @@
 
 ---
 
-## 🚀 5分钟快速开始
+## [QUICK] 5分钟快速开始
 
 ### Windows用户（推荐）
 
@@ -56,7 +56,7 @@ start.bat qr
 
 ---
 
-## 📋 命令速查表
+## [CHECKLIST] 命令速查表
 
 ### 常用命令（Windows）
 
@@ -88,7 +88,7 @@ python key_collision_cli.py --examples
 
 ---
 
-## 🎯 功能详解
+## [TARGET] 功能详解
 
 ### 1. 快速模式（--quick-run）
 
@@ -96,13 +96,13 @@ python key_collision_cli.py --examples
 
 **特点**:
 
-- ⚡ 跳过向导，直接启动
+- [BOLT] 跳过向导，直接启动
 
-- 📁 自动检测`targets.txt`
+- [DIR] 自动检测`targets.txt`
 
-- 👁️ 显示文件预览（前3个地址）
+- [EYE] 显示文件预览（前3个地址）
 
-- ⏱️ 3秒倒计时（可取消）
+- [STOPWATCH] 3秒倒计时（可取消）
 
 **使用方法**:
 
@@ -143,13 +143,13 @@ start.bat qr
 
 **特点**:
 
-- 🧙 4步引导，简单易懂
+- [MAGE] 4步引导，简单易懂
 
-- 💡 每步都有帮助提示
+- [TIP] 每步都有帮助提示
 
-- 🎨 可视化界面
+- [ART] 可视化界面
 
-- ✅ 配置摘要确认
+- [OK] 配置摘要确认
 
 **使用方法**:
 
@@ -234,11 +234,11 @@ start.bat qs
 
 **特点**:
 
-- 📦 跳过详细帮助信息
+- [PACKAGE] 跳过详细帮助信息
 
-- ⚡ 加快配置速度
+- [BOLT] 加快配置速度
 
-- 🎯 适合小屏幕终端
+- [TARGET] 适合小屏幕终端
 
 **使用方法**:
 
@@ -302,7 +302,7 @@ python key_collision_cli.py --quick-start --compact
 
 ---
 
-## 📝 创建目标地址文件
+## [CONFIG] 创建目标地址文件
 
 ### 方法1: 命令行创建
 
@@ -350,15 +350,15 @@ bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh
 
 **支持的地址格式**:
 
-- ✅ **P2PKH**: 以`1`开头
+- [OK] **P2PKH**: 以`1`开头
 
-- ✅ **P2SH**: 以`3`开头
+- [OK] **P2SH**: 以`3`开头
 
-- ✅ **Bech32**: 以`bc1`开头
+- [OK] **Bech32**: 以`bc1`开头
 
 ---
 
-## ❓ 常见问题
+## [MISS] 常见问题
 
 ### Q: 我是新手，应该用什么方式启动？
 
@@ -518,7 +518,7 @@ start.bat rec
 
 ---
 
-## 🔍 故障排查
+## [CHECK] 故障排查
 
 ### 问题1: 双击start.bat闪退
 
@@ -605,7 +605,7 @@ python key_collision_cli.py --quick-run --no-color
 
 ---
 
-## 💡 使用技巧
+## [TIP] 使用技巧
 
 ### 技巧1: 后台运行
 
@@ -667,21 +667,21 @@ python key_collision_cli.py -t targets_small.txt -m random
 
 ---
 
-## 📚 更多资源
+## [DOCS] 更多资源
 
-- 📘 [完整使用指南](USER_GUIDE.md) - 详细文档
+- [BOOK] [完整使用指南](USER_GUIDE.md) - 详细文档
 
-- 📖 [README](../README.md) - 项目概述
+- [BOOK] [README](../README.md) - 项目概述
 
-- 📝 [版本历史](../CHANGELOG.md) - 更新日志
+- [CONFIG] [版本历史](../CHANGELOG.md) - 更新日志
 
-- 🔧 [配置示例](../config.example.json) - 完整配置
+- [TOOL] [配置示例](../config.example.json) - 完整配置
 
-- 🤝 [贡献指南](../CONTRIBUTING.md) - 参与开发
+- [HANDSHAKE] [贡献指南](../CONTRIBUTING.md) - 参与开发
 
 ---
 
-## 🆘 获取帮助
+## [SOS] 获取帮助
 
 遇到问题？
 
@@ -695,6 +695,6 @@ python key_collision_cli.py -t targets_small.txt -m random
 
 ---
 
-**祝您使用愉快！** 🎉
+**祝您使用愉快！** [DONE]
 
 有任何问题或建议，欢迎反馈！

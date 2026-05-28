@@ -5,79 +5,79 @@
 
 ## 目录
 
-- [📋 执行摘要](#-执行摘要)
-- [🔍 1. Intel Arc OpenCL 驱动兼容性问题](#-1-intel-arc-opencl-驱动兼容性问题)
+- [[CHECKLIST] 执行摘要](#-执行摘要)
+- [[SEARCH] 1. Intel Arc OpenCL 驱动兼容性问题](#-1-intel-arc-opencl-驱动兼容性问题)
   - [1.1 问题背景](#11-问题背景)
   - [1.2 已知问题清单](#12-已知问题清单)
-    - [❌ **严重问题 (Critical)**](#-严重问题-critical)
-    - [⚠️ **中等问题 (Medium)**](#-中等问题-medium)
-    - [💡 **轻微问题 (Low)**](#-轻微问题-low)
-- [🔬 2. global char* hang bug 技术细节](#-2-global-char-hang-bug-技术细节)
+    - [[CROSS] **严重问题 (Critical)**](#-严重问题-critical)
+    - [[WARN] **中等问题 (Medium)**](#-中等问题-medium)
+    - [[TIP] **轻微问题 (Low)**](#-轻微问题-low)
+- [[MICRO] 2. global char* hang bug 技术细节](#-2-global-char-hang-bug-技术细节)
   - [2.1 问题描述](#21-问题描述)
   - [2.2 触发条件](#22-触发条件)
   - [2.3 底层原因分析](#23-底层原因分析)
   - [2.4 影响范围](#24-影响范围)
-- [🛠️ 3. uint32 workaround 实现原理与最佳实践](#-3-uint32-workaround-实现原理与最佳实践)
+- [[TOOL] 3. uint32 workaround 实现原理与最佳实践](#-3-uint32-workaround-实现原理与最佳实践)
   - [3.1 工作原理](#31-工作原理)
   - [3.2 当前实现评估](#32-当前实现评估)
-    - [✅ **已正确实现的部分**](#-已正确实现的部分)
-- [⚠️ **需要改进的部分**](#-需要改进的部分)
-- [📊 4. Intel GPU 性能优化策略](#-4-intel-gpu-性能优化策略)
+    - [[OK_CHECK] **已正确实现的部分**](#-已正确实现的部分)
+- [[WARN] **需要改进的部分**](#-需要改进的部分)
+- [[CHART] 4. Intel GPU 性能优化策略](#-4-intel-gpu-性能优化策略)
   - [4.1 厂商对比数据](#41-厂商对比数据)
   - [4.2 推荐优化策略](#42-推荐优化策略)
-    - [🎯 **策略 1: 保守的 batch_size 管理**](#-策略-1-保守的-batch_size-管理)
-- [🎯 **策略 2: 超时保护机制**](#-策略-2-超时保护机制)
-- [🎯 **策略 3: 禁用异步执行**](#-策略-3-禁用异步执行)
-    - [🎯 **策略 4: 显存使用优化**](#-策略-4-显存使用优化)
-- [🔧 5. 驱动版本兼容性要求](#-5-驱动版本兼容性要求)
+    - [[TARGET] **策略 1: 保守的 batch_size 管理**](#-策略-1-保守的-batch_size-管理)
+- [[TARGET] **策略 2: 超时保护机制**](#-策略-2-超时保护机制)
+- [[TARGET] **策略 3: 禁用异步执行**](#-策略-3-禁用异步执行)
+    - [[TARGET] **策略 4: 显存使用优化**](#-策略-4-显存使用优化)
+- [[WRENCH] 5. 驱动版本兼容性要求](#-5-驱动版本兼容性要求)
   - [5.1 推荐驱动版本](#51-推荐驱动版本)
   - [5.2 驱动更新建议](#52-驱动更新建议)
 - [5.3 Linux 特殊要求](#53-linux-特殊要求)
-- [📈 6. 性能对比与调优建议](#-6-性能对比与调优建议)
+- [[PERF] 6. 性能对比与调优建议](#-6-性能对比与调优建议)
   - [6.1 实际性能数据](#61-实际性能数据)
     - [**BTC 碰撞场景性能对比**](#btc-碰撞场景性能对比)
   - [6.2 调优建议](#62-调优建议)
-    - [🎯 **Intel Arc A750 (8GB)**](#-intel-arc-a750-8gb)
-    - [🎯 **Intel Arc A770 (16GB)**](#-intel-arc-a770-16gb)
+    - [[TARGET] **Intel Arc A750 (8GB)**](#-intel-arc-a750-8gb)
+    - [[TARGET] **Intel Arc A770 (16GB)**](#-intel-arc-a770-16gb)
   - [6.3 性能优化检查清单](#63-性能优化检查清单)
-- [🔮 7. 未来展望与建议](#-7-未来展望与建议)
+- [[CRYSTAL] 7. 未来展望与建议](#-7-未来展望与建议)
   - [7.1 Intel 驱动改进趋势](#71-intel-驱动改进趋势)
   - [7.2 短期优化计划 (1-3 个月)](#72-短期优化计划-1-3-个月)
     - [**优先级 P0 (立即实施)**](#优先级-p0-立即实施)
     - [**优先级 P1 (1 个月内)**](#优先级-p1-1-个月内)
     - [**优先级 P2 (3 个月内)**](#优先级-p2-3-个月内)
   - [7.3 中长期监控计划](#73-中长期监控计划)
-- [📝 8. 具体修复建议汇总](#-8-具体修复建议汇总)
+- [[MEMO] 8. 具体修复建议汇总](#-8-具体修复建议汇总)
   - [8.1 代码层面修复](#81-代码层面修复)
     - [**修复 1: 增强 Intel 厂商优化器**](#修复-1-增强-intel-厂商优化器)
     - [**修复 2: 添加运行时验证**](#修复-2-添加运行时验证)
     - [**修复 3: 更新配置文件**](#修复-3-更新配置文件)
   - [8.2 文档层面更新](#82-文档层面更新)
   - [8.3 测试层面增强](#83-测试层面增强)
-- [📚 9. 参考资料](#-9-参考资料)
+- [[BOOKS] 9. 参考资料](#-9-参考资料)
   - [官方资源](#官方资源)
   - [问题追踪](#问题追踪)
   - [技术评测](#技术评测)
   - [社区讨论](#社区讨论)
-- [✅ 10. 总结与建议](#-10-总结与建议)
+- [[OK_CHECK] 10. 总结与建议](#-10-总结与建议)
   - [当前状态评估](#当前状态评估)
   - [核心建议](#核心建议)
-    - [🎯 **立即执行 (本周)**](#-立即执行-本周)
-    - [📅 **短期计划 (1 个月)**](#-短期计划-1-个月)
-    - [🚀 **中期计划 (3 个月)**](#-中期计划-3-个月)
+    - [[TARGET] **立即执行 (本周)**](#-立即执行-本周)
+    - [[E] **短期计划 (1 个月)**](#-短期计划-1-个月)
+    - [[QUICK] **中期计划 (3 个月)**](#-中期计划-3-个月)
   - [最终评价](#最终评价)
-## 📋 执行摘要
+## [CHECKLIST] 执行摘要
 
 本文档基于官方资源、GitHub Issues、技术社区和实际测试，对 Intel Arc GPU 的 OpenCL 兼容性问题进行全面调研，并提供可实施的优化修复建议。
 
 **调研时间**: 2026-04-21  
 **涉及 GPU 型号**: Intel Arc A750, A770, B570, B580, Pro A30-A60  
 **关键问题**: global char* hang bug (GSD-12575)  
-**当前状态**: ✅ 已通过 uint32 workaround 解决
+**当前状态**: [OK_CHECK] 已通过 uint32 workaround 解决
 
 ---
 
-## 🔍 1. Intel Arc OpenCL 驱动兼容性问题
+## [SEARCH] 1. Intel Arc OpenCL 驱动兼容性问题
 
 ### 1.1 问题背景
 
@@ -96,9 +96,9 @@ Intel Arc 系列 GPU 自 2022 年发布以来，经历了显著的驱动改进�
 
 根据 GitHub Issue #912 和社区反馈，主要问题包括：
 
-#### ❌ **严重问题 (Critical)**
+#### [CROSS] **严重问题 (Critical)**
 1. **GSD-12575: global char* hang bug**
-   - **状态**: 🔴 未修复 (截至 2026-04)
+   - **状态**: [RED] 未修复 (截至 2026-04)
    - **影响**: Arc A750/A770/B580 等所有 Xe-HPG/Xe2 架构
    - **表现**: 使用 `__global char*` 或 `__global uchar*` 时内核永久挂起
    - **根因**: Intel Compute Runtime 驱动的全局内存访问优化缺陷
@@ -107,7 +107,7 @@ Intel Arc 系列 GPU 自 2022 年发布以来，经历了显著的驱动改进�
    - **表现**: 复杂内核编译时间 > 30 秒
    - **影响**: 初始化阶段用户体验差
 
-#### ⚠️ **中等问题 (Medium)**
+#### [WARN] **中等问题 (Medium)**
 3. **异步执行支持差**
    - Intel Arc 的 OpenCL 异步命令队列实现不稳定
    - 建议禁用或谨慎使用
@@ -116,14 +116,14 @@ Intel Arc 系列 GPU 自 2022 年发布以来，经历了显著的驱动改进�
    - 实际可用显存仅 45-50%（NVIDIA 可达 70-80%）
    - 需要更保守的 batch_size 策略
 
-#### 💡 **轻微问题 (Low)**
+#### [TIP] **轻微问题 (Low)**
 5. **Linux 内核兼容性**
    - Linux Kernel 6.8+ 需要特定的 intel-compute-runtime 版本
    - Windows 驱动相对稳定
 
 ---
 
-## 🔬 2. global char* hang bug 技术细节
+## [MICRO] 2. global char* hang bug 技术细节
 
 ### 2.1 问题描述
 
@@ -164,7 +164,7 @@ load/store causes kernel hang!
 ### 2.4 影响范围
 
 ```c
-// ❌ 会触发 hang bug 的代码模式
+// [CROSS] 会触发 hang bug 的代码模式
 __kernel void problematic_kernel(
     __global const uchar *input,  // 触发条件
     __global uchar *output        // 触发条件
@@ -173,7 +173,7 @@ __kernel void problematic_kernel(
     output[gid] = val;            // hang!
 }
 
-// ✅ 安全的代码模式
+// [OK_CHECK] 安全的代码模式
 __kernel void safe_kernel(
     __global const uint *input,   // 使用 uint32
     __global uint *output         // 使用 uint32
@@ -185,7 +185,7 @@ __kernel void safe_kernel(
 
 ---
 
-## 🛠️ 3. uint32 workaround 实现原理与最佳实践
+## [TOOL] 3. uint32 workaround 实现原理与最佳实践
 
 ### 3.1 工作原理
 
@@ -205,11 +205,11 @@ Workaround 方案 (安全):
 
 ### 3.2 当前实现评估
 
-#### ✅ **已正确实现的部分**
+#### [OK_CHECK] **已正确实现的部分**
 
 1. **内核层修改** ([kernel.py](file:///f:/Qoder/btc-collision-engine/src/gpu/kernel.py#L139-L147))
 ```c
-// ✅ 正确：使用 uint* 替代 uchar*
+// [OK_CHECK] 正确：使用 uint* 替代 uchar*
 void uint256_from_bytes_global(__global const uint *bytes, uint256_t *result) {
     for (int i = 0; i < 8; i++) {
         result->d[7 - i] = bytes[i];  // 直接读取 uint32
@@ -219,7 +219,7 @@ void uint256_from_bytes_global(__global const uint *bytes, uint256_t *result) {
 
 2. **Python 端数据转换** ([gpu_collision_engine.py](file:///f:/Qoder/btc-collision-engine/src/collision/gpu_collision_engine.py#L311-L314))
 ```python
-# ✅ 正确：使用 numpy 重新解释数据
+# [OK_CHECK] 正确：使用 numpy 重新解释数据
 keys_array = np.frombuffer(private_keys[:num_keys * 32], dtype=np.uint32)
 cl.enqueue_copy(self.device.queue, self._keys_buf, keys_array)
 ```python
@@ -232,7 +232,7 @@ cl.enqueue_copy(self.device.queue, self._keys_buf, keys_array)
 }
 ```yaml
 
-## ⚠️ **需要改进的部分**
+## [WARN] **需要改进的部分**
 
 1. **缺少运行时验证**
    - 当前仅在初始化时记录日志
@@ -244,7 +244,7 @@ cl.enqueue_copy(self.device.queue, self._keys_buf, keys_array)
 
 ---
 
-## 📊 4. Intel GPU 性能优化策略
+## [CHART] 4. Intel GPU 性能优化策略
 
 ### 4.1 厂商对比数据
 
@@ -255,27 +255,27 @@ cl.enqueue_copy(self.device.queue, self._keys_buf, keys_array)
 | **显存可用率** | 75-80% | 65-70% | 45-50% | Intel 需要更保守 |
 | **最大 batch_size** | 4M | 2M | 256K | Intel 限制严格 |
 | **内核编译时间** | 5-10s | 8-15s | 15-30s | Intel 较慢 |
-| **异步支持** | ✅ 优秀 | ✅ 良好 | ⚠️ 差 | 建议禁用 |
+| **异步支持** | [OK_CHECK] 优秀 | [OK_CHECK] 良好 | [WARN] 差 | 建议禁用 |
 | **OpenCL 版本** | 3.0 | 2.1 | 3.0 | - |
-| **驱动稳定性** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ | Intel 改善中 |
+| **驱动稳定性** | [STAR][STAR][STAR][STAR][STAR] | [STAR][STAR][STAR][STAR] | [STAR][STAR][STAR] | Intel 改善中 |
 
 ### 4.2 推荐优化策略
 
-#### 🎯 **策略 1: 保守的 batch_size 管理**
+#### [TARGET] **策略 1: 保守的 batch_size 管理**
 
 ```python
-# 当前实现 (intel.py#L80-L113) ✅ 良好
+# 当前实现 (intel.py#L80-L113) [OK_CHECK] 良好
 def calculate_batch_size(self, device, profile):
     recommended = profile.get('recommended_batch_size', 262144)
     maximum = profile.get('max_batch_size', 524288)
-    memory_efficiency = profile.get('memory_efficiency', 0.45)  # ✅ 保守值
+    memory_efficiency = profile.get('memory_efficiency', 0.45)  # [OK_CHECK] 保守值
     
     global_mem = device.device_info.get('global_mem_size', 0)
     per_key_memory = 36
     mem_based_max = int((global_mem * memory_efficiency) / per_key_memory)
     
     optimal = min(recommended, maximum, mem_based_max)
-    return (optimal // 1024) * 1024  # ✅ 对齐到 1024
+    return (optimal // 1024) * 1024  # [OK_CHECK] 对齐到 1024
 ```python
 
 **建议改进**:
@@ -300,18 +300,18 @@ def calculate_batch_size(self, device, profile):
     # ...
 ```markdown
 
-## 🎯 **策略 2: 超时保护机制**
+## [TARGET] **策略 2: 超时保护机制**
 
-当前实现 ([gpu_collision_engine.py#L339-L375](file:///f:/Qoder/btc-collision-engine/src/collision/gpu_collision_engine.py#L339-L375)) ✅ 优秀：
+当前实现 ([gpu_collision_engine.py#L339-L375](file:///f:/Qoder/btc-collision-engine/src/collision/gpu_collision_engine.py#L339-L375)) [OK_CHECK] 优秀：
 
 ```python
-timeout_seconds = 30  # ✅ Intel Arc 推荐值
+timeout_seconds = 30  # [OK_CHECK] Intel Arc 推荐值
 
 def timeout_monitor():
     if not timeout_event.wait(timeout_seconds):
         logger.error(f"GPU执行超时({timeout_seconds}秒)")
         try:
-            self.device.queue.finish()  # ✅ 强制完成
+            self.device.queue.finish()  # [OK_CHECK] 强制完成
         except Exception as e:
             logger.error(f"强制完成队列失败: {e}")
 ```python
@@ -338,14 +338,14 @@ class IntelTimeoutManager:
             self.timeout_history = self.timeout_history[-50:]
 ```markdown
 
-## 🎯 **策略 3: 禁用异步执行**
+## [TARGET] **策略 3: 禁用异步执行**
 
-当前实现 ([performance_optimizer.py#L119-L120](file:///f:/Qoder/btc-collision-engine/src/gpu/performance_optimizer.py#L119-L120)) ✅ 正确：
+当前实现 ([performance_optimizer.py#L119-L120](file:///f:/Qoder/btc-collision-engine/src/gpu/performance_optimizer.py#L119-L120)) [OK_CHECK] 正确：
 
 ```python
 GPUVendor.INTEL: GPUProfile(
     use_uint32_workaround=True,
-    enable_async_execution=False,  # ✅ Intel 异步支持差
+    enable_async_execution=False,  # [OK_CHECK] Intel 异步支持差
     enable_buffer_pooling=True,
 )
 ```python
@@ -360,7 +360,7 @@ def _init_gpu(self):
         # 确保所有操作同步执行
 ```markdown
 
-#### 🎯 **策略 4: 显存使用优化**
+#### [TARGET] **策略 4: 显存使用优化**
 
 ```python
 # 添加显存监控
@@ -382,7 +382,7 @@ class IntelMemoryManager:
 
 ---
 
-## 🔧 5. 驱动版本兼容性要求
+## [WRENCH] 5. 驱动版本兼容性要求
 
 ### 5.1 推荐驱动版本
 
@@ -449,7 +449,7 @@ clinfo | grep -A 5 "Intel"
 
 ---
 
-## 📈 6. 性能对比与调优建议
+## [PERF] 6. 性能对比与调优建议
 
 ### 6.1 实际性能数据
 
@@ -459,15 +459,15 @@ clinfo | grep -A 5 "Intel"
 
 | GPU | batch_size | 密钥/秒 | 显存占用 | 稳定性 |
 |-----|-----------|---------|---------|--------|
-| **RTX 3060** | 2,097,152 | ~850K | 6.2 GB / 12 GB | ⭐⭐⭐⭐⭐ |
-| **RX 6600 XT** | 1,048,576 | ~620K | 5.8 GB / 8 GB | ⭐⭐⭐⭐ |
-| **Arc A750** | 262,144 | ~380K | 3.2 GB / 8 GB | ⭐⭐⭐ |
-| **Arc A770 16G** | 524,288 | ~520K | 6.8 GB / 16 GB | ⭐⭐⭐ |
-| **Arc B580** | 262,144 | ~410K | 3.5 GB / 12 GB | ⭐⭐⭐ |
+| **RTX 3060** | 2,097,152 | ~850K | 6.2 GB / 12 GB | [STAR][STAR][STAR][STAR][STAR] |
+| **RX 6600 XT** | 1,048,576 | ~620K | 5.8 GB / 8 GB | [STAR][STAR][STAR][STAR] |
+| **Arc A750** | 262,144 | ~380K | 3.2 GB / 8 GB | [STAR][STAR][STAR] |
+| **Arc A770 16G** | 524,288 | ~520K | 6.8 GB / 16 GB | [STAR][STAR][STAR] |
+| **Arc B580** | 262,144 | ~410K | 3.5 GB / 12 GB | [STAR][STAR][STAR] |
 
 ### 6.2 调优建议
 
-#### 🎯 **Intel Arc A750 (8GB)**
+#### [TARGET] **Intel Arc A750 (8GB)**
 
 ```json
 {
@@ -484,7 +484,7 @@ clinfo | grep -A 5 "Intel"
 }
 ```markdown
 
-#### 🎯 **Intel Arc A770 (16GB)**
+#### [TARGET] **Intel Arc A770 (16GB)**
 
 ```json
 {
@@ -530,9 +530,9 @@ def verify_intel_optimizations(gpu_kernel):
     
     # 输出报告
     all_passed = all(checks.values())
-    logger.info(f"Intel 优化验证: {'✅ 通过' if all_passed else '⚠️ 部分失败'}")
+    logger.info(f"Intel 优化验证: {'[OK_CHECK] 通过' if all_passed else '[WARN] 部分失败'}")
     for check, passed in checks.items():
-        status = '✅' if passed else '❌'
+        status = '[OK_CHECK]' if passed else '[CROSS]'
         logger.info(f"  {status} {check}")
     
     return all_passed
@@ -540,18 +540,18 @@ def verify_intel_optimizations(gpu_kernel):
 
 ---
 
-## 🔮 7. 未来展望与建议
+## [CRYSTAL] 7. 未来展望与建议
 
 ### 7.1 Intel 驱动改进趋势
 
 根据 GamersNexus 2025-11 的报告：
 
-- ✅ **积极方面**:
+- [OK_CHECK] **积极方面**:
   - 641 个追踪 issues 中大部分已修复
   - 驱动崩溃率显著降低
   - 更新频率稳定（每月 1-2 次）
 
-- ⚠️ **待解决**:
+- [WARN] **待解决**:
   - global char* hang bug 仍未修复 (GSD-12575)
   - 偶发性驱动损坏问题
   - Linux 内核兼容性波动
@@ -560,9 +560,9 @@ def verify_intel_optimizations(gpu_kernel):
 
 #### **优先级 P0 (立即实施)**
 
-1. ✅ 已完成: uint32 workaround
-2. ✅ 已完成: 超时保护机制
-3. 🔧 待实施: 添加运行时验证
+1. [OK_CHECK] 已完成: uint32 workaround
+2. [OK_CHECK] 已完成: 超时保护机制
+3. [WRENCH] 待实施: 添加运行时验证
    ```python
    # 在 GPUKernel 初始化时验证
    def _verify_intel_workaround(self):
@@ -581,15 +581,15 @@ def verify_intel_optimizations(gpu_kernel):
 
 #### **优先级 P1 (1 个月内)**
 
-4. 🔧 添加驱动版本自动检查
-5. 🔧 实现自适应超时管理
-6. 🔧 显存使用监控和预警
+4. [WRENCH] 添加驱动版本自动检查
+5. [WRENCH] 实现自适应超时管理
+6. [WRENCH] 显存使用监控和预警
 
 #### **优先级 P2 (3 个月内)**
 
-7. 🔧 性能基准测试套件
-8. 🔧 自动调优机制
-9. 🔧 详细性能报告生成
+7. [WRENCH] 性能基准测试套件
+8. [WRENCH] 自动调优机制
+9. [WRENCH] 详细性能报告生成
 
 ### 7.3 中长期监控计划
 
@@ -631,7 +631,7 @@ class IntelGPUHealthMonitor:
 
 ---
 
-## 📝 8. 具体修复建议汇总
+## [MEMO] 8. 具体修复建议汇总
 
 ### 8.1 代码层面修复
 
@@ -649,19 +649,19 @@ def apply_optimizations(self, device, profile: Dict[str, Any]):
     
     # 1. uint32 workaround - 关键优化
     if 'uint32_workaround' in optimizations:
-        logger.info("✅ 启用uint32 workaround(避免Intel Arc global char* hang bug)")
+        logger.info("[OK_CHECK] 启用uint32 workaround(避免Intel Arc global char* hang bug)")
         # 标记设备需要特殊处理
         device.requires_uint32_workaround = True
     
     # 2. 超时保护
     if 'timeout_protection' in optimizations:
         timeout = profile.get('timeout_seconds', 30)
-        logger.info(f"✅ 启用超时保护机制: {timeout}秒")
+        logger.info(f"[OK_CHECK] 启用超时保护机制: {timeout}秒")
         device.timeout_seconds = timeout
     
     # 3. 异步传输 - Intel 建议禁用
     if 'async_transfer' in optimizations:
-        logger.warning("⚠️ Intel GPU: 禁用异步传输以确保稳定性")
+        logger.warning("[WARN] Intel GPU: 禁用异步传输以确保稳定性")
         device.enable_async = False
     
     # 4. 驱动版本检查
@@ -669,20 +669,20 @@ def apply_optimizations(self, device, profile: Dict[str, Any]):
     
     # 5. 显存限制
     memory_efficiency = profile.get('memory_efficiency', 0.45)
-    logger.info(f"✅ Intel GPU内存效率: {memory_efficiency*100:.0f}% (保守策略)")
+    logger.info(f"[OK_CHECK] Intel GPU内存效率: {memory_efficiency*100:.0f}% (保守策略)")
     device.memory_efficiency = memory_efficiency
 
 def _check_driver_version(self, device):
     """检查驱动版本并给出建议"""
     driver_version = device.driver_version
     if not driver_version:
-        logger.warning("⚠️ 无法检测驱动版本")
+        logger.warning("[WARN] 无法检测驱动版本")
         return
     
     # 版本比较逻辑
     if self._version_less_than(driver_version, "31.0.101.4500"):
         logger.warning(
-            f"⚠️ 驱动版本 {driver_version} 较旧，"
+            f"[WARN] 驱动版本 {driver_version} 较旧，"
             f"建议更新到 31.0.101.4500+ 以获得更好的稳定性"
         )
 ```markdown
@@ -708,7 +708,7 @@ def _init_gpu(self):
             vendor = device_info.get('vendor', '').lower()
             
             if 'intel' in vendor:
-                logger.info("🔧 检测到 Intel GPU，应用特殊优化")
+                logger.info("[WRENCH] 检测到 Intel GPU，应用特殊优化")
                 self._apply_intel_specific_optimizations()
             
             # ... 其余初始化代码 ...
@@ -722,15 +722,15 @@ def _apply_intel_specific_optimizations(self):
     
     # 2. 设置保守的超时
     self._gpu_device.timeout_seconds = 30
-    logger.info("✅ Intel 超时保护: 30秒")
+    logger.info("[OK_CHECK] Intel 超时保护: 30秒")
     
     # 3. 禁用异步
     self._gpu_device.enable_async = False
-    logger.info("✅ Intel 异步执行: 已禁用")
+    logger.info("[OK_CHECK] Intel 异步执行: 已禁用")
     
     # 4. 显存限制
     self._gpu_device.memory_efficiency = 0.45
-    logger.info("✅ Intel 显存效率: 45%")
+    logger.info("[OK_CHECK] Intel 显存效率: 45%")
 
 def _verify_uint32_workaround(self):
     """验证 uint32 workaround 是否正确应用"""
@@ -753,7 +753,7 @@ def _verify_uint32_workaround(self):
             num_targets=1
         )
         
-        logger.info("✅ Intel uint32 workaround 测试通过")
+        logger.info("[OK_CHECK] Intel uint32 workaround 测试通过")
         return True
         
     except Exception as e:
@@ -834,7 +834,7 @@ class TestIntelArcCompatibility:
 
 ---
 
-## 📚 9. 参考资料
+## [BOOKS] 9. 参考资料
 
 ### 官方资源
 1. [Intel Compute Runtime GitHub](https://github.com/intel/compute-runtime)
@@ -855,48 +855,48 @@ class TestIntelArcCompatibility:
 
 ---
 
-## ✅ 10. 总结与建议
+## [OK_CHECK] 10. 总结与建议
 
 ### 当前状态评估
 
 | 项目 | 状态 | 评分 |
 |------|------|------|
-| **uint32 workaround 实现** | ✅ 完整 | ⭐⭐⭐⭐⭐ |
-| **超时保护机制** | ✅ 完整 | ⭐⭐⭐⭐⭐ |
-| **厂商配置** | ✅ 完整 | ⭐⭐⭐⭐ |
-| **驱动版本检查** | ⚠️ 部分 | ⭐⭐⭐ |
-| **运行时验证** | ❌ 缺失 | ⭐⭐ |
-| **性能监控** | ⚠️ 基础 | ⭐⭐⭐ |
-| **文档完整性** | ⚠️ 待补充 | ⭐⭐⭐ |
+| **uint32 workaround 实现** | [OK_CHECK] 完整 | [STAR][STAR][STAR][STAR][STAR] |
+| **超时保护机制** | [OK_CHECK] 完整 | [STAR][STAR][STAR][STAR][STAR] |
+| **厂商配置** | [OK_CHECK] 完整 | [STAR][STAR][STAR][STAR] |
+| **驱动版本检查** | [WARN] 部分 | [STAR][STAR][STAR] |
+| **运行时验证** | [CROSS] 缺失 | [STAR][STAR] |
+| **性能监控** | [WARN] 基础 | [STAR][STAR][STAR] |
+| **文档完整性** | [WARN] 待补充 | [STAR][STAR][STAR] |
 
 ### 核心建议
 
-#### 🎯 **立即执行 (本周)**
-1. ✅ 已完成: uint32 workaround
-2. ✅ 已完成: 超时保护
-3. 🔧 添加: 运行时验证机制
-4. 🔧 添加: 驱动版本自动检查
+#### [TARGET] **立即执行 (本周)**
+1. [OK_CHECK] 已完成: uint32 workaround
+2. [OK_CHECK] 已完成: 超时保护
+3. [WRENCH] 添加: 运行时验证机制
+4. [WRENCH] 添加: 驱动版本自动检查
 
-#### 📅 **短期计划 (1 个月)**
-5. 🔧 实现: 自适应超时管理
-6. 🔧 实现: 显存使用监控
-7. 📝 更新: 用户文档和故障排除指南
+#### [E] **短期计划 (1 个月)**
+5. [WRENCH] 实现: 自适应超时管理
+6. [WRENCH] 实现: 显存使用监控
+7. [MEMO] 更新: 用户文档和故障排除指南
 
-#### 🚀 **中期计划 (3 个月)**
-8. 🔧 开发: 自动性能调优系统
-9. 🔧 开发: 详细性能报告
-10. 🧪 完善: Intel GPU 测试套件
+#### [QUICK] **中期计划 (3 个月)**
+8. [WRENCH] 开发: 自动性能调优系统
+9. [WRENCH] 开发: 详细性能报告
+10. [TEST] 完善: Intel GPU 测试套件
 
 ### 最终评价
 
-**当前实现质量**: ⭐⭐⭐⭐ (4/5)
+**当前实现质量**: [STAR][STAR][STAR][STAR] (4/5)
 
-✅ **优点**:
+[OK_CHECK] **优点**:
 - uint32 workaround 实现正确且完整
 - 超时保护机制设计合理
 - 配置文件结构清晰
 
-⚠️ **改进空间**:
+[WARN] **改进空间**:
 - 缺少运行时验证和监控
 - 驱动版本检查不完善
 - 文档需要补充

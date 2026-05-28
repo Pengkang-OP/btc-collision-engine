@@ -2,7 +2,7 @@
 
 **文档版本**: v4.2.2
 **日期**: 2026-04-24
-**状态**: ✅ 已实施
+**状态**: [OK] 已实施
 
 ---
 
@@ -205,11 +205,11 @@ def lock_memory_linux(buffer: bytes) -> bool:
 **原则**: 只锁定真正敏感的数据
 
 ```python
-# ✅ 正确: 只锁定私钥
+# [OK] 正确: 只锁定私钥
 private_key = generate_private_key()
 lock_memory(private_key)
 
-# ❌ 错误: 锁定整个缓冲区
+# [FAIL] 错误: 锁定整个缓冲区
 large_buffer = bytearray(1024 * 1024 * 100)  # 100MB
 lock_memory(large_buffer)  # 可能失败
 

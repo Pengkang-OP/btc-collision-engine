@@ -244,7 +244,7 @@ class IntelGPUVendor(GPUVendorBase):
             os.environ["SYCL_DEVICE_FILTER"] = "opencl:gpu"
             applied["SYCL_DEVICE_FILTER"] = "opencl:gpu"
             _rate_logger.info(
-                "✅ SYCL_DEVICE_FILTER=opencl:gpu (减少12%启动延迟)",
+                "OK SYCL_DEVICE_FILTER=opencl:gpu (减少12%启动延迟)",
                 key="intel_sycl_filter",
             )
 
@@ -255,7 +255,7 @@ class IntelGPUVendor(GPUVendorBase):
             os.environ["INTEL_XESS_MEMORY_COMPRESSION"] = "1"
             applied["INTEL_XESS_MEMORY_COMPRESSION"] = "1"
             _rate_logger.info(
-                "✅ 设置 INTEL_XESS_MEMORY_COMPRESSION=1 (启用内存压缩)",
+                "OK 设置 INTEL_XESS_MEMORY_COMPRESSION=1 (启用内存压缩)",
                 key="intel_xess_compression",
             )
 
@@ -280,7 +280,7 @@ class IntelGPUVendor(GPUVendorBase):
             os.environ["OCL_CACHE_DIR"] = cache_dir
             applied["OCL_CACHE_DIR"] = cache_dir
             _rate_logger.info(
-                f"✅ 设置 OCL_CACHE_DIR={cache_dir} (编译缓存)",
+                f"OK 设置 OCL_CACHE_DIR={cache_dir} (编译缓存)",
             )
 
         return applied
@@ -337,9 +337,9 @@ class IntelGPUVendor(GPUVendorBase):
             "",
             "已知问题与解决方案:",
             "-" * 40,
-            "global char* hang bug: ✅ 已修复 (使用uint32替代)",
-            "signed long overflow: ✅ 已修复 (使用ulong)",
-            "Level-Zero 延迟: ✅ 已优化 (强制OpenCL)",
+            "global char* hang bug: OK 已修复 (使用uint32替代)",
+            "signed long overflow: OK 已修复 (使用ulong)",
+            "Level-Zero 延迟: OK 已优化 (强制OpenCL)",
             "",
             "=" * 60,
         ]
