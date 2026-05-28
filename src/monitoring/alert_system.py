@@ -611,7 +611,7 @@ class AlertSystem:
                     },
                 )
 
-            with Path(self.alert_log_file).open("w", encoding="utf-8") as f:
+            with Path(self.alert_log_file).open("wb") as f:
                 fast_dump(data, f, indent=2, ensure_ascii=False)
 
         except Exception as e:
@@ -623,7 +623,7 @@ class AlertSystem:
             return
 
         try:
-            with Path(self.alert_log_file).open(encoding="utf-8") as f:
+            with Path(self.alert_log_file).open("rb") as f:
                 data = fast_load(f)
 
             for item in data:

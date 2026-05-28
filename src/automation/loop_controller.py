@@ -337,7 +337,7 @@ class LoopController:
 
         from src.utils.fast_json import fast_dump
 
-        with Path(filepath).open("w", encoding="utf-8") as f:
+        with Path(filepath).open("wb") as f:
             fast_dump(report, f, ensure_ascii=False, indent=2)
 
 

@@ -233,7 +233,7 @@ class DataAnalysisModule:
             try:
                 from src.utils.fast_json import fast_load
 
-                with Path(config_file).open() as f:
+                with Path(config_file).open("rb") as f:
                     data = fast_load(f)
                 config["config_valid"] = True
                 config["keys"] = list(data.keys())

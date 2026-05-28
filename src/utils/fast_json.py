@@ -13,7 +13,7 @@ def fast_dump(obj: typing.Any, fp: typing.BinaryIO, **kwargs: typing.Any) -> Non
         **kwargs: Passed to json.dump
 
     """
-    _json.dump(obj, fp, **kwargs)
+    _json.dump(obj, fp, **kwargs)  # type: ignore[arg-type]
 
 
 def fast_load(fp: typing.BinaryIO) -> typing.Any:
