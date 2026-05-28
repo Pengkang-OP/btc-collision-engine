@@ -185,12 +185,6 @@ ignore_errors = true
 
 [[tool.mypy.overrides]]
 module = [
-    "key_collision",                       # 根层 key_collision.py：条件导入 try/except 导致 no-redef/attr-defined + implicit Optional + 类型赋值不匹配
-]
-ignore_errors = true
-
-[[tool.mypy.overrides]]
-module = [
     "src.collision.gpu._result_processor", # EngineMatchEvent.source
     "src.gpu.metrics",                     # float vs int assignment
     "src.core.key_generator",              # bytearray vs bytes

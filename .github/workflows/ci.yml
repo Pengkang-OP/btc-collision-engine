@@ -400,6 +400,8 @@ jobs:
             !.codebuddy/**
             !.trae/**
             !docs/archive/**
+            !venv/**
+            !node_modules/**
           config: .markdownlint.json
 
       - name: 验证文档结构
