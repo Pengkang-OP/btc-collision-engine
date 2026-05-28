@@ -19,7 +19,7 @@ logger = get_configured_logger("ConfigWatcher")
 
 # ── watchdog 可用性检测 ──────────────────────────────────────────────
 try:
-    from watchdog.events import FileSystemEventHandler
+    from watchdog.events import FileSystemEvent, FileSystemEventHandler
     from watchdog.observers import Observer
 
     class _WatchdogHandler(FileSystemEventHandler):
