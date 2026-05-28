@@ -237,7 +237,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
 
     MONITOR_INTERVAL = 100
 
-    def __init__(  # noqa: C901
+    def __init__(
         self,
         targets: set[str],
         device_index: int = 1,
@@ -249,7 +249,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
         dedup_enabled: bool = False,
         dedup_max_size: int = 1_000_000,
         checkpoint_interval: int = 30,
-        event_bus: EventBus | None = None,  # v4.2.1: 事件总线支持
+        event_bus: EventBus | None = None,
         data_logging_enabled: bool = True,
         data_logging_interval: int = 5,
         use_enhanced_monitoring: bool = True,
@@ -261,13 +261,11 @@ class GPUCollisionEngine(BaseCollisionEngine):
         async_log_max_bytes: int = LOG_DEFAULT_MAX_BYTES,
         async_log_backup_count: int = 5,
         check_uncompressed: bool | None = None,
-        key_generation_strategy: KeyGenerationStrategy = KeyGenerationStrategy.PRNG_SEED,
-        # v3.2.1: 私钥生成策略
-        config: "GPUEngineConfig | None" = None,  # v4.3.1: 配置对象优先
-        gpu_config: dict[str, Any] | None = None,  # v5.2.1: GPU 配置段（来自 facade）
-        # Phase 6.1: 依赖注入参数（可选）
-        device_manager: Any | None = None,  # 自定义GPUDeviceManager实现
-        search_coordinator: Any | None = None,  # 自定义SearchModeCoordinator实现
+        key_generation_strategy: KeyGenerationStrategy = (KeyGenerationStrategy.PRNG_SEED),
+        config: "GPUEngineConfig | None" = None,
+        gpu_config: dict[str, Any] | None = None,
+        device_manager: Any | None = None,
+        search_coordinator: Any | None = None,
     ) -> None:
         """初始化 GPU 碰撞引擎 (Phase 6.1 重构版).
 
@@ -283,61 +281,51 @@ class GPUCollisionEngine(BaseCollisionEngine):
         - search_coordinator: 可传入自定义的SearchModeCoordinator实现
         如未传入，则使用默认实现。
         """
-        # v4.3.1: 合并配置 - config 提供默认值，显式参数可覆盖
-        if config is not None:
-            cfg = config
-            # 对于可以为 None 的参数，仅在参数为 None（默认）时使用 cfg 的值
-            if batch_size is None:
-                batch_size = cfg.batch_size
-            if check_uncompressed is None:
-                check_uncompressed = cfg.check_uncompressed
-            # 对于无法区分"显式传入默认值"的参数（bool/int/str），
-            # 使用 cfg 值覆盖函数默认值（符合 docstring 约定）
-            device_index = cfg.device_index
-            checkpoint_enabled = cfg.checkpoint_enabled
-            dedup_enabled = cfg.dedup_enabled
-            dedup_max_size = cfg.dedup_max_size
-            checkpoint_interval = cfg.checkpoint_interval
-            data_logging_enabled = cfg.data_logging_enabled
-            data_logging_interval = cfg.data_logging_interval
-            use_enhanced_monitoring = cfg.use_enhanced_monitoring
-            use_gpu_memory_pool = cfg.use_gpu_memory_pool
-            gpu_pool_max_buffers = cfg.gpu_pool_max_buffers
-            gpu_pool_max_memory_mb = cfg.gpu_pool_max_memory_mb
-            use_async_logging = cfg.use_async_logging
-            async_log_file = cfg.async_log_file
-            async_log_max_bytes = cfg.async_log_max_bytes
-            async_log_backup_count = cfg.async_log_backup_count
-            key_generation_strategy = cfg.key_generation_strategy
-            # Phase 6.1: 提取依赖注入配置
-            device_manager_class = cfg.device_manager_class
-            search_coordinator_class = cfg.search_coordinator_class
-        else:
-            cfg = GPUEngineConfig()
-            device_manager_class = None
-            search_coordinator_class = None
-        if not PYOPENCL_AVAILABLE:
-            # L2修复: 提供详细诊断信息
-            diagnostic_msg = (
-                "PyOpenCL 不可用，无法使用 GPU 加速。\n"
-                "诊断步骤:\n"
-                "  1. 安装 OpenCL 运行时:\n"
-                "     - NVIDIA: conda install pyopencl"
-                " nccl-cu* (或 pip install pyopencl)\n"
-                "     - Intel: 下载 Intel OpenCL Runtime\n"
-                "     - AMD: 安装 AMD APP SDK\n"
-                "  2. 验证 GPU 驱动已正确安装\n"
-                "  3. 设置 PYOPENCL_DEBUG=1 查看详细错误\n"
-                "  4. 使用 CPU 模式作为替代:\n"
-                "     python key_collision_cli.py -t <地址> -m random\n"
-            )
-            raise RuntimeError(diagnostic_msg)
+        # 合并配置并解决所有参数（config 对象提供默认值）
+        params = self._resolve_config(
+            config=config,
+            batch_size=batch_size,
+            check_uncompressed=check_uncompressed,
+            device_index=device_index,
+            checkpoint_enabled=checkpoint_enabled,
+            dedup_enabled=dedup_enabled,
+            dedup_max_size=dedup_max_size,
+            checkpoint_interval=checkpoint_interval,
+            data_logging_enabled=data_logging_enabled,
+            data_logging_interval=data_logging_interval,
+            use_enhanced_monitoring=use_enhanced_monitoring,
+            use_gpu_memory_pool=use_gpu_memory_pool,
+            gpu_pool_max_buffers=gpu_pool_max_buffers,
+            gpu_pool_max_memory_mb=gpu_pool_max_memory_mb,
+            use_async_logging=use_async_logging,
+            async_log_file=async_log_file,
+            async_log_max_bytes=async_log_max_bytes,
+            async_log_backup_count=async_log_backup_count,
+            key_generation_strategy=key_generation_strategy,
+        )
+        batch_size = params["batch_size"]
+        check_uncompressed = params["check_uncompressed"]
+        device_index = params["device_index"]
+        checkpoint_enabled = params["checkpoint_enabled"]
+        dedup_enabled = params["dedup_enabled"]
+        dedup_max_size = params["dedup_max_size"]
+        checkpoint_interval = params["checkpoint_interval"]
+        data_logging_enabled = params["data_logging_enabled"]
+        data_logging_interval = params["data_logging_interval"]
+        use_enhanced_monitoring = params["use_enhanced_monitoring"]
+        use_gpu_memory_pool = params["use_gpu_memory_pool"]
+        gpu_pool_max_buffers = params["gpu_pool_max_buffers"]
+        gpu_pool_max_memory_mb = params["gpu_pool_max_memory_mb"]
+        use_async_logging = params["use_async_logging"]
+        async_log_file = params["async_log_file"]
+        async_log_max_bytes = params["async_log_max_bytes"]
+        async_log_backup_count = params["async_log_backup_count"]
+        key_generation_strategy = params["key_generation_strategy"]
+        device_manager_class = params["device_manager_class"]
+        search_coordinator_class = params["search_coordinator_class"]
 
-        # v5.2.0: key_generator 在 GPU 路径中为死代码，已移除初始化。
-        # GPU 内核 (batch_check.cl) 自行执行私钥推导 (generate_private_key)，
-        # CPU 恢复路径 (_result_processor.py:process_matches_prng) 直接
-        # 用 (seed_int + key_idx) % 2^256 重建，均不依赖此 KeyGenerator。
-        # key_generation_strategy 参数保留用于未来 CPU 路径集成。
+        self._check_pyopencl()
+
         logger.debug(
             f"GPU引擎：私钥生成策略参数: {key_generation_strategy.value} (GPU路径不使用)",
         )
@@ -353,17 +341,137 @@ class GPUCollisionEngine(BaseCollisionEngine):
             },
         )
 
-        # v4.2.1: 事件总线初始化
         self.event_bus = event_bus or EventBus()
+        self._init_basic_attrs(
+            targets,
+            device_index,
+            on_progress,
+            on_match,
+            on_complete,
+        )
+        self._init_check_uncompressed(check_uncompressed)
+        self._init_control_params(batch_size)
+        self._init_collision_core(
+            targets,
+            checkpoint_enabled,
+            dedup_enabled,
+            dedup_max_size,
+            checkpoint_interval,
+            on_progress,
+            on_match,
+        )
+        self._init_monitoring_system(
+            data_logging_enabled,
+            data_logging_interval,
+            use_enhanced_monitoring,
+            use_async_logging,
+            async_log_file,
+            async_log_max_bytes,
+            async_log_backup_count,
+        )
+        self._init_gpu_device(
+            use_gpu_memory_pool,
+            gpu_pool_max_buffers,
+            gpu_pool_max_memory_mb,
+            gpu_config,
+            batch_size,
+            device_index,
+            targets,
+            device_manager,
+            device_manager_class,
+        )
+        self._init_search_coordinator(
+            search_coordinator,
+            search_coordinator_class,
+        )
+        self._init_perf_pipeline_config(batch_size, device_index)
+        self._init_position_tracking()
+        self._init_adaptive_batch()
+        self._init_benchmark()
 
-        # === 基本属性 ===
+    # ========== 初始化辅助方法 ==========
+
+    @staticmethod
+    def _resolve_config(
+        config: "GPUEngineConfig | None",
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        """合并 GPUEngineConfig 与显式参数，返回解析后的参数字典.
+
+        GPUEngineConfig 提供默认值，显式传入的非 None 参数优先。
+        """
+        if config is None:
+            return {
+                **kwargs,
+                "device_manager_class": None,
+                "search_coordinator_class": None,
+            }
+        cfg = config
+        result = dict(kwargs)
+        # None 值参数从 cfg 获取默认值
+        none_keys = ["batch_size", "check_uncompressed"]
+        for key in none_keys:
+            if result.get(key) is None:
+                result[key] = getattr(cfg, key)
+        # 非 None 参数使用 cfg 默认值覆盖函数默认值
+        override_keys = [
+            "device_index",
+            "checkpoint_enabled",
+            "dedup_enabled",
+            "dedup_max_size",
+            "checkpoint_interval",
+            "data_logging_enabled",
+            "data_logging_interval",
+            "use_enhanced_monitoring",
+            "use_gpu_memory_pool",
+            "gpu_pool_max_buffers",
+            "gpu_pool_max_memory_mb",
+            "use_async_logging",
+            "async_log_file",
+            "async_log_max_bytes",
+            "async_log_backup_count",
+            "key_generation_strategy",
+        ]
+        for key in override_keys:
+            result[key] = getattr(cfg, key)
+        result["device_manager_class"] = cfg.device_manager_class
+        result["search_coordinator_class"] = cfg.search_coordinator_class
+        return result
+
+    @staticmethod
+    def _check_pyopencl() -> None:
+        """检查 PyOpenCL 可用性，不可用时抛出详细诊断异常."""
+        if PYOPENCL_AVAILABLE:
+            return
+        diagnostic_msg = (
+            "PyOpenCL 不可用，无法使用 GPU 加速。\n"
+            "诊断步骤:\n"
+            "  1. 安装 OpenCL 运行时:\n"
+            "     - NVIDIA: conda install pyopencl"
+            " nccl-cu* (或 pip install pyopencl)\n"
+            "     - Intel: 下载 Intel OpenCL Runtime\n"
+            "     - AMD: 安装 AMD APP SDK\n"
+            "  2. 验证 GPU 驱动已正确安装\n"
+            "  3. 设置 PYOPENCL_DEBUG=1 查看详细错误\n"
+            "  4. 使用 CPU 模式作为替代:\n"
+            "     python key_collision_cli.py -t <地址> -m random\n"
+        )
+        raise RuntimeError(diagnostic_msg)
+
+    def _init_basic_attrs(
+        self,
+        targets: set[str],
+        device_index: int,
+        on_progress: ProgressCallback | None,
+        on_match: MatchCallback | None,
+        on_complete: CompleteCallback | None,
+    ) -> None:
+        """初始化基本属性和事件总线订阅."""
         self.targets = targets
         self.device_index = device_index
         self.on_progress = on_progress
         self.on_match = on_match
         self.on_complete = on_complete
-
-        # v4.2.1: 向后兼容 - 回调包装器
         self._data_logger_adapter = None
         self._enhanced_monitoring_adapter = None
         if on_progress:
@@ -389,19 +497,34 @@ class GPUCollisionEngine(BaseCollisionEngine):
         self._last_memory_check_time = time.time()
         self._memory_check_interval = 60
 
-        # === 地址格式检测 ===
+    def _init_check_uncompressed(
+        self,
+        check_uncompressed: bool | None,
+    ) -> None:
+        """初始化压缩格式检测标志."""
         if check_uncompressed is None:
             self._check_uncompressed = self._auto_detect_compression_needed_gpu()
         else:
             self._check_uncompressed = 1 if check_uncompressed else 0
 
-        # === 控制参数 ===
+    def _init_control_params(self, batch_size: int | None) -> None:
+        """初始化控制参数."""
         self._batch_size = batch_size if batch_size is not None else INITIAL_BATCH_SIZE
         self._batch_size_lock = threading.Lock()
         self._max_gpu_error_retries = 100
         self._consecutive_gpu_errors = 0
 
-        # === Phase 4: CollisionCore (stats/checkpoint/dedup) ===
+    def _init_collision_core(
+        self,
+        targets: set[str],
+        checkpoint_enabled: bool,
+        dedup_enabled: bool,
+        dedup_max_size: int,
+        checkpoint_interval: int,
+        on_progress: ProgressCallback | None,
+        on_match: MatchCallback | None,
+    ) -> None:
+        """初始化 CollisionCore（统计/断点/去重）."""
         self._core = CollisionCore(
             targets=targets,
             config={
@@ -414,20 +537,26 @@ class GPUCollisionEngine(BaseCollisionEngine):
             on_match=on_match,
             engine=self,
         )
-
-        # 直接暴露 Core 属性（向后兼容）
         self.stats = self._core.stats
         self.checkpoint_mgr = self._core.checkpoint
         self.dedup_filter = self._core.dedup_filter
 
-        # === 监控系统 ===
+    def _init_monitoring_system(
+        self,
+        data_logging_enabled: bool,
+        data_logging_interval: int,
+        use_enhanced_monitoring: bool,
+        use_async_logging: bool,
+        async_log_file: str,
+        async_log_max_bytes: int,
+        async_log_backup_count: int,
+    ) -> None:
+        """初始化监控系统和异步日志."""
         self.data_logging_enabled = data_logging_enabled
         self.data_logging_interval = data_logging_interval
         self.data_logger = None
         self.enhanced_monitoring = None
         self._engine_monitor = GPUEngineMonitor(engine=self)
-
-        # 异步日志
         self._async_log_handler: Any | None = None
         if use_async_logging:
             self._setup_async_logging(
@@ -436,26 +565,57 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 async_log_backup_count,
             )
 
-        # === Phase 2: GPUDeviceManager ===
-        # v5.2.1: 合并 gpu_config（来自 facade/config.intel_arc.json）与引擎参数
+        if not data_logging_enabled:
+            return
+        try:
+            if use_enhanced_monitoring:
+                self.enhanced_monitoring = EnhancedMonitoringSystem(
+                    config=MonitorConfig(
+                        collection_interval=data_logging_interval,
+                        enable_monitoring_data=False,
+                    ),
+                )
+                self.data_logger = self.enhanced_monitoring.data_logger
+                self._enhanced_monitoring_adapter = EnhancedMonitoringAdapter(
+                    self.enhanced_monitoring,
+                )
+                self._enhanced_monitoring_adapter.subscribe_to(self.event_bus)
+                self.enhanced_monitoring.start()
+                logger.debug("GPU引擎：增强监控系统已启用并启动（事件适配器模式）")
+            else:
+                self.data_logger = DataLogger()
+                self._data_logger_adapter = DataLoggerAdapter(self.data_logger)
+                self._data_logger_adapter.subscribe_to(self.event_bus)
+                logger.debug("GPU引擎：数据日志系统已启用（事件适配器模式）")
+        except Exception as e:
+            logger.warning("GPU引擎：监控系统初始化失败: %s", e, exc_info=True)
+            self.data_logging_enabled = False
+
+    def _init_gpu_device(
+        self,
+        use_gpu_memory_pool: bool,
+        gpu_pool_max_buffers: int,
+        gpu_pool_max_memory_mb: int,
+        gpu_config: dict[str, Any] | None,
+        batch_size: int | None,
+        device_index: int,
+        targets: set[str],
+        device_manager: Any | None,
+        device_manager_class: Any | None,
+    ) -> None:
+        """初始化 GPU 设备管理器."""
         _base_gpu_cfg: dict[str, Any] = {
             "use_memory_pool": use_gpu_memory_pool,
             "pool_max_buffers": gpu_pool_max_buffers,
             "pool_max_memory_mb": gpu_pool_max_memory_mb,
         }
         if gpu_config:
-            # gpu_config 中的值覆盖默认值（但引擎显式参数优先）
             _base_gpu_cfg.update(gpu_config)
-        gpu_facade_config = {
-            "gpu": _base_gpu_cfg,
-            "batch_size": batch_size,
-        }
-        # Phase 6.1: 依赖注入 - 使用传入的device_manager或创建默认实例
+        gpu_facade_config = {"gpu": _base_gpu_cfg, "batch_size": batch_size}
+
         if device_manager is not None:
-            # 使用注入的device_manager实例
             self._device_manager = device_manager
         elif device_manager_class is not None:
-            # 使用自定义的device_manager类
             self._device_manager = device_manager_class(
                 device_index=device_index,
                 config=gpu_facade_config,
@@ -467,7 +627,6 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 check_uncompressed=self._check_uncompressed,
             )
         else:
-            # 使用默认的GPUDeviceManager
             self._device_manager = GPUDeviceManager(
                 device_index=device_index,
                 config=gpu_facade_config,
@@ -479,80 +638,56 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 check_uncompressed=self._check_uncompressed,
             )
 
-        # 暴露 GPU 对象（向后兼容）
         self._gpu_device = self._device_manager.device
         self._gpu_context = self._device_manager.context
         self._gpu_kernel = self._device_manager.kernel
-        # v5.2.1: sync 模式 (async_execution=false) 下 async_executor 为 None
         try:
             self._async_executor = self._device_manager.async_executor
         except RuntimeError:
             self._async_executor = None
         self._gpu_memory_pool = self._device_manager.memory_pool
 
-        # === 搜索模式协调器 ===
-        # Phase 6.1: 依赖注入 - 使用传入的search_coordinator或创建默认实例
+    def _init_search_coordinator(
+        self,
+        search_coordinator: Any | None,
+        search_coordinator_class: Any | None,
+    ) -> None:
+        """初始化搜索模式协调器."""
         if search_coordinator is not None:
-            # 使用注入的search_coordinator实例
             self._search_coordinator = search_coordinator
         elif search_coordinator_class is not None:
-            # 使用自定义的search_coordinator类
             self._search_coordinator = search_coordinator_class(self, logger)
         else:
-            # 使用默认的SearchModeCoordinator
             self._search_coordinator = SearchModeCoordinator(self, logger)
 
-        # 将协调器内部模式同步到 engine 属性（向后兼容搜索模式委托方法）
         self._random_search_mode = self._search_coordinator.get_mode_instance("random")
         self._range_scan_mode = self._search_coordinator.get_mode_instance("range_scan")
         self._brute_force_mode = self._search_coordinator.get_mode_instance("brute_force")
 
-        # === Phase 3: PerformanceMonitoringPipeline (懒加载) ===
+    def _init_perf_pipeline_config(
+        self,
+        batch_size: int | None,
+        device_index: int,
+    ) -> None:
+        """初始化性能监控管道配置（懒加载）."""
         self._perf_pipeline: PerformanceMonitoringPipeline | None = None
         self._perf_pipeline_config: dict[str, Any] = {
             "batch_size": batch_size,
             "device_index": device_index,
         }
-        if data_logging_enabled:
-            try:
-                if use_enhanced_monitoring:
-                    # v4.2.1: 使用事件适配器模式
-                    self.enhanced_monitoring = EnhancedMonitoringSystem(
-                        config=MonitorConfig(
-                            collection_interval=data_logging_interval,
-                            enable_monitoring_data=False,
-                        ),
-                    )
-                    self.data_logger = self.enhanced_monitoring.data_logger
-                    self._enhanced_monitoring_adapter = EnhancedMonitoringAdapter(
-                        self.enhanced_monitoring,
-                    )
-                    self._enhanced_monitoring_adapter.subscribe_to(self.event_bus)
-                    # v5.2.2: 修复 — 启动增强监控线程
-                    self.enhanced_monitoring.start()
-                    logger.debug("GPU引擎：增强监控系统已启用并启动（事件适配器模式）")
-                else:
-                    # v4.2.1: 使用数据日志事件适配器
-                    self.data_logger = DataLogger()
-                    self._data_logger_adapter = DataLoggerAdapter(self.data_logger)
-                    self._data_logger_adapter.subscribe_to(self.event_bus)
-                    logger.debug("GPU引擎：数据日志系统已启用（事件适配器模式）")
-            except Exception as e:
-                logger.warning("GPU引擎：监控系统初始化失败: %s", e, exc_info=True)
-                self.data_logging_enabled = False
 
-        # === 位置跟踪 ===
+    def _init_position_tracking(self) -> None:
+        """初始化位置跟踪."""
         self._current_position = 0
         self._current_mode = ""
         self._range_start = None
         self._range_end = None
         self._last_progress_time = 0.0
         self._progress_interval_sec = 0.5
-
-        # GPU 性能监控器
         self.gpu_performance_monitor = _get_gpu_monitor()
 
-        # 自适应批处理
+    def _init_adaptive_batch(self) -> None:
+        """初始化自适应批处理参数."""
         self._adaptive_batch_enabled = True
         self._adaptive_error_count = 0
         self._adaptive_batch_size = self._batch_size
@@ -564,7 +699,8 @@ class GPUCollisionEngine(BaseCollisionEngine):
         self._batch_adjust_interval = 10.0
         self._error_rate_threshold = 0.05
 
-        # 性能基准
+    def _init_benchmark(self) -> None:
+        """初始化性能基准."""
         self._result_processor = GPUResultProcessor(engine=self)
         self._scheduler = GPUBatchScheduler(engine=self)
         self._scheduler.calculate_dynamic_benchmark()
@@ -582,8 +718,8 @@ class GPUCollisionEngine(BaseCollisionEngine):
         """线程安全的 batch_size 写入 (UINT32_MAX 溢出检查)."""
         if value >= GPU_MAX_BATCH_SIZE:
             raise ValueError(
-                f"batch_size ({value:,}) >= UINT32_MAX ({GPU_MAX_BATCH_SIZE:,}) "
-                f"会导致 GPU 内核 gid 溢出",
+                f"batch_size ({value:,}) >= UINT32_MAX "
+                f"({GPU_MAX_BATCH_SIZE:,}) 会导致 GPU 内核 gid 溢出",
             )
         with self._batch_size_lock:
             self._batch_size = value
@@ -634,7 +770,12 @@ class GPUCollisionEngine(BaseCollisionEngine):
         """检查 GPU 是否可用."""
         return GPUDeviceDetector.is_gpu_available()
 
-    def start(self, mode: str = "random", resume: bool = False, **kwargs) -> None:
+    def start(
+        self,
+        mode: str = "random",
+        resume: bool = False,
+        **kwargs,
+    ) -> None:
         """启动对撞."""
         if self._running:
             return
@@ -686,9 +827,12 @@ class GPUCollisionEngine(BaseCollisionEngine):
             return
         try:
             matches_list = [
-                {"private_key_hash": m["private_key_hash"], "address": m["address"]}
+                {
+                    "private_key_hash": m["private_key_hash"],
+                    "address": m["address"],
+                }
                 for m in self.stats.matches
-                if isinstance(m, dict) and "private_key_hash" in m and "address" in m
+                if (isinstance(m, dict) and "private_key_hash" in m and "address" in m)
             ]
             self.checkpoint_mgr.save(
                 {
@@ -727,53 +871,74 @@ class GPUCollisionEngine(BaseCollisionEngine):
         )
         self.event_bus.publish(complete_event)
 
-    def _cleanup_stop_components(self) -> None:  # noqa: C901
+    @staticmethod
+    def _safe_cleanup_component(
+        component: Any,
+        cleanup_attr: str,
+        error_msg: str,
+        log_level: str = "error",
+        extra_cleanup: Callable[[], None] | None = None,
+    ) -> None:
+        """安全清理组件，捕获并记录异常.
+
+        Args:
+            component: 要清理的组件对象
+            cleanup_attr: 调用的清理方法名
+            error_msg: 失败时的错误日志信息
+            log_level: 日志级别 ("error" 或 "warning")
+            extra_cleanup: 额外清理回调（清理后执行）
+        """
+        if not component:
+            return
+        try:
+            getattr(component, cleanup_attr)()
+        except Exception as e:
+            log_fn = logger.warning if log_level == "warning" else logger.error
+            log_fn("%s: %s", error_msg, e, exc_info=True)
+        if extra_cleanup:
+            extra_cleanup()
+
+    def _cleanup_stop_components(self) -> None:
         """停止后清理所有组件（监控、去重、日志、种子预生成、异步执行器等）。."""
-        if self.enhanced_monitoring:
-            try:
-                self.enhanced_monitoring.stop()
-            except Exception as e:
-                logger.error("停止监控系统失败: %s", e, exc_info=True)
-
-        if self.gpu_performance_monitor:
-            try:
-                self.gpu_performance_monitor.stop()
-            except Exception as e:
-                logger.error("停止GPU性能监控器失败: %s", e, exc_info=True)
-
-        if self._perf_pipeline:
-            try:
-                self._perf_pipeline.stop()
-            except Exception as e:
-                logger.error("停止性能监控管道失败: %s", e, exc_info=True)
-
+        self._safe_cleanup_component(
+            self.enhanced_monitoring,
+            "stop",
+            "停止监控系统失败",
+        )
+        self._safe_cleanup_component(
+            self.gpu_performance_monitor,
+            "stop",
+            "停止GPU性能监控器失败",
+        )
+        self._safe_cleanup_component(
+            self._perf_pipeline,
+            "stop",
+            "停止性能监控管道失败",
+        )
         if self.dedup_filter and self.dedup_filter.enabled:
             self.dedup_filter.reset()
-
-        if self.data_logger:
-            try:
-                self.data_logger.flush()
-            except Exception as e:
-                logger.error("刷写数据日志失败: %s", e, exc_info=True)
-
-        if hasattr(self, "_random_search_mode") and self._random_search_mode:
-            try:
-                self._random_search_mode.stop()
-            except Exception as e:
-                logger.warning("停止种子预生成线程失败: %s", e, exc_info=True)
-
-        if self._async_executor:
-            try:
-                self._async_executor.cleanup()
-            except Exception as e:
-                logger.error("清理异步执行器失败: %s", e, exc_info=True)
-            self._async_executor = None
-
-        if self._device_manager:
-            try:
-                self._device_manager.cleanup()
-            except Exception as e:
-                logger.error("清理设备管理器失败: %s", e, exc_info=True)
+        self._safe_cleanup_component(
+            self.data_logger,
+            "flush",
+            "刷写数据日志失败",
+        )
+        self._safe_cleanup_component(
+            getattr(self, "_random_search_mode", None),
+            "stop",
+            "停止种子预生成线程失败",
+            log_level="warning",
+        )
+        self._safe_cleanup_component(
+            self._async_executor,
+            "cleanup",
+            "清理异步执行器失败",
+            extra_cleanup=lambda: setattr(self, "_async_executor", None),
+        )
+        self._safe_cleanup_component(
+            self._device_manager,
+            "cleanup",
+            "清理设备管理器失败",
+        )
 
     def stop(self, timeout: float | None = None) -> None:
         """停止对撞（幂等，重复调用安全）。."""
@@ -803,7 +968,10 @@ class GPUCollisionEngine(BaseCollisionEngine):
 
     def is_running(self) -> bool:
         """是否正在运行."""
-        return cast("bool", self._running and self._thread and self._thread.is_alive())
+        return cast(
+            "bool",
+            self._running and self._thread and self._thread.is_alive(),
+        )
 
     def get_device_info(self) -> dict[str, Any]:
         """获取 GPU 设备信息."""
@@ -977,25 +1145,49 @@ class GPUCollisionEngine(BaseCollisionEngine):
 
     # ========== 匹配回调 ==========
 
-    def _safe_invoke_match_callback(self, private_key: bytes, address: str, wif: str) -> bool:
+    def _safe_invoke_match_callback(
+        self,
+        private_key: bytes,
+        address: str,
+        wif: str,
+    ) -> bool:
         """安全调用匹配回调函数 [委托给 _result_processor]."""
-        return self._result_processor.safe_invoke_match_callback(private_key, address, wif)
+        return self._result_processor.safe_invoke_match_callback(
+            private_key,
+            address,
+            wif,
+        )
 
     # ========== 匹配处理 ==========
 
-    def _process_gpu_matches(self, private_keys: bytes, matches: list[dict[str, int]]) -> None:
+    def _process_gpu_matches(
+        self,
+        private_keys: bytes,
+        matches: list[dict[str, int]],
+    ) -> None:
         """处理 GPU 匹配结果 [委托给 _result_processor]."""
         self._result_processor.process_matches(private_keys, matches)
 
-    def _process_gpu_matches_prng(self, seed: bytes, matches: list[dict[str, int]]) -> None:
+    def _process_gpu_matches_prng(
+        self,
+        seed: bytes,
+        matches: list[dict[str, int]],
+    ) -> None:
         """处理 GPU 匹配结果 (PRNG 模式) [委托给 _result_processor]."""
         self._result_processor.process_matches_prng(seed, matches)
 
     # ========== 性能指标 ==========
 
-    def _update_performance_metrics(self, batch_size: int, execution_time_ms: float) -> None:
+    def _update_performance_metrics(
+        self,
+        batch_size: int,
+        execution_time_ms: float,
+    ) -> None:
         """记录 GPU 性能指标 [委托给 _scheduler]."""
-        self._scheduler.update_performance_metrics(batch_size, execution_time_ms)
+        self._scheduler.update_performance_metrics(
+            batch_size,
+            execution_time_ms,
+        )
 
     def _record_adjustment(
         self,
@@ -1015,9 +1207,16 @@ class GPUCollisionEngine(BaseCollisionEngine):
 
     # ========== 进度与断点 ==========
 
-    def _check_and_report_progress(self, batch_count: int, current_batch_size: int) -> None:
+    def _check_and_report_progress(
+        self,
+        batch_count: int,
+        current_batch_size: int,
+    ) -> None:
         """检查并报告进度 [委托给 _scheduler]."""
-        self._scheduler.check_and_report_progress(batch_count, current_batch_size)
+        self._scheduler.check_and_report_progress(
+            batch_count,
+            current_batch_size,
+        )
 
     def _save_checkpoint(self, count: int):
         """保存断点 [委托给 _scheduler]."""
@@ -1061,9 +1260,17 @@ class GPUCollisionEngine(BaseCollisionEngine):
         """异步私钥生成超时计算."""
         if self._random_search_mode is None:
             raise RuntimeError("_random_search_mode not set for key_gen_timeout")
-        return cast("float", self._random_search_mode._calculate_key_gen_timeout(batch_size))
+        return cast(
+            "float",
+            self._random_search_mode._calculate_key_gen_timeout(
+                batch_size,
+            ),
+        )
 
-    def _start_async_key_generation(self, batch_size: int) -> tuple[threading.Thread, list[Any]]:
+    def _start_async_key_generation(
+        self,
+        batch_size: int,
+    ) -> tuple[threading.Thread, list[Any]]:
         """启动异步私钥生成线程."""
         if self._random_search_mode is None:
             raise RuntimeError("_random_search_mode not set for async_key_gen")
@@ -1122,19 +1329,33 @@ class GPUCollisionEngine(BaseCollisionEngine):
 
     # ========== 异步日志 ==========
 
-    def _setup_async_logging(self, log_file: str, max_bytes: int, backup_count: int):
+    def _setup_async_logging(
+        self,
+        log_file: str,
+        max_bytes: int,
+        backup_count: int,
+    ):
         """设置异步日志处理器."""
         try:
             log_dir = os.path.dirname(log_file)
-            if log_dir and not pathlib.Path(log_dir).exists():
-                pathlib.Path(log_dir).mkdir(mode=0o750, exist_ok=True, parents=True)
+            log_path = pathlib.Path(log_dir)
+            if log_dir and not log_path.exists():
+                log_path.mkdir(mode=0o750, exist_ok=True, parents=True)
             from src.utils.logger import AsyncFileHandler
 
-            handler = AsyncFileHandler(log_file, max_bytes=max_bytes, backup_count=backup_count)
+            handler = AsyncFileHandler(
+                log_file,
+                max_bytes=max_bytes,
+                backup_count=backup_count,
+            )
             self._async_log_handler = handler
             handler.setLevel(logging.DEBUG)
             logger.addHandler(handler)
-            logger.info(f"GPU异步日志已启用: {log_file} (max={max_bytes / 1024 / 1024:.0f}MB)")
+            logger.info(
+                "GPU异步日志已启用: %s (max=%.0fMB)",
+                log_file,
+                max_bytes / 1024 / 1024,
+            )
         except Exception as e:
             logger.warning("异步日志启用失败: %s，使用同步日志", e)
 
@@ -1155,7 +1376,11 @@ class GPUCollisionEngine(BaseCollisionEngine):
             )
         return self._perf_pipeline
 
-    def run_benchmark(self, iterations: int = 5, save_report: bool = True) -> dict[str, Any]:
+    def run_benchmark(
+        self,
+        iterations: int = 5,
+        save_report: bool = True,
+    ) -> dict[str, Any]:
         """运行性能基准测试 (P2)."""
         pipeline: Any = self._get_perf_pipeline()
         results = pipeline.run_benchmark(iterations)
@@ -1186,7 +1411,11 @@ class GPUCollisionEngine(BaseCollisionEngine):
                 self.batch_size = new_size
                 logger.info(f"自动更新 batch_size: {old_size:,} -> {new_size:,}")
             else:
-                logger.info(f"建议 batch_size: {new_size:,} (当前: {self.batch_size:,})")
+                logger.info(
+                    "建议 batch_size: %s (当前: %s)",
+                    f"{new_size:,}",
+                    f"{self.batch_size:,}",
+                )
 
         pipeline: Any = self._get_perf_pipeline()
         results = pipeline.start_auto_tuning(

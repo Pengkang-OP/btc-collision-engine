@@ -145,7 +145,11 @@ class GPUDeviceManager:
             NoValidTargetsError: 无有效 P2PKH 目标地址时抛出
 
         """
-        with EnhancedPerformanceMonitor(self.logger, "GPU设备初始化", level="INFO") as pm:
+        with EnhancedPerformanceMonitor(
+            self.logger,
+            "GPU设备初始化",
+            level="INFO",
+        ) as pm:
             try:
                 if not GPUDeviceDetector.is_gpu_available():
                     raise RuntimeError("pyopencl 不可用")
@@ -153,7 +157,9 @@ class GPUDeviceManager:
                 # 1. 初始化GPU设备
                 self._init_device()
                 if self._gpu_device is None:
-                    raise RuntimeError("GPUDeviceManager._init_device() did not set _gpu_device")
+                    raise RuntimeError(
+                        "GPUDeviceManager._init_device() did not set _gpu_device",
+                    )
 
                 # 2. 准备目标地址
                 target_hash160s, target_list = self._prepare_targets(targets)
@@ -167,12 +173,16 @@ class GPUDeviceManager:
                 # 4. 创建GPU上下文
                 self._init_context()
                 if self._gpu_context is None:
-                    raise RuntimeError("GPUDeviceManager._init_context() did not set _gpu_context")
+                    raise RuntimeError(
+                        "GPUDeviceManager._init_context() did not set _gpu_context",
+                    )
 
                 # 5. 编译和创建内核
                 self._init_kernel(batch_size)
                 if self._gpu_kernel is None:
-                    raise RuntimeError("GPUDeviceManager._init_kernel() did not set _gpu_kernel")
+                    raise RuntimeError(
+                        "GPUDeviceManager._init_kernel() did not set _gpu_kernel",
+                    )
 
                 # 6. 初始化内存池（含预分配）
                 self._init_memory_pool(batch_size)
@@ -208,8 +218,14 @@ class GPUDeviceManager:
                     _wgs,
                 )
 
-                pm.add_metadata("device_name", device_info.get("name", "Unknown"))
-                pm.add_metadata("vendor", device_info.get("vendor", "Unknown"))
+                pm.add_metadata(
+                    "device_name",
+                    device_info.get("name", "Unknown"),
+                )
+                pm.add_metadata(
+                    "vendor",
+                    device_info.get("vendor", "Unknown"),
+                )
                 pm.add_metadata("batch_size", batch_size)
 
             except NoValidTargetsError as e:
@@ -259,14 +275,21 @@ class GPUDeviceManager:
 
     def _init_device(self) -> None:
         """初始化GPU设备."""
-        with EnhancedPerformanceMonitor(self.logger, "GPU设备初始化", level="DEBUG"):
+        with EnhancedPerformanceMonitor(
+            self.logger,
+            "GPU设备初始化",
+            level="DEBUG",
+        ):
             self._gpu_device = GPUDevice()
 
             # 读取异步执行配置
             enable_async = self._read_async_config()
 
             # 初始化设备
-            self._gpu_device.initialize(self.device_index, enable_async=enable_async)
+            self._gpu_device.initialize(
+                self.device_index,
+                enable_async=enable_async,
+            )
 
             device_info = self._gpu_device.get_device_info()
             _name = device_info.get("name", "Unknown")
@@ -317,7 +340,11 @@ class GPUDeviceManager:
                                 )
                                 break
                     except json.JSONDecodeError as e:
-                        self.logger.warning("配置文件 %s JSON格式错误: %s", cfg_file, e)
+                        self.logger.warning(
+                            "配置文件 %s JSON格式错误: %s",
+                            cfg_file,
+                            e,
+                        )
                     except PermissionError:
                         self.logger.warning("无法读取 %s: 权限不足", cfg_file)
                     except RuntimeError as e:
@@ -335,7 +362,9 @@ class GPUDeviceManager:
                 "GPU异步执行未启用 (来源: %s) - 使用同步模式",
                 config_source,
             )
-            self.logger.info("提示: 在配置文件中设置 'gpu.async_execution': true 以启用异步优化")
+            self.logger.info(
+                "提示: 在配置文件中设置 'gpu.async_execution': true 以启用异步优化",
+            )
 
         return enable_async
 
@@ -357,135 +386,178 @@ class GPUDeviceManager:
             return "Bech32m (Taproot)"
         return "未知格式"
 
-    def _prepare_targets(self, targets: set[str]):  # noqa: C901
+    @staticmethod
+    def _mask_address(address: str) -> str:
+        """创建地址的掩码表示（前8字符...后6字符）."""
+        return address[:8] + "..." + address[-6:] if len(address) >= 14 else address
+
+    def _process_bech32_address(
+        self,
+        address: str,
+        address_lower: str,
+        target_list: list[str],
+        hash160_list: list[bytes],
+        skipped_addresses: list[tuple[str, str, str]],
+    ) -> tuple[bool, int]:
+        """处理 Bech32 地址，返回 (已处理, bech32增量).
+
+        Returns:
+            (是否已处理, 新增 P2WPKH 计数)
+        """
+        # Taproot 地址 (bc1p/tb1p): 跳过
+        if address_lower.startswith(("bc1p", "tb1p")):
+            masked = self._mask_address(address)
+            skipped_addresses.append(
+                (
+                    masked,
+                    "Bech32m (Taproot)",
+                    "Taproot的witness_program=x-only公钥，密码学上无法通过hash160(pubkey)匹配",
+                ),
+            )
+            return True, 0
+
+        # 尝试解码 Bech32 地址
+        try:
+            _hrp, witness_version, witness_program = decode_segwit_address(address)
+            if witness_program is None:
+                raise ValueError("Bech32解码失败")
+
+            # 检查 witness version
+            if witness_version != 0:
+                masked = self._mask_address(address)
+                skipped_addresses.append(
+                    (
+                        masked,
+                        f"Bech32 (witness v{witness_version})",
+                        "仅支持 witness v0",
+                    ),
+                )
+                return True, 0
+
+            # P2WPKH: 20字节 witness_program = hash160(pubkey) → 可匹配
+            if len(witness_program) == 20:
+                target_list.append(address)
+                hash160_list.append(witness_program)
+                short_hash = witness_program.hex()[:8]
+                self.logger.debug(
+                    "Bech32 P2WPKH 目标: %s... -> hash160=%s...",
+                    address[:8],
+                    short_hash,
+                )
+                return True, 1
+
+            # P2WSH: 32字节 witness_program = sha256(redeemScript) → 不可匹配
+            if len(witness_program) == 32:
+                masked = self._mask_address(address)
+                skipped_addresses.append(
+                    (
+                        masked,
+                        "Bech32 (P2WSH)",
+                        "P2WSH的witness_program=sha256(redeemScript)，"
+                        "密码学上无法通过hash160(pubkey)匹配",
+                    ),
+                )
+                return True, 0
+
+            masked = self._mask_address(address)
+            skipped_addresses.append(
+                (masked, "Bech32", f"不支持的 witness_program 长度: {len(witness_program)}"),
+            )
+            return True, 0
+
+        except Exception as e:
+            masked = self._mask_address(address)
+            skipped_addresses.append(
+                (masked, "Bech32", f"解码失败: {type(e).__name__}"),
+            )
+            return True, 0
+
+    def _process_base58_address(
+        self,
+        address: str,
+        target_list: list[str],
+        hash160_list: list[bytes],
+        skipped_addresses: list[tuple[str, str, str]],
+    ) -> bool:
+        """处理 Base58 地址 (P2PKH / P2SH).
+
+        Returns:
+            是否继续（False 表示需要跳过此地址的后续处理）
+        """
+        try:
+            version, payload = Base58.check_decode(address)
+        except (ValueError, TypeError) as e:
+            fmt = self._classify_address_format(address)
+            masked = self._mask_address(address)
+            skipped_addresses.append((masked, fmt, f"{type(e).__name__}"))
+            return False  # continue
+        except RuntimeError as e:
+            fmt = self._classify_address_format(address)
+            masked = self._mask_address(address)
+            self.logger.warning("目标地址解析失败 [%s]: %s", masked, type(e).__name__)
+            return False  # continue
+
+        # P2PKH: version=0x00, 20字节 payload = hash160(pubkey) → 可匹配
+        if version == 0x00 and len(payload) == 20:
+            target_list.append(address)
+            hash160_list.append(payload)
+
+        elif version == 0x05 and len(payload) == 20:
+            # P2SH: payload = hash160(redeemScript) ≠ hash160(pubkey) → 不可匹配
+            masked = self._mask_address(address)
+            skipped_addresses.append(
+                (
+                    masked,
+                    "P2SH",
+                    "P2SH的payload=hash160(redeemScript)，密码学上无法通过hash160(pubkey)匹配",
+                ),
+            )
+        else:
+            fmt = self._classify_address_format(address)
+            masked = self._mask_address(address)
+            reason = f"version=0x{version:02x} (仅接受 P2PKH/Bech32 P2WPKH)"
+            skipped_addresses.append((masked, fmt, reason))
+        return True
+
+    def _prepare_targets(self, targets: set[str]):
         """准备目标地址 (支持 P2PKH 和 Bech32 P2WPKH 格式).
 
         GPU 引擎支持以下目标格式:
         1. P2PKH (version=0x00, 以 '1' 开头): 直接提取 hash160
-        2. Bech32 P2WPKH (以 'bc1q' 开头, 20字节 witness): 提取 witness_program 作为 hash160
+        2. Bech32 P2WPKH (以 'bc1q' 开头, 20字节 witness):
+            提取 witness_program 作为 hash160
         3. 其他格式 (P2SH/P2WSH/Taproot): 被跳过，生成 WARNING 日志
 
         v4.3.0: 增强支持 Bech32 P2WPKH 地址
         """
-        target_list = []
-        hash160_list = []
-        skipped_addresses: list[tuple[str, str, str]] = []  # (masked, format, reason)
-        bech32_p2wpkh_count = 0  # 统计Bech32 P2WPKH地址数量
+        target_list: list[str] = []
+        hash160_list: list[bytes] = []
+        skipped_addresses: list[tuple[str, str, str]] = []
+        bech32_p2wpkh_count = 0
 
         for address in sorted(targets):
             address_lower = address.lower()
 
             # 1. 首先尝试 Bech32 地址检测
             if address_lower.startswith("bc1") or address_lower.startswith("tb1"):
-                # Taproot 地址 (bc1p/tb1p): 跳过
-                if address_lower.startswith(("bc1p", "tb1p")):
-                    masked = address[:8] + "..." + address[-6:] if len(address) >= 14 else address
-                    skipped_addresses.append(
-                        (
-                            masked,
-                            "Bech32m (Taproot)",
-                            "Taproot的witness_program=x-only公钥，密码学上无法通过hash160(pubkey)匹配",
-                        ),
-                    )
-                    continue
-
-                # 尝试解码 Bech32 地址
-                try:
-                    hrp, witness_version, witness_program = decode_segwit_address(address)
-                    if witness_program is None:
-                        raise ValueError("Bech32解码失败")
-
-                    # 检查 witness version
-                    if witness_version != 0:
-                        masked = address[:8] + "..." + address[-6:] if len(address) >= 14 else address
-                        skipped_addresses.append(
-                            (
-                                masked,
-                                f"Bech32 (witness v{witness_version})",
-                                "仅支持 witness v0",
-                            ),
-                        )
-                        continue
-
-                    # P2WPKH: 20字节 witness_program = hash160(pubkey) → 可匹配
-                    if len(witness_program) == 20:
-                        target_list.append(address)
-                        hash160_list.append(witness_program)
-                        bech32_p2wpkh_count += 1
-                        short_hash = witness_program.hex()[:8]
-                        self.logger.debug(
-                            f"Bech32 P2WPKH 目标: {address[:8]}... -> hash160={short_hash}...",
-                        )
-                        continue
-
-                    # P2WSH: 32字节 witness_program = sha256(redeemScript) → 不可匹配
-                    if len(witness_program) == 32:
-                        masked = address[:8] + "..." + address[-6:] if len(address) >= 14 else address
-                        skipped_addresses.append(
-                            (
-                                masked,
-                                "Bech32 (P2WSH)",
-                                "P2WSH的witness_program=sha256(redeemScript)，密码学上无法通过hash160(pubkey)匹配",
-                            ),
-                        )
-                        continue
-
-                    masked = address[:8] + "..." + address[-6:] if len(address) >= 14 else address
-                    skipped_addresses.append(
-                        (
-                            masked,
-                            "Bech32",
-                            f"不支持的 witness_program 长度: {len(witness_program)}",
-                        ),
-                    )
-                    continue
-
-                except Exception as e:
-                    masked = address[:8] + "..." + address[-6:] if len(address) >= 14 else address
-                    skipped_addresses.append((masked, "Bech32", f"解码失败: {type(e).__name__}"))
+                handled, added = self._process_bech32_address(
+                    address,
+                    address_lower,
+                    target_list,
+                    hash160_list,
+                    skipped_addresses,
+                )
+                if handled:
+                    bech32_p2wpkh_count += added
                     continue
 
             # 2. 尝试 Base58 地址检测 (P2PKH / P2SH)
-            try:
-                version, payload = Base58.check_decode(address)
-
-                # P2PKH: version=0x00, 20字节 payload = hash160(pubkey) → 可匹配
-                if version == 0x00 and len(payload) == 20:
-                    target_list.append(address)
-                    hash160_list.append(payload)
-
-                elif version == 0x05 and len(payload) == 20:
-                    # P2SH: payload = hash160(redeemScript) ≠ hash160(pubkey) → 不可匹配
-                    addr_len = len(address)
-                    masked = address[:8] + "..." + address[-6:] if addr_len >= 14 else address
-                    skipped_addresses.append(
-                        (
-                            masked,
-                            "P2SH",
-                            "P2SH的payload=hash160(redeemScript)，密码学上无法通过hash160(pubkey)匹配",
-                        ),
-                    )
-                else:
-                    fmt = self._classify_address_format(address)
-                    addr_len = len(address)
-                    masked = address[:8] + "..." + address[-6:] if addr_len >= 14 else address
-                    reason = f"version=0x{version:02x} (仅接受 P2PKH/Bech32 P2WPKH)"
-                    skipped_addresses.append((masked, fmt, reason))
-
-            except (ValueError, TypeError) as e:
-                fmt = self._classify_address_format(address)
-                addr_len = len(address)
-                masked = address[:8] + "..." + address[-6:] if addr_len >= 14 else address
-                reason = f"{type(e).__name__}"
-                skipped_addresses.append((masked, fmt, reason))
-                continue
-
-            except RuntimeError as e:
-                fmt = self._classify_address_format(address)
-                addr_len = len(address)
-                masked = address[:8] + "..." + address[-6:] if addr_len >= 14 else address
-                self.logger.warning("目标地址解析失败 [%s]: %s", masked, type(e).__name__)
-                continue
+            self._process_base58_address(
+                address,
+                target_list,
+                hash160_list,
+                skipped_addresses,
+            )
 
         # 统计信息
         p2pkh_count = len([a for a in target_list if a.startswith("1")])
@@ -500,9 +572,13 @@ class GPUDeviceManager:
             )
             # 显示每个被跳过地址的格式和原因 (最多显示 5 条避免日志洪水)
             for masked, fmt, reason in skipped_addresses[:5]:
-                self.logger.warning("  [SKIP] %s | 格式: %s | 原因: %s", masked, fmt, reason)
+                skip_msg = "  [SKIP] %s | 格式: %s | 原因: %s"
+                self.logger.warning(skip_msg, masked, fmt, reason)
             if skipped_count > 5:
-                self.logger.warning("  ... 以及 %d 条未显示 (详情见上文)", skipped_count - 5)
+                self.logger.warning(
+                    "  ... 以及 %d 条未显示 (详情见上文)",
+                    skipped_count - 5,
+                )
             self.logger.warning(
                 "建议: P2SH/P2WSH/Taproot 目标因密码学路径不同无法通过私钥碰撞匹配。"
                 " 请使用 P2PKH (1开头) 或 Bech32 P2WPKH (bc1q开头，20字节witness) 地址。"
@@ -511,15 +587,20 @@ class GPUDeviceManager:
 
         if not hash160_list:
             raise NoValidTargetsError(
-                f"没有有效的 P2PKH/Bech32 P2WPKH 目标地址 (已跳过 {len(skipped_addresses)} 个)。"
-                " 请添加 '1' 开头的 P2PKH 地址或 'bc1q' 开头的 Bech32 P2WPKH 地址。"
-                " 其他格式(P2SH/P2WSH/Taproot)因密码学路径不同无法通过私钥碰撞匹配。",
+                f"没有有效的 P2PKH/Bech32 P2WPKH 目标地址 "
+                f"(已跳过 {len(skipped_addresses)} 个)。"
+                " 请添加 '1' 开头的 P2PKH 地址或 'bc1q' 开头的 "
+                "Bech32 P2WPKH 地址。其他格式(P2SH/P2WSH/Taproot)"
+                "因密码学路径不同无法通过私钥碰撞匹配。",
             )
 
         # 输出统计信息
         self.logger.info(
-            f"GPU 目标准备完成: P2PKH={p2pkh_count}, Bech32 P2WPKH={bech32_p2wpkh_count}, "
-            f"总目标={total_targets}, 跳过={len(skipped_addresses)}",
+            "GPU 目标准备完成: P2PKH=%s, Bech32 P2WPKH=%s, 总目标=%s, 跳过=%s",
+            p2pkh_count,
+            bech32_p2wpkh_count,
+            total_targets,
+            len(skipped_addresses),
         )
 
         target_hash160s = b"".join(hash160_list)
@@ -538,24 +619,35 @@ class GPUDeviceManager:
         profile = self._profile_loader.get_profile(vendor, device_name)
         if profile and "recommended_batch_size" in profile:
             recommended_batch_size = profile["recommended_batch_size"]
-            self.logger.info("从GPU配置文件获取推荐 batch_size: %s", recommended_batch_size)
+            self.logger.info(
+                "从GPU配置文件获取推荐 batch_size: %s",
+                recommended_batch_size,
+            )
             return int(recommended_batch_size)
 
         # 基于显存大小计算
         global_mem_size = device_info.get("global_mem_size", 1024**3)  # 默认1GB
 
         # 保守估计：每100万私钥需要约100MB显存
-        estimated_batch_size = int((global_mem_size / (100 * 1024 * 1024)) * 1_000_000)
+        mem_per_unit = global_mem_size / (100 * 1024 * 1024)
+        estimated_batch_size = int(mem_per_unit * 1_000_000)
 
         # 限制范围 100K到16M
-        estimated_batch_size = max(100_000, min(estimated_batch_size, 16_777_216))
+        estimated_batch_size = max(
+            100_000,
+            min(estimated_batch_size, 16_777_216),
+        )
 
         self.logger.info("自动计算 batch_size: %d (基于GPU显存)", estimated_batch_size)
         return estimated_batch_size
 
     def _init_context(self) -> None:
         """初始化GPU上下文."""
-        with EnhancedPerformanceMonitor(self.logger, "GPU上下文初始化", level="DEBUG"):
+        with EnhancedPerformanceMonitor(
+            self.logger,
+            "GPU上下文初始化",
+            level="DEBUG",
+        ):
             self._gpu_context = GPUContext(self._require_device())
 
             # 应用优化
@@ -563,17 +655,23 @@ class GPUDeviceManager:
 
     def _init_kernel(self, batch_size: int) -> None:
         """初始化GPU内核."""
-        with EnhancedPerformanceMonitor(self.logger, "OpenCL内核编译", level="INFO"):
+        with EnhancedPerformanceMonitor(
+            self.logger,
+            "OpenCL内核编译",
+            level="INFO",
+        ):
             ctx = self._require_context()
             dev = self._require_device()
             # 编译内核
             ctx.compile_kernel(OPENCL_KERNEL_SOURCE)
 
             # 创建GPUKernel
+            gpu_context = self._gpu_context
+            assert gpu_context is not None
             self._gpu_kernel = GPUKernel(
                 dev,
                 max_batch_size=batch_size,
-                program=cast("Any", self._gpu_context.program),  # type: ignore[union-attr]
+                program=cast("Any", gpu_context.program),
             )
 
     def _init_memory_pool(self, batch_size: int = 0) -> None:
@@ -600,7 +698,10 @@ class GPUDeviceManager:
             preallocate_sizes = self._compute_prealloc_sizes(batch_size)
             if preallocate_sizes:
                 try:
-                    self._gpu_memory_pool.preallocate_buffers(preallocate_sizes, count_per_size=2)
+                    self._gpu_memory_pool.preallocate_buffers(
+                        preallocate_sizes,
+                        count_per_size=2,
+                    )
                     self.logger.debug(
                         "GPU内存池预分配: %d 种大小 × 2",
                         len(preallocate_sizes),
@@ -719,9 +820,13 @@ class GPUDeviceManager:
                     config=self.config,
                     engine_logger=self.logger,
                 )
-                optimization_result = self._nvidia_optimizer.apply_optimizations()
+                nv_opt = self._nvidia_optimizer
+                optimization_result = nv_opt.apply_optimizations()
                 arch_name = optimization_result.get("arch_name", "Unknown")
-                mem_ratio = optimization_result.get("recommended_memory_ratio", 0.60)
+                mem_ratio = optimization_result.get(
+                    "recommended_memory_ratio",
+                    0.60,
+                )
                 self.logger.info(
                     "[OK] NVIDIA 优化器已初始化: 架构=%s, memory_ratio=%.2f",
                     arch_name,
@@ -740,7 +845,10 @@ class GPUDeviceManager:
                 )
                 optimization_result = self._amd_optimizer.apply_optimizations()
                 arch_name = optimization_result.get("arch_name", "Unknown")
-                mem_ratio = optimization_result.get("recommended_memory_ratio", 0.60)
+                mem_ratio = optimization_result.get(
+                    "recommended_memory_ratio",
+                    0.60,
+                )
                 self.logger.info(
                     "[OK] AMD 优化器已初始化: 架构=%s, memory_ratio=%.2f",
                     arch_name,
