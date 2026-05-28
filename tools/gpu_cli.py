@@ -210,10 +210,15 @@ def main():
     # generate-config命令
     gen_parser = subparsers.add_parser("generate-config", help="生成配置文件")
     gen_parser.add_argument(
-        "--mode", choices=["auto", "single", "multi"], default="auto", help="GPU模式(默认auto)",
+        "--mode",
+        choices=["auto", "single", "multi"],
+        default="auto",
+        help="GPU模式(默认auto)",
     )
     gen_parser.add_argument(
-        "--output", default="config.gpu.json", help="输出文件路径(默认config.gpu.json)",
+        "--output",
+        default="config.gpu.json",
+        help="输出文件路径(默认config.gpu.json)",
     )
     gen_parser.set_defaults(func=cmd_generate_config)
 

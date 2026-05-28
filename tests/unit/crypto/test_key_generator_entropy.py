@@ -22,7 +22,8 @@ class TestEntropyHealthCheck:
         self.key_gen = SecureKeyGenerator(config={"batch_size": 100})
 
     @pytest.mark.skipif(
-        sys.platform != "linux", reason="Linux /proc entropy test - non-Linux fallback returns True",
+        sys.platform != "linux",
+        reason="Linux /proc entropy test - non-Linux fallback returns True",
     )
     def test_low_entropy_linux(self):
         """测试Linux低熵场景(< 1000 bits)."""
@@ -108,7 +109,8 @@ class TestEntropyHealthCheck:
                 assert len(keys) == 5
 
     @pytest.mark.skipif(
-        sys.platform != "linux", reason="Linux /proc entropy test - non-Linux fallback returns True",
+        sys.platform != "linux",
+        reason="Linux /proc entropy test - non-Linux fallback returns True",
     )
     def test_multiple_low_entropy_warnings(self):
         """测试多次低熵警告统计."""
@@ -132,7 +134,8 @@ class TestEntropyHealthCheck:
                 assert result
 
     @pytest.mark.skipif(
-        sys.platform != "linux", reason="Linux /proc entropy test - non-Linux fallback returns True",
+        sys.platform != "linux",
+        reason="Linux /proc entropy test - non-Linux fallback returns True",
     )
     def test_entropy_boundary_999(self):
         """测试熵值边界条件(999)."""

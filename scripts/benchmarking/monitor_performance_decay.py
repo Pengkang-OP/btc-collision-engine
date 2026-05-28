@@ -69,7 +69,10 @@ def get_performance(engine=None):
 def main():
     parser = argparse.ArgumentParser(description="性能衰减曲线监控")
     parser.add_argument(
-        "--duration", type=int, default=3600, help="监控持续时间（秒），默认 3600 (1 小时)",
+        "--duration",
+        type=int,
+        default=3600,
+        help="监控持续时间（秒），默认 3600 (1 小时)",
     )
     parser.add_argument("--interval", type=int, default=60, help="采样间隔（秒），默认 60")
     parser.add_argument("--output", type=str, default=None, help="输出 CSV 文件路径")

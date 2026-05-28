@@ -128,7 +128,9 @@ def test_d1_modes():
         ["-t", VALID_ADDR, "-m", "brute_force", "--start", "1", "--duration", "3"],
     )
     assert_success(
-        "D1-Normal", "gpu-mode", ["-t", VALID_ADDR, "-m", "random", "--use-gpu", "--duration", "3"],
+        "D1-Normal",
+        "gpu-mode",
+        ["-t", VALID_ADDR, "-m", "random", "--use-gpu", "--duration", "3"],
     )
     # 用临时有效文件测试文件输入
     _tmp_f = PROJECT_ROOT / "_test_targets_tmp.txt"
@@ -154,7 +156,9 @@ def test_d1_modes():
         ["-t", VALID_ADDR, "-m", "random", "--use-gpu", "--multi-gpu", "--duration", "2"],
     )
     assert_fail(
-        "D1-Abnormal", "invalid-mode", ["-t", VALID_ADDR, "-m", "invalid_mode", "--duration", "2"],
+        "D1-Abnormal",
+        "invalid-mode",
+        ["-t", VALID_ADDR, "-m", "invalid_mode", "--duration", "2"],
     )
     assert_fail("D1-Abnormal", "no-target-no-file", ["-m", "random", "--duration", "2"])
 
@@ -196,7 +200,10 @@ def test_d1_modes():
     assert_success("D1-Tool", "examples", ["--examples"], keywords=["example", "示例", "quick-start"])
     assert_success("D1-Tool", "recommend", ["--recommend"], keywords=RECOMMEND_KW)
     assert_success(
-        "D1-Tool", "template-list", ["--template", "quick-test"], keywords=["applied", "Template"],
+        "D1-Tool",
+        "template-list",
+        ["--template", "quick-test"],
+        keywords=["applied", "Template"],
     )
 
 
@@ -219,7 +226,9 @@ def test_d2_states():
         ckpt_backup = None
 
     assert_success(
-        "D2-Init", "fresh-start-no-checkpoint", ["-t", VALID_ADDR, "-m", "random", "--duration", "2"],
+        "D2-Init",
+        "fresh-start-no-checkpoint",
+        ["-t", VALID_ADDR, "-m", "random", "--duration", "2"],
     )
 
     # ── Mid-run → Terminal ──
@@ -305,7 +314,9 @@ def test_d3_settings():
         if ok:
             # Quick verify template works
             assert_success(
-                "D3-Custom", f"run-with-{tmpl}", ["-t", VALID_ADDR, "-m", "random", "--duration", "2"],
+                "D3-Custom",
+                f"run-with-{tmpl}",
+                ["-t", VALID_ADDR, "-m", "random", "--duration", "2"],
             )
 
         # Restore
@@ -430,10 +441,14 @@ def test_d4_params():
 
     assert_fail("D4-Invalid", "bad-address", ["-t", INVALID_ADDR, "-m", "random", "--duration", "2"])
     assert_fail(
-        "D4-Invalid", "bad-file", ["-f", "nonexistent_file_xyz.txt", "-m", "random", "--duration", "2"],
+        "D4-Invalid",
+        "bad-file",
+        ["-f", "nonexistent_file_xyz.txt", "-m", "random", "--duration", "2"],
     )
     assert_fail(
-        "D4-Invalid", "negative-duration", ["-t", VALID_ADDR, "-m", "random", "--duration", "-1"],
+        "D4-Invalid",
+        "negative-duration",
+        ["-t", VALID_ADDR, "-m", "random", "--duration", "-1"],
     )
     assert_fail(
         "D4-Invalid",

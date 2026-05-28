@@ -447,7 +447,8 @@ class DocumentQualityChecker:
         code_block_deduction = 0.0
         if code_block_issues > 0:
             code_block_deduction = min(
-                code_block_issues * self.config.code_block_weight, self.config.code_block_max,
+                code_block_issues * self.config.code_block_weight,
+                self.config.code_block_max,
             )
             deduction += code_block_deduction
 

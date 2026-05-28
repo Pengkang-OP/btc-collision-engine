@@ -32,7 +32,8 @@
 - **测试修复** — `test_gpu_engine_initialization_without_gpu` 和 `test_constructor_pyopencl_unavailable` 补 `engine.PYOPENCL_AVAILABLE` 本地副本 patch
 
 ## [5.0.0] — 2026-05
-  - 根目录 `GPU_CONFIG_GUIDE.md`、`deploy/QUICK_START.md` 添加 v5.0.0 版本标记
+
+- 根目录 `GPU_CONFIG_GUIDE.md`、`deploy/QUICK_START.md` 添加 v5.0.0 版本标记
 - **ROADMAP #15 启用 pydocstyle Google convention 强制校验**:
   - 在 `[tool.ruff.lint]` select 中添加 `"D"` 规则
   - 取消注释 `[tool.ruff.lint.pydocstyle]` 的 `convention = "google"`

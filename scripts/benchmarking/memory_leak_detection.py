@@ -52,8 +52,7 @@ def _log_memory_change(current_mem, initial_mem, loop_idx=None):
 
 
 def test_gpu_collision_engine_memory_leak():
-    """测试GPU碰撞引擎的内存泄漏.
-    """
+    """测试GPU碰撞引擎的内存泄漏."""
     logger.info("开始测试GPU碰撞引擎的内存泄漏...")
 
     test_targets = {
@@ -114,8 +113,7 @@ def test_gpu_collision_engine_memory_leak():
 
 
 def test_multi_gpu_engine_memory_leak():
-    """测试多GPU引擎的内存泄漏.
-    """
+    """测试多GPU引擎的内存泄漏."""
     logger.info("开始测试多GPU引擎的内存泄漏...")
 
     test_targets = {

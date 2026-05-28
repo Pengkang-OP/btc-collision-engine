@@ -124,7 +124,10 @@ def main():
     results = []
     for test in tests:
         success = run_test(
-            test["name"], test["command"], test.get("expected"), test.get("should_fail", False),
+            test["name"],
+            test["command"],
+            test.get("expected"),
+            test.get("should_fail", False),
         )
         results.append((test["name"], success))
 

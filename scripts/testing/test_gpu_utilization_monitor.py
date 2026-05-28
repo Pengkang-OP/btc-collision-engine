@@ -40,7 +40,9 @@ class GPUMonitor:
         """
         self._running = True
         self._monitor_thread = threading.Thread(
-            target=self._monitor_loop, args=(engine, interval), daemon=True,
+            target=self._monitor_loop,
+            args=(engine, interval),
+            daemon=True,
         )
         self._monitor_thread.start()
         print(f"  [监控] GPU利用率监控已启动 (间隔: {interval}s)")
@@ -248,7 +250,10 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="GPU利用率监控测试")
     parser.add_argument(
-        "--mode", choices=["sync", "async"], default="async", help="测试模式 (默认: async)",
+        "--mode",
+        choices=["sync", "async"],
+        default="async",
+        help="测试模式 (默认: async)",
     )
     parser.add_argument("--duration", type=int, default=60, help="测试时长(秒, 默认: 60)")
 

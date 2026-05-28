@@ -9,7 +9,10 @@ from pathlib import Path
 
 
 def read_with_retry(
-    file_path: Path, max_retries: int = 3, delay: float = 0.1, encoding: str = "utf-8",
+    file_path: Path,
+    max_retries: int = 3,
+    delay: float = 0.1,
+    encoding: str = "utf-8",
 ) -> str | None:
     """带重试的文件读取.
 
@@ -34,7 +37,11 @@ def read_with_retry(
 
 
 def write_with_retry(
-    file_path: Path, content: str, max_retries: int = 3, delay: float = 0.1, encoding: str = "utf-8",
+    file_path: Path,
+    content: str,
+    max_retries: int = 3,
+    delay: float = 0.1,
+    encoding: str = "utf-8",
 ) -> bool:
     """带重试的文件写入.
 

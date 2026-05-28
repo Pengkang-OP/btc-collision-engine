@@ -88,7 +88,10 @@ def check_gpu_driver():
             # 尝试检查Intel驱动
             try:
                 result = subprocess.run(
-                    ["driverquery", "/v", "/fo", "csv"], capture_output=True, text=True, timeout=10,
+                    ["driverquery", "/v", "/fo", "csv"],
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
                 )
 
                 if "intel" in result.stdout.lower():
@@ -116,7 +119,10 @@ def check_gpu_driver():
             # 检查Intel GPU工具
             try:
                 result = subprocess.run(
-                    ["intel_gpu_top", "-L"], capture_output=True, text=True, timeout=5,
+                    ["intel_gpu_top", "-L"],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
                 )
                 print("  [PASS] intel_gpu_top可用")
             except FileNotFoundError:

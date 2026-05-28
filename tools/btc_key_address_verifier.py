@@ -391,7 +391,9 @@ class BTCKeyAddressVerifier:
         return Base58.check_encode(version, payload)
 
     def verify_public_key_to_p2pkh(
-        self, public_key: bytes, target_address: str | None = None,
+        self,
+        public_key: bytes,
+        target_address: str | None = None,
     ) -> AddressVerificationResult:
         """验证公钥到 P2PKH (Legacy) 地址的转换.
 
@@ -488,7 +490,9 @@ class BTCKeyAddressVerifier:
         return result
 
     def verify_public_key_to_p2sh(
-        self, public_key: bytes, target_address: str | None = None,
+        self,
+        public_key: bytes,
+        target_address: str | None = None,
     ) -> AddressVerificationResult:
         """验证公钥到 P2SH (Nested SegWit) 地址的转换.
 
@@ -597,7 +601,10 @@ class BTCKeyAddressVerifier:
         return result
 
     def verify_public_key_to_bech32(
-        self, public_key: bytes, target_address: str | None = None, is_taproot: bool = False,
+        self,
+        public_key: bytes,
+        target_address: str | None = None,
+        is_taproot: bool = False,
     ) -> AddressVerificationResult:
         """验证公钥到 Bech32/Bech32m (Native SegWit/Taproot) 地址的转换.
 
@@ -739,7 +746,9 @@ class BTCKeyAddressVerifier:
     # =========================================================================
 
     def verify_private_key(
-        self, private_key_hex: str, target_addresses: dict[str, str] | None = None,
+        self,
+        private_key_hex: str,
+        target_addresses: dict[str, str] | None = None,
     ) -> FullVerificationReport:
         """完整验证私钥派生的所有地址格式.
 
@@ -778,25 +787,31 @@ class BTCKeyAddressVerifier:
         # P2PKH
         self._log("生成 P2PKH (Legacy) 地址...")
         address_results[AddressFormat.P2PKH] = self.verify_public_key_to_p2pkh(
-            pub_compressed, targets.get("p2pkh"),
+            pub_compressed,
+            targets.get("p2pkh"),
         )
 
         # P2SH
         self._log("生成 P2SH (Nested SegWit) 地址...")
         address_results[AddressFormat.P2SH] = self.verify_public_key_to_p2sh(
-            pub_compressed, targets.get("p2sh"),
+            pub_compressed,
+            targets.get("p2sh"),
         )
 
         # Bech32 (Native SegWit v0)
         self._log("生成 Bech32 (Native SegWit) 地址...")
         address_results[AddressFormat.BECH32] = self.verify_public_key_to_bech32(
-            pub_compressed, targets.get("bech32"), is_taproot=False,
+            pub_compressed,
+            targets.get("bech32"),
+            is_taproot=False,
         )
 
         # Bech32m (Taproot)
         self._log("生成 Bech32m (Taproot) 地址...")
         address_results[AddressFormat.BECH32M] = self.verify_public_key_to_bech32(
-            pub_compressed, targets.get("bech32m"), is_taproot=True,
+            pub_compressed,
+            targets.get("bech32m"),
+            is_taproot=True,
         )
 
         # Step 3: 汇总结果
@@ -936,7 +951,9 @@ class BTCKeyAddressVerifier:
         return all_passed
 
     def batch_verify_addresses(
-        self, private_key_hex: str, target_addresses: dict[str, str],
+        self,
+        private_key_hex: str,
+        target_addresses: dict[str, str],
     ) -> dict[str, Any]:
         """批量验证多个地址格式.
 

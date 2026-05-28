@@ -26,7 +26,9 @@ def check_has_version(content: str) -> bool:
 
 
 def add_version_info(
-    content: str, version: str, target_audience: str = "用户/开发者",
+    content: str,
+    version: str,
+    target_audience: str = "用户/开发者",
 ) -> tuple[str, bool]:
     """添加版本信息到文档.
 

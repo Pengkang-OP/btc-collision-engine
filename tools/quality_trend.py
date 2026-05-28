@@ -180,7 +180,10 @@ class QualityTrendAnalyzer:
         try:
             with open(output_file, "w", encoding="utf-8") as f:
                 f.write("timestamp,avg_score,doc_count\n")
-                f.writelines(f"{record['timestamp']},{record['avg_score']},{record['doc_count']}\n" for record in self.history)  # noqa: E501
+                f.writelines(
+                    f"{record['timestamp']},{record['avg_score']},{record['doc_count']}\n"
+                    for record in self.history
+                )  # noqa: E501
 
             print(f"✅ 数据已导出到: {output_file}")
         except (OSError, PermissionError) as e:

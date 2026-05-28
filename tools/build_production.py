@@ -132,7 +132,8 @@ def get_git_info():
         try:
             tag = (
                 subprocess.check_output(
-                    ["git", "describe", "--tags", "--abbrev=0"], stderr=subprocess.DEVNULL,
+                    ["git", "describe", "--tags", "--abbrev=0"],
+                    stderr=subprocess.DEVNULL,
                 )
                 .decode()
                 .strip()
@@ -150,7 +151,8 @@ def get_git_info():
         # 获取分支名
         branch = (
             subprocess.check_output(
-                ["git", "rev-parse", "--abbrev-ref", "HEAD"], stderr=subprocess.DEVNULL,
+                ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+                stderr=subprocess.DEVNULL,
             )
             .decode()
             .strip()

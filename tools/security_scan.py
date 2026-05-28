@@ -207,7 +207,10 @@ def main():
     parser.add_argument("--format", choices=["json", "html", "text"], default="json", help="报告格式")
     parser.add_argument("--output", help="报告输出路径")
     parser.add_argument(
-        "--severity", choices=["low", "medium", "high"], default="medium", help="最低严重性级别",
+        "--severity",
+        choices=["low", "medium", "high"],
+        default="medium",
+        help="最低严重性级别",
     )
     parser.add_argument("--ci-mode", action="store_true", help="CI/CD模式(有高危问题时退出码非0)")
 

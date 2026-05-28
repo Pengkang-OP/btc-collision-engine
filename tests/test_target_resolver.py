@@ -85,7 +85,8 @@ class TestDecodeSegwitAddress:
         from src.utils.bech32_codec import decode_segwit_address
 
         hrp, version, program = decode_segwit_address(
-            "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq", expected_hrp="bc",
+            "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
+            expected_hrp="bc",
         )
         assert version == 0
         assert program is not None
@@ -103,7 +104,8 @@ class TestDecodeSegwitAddress:
         from src.utils.bech32_codec import decode_segwit_address
 
         hrp, version, program = decode_segwit_address(
-            "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq", expected_hrp="tb",
+            "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
+            expected_hrp="tb",
         )
         assert version is None
         assert program is None

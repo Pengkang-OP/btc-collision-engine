@@ -118,9 +118,7 @@ class TestGPUKernelArithmetic:
         cl.enqueue_copy(self.queue, result_x, result_x_buf)
         x_val = _uint256_to_int(result_x)
 
-        assert x_val == TWO_GX_HEX, (
-            f"2*G X 坐标不匹配: GPU={hex(x_val)}, 预期={hex(TWO_GX_HEX)}"
-        )
+        assert x_val == TWO_GX_HEX, f"2*G X 坐标不匹配: GPU={hex(x_val)}, 预期={hex(TWO_GX_HEX)}"
 
     @skip_if_no_gpu
     def test_two_times_G_correct_y(self):
@@ -138,9 +136,7 @@ class TestGPUKernelArithmetic:
         cl.enqueue_copy(self.queue, result_y, result_y_buf)
         y_val = _uint256_to_int(result_y)
 
-        assert y_val == TWO_GY_HEX, (
-            f"2*G Y 坐标不匹配: GPU={hex(y_val)}, 预期={hex(TWO_GY_HEX)}"
-        )
+        assert y_val == TWO_GY_HEX, f"2*G Y 坐标不匹配: GPU={hex(y_val)}, 预期={hex(TWO_GY_HEX)}"
 
     # ── 基点 G 恒等式 ──────────────────────────
 

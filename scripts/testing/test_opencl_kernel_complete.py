@@ -171,7 +171,15 @@ def test_debug_hash():
         # 执行内核（k=1）
         debug_kernel = program.debug_hash
         debug_kernel(
-            queue, (1,), None, pubkey_buf, sha256_buf, hash160_buf, np.uint32(1), qx_buf, qy_buf,
+            queue,
+            (1,),
+            None,
+            pubkey_buf,
+            sha256_buf,
+            hash160_buf,
+            np.uint32(1),
+            qx_buf,
+            qy_buf,
         )
         queue.finish()
 

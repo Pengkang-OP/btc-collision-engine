@@ -94,7 +94,9 @@ class IntelArcOptimizer:
 
             try:
                 engine = GPUCollisionEngine(
-                    targets=test_targets, batch_size=batch_size, use_gpu_memory_pool=True,
+                    targets=test_targets,
+                    batch_size=batch_size,
+                    use_gpu_memory_pool=True,
                 )
 
                 import threading
@@ -146,7 +148,8 @@ class IntelArcOptimizer:
 
         # 找出最佳批次大小
         best_batch = max(
-            results.items(), key=lambda x: x[1]["throughput"] if x[1]["status"] == "pass" else 0,
+            results.items(),
+            key=lambda x: x[1]["throughput"] if x[1]["status"] == "pass" else 0,
         )
 
         print(f"\n  [INFO] 最佳批次大小: {best_batch[0]:,}")
