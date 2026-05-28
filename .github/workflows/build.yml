@@ -86,6 +86,7 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
+          cache: "pip"
 
       - name: 安装系统依赖
         run: |
@@ -104,7 +105,7 @@ jobs:
 
       - name: 验证 CLI 入口点
         run: |
-          btc-collision --help || echo "⚠️ CLI 入口点不可用（可能缺少配置文件）"
+          btc-collision --help
 
       - name: 验证核心模块可导入
         run: |

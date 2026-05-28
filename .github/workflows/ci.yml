@@ -51,29 +51,32 @@ jobs:
           python3 - <<'PYEOF'
           import ast, sys, glob
           errors = []
-          for py_file in sorted(glob.glob("src/gpu/**/*.py", recursive=True)):
-              if "__pycache__" in py_file:
-                  continue
-              try:
-                  with open(py_file, "rb") as f:
-                      raw = f.read()
-                  try:
-                      text = raw.decode("utf-8")
-                  except UnicodeDecodeError:
-                      errors.append(f"  ❌ {py_file}: 非 UTF-8 编码")
+          checked = 0
+          for pattern in ("src/gpu/**/*.py", "src/collision/gpu/**/*.py"):
+              for py_file in sorted(glob.glob(pattern, recursive=True)):
+                  if "__pycache__" in py_file:
                       continue
+                  checked += 1
                   try:
-                      ast.parse(text, filename=py_file)
-                  except SyntaxError as e:
-                      errors.append(f"  ❌ {py_file}:{e.lineno}: {e.msg}")
-              except Exception as e:
-                  errors.append(f"  ❌ {py_file}: {e}")
+                      with open(py_file, "rb") as f:
+                          raw = f.read()
+                      try:
+                          text = raw.decode("utf-8")
+                      except UnicodeDecodeError:
+                          errors.append(f"  ❌ {py_file}: 非 UTF-8 编码")
+                          continue
+                      try:
+                          ast.parse(text, filename=py_file)
+                      except SyntaxError as e:
+                          errors.append(f"  ❌ {py_file}:{e.lineno}: {e.msg}")
+                  except Exception as e:
+                      errors.append(f"  ❌ {py_file}: {e}")
           if errors:
-              print(f"❌ 发现 {len(errors)} 个错误:")
+              print(f"❌ 发现 {len(errors)} 个错误 (共检查 {checked} 个文件):")
               for e in errors:
                   print(e)
               sys.exit(1)
-          print("✅ 所有 src/gpu/ Python 文件语法正确")
+          print(f"✅ 所有 {checked} 个 GPU Python 文件语法正确 (src/gpu/ + src/collision/gpu/)")
           PYEOF
 
       - name: OpenCL 内核结构验证
@@ -269,10 +272,10 @@ jobs:
         run: pytest tests/gpu/test_gpu_core.py -v --tb=short --timeout=60 --timeout-method=thread
 
       - name: 导入路径测试
-        run: pytest tests/test_import_paths.py -v
+        run: pytest tests/test_import_paths.py -v --timeout=60 --timeout-method=thread
 
       - name: Bech32/P2SH测试
-        run: pytest tests/unit/crypto/test_bech32_p2sh_conversion.py tests/unit/crypto/test_bech32_p2sh_performance.py -v
+        run: pytest tests/unit/crypto/test_bech32_p2sh_conversion.py tests/unit/crypto/test_bech32_p2sh_performance.py -v --tb=short --timeout=60 --timeout-method=thread
 
   # ──────────────────────────────────────────
   # 5. 性能回归检测

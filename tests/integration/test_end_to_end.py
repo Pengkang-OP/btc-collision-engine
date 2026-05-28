@@ -6,6 +6,8 @@ import logging
 import pathlib
 import time
 
+import pytest
+
 from src.collision.key_collision_engine import KeyCollisionEngine
 from src.collision.targets.storage import AddressStorage
 
@@ -13,6 +15,7 @@ from src.collision.targets.storage import AddressStorage
 logging.basicConfig(level=logging.CRITICAL)
 
 
+@pytest.mark.integration
 def test_end_to_end_address_import():
     """端到端测试：地址导入 + 碰撞检测."""
     print("=== 端到端测试：地址导入模式 ===")

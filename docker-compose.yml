@@ -1,5 +1,3 @@
-version: '3.8'
-
 # BTC碰撞引擎 - Docker Compose配置
 # 支持CPU和GPU两种模式
 #

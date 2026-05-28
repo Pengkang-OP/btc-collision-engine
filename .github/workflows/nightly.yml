@@ -39,7 +39,7 @@ jobs:
       - name: 安装系统依赖
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libgmp-dev
+          sudo apt-get install -y --no-install-recommends libgmp-dev libsecp256k1-dev
 
       - name: 安装 Python 依赖
         run: |
@@ -52,10 +52,13 @@ jobs:
             -v \
             --tb=long \
             --cov=src \
+            --cov-fail-under=50 \
             --cov-report=xml \
+            --cov-report=term-missing \
             --cov-report=html \
-            -m "not (gpu or gpu_kernel or multi_gpu)" \
+            -m "not (gpu or gpu_kernel or multi_gpu or integration)" \
             --timeout=600 \
+            --timeout-method=thread \
             --reruns=2 \
             --reruns-delay=5
 

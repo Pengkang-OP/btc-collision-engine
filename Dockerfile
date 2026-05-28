@@ -23,6 +23,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # 复制依赖文件（仅生产依赖，不包含开发/测试工具）
+# requirements-gpu.txt 通过 -r 引用 requirements-base.txt，两者都需复制
 COPY requirements-base.txt requirements-base.txt
 COPY requirements-gpu.txt requirements-gpu.txt
 
@@ -30,7 +31,7 @@ COPY requirements-gpu.txt requirements-gpu.txt
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel
-RUN pip install --no-cache-dir -r requirements-base.txt -r requirements-gpu.txt
+RUN pip install --no-cache-dir -r requirements-gpu.txt
 
 # 生产阶段
 FROM --platform=$TARGETPLATFORM python:3.12-slim AS production
@@ -43,7 +44,7 @@ LABEL maintainer="BTC Project" \
     org.label-schema.version="${VERSION}" \
     org.label-schema.build-date="${BUILD_DATE}" \
     org.label-schema.vcs-ref="${VCS_REF}" \
-    org.label-schema.vcs-url="https://github.com/your-repo/btc-collision-engine"
+    org.label-schema.vcs-url="https://github.com/btc-project/btc-collision-engine"
 
 # 环境变量
 ENV PYTHONUNBUFFERED=1 \
@@ -90,12 +91,8 @@ RUN groupadd -r btc-engine \
 # 复制应用代码（使用已创建的用户）
 COPY --chown=btc-engine:btc-engine . .
 
-# 创建数据目录（如果不存在）
-RUN mkdir -p data_logs monitoring_data logs
-
 # 设置目录权限和所有者
 RUN chmod 750 ${DATA_DIR} ${LOG_DIR} ${MONITOR_DIR} \
-    && chmod 750 data_logs monitoring_data logs \
     && chown -R btc-engine:btc-engine ${APP_HOME}
 
 # 切换到非 root 用户运行（安全加固）

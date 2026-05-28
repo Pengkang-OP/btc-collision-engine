@@ -5,6 +5,10 @@ on:
     branches: [develop]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  packages: write
+
 concurrency:
   group: staging-deploy
   cancel-in-progress: true
@@ -47,7 +51,7 @@ jobs:
           platforms: linux/amd64
           build-args: |
             VERSION=staging-${{ steps.sha.outputs.short }}  # 镜像版本号
-            BUILD_DATE=${{ github.event.head_commit.timestamp }}  # 构建时间戳
+            BUILD_DATE=${{ github.event.head_commit.timestamp || github.event.repository.updated_at }}  # 构建时间戳（workflow_dispatch 时降级使用仓库更新时间）
             VCS_REF=${{ github.sha }}  # Git commit SHA
           cache-from: type=gha
           cache-to: type=gha,mode=max

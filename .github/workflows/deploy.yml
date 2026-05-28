@@ -44,7 +44,7 @@ jobs:
           import os
 
           # 读取项目版本
-          version = "5.0.0"
+          version = "5.0.1"
           try:
               with open("pyproject.toml", "r", encoding="utf-8") as f:
                   for line in f:

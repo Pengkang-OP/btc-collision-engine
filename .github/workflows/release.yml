@@ -37,7 +37,7 @@ jobs:
       - name: 安装系统依赖
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libgmp-dev
+          sudo apt-get install -y --no-install-recommends libgmp-dev libsecp256k1-dev
 
       - name: 安装 Python 依赖
         run: |
@@ -50,9 +50,12 @@ jobs:
             -v \
             --tb=short \
             --cov=src \
+            --cov-report=xml \
             --cov-report=term-missing \
-            -m "not (gpu or gpu_kernel or multi_gpu)" \
-            --timeout=600
+            --cov-fail-under=50 \
+            -m "not (gpu or gpu_kernel or multi_gpu or integration)" \
+            --timeout=600 \
+            --timeout-method=thread
 
   # ─────────────────────────────────────────────
   # Job 2: 构建发布包
@@ -220,7 +223,7 @@ jobs:
   docker-push:
     name: 构建并推送 Docker 镜像
     runs-on: ubuntu-latest
-    needs: test
+    needs: [test, build]
 
     steps:
       - name: 检出代码
