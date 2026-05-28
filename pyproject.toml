@@ -170,10 +170,11 @@ convention = "google"
     "E501",
     "E402",
     "T201",
-] # 脚本：sys.path.insert + 可读性长行 + print合法
+    "D",
+] # 脚本：sys.path.insert + 可读性长行 + print合法。D (pydocstyle) 暂不强制
 "scripts/_batch_p1.py" = ["E501"] # 嵌入式源码字符串补丁脚本
 "scripts/extract_opencl_kernels.py" = ["E501"] # 文档字符串含 markdown 代码示例
-"benchmarks/**/*.py" = ["E501", "E402", "T201"] # 基准测试：格式化非关键，允许 print
+"benchmarks/**/*.py" = ["E501", "E402", "T201", "D"] # 基准测试：格式化非关键，允许 print。D (pydocstyle) 暂不强制
 "tests/**/*.py" = [
     "T201",   # 测试代码：print 调试输出合法
     "N806",   # Mock/数学变量名大写合法（MockDeviceManager, G, bpMB 等）
@@ -192,6 +193,7 @@ convention = "google"
     "E741",   # 数学变量名 l 在测试中可接受
     "N814",   # 测试中导入缩写合法（TR1, TR2 等）
     "N817",   # 测试中导入缩写合合法（CM 等）
+    "D",      # D (pydocstyle) 暂不强制 — 测试函数常见无 docstring
 ] # 测试代码：广泛豁免常见测试模式
 # ── 合法 CLI 工具允许 print() 输出 ──────────────────────────
 "src/cli/*.py" = ["T201"] # CLI 命令行接口输出
@@ -207,6 +209,7 @@ convention = "google"
     "E501", # 工具脚本：长行可读性优先
     "B007", # 未使用循环变量可接受
     "E741", # 工具脚本中 l 变量可接受
+    "D",    # D (pydocstyle) 暂不强制
 ] # 运维工具：豁免常见模式
 # ── 示例代码允许 print() ──────────────────────────
 "examples/**/*.py" = [
