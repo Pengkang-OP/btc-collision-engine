@@ -86,7 +86,7 @@ jobs:
 
           # 远程部署
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
-            "${STAGING_USER}@${STAGING_HOST}" << 'DEPLOY_EOF'
+            "${STAGING_USER}@${STAGING_HOST}" << DEPLOY_EOF
             cd "${STAGING_PATH:-/opt/btc-collision-engine}" || exit 1
 
             # 拉取最新 staging 镜像

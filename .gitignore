@@ -44,6 +44,7 @@ data_logs/
 monitoring_data/
 .cleanup_logs/
 benchmarks/results/
+!benchmarks/results/benchmark-baseline.json
 checkpoint.json
 *checkpoint.json
 config.json

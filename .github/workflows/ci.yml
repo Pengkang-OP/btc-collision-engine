@@ -31,7 +31,7 @@ jobs:
 
       - name: 安装工具
         run: |
-          pip install ruff>=0.9.0 mypy>=1.0.0
+          pip install "ruff>=0.15.0,<2.0.0" "mypy>=1.0.0,<2.0.0"
           pip install -r requirements-base.txt
 
       - name: ruff format 检查
@@ -121,7 +121,7 @@ jobs:
 
       - name: 安装工具
         run: |
-          pip install bandit>=1.7.0 pip-audit>=2.7.0
+          pip install "bandit>=1.7.0,<2.0.0" "pip-audit>=2.7.0,<3.0.0"
           pip install -r requirements-base.txt
 
       - name: Bandit 安全扫描
@@ -174,7 +174,7 @@ jobs:
     needs: [static-analysis]
     strategy:
       matrix:
-        python-version: ["3.12"]
+        python-version: ["3.12", "3.13"]
       fail-fast: false
 
     steps:
@@ -220,7 +220,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: test-output
+          name: test-output-py${{ matrix.python-version }}
           path: test-output.log
 
       - name: 上传覆盖率报告
@@ -229,7 +229,7 @@ jobs:
         with:
           files: ./coverage.xml
           flags: unittests
-          name: codecov-py3.12
+          name: codecov-py${{ matrix.python-version }}
           fail_ci_if_error: false
 
   # ──────────────────────────────────────────
