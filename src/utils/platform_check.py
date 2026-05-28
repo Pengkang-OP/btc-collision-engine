@@ -14,7 +14,7 @@ logger = get_configured_logger(__name__)
 class PlatformChecker:
     """Cross-platform compatibility checker."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize PlatformChecker."""
         self._results: list[tuple[bool, str]] = []
 

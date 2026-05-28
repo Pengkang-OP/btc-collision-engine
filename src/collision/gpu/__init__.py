@@ -20,6 +20,8 @@
 更新日期: 2026-05-23
 """
 
+from typing import Any
+
 from src import __version__ as __version__  # noqa: F401
 
 __author__ = "BTC Project"
@@ -65,7 +67,7 @@ __all__ = [  # first definition
 
 
 # 工厂函数（向后兼容：支持延迟导入/依赖注入场景）
-def get_gpu_engine_facade():
+def get_gpu_engine_facade() -> type[GPUEngineFacade]:
     """返回 GPUEngineFacade 类（非实例）."""
     return GPUEngineFacade
 
@@ -99,37 +101,37 @@ def create_gpu_collision_engine(
     )
 
 
-def get_monitoring_pipeline():
+def get_monitoring_pipeline() -> type[PerformanceMonitoringPipeline]:
     """返回 PerformanceMonitoringPipeline 类（非实例）."""
     return PerformanceMonitoringPipeline
 
 
-def get_collision_core():
+def get_collision_core() -> type[CollisionCore]:
     """返回 CollisionCore 类（非实例）."""
     return CollisionCore
 
 
-def get_vendor_factory():
+def get_vendor_factory() -> type[VendorOptimizationFactory]:
     """返回 VendorOptimizationFactory 类（非实例）."""
     return VendorOptimizationFactory
 
 
-def get_device_manager_adapter():
+def get_device_manager_adapter() -> type[DeviceManagerAdapter]:
     """返回 DeviceManagerAdapter 类（非实例）."""
     return DeviceManagerAdapter
 
 
-def get_kernel_adapter():
+def get_kernel_adapter() -> type[GPUKernelAdapter]:
     """返回 GPUKernelAdapter 类（非实例）."""
     return GPUKernelAdapter
 
 
-def get_async_pipeline_adapter():
+def get_async_pipeline_adapter() -> type[AsyncPipelineAdapter]:
     """返回 AsyncPipelineAdapter 类（非实例）."""
     return AsyncPipelineAdapter
 
 
-def get_data_logger_adapter():
+def get_data_logger_adapter() -> type[DataLoggerAdapter]:
     """返回 DataLoggerAdapter 类（非实例）."""
     return DataLoggerAdapter
 

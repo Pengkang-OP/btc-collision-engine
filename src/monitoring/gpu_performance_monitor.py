@@ -257,7 +257,7 @@ class GPUPerformanceMonitor:
             f"GPUPerformanceMonitor初始化: device={self._device_name}, check_interval={check_interval}s",
         )
 
-    def _init_device_info(self):
+    def _init_device_info(self) -> None:
         """初始化GPU设备信息."""
         try:
             if hasattr(self.engine, "_gpu_device") and self.engine._gpu_device:
@@ -918,7 +918,7 @@ class GPUPerformanceMonitor:
                 return "\n".join(csv_lines)
             raise ValueError(f"不支持的格式: {format}")
 
-    def _collect_engine_metrics(self):
+    def _collect_engine_metrics(self) -> None:
         """从GPU引擎收集指标."""
         try:
             # 收集显存信息
@@ -937,7 +937,7 @@ class GPUPerformanceMonitor:
         except Exception as e:
             logger.debug("收集GPU引擎指标失败: %s", e)
 
-    def _check_memory_leak(self):
+    def _check_memory_leak(self) -> None:
         """检测显存泄漏."""
         with self._lock:
             if len(self._memory_metrics) < 50:
@@ -960,7 +960,7 @@ class GPUPerformanceMonitor:
                         f"WARN 检测到可能的显存泄漏: 前半段={_first:.1f}MB, 后半段={_second:.1f}MB",
                     )
 
-    def _check_error_rate(self):
+    def _check_error_rate(self) -> None:
         """检查错误率."""
         with self._lock:
             if self._total_batches < 10:

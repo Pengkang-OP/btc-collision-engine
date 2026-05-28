@@ -10,7 +10,7 @@ logger = get_configured_logger(__name__)
 class StatsPerformanceMonitor:
     """Monitors and reports performance statistics."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize performance monitor."""
         self._start_time = time.time()
         self._last_report = time.time()

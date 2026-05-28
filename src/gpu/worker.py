@@ -216,7 +216,7 @@ class SingleGPUWorker(threading.Thread):
                     self._stats["status"] = "stopped"
             logger.info(f"GPU {self.device_idx} 工作器已停止")
 
-    def _initialize_gpu_engine(self):
+    def _initialize_gpu_engine(self) -> None:
         """初始化GPU碰撞引擎."""
         try:
             # 导入GPU碰撞引擎工厂
@@ -316,7 +316,7 @@ class SingleGPUWorker(threading.Thread):
             self._stats["error_count"] += 1
             self._stats["last_error"] = f"{type(error).__name__}: {error}"
 
-    def _execute_search(self, _retry_depth: int = 0):
+    def _execute_search(self, _retry_depth: int = 0) -> None:
         """执行私钥搜索（支持 random / range / brute_force 三种模式）。.
 
         _retry_depth: 内部参数，由 _handle_memory_error_retry 传递，外部调用方不应使用。
@@ -405,7 +405,7 @@ class SingleGPUWorker(threading.Thread):
 
         self._last_reported_match_count = current_count
 
-    def _update_stats(self):
+    def _update_stats(self) -> None:
         """更新统计信息."""
         if not self._gpu_engine:
             return

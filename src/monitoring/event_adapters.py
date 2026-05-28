@@ -18,7 +18,7 @@ __all__ = [
 class DataLoggerAdapter:
     """Adapter that wraps a DataLogger and subscribes it to events."""
 
-    def __init__(self, data_logger):
+    def __init__(self, data_logger: Any) -> None:
         """Initialize the data logger adapter."""
         self.data_logger = data_logger
 
@@ -47,21 +47,21 @@ def setup_data_logging(event_bus: "Any", data_logger: "Any") -> DataLoggerAdapte
 class EnhancedMonitoringAdapter:
     """Adapter that subscribes enhanced monitoring to event bus events."""
 
-    def __init__(self, monitoring_system):
+    def __init__(self, monitoring_system: Any) -> None:
         """Initialize the monitoring adapter."""
         self._monitoring = monitoring_system
 
-    def subscribe_to(self, event_bus):
+    def subscribe_to(self, event_bus: Any) -> None:
         """Subscribe to relevant events on the event bus."""
         from ..collision.events import EngineMatchEvent, EngineProgressEvent
 
         event_bus.subscribe(EngineMatchEvent, self._on_match)
         event_bus.subscribe(EngineProgressEvent, self._on_progress)
 
-    def _on_match(self, event):
+    def _on_match(self, event: Any) -> None:
         self._monitoring.record_metric("matches", 1)
 
-    def _on_progress(self, event):
+    def _on_progress(self, event: Any) -> None:
         keys = getattr(event, "keys_checked", 0) or getattr(event, "total_checked", 0)
         self._monitoring.record_metric("keys_checked", keys)
 
@@ -74,18 +74,18 @@ class AlertSystemAdapter:
     poll-based check_metrics() in the runtime loop.
     """
 
-    def __init__(self, alert_system):
+    def __init__(self, alert_system: Any) -> None:
         """Initialize the alert adapter."""
         self._alert_system = alert_system
 
-    def subscribe_to(self, event_bus):
+    def subscribe_to(self, event_bus: Any) -> None:
         """Subscribe to relevant events on the event bus."""
         from ..collision.events import EngineErrorEvent, EngineProgressEvent
 
         event_bus.subscribe(EngineProgressEvent, self._on_progress)
         event_bus.subscribe(EngineErrorEvent, self._on_error)
 
-    def _on_progress(self, event):
+    def _on_progress(self, event: Any) -> None:
         """Handle progress events — check metrics for alert conditions."""
         try:
             metrics = {
@@ -98,7 +98,7 @@ class AlertSystemAdapter:
         except Exception:
             logger.debug("AlertSystemAdapter: progress alert check failed (non-fatal)", exc_info=True)
 
-    def _on_error(self, event):
+    def _on_error(self, event: Any) -> None:
         """Handle error events — check error rate for alert conditions."""
         try:
             metrics = {

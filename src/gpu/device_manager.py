@@ -519,7 +519,7 @@ class GPUDeviceManager:
             skipped_addresses.append((masked, fmt, reason))
         return True
 
-    def _prepare_targets(self, targets: set[str]):
+    def _prepare_targets(self, targets: set[str]) -> None:
         """准备目标地址 (支持 P2PKH 和 Bech32 P2WPKH 格式).
 
         GPU 引擎支持以下目标格式:

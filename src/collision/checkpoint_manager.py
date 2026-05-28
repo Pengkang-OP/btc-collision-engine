@@ -79,7 +79,7 @@ class CheckpointManager:
     def save(
         self,
         state: dict[str, Any] | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         """Save checkpoint with state data.
 

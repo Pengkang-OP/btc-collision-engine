@@ -13,6 +13,7 @@ import traceback
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from .models import AnalysisReport, TestCase, TestResult, TestSuiteResult
 
@@ -30,7 +31,7 @@ class AutoTestModule:
         # 初始化测试用例
         self._discover_test_cases()
 
-    def _discover_test_cases(self):
+    def _discover_test_cases(self) -> None:
         """自动发现测试用例."""
         self.test_cases = [
             # 核心功能测试
@@ -533,7 +534,7 @@ class AutoTestModule:
             }
 
 
-def run_tests(project_root: Path | None = None, analysis_report=None) -> TestSuiteResult:
+def run_tests(project_root: Path | None = None, analysis_report: Any = None) -> TestSuiteResult:
     """运行所有测试."""
     module = AutoTestModule(project_root)
     return module.run_all_tests(analysis_report)

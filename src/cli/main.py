@@ -36,7 +36,7 @@ init_logging()
 logger = get_configured_logger("CLI")
 
 
-def _apply_output_flags(args) -> None:
+def _apply_output_flags(args: Any) -> None:
     """根据 --verbose / --quiet / --no-color 调整日志级别和输出行为."""
     import logging
 
@@ -145,7 +145,7 @@ def _print_dropped_summary(
     output.hint("提示: 仅 P2PKH (1...)、P2WPKH (bc1q... 20B)、WIF私钥、公钥格式可被碰撞匹配")
 
 
-def _run_security_check(args) -> None:
+def _run_security_check(args: Any) -> None:
     """在引擎启动前自动验证加密后端安全性（非阻塞模式）。.
 
     默认自动执行；使用 --skip-security-check 可跳过。
@@ -298,7 +298,7 @@ def _export_progress_data(engine: Any, args: Any) -> None:
     try:
         import json
 
-        stats = {}
+        stats: dict[str, Any] = {}
         if hasattr(engine, "get_stats"):
             stats = engine.get_stats() or {}
         elif hasattr(engine, "get_combined_stats"):

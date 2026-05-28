@@ -45,7 +45,7 @@ class _SyncFallbackHost(Protocol):
 # 避免循环导入：在运行时延迟导入 _SyncFallbackError
 
 
-def _get_sync_fallback_error_type():
+def _get_sync_fallback_error_type() -> type:
     """延迟获取 _SyncFallbackError 类型，避免循环导入。."""
     from ..executor_types import _SyncFallbackError  # type: ignore[import-unlocked]
 

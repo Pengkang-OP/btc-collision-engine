@@ -39,7 +39,7 @@ class CryptoConfig:
         "strict_wif_validation": True,  # 严格WIF格式验证
     }
 
-    def __init__(self, config_file: str | None = None, config_manager=None) -> None:
+    def __init__(self, config_file: str | None = None, config_manager: Any = None) -> None:
         """初始化加密配置.
 
         Args:
@@ -218,7 +218,7 @@ class CryptoConfig:
         gpu_config = GPUConfig()
         return gpu_config.get_gpu_device_info()
 
-    def create_gpu_engine(self, targets) -> Any:
+    def create_gpu_engine(self, targets: Any) -> Any:
         """根据当前GPU配置创建GPU碰撞引擎.
 
         Args:

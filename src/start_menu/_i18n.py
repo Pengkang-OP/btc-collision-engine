@@ -1,5 +1,7 @@
 """启动菜单国际化 — 翻译字典和 _t() 包装函数."""
 
+from typing import Any
+
 _FALLBACK_ZH = {
     "menu.title": "BTC 碰撞引擎 - 启动菜单",
     "menu.system_status": "系统状态:",
@@ -103,13 +105,13 @@ try:
     set_language(_lang)
     _fallback = _FALLBACK_ZH if _lang == "zh" else _FALLBACK_EN
 
-    def _t(key: str, **kwargs) -> str:
+    def _t(key: str, **kwargs: Any) -> str:
         text = _i18n_t(key)
         if text == key and key in _fallback:
             text = _fallback[key]
         return text.format(**kwargs) if kwargs else text
 except Exception:
 
-    def _t(key: str, **kwargs) -> str:
+    def _t(key: str, **kwargs: Any) -> str:
         text = _FALLBACK_ZH.get(key, key)
         return text.format(**kwargs) if kwargs else text

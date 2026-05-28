@@ -9,6 +9,7 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
+from typing import Any
 
 
 def atomic_write(
@@ -45,8 +46,8 @@ def atomic_write(
 
 def atomic_json_write(
     filepath: str | Path,
-    data,
-    **kwargs,
+    data: Any,
+    **kwargs: Any,
 ) -> None:
     """Atomically write JSON data to a file.
 
@@ -62,7 +63,7 @@ def atomic_json_write(
     )
 
 
-def atomic_json_read(filepath: str | Path):
+def atomic_json_read(filepath: str | Path) -> Any:
     """Atomically read JSON data from a file.
 
     Args:

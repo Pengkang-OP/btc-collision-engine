@@ -40,6 +40,7 @@ __all__ = [
 ]
 
 import hashlib
+from typing import Any
 
 # Import logging configuration
 from ..utils import get_configured_logger
@@ -84,7 +85,7 @@ class BatchOptimizer:
             f"Batch optimizer initialized: batch_size={batch_size:,}",
         )
 
-    def _precompute_constants(self):
+    def _precompute_constants(self) -> None:
         """Precompute commonly used constants."""
         # Note: secp256k1 P and N are 256-bit large integers,
         # cannot use NumPy fixed-precision types
@@ -280,7 +281,7 @@ class BatchCollisionProcessor:
             f"BatchCollisionProcessor initialized: batch_size={batch_size:,}",
         )
 
-    def set_targets(self, addresses: list[str]):
+    def set_targets(self, addresses: list[str]) -> None:
         """Set target addresses.
 
         Args:
@@ -295,7 +296,7 @@ class BatchCollisionProcessor:
     def process_batch(
         self,
         private_keys: list[bytes],
-        address_generator,
+        address_generator: Any,
     ) -> list[tuple[bytes, str]]:
         """Process batch of private keys, detect collisions.
 
@@ -338,7 +339,7 @@ class BatchCollisionProcessor:
     def _batch_generate_addresses(
         self,
         private_keys: list[bytes],
-        address_generator,
+        address_generator: Any,
     ) -> list[str]:
         """Batch generate Bitcoin addresses.
 
@@ -375,7 +376,7 @@ class NumpyOptimizedAddressGenerator:
     for improved batch address generation performance.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize optimized address generator."""
         from ..core.address_generator import (
             AddressGenerator,

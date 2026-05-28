@@ -1,7 +1,7 @@
 """Log collector for aggregating log entries."""
 
 import threading
-from collections.abc import Callable
+from typing import Any
 
 from ..utils import get_configured_logger
 
@@ -36,7 +36,7 @@ class LogCollector:
             except Exception as e:
                 logger.error("Log handler error: %s", e)
 
-    def collect_from_queue(self, event_type, data: dict) -> None:
+    def collect_from_queue(self, event_type: Any, data: dict) -> None:
         """Collect an event from a queue (backward compat API).
 
         Args:

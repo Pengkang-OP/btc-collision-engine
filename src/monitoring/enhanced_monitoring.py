@@ -21,7 +21,7 @@ class EnhancedMonitoringSystem:
     analysis, and resource usage tracking.
     """
 
-    def __init__(self, engine=None, config=None):
+    def __init__(self, engine: Any = None, config: Any = None) -> None:
         """Initialize the enhanced monitor."""
         self._engine = engine
         self._config = config if config is not None else MonitorConfig()
@@ -95,7 +95,7 @@ class EnhancedMonitoringSystem:
 
         return valid
 
-    def _init_monitoring_components(self):
+    def _init_monitoring_components(self) -> None:
         """Initialize monitoring data components."""
         self.storage = {}
         self.detector = {}
@@ -104,17 +104,17 @@ class EnhancedMonitoringSystem:
         self.report_generator = {}
 
     @property
-    def config(self):
+    def config(self) -> Any:
         """Get the monitoring configuration."""
         return self._config
 
     @property
-    def engine(self):
+    def engine(self) -> Any:
         """Get the engine instance."""
         return self._engine
 
     @engine.setter
-    def engine(self, value):
+    def engine(self, value: Any) -> None:
         """Set the engine instance."""
         self._engine = value
 

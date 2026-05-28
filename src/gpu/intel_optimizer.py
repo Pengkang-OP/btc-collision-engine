@@ -158,7 +158,7 @@ class IntelGPUOptimizer:
                 classes.append(None)
         return tuple(classes)
 
-    def _init_timeout_manager(self, timeout_cls) -> None:
+    def _init_timeout_manager(self, timeout_cls: Any) -> None:
         """初始化自适应超时管理器（P1）。."""
         self._timeout_manager = None
         if not timeout_cls:
@@ -181,7 +181,7 @@ class IntelGPUOptimizer:
                 exc_info=True,
             )
 
-    def _init_memory_monitor(self, memory_cls) -> None:
+    def _init_memory_monitor(self, memory_cls: Any) -> None:
         """初始化显存监控器（P1）。."""
         self._memory_monitor = None
         if not memory_cls:
@@ -218,7 +218,7 @@ class IntelGPUOptimizer:
                 exc_info=True,
             )
 
-    def _init_benchmark_suite(self, benchmark_cls, engine) -> None:
+    def _init_benchmark_suite(self, benchmark_cls: Any, engine: Any) -> None:
         """初始化基准测试套件（P2）。."""
         self._benchmark_suite = None
         if not benchmark_cls or engine is None:
@@ -233,7 +233,7 @@ class IntelGPUOptimizer:
                 exc_info=True,
             )
 
-    def _init_auto_tuner(self, tuner_cls, engine) -> None:
+    def _init_auto_tuner(self, tuner_cls: Any, engine: Any) -> None:
         """初始化自动调优器（P2）。."""
         self._auto_tuner = None
         if not tuner_cls or engine is None:
@@ -248,7 +248,7 @@ class IntelGPUOptimizer:
                 exc_info=True,
             )
 
-    def _init_performance_reporter(self, reporter_cls, engine) -> None:
+    def _init_performance_reporter(self, reporter_cls: Any, engine: Any) -> None:
         """初始化性能报告生成器（P2）。."""
         self._performance_reporter = None
         if not reporter_cls or engine is None:

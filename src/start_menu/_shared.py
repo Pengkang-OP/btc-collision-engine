@@ -13,9 +13,9 @@ try:
 
     _has_rich = True
 except ImportError:
-    _RichConsole = None  # type: ignore[assignment]
-    _RichPanel = None  # type: ignore[assignment]
-    _RichText = None  # type: ignore[assignment]
+    _RichConsole = None  # type: ignore[assignment, misc]
+    _RichPanel = None  # type: ignore[assignment, misc]
+    _RichText = None  # type: ignore[assignment, misc]
     _has_rich = False
 
 if _has_rich:

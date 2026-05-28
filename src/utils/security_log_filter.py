@@ -8,6 +8,7 @@ v4.5.1: 正则模式已提取至 src.utils.sensitive_patterns 共享模块。
 
 import hashlib
 import logging
+from typing import Any
 
 from .sensitive_patterns import (
     BECH32_ADDRESS,
@@ -265,7 +266,7 @@ def sanitize_private_key_for_log(private_key: bytes) -> str:
 
 
 # 便捷函数
-def log_safe_error(logger: logging.Logger, message: str, **kwargs) -> None:
+def log_safe_error(logger: logging.Logger, message: str, **kwargs: Any) -> None:
     """记录安全的错误日志（自动过滤敏感信息）.
 
     Args:
@@ -278,7 +279,7 @@ def log_safe_error(logger: logging.Logger, message: str, **kwargs) -> None:
     logger.error(message, **kwargs)
 
 
-def log_safe_debug(logger: logging.Logger, message: str, **kwargs) -> None:
+def log_safe_debug(logger: logging.Logger, message: str, **kwargs: Any) -> None:
     """记录安全的调试日志（自动过滤敏感信息）.
 
     Args:
@@ -294,7 +295,7 @@ def log_safe_exception(
     logger: logging.Logger,
     message: str,
     exc: BaseException | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> None:
     """安全记录异常（不泄露敏感堆栈信息）.
 

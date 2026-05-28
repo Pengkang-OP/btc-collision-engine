@@ -210,7 +210,7 @@ class WorkStealingThreadPool:
             f"failed={stats['tasks_failed']}",
         )
 
-    def submit(self, fn: Callable, *args, **kwargs) -> Future:
+    def submit(self, fn: Callable, *args: Any, **kwargs: Any) -> Future:
         """Submit a task to the thread pool.
 
         Args:
@@ -434,8 +434,8 @@ class TaskBatch:
     def submit(
         self,
         fn: Callable,
-        *args,
-        **kwargs,
+        *args: Any,
+        **kwargs: Any,
     ) -> None:
         """Submit a task to the batch."""
         future = self._pool.submit(fn, *args, **kwargs)

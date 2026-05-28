@@ -7,6 +7,8 @@
     "wealth-management@cb_teams_marketplace": true,
     "lseg@cb_teams_marketplace": true,
     "spglobal@cb_teams_marketplace": true,
-    "finance-data@cb_teams_marketplace": true
+    "finance-data@cb_teams_marketplace": true,
+    "unit-testing@codebuddy-plugins-official": true,
+    "godot-mcp@codebuddy-plugins-official": true
   }
 }

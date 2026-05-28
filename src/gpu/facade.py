@@ -52,13 +52,13 @@ class GPUFacade:
 
     def __init__(
         self,
-        targets=None,
-        use_gpu=True,
-        checkpoint_enabled=False,
-        dedup_enabled=False,
-        config=None,
-        **kwargs,
-    ):
+        targets: Any = None,
+        use_gpu: bool = True,
+        checkpoint_enabled: bool = False,
+        dedup_enabled: bool = False,
+        config: Any = None,
+        **kwargs: Any,
+    ) -> None:
         """初始化GPU外观类.
 
         Args:
@@ -378,16 +378,16 @@ class GPUFacade:
             "matches_found": len(stats.get("matches", [])),
         }
 
-    def __enter__(self):
+    def __enter__(self) -> Any:
         """上下文管理器入口."""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> bool:
         """上下文管理器出口."""
         self.cleanup()
         return False
 
-    def __del__(self):
+    def __del__(self) -> None:
         """析构函数.
 
         风险说明（评估为低风险，暂不修改）：

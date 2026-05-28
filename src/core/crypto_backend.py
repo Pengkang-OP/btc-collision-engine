@@ -683,7 +683,7 @@ class CryptoBackendManager:
     def set_backend(
         self,
         backend_type: BackendType,
-        **kwargs,
+        **kwargs: Any,
     ) -> bool:
         """Set current backend (thread-safe).
 
@@ -844,7 +844,7 @@ def generate_public_key(
 
 def set_crypto_backend(
     backend_type: BackendType,
-    **kwargs,
+    **kwargs: Any,
 ) -> bool:
     """Set crypto backend.
 

@@ -99,7 +99,7 @@ def recommend_parameters(args: Any) -> dict[str, Any]:
 class AdvancedFeatureManager:
     """Manages advanced CLI features."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize advanced features manager."""
         self._features: dict[str, bool] = {
             "batch_size_tuning": False,

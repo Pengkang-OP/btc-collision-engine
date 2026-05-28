@@ -6,6 +6,7 @@ group in arg_parser.py.
 """
 
 import os
+from typing import Any
 
 from ..utils import get_configured_logger
 
@@ -21,7 +22,7 @@ class OptimizationCLI:
     """
 
     @staticmethod
-    def add_arguments(parser) -> None:
+    def add_arguments(parser: Any) -> None:
         """Add auto-tuning arguments to parser.
 
         Args:
@@ -43,7 +44,7 @@ class OptimizationCLI:
         )
 
     @staticmethod
-    def auto_tune(args) -> dict:
+    def auto_tune(args: Any) -> dict[str, Any]:
         """Auto-tune batch size and workers based on system resources.
 
         Args:

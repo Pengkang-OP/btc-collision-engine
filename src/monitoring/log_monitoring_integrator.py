@@ -1,5 +1,7 @@
 """Integration between logging and monitoring systems."""
 
+from typing import Any
+
 from ..utils import get_configured_logger
 
 __all__ = ["LogMonitoringIntegrator", "get_log_monitoring_integrator"]
@@ -11,7 +13,7 @@ logger = get_configured_logger(__name__)
 class LogMonitoringIntegrator:
     """Integrates log events with the monitoring system."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the log-monitoring integrator."""
         self._alert_system = None
         logger.info(
@@ -35,7 +37,7 @@ class LogMonitoringIntegrator:
                 log_entry.get("source", ""),
             )
 
-    def integrate_with_monitoring_system(self, monitoring_system) -> None:
+    def integrate_with_monitoring_system(self, monitoring_system: Any) -> None:
         """Integrate with a monitoring system (connect alert system, hooks, etc.).
 
         Args:
@@ -45,7 +47,7 @@ class LogMonitoringIntegrator:
         if hasattr(monitoring_system, "alert_system"):
             self.set_alert_system(monitoring_system.alert_system)
 
-    def set_alert_system(self, alert_system) -> None:
+    def set_alert_system(self, alert_system: Any) -> None:
         """Set alert system reference.
 
         Args:

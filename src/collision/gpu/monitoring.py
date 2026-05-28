@@ -203,7 +203,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
 
         return stats
 
-    def get_data_logger(self):
+    def get_data_logger(self) -> Any:
         """获取数据日志适配器.
 
         Returns:
@@ -218,7 +218,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
 
     # ========== 私有方法 ==========
 
-    def _create_performance_monitor(self):
+    def _create_performance_monitor(self) -> Any:
         """创建GPU性能监控器.
 
         从现有 GPUPerformanceMonitor 单例获取实例，
@@ -243,7 +243,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
             logger.warning("创建GPU性能监控器失败: %s", e)
             return None
 
-    def _create_engine_monitor(self):
+    def _create_engine_monitor(self) -> Any:
         """创建引擎监控器.
 
         从现有 GPUEngineMonitor 适配，用于追踪 batch_size 调整历史
@@ -263,7 +263,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
             logger.warning("创建引擎监控器失败: %s", e)
             return None
 
-    def _create_data_logger(self):
+    def _create_data_logger(self) -> Any:
         """创建数据日志适配器.
 
         通过 DataLoggerAdapter 桥接 DataLogger API，

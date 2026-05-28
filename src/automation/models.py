@@ -94,7 +94,7 @@ class AnalysisReport:
             "metadata": self.metadata,
         }
 
-    def save(self, filepath: str):
+    def save(self, filepath: str) -> None:
         """保存报告到文件."""
         with pathlib.Path(filepath).open("w", encoding="utf-8") as f:
             json.dump(self.to_dict(), f, ensure_ascii=False, indent=2)
@@ -228,7 +228,7 @@ class AuditResult:
             "metadata": self.metadata,
         }
 
-    def save(self, filepath: str):
+    def save(self, filepath: str) -> None:
         """保存审核结果到文件."""
         with pathlib.Path(filepath).open("w", encoding="utf-8") as f:
             json.dump(self.to_dict(), f, ensure_ascii=False, indent=2)
@@ -254,6 +254,6 @@ class LoopState:
         """检查是否可以重试."""
         return self.retry_count < self.max_retries
 
-    def increment_retry(self):
+    def increment_retry(self) -> None:
         """增加重试计数."""
         self.retry_count += 1

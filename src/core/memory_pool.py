@@ -158,7 +158,7 @@ class ObjectPool:
             f"prewarm={_prewarm_ms:.1f}ms",
         )
 
-    def _preallocate(self, count: int):
+    def _preallocate(self, count: int) -> None:
         """Pre-allocate objects into the pool."""
         for _ in range(count):
             obj = self._factory()

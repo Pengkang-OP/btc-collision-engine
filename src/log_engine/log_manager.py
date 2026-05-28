@@ -10,7 +10,7 @@ logger = get_configured_logger(__name__)
 class LogManager:
     """Manages log configuration and lifecycle."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the log manager."""
         self._loggers: dict[str, logging.Logger] = {}
 

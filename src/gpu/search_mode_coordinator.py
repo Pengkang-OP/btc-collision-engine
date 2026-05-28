@@ -49,7 +49,7 @@ class SearchModeCoordinator:
         # 初始化搜索模式
         self._init_modes()
 
-    def _init_modes(self):
+    def _init_modes(self) -> None:
         """初始化所有搜索模式."""
         # v5.1: 从模块级常量获取默认值（而非硬编码 5）
         from .search_modes.random_search import SEED_PREFETCH_SIZE
@@ -124,14 +124,14 @@ class SearchModeCoordinator:
             end = kwargs.get("end", 2**256 - 1)
             search_mode.execute(start, end)
 
-    def _execute_random_search(self, search_mode: RandomSearchMode, **kwargs):
+    def _execute_random_search(self, search_mode: RandomSearchMode, **kwargs: Any) -> None:
         """执行随机搜索."""
         kwargs.get("resume", False)
 
         # 调用RandomSearchMode的execute方法，它会自动选择同步或异步模式
         search_mode.execute()
 
-    def _resume_from_checkpoint(self):
+    def _resume_from_checkpoint(self) -> None:
         """从检查点恢复."""
         if self.engine.checkpoint_mgr:
             checkpoint = self.engine.checkpoint_mgr.load()

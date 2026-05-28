@@ -34,7 +34,7 @@ import time
 from collections import defaultdict
 from functools import wraps
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Callable
 
 from ..utils import get_configured_logger
 
@@ -87,11 +87,11 @@ def _validate_api_key() -> bool:
     return secrets.compare_digest(provided, _api_key or "")
 
 
-def require_auth(f):
+def require_auth(f: Callable) -> Callable:
     """Decorator for requiring API authentication."""
 
     @wraps(f)
-    def decorated(*args, **kwargs):
+    def decorated(*args: Any, **kwargs: Any) -> Any:
         if f.__name__ in UNPROTECTED_ROUTES:
             return f(*args, **kwargs)
         if not _validate_api_key():
@@ -111,11 +111,11 @@ RATE_LIMIT_WINDOW = 60  # 窗口大小（秒）
 _request_history: defaultdict[str, list[float]] = defaultdict(list)
 
 
-def rate_limit(f):
+def rate_limit(f: Callable) -> Callable:
     """滑动窗口速率限制装饰器（基于客户端 IP + 端点）."""
 
     @wraps(f)
-    def decorated(*args, **kwargs):
+    def decorated(*args: Any, **kwargs: Any) -> Any:
         client_ip = request.remote_addr or "unknown"
         endpoint = request.endpoint or "unknown"
         key = f"{client_ip}:{endpoint}"
@@ -771,7 +771,7 @@ def create_app(data_dir: Path | None = None, debug: bool = False) -> "Flask":
 
     @app.route("/")
     @require_auth
-    def index():
+    def index() -> Any:
         """仪表板主页."""
         stats = get_current_stats(data_logs_dir)
         history = get_history(data_logs_dir, limit=20)
@@ -804,14 +804,14 @@ def create_app(data_dir: Path | None = None, debug: bool = False) -> "Flask":
     @app.route(f"{API_PREFIX}/status")
     @rate_limit
     @require_auth
-    def api_status():
+    def api_status() -> Any:
         """API: 当前运行状态."""
         return jsonify(get_current_stats(data_logs_dir))
 
     @app.route(f"{API_PREFIX}/history")
     @rate_limit
     @require_auth
-    def api_history():
+    def api_history() -> Any:
         """API: 历史数据.
 
         Query params:
@@ -824,7 +824,7 @@ def create_app(data_dir: Path | None = None, debug: bool = False) -> "Flask":
     @app.route(f"{API_PREFIX}/errors")
     @rate_limit
     @require_auth
-    def api_errors():
+    def api_errors() -> Any:
         """API: 错误日志.
 
         Query params:
@@ -837,7 +837,7 @@ def create_app(data_dir: Path | None = None, debug: bool = False) -> "Flask":
     @app.route(f"{API_PREFIX}/report")
     @rate_limit
     @require_auth
-    def api_report():
+    def api_report() -> Any:
         """API: 日报告摘要."""
         stats = get_current_stats(data_logs_dir)
         history = get_history(data_logs_dir, limit=100)
@@ -868,7 +868,7 @@ def create_app(data_dir: Path | None = None, debug: bool = False) -> "Flask":
     @app.route(f"{API_PREFIX}/security-audit")
     @rate_limit
     @require_auth
-    def api_security_audit():
+    def api_security_audit() -> Any:
         """API: 安全审计状态（已脱敏，不暴露私钥等敏感信息）.
 
         Returns:
@@ -880,12 +880,12 @@ def create_app(data_dir: Path | None = None, debug: bool = False) -> "Flask":
         return jsonify(audit_data)
 
     @app.route("/health")
-    def health():
+    def health() -> Any:
         """健康检查端点."""
         return jsonify({"status": "ok", "timestamp": time.time()})
 
     @app.route("/api/<path:subpath>")
-    def api_redirect(subpath: str):
+    def api_redirect(subpath: str) -> Any:
         """旧 /api/* 路径自动 301 重定向至 /api/v1/*."""
         return redirect(f"{API_PREFIX}/{subpath}"), 301
 
@@ -949,7 +949,7 @@ def run_dashboard(
 # ──────────────────────────────────────────────────────────────────
 
 
-def main():
+def main() -> None:
     """Dashboard CLI entry point."""
     parser = argparse.ArgumentParser(
         description="BTC 碰撞引擎 - Web 监控仪表板",

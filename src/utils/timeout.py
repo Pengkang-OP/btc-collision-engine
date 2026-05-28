@@ -286,7 +286,7 @@ def invoke_with_timeout(
 # ============================================================================
 
 
-def with_timeout(seconds: float):
+def with_timeout(seconds: float) -> Any:
     """超时装饰器工厂.
 
     在独立线程中执行被装饰函数，超时则记录 WARNING 日志并静默返回。

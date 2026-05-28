@@ -277,7 +277,7 @@ class P2PKHAddressGenerator(BaseAddressGenerator):
         # Check crypto backend and issue performance warning
         self._check_crypto_backend_performance()
 
-    def _check_crypto_backend_performance(self):
+    def _check_crypto_backend_performance(self) -> None:
         """Check crypto backend and issue performance warning.
 
         If using pure Python backend, warns and suggests installing

@@ -156,7 +156,7 @@ class GPUContext:
         """
         return self._get_or_compile_kernel(kernel_source)
 
-    def _get_or_compile_kernel(self, kernel_source: str):
+    def _get_or_compile_kernel(self, kernel_source: str) -> Any:
         """获取或编译OpenCL内核（内核缓存 + 重试机制）.
 
         OpenCL Program 不能跨 context 共享，但同一 context 内相同源码可以复用。

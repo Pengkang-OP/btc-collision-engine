@@ -75,12 +75,12 @@ class AddressMatcher:
 
         logger.info(f"AddressMatcher 初始化: 策略={strategy}, 目标数={len(self.targets)}")
 
-    def _init_hash_set(self):
+    def _init_hash_set(self) -> None:
         """初始化Hash集合策略."""
         self._hash_set = set(self.targets)
         logger.debug(f"Hash集合初始化完成: {len(self._hash_set)} 个目标")
 
-    def _init_bloom_filter(self, capacity: int, error_rate: float):
+    def _init_bloom_filter(self, capacity: int, error_rate: float) -> None:
         """初始化布隆过滤器策略."""
         try:
             self._bloom = BloomFilter(capacity=capacity, error_rate=error_rate)
@@ -99,7 +99,7 @@ class AddressMatcher:
             self.strategy = "hash_set"
             self._init_hash_set()
 
-    def _init_trie(self):
+    def _init_trie(self) -> None:
         """初始化前缀树策略."""
         try:
             self._trie = {}
@@ -111,7 +111,7 @@ class AddressMatcher:
             self.strategy = "hash_set"
             self._init_hash_set()
 
-    def _insert_trie(self, address: str):
+    def _insert_trie(self, address: str) -> None:
         """插入地址到前缀树."""
         node = self._trie
         for char in address:

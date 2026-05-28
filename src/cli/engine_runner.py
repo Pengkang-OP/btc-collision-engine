@@ -190,7 +190,7 @@ def _setup_and_start_engine(
     # 停止事件：用于优雅停止的跨线程通信
     stop_event = threading.Event()
 
-    def _sig_handler(signum, frame):
+    def _sig_handler(signum: Any, frame: Any) -> None:
         logger.info("收到信号 %s，开始优雅停止", signum)
         stop_event.set()
         engine.stop()

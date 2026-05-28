@@ -149,7 +149,7 @@ class CollisionCore(ICollisionCore):
 
     # ========== 私有方法 ==========
 
-    def _init_stats(self):
+    def _init_stats(self) -> None:
         """初始化碰撞统计.
 
         初始化 CollisionStats 实例，用于跟踪引擎运行时的统计数据。
@@ -173,7 +173,7 @@ class CollisionCore(ICollisionCore):
             logger.error("初始化碰撞统计失败: %s", e)
             raise
 
-    def _init_checkpoint(self):
+    def _init_checkpoint(self) -> None:
         """初始化断点管理器."""
         # 优先使用依赖注入的工厂
         if self._checkpoint_factory:
@@ -193,7 +193,7 @@ class CollisionCore(ICollisionCore):
             logger.error("初始化断点管理器失败: %s", e)
             raise
 
-    def _init_dedup_filter(self):
+    def _init_dedup_filter(self) -> None:
         """初始化去重过滤器."""
         # 优先使用依赖注入的工厂
         if self._dedup_factory:
@@ -214,7 +214,7 @@ class CollisionCore(ICollisionCore):
             logger.error("初始化去重过滤器失败: %s", e)
             raise
 
-    def _restore_checkpoint(self):
+    def _restore_checkpoint(self) -> None:
         """恢复断点.
 
         Phase 4实现:
@@ -266,7 +266,7 @@ class CollisionCore(ICollisionCore):
         except Exception as e:
             logger.error("恢复断点失败: %s", e)
 
-    def _save_checkpoint(self):
+    def _save_checkpoint(self) -> None:
         """保存断点."""
         if not self.checkpoint or not self.stats:
             return

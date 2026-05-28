@@ -45,7 +45,7 @@ def _format_size(size_bytes: int) -> str:
 
 
 def _detect_gpu_quick() -> str | None:
-    def _probe():
+    def _probe() -> str | None:
         try:
             from src.gpu.device import GPUDeviceDetector
 

@@ -55,7 +55,7 @@ else:
 class KeyboardListener:
     """键盘监听器（兼容旧接口，推荐直接使用 check_key()）。."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """初始化键盘监听器。."""
         self._running = False
 

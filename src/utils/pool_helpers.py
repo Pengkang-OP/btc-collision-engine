@@ -2,6 +2,7 @@
 
 import threading
 import time
+from typing import Any
 
 from .logging_config import get_configured_logger
 
@@ -11,7 +12,7 @@ logger = get_configured_logger(__name__)
 class _CleanupThreadState:
     """Shared state for cleanup thread management."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.stop_event = threading.Event()
         self.thread: threading.Thread | None = None
 
@@ -20,7 +21,7 @@ def run_cleanup_loop_safely(
     state: _CleanupThreadState,
     interval: float,
     name: str,
-    cleanup_fn,
+    cleanup_fn: Any,
     on_memory_error: str = "continue",
 ) -> None:
     """Run a cleanup loop with safe error handling.
@@ -54,7 +55,7 @@ def run_cleanup_loop_safely(
 
 def start_cleanup_thread(
     state: _CleanupThreadState,
-    loop_fn,
+    loop_fn: Any,
     interval: float,
     name: str,
 ) -> None:

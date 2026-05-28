@@ -40,7 +40,7 @@ class SafeRotatingFileHandler(RotatingFileHandler):
     仅在 Windows 平台启用重试逻辑；Linux/macOS 行为与原生 RotatingFileHandler 完全相同。
     """
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Initialize Windows-safe rotating file handler.
 
         Adds retry logic for Windows file lock conflicts.
@@ -331,7 +331,7 @@ class LoggingConfig:
                     self._rotation_type: str | None = None
                     self._config_snapshot: dict[str, Any] | None = None
 
-                def setFormatter(self, fmt) -> None:  # noqa: N802 — 继承父类 camelCase 方法
+                def setFormatter(self, fmt: Any) -> None:  # noqa: N802 — 继承父类 camelCase 方法
                     self._inner.setFormatter(fmt)
                     self._format_str = fmt
 
