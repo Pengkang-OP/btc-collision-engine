@@ -642,6 +642,7 @@ class AlertSystem:
 
         except Exception as e:
             logger.error("加载告警历史失败: %s", e)
+            raise
 
     def clear_history(self) -> None:
         """清空告警历史."""

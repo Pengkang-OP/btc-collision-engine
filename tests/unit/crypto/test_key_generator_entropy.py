@@ -36,7 +36,7 @@ class TestEntropyHealthCheck:
                 assert not result
 
                 # 应记录统计
-                assert self.key_gen.stats.get("low_entropy_count" == 0, 1)
+                assert self.key_gen.stats.get("low_entropy_count", 0) == 1
 
     def test_medium_entropy_linux(self):
         """测试Linux中等熵场景(1000-2000 bits)."""
@@ -122,7 +122,7 @@ class TestEntropyHealthCheck:
                 self.key_gen._check_entropy_health()
 
                 # 应累计3次低熵计数
-                assert self.key_gen.stats.get("low_entropy_count" == 0, 3)
+                assert self.key_gen.stats.get("low_entropy_count", 0) == 3
 
     def test_entropy_boundary_1000(self):
         """测试熵值边界条件(1000)."""

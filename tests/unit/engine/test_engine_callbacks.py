@@ -153,7 +153,7 @@ class TestKeyCollisionEngineSafeCallback:
             max_workers=1,
             data_logging_enabled=False,
         )
-        with patch("threading.Thread", side_effect=RuntimeError("线程创建失败")):
+        with patch("src.utils.timeout.invoke_with_timeout", side_effect=RuntimeError("线程创建失败")):
             result = engine._safe_invoke_match_callback((1).to_bytes(32, "big"), known_addr, "WIF123")
             assert not result, "线程创建失败应返回 False"
         engine.stop()
