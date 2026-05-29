@@ -195,8 +195,7 @@ jobs:
       - name: 安装 Python 依赖
         run: |
           pip install --upgrade pip setuptools wheel
-          # coincurve: 强制源码编译链接系统 libsecp256k1（预编译 wheel 可能未正确链接）
-          pip install --no-binary coincurve -r requirements.txt
+          pip install -r requirements.txt
 
       - name: 验证 coincurve 后端
         run: |
@@ -273,8 +272,7 @@ jobs:
       - name: 安装 Python 依赖
         run: |
           pip install --upgrade pip setuptools wheel
-          # coincurve: 强制源码编译链接系统 libsecp256k1
-          pip install --no-binary coincurve -r requirements.txt
+          pip install -r requirements.txt
 
       - name: 五大维度综合测试
         run: pytest tests/test_comprehensive_5d.py -v --tb=short --timeout=120 --timeout-method=thread
@@ -320,8 +318,7 @@ jobs:
       - name: 安装 Python 依赖
         run: |
           pip install --upgrade pip setuptools wheel
-          # coincurve: 强制源码编译链接系统 libsecp256k1
-          pip install --no-binary coincurve -r requirements.txt
+          pip install -r requirements.txt
 
       - name: 运行性能基准测试
         run: |
