@@ -20,6 +20,25 @@ from src.constants import (  # noqa: F401
     clamp_batch_size,
 )
 
-__all__ = ["DEFAULT_BATCH_SIZE"]
+__all__ = [
+    "BATCH_SIZE_ALIGNMENT",
+    "BYTES_PER_MB",
+    "DEFAULT_BATCH_SIZE",
+    "DEFAULT_MEMORY_EFFICIENCY",
+    "GPU_DEFAULT_BATCH_SIZE",
+    "MAX_BATCH_SIZE",
+    "MEMORY_EFFICIENCY_MAX",
+    "MEMORY_EFFICIENCY_MIN",
+    "MIN_BATCH_SIZE",
+    "OPENCL_CL_STANDARDS",
+    "OPENCL_MIN_REQUIRED_VERSION",
+    "OPENCL_OPTIMAL_VERSION",
+    "OPENCL_RECOMMENDED_VERSION",
+    "OPENCL_UPGRADE_ADVICE",
+    "OPENCL_VERSION_UNKNOWN",
+    "PER_KEY_MEMORY_BYTES",
+    "align_batch_size",
+    "clamp_batch_size",
+]
 
 DEFAULT_BATCH_SIZE = GPU_DEFAULT_BATCH_SIZE

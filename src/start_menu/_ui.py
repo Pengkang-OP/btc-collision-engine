@@ -6,7 +6,7 @@ import subprocess
 from pathlib import Path
 
 from ._i18n import _t
-from ._shared import (
+from ._shared import (  # type: ignore[attr-defined]
     _PROJECT_ROOT,
     _PYTHON_EXE,
     _console,
