@@ -52,7 +52,7 @@ def _make_rotating_handler(
     )
 
 
-class SafeStreamHandler(logging.StreamHandler):
+class SafeStreamHandler(logging.StreamHandler[Any]):
     """Windows GBK 编码安全控制台处理器.
 
     在 Windows CMD/PowerShell（默认 GBK 编码）环境下，中文日志消息会乱码。
@@ -410,7 +410,7 @@ def log_performance(
     logger: logging.Logger,
     operation: str,
     level: str = "DEBUG",
-) -> Callable:
+) -> Callable[..., Any]:
     """性能监控装饰器工厂.
 
     使用示例:
@@ -419,7 +419,7 @@ def log_performance(
             pass
     """
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             with PerformanceMonitor(logger, operation, level):
@@ -462,7 +462,7 @@ class AsyncLogger:
             max_queue_size: 队列最大长度，超出时丢弃最旧日志
 
         """
-        self._queue: queue.Queue = queue.Queue(maxsize=max_queue_size)
+        self._queue: queue.Queue[Any] = queue.Queue[Any](maxsize=max_queue_size)
         self._handler: logging.Handler | None = None
         self._writer_thread = threading.Thread(
             target=self._write_loop,
@@ -573,7 +573,7 @@ class AsyncLogger:
 
         _logger.info("AsyncLogger 已关闭")
 
-    def get_stats(self) -> dict:
+    def get_stats(self) -> dict[str, Any]:
         """获取异步日志统计信息."""
         return {
             "queue_size": self._queue.qsize(),
@@ -631,6 +631,6 @@ class AsyncFileHandler(logging.Handler):
         self._async_logger.close()
         super().close()
 
-    def get_stats(self) -> dict:
+    def get_stats(self) -> dict[str, Any]:
         """获取统计信息."""
         return self._async_logger.get_stats()

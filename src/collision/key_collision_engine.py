@@ -863,7 +863,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         private_key,
         matched_address: str,
         matched_compressed: bool,
-        local_matches: list,
+        local_matches: list[Any],
         worker_id: int,
         matched_hash160: bytes | None = None,
     ) -> bool:
@@ -934,7 +934,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             return False
         return should_continue
 
-    def _flush_match_batch(self, local_matches: list, force: bool = False) -> tuple[bool, bool]:
+    def _flush_match_batch(self, local_matches: list[Any], force: bool = False) -> tuple[bool, bool]:
         """批量提交匹配结果（v4.2.2 H6重构: 从 _process_key_match 和 worker 末尾提取公共逻辑）.
 
         将匹配结果批量提交到 CollisionStats、匹配回调和 EventBus。
@@ -1167,8 +1167,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
         local_matches: list[tuple[bytes, str, str, bytes | None]] = []
         batch_start_time = time.time()
 
-        recent_keys_list: list = []
-        recent_keys_set: set = set()
+        recent_keys_list: list[Any] = []
+        recent_keys_set: set[Any] = set[Any]()
         max_recent_size = 10000
         _half_size = max_recent_size // 2
 
@@ -1314,8 +1314,8 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
     def _random_search_handle_done(
         self,
-        future: concurrent.futures.Future,
-        futures: dict,
+        future: concurrent.futures.Future[int],
+        futures: dict[concurrent.futures.Future[int], int],
         total_count: int,
         executor: concurrent.futures.ThreadPoolExecutor,
     ) -> int:
@@ -2034,7 +2034,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
         self._brute_force_finalize(total_count)
 
-    def resume_from_checkpoint(self) -> dict | None:
+    def resume_from_checkpoint(self) -> dict[str, Any] | None:
         """从断点恢复，返回断点数据（包含mode等信息），无断点返回 None."""
         if not self.checkpoint_mgr or not self.checkpoint_mgr.exists:
             return None
@@ -2052,7 +2052,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
 
         return data
 
-    def start_from_checkpoint(self, data: dict) -> None:
+    def start_from_checkpoint(self, data: dict[str, Any]) -> None:
         """根据断点数据启动对撞."""
         mode = data.get("mode", "random")
         if mode == "range":
@@ -2069,7 +2069,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
         elif mode == "random":
             self.start(mode="random")
 
-    def _validate_start_mode(self, mode: str, kwargs: dict) -> None:
+    def _validate_start_mode(self, mode: str, kwargs: dict[str, Any]) -> None:
         """验证 start() 参数的有效性。."""
         valid_modes = ["random", "range", "brute_force"]
         if mode not in valid_modes:
@@ -2088,7 +2088,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             if "start" in kwargs and kwargs["start"] < 1:
                 raise ValueError("start 必须大于0")
 
-    def _handle_checkpoint_resume(self, mode: str, kwargs: dict) -> str:
+    def _handle_checkpoint_resume(self, mode: str, kwargs: dict[str, Any]) -> str:
         """处理断点恢复逻辑，返回更新后的 mode。.
 
         如果恢复失败，返回原始 mode。
@@ -2133,7 +2133,7 @@ class KeyCollisionEngine(BaseCollisionEngine):
             self.checkpoint_mgr = None
             return mode
 
-    def _create_and_start_thread(self, mode: str, kwargs: dict) -> None:
+    def _create_and_start_thread(self, mode: str, kwargs: dict[str, Any]) -> None:
         """根据模式创建并启动工作线程。."""
         if mode == "random":
             target_fn = self.random_search

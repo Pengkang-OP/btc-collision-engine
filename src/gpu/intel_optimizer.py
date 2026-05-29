@@ -138,7 +138,7 @@ class IntelGPUOptimizer:
         return result
 
     @staticmethod
-    def _lazy_import_components() -> tuple:
+    def _lazy_import_components() -> tuple[Any, ...]:
         """延迟导入所有 5 个监控/调优组件类，返回 (Timeout, Memory, Benchmark, Tuner, Reporter)。.
 
         导入失败的组件对应位置为 None。.

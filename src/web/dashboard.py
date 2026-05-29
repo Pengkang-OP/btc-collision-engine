@@ -87,7 +87,7 @@ def _validate_api_key() -> bool:
     return secrets.compare_digest(provided, _api_key or "")
 
 
-def require_auth(f: Callable) -> Callable:
+def require_auth(f: Callable[..., Any]) -> Callable[..., Any]:
     """Decorator for requiring API authentication."""
 
     @wraps(f)
@@ -111,7 +111,7 @@ RATE_LIMIT_WINDOW = 60  # 窗口大小（秒）
 _request_history: defaultdict[str, list[float]] = defaultdict(list)
 
 
-def rate_limit(f: Callable) -> Callable:
+def rate_limit(f: Callable[..., Any]) -> Callable[..., Any]:
     """滑动窗口速率限制装饰器（基于客户端 IP + 端点）."""
 
     @wraps(f)

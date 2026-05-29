@@ -1,6 +1,7 @@
 """Key auditing utilities for security compliance."""
 
 from ..utils import get_configured_logger
+from typing import Any
 
 logger = get_configured_logger("KeyAudit")
 
@@ -10,7 +11,7 @@ class KeyAuditor:
 
     def __init__(self) -> None:
         """Initialize the key auditor."""
-        self._audit_log: list[dict] = []
+        self._audit_log: list[dict[str, Any]] = []
 
     def record_generation(
         self,
@@ -30,7 +31,7 @@ class KeyAuditor:
         )
         logger.debug(f"Key generation recorded: {key_hash[:8]}...")
 
-    def get_report(self) -> list[dict]:
+    def get_report(self) -> list[dict[str, Any]]:
         """Get audit report.
 
         Returns:

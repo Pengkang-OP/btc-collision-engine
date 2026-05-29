@@ -199,10 +199,10 @@ class GPUPerformanceMonitor:
         self.history_size = history_size
 
         # 内核执行历史
-        self._kernel_metrics: deque = deque(maxlen=history_size)
+        self._kernel_metrics: deque[Any] = deque[Any](maxlen=history_size)
 
         # 显存使用历史
-        self._memory_metrics: deque = deque(maxlen=history_size)
+        self._memory_metrics: deque[Any] = deque[Any](maxlen=history_size)
 
         # 统计信息
         self._peak_throughput = 0.0
@@ -230,18 +230,18 @@ class GPUPerformanceMonitor:
         self._lock = threading.Lock()
 
         # 告警回调
-        self._degradation_callbacks: list[Callable] = []
-        self._error_callbacks: list[Callable] = []
+        self._degradation_callbacks: list[Callable[..., Any]] = []
+        self._error_callbacks: list[Callable[..., Any]] = []
 
         # GPU硬件利用率监控
         self._hardware_monitoring_enabled = True
         self._pynvml_initialized = False
         self._amd_initialized = False
         self._intel_initialized = False
-        self._gpu_utilization_history: deque = deque(maxlen=100)
-        self._gpu_memory_history: deque = deque(maxlen=100)
-        self._gpu_temperature_history: deque = deque(maxlen=100)
-        self._gpu_power_history: deque = deque(maxlen=100)
+        self._gpu_utilization_history: deque[Any] = deque[Any](maxlen=100)
+        self._gpu_memory_history: deque[Any] = deque[Any](maxlen=100)
+        self._gpu_temperature_history: deque[Any] = deque[Any](maxlen=100)
+        self._gpu_power_history: deque[Any] = deque[Any](maxlen=100)
         self._device_handle = None
         self._intel_gpu_index = 0
 
@@ -856,7 +856,7 @@ class GPUPerformanceMonitor:
                 performance_stability_percent=stability,
             )
 
-    def on_degradation(self, callback: Callable) -> None:
+    def on_degradation(self, callback: Callable[..., Any]) -> None:
         """注册性能退化回调.
 
         Args:
@@ -865,7 +865,7 @@ class GPUPerformanceMonitor:
         """
         self._degradation_callbacks.append(callback)
 
-    def on_error(self, callback: Callable) -> None:
+    def on_error(self, callback: Callable[..., Any]) -> None:
         """注册错误回调.
 
         Args:

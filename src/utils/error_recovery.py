@@ -552,7 +552,7 @@ class ErrorRecoveryManager:
                 degrades_triggered=self._stats.degrades_triggered,
             )
 
-    def get_history(self, category: RecoverableErrorCategory | None = None) -> dict:
+    def get_history(self, category: RecoverableErrorCategory | None = None) -> dict[str, Any]:
         """Get retry history.
 
         Args:

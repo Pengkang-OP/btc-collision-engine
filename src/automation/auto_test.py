@@ -231,7 +231,7 @@ class AutoTestModule:
 
     # ========== 测试函数实现 ==========
 
-    def test_config_validation(self, config_path: str) -> dict:
+    def test_config_validation(self, config_path: str) -> dict[str, Any]:
         """测试配置验证."""
         import json
 
@@ -260,7 +260,7 @@ class AutoTestModule:
                 "message": f"配置验证失败: {e!s}",
             }
 
-    def test_cli_help(self) -> dict:
+    def test_cli_help(self) -> dict[str, Any]:
         """测试CLI帮助信息."""
         try:
             result = subprocess.run(  # nosec B603
@@ -289,7 +289,7 @@ class AutoTestModule:
                 "message": f"CLI测试执行失败: {e!s}",
             }
 
-    def test_crypto_backend_init(self) -> dict:
+    def test_crypto_backend_init(self) -> dict[str, Any]:
         """测试加密后端初始化."""
         try:
             from src.core.crypto_backend import CryptoBackend
@@ -318,7 +318,7 @@ class AutoTestModule:
                 "message": f"加密后端测试异常: {e!s}",
             }
 
-    def test_logging_system(self) -> dict:
+    def test_logging_system(self) -> dict[str, Any]:
         """测试日志系统."""
         try:
             log_dir = self.project_root / "logs"
@@ -339,7 +339,7 @@ class AutoTestModule:
                 "message": f"日志系统测试异常: {e!s}",
             }
 
-    def test_module_imports(self) -> dict:
+    def test_module_imports(self) -> dict[str, Any]:
         """测试模块导入."""
         modules_to_test = [
             "src.core.secp256k1",
@@ -374,7 +374,7 @@ class AutoTestModule:
             "metrics": {"imported": successful_imports},
         }
 
-    def test_bigint_performance(self, iterations: int = 1000) -> dict:
+    def test_bigint_performance(self, iterations: int = 1000) -> dict[str, Any]:
         """测试大整数运算性能."""
         try:
             import time
@@ -413,7 +413,7 @@ class AutoTestModule:
                 "message": f"性能测试异常: {e!s}",
             }
 
-    def test_hash_performance(self, iterations: int = 10000) -> dict:
+    def test_hash_performance(self, iterations: int = 10000) -> dict[str, Any]:
         """测试哈希计算性能."""
         try:
             import hashlib
@@ -451,7 +451,7 @@ class AutoTestModule:
                 "message": f"哈希性能测试异常: {e!s}",
             }
 
-    def test_e2e_workflow(self, duration: int = 5) -> dict:
+    def test_e2e_workflow(self, duration: int = 5) -> dict[str, Any]:
         """测试端到端工作流."""
         try:
             result = subprocess.run(  # nosec B603
@@ -480,7 +480,7 @@ class AutoTestModule:
                 "message": f"端到端测试异常: {e!s}",
             }
 
-    def test_checkpoint_feature(self) -> dict:
+    def test_checkpoint_feature(self) -> dict[str, Any]:
         """测试断点续传功能."""
         try:
             # 验证断点续传模块存在
@@ -503,7 +503,7 @@ class AutoTestModule:
                 "message": f"断点续传测试异常: {e!s}",
             }
 
-    def test_i18n_support(self, languages: list[str] | None = None) -> dict:
+    def test_i18n_support(self, languages: list[str] | None = None) -> dict[str, Any]:
         """测试多语言支持."""
         languages = languages or ["zh_CN", "en_US"]
 

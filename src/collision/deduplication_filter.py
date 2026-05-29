@@ -11,6 +11,7 @@ __all__ = [
 import threading
 
 from ..utils import get_configured_logger
+from typing import Any
 
 logger = get_configured_logger("DedupFilter")
 
@@ -114,7 +115,7 @@ class DeduplicationFilter:
         with self._lock:
             return private_key in self._seen_keys or address.lower() in self._seen_addresses
 
-    def get_stats(self) -> dict:
+    def get_stats(self) -> dict[str, Any]:
         """Get filter statistics.
 
         Returns:

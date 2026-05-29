@@ -270,7 +270,7 @@ class DoubleBuffer:
     # 诊断
     # ------------------------------------------------------------------
 
-    def get_stats(self) -> dict:
+    def get_stats(self) -> dict[str, Any]:
         """获取双缓冲状态统计.
 
         Returns:

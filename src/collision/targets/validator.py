@@ -181,7 +181,7 @@ class AddressBatchValidator:
         return str_addresses, skipped_count, None
 
     @staticmethod
-    def _log_validation_summary(results: dict) -> None:
+    def _log_validation_summary(results: dict[str, Any]) -> None:
         """记录批量验证结果摘要。."""
         valid_count = sum(1 for r in results.values() if r.valid)
         invalid_count = len(results) - valid_count

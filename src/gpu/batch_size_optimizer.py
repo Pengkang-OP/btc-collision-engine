@@ -15,6 +15,7 @@ import time
 
 # 统一日志获取
 from ..utils import get_configured_logger
+from typing import Any
 
 __all__ = ["SmartBatchSizeOptimizer", "get_batch_size_optimizer", "reset_batch_size_optimizer"]
 
@@ -72,11 +73,11 @@ class SmartBatchSizeOptimizer:
         self._max_batch_size: int = gpu_config.get("max_batch_size", max_batch_size)
 
         # 性能历史数据
-        self._performance_history: list[dict] = []
+        self._performance_history: list[dict[str, Any]] = []
         # 内存使用历史
-        self._memory_history: list[dict] = []
+        self._memory_history: list[dict[str, Any]] = []
         # 系统负载历史
-        self._load_history: list[dict] = []
+        self._load_history: list[dict[str, Any]] = []
 
         # 调整参数
         self._adjustment_interval = 20  # 20批次调整一次，减少调整频率
@@ -101,7 +102,7 @@ class SmartBatchSizeOptimizer:
             _max_b,
         )
 
-    def _get_gpu_config(self, gpu_model: str) -> dict:
+    def _get_gpu_config(self, gpu_model: str) -> dict[str, Any]:
         """获取GPU特定配置.
 
         Args:
@@ -432,7 +433,7 @@ class SmartBatchSizeOptimizer:
             return lower
         return upper
 
-    def get_stats(self) -> dict:
+    def get_stats(self) -> dict[str, Any]:
         """获取优化器统计信息.
 
         Returns:

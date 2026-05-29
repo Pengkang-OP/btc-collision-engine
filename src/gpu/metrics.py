@@ -24,6 +24,7 @@ Key Metrics:
 import threading
 import time
 from collections import defaultdict
+from typing import Any
 
 __all__ = ["GPUMetricsCollector", "get_metrics_collector", "reset_metrics_collector"]
 
@@ -198,7 +199,7 @@ class GPUMetricsCollector:
                 return None
             return self._pool_hits[device_idx] / total
 
-    def get_kernel_latency_stats(self, device_idx: int) -> dict:
+    def get_kernel_latency_stats(self, device_idx: int) -> dict[str, Any]:
         """获取内核延迟统计."""
         with self._lock:
             count = self._kernel_latency_count[device_idx]
@@ -308,7 +309,7 @@ class GPUMetricsCollector:
             lines.append("")  # 末尾换行
             return "\n".join(lines)
 
-    def export_json(self) -> dict:
+    def export_json(self) -> dict[str, Any]:
         """导出 JSON 格式指标摘要.
 
         Returns:

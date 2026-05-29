@@ -89,8 +89,8 @@ class SingleGPUWorker(threading.Thread):
         device_idx: int,
         key_range: tuple[int, int],
         targets: set[str],
-        config: dict | WorkerConfig,
-        result_callback: Callable | None = None,
+        config: dict[str, Any] | WorkerConfig,
+        result_callback: Callable[..., Any] | None = None,
         data_monitor: Any | None = None,  # 添加数据监控器引用
         mode: str = "random",  # 碰撞模式: random / range / brute_force
         range_start: int | None = None,  # range/brute_force 起始私钥
@@ -328,7 +328,7 @@ class SingleGPUWorker(threading.Thread):
         total_keys = end_key - start_key
 
         try:
-            engine_kwargs: dict = {}
+            engine_kwargs: dict[str, Any] = {}
             if self.mode in ("range", "brute_force") and self.range_start is not None:
                 engine_kwargs["start"] = self.range_start
             if self.mode == "range" and self.range_end is not None:
@@ -374,7 +374,7 @@ class SingleGPUWorker(threading.Thread):
         if self._stats["elapsed_time"] > 0:
             self._stats["throughput"] = self._stats["keys_checked"] / self._stats["elapsed_time"]
 
-    def _report_new_matches(self, matches: list, current_count: int) -> None:
+    def _report_new_matches(self, matches: list[Any], current_count: int) -> None:
         """上报新增匹配结果（需在锁内调用）。."""
         if current_count <= self._last_reported_match_count:
             return
@@ -499,7 +499,7 @@ class SingleGPUWorker(threading.Thread):
         with self._lock:
             self._stats["status"] = "running"
 
-    def get_stats(self) -> dict:
+    def get_stats(self) -> dict[str, Any]:
         """获取统计信息(线程安全).
 
         Returns:
@@ -509,7 +509,7 @@ class SingleGPUWorker(threading.Thread):
         with self._lock:
             return self._stats.copy()
 
-    def get_results(self, max_results: int = 100) -> list:
+    def get_results(self, max_results: int = 100) -> list[Any]:
         """获取搜索结果.
 
         Args:

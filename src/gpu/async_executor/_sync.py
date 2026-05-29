@@ -56,7 +56,7 @@ class _SyncFallbackMixin:
         program: Any,
         targets_buf: Any,
         num_targets: int,
-    ) -> "tuple[list[tuple[bytes, list[dict]]], float]":
+    ) -> "tuple[list[tuple[bytes, list[dict[str, Any]]]], float]":
         """同步执行（回退模式，PRNG 模式）。.
 
         当异步执行失败时使用。seed 替代 private_keys。
@@ -131,7 +131,7 @@ class _SyncFallbackMixin:
             logger.warning(f"同步模式结果回读失败: {type(e).__name__}: {e}")
             return [], (time.time() - start_time) * 1000
 
-        matches_list: list[dict] = []
+        matches_list: list[dict[str, Any]] = []
         for i in range(num_keys):
             if match_flags[i] > 0:
                 matches_list.append({"key_index": i, "target_index": int(match_flags[i] - 1)})
@@ -369,7 +369,7 @@ class _SyncFallbackMixin:
                 self._log_cleanup(logging.WARNING, f"释放 {name} 失败: {type(e).__name__}: {e}")
             setter(None)
 
-    def _try_create_fallback_buffer(self, buf_dict: dict, num_keys: int, start_time: float) -> bool:
+    def _try_create_fallback_buffer(self, buf_dict: dict[str, Any], num_keys: int, start_time: float) -> bool:
         """尝试创建临时回退缓冲区并清空。."""
         import pyopencl as cl
 

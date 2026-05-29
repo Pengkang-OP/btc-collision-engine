@@ -40,7 +40,7 @@ class ConfigLoader:
     def load(
         self,
         filepath: str | Path,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Load configuration from JSON file.
 
         Args:
@@ -57,7 +57,7 @@ class ConfigLoader:
         with Path(path).open() as f:
             return json.load(f)  # type: ignore[no-any-return]
 
-    def merge(self, base: dict, override: dict) -> dict:
+    def merge(self, base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
         """Merge configurations, override taking precedence."""
         result = dict(base)
         result.update(override)

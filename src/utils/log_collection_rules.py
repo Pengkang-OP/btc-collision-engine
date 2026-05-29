@@ -37,9 +37,9 @@ class LogCollectionRule:
     def __post_init__(self) -> None:
         """初始化规则."""
         # 编译正则表达式模式
-        self._module_regex: Pattern | None = None
-        self._include_regexes: list[Pattern] = []
-        self._exclude_regexes: list[Pattern] = []
+        self._module_regex: Pattern[str] | None = None
+        self._include_regexes: list[Pattern[str]] = []
+        self._exclude_regexes: list[Pattern[str]] = []
 
         # 编译模块模式
         if self.module_pattern:

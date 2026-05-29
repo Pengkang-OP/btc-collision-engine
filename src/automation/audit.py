@@ -287,7 +287,7 @@ class AuditModule:
         metrics: dict[str, Any],
         test_results: TestSuiteResult,
         analysis_report: AnalysisReport | None,
-    ) -> tuple:
+    ) -> tuple[Any, ...]:
         """执行规则检查."""
         violations = []
         warnings = []

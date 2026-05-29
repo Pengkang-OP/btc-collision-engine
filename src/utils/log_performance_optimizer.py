@@ -338,7 +338,7 @@ class LogThrottler:
             return False
 
 
-def log_performance_decorator(logger: logging.Logger, operation: str, level: str = "DEBUG") -> Callable:
+def log_performance_decorator(logger: logging.Logger, operation: str, level: str = "DEBUG") -> Callable[..., Any]:
     """性能监控装饰器.
 
     Args:
@@ -351,7 +351,7 @@ def log_performance_decorator(logger: logging.Logger, operation: str, level: str
 
     """
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             start_time = time.time()
             try:

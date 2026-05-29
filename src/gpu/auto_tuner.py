@@ -46,7 +46,7 @@ class GPUAutoTuner:
         self._tuned_params: dict[str, Any] = {}
         self._tuned = False
 
-    def auto_tune(self, benchmark_results: dict | None = None) -> dict[str, Any]:
+    def auto_tune(self, benchmark_results: dict[str, Any] | None = None) -> dict[str, Any]:
         """自动调优 GPU 参数。.
 
         Args:

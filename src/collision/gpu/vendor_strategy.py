@@ -327,7 +327,7 @@ class VendorOptimizationFactory:
         logger.info("注册厂商优化策略: %s", vendor)
 
     @classmethod
-    def get_supported_vendors(cls) -> list:
+    def get_supported_vendors(cls) -> list[Any]:
         """获取支持的厂商列表.
 
         Returns:

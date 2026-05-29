@@ -66,10 +66,10 @@ class EventBus:
         self._lock = threading.Lock()
         self._subscribers: dict[
             Any,
-            list[Callable],
+            list[Callable[..., Any]],
         ] = {}
-        self._all_subscribers: list[Callable] = []  # subscribers for all events
-        self._error_handler: Callable | None = None
+        self._all_subscribers: list[Callable[..., Any]] = []  # subscribers for all events
+        self._error_handler: Callable[..., Any] | None = None
         self._async_mode = async_mode
         self._max_queue_size = max_queue_size
         self._running = False  # async worker running flag
@@ -79,7 +79,7 @@ class EventBus:
     def subscribe(
         self,
         event_type: Any,
-        handler: Callable,
+        handler: Callable[..., Any],
     ) -> None:
         """Subscribe a handler to an event type.
 
@@ -97,7 +97,7 @@ class EventBus:
             name = getattr(event_type, "__name__", str(event_type))
             logger.debug(f"Subscribed {handler.__name__} to {name}")
 
-    def subscribe_to_all(self, handler: Callable) -> None:
+    def subscribe_to_all(self, handler: Callable[..., Any]) -> None:
         """Subscribe a handler to all event types.
 
         Args:
@@ -108,7 +108,7 @@ class EventBus:
             if handler not in self._all_subscribers:
                 self._all_subscribers.append(handler)
 
-    def set_error_handler(self, handler: Callable) -> None:
+    def set_error_handler(self, handler: Callable[..., Any]) -> None:
         """Set a callback for handler errors.
 
         Args:
@@ -120,7 +120,7 @@ class EventBus:
     def unsubscribe(
         self,
         event_type: Any,
-        handler: Callable,
+        handler: Callable[..., Any],
     ) -> None:
         """Unsubscribe a handler.
 
@@ -150,8 +150,8 @@ class EventBus:
             return
 
         # Collect handlers: type-based + enum/string-keyed + subscribe_to_all
-        handlers: list[Callable] = []
-        all_handlers: list[Callable] = []
+        handlers: list[Callable[..., Any]] = []
+        all_handlers: list[Callable[..., Any]] = []
         with self._lock:
             # Type-based lookup
             handlers.extend(list(self._subscribers.get(type(event), [])))
@@ -181,7 +181,7 @@ class EventBus:
 
     def _invoke_handler(
         self,
-        handler: Callable,
+        handler: Callable[..., Any],
         event: Any,
         event_type: Any = None,
     ) -> None:

@@ -98,7 +98,7 @@ class LockMonitor:
             stats["total_hold_ms"] += hold_time_ms
             stats["max_hold_ms"] = max(stats["max_hold_ms"], hold_time_ms)
 
-    def get_stats(self, lock_name: str) -> dict:
+    def get_stats(self, lock_name: str) -> dict[str, Any]:
         """获取锁统计信息.
 
         Args:
@@ -125,7 +125,7 @@ class LockMonitor:
 
             return stats
 
-    def get_all_stats(self) -> dict[str, dict]:
+    def get_all_stats(self) -> dict[str, dict[str, Any]]:
         """获取所有锁统计信息.
 
         Returns:

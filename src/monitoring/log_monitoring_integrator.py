@@ -22,7 +22,7 @@ class LogMonitoringIntegrator:
 
     def integrate(
         self,
-        log_entry: dict,
+        log_entry: dict[str, Any],
     ) -> None:
         """Process a log entry through monitoring.
 

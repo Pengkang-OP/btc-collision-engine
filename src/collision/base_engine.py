@@ -27,14 +27,14 @@ class BaseCollisionEngine(ABC):
     Subclasses must implement: start(), stop(), get_stats()
     """
 
-    def __init__(self, config: dict | None = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         """Initialize the base collision engine."""
         self.config = config or {}
         self._lock = threading.Lock()
         self._running = False
         self._start_time: float | None = None
         self._total_keys_checked = 0
-        self._match_callback: Callable | None = None
+        self._match_callback: Callable[..., Any] | None = None
 
     @abstractmethod
     def start(self, **kwargs: Any) -> None:

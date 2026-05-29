@@ -204,7 +204,7 @@ class CryptoConfig:
 
         return GPUDeviceDetector.is_gpu_available()
 
-    def get_gpu_device_info(self) -> list:
+    def get_gpu_device_info(self) -> list[Any]:
         """获取可用GPU设备列表.
 
         Returns:
@@ -295,7 +295,7 @@ class CryptoConfig:
             self.config["gpu_batch_size"] = batch_size
         return True
 
-    def validate(self) -> list:
+    def validate(self) -> list[Any]:
         """验证配置.
 
         Returns:

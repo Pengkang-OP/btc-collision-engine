@@ -38,6 +38,7 @@ from src.utils.bech32_codec import decode_segwit_address
 from src.utils.encoding_utils import EncodingUtils
 
 from .cache import AddressCache
+from typing import Any
 
 logger = get_configured_logger("TargetResolver")
 
@@ -621,7 +622,7 @@ class TargetResolver:
                 counts["unknown"] += 1
         return counts
 
-    def get_cache_stats(self) -> dict | None:
+    def get_cache_stats(self) -> dict[str, Any] | None:
         """获取缓存统计信息.
 
         Returns:

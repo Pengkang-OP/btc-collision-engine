@@ -62,9 +62,9 @@ class CollisionCore(ICollisionCore):
         on_match: MatchCallback | None = None,
         # 依赖注入（可选）
         engine: Optional["GPUCollisionEngine"] = None,
-        stats_factory: Callable | None = None,
-        checkpoint_factory: Callable | None = None,
-        dedup_factory: Callable | None = None,
+        stats_factory: Callable[..., Any] | None = None,
+        checkpoint_factory: Callable[..., Any] | None = None,
+        dedup_factory: Callable[..., Any] | None = None,
     ) -> None:
         """初始化碰撞核心.
 

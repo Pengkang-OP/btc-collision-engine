@@ -155,7 +155,7 @@ class GPUKernelAdapter(IKernelExecutor):
             logger.error("GPU批次执行失败: %s", e)
             raise RuntimeError(f"GPU批次执行失败: {e}") from e
 
-    def _convert_matches(self, raw_matches: list[dict]) -> list[MatchResult]:
+    def _convert_matches(self, raw_matches: list[dict[str, Any]]) -> list[MatchResult]:
         """转换匹配结果格式.
 
         Args:

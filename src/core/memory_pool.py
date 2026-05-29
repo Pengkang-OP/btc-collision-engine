@@ -103,7 +103,7 @@ class ObjectPool:
 
     def __init__(
         self,
-        factory: Callable,
+        factory: Callable[..., Any],
         initial_size: int = 100,
         max_size: int = 1000,
         object_size_estimate: int = POOL_DEFAULT_OBJECT_SIZE_ESTIMATE,
@@ -207,7 +207,7 @@ class ObjectPool:
                 self._release_count += 1
             # Otherwise discard to prevent unbounded pool growth
 
-    def get_stats(self) -> dict:
+    def get_stats(self) -> dict[str, Any]:
         """P3-7 enhanced: Get detailed pool statistics.
 
         Returns:
@@ -419,7 +419,7 @@ class ECPointPool:
         """Return ECPoint object to pool."""
         self._pool.release(point)
 
-    def get_stats(self) -> dict:
+    def get_stats(self) -> dict[str, Any]:
         """Get pool statistics."""
         return self._pool.get_stats()
 
@@ -477,7 +477,7 @@ class ByteArrayPool:
 
         self._pool.release(buffer)
 
-    def get_stats(self) -> dict:
+    def get_stats(self) -> dict[str, Any]:
         """Get pool statistics."""
         return self._pool.get_stats()
 
@@ -583,7 +583,7 @@ class GlobalPoolManager:
             max_size=1000,
         )
 
-    def get_all_stats(self) -> dict:
+    def get_all_stats(self) -> dict[str, Any]:
         """P3-7 new: Get aggregated statistics for all pools.
 
         Returns:

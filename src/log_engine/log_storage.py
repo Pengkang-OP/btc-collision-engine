@@ -2,6 +2,7 @@
 
 import json
 from pathlib import Path
+from typing import Any
 
 
 class LogStorage:
@@ -20,7 +21,7 @@ class LogStorage:
 
     def save(
         self,
-        entries: list[dict],
+        entries: list[dict[str, Any]],
     ) -> None:
         """Save log entries to file.
 
@@ -34,7 +35,7 @@ class LogStorage:
         with Path(filepath).open("w") as f:
             json.dump(entries, f, indent=2)
 
-    def load_all(self) -> list[dict]:
+    def load_all(self) -> list[dict[str, Any]]:
         """Load all stored log entries.
 
         Returns:
@@ -49,7 +50,7 @@ class LogStorage:
                 entries.extend(json.load(f))
         return entries
 
-    def get_recent(self, count: int = 100) -> list[dict]:
+    def get_recent(self, count: int = 100) -> list[dict[str, Any]]:
         """Get the most recent log entries.
 
         Args:
@@ -62,7 +63,7 @@ class LogStorage:
         all_entries = self.load_all()
         return all_entries[-count:][::-1]
 
-    def get_by_type(self, event_type: str) -> list[dict]:
+    def get_by_type(self, event_type: str) -> list[dict[str, Any]]:
         """Get log entries filtered by event type.
 
         Args:
@@ -75,7 +76,7 @@ class LogStorage:
         all_entries = self.load_all()
         return [e for e in all_entries if e.get("type") == event_type]
 
-    def search(self, query: str) -> list[dict]:
+    def search(self, query: str) -> list[dict[str, Any]]:
         """Search log entries by keyword.
 
         Args:
@@ -93,7 +94,7 @@ class LogStorage:
                 results.append(entry)
         return results
 
-    def get_stats(self) -> dict:
+    def get_stats(self) -> dict[str, Any]:
         """Get storage statistics.
 
         Returns:

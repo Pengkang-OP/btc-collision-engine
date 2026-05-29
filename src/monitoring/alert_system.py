@@ -74,7 +74,7 @@ class AlertRule:
     name: str  # 规则名称
     alert_type: AlertType  # 告警类型
     level: AlertLevel  # 告警级别
-    condition: Callable[[dict], bool]  # 条件函数
+    condition: Callable[[dict[str, Any]], bool]  # 条件函数
     message: str  # 告警消息
     cooldown: int | None = None  # 冷却时间(秒),None表示使用默认值
     enabled: bool = True  # 是否启用
@@ -186,7 +186,7 @@ class AlertSystem:
 
         return removed
 
-    def add_alert_callback(self, callback: Callable) -> None:
+    def add_alert_callback(self, callback: Callable[..., Any]) -> None:
         """添加告警回调函数.
 
         Args:
@@ -232,7 +232,7 @@ class AlertSystem:
         """设置默认告警规则."""
 
         # 规则1: 性能退化>20%
-        def check_performance_degradation(metrics: dict) -> bool:
+        def check_performance_degradation(metrics: dict[str, Any]) -> bool:
             if "degradation_rate" not in metrics:
                 return False
             return cast("bool", metrics["degradation_rate"] > 20.0)
@@ -249,7 +249,7 @@ class AlertSystem:
         )
 
         # 规则2: 内存使用>80%
-        def check_memory_usage(metrics: dict) -> bool:
+        def check_memory_usage(metrics: dict[str, Any]) -> bool:
             if "memory_usage_percent" not in metrics:
                 return False
             return cast("bool", metrics["memory_usage_percent"] > 80.0)
@@ -266,7 +266,7 @@ class AlertSystem:
         )
 
         # 规则3: GPU温度>85°C
-        def check_gpu_temperature(metrics: dict) -> bool:
+        def check_gpu_temperature(metrics: dict[str, Any]) -> bool:
             if "gpu_temperature" not in metrics:
                 return False
             return cast("bool", metrics["gpu_temperature"] > 85.0)
@@ -283,7 +283,7 @@ class AlertSystem:
         )
 
         # 规则4: 错误率>5%
-        def check_error_rate(metrics: dict) -> bool:
+        def check_error_rate(metrics: dict[str, Any]) -> bool:
             if "error_rate" not in metrics:
                 return False
             return cast("bool", metrics["error_rate"] > 0.05)
@@ -300,7 +300,7 @@ class AlertSystem:
         )
 
         # 规则5: 吞吐量下降>50%
-        def check_throughput_drop(metrics: dict) -> bool:
+        def check_throughput_drop(metrics: dict[str, Any]) -> bool:
             if "throughput" not in metrics or "baseline_throughput" not in metrics:
                 return False
             if metrics["baseline_throughput"] == 0:

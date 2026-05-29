@@ -33,7 +33,7 @@ class _CollectorHost(Protocol):
     _collector_cycles: int
     _prefetch_events: list[_PendingBatch]
     _prefetch_lock: threading.Lock
-    _completed_results: list[tuple[bytes, list[dict]]]
+    _completed_results: list[tuple[bytes, list[dict[str, Any]]]]
     _completed_results_lock: threading.Lock
     _adaptive_controller: Any  # AdaptiveController 实例
     queue_depth_hits: int
@@ -130,7 +130,7 @@ class _ResultCollectorMixin:
                     continue
 
                 # GPU 已完成！收集结果
-                matches: list[dict] = []
+                matches: list[dict[str, Any]] = []
                 try:
                     for i in range(oldest.num_keys):
                         if oldest.buf and oldest.buf["match_flags"][i] > 0:
@@ -168,7 +168,7 @@ class _ResultCollectorMixin:
                 logger.warning("结果收集器异常: %s", e, exc_info=True)
                 time.sleep(0.001)
 
-    def drain_results(self: _CollectorHost) -> "list[tuple[bytes, list[dict]]]":
+    def drain_results(self: _CollectorHost) -> "list[tuple[bytes, list[dict[str, Any]]]]":
         """排空后台收集器已完成的结果。.
 
         Returns:
@@ -176,7 +176,7 @@ class _ResultCollectorMixin:
             调用方必须使用每对中自己的 seed 重建私钥。
 
         """
-        combined: list[tuple[bytes, list[dict]]] = []
+        combined: list[tuple[bytes, list[dict[str, Any]]]] = []
         with self._completed_results_lock:
             if not self._completed_results:
                 return combined
@@ -184,7 +184,7 @@ class _ResultCollectorMixin:
             self._completed_results.clear()
         return combined
 
-    def flush_pending(self: _CollectorHost) -> "list[tuple[bytes, list[dict]]]":
+    def flush_pending(self: _CollectorHost) -> "list[tuple[bytes, list[dict[str, Any]]]]":
         """收集所有尚未取回的异步执行结果。.
 
         在主循环结束后调用，确保 _prefetch_events 队列中所有已提交的 GPU 批次结果不丢失。
@@ -194,7 +194,7 @@ class _ResultCollectorMixin:
             调用方必须使用每批次自己的 seed 重建私钥。
 
         """
-        batch_results: list[tuple[bytes, list[dict]]] = []
+        batch_results: list[tuple[bytes, list[dict[str, Any]]]] = []
 
         while True:
             with self._prefetch_lock:
@@ -215,7 +215,7 @@ class _ResultCollectorMixin:
                 continue
 
             if oldest.buf is not None:
-                batch_matches: list[dict] = []
+                batch_matches: list[dict[str, Any]] = []
                 for i in range(oldest.num_keys):
                     if oldest.buf["match_flags"][i] > 0:
                         batch_matches.append(
@@ -232,7 +232,7 @@ class _ResultCollectorMixin:
     def _collect_oldest_batch_results_from(
         self: _CollectorHost,
         batch: _PendingBatch,
-    ) -> "list[tuple[bytes, list[dict]]]":
+    ) -> "list[tuple[bytes, list[dict[str, Any]]]]":
         """等待并收集批次结果（种子随匹配绑定返回）。.
 
         Args:
@@ -242,7 +242,7 @@ class _ResultCollectorMixin:
             list[(seed, matches)] — 包含该批次的种子和匹配列表
 
         """
-        prev_matches: list[tuple[bytes, list[dict]]] = []
+        prev_matches: list[tuple[bytes, list[dict[str, Any]]]] = []
         oldest = batch
         batch_seed = getattr(oldest, "seed", None) or b""
         timeout_seconds = 5
@@ -261,7 +261,7 @@ class _ResultCollectorMixin:
             raise RuntimeError(f"异步执行失败: {wait_err}") from wait_err
 
         try:
-            batch_matches: list[dict] = []
+            batch_matches: list[dict[str, Any]] = []
             for i in range(oldest.num_keys):
                 if oldest.buf["match_flags"][i] > 0:
                     batch_matches.append(

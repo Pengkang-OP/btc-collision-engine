@@ -66,7 +66,7 @@ class GPULoadBalancer:
 
     def __init__(
         self,
-        devices: list[dict],
+        devices: list[dict[str, Any]],
         strategy: str = "performance",
         rebalance_interval: int = 30,  # 减少重平衡间隔，提高响应速度
         min_rebalance_threshold: float = 0.05,  # 减少重平衡阈值，提高负载均衡的准确性
@@ -529,7 +529,7 @@ class GPULoadBalancer:
             if len(self._load_history[idx]) > 100:
                 self._load_history[idx] = self._load_history[idx][-100:]
 
-    def get_device_load(self, device_idx: int) -> dict | None:
+    def get_device_load(self, device_idx: int) -> dict[str, Any] | None:
         """获取指定GPU的负载信息.
 
         Args:
@@ -557,7 +557,7 @@ class GPULoadBalancer:
             "last_update": perf_stats.get("timestamp", 0),
         }
 
-    def get_all_loads(self) -> dict[int, dict]:
+    def get_all_loads(self) -> dict[int, dict[str, Any]]:
         """获取所有GPU的负载信息.
 
         Returns:

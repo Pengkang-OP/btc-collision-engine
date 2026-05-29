@@ -102,14 +102,14 @@ def with_sync_fallback(
     return decorator
 
 
-def _arg_or_kw(args: tuple[Any, ...], kwargs: dict, idx: int, name: str) -> Any:
+def _arg_or_kw(args: tuple[Any, ...], kwargs: dict[str, Any], idx: int, name: str) -> Any:
     """安全提取位置参数或关键字参数。."""
     if len(args) > idx:
         return args[idx]
     return kwargs.get(name)
 
 
-def safe_release_buffer(buf_dict: dict, key: str) -> None:
+def safe_release_buffer(buf_dict: dict[str, Any], key: str) -> None:
     """安全释放缓冲区字典中的单个 OpenCL buffer（防止孤儿泄漏）。."""
     buf = buf_dict.get(key)
     if buf is not None:

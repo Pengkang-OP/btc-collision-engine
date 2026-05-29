@@ -201,7 +201,7 @@ def _execute_with_sigalrm_timeout(
             finally:
                 setitimer(signal.ITIMER_REAL, 0.0)  # type: ignore[attr-defined]  # Unix-only
                 signal.signal(  # type: ignore[attr-defined]  # Unix-only
-                    signal.SIGALRM,
+                    signal.SIGALRM,  # type: ignore[attr-defined]  # Unix-only
                     old_handler,
                 )
         except (ValueError, OSError, AttributeError) as e:

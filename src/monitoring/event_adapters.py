@@ -115,7 +115,7 @@ class AlertSystemAdapter:
 class EventAdapter:
     """Adapts engine events for monitoring consumption."""
 
-    def adapt_match_event(self, event: dict) -> dict:
+    def adapt_match_event(self, event: dict[str, Any]) -> dict[str, Any]:
         """Convert match event to monitoring format.
 
         Args:
@@ -131,7 +131,7 @@ class EventAdapter:
             "timestamp": event.get("timestamp", 0),
         }
 
-    def adapt_error_event(self, event: dict) -> dict:
+    def adapt_error_event(self, event: dict[str, Any]) -> dict[str, Any]:
         """Convert error event to monitoring format.
 
         Args:
@@ -148,7 +148,7 @@ class EventAdapter:
             "recoverable": event.get("recoverable", False),
         }
 
-    def adapt_progress_event(self, event: dict) -> dict:
+    def adapt_progress_event(self, event: dict[str, Any]) -> dict[str, Any]:
         """Convert progress event to monitoring format.
 
         Args:

@@ -36,7 +36,7 @@ def _mask_private_key(key: str, mode: str = "masked") -> str:
     return key[:4] + "*" * min(len(key) - 8, 12) + key[-4:]
 
 
-def _compute_range(args: Any) -> tuple:
+def _compute_range(args: Any) -> tuple[Any, ...]:
     """阶段4: 计算搜索范围参数。.
 
     Args:
@@ -112,10 +112,10 @@ def _print_config_info(
 def _setup_and_start_engine(
     args: Any,
     targets: set[str],
-    config: dict,
+    config: dict[str, Any],
     start_val: str | None,
     end_val: str | None,
-) -> tuple:
+) -> tuple[Any, ...]:
     """阶段6: 构建引擎、初始化告警、注册信号、启动引擎。.
 
     Returns:
@@ -322,7 +322,7 @@ def _run_collision_loop(
         print()  # 确保换行
 
 
-def _format_match_detail(match: dict, sensitive_mode: str) -> str:
+def _format_match_detail(match: dict[str, Any], sensitive_mode: str) -> str:
     """格式化单条匹配结果，应用脱敏模式。.
 
     Args:

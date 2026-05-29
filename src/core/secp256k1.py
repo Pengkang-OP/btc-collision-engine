@@ -169,7 +169,7 @@ class Secp256k1:
         return True
 
     @classmethod
-    def get_security_info(cls) -> dict:
+    def get_security_info(cls) -> dict[str, Any]:
         """获取曲线安全信息."""
         return {
             "name": "secp256k1",

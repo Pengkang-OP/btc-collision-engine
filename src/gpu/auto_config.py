@@ -84,7 +84,7 @@ def _align_work_group_size(recommended: int, max_wgs: int, alignment: int) -> in
     return min(wgs, max_wgs)
 
 
-def _get_memory_gb(device: dict) -> float:
+def _get_memory_gb(device: dict[str, Any]) -> float:
     """获取GPU显存大小(GB).
 
     v4.2.1修复: 兼容global_mem_size(字节)和global_mem_gb两种格式

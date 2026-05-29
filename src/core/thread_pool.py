@@ -133,7 +133,7 @@ class WorkStealingThreadPool:
         self.enable_work_stealing = enable_work_stealing
 
         # Per-thread task queues
-        self._queues: list[deque] = [deque() for _ in range(self.num_threads)]
+        self._queues: list[deque[Any]] = [deque[Any]() for _ in range(self.num_threads)]
         self._queue_locks = [threading.Lock() for _ in range(self.num_threads)]
 
         # Thread management
@@ -210,7 +210,7 @@ class WorkStealingThreadPool:
             f"failed={stats['tasks_failed']}",
         )
 
-    def submit(self, fn: Callable, *args: Any, **kwargs: Any) -> Future:
+    def submit(self, fn: Callable[..., Any], *args: Any, **kwargs: Any) -> Future[Any]:
         """Submit a task to the thread pool.
 
         Args:
@@ -222,7 +222,7 @@ class WorkStealingThreadPool:
             Future object for retrieving the task result
 
         """
-        future: Future = Future()
+        future: Future[Any] = Future[Any]()
 
         # Wrap task
         task = (fn, args, kwargs, future)
@@ -266,7 +266,7 @@ class WorkStealingThreadPool:
     def _get_task(
         self,
         thread_id: int,
-    ) -> tuple | None:
+    ) -> tuple[Any, ...] | None:
         """Get a task (local queue first, then steal).
 
         Args:
@@ -280,7 +280,7 @@ class WorkStealingThreadPool:
         with self._queue_locks[thread_id]:
             if self._queues[thread_id]:
                 return cast(
-                    "tuple | None",
+                    "tuple[Any, ...] | None",
                     self._queues[thread_id].popleft(),
                 )
 
@@ -293,7 +293,7 @@ class WorkStealingThreadPool:
     def _steal_work(
         self,
         thief_id: int,
-    ) -> tuple | None:
+    ) -> tuple[Any, ...] | None:
         """Work stealing algorithm.
 
         Steals tasks from the tail of other thread queues.
@@ -315,11 +315,11 @@ class WorkStealingThreadPool:
                     # Steal from queue tail (reduce contention)
                     task = self._queues[victim_id].pop()
                     self._tasks_stolen += 1
-                    return cast("tuple | None", task)
+                    return cast("tuple[Any, ...] | None", task)
 
         return None
 
-    def get_stats(self) -> dict:
+    def get_stats(self) -> dict[str, Any]:
         """P3-8 enhanced: Get detailed thread pool statistics.
 
         Returns:
@@ -350,7 +350,7 @@ class WorkStealingThreadPool:
                 "uptime_seconds": (time.time() - self._start_time if self._start_time else 0),
             }
 
-    def health_check(self) -> dict:
+    def health_check(self) -> dict[str, Any]:
         """P3-8 new: Thread pool health check.
 
         Detects thread starvation, dead threads, and other anomalies.
@@ -429,11 +429,11 @@ class TaskBatch:
 
         """
         self._pool = pool
-        self._futures: list[Future] = []
+        self._futures: list[Future[Any]] = []
 
     def submit(
         self,
-        fn: Callable,
+        fn: Callable[..., Any],
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -586,7 +586,7 @@ class GlobalThreadPoolManager:
         self._resize_pending = new_num_threads
         return True
 
-    def get_health(self) -> dict | None:
+    def get_health(self) -> dict[str, Any] | None:
         """P3-8 new: Get thread pool health status.
 
         Returns:

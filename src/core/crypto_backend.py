@@ -283,7 +283,7 @@ class OpenSSLBackend(CryptoBackend):
         x = public_numbers.x
         y = public_numbers.y
 
-        x_bytes = x.to_bytes(32, "big")
+        x_bytes: bytes = x.to_bytes(32, "big")
 
         if compressed:
             # Compressed format: 0x02 (y even) or 0x03 (y odd)
@@ -291,7 +291,7 @@ class OpenSSLBackend(CryptoBackend):
             prefix = b"\x02" if (y % 2 == 0) else b"\x03"
             return prefix + x_bytes
         # Uncompressed format: 0x04 + x coordinate + y coordinate
-        y_bytes = y.to_bytes(32, "big")
+        y_bytes: bytes = y.to_bytes(32, "big")
         return b"\x04" + x_bytes + y_bytes
 
     def scalar_multiply(
@@ -427,7 +427,7 @@ class CoincurveBackend(CryptoBackend):
 
         # Generate public key using coincurve
         private_key_obj = coincurve.PrivateKey(private_key)
-        return private_key_obj.public_key.format(compressed=compressed)
+        return private_key_obj.public_key.format(compressed=compressed)  # type: ignore[no-any-return]
 
     def scalar_multiply(
         self,
@@ -905,7 +905,7 @@ def is_secure_backend_available() -> bool:
     return False
 
 
-def get_backend_security_info() -> dict:
+def get_backend_security_info() -> dict[str, Any]:
     """Get current backend security information.
 
     Returns:

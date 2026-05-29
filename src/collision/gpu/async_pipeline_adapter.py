@@ -164,7 +164,7 @@ class AsyncPipelineAdapter(IAsyncExecutionPipeline):
         except Exception as e:
             logger.warning("预取下一批失败: %s", e)
 
-    def flush_pending(self) -> list:
+    def flush_pending(self) -> list[Any]:
         """收集所有尚未取回的异步执行结果.
 
         Returns:
@@ -210,7 +210,7 @@ class AsyncPipelineAdapter(IAsyncExecutionPipeline):
         except Exception as e:
             logger.error("异步管道清理失败: %s", e)
 
-    def _convert_matches(self, raw_matches: list[dict]) -> list[MatchResult]:
+    def _convert_matches(self, raw_matches: list[dict[str, Any]]) -> list[MatchResult]:
         """转换匹配结果格式.
 
         Args:

@@ -1,10 +1,11 @@
+from typing import Any
 """Wizard GPU device selection step."""
 
 
 class GPUSelector:
     """Handles GPU device selection in the setup wizard."""
 
-    def select(self, devices: list[dict]) -> list[int]:
+    def select(self, devices: list[dict[str, Any]]) -> list[int]:
         """Select GPU devices to use.
 
         Args:

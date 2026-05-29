@@ -10,6 +10,7 @@ from .address_generator import (
 from .hash_utils import HashUtils
 from .precomputed_table import get_precomputed_table
 from .simd_optimizer import BatchOptimizer
+from typing import Any
 
 
 class OptimizedP2PKHAddressGenerator(P2PKHAddressGenerator):
@@ -178,7 +179,7 @@ class OptimizedP2PKHAddressGenerator(P2PKHAddressGenerator):
 
         return [self.generate_address(pk)[0] for pk in private_keys]
 
-    def get_optimization_info(self) -> dict:
+    def get_optimization_info(self) -> dict[str, Any]:
         """Get optimization configuration information.
 
         Returns:

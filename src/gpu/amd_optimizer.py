@@ -56,7 +56,7 @@ class AmdDriverDetector:
 
     __slots__ = ("_device_info", "_logger")
 
-    def __init__(self, device_info: dict, engine_logger: Any | None = None) -> None:
+    def __init__(self, device_info: dict[str, Any], engine_logger: Any | None = None) -> None:
         """Initialize AMD driver version detector.
 
         Args:
@@ -67,7 +67,7 @@ class AmdDriverDetector:
         self._device_info = device_info
         self._logger = engine_logger or logger
 
-    def detect(self) -> dict:
+    def detect(self) -> dict[str, Any]:
         """检测驱动版本并返回结果字典.
 
         Returns:
@@ -144,7 +144,7 @@ class AmdDriverDetector:
         return result
 
     @staticmethod
-    def _parse_rocm_version(version_str: str) -> tuple:
+    def _parse_rocm_version(version_str: str) -> tuple[Any, ...]:
         """从 ROCm 版本字符串中解析主次版本号，返回(major, minor)."""
         match = re.search(r"(\d+)\.(\d+)", version_str)
         if match:
@@ -164,7 +164,7 @@ class AmdDriverDetector:
         return None
 
     @staticmethod
-    def _parse_adrenalin_version(version_str: str) -> tuple:
+    def _parse_adrenalin_version(version_str: str) -> tuple[Any, ...]:
         """从 Adrenalin 版本字符串中解析 (年份, 次版本)."""
         match = re.search(r"(\d{2})\.(\d{1,2})", version_str)
         if match:
@@ -463,7 +463,7 @@ class AmdArchDetector:
 
     __slots__ = ("_device_info", "_logger")
 
-    def __init__(self, device_info: dict, engine_logger: Any | None = None) -> None:
+    def __init__(self, device_info: dict[str, Any], engine_logger: Any | None = None) -> None:
         """Initialize AMD architecture detector.
 
         Args:
@@ -474,7 +474,7 @@ class AmdArchDetector:
         self._device_info = device_info
         self._logger = engine_logger or logger
 
-    def detect(self) -> dict:
+    def detect(self) -> dict[str, Any]:
         """检测 GPU 架构代.
 
         Returns:
@@ -528,7 +528,7 @@ class AmdWavefrontValidator:
 
     __slots__ = ("_arch_info", "_logger", "_wavefront_size")
 
-    def __init__(self, arch_info: dict, engine_logger: Any | None = None) -> None:
+    def __init__(self, arch_info: dict[str, Any], engine_logger: Any | None = None) -> None:
         """Initialize AMD workgroup validator.
 
         Args:
@@ -540,7 +540,7 @@ class AmdWavefrontValidator:
         self._logger = engine_logger or logger
         self._wavefront_size = arch_info.get("wavefront_size", 64)
 
-    def validate(self, work_group_size: int) -> dict:
+    def validate(self, work_group_size: int) -> dict[str, Any]:
         """验证 work_group_size 对齐情况.
 
         Args:
@@ -625,8 +625,8 @@ class AmdMemoryOptimizer:
 
     def __init__(
         self,
-        device_info: dict,
-        arch_info: dict,
+        device_info: dict[str, Any],
+        arch_info: dict[str, Any],
         engine_logger: Any | None = None,
     ) -> None:
         """Initialize AMD memory config calculator.
@@ -641,7 +641,7 @@ class AmdMemoryOptimizer:
         self._arch_info = arch_info
         self._logger = engine_logger or logger
 
-    def compute(self) -> dict:
+    def compute(self) -> dict[str, Any]:
         """计算显存优化配置.
 
         Returns:
@@ -745,8 +745,8 @@ class AmdGPUOptimizer:
 
     def __init__(
         self,
-        device_info: dict,
-        config: dict | None = None,
+        device_info: dict[str, Any],
+        config: dict[str, Any] | None = None,
         engine_logger: Any | None = None,
     ) -> None:
         """Initialize AMD system optimizer.
@@ -761,16 +761,16 @@ class AmdGPUOptimizer:
         self._config = config or {}
         self._logger = engine_logger or logger
         # 内部组件（防御性初始化，默认为 None）
-        self._driver_info: dict | None = None
-        self._arch_info: dict | None = None
-        self._wavefront_result: dict | None = None
-        self._memory_config: dict | None = None
+        self._driver_info: dict[str, Any] | None = None
+        self._arch_info: dict[str, Any] | None = None
+        self._wavefront_result: dict[str, Any] | None = None
+        self._memory_config: dict[str, Any] | None = None
 
     # ------------------------------------------------------------------
     # 公共接口
     # ------------------------------------------------------------------
 
-    def apply_optimizations(self) -> dict:
+    def apply_optimizations(self) -> dict[str, Any]:
         """应用 AMD GPU 特定优化.
 
         采用防御性策略：每个检测步骤独立执行，单步失败不影响整体。
@@ -973,7 +973,7 @@ class AmdGPUOptimizer:
 
         return result
 
-    def get_optimization_report(self) -> dict:
+    def get_optimization_report(self) -> dict[str, Any]:
         """返回优化状态报告.
 
         Returns:

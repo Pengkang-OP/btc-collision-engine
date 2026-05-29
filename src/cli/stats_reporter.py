@@ -106,7 +106,7 @@ def _print_final_summary(engine: Any, engine_type: str, args: Any) -> None:
     output.rule(style="dim")
 
 
-def _build_stats_rows(stats: dict, multi_gpu: bool = False) -> list:
+def _build_stats_rows(stats: dict[str, Any], multi_gpu: bool = False) -> list[Any]:
     """构建统计行数据。."""
     if multi_gpu:
         return [
@@ -124,7 +124,7 @@ def _build_stats_rows(stats: dict, multi_gpu: bool = False) -> list:
     ]
 
 
-def _get_matches(engine: Any, engine_type: str) -> list[dict]:
+def _get_matches(engine: Any, engine_type: str) -> list[dict[str, Any]]:
     """安全获取匹配结果列表。."""
     try:
         if engine_type == "MultiGPU" and hasattr(engine, "get_matches"):
@@ -141,7 +141,7 @@ def _get_matches(engine: Any, engine_type: str) -> list[dict]:
 
 def _print_single_match(
     output: Any,
-    match: dict,
+    match: dict[str, Any],
     index: int,
     sensitive_mode: str,
 ) -> None:
@@ -163,7 +163,7 @@ def _print_single_match(
             output.print(f"    [dim]{field}:[/dim] {val}")
 
 
-def _export_matches_if_requested(args: Any, matches: list[dict]) -> None:
+def _export_matches_if_requested(args: Any, matches: list[dict[str, Any]]) -> None:
     """如果指定了 --export-matches，导出为 JSON 文件。."""
     export_path = getattr(args, "export_matches", None)
     if not export_path:
@@ -201,7 +201,7 @@ class StatsReporter:
     """Formats and outputs collision engine statistics."""
 
     @staticmethod
-    def format_summary(stats: dict) -> str:
+    def format_summary(stats: dict[str, Any]) -> str:
         """Format a human-readable summary.
 
         Args:
@@ -221,7 +221,7 @@ class StatsReporter:
         return "\n".join(lines)
 
     @staticmethod
-    def format_json(stats: dict) -> str:
+    def format_json(stats: dict[str, Any]) -> str:
         """Format as JSON.
 
         Args:

@@ -53,7 +53,7 @@ class MultiFormatMultiGPUEngine:
         "_multi_gpu_engine",
     )
 
-    def __init__(self, multi_gpu_config: dict | None = None) -> None:
+    def __init__(self, multi_gpu_config: dict[str, Any] | None = None) -> None:
         """初始化多格式多GPU引擎.
 
         Args:
@@ -104,7 +104,7 @@ class MultiFormatMultiGPUEngine:
         targets: set[str] | list[str] | None = None,
         mode: str = "random",
         total_keys: int = 10000000,
-        match_callback: Callable | None = None,
+        match_callback: Callable[..., Any] | None = None,
         range_start: int | None = None,
         range_end: int | None = None,
     ) -> bool:
@@ -231,13 +231,13 @@ class MultiFormatMultiGPUEngine:
         if hasattr(self._multi_gpu_engine, "resume"):
             self._multi_gpu_engine.resume()
 
-    def get_combined_stats(self) -> dict:
+    def get_combined_stats(self) -> dict[str, Any]:
         """获取统计信息（包含格式统计）."""
         stats = self._multi_gpu_engine.get_combined_stats()
         stats["format_stats"] = self.get_format_stats()
         return stats
 
-    def get_stats(self) -> dict:
+    def get_stats(self) -> dict[str, Any]:
         """获取基础统计信息（兼容CPU引擎接口）."""
         return self.get_combined_stats()
 

@@ -48,7 +48,7 @@ class GPUDeviceSelector:
         self._devices_cache: list[dict[str, Any]] | None = None
         self._scores_cache: dict[int, float] = {}
 
-    def detect_all_devices(self, force_refresh: bool = False) -> list[dict]:
+    def detect_all_devices(self, force_refresh: bool = False) -> list[dict[str, Any]]:
         """检测所有GPU设备.
 
         Args:
@@ -94,7 +94,7 @@ class GPUDeviceSelector:
             self._devices_cache = []
             return []
 
-    def score_device(self, device: dict) -> float:
+    def score_device(self, device: dict[str, Any]) -> float:
         """计算GPU设备评分.
 
         委托给统一的 GPUDeviceScorer 进行评分。
@@ -135,7 +135,7 @@ class GPUDeviceSelector:
 
         return best_device
 
-    def get_device_info(self, device_idx: int) -> dict | None:
+    def get_device_info(self, device_idx: int) -> dict[str, Any] | None:
         """获取指定索引的设备信息.
 
         Args:
@@ -154,7 +154,7 @@ class GPUDeviceSelector:
         logger.warning("设备索引 %s 不存在", device_idx)
         return None
 
-    def format_device_info(self, device: dict, detailed: bool = False) -> str:
+    def format_device_info(self, device: dict[str, Any], detailed: bool = False) -> str:
         """格式化设备信息用于展示.
 
         Args:
@@ -231,7 +231,7 @@ class GPUDeviceSelector:
 
         return "\n".join(lines)
 
-    def select_devices_by_indices(self, indices: list[int]) -> list[dict]:
+    def select_devices_by_indices(self, indices: list[int]) -> list[dict[str, Any]]:
         """根据索引列表选择设备.
 
         Args:
@@ -268,7 +268,7 @@ class GPUDeviceSelector:
 
         return selected
 
-    def recommend_batch_size(self, device: dict) -> int:
+    def recommend_batch_size(self, device: dict[str, Any]) -> int:
         """推荐批次大小.
 
         基于显存大小计算合适的批次大小。
@@ -303,7 +303,7 @@ class GPUDeviceSelector:
 
         return base_batch
 
-    def recommend_work_group_size(self, device: dict) -> int:
+    def recommend_work_group_size(self, device: dict[str, Any]) -> int:
         """推荐工作组大小.
 
         Args:
@@ -324,7 +324,7 @@ class GPUDeviceSelector:
             return int(min(256, max_work_group))
         return int(min(256, max_work_group))
 
-    def _enrich_device_info(self, raw_device: dict, global_idx: int) -> dict:
+    def _enrich_device_info(self, raw_device: dict[str, Any], global_idx: int) -> dict[str, Any]:
         """增强设备信息,添加评分所需的字段.
 
         Args:

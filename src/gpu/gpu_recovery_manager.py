@@ -146,7 +146,7 @@ class GPURecoveryManager:
         self._recovery_callback: Callable[..., Any] | None = None  # 恢复回调
 
         # 失败历史记录
-        self._failure_history: dict[int, list] = {}
+        self._failure_history: dict[int, list[Any]] = {}
         self._history_lock = threading.Lock()
 
         # 恢复回调
@@ -632,7 +632,7 @@ class GPURecoveryManager:
         with self._failed_gpus_lock:
             return self._failed_gpus.copy()
 
-    def get_recovery_stats(self) -> dict:
+    def get_recovery_stats(self) -> dict[str, Any]:
         """M2修复: 获取恢复统计（一致性快照）.
 
         使用锁保护读取操作，确保统计数据的一致性。

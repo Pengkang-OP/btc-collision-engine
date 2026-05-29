@@ -31,7 +31,7 @@ class DataAnalysisModule:
                 __file__,
             ).parent.parent.parent.parent
         )
-        self.analysis_cache: dict = {}
+        self.analysis_cache: dict[str, Any] = {}
 
     def analyze(self, target_path: str | None = None) -> AnalysisReport:
         """执行完整的数据分析."""

@@ -68,7 +68,7 @@ class GPUBufferTracker:
         self._memory_threshold = memory_threshold or self.MEMORY_USAGE_THRESHOLD
         self._cleanup_count = 0
         self._leak_detection_count = 0
-        self._memory_usage_history: list[dict] = []  # 内存使用历史
+        self._memory_usage_history: list[dict[str, Any]] = []  # 内存使用历史
         self._last_check_time = time.time()
 
     def track_buffer(

@@ -100,7 +100,7 @@ warn_unused_configs = true
 warn_unused_ignores = false  # Phase2 遗留大量 type:ignore，暂不清理
 check_untyped_defs = false   # 部分第三方库调用的函数无类型注解
 disallow_untyped_calls = false # 允许调用未类型化函数
-disallow_any_generics = false  # 项目中大量 dict/Callable 等缺少类型参数，暂不启用
+disallow_any_generics = true
 exclude = [
     "tests/",
     "benchmarks/",

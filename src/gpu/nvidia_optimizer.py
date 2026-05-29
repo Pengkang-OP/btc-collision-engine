@@ -59,7 +59,7 @@ class NvidiaDriverDetector:
 
     __slots__ = ("_device_info", "_logger")
 
-    def __init__(self, device_info: dict, engine_logger: Any | None = None) -> None:
+    def __init__(self, device_info: dict[str, Any], engine_logger: Any | None = None) -> None:
         """Initialize NVIDIA driver version detector.
 
         Args:
@@ -70,7 +70,7 @@ class NvidiaDriverDetector:
         self._device_info = device_info
         self._logger = engine_logger or logger
 
-    def detect(self) -> dict:
+    def detect(self) -> dict[str, Any]:
         """检测驱动版本并返回结果字典.
 
         Returns:
@@ -407,7 +407,7 @@ class NvidiaArchDetector:
 
     __slots__ = ("_device_info", "_logger")
 
-    def __init__(self, device_info: dict, engine_logger: Any | None = None) -> None:
+    def __init__(self, device_info: dict[str, Any], engine_logger: Any | None = None) -> None:
         """Initialize NVIDIA architecture detector.
 
         Args:
@@ -418,7 +418,7 @@ class NvidiaArchDetector:
         self._device_info = device_info
         self._logger = engine_logger or logger
 
-    def detect(self) -> dict:
+    def detect(self) -> dict[str, Any]:
         """检测 GPU 架构代.
 
         Returns:
@@ -472,8 +472,8 @@ class NvidiaMemoryOptimizer:
 
     def __init__(
         self,
-        device_info: dict,
-        arch_features: dict,
+        device_info: dict[str, Any],
+        arch_features: dict[str, Any],
         engine_logger: Any | None = None,
     ) -> None:
         """Initialize NVIDIA workgroup validator.
@@ -488,7 +488,7 @@ class NvidiaMemoryOptimizer:
         self._arch_features = arch_features
         self._logger = engine_logger or logger
 
-    def compute(self) -> dict:
+    def compute(self) -> dict[str, Any]:
         """计算显存优化配置.
 
         Returns:
@@ -566,8 +566,8 @@ class NvidiaGPUOptimizer:
 
     def __init__(
         self,
-        device_info: dict,
-        config: dict | None = None,
+        device_info: dict[str, Any],
+        config: dict[str, Any] | None = None,
         engine_logger: Any | None = None,
     ) -> None:
         """Initialize NVIDIA system optimizer.
@@ -582,15 +582,15 @@ class NvidiaGPUOptimizer:
         self._config = config or {}
         self._logger = engine_logger or logger
         # 内部组件（防御性初始化，默认为 None）
-        self._driver_info: dict | None = None
-        self._arch_info: dict | None = None
-        self._memory_config: dict | None = None
+        self._driver_info: dict[str, Any] | None = None
+        self._arch_info: dict[str, Any] | None = None
+        self._memory_config: dict[str, Any] | None = None
 
     # ------------------------------------------------------------------
     # 公共接口
     # ------------------------------------------------------------------
 
-    def apply_optimizations(self) -> dict:
+    def apply_optimizations(self) -> dict[str, Any]:
         """应用 NVIDIA GPU 特定优化.
 
         采用防御性策略：每个检测步骤独立执行，单步失败不影响整体。
@@ -711,7 +711,7 @@ class NvidiaGPUOptimizer:
 
         return result
 
-    def get_optimization_report(self) -> dict:
+    def get_optimization_report(self) -> dict[str, Any]:
         """返回优化状态报告.
 
         Returns:

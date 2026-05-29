@@ -156,7 +156,7 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
         self.queue_depth_hits = 0
 
         # 后台结果收集器
-        self._completed_results: list[tuple[bytes, list[dict]]] = []
+        self._completed_results: list[tuple[bytes, list[dict[str, Any]]]] = []
         self._completed_results_lock = threading.Lock()
         self._collector_running = False
         self._collector_thread: threading.Thread | None = None  # type: ignore[assignment]
@@ -188,12 +188,12 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
     # ------------------------------------------------------------------
 
     @property
-    def pending_batches(self) -> list:
+    def pending_batches(self) -> list[Any]:
         """验收测试兼容：pending_batches -> _prefetch_events."""
         return self._prefetch_events
 
     @pending_batches.setter
-    def pending_batches(self, value: list) -> None:
+    def pending_batches(self, value: list[Any]) -> None:
         self._prefetch_events = value
 
     @property
@@ -212,7 +212,7 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
         """验收测试兼容：停止执行器。."""
         self.is_async_ready = False
 
-    def execute_batch(self, seed: bytes, batch_size: int) -> list:
+    def execute_batch(self, seed: bytes, batch_size: int) -> list[Any]:
         """验收测试兼容：执行单批私钥碰撞检测。."""
         if not self.is_async_ready:
             return []
@@ -223,7 +223,7 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
             logger.error("异步预取种子失败: %s", e, exc_info=True)
             return []
 
-    def get_performance_stats(self) -> dict:
+    def get_performance_stats(self) -> dict[str, Any]:
         return self.get_stats()
 
     # ------------------------------------------------------------------
@@ -314,7 +314,7 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
         program: Any,
         targets_buf: Any,
         num_targets: int,
-    ) -> "tuple[list[tuple[bytes, list[dict]]], float]":
+    ) -> "tuple[list[tuple[bytes, list[dict[str, Any]]]], float]":
         """异步执行批次（PRNG模式：seed替代private_keys）。."""
         start_time = time.time()
 
@@ -328,7 +328,7 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
 
         try:
             # 步骤0：先排空后台收集器已完成的批次
-            prev_matches: list[tuple[bytes, list[dict]]] = self.drain_results()
+            prev_matches: list[tuple[bytes, list[dict[str, Any]]]] = self.drain_results()
             oldest_batch: _PendingBatch | None = None
             with self._prefetch_lock:
                 if len(self._prefetch_events) >= self.queue_depth:
@@ -777,7 +777,7 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
     # 统计
     # ------------------------------------------------------------------
 
-    def get_stats(self) -> dict:
+    def get_stats(self) -> dict[str, Any]:
         total = self.async_executions + self.sync_fallbacks
         async_rate = (self.async_executions / total * 100) if total > 0 else 0
         prefetch_total = self.prefetch_hits + self.prefetch_misses

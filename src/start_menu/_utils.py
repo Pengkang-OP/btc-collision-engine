@@ -29,7 +29,7 @@ def _wait_key() -> None:
 
 def _term_width() -> int:
     if _has_rich and _console is not None:
-        w = _console.width
+        w: int = _console.width
         return max(52, min(w - 4, 100))
     return 62
 

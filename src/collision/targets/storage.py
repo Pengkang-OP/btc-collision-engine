@@ -95,7 +95,7 @@ class AddressStorage:
 
         logger.info("AddressStorage 初始化: 类型=%s, 路径=%s", storage_type, path)
 
-    def save_targets(self, targets: set[str], metadata: dict | None = None) -> bool:
+    def save_targets(self, targets: set[str], metadata: dict[str, Any] | None = None) -> bool:
         """保存目标地址集合到持久化存储.
 
         根据 storage_type 选择对应的存储后端执行保存操作。
@@ -121,7 +121,7 @@ class AddressStorage:
             logger.error("保存目标地址失败: %s", e)
             return False
 
-    def load_targets(self) -> tuple[set[str], dict | None]:
+    def load_targets(self) -> tuple[set[str], dict[str, Any] | None]:
         """从持久化存储加载目标地址集合和元数据.
 
         根据 storage_type 选择对应的存储后端执行加载操作。
@@ -143,7 +143,7 @@ class AddressStorage:
             logger.error("加载目标地址失败: %s", e)
             return set(), None
 
-    def _save_json(self, targets: set[str], metadata: dict | None = None) -> bool:
+    def _save_json(self, targets: set[str], metadata: dict[str, Any] | None = None) -> bool:
         """保存为JSON格式."""
         data = {
             "version": "1.0",
@@ -163,7 +163,7 @@ class AddressStorage:
             logger.error("JSON保存失败: %s", e)
             return False
 
-    def _load_json(self) -> tuple[set[str], dict | None]:
+    def _load_json(self) -> tuple[set[str], dict[str, Any] | None]:
         """从JSON加载."""
         if not pathlib.Path(self.path).exists():
             logger.warning(f"文件不存在: {self.path}")
@@ -183,7 +183,7 @@ class AddressStorage:
             logger.error("JSON加载失败: %s", e)
             return set(), None
 
-    def _save_sqlite(self, targets: set[str], metadata: dict | None = None) -> bool:
+    def _save_sqlite(self, targets: set[str], metadata: dict[str, Any] | None = None) -> bool:
         """保存到SQLite数据库（带输入验证）."""
         # 输入验证
         validated_targets = set()
@@ -264,7 +264,7 @@ class AddressStorage:
         finally:
             conn.close()
 
-    def _load_sqlite(self) -> tuple[set[str], dict | None]:
+    def _load_sqlite(self) -> tuple[set[str], dict[str, Any] | None]:
         """从SQLite加载."""
         if not pathlib.Path(self.path).exists():
             logger.warning(f"数据库不存在: {self.path}")
@@ -298,7 +298,7 @@ class AddressStorage:
         finally:
             conn.close()
 
-    def _save_csv(self, targets: set[str], metadata: dict | None = None) -> bool:
+    def _save_csv(self, targets: set[str], metadata: dict[str, Any] | None = None) -> bool:
         """保存为CSV格式."""
         try:
             # 使用统一的编码工具
@@ -329,7 +329,7 @@ class AddressStorage:
             logger.error("CSV保存失败: %s", e)
             return False
 
-    def _load_csv(self) -> tuple[set[str], dict | None]:
+    def _load_csv(self) -> tuple[set[str], dict[str, Any] | None]:
         """从CSV加载."""
         if not pathlib.Path(self.path).exists():
             logger.warning(f"文件不存在: {self.path}")
@@ -482,13 +482,13 @@ class AddressStorage:
     @staticmethod
     def _batch_validate_addresses(
         source_addresses: list[str],
-        progress_callback: Callable | None,
-    ) -> tuple[set, list]:
+        progress_callback: Callable[..., Any] | None,
+    ) -> tuple[set[Any], list[Any]]:
         """分批验证源地址，返回 (valid_addresses, invalid_addresses)。."""
         from .validator import AddressBatchValidator
 
-        valid_addresses: set = set()
-        invalid_addresses: list = []
+        valid_addresses: set[Any] = set[Any]()
+        invalid_addresses: list[Any] = []
         validator = AddressBatchValidator(max_workers=4)
         batch_size = 100
         for i in range(0, len(source_addresses), batch_size):
@@ -512,7 +512,7 @@ class AddressStorage:
         storage_dir: str | None = None,
         validate: bool = True,
         storage_type: str = "json",
-        progress_callback: Callable | None = None,
+        progress_callback: Callable[..., Any] | None = None,
     ) -> dict[str, Any]:
         """从外部源导入地址并自动保存到持久化存储。."""
         result: dict[str, Any] = {

@@ -2,6 +2,7 @@
 
 import json
 from pathlib import Path
+from typing import Any
 
 
 class Translator:
@@ -13,7 +14,7 @@ class Translator:
     ):
         """Initialize the translator."""
         self._locale_dir = Path(locale_dir or (Path(__file__).parent / "locales"))
-        self._translations: dict = {}
+        self._translations: dict[str, Any] = {}
 
     def load(self, lang: str) -> None:
         """Load translations for a language.

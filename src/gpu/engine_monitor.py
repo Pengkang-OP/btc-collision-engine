@@ -80,7 +80,7 @@ class GPUEngineMonitor:
         self._adjustment_history_lock = threading.Lock()
 
         # 性能窗口（最近100批的性能数据）
-        self._performance_window: deque = deque(maxlen=100)
+        self._performance_window: deque[Any] = deque[Any](maxlen=100)
         self._performance_lock = threading.Lock()
 
         # 自适应调整参数

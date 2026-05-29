@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass, field
 from enum import Enum, auto
+from typing import Any
 
 
 class LogEventType(Enum):
@@ -24,7 +25,7 @@ class LogEvent:
     """
 
     event_type: "LogEventType | None" = None
-    data: dict = field(default_factory=dict)
+    data: dict[str, Any] = field(default_factory=dict[str, Any])
     level: str = "INFO"
     message: str = ""
     timestamp: float = 0.0

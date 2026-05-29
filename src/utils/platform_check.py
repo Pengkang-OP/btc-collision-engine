@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 from .logging_config import get_configured_logger
+from typing import Any
 
 logger = get_configured_logger(__name__)
 
@@ -82,7 +83,7 @@ class PlatformChecker:
         print(f"  结果: {'全部通过' if all_passed else '存在警告'}")  # noqa: T201
         print(f"{'=' * 60}\n")  # noqa: T201
 
-    def generate_report(self) -> dict:
+    def generate_report(self) -> dict[str, Any]:
         """Generate a structured report dict."""
         vi = sys.version_info
         return {
@@ -130,4 +131,4 @@ def has_admin_privileges() -> bool:
         import ctypes
 
         return ctypes.windll.shell32.IsUserAnAdmin() != 0  # type: ignore[attr-defined, no-any-return]
-    return os.geteuid() == 0  # type: ignore[attr-defined]  # Unix-only
+    return os.geteuid() == 0  # type: ignore[attr-defined, no-any-return]  # Unix-only

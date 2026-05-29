@@ -716,7 +716,7 @@ class GPUDeviceManager:
             self.logger.info("GPU内存池未启用,使用直接分配模式")
 
     @staticmethod
-    def _compute_prealloc_sizes(batch_size: int) -> list:
+    def _compute_prealloc_sizes(batch_size: int) -> list[Any]:
         """计算引擎常用缓冲区的预分配大小列表.
 
         基于引擎批大小推导关键缓冲区尺寸:

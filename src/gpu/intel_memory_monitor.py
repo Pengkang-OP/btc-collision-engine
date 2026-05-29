@@ -18,6 +18,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from ..utils import get_configured_logger
+from typing import Any
 
 __all__ = ["IntelMemoryMonitor", "MemorySnapshot", "MemoryStatus"]
 
@@ -202,7 +203,7 @@ class IntelMemoryMonitor:
             f"显存释放: -{size_bytes / 1024**2:.1f}MB, 总计: {self.current_usage / 1024**2:.1f}MB",
         )
 
-    def get_status(self) -> dict:
+    def get_status(self) -> dict[str, Any]:
         """获取当前显存状态.
 
         Returns:

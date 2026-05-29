@@ -10,6 +10,7 @@ from contextlib import suppress
 from src.utils import get_configured_logger
 
 from ..executor_types import GPU_SPECIFIC_CONFIG
+from typing import Any
 
 logger = get_configured_logger("AsyncGPUExecutor.GPUInfo")
 
@@ -75,7 +76,7 @@ class _GPUInfoMixin:
                 return "intel"
         return "default"
 
-    def _get_gpu_config(self, gpu_model: str) -> dict:
+    def _get_gpu_config(self, gpu_model: str) -> dict[str, Any]:
         """获取GPU特定配置。.
 
         Args:
@@ -87,7 +88,7 @@ class _GPUInfoMixin:
         """
         return GPU_SPECIFIC_CONFIG.get(gpu_model, GPU_SPECIFIC_CONFIG.get("default", {}))
 
-    def _detect_optimal_work_group_size(self, gpu_config: dict) -> int:
+    def _detect_optimal_work_group_size(self, gpu_config: dict[str, Any]) -> int:
         """检测最优 work_group_size。.
 
         从 GPU 设备信息和型号配置推断最优 work_group_size。

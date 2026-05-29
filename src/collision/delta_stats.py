@@ -2,6 +2,7 @@
 
 import threading
 import time
+from typing import Any
 
 
 class DeltaStats:
@@ -31,7 +32,7 @@ class DeltaStats:
     def update(
         self,
         total_keys: int,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Update stats and compute delta.
 
         Args:

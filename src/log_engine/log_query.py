@@ -1,6 +1,7 @@
 """Log query engine for searching log entries."""
 
 import re
+from typing import Any
 
 
 class LogQuery:
@@ -8,9 +9,9 @@ class LogQuery:
 
     @staticmethod
     def filter_by_level(
-        entries: list[dict],
+        entries: list[dict[str, Any]],
         min_level: str,
-    ) -> list[dict]:
+    ) -> list[dict[str, Any]]:
         """Filter entries by minimum log level.
 
         Args:
@@ -40,9 +41,9 @@ class LogQuery:
 
     @staticmethod
     def search_text(
-        entries: list[dict],
+        entries: list[dict[str, Any]],
         text: str,
-    ) -> list[dict]:
+    ) -> list[dict[str, Any]]:
         """Search entries containing text.
 
         Args:

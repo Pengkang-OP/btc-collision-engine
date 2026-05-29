@@ -486,7 +486,7 @@ class DriverManager:
         logger.info("驱动版本缓存已清除")
 
     @staticmethod
-    def get_unstable_driver_report() -> dict:
+    def get_unstable_driver_report() -> dict[str, Any]:
         """获取不稳定驱动报告.
 
         Returns:
@@ -571,7 +571,7 @@ class DriverManager:
         return version
 
     @staticmethod
-    def check_driver_health(vendor: str, driver_version: str, profile: dict | None = None) -> dict:
+    def check_driver_health(vendor: str, driver_version: str, profile: dict[str, Any] | None = None) -> dict[str, Any]:
         """检查驱动健康状态.
 
         Args:
@@ -650,7 +650,7 @@ class DriverManager:
     def get_driver_optimization_flags(
         vendor: str,
         driver_version: str,
-        profile: dict | None = None,
+        profile: dict[str, Any] | None = None,
     ) -> dict[str, bool]:
         """根据驱动版本获取优化标志.
 

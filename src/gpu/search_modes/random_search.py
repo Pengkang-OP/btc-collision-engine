@@ -113,7 +113,7 @@ class RandomSearchMode(BaseSearchMode):
         self._seed_prefetch_size = seed_prefetch_size
         self._adaptive_controller = adaptive_controller
         # 种子预生成队列与线程
-        self._seed_queue: queue.Queue = queue.Queue(maxsize=seed_prefetch_size)
+        self._seed_queue: queue.Queue[Any] = queue.Queue[Any](maxsize=seed_prefetch_size)
         self._seed_stop_event: threading.Event = threading.Event()
         self._seed_thread: threading.Thread | None = None
 
@@ -458,7 +458,7 @@ class RandomSearchMode(BaseSearchMode):
         batch_size: int,
         batch_optimizer: Any,
         batch_num: int,
-    ) -> "tuple[list[tuple[bytes, list[dict]]], float]":
+    ) -> "tuple[list[tuple[bytes, list[dict[str, Any]]]], float]":
         """执行单个批次并返回结果（v5.2.0: 每批次种子随匹配绑定）.
 
         Returns:
@@ -466,7 +466,7 @@ class RandomSearchMode(BaseSearchMode):
             batch_results: list of (seed, matches) pairs from previously collected batches
 
         """
-        batch_results: list[tuple[bytes, list[dict]]]
+        batch_results: list[tuple[bytes, list[dict[str, Any]]]]
         batch_results, execution_time_ms = engine._async_executor.run_batch_async(
             seed,
             batch_size,
@@ -524,7 +524,7 @@ class RandomSearchMode(BaseSearchMode):
     # ── _execute_async 辅助方法（降低 C901） ──────────────────────
 
     # v5.2.4: 修正返回类型注解 tuple[dict, int, str, Any]（原本漏掉 batch_optimizer 的第4个返回值）
-    def _setup_async_buffers(self, engine: Any, current_batch_size: int) -> tuple[dict, int, str, Any]:
+    def _setup_async_buffers(self, engine: Any, current_batch_size: int) -> tuple[dict[str, Any], int, str, Any]:
         """初始化双缓冲区和 GPU 型号检测。."""
         gpu_model = self._detect_gpu_model(engine)
         from ..batch_size_optimizer import get_batch_size_optimizer
@@ -551,7 +551,7 @@ class RandomSearchMode(BaseSearchMode):
         self,
         engine: Any,
         batch_optimizer: Any,
-        buffer_data: dict,
+        buffer_data: dict[str, Any],
         current_buffer: str,
         current_batch_size: int,
         batch_num: int,

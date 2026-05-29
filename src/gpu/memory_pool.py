@@ -140,7 +140,7 @@ class GPUMemoryPool:
         # 缓冲区池: 按大小分组
         self._pool: dict[int | str, list[Any]] = {}
         # 按类型分组的缓冲区池
-        self._type_pools: dict[str, dict[int, list]] = {
+        self._type_pools: dict[str, dict[int, list[Any]]] = {
             "input": {},  # 输入缓冲区
             "output": {},  # 输出缓冲区
             "temp": {},  # 临时缓冲区
@@ -161,7 +161,7 @@ class GPUMemoryPool:
         self._lru_cache: OrderedDict[int, tuple[Any, int, str, float]] = OrderedDict()
 
         # 内存使用历史
-        self._memory_usage_history: list[dict] = []
+        self._memory_usage_history: list[dict[str, Any]] = []
         # 分配模式历史
         self._allocation_patterns: dict[int, int] = {}  # 大小 -> 使用次数
 
@@ -427,7 +427,7 @@ class GPUMemoryPool:
                 pool_list.pop(i)
                 break
 
-    def _find_lru_candidate(self, min_idle_seconds: float, now: float) -> tuple | None:
+    def _find_lru_candidate(self, min_idle_seconds: float, now: float) -> tuple[Any, ...] | None:
         """在 LRU 缓存中查找符合条件的最久未使用的候选缓冲区.
 
         Args:
@@ -609,7 +609,7 @@ class GPUMemoryPool:
             # 主动淘汰LRU缓冲区释放压力
             self._evict_lru()
 
-    def get_pool_stats(self) -> dict:
+    def get_pool_stats(self) -> dict[str, Any]:
         """获取内存池统计信息（含LRU跟踪状态）.
 
         Returns:
@@ -639,7 +639,7 @@ class GPUMemoryPool:
                 ),
             }
 
-    def get_stats(self) -> dict:
+    def get_stats(self) -> dict[str, Any]:
         """获取内存池统计信息.
 
         Returns:
@@ -737,8 +737,8 @@ class GPUMemoryPool:
     @classmethod
     def create_proportional_pools(
         cls,
-        devices: list[dict],
-        contexts: list | None = None,
+        devices: list[dict[str, Any]],
+        contexts: list[Any] | None = None,
         total_pool_mb: int = 512,
     ) -> dict[int, "GPUMemoryPool"]:
         """根据GPU显存按比例创建内存池.
@@ -852,7 +852,7 @@ class GPUBufferAllocator:
         """归还临时缓冲区."""
         self._temp_pool.release(buf, size, buffer_type="temp")
 
-    def get_stats(self) -> dict:
+    def get_stats(self) -> dict[str, Any]:
         """获取分配器统计."""
         return {
             "input_pool": self._input_pool.get_stats(),

@@ -1,3 +1,4 @@
+from typing import Any
 """Wizard option selection step."""
 
 
@@ -6,7 +7,7 @@ class OptionSelector:
 
     def select(
         self,
-        options: list[dict],
+        options: list[dict[str, Any]],
         key: str,
     ) -> str | None:
         """Select an option by key.

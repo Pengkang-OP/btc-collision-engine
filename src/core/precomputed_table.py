@@ -138,7 +138,7 @@ class PrecomputedPointTable:
             f"Precomputed table built, estimated memory: {memory_kb:.1f}KB",
         )
 
-    def _build_table(self) -> list:
+    def _build_table(self) -> list[Any]:
         """Build precomputed table.
 
         [G, 2G, 3G, ..., (2^w-1)G]

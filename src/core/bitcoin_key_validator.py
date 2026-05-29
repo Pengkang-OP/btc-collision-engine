@@ -692,7 +692,7 @@ class BitcoinKeyValidator:
     def verify_address_match(
         self,
         address: str,
-        target_addresses: set,
+        target_addresses: set[Any],
     ) -> KeyValidationResult:
         """Verify if address matches target address list.
 
@@ -738,7 +738,7 @@ class BitcoinKeyValidator:
     def full_validation_chain(
         self,
         private_key: bytes,
-        target_addresses: set,
+        target_addresses: set[Any],
     ) -> dict[str, Any]:
         """Full validation chain: private key -> public key -> address -> WIF -> match verify.
 
@@ -872,7 +872,7 @@ class BitcoinKeyValidator:
 # Convenience function
 def validate_bitcoin_key_chain(
     private_key: bytes,
-    target_addresses: set,
+    target_addresses: set[Any],
 ) -> dict[str, Any]:
     """Convenience function: validate complete Bitcoin key chain.
 

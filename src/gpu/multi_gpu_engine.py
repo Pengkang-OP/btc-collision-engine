@@ -109,7 +109,7 @@ class MultiGPUCollisionEngine:
         "_metrics",
     )
 
-    def __init__(self, config: dict | MultiGPUConfig | None = None) -> None:
+    def __init__(self, config: dict[str, Any] | MultiGPUConfig | None = None) -> None:
         """初始化多GPU引擎.
 
         Args:
@@ -297,7 +297,7 @@ class MultiGPUCollisionEngine:
                     self.recovery_manager.cleanup()
             return False
 
-    def _validate_config_values(self, config: dict) -> dict:
+    def _validate_config_values(self, config: dict[str, Any]) -> dict[str, Any]:
         """M-3修复: 验证配置值边界.
 
         配置值边界验证说明:
@@ -494,7 +494,7 @@ class MultiGPUCollisionEngine:
         targets: set[str],
         mode: str = "random",
         total_keys: int = 10000000,
-        match_callback: Callable | None = None,
+        match_callback: Callable[..., Any] | None = None,
         range_start: int | None = None,  # range/brute_force 的起始私钥
         range_end: int | None = None,  # range 的结束私钥
     ) -> bool:
@@ -686,7 +686,7 @@ class MultiGPUCollisionEngine:
 
         logger.info("所有GPU工作器已恢复")
 
-    def get_combined_stats(self) -> dict:
+    def get_combined_stats(self) -> dict[str, Any]:
         """获取汇总统计信息.
 
         Returns:
@@ -753,7 +753,7 @@ class MultiGPUCollisionEngine:
             return time.time() - self._start_time
         return 0.0
 
-    def get_per_device_stats(self) -> dict[int, dict]:
+    def get_per_device_stats(self) -> dict[int, dict[str, Any]]:
         """获取每个GPU的独立统计.
 
         Returns:
@@ -770,7 +770,7 @@ class MultiGPUCollisionEngine:
 
         return stats
 
-    def get_matches(self) -> list[dict]:
+    def get_matches(self) -> list[dict[str, Any]]:
         """获取所有匹配结果.
 
         Returns:
@@ -803,7 +803,7 @@ class MultiGPUCollisionEngine:
         with self._state_lock:
             return self._initialized
 
-    def get_devices(self) -> list[dict]:
+    def get_devices(self) -> list[dict[str, Any]]:
         """获取当前使用的GPU设备列表.
 
         Returns:
@@ -823,7 +823,7 @@ class MultiGPUCollisionEngine:
         """
         return self.load_balancer
 
-    def _on_match_found(self, device_idx: int, match: dict) -> None:
+    def _on_match_found(self, device_idx: int, match: dict[str, Any]) -> None:
         """处理匹配结果(回调).
 
         Args:
@@ -858,7 +858,7 @@ class MultiGPUCollisionEngine:
             except Exception as e:
                 logger.error("匹配回调异常: %s", e)
 
-    def _on_anomaly_detected(self, device_idx: int, issue: dict) -> None:
+    def _on_anomaly_detected(self, device_idx: int, issue: dict[str, Any]) -> None:
         """处理数据异常检测回调.
 
         Args:
@@ -902,7 +902,7 @@ class MultiGPUCollisionEngine:
                 except Exception as e:
                     logger.error("暂停GPU %s 失败: %s", device_idx, e)
 
-    def get_monitor_stats(self) -> dict:
+    def get_monitor_stats(self) -> dict[str, Any]:
         """获取数据监控统计.
 
         Returns:
@@ -910,7 +910,7 @@ class MultiGPUCollisionEngine:
 
         """
         if self._monitor_enabled:
-            return cast("dict", self.data_monitor.get_stats())
+            return self.data_monitor.get_stats()  # type: ignore[no-any-return]
         return {"enabled": False}
 
     def get_monitor_issues(
@@ -918,7 +918,7 @@ class MultiGPUCollisionEngine:
         severity: str | None = None,
         device_idx: int | None = None,
         limit: int = 100,
-    ) -> list[dict]:
+    ) -> list[dict[str, Any]]:
         """获取数据质量问题.
 
         Args:
@@ -931,13 +931,11 @@ class MultiGPUCollisionEngine:
 
         """
         if self._monitor_enabled:
-            return cast(
-                "list[dict]",
-                self.data_monitor.get_issues(severity=severity, device_idx=device_idx, limit=limit),
-            )
+            return self.data_monitor.get_issues(severity=severity, device_idx=device_idx, limit=limit)  # type: ignore[no-any-return]
+
         return []
 
-    def _get_device_config(self, device: dict) -> WorkerConfig:
+    def _get_device_config(self, device: dict[str, Any]) -> WorkerConfig:
         """获取设备特定配置.
 
         Args:
@@ -972,7 +970,7 @@ class MultiGPUCollisionEngine:
 
         return config
 
-    def _get_vendor_key(self, device: dict) -> str:
+    def _get_vendor_key(self, device: dict[str, Any]) -> str:
         """生成厂商+平台的唯一键，用于同厂商内核编译配置共享.
 
         Args:
@@ -991,10 +989,10 @@ class MultiGPUCollisionEngine:
 
     def _get_or_cache_compile_config(
         self,
-        device: dict,
+        device: dict[str, Any],
         kernel_source: str,
         build_options: str,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """获取或缓存内核编译配置（同厂商GPU共享编译配置）.
 
         OpenCL Program 不能跨 context 共享，但同厂商 GPU 可共享相同的
@@ -1015,7 +1013,7 @@ class MultiGPUCollisionEngine:
 
         if vendor_key in self._compiled_programs:
             logger.info("同厂商 '%s' 编译配置已存在，无需重新预处理", vendor_key)
-            return cast("dict", self._compiled_programs[vendor_key])
+            return cast("dict[str, Any]", self._compiled_programs[vendor_key])
 
         # 首次为该厂商记录编译配置
         compile_config = {
@@ -1342,7 +1340,7 @@ class MultiGPUCollisionEngine:
         except Exception as e:
             logger.error("自动重平衡检查失败: %s", e)
 
-    def get_metrics(self) -> "dict":
+    def get_metrics(self) -> "dict[str, Any]":
         """获取结构化性能指标（Prometheus/JSON格式）.
 
         Returns:
@@ -1360,7 +1358,7 @@ class MultiGPUCollisionEngine:
         """
         return self._metrics.export_prometheus()
 
-    def get_performance_history(self) -> list[dict]:
+    def get_performance_history(self) -> list[dict[str, Any]]:
         """获取性能历史数据.
 
         Returns:
@@ -1370,7 +1368,7 @@ class MultiGPUCollisionEngine:
         with self._performance_history_lock:
             return self._performance_history.copy()
 
-    def get_workload_stats(self) -> dict:
+    def get_workload_stats(self) -> dict[str, Any]:
         """获取工作负载统计信息.
 
         Returns:

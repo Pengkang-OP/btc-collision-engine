@@ -109,7 +109,7 @@ class FirstRunWizard:
             sys.exit(0)
 
     @staticmethod
-    def _choose(message: str, options: list, default_idx: int = 0) -> str:
+    def _choose(message: str, options: list[Any], default_idx: int = 0) -> str:
         """让用户从选项列表中选择."""
         print(f"\n{message}")
         for i, opt in enumerate(options, 1):
@@ -157,7 +157,7 @@ class FirstRunWizard:
 """)
         input("  按 Enter 继续...")
 
-    def _step_mode(self, config: dict) -> None:
+    def _step_mode(self, config: dict[str, Any]) -> None:
         """步骤1：选择碰撞模式."""
         print("\n[步骤 1/4] 选择碰撞模式")
         mode_options = [
@@ -170,7 +170,7 @@ class FirstRunWizard:
         config["collision"]["mode"] = mode
         print(f"  已设置模式: {mode}")
 
-    def _step_target(self, config: dict) -> str | None:
+    def _step_target(self, config: dict[str, Any]) -> str | None:
         """步骤2：设置目标地址."""
         print("\n[步骤 2/4] 设置目标地址")
 
@@ -250,7 +250,7 @@ class FirstRunWizard:
                 return candidate
         return None
 
-    def _step_gpu(self, config: dict) -> None:
+    def _step_gpu(self, config: dict[str, Any]) -> None:
         """步骤3：GPU 设置."""
         print("\n[步骤 3/4] GPU 加速设置")
 
@@ -275,7 +275,7 @@ class FirstRunWizard:
         else:
             print("  已选择 CPU 模式")
 
-    def _step_workers(self, config: dict, use_gpu: bool = False) -> None:
+    def _step_workers(self, config: dict[str, Any], use_gpu: bool = False) -> None:
         """步骤4：CPU 工作线程数."""
         print("\n[步骤 4/4] 性能设置")
         cpu_count = os.cpu_count() or 4
@@ -302,7 +302,7 @@ class FirstRunWizard:
     # 生成配置文件
     # -------------------------------------------------------------------------
 
-    def _write_config(self, config: dict) -> bool:
+    def _write_config(self, config: dict[str, Any]) -> bool:
         """写入配置文件."""
         try:
             # 如果有 example 配置，先复制
@@ -324,7 +324,7 @@ class FirstRunWizard:
             return False
 
     @staticmethod
-    def _deep_merge(base: dict, override: dict) -> None:
+    def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> None:
         """递归合并字典."""
         for k, v in override.items():
             if k in base and isinstance(base[k], dict) and isinstance(v, dict):

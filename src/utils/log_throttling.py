@@ -8,6 +8,7 @@ import time
 from collections.abc import Callable
 
 from .logging_config import get_configured_logger
+from typing import Any
 
 logger = get_configured_logger(__name__)
 
@@ -46,7 +47,7 @@ class LogThrottle:
     def throttle(
         self,
         key: str,
-        log_fn: Callable,
+        log_fn: Callable[..., Any],
         message: str,
     ) -> None:
         """Log a throttled message.

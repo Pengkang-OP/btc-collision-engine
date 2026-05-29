@@ -28,7 +28,7 @@ class PerformanceMetrics:
     timestamp: datetime = field(default_factory=datetime.now)
     success: bool = True
     error: str | None = None
-    metadata: dict = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict[str, Any])
 
 
 class PerformanceTracker:
@@ -83,7 +83,7 @@ class PerformanceTracker:
                 excess = len(self._records) - self.max_records
                 del self._records[:excess]
 
-    def get_statistics(self, operation: str | None = None) -> dict:
+    def get_statistics(self, operation: str | None = None) -> dict[str, Any]:
         """获取性能统计.
 
         Args:
@@ -157,7 +157,7 @@ _global_tracker = None
 _tracker_lock = threading.Lock()
 
 
-def _get_tracker_config() -> dict | None:
+def _get_tracker_config() -> dict[str, Any] | None:
     """从配置获取追踪器配置."""
     try:
         from ..config.config_manager import ConfigManager

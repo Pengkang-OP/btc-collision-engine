@@ -54,16 +54,16 @@ class EventDispatcher:
 
     def __init__(self) -> None:
         """Initialize the event dispatcher."""
-        self._listeners: dict[str, list[Callable]] = {}
-        self._event_queue: Queue = Queue()
+        self._listeners: dict[str, list[Callable[..., Any]]] = {}
+        self._event_queue: Queue[Any] = Queue[Any]()
 
-    def register(self, event_type: str, listener: Callable) -> None:
+    def register(self, event_type: str, listener: Callable[..., Any]) -> None:
         """Register a listener for an event type."""
         if event_type not in self._listeners:
             self._listeners[event_type] = []
         self._listeners[event_type].append(listener)
 
-    def unregister(self, event_type: str, listener: Callable) -> None:
+    def unregister(self, event_type: str, listener: Callable[..., Any]) -> None:
         """Unregister a listener for an event type."""
         if event_type in self._listeners:
             with contextlib.suppress(ValueError):

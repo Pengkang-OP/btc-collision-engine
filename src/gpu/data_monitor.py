@@ -272,7 +272,7 @@ class DataMonitor:
         except Exception as e:
             logger.error("报告私钥生成失败 [GPU %s]: %s", device_idx, e)
 
-    def report_match(self, device_idx: int, match_data: dict) -> None:
+    def report_match(self, device_idx: int, match_data: dict[str, Any]) -> None:
         """报告匹配结果.
 
         Args:
@@ -484,7 +484,7 @@ class DataMonitor:
             )
             self._record_issue(issue)
 
-    def _validate_match(self, device_idx: int, match_data: dict) -> None:
+    def _validate_match(self, device_idx: int, match_data: dict[str, Any]) -> None:
         """验证匹配数据.
 
         Args:

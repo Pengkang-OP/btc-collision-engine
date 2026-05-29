@@ -15,10 +15,10 @@ class LogCollector:
         """Initialize the log collector."""
         self._lock = threading.Lock()
         self._max_queue_size = max_queue_size
-        self._entries: list[dict] = []
-        self._handlers: list[Callable] = []
+        self._entries: list[dict[str, Any]] = []
+        self._handlers: list[Callable[..., Any]] = []
 
-    def add_entry(self, entry: dict) -> None:
+    def add_entry(self, entry: dict[str, Any]) -> None:
         """Add a log entry.
 
         Args:
@@ -36,7 +36,7 @@ class LogCollector:
             except Exception as e:
                 logger.error("Log handler error: %s", e)
 
-    def collect_from_queue(self, event_type: Any, data: dict) -> None:
+    def collect_from_queue(self, event_type: Any, data: dict[str, Any]) -> None:
         """Collect an event from a queue (backward compat API).
 
         Args:
@@ -53,7 +53,7 @@ class LogCollector:
     def get_entries(
         self,
         limit: int = 100,
-    ) -> list[dict]:
+    ) -> list[dict[str, Any]]:
         """Get recent log entries.
 
         Args:

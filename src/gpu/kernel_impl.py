@@ -105,7 +105,7 @@ COMPILE_STRATEGIES = (
 def compile_kernel_with_retry(  # type: ignore[no-untyped-def]
     ctx,  # OpenCL context
     source: str,
-    strategies: list | None = None,
+    strategies: list[Any] | None = None,
     max_retries: int = GPU_KERNEL_COMPILE_MAX_RETRIES,
     retry_delay_base: float = GPU_KERNEL_COMPILE_RETRY_DELAY_BASE,
     log=None,
@@ -945,7 +945,7 @@ class GPUKernel(GPUKernelProtocol):
             logger.error("清空 match_buf 失败: %s", e, exc_info=True)
             raise
 
-    def _execute_kernel(self, num_keys: int, local_work_size: int) -> tuple:
+    def _execute_kernel(self, num_keys: int, local_work_size: int) -> tuple[Any, ...]:
         """执行GPU内核（OPT-3 优化）.
 
         内核执行策略:
@@ -1101,7 +1101,7 @@ class GPUKernel(GPUKernelProtocol):
                     buf.release()
             setattr(self, buf_attr, None)
 
-    def _collect_matches(self, match_view: Any, num_keys: int) -> list:
+    def _collect_matches(self, match_view: Any, num_keys: int) -> list[Any]:
         """收集匹配结果."""
         matches = []
         for i in range(num_keys):
@@ -1146,7 +1146,7 @@ class GPUKernel(GPUKernelProtocol):
         target_hash160s: bytes | None = None,
         num_targets: int = 0,
         stop_event: Any | None = None,
-    ) -> list[dict]:
+    ) -> list[dict[str, Any]]:
         """PRNG模式批量执行私钥碰撞检测."""
         import time
 
