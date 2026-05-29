@@ -1,7 +1,8 @@
 """Key auditing utilities for security compliance."""
 
-from ..utils import get_configured_logger
 from typing import Any
+
+from ..utils import get_configured_logger
 
 logger = get_configured_logger("KeyAudit")
 

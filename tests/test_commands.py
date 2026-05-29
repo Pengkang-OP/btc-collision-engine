@@ -393,7 +393,7 @@ class TestDispatchUtilityCommands:
             patch("src.cli.commands._cmd_examples") as mock_cmd,
             patch.object(sys, "exit") as mock_exit,
         ):
-            result = dispatch_utility_commands(args)
+            dispatch_utility_commands(args)
         mock_cmd.assert_called_once()
         mock_exit.assert_called_once_with(0)
 

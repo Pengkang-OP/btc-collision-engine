@@ -16,9 +16,9 @@ v4.2.1 修复:
 import time
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any
 
 from ..utils import get_configured_logger
-from typing import Any
 
 __all__ = ["IntelMemoryMonitor", "MemorySnapshot", "MemoryStatus"]
 

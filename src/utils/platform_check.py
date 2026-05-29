@@ -5,9 +5,9 @@ import platform
 import shutil
 import sys
 from pathlib import Path
+from typing import Any
 
 from .logging_config import get_configured_logger
-from typing import Any
 
 logger = get_configured_logger(__name__)
 

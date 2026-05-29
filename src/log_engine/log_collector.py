@@ -1,7 +1,8 @@
 """Log collector for aggregating log entries."""
 
 import threading
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from ..utils import get_configured_logger
 

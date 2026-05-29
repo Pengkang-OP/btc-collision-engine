@@ -524,7 +524,9 @@ class RandomSearchMode(BaseSearchMode):
     # ── _execute_async 辅助方法（降低 C901） ──────────────────────
 
     # v5.2.4: 修正返回类型注解 tuple[dict, int, str, Any]（原本漏掉 batch_optimizer 的第4个返回值）
-    def _setup_async_buffers(self, engine: Any, current_batch_size: int) -> tuple[dict[str, Any], int, str, Any]:
+    def _setup_async_buffers(
+        self, engine: Any, current_batch_size: int
+    ) -> tuple[dict[str, Any], int, str, Any]:
         """初始化双缓冲区和 GPU 型号检测。."""
         gpu_model = self._detect_gpu_model(engine)
         from ..batch_size_optimizer import get_batch_size_optimizer

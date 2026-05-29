@@ -119,7 +119,9 @@ class _SyncFallbackError(Exception):
 
     __slots__ = ("execution_time_ms", "matches")
 
-    def __init__(self, matches: "list[tuple[bytes, list[dict[str, Any]]]]", execution_time_ms: float) -> None:
+    def __init__(
+        self, matches: "list[tuple[bytes, list[dict[str, Any]]]]", execution_time_ms: float
+    ) -> None:
         super().__init__(
             f"Async fallback complete: {len(matches)} matches, {execution_time_ms:.1f}ms",
         )

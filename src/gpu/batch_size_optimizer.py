@@ -12,10 +12,10 @@
 
 import threading
 import time
+from typing import Any
 
 # 统一日志获取
 from ..utils import get_configured_logger
-from typing import Any
 
 __all__ = ["SmartBatchSizeOptimizer", "get_batch_size_optimizer", "reset_batch_size_optimizer"]
 

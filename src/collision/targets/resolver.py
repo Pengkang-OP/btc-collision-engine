@@ -26,6 +26,7 @@ P2SH/Bech32(P2WSH)/Taproot等非P2PKH目标必然无法匹配。
 
 import os
 import pathlib
+from typing import Any
 
 from src.core.address_generator import P2PKHAddressGenerator
 from src.core.base58 import Base58
@@ -38,7 +39,6 @@ from src.utils.bech32_codec import decode_segwit_address
 from src.utils.encoding_utils import EncodingUtils
 
 from .cache import AddressCache
-from typing import Any
 
 logger = get_configured_logger("TargetResolver")
 

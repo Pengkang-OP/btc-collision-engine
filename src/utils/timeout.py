@@ -200,7 +200,7 @@ def _execute_with_sigalrm_timeout(
                 return False
             finally:
                 setitimer(signal.ITIMER_REAL, 0.0)  # type: ignore[attr-defined]  # Unix-only
-                signal.signal(# Unix-only
+                signal.signal(  # Unix-only
                     signal.SIGALRM,  # type: ignore[attr-defined]  # Unix-only
                     old_handler,
                 )

@@ -571,7 +571,9 @@ class DriverManager:
         return version
 
     @staticmethod
-    def check_driver_health(vendor: str, driver_version: str, profile: dict[str, Any] | None = None) -> dict[str, Any]:
+    def check_driver_health(
+        vendor: str, driver_version: str, profile: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """检查驱动健康状态.
 
         Args:

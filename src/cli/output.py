@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from rich.table import Table as _RichTable
     from rich.text import Text as _RichText
 
-    Console: type = _RichConsole# in TYPE_CHECKING block
+    Console: type = _RichConsole  # in TYPE_CHECKING block
     Panel: type = _RichPanel
     Table: type = _RichTable
     Text: type = _RichText

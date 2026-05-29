@@ -23,7 +23,7 @@ from typing import Any
 # C-13: nvidia-ml-py 安装后导入名称仍为 pynvml，API 完全兼容
 # pynvml 已迁移至 nvidia-ml-py 包
 try:
-    import pynvml# p: pynvml 无官方 stub
+    import pynvml  # p: pynvml 无官方 stub
 
     PYNVML_AVAILABLE = True
 except ImportError:

@@ -32,9 +32,10 @@ import secrets
 import sys
 import time
 from collections import defaultdict
+from collections.abc import Callable
 from functools import wraps
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any
 
 from ..utils import get_configured_logger
 

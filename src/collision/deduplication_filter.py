@@ -9,9 +9,9 @@ __all__ = [
 ]
 
 import threading
+from typing import Any
 
 from ..utils import get_configured_logger
-from typing import Any
 
 logger = get_configured_logger("DedupFilter")
 

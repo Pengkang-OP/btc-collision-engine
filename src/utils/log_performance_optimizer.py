@@ -338,7 +338,9 @@ class LogThrottler:
             return False
 
 
-def log_performance_decorator(logger: logging.Logger, operation: str, level: str = "DEBUG") -> Callable[..., Any]:
+def log_performance_decorator(
+    logger: logging.Logger, operation: str, level: str = "DEBUG"
+) -> Callable[..., Any]:
     """性能监控装饰器.
 
     Args:

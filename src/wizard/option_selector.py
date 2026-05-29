@@ -1,5 +1,6 @@
-from typing import Any
 """Wizard option selection step."""
+
+from typing import Any
 
 
 class OptionSelector:

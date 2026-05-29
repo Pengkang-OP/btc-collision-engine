@@ -4,13 +4,14 @@ __all__ = [
     "OptimizedP2PKHAddressGenerator",
 ]
 
+from typing import Any
+
 from .address_generator import (
     P2PKHAddressGenerator,
 )
 from .hash_utils import HashUtils
 from .precomputed_table import get_precomputed_table
 from .simd_optimizer import BatchOptimizer
-from typing import Any
 
 
 class OptimizedP2PKHAddressGenerator(P2PKHAddressGenerator):
