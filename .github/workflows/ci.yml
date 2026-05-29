@@ -190,12 +190,26 @@ jobs:
       - name: 安装系统依赖
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends build-essential libgmp-dev libsecp256k1-dev
+          sudo apt-get install -y --no-install-recommends build-essential libgmp-dev libsecp256k1-dev pkg-config
 
       - name: 安装 Python 依赖
         run: |
           pip install --upgrade pip setuptools wheel
-          pip install -r requirements.txt
+          # coincurve: 强制源码编译链接系统 libsecp256k1（预编译 wheel 可能未正确链接）
+          pip install --no-binary coincurve -r requirements.txt
+
+      - name: 验证 coincurve 后端
+        run: |
+          python3 -c "
+          import sys, importlib
+          for mod in ['coincurve']:
+              try:
+                  importlib.import_module(mod)
+                  print(f'✅ {mod} 导入成功')
+              except Exception as e:
+                  print(f'❌ {mod} 导入失败: {e}')
+                  sys.exit(1)
+          "
 
       - name: 配置验证
         run: python tools/validate_config.py
@@ -254,11 +268,13 @@ jobs:
       - name: 安装系统依赖
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libgmp-dev libsecp256k1-dev
+          sudo apt-get install -y --no-install-recommends build-essential libgmp-dev libsecp256k1-dev pkg-config
 
       - name: 安装 Python 依赖
         run: |
-          pip install -r requirements.txt
+          pip install --upgrade pip setuptools wheel
+          # coincurve: 强制源码编译链接系统 libsecp256k1
+          pip install --no-binary coincurve -r requirements.txt
 
       - name: 五大维度综合测试
         run: pytest tests/test_comprehensive_5d.py -v --tb=short --timeout=120 --timeout-method=thread
@@ -299,11 +315,13 @@ jobs:
       - name: 安装系统依赖
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libgmp-dev libsecp256k1-dev
+          sudo apt-get install -y --no-install-recommends build-essential libgmp-dev libsecp256k1-dev pkg-config
 
       - name: 安装 Python 依赖
         run: |
-          pip install -r requirements.txt
+          pip install --upgrade pip setuptools wheel
+          # coincurve: 强制源码编译链接系统 libsecp256k1
+          pip install --no-binary coincurve -r requirements.txt
 
       - name: 运行性能基准测试
         run: |
