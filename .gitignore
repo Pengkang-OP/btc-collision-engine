@@ -1,4 +1,5 @@
 # === Python / Virtual envs ===
+uv.lock
 __pycache__/
 *.py[cod]
 *.pyo
