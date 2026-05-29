@@ -91,23 +91,15 @@ include = ["src*"]
 # pytest 配置已迁移至 pytest.ini，此处不再重复定义以避免冲突
 
 [tool.mypy]
-# P2-23: strict 子标志逐步启用计划
-# Phase 1 (已启用，2026-05-29): disallow_untyped_defs = true
-# Phase 2 (后续): warn_return_any = true
-# Phase 3 (后续): disallow_incomplete_defs = true
-# 最终目标: strict = true
+# P2-23: strict 模式已完全启用（2026-05-29）
+strict = true
 python_version = "3.12" # 与 CI type-check job 使用的 Python 版本一致
 ignore_missing_imports = true
-warn_return_any = true
 warn_unused_configs = true
-warn_redundant_casts = true
-warn_unused_ignores = false
-check_untyped_defs = false
-disallow_untyped_defs = true # Phase 1: 所有函数需完整类型注解（2026-05-29 开启）
-disallow_incomplete_defs = true # Phase 3: 所有参数需完整类型注解（当前阶段）
+# 以下为 strict=true 的显式覆写（因项目特殊情况保留）
+warn_unused_ignores = false  # Phase2 遗留大量 type:ignore，暂不清理
+check_untyped_defs = false   # 部分第三方库调用的函数无类型注解
 disallow_untyped_calls = false # 允许调用未类型化函数
-no_implicit_optional = true # 防止隐式Optional
-strict_equality = true # 防止不安全的类型比较
 exclude = [
     "tests/",
     "benchmarks/",
