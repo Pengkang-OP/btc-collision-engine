@@ -586,6 +586,10 @@ class TestNotificationChannelConcurrency:
         self.AlertLevel = AlertLevel
         self.AlertType = AlertType
 
+        # 使用临时文件避免与其他测试共享 data_logs/alert_history.json
+        tmpdir = pathlib.Path(tempfile.mkdtemp())
+        self._alert_log_file = tmpdir / "alert_history_test.json"
+
     def test_01_concurrent_add_channel_and_trigger(self):
         """S10: 并发 add_notification_channel + _trigger_alert 不崩溃."""
 
@@ -594,7 +598,7 @@ class TestNotificationChannelConcurrency:
             def send(self, alert):
                 pass
 
-        alert_sys = self.AlertSystem()
+        alert_sys = self.AlertSystem(str(self._alert_log_file))
         errors = []
 
         def adder():

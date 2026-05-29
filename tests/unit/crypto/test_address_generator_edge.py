@@ -65,7 +65,7 @@ class TestGeneratePrivateKeyEdge:
         """重试耗尽抛出 KeyGenerationError → line 191."""
         with patch("secrets.token_bytes", return_value=b"\x00" * 32):
             # 零私钥始终无效, 耗尽 max_retries
-            with self.assertRaises(Exception) as ctx:
+            with pytest.raises(Exception) as ctx:
                 self.gen.generate_private_key(max_retries=3)
             assert "Cannot generate valid private key within 3 attempts" in str(ctx.value)
 
@@ -84,7 +84,7 @@ class TestGeneratePrivateKeyEdge:
                 "secrets.token_bytes",
                 side_effect=KeyGenerationError("模拟", error_code=999),
             ),
-            self.assertRaises(Exception),
+            pytest.raises(Exception),
         ):
             self.gen.generate_private_key(max_retries=2)
 

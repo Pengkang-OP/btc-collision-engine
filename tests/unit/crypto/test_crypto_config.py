@@ -121,7 +121,7 @@ class TestCryptoConfig:
         """validate() 检测无效后端类型."""
         self.cfg.set("backend", "bitcoinj")
         errors = self.cfg.validate()
-        assert errors[0] in "无效的后端类型"
+        assert "无效的后端类型" in errors[0]
 
     def test_validate_non_bool_fields(self):
         """validate() 检测非布尔字段."""

@@ -611,7 +611,7 @@ class AlertSystem:
                     },
                 )
 
-            with Path(self.alert_log_file).open("wb") as f:
+            with Path(self.alert_log_file).open("w", encoding="utf-8") as f:
                 fast_dump(data, f, indent=2, ensure_ascii=False)
 
         except Exception as e:
@@ -641,8 +641,7 @@ class AlertSystem:
             logger.info(f"加载告警历史: {len(self.alert_history)} 条记录")
 
         except Exception as e:
-            logger.error("加载告警历史失败: %s", e)
-            raise
+            logger.warning("加载告警历史失败（使用空历史）: %s", e)
 
     def clear_history(self) -> None:
         """清空告警历史."""

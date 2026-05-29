@@ -172,9 +172,9 @@ class TestOptimizedAddressGeneratorEdge:
         """get_optimization_info 返回优化配置信息 (cover lines 219-242)."""
         gen = OptimizedP2PKHAddressGenerator()
         info = gen.get_optimization_info()
-        assert info in "precomputed_table"
-        assert info in "simd_hash"
-        assert info in "memory_pool"
+        assert "precomputed_table" in info
+        assert "simd_hash" in info
+        assert "memory_pool" in info
         assert info["precomputed_table"]["enabled"]
 
     def test_get_optimization_info_all_disabled(self):
