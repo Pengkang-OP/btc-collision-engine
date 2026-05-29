@@ -47,19 +47,20 @@
 
 ## P2-23 — mypy Strict 逐步启用计划
 
-**状态**: [INPROGRESS] 进行中  
-**当前**: 0 个 `[[tool.mypy.overrides]]` block，所有 override blocks 已全部消除（零 ignore_errors）  
-(2026-05-29: Block 1 3→1 模块; Block 3 修复并删除; Blocks 5+6 共 17 模块修复; Block 4 valid-type 消除; Block 2 全部移除 4 模块; Block 1 misc 消除; Block union-attr 消除)
-(2026-05-29: 最后一个 block return-value 移除（5 处已 inline ignore），零 block 残留；**Phase 1 已启用**)
-**Phase 进度**（override blocks 全部消除后按顺序启用）:
+**状态**: [DONE] 全部完成 (2026-05-29)  
+**最终配置**:  
+```toml
+strict = true
+check_untyped_defs = true
+disallow_untyped_calls = true
+disallow_any_generics = true
+warn_unused_ignores = true
+```
+- **override blocks**: 0 个（全部消除，零 ignore_errors，零 disable_error_code）
+- **排除目录**: tests/, benchmarks/, scripts/, src/gpu/pyopencl_stubs/
+- **228 源文件**: mypy 0 错误通过
 
-| Phase | 标志 | 说明 |
-|-------|------|------|
-| 1 | `disallow_untyped_defs = true` | 所有函数需完整类型注解 |
-| 2 | `warn_return_any = true` | 禁止 Any 返回值传播 |
-| 3 | `disallow_incomplete_defs = true` | 禁止部分类型注解 |
-
-**最终目标**: `strict = true`
+**里程碑**: 从 6 个 override block（含 24+ 模块 ignore_errors=true）→ 0 个 block，所有 strict 覆盖配置全部启用无错误
 
 ---
 

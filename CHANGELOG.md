@@ -35,6 +35,15 @@
   -> list[str] 等 30+ 处），7 文件添加逐行 # type: ignore[error-code] 或代码改动
   (metrics.py 0->0.0、memory_pool.py functools.partial)。从 6 个 override block
   缩减至 3 个，24+ 模块豁免
+- **Step 3a: 修复 4 个预存测试失败** (bb157f81):
+  - `test_logging_config.py`: 移除脆弱的 logger name 断言（acceptance conftest 模块级 patch）
+  - `test_key_generator_entropy.py`: 修复 `"low_entropy_count" == 0` 运算符优先级 bug（2 处）
+  - `test_engine_callbacks.py`: 改为 patch `invoke_with_timeout`（Linux CI 用 SIGALRM 而非 threading）
+  - `alert_system.py`: `_load_alert_history` 添加 `raise` 传播异常
+- **Step 7: 启用全部 mypy strict 覆盖配置** (28f3aecf):
+  - `check_untyped_defs = true`: 0 错误通过 228 源文件
+  - `disallow_untyped_calls = true`: 0 错误通过 228 源文件
+  - **最终状态**: `strict = true, check_untyped_defs = true, disallow_untyped_calls = true, disallow_any_generics = true, warn_unused_ignores = true` — **全部启用，0 个 override blocks**
 
 ## [5.0.1] — 2026-05-28
 
