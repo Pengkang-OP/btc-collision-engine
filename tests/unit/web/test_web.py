@@ -23,7 +23,7 @@ class TestWebInit:
     def test_version(self):
         from src.web import __version__
 
-        assert __version__ == "5.0.0"
+        assert __version__ == "5.0.1"
 
     def test_all_exports(self):
         from src.web import __all__

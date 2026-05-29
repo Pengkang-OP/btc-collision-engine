@@ -179,7 +179,8 @@ class TestPerformanceMonitor:
             pass
         mock_logger.log.assert_called_once()
         call_args = mock_logger.log.call_args[0]
-        assert "test_op" in call_args[1]
+        # call_args = (level, format_str, operation, elapsed_ms)
+        assert "test_op" in call_args[2]
         assert "ms" in call_args[1]
 
     def test_elapsed_ms_property(self):
@@ -201,9 +202,10 @@ class TestPerformanceMonitor:
         except ValueError:
             pass
         mock_logger.error.assert_called_once()
-        call_args = mock_logger.error.call_args[0][0]
-        assert "FAILED" in call_args
-        assert "test error" in call_args
+        call_args = mock_logger.error.call_args[0]
+        # call_args = (format_str, operation, elapsed_ms, exc_val)
+        assert "FAILED" in call_args[0]
+        assert "test error" in str(call_args[3])
 
     def test_default_level_is_debug(self):
         from src.utils.logger import PerformanceMonitor

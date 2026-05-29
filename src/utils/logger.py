@@ -254,13 +254,9 @@ class SampledLogger:
             if self._counter >= self._COUNTER_MAX:
                 self._counter = 0
             if self._counter % self.sample_rate == 0 and self._should_log_by_time():
-                self.logger.debug(
-                    "[Sampled 1/%s] %s",
-                    self.sample_rate,
-                    msg,
-                    *args,
-                    **kwargs,
-                )
+                # 先格式化前缀，避免 msg 中的 %s 与 *args 数量不匹配
+                combined_msg = "[Sampled 1/%s] %s" % (self.sample_rate, msg)
+                self.logger.debug(combined_msg, *args, **kwargs)
 
     def info(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log info message with rate limiting."""
@@ -270,13 +266,9 @@ class SampledLogger:
             if self._counter >= self._COUNTER_MAX:
                 self._counter = 0
             if self._counter % self.sample_rate == 0 and self._should_log_by_time():
-                self.logger.info(
-                    "[Sampled 1/%s] %s",
-                    self.sample_rate,
-                    msg,
-                    *args,
-                    **kwargs,
-                )
+                # 先格式化前缀，避免 msg 中的 %s 与 *args 数量不匹配
+                combined_msg = "[Sampled 1/%s] %s" % (self.sample_rate, msg)
+                self.logger.info(combined_msg, *args, **kwargs)
 
     def warning(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log warning message with rate limiting."""
@@ -286,13 +278,9 @@ class SampledLogger:
             if self._counter >= self._COUNTER_MAX:
                 self._counter = 0
             if self._counter % self.sample_rate == 0 and self._should_log_by_time():
-                self.logger.warning(
-                    "[Sampled 1/%s] %s",
-                    self.sample_rate,
-                    msg,
-                    *args,
-                    **kwargs,
-                )
+                # 先格式化前缀，避免 msg 中的 %s 与 *args 数量不匹配
+                combined_msg = "[Sampled 1/%s] %s" % (self.sample_rate, msg)
+                self.logger.warning(combined_msg, *args, **kwargs)
 
     def error(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log error message with rate limiting."""
@@ -302,13 +290,9 @@ class SampledLogger:
             if self._counter >= self._COUNTER_MAX:
                 self._counter = 0
             if self._counter % self.sample_rate == 0 and self._should_log_by_time():
-                self.logger.error(
-                    "[Sampled 1/%s] %s",
-                    self.sample_rate,
-                    msg,
-                    *args,
-                    **kwargs,
-                )
+                # 先格式化前缀，避免 msg 中的 %s 与 *args 数量不匹配
+                combined_msg = "[Sampled 1/%s] %s" % (self.sample_rate, msg)
+                self.logger.error(combined_msg, *args, **kwargs)
 
 
 def setup_logger(
