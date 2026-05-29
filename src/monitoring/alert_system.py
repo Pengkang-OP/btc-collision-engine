@@ -612,7 +612,7 @@ class AlertSystem:
                 )
 
             with Path(self.alert_log_file).open("w", encoding="utf-8") as f:
-                fast_dump(data, f, indent=2, ensure_ascii=False)
+                fast_dump(data, f, indent=2, ensure_ascii=False)  # type: ignore[arg-type]
 
         except Exception as e:
             logger.error("保存告警历史失败: %s", e)

@@ -4,7 +4,7 @@ import json as _json
 import typing
 
 
-def fast_dump(obj: typing.Any, fp: typing.IO[typing.Any], **kwargs: typing.Any) -> None:
+def fast_dump(obj: typing.Any, fp: typing.BinaryIO, **kwargs: typing.Any) -> None:
     """Fast JSON serialization to file.
 
     Args:
@@ -13,7 +13,7 @@ def fast_dump(obj: typing.Any, fp: typing.IO[typing.Any], **kwargs: typing.Any) 
         **kwargs: Passed to json.dump
 
     """
-    _json.dump(obj, fp, **kwargs)
+    _json.dump(obj, fp, **kwargs)  # type: ignore[arg-type]
 
 
 def fast_load(fp: typing.BinaryIO) -> typing.Any:
