@@ -1454,14 +1454,14 @@ class GPUCollisionEngine(BaseCollisionEngine):
     ) -> str:
         """生成性能报告 (P2)."""
         pipeline: Any = self._get_perf_pipeline()
-        return pipeline.generate_report(
+        return pipeline.generate_report(  # type: ignore[no-any-return]
             include_benchmarks=include_benchmarks,
             include_tuning=include_tuning,
             include_history=include_history,
             include_recommendations=include_recommendations,
             include_comparison=include_comparison,
             output_dir=output_dir,
-        )  # type: ignore[no-any-return]
+        )
 
     # ========== Intel 特定优化 (向后兼容存根) ==========
 

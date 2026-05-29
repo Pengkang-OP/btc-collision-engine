@@ -42,7 +42,7 @@ class Translator:
             Translated text
 
         """
-        return self._translations.get(
+        return self._translations.get(  # type: ignore[no-any-return]
             key,
             default or key,
-        )  # type: ignore[no-any-return]
+        )

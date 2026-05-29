@@ -770,7 +770,7 @@ def _format_device_label(device: dict[str, Any], index: int) -> str:
             mem_mb = mem_size / (1024**2)
             mem_str = f"{mem_mb:.0f}MB"
         return f"{name} ({mem_str})"  # type: ignore[no-any-return]
-    return name
+    return name  # type: ignore[no-any-return]
 
 
 def _detect_gpu_devices_with_timeout(timeout: float = 5.0) -> list[dict[str, Any]]:

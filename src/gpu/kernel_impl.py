@@ -1036,11 +1036,11 @@ class GPUKernel(GPUKernelProtocol):
 
         # OPT-3: 异步读取匹配结果（非阻塞，通过返回的 event 同步）
         # 使用 match_flags[:num_keys] 视图而非整个数组，减少主机内存拷贝
-        return cl.enqueue_copy(
+        return cl.enqueue_copy(  # type: ignore[no-any-return]
             self.device.queue,
             self._match_flags[:num_keys],  # type: ignore[index]
             self._match_buf,
-        )  # type: ignore[no-any-return]
+        )
 
     def _wait_for_completion(self, read_event: Any, timeout_seconds: float = 30) -> bool:
         """等待GPU执行完成."""
