@@ -1,0 +1,355 @@
+﻿2026-05-29T00:36:46.6764814Z Current runner version: '2.334.0'
+2026-05-29T00:36:46.6790334Z ##[group]Runner Image Provisioner
+2026-05-29T00:36:46.6791349Z Hosted Compute Agent
+2026-05-29T00:36:46.6791983Z Version: 20260520.533
+2026-05-29T00:36:46.6792912Z Commit: 189110e25284a9812c124fd27b339e2fb4f2f9db
+2026-05-29T00:36:46.6793672Z Build Date: 2026-05-20T17:44:04Z
+2026-05-29T00:36:46.6794391Z Worker ID: {b32ce130-5084-4968-bbd9-8cad7e6bd1c2}
+2026-05-29T00:36:46.6795147Z Azure Region: westus
+2026-05-29T00:36:46.6795701Z ##[endgroup]
+2026-05-29T00:36:46.6797195Z ##[group]Operating System
+2026-05-29T00:36:46.6797972Z Ubuntu
+2026-05-29T00:36:46.6798497Z 24.04.4
+2026-05-29T00:36:46.6799053Z LTS
+2026-05-29T00:36:46.6799598Z ##[endgroup]
+2026-05-29T00:36:46.6800169Z ##[group]Runner Image
+2026-05-29T00:36:46.6800836Z Image: ubuntu-24.04
+2026-05-29T00:36:46.6801406Z Version: 20260525.161.1
+2026-05-29T00:36:46.6802914Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260525.161/images/ubuntu/Ubuntu2404-Readme.md
+2026-05-29T00:36:46.6804480Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260525.161
+2026-05-29T00:36:46.6805508Z ##[endgroup]
+2026-05-29T00:36:46.6806650Z ##[group]GITHUB_TOKEN Permissions
+2026-05-29T00:36:46.6808682Z Contents: read
+2026-05-29T00:36:46.6809341Z Metadata: read
+2026-05-29T00:36:46.6810326Z Packages: read
+2026-05-29T00:36:46.6810939Z ##[endgroup]
+2026-05-29T00:36:46.6813591Z Secret source: Actions
+2026-05-29T00:36:46.6814468Z Prepare workflow directory
+2026-05-29T00:36:46.7145937Z Prepare all required actions
+2026-05-29T00:36:46.7183546Z Getting action download info
+2026-05-29T00:36:47.2078935Z Download action repository 'actions/checkout@v6' (SHA:de0fac2e4500dabe0009e67214ff5f5447ce83dd)
+2026-05-29T00:36:47.3486436Z Download action repository 'actions/setup-python@v6' (SHA:a309ff8b426b58ec0e2a45f0f869d46889d02405)
+2026-05-29T00:36:47.5229727Z Complete job name: 静态分析
+2026-05-29T00:36:47.5956110Z ##[group]Run actions/checkout@v6
+2026-05-29T00:36:47.5956994Z with:
+2026-05-29T00:36:47.5957516Z   repository: Pengkang-OP/btc-collision-engine
+2026-05-29T00:36:47.5961904Z   token: ***
+2026-05-29T00:36:47.5962526Z   ssh-strict: true
+2026-05-29T00:36:47.5962963Z   ssh-user: git
+2026-05-29T00:36:47.5963399Z   persist-credentials: true
+2026-05-29T00:36:47.5963877Z   clean: true
+2026-05-29T00:36:47.5964311Z   sparse-checkout-cone-mode: true
+2026-05-29T00:36:47.5964827Z   fetch-depth: 1
+2026-05-29T00:36:47.5965246Z   fetch-tags: false
+2026-05-29T00:36:47.5965680Z   show-progress: true
+2026-05-29T00:36:47.5966128Z   lfs: false
+2026-05-29T00:36:47.5966527Z   submodules: false
+2026-05-29T00:36:47.5966965Z   set-safe-directory: true
+2026-05-29T00:36:47.5967726Z ##[endgroup]
+2026-05-29T00:36:47.6943378Z Syncing repository: Pengkang-OP/btc-collision-engine
+2026-05-29T00:36:47.6945316Z ##[group]Getting Git version info
+2026-05-29T00:36:47.6946259Z Working directory is '/home/runner/work/btc-collision-engine/btc-collision-engine'
+2026-05-29T00:36:47.6947384Z [command]/usr/bin/git version
+2026-05-29T00:36:47.7011273Z git version 2.54.0
+2026-05-29T00:36:47.7066335Z ##[endgroup]
+2026-05-29T00:36:47.7080510Z Temporarily overriding HOME='/home/runner/work/_temp/74b8cbc0-976c-4648-bafe-95d2f962c517' before making global git config changes
+2026-05-29T00:36:47.7082705Z Adding repository directory to the temporary git global config as a safe directory
+2026-05-29T00:36:47.7085619Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/btc-collision-engine/btc-collision-engine
+2026-05-29T00:36:47.7135478Z Deleting the contents of '/home/runner/work/btc-collision-engine/btc-collision-engine'
+2026-05-29T00:36:47.7139022Z ##[group]Initializing the repository
+2026-05-29T00:36:47.7144210Z [command]/usr/bin/git init /home/runner/work/btc-collision-engine/btc-collision-engine
+2026-05-29T00:36:47.7251092Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-05-29T00:36:47.7253250Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-05-29T00:36:47.7254785Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-05-29T00:36:47.7256449Z hint: call:
+2026-05-29T00:36:47.7257398Z hint:
+2026-05-29T00:36:47.7258883Z hint: 	git config --global init.defaultBranch <name>
+2026-05-29T00:36:47.7260188Z hint:
+2026-05-29T00:36:47.7260914Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-05-29T00:36:47.7261983Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-05-29T00:36:47.7263182Z hint:
+2026-05-29T00:36:47.7263649Z hint: 	git branch -m <name>
+2026-05-29T00:36:47.7264482Z hint:
+2026-05-29T00:36:47.7265575Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-05-29T00:36:47.7267180Z Initialized empty Git repository in /home/runner/work/btc-collision-engine/btc-collision-engine/.git/
+2026-05-29T00:36:47.7270493Z [command]/usr/bin/git remote add origin https://github.com/Pengkang-OP/btc-collision-engine
+2026-05-29T00:36:47.7314828Z ##[endgroup]
+2026-05-29T00:36:47.7315604Z ##[group]Disabling automatic garbage collection
+2026-05-29T00:36:47.7318523Z [command]/usr/bin/git config --local gc.auto 0
+2026-05-29T00:36:47.7347188Z ##[endgroup]
+2026-05-29T00:36:47.7347968Z ##[group]Setting up auth
+2026-05-29T00:36:47.7348784Z Removing SSH command configuration
+2026-05-29T00:36:47.7354832Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-05-29T00:36:47.7388902Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-05-29T00:36:47.7731971Z Removing HTTP extra header
+2026-05-29T00:36:47.7739085Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-05-29T00:36:47.7771693Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-05-29T00:36:47.8001366Z Removing includeIf entries pointing to credentials config files
+2026-05-29T00:36:47.8008295Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-05-29T00:36:47.8048406Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-05-29T00:36:47.8271733Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-5c1e4d45-eed5-4e50-aae7-de3f4f9258d6.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-05-29T00:36:47.8309524Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/btc-collision-engine/btc-collision-engine/.git.path /home/runner/work/_temp/git-credentials-5c1e4d45-eed5-4e50-aae7-de3f4f9258d6.config
+2026-05-29T00:36:47.8340524Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/btc-collision-engine/btc-collision-engine/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-5c1e4d45-eed5-4e50-aae7-de3f4f9258d6.config
+2026-05-29T00:36:47.8375297Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-5c1e4d45-eed5-4e50-aae7-de3f4f9258d6.config
+2026-05-29T00:36:47.8405029Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-5c1e4d45-eed5-4e50-aae7-de3f4f9258d6.config
+2026-05-29T00:36:47.8430788Z ##[endgroup]
+2026-05-29T00:36:47.8432395Z ##[group]Fetching the repository
+2026-05-29T00:36:47.8440741Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +acf036f4b9606ba019385747e1514f55acca21e4:refs/remotes/origin/main
+2026-05-29T00:36:49.1237218Z From https://github.com/Pengkang-OP/btc-collision-engine
+2026-05-29T00:36:49.1239891Z  * [new ref]         acf036f4b9606ba019385747e1514f55acca21e4 -> origin/main
+2026-05-29T00:36:49.1281022Z [command]/usr/bin/git branch --list --remote origin/main
+2026-05-29T00:36:49.1307778Z   origin/main
+2026-05-29T00:36:49.1317731Z [command]/usr/bin/git rev-parse refs/remotes/origin/main
+2026-05-29T00:36:49.1342787Z acf036f4b9606ba019385747e1514f55acca21e4
+2026-05-29T00:36:49.1353801Z ##[endgroup]
+2026-05-29T00:36:49.1354691Z ##[group]Determining the checkout info
+2026-05-29T00:36:49.1355561Z ##[endgroup]
+2026-05-29T00:36:49.1356099Z [command]/usr/bin/git sparse-checkout disable
+2026-05-29T00:36:49.1400701Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-05-29T00:36:49.1429065Z ##[group]Checking out the ref
+2026-05-29T00:36:49.1431567Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-05-29T00:36:49.2390786Z Switched to a new branch 'main'
+2026-05-29T00:36:49.2392928Z branch 'main' set up to track 'origin/main'.
+2026-05-29T00:36:49.2400477Z ##[endgroup]
+2026-05-29T00:36:49.2445689Z [command]/usr/bin/git log -1 --format=%H
+2026-05-29T00:36:49.2470660Z acf036f4b9606ba019385747e1514f55acca21e4
+2026-05-29T00:36:49.2825839Z ##[group]Run actions/setup-python@v6
+2026-05-29T00:36:49.2827080Z with:
+2026-05-29T00:36:49.2827995Z   python-version: 3.12
+2026-05-29T00:36:49.2829016Z   cache: pip
+2026-05-29T00:36:49.2829966Z   check-latest: false
+2026-05-29T00:36:49.2840559Z   token: ***
+2026-05-29T00:36:49.2841572Z   update-environment: true
+2026-05-29T00:36:49.2842845Z   allow-prereleases: false
+2026-05-29T00:36:49.2843946Z   freethreaded: false
+2026-05-29T00:36:49.2844945Z ##[endgroup]
+2026-05-29T00:36:49.4159521Z ##[group]Installed versions
+2026-05-29T00:36:49.4261815Z Successfully set up CPython (3.12.13)
+2026-05-29T00:36:49.4263194Z ##[endgroup]
+2026-05-29T00:36:49.5688391Z [command]/opt/hostedtoolcache/Python/3.12.13/x64/bin/pip cache dir
+2026-05-29T00:36:49.8966162Z /home/runner/.cache/pip
+2026-05-29T00:36:50.1843813Z Cache hit for: setup-python-Linux-x64-24.04-Ubuntu-python-3.12.13-pip-34252b5f403f2d000429f7134d5dd910a38a6a19ca836602cf0f83ed432730fd
+2026-05-29T00:36:51.4905133Z Received 0 of 84432888 (0.0%), 0.0 MBs/sec
+2026-05-29T00:36:52.3523375Z Received 84432888 of 84432888 (100.0%), 43.2 MBs/sec
+2026-05-29T00:36:52.3524579Z Cache Size: ~81 MB (84432888 B)
+2026-05-29T00:36:52.3591732Z [command]/usr/bin/tar -xf /home/runner/work/_temp/698374e3-244b-4c3a-b5da-840d2f6cfe30/cache.tzst -P -C /home/runner/work/btc-collision-engine/btc-collision-engine --use-compress-program unzstd
+2026-05-29T00:36:52.5128052Z Cache restored successfully
+2026-05-29T00:36:52.5172437Z Cache restored from key: setup-python-Linux-x64-24.04-Ubuntu-python-3.12.13-pip-34252b5f403f2d000429f7134d5dd910a38a6a19ca836602cf0f83ed432730fd
+2026-05-29T00:36:52.5364722Z ##[group]Run pip install "ruff>=0.9.0,<2.0.0" "mypy>=1.0.0,<3.0.0"
+2026-05-29T00:36:52.5365342Z [36;1mpip install "ruff>=0.9.0,<2.0.0" "mypy>=1.0.0,<3.0.0"[0m
+2026-05-29T00:36:52.5365986Z [36;1mpip install "types-cachetools>=5.0,<9.0.0" "types-requests>=2.28.0,<3.0.0" "types-psutil>=5.9.0,<8.0.0"[0m
+2026-05-29T00:36:52.5366661Z [36;1mpip install -r requirements-base.txt[0m
+2026-05-29T00:36:52.5403985Z shell: /usr/bin/bash -e {0}
+2026-05-29T00:36:52.5404303Z env:
+2026-05-29T00:36:52.5404607Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-05-29T00:36:52.5405145Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib/pkgconfig
+2026-05-29T00:36:52.5405637Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-05-29T00:36:52.5406084Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-05-29T00:36:52.5406549Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-05-29T00:36:52.5407083Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib
+2026-05-29T00:36:52.5407473Z ##[endgroup]
+2026-05-29T00:36:53.8456369Z Collecting ruff<2.0.0,>=0.9.0
+2026-05-29T00:36:53.8977993Z   Downloading ruff-0.15.15-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (26 kB)
+2026-05-29T00:36:54.0036140Z Collecting mypy<3.0.0,>=1.0.0
+2026-05-29T00:36:54.0049701Z   Using cached mypy-2.1.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.3 kB)
+2026-05-29T00:36:54.0188436Z Collecting typing_extensions>=4.6.0 (from mypy<3.0.0,>=1.0.0)
+2026-05-29T00:36:54.0200088Z   Using cached typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
+2026-05-29T00:36:54.0269651Z Collecting mypy_extensions>=1.0.0 (from mypy<3.0.0,>=1.0.0)
+2026-05-29T00:36:54.0280850Z   Using cached mypy_extensions-1.1.0-py3-none-any.whl.metadata (1.1 kB)
+2026-05-29T00:36:54.0368747Z Collecting pathspec>=1.0.0 (from mypy<3.0.0,>=1.0.0)
+2026-05-29T00:36:54.0380273Z   Using cached pathspec-1.1.1-py3-none-any.whl.metadata (14 kB)
+2026-05-29T00:36:54.1351136Z Collecting librt>=0.11.0 (from mypy<3.0.0,>=1.0.0)
+2026-05-29T00:36:54.1365382Z   Using cached librt-0.11.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (1.3 kB)
+2026-05-29T00:36:54.1580131Z Collecting ast-serialize<1.0.0,>=0.3.0 (from mypy<3.0.0,>=1.0.0)
+2026-05-29T00:36:54.1591721Z   Using cached ast_serialize-0.5.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (1.3 kB)
+2026-05-29T00:36:54.1641174Z Downloading ruff-0.15.15-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (11.4 MB)
+2026-05-29T00:36:54.2337132Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.4/11.4 MB 260.3 MB/s  0:00:00
+2026-05-29T00:36:54.2350303Z Using cached mypy-2.1.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (15.1 MB)
+2026-05-29T00:36:54.2419510Z Using cached ast_serialize-0.5.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (1.3 MB)
+2026-05-29T00:36:54.2437640Z Using cached librt-0.11.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (513 kB)
+2026-05-29T00:36:54.2451049Z Using cached mypy_extensions-1.1.0-py3-none-any.whl (5.0 kB)
+2026-05-29T00:36:54.2462725Z Using cached pathspec-1.1.1-py3-none-any.whl (57 kB)
+2026-05-29T00:36:54.2474909Z Using cached typing_extensions-4.15.0-py3-none-any.whl (44 kB)
+2026-05-29T00:36:54.3123411Z Installing collected packages: typing_extensions, ruff, pathspec, mypy_extensions, librt, ast-serialize, mypy
+2026-05-29T00:36:56.0802900Z 
+2026-05-29T00:36:56.0811923Z Successfully installed ast-serialize-0.5.0 librt-0.11.0 mypy-2.1.0 mypy_extensions-1.1.0 pathspec-1.1.1 ruff-0.15.15 typing_extensions-4.15.0
+2026-05-29T00:36:56.5866065Z Collecting types-cachetools<9.0.0,>=5.0
+2026-05-29T00:36:56.5878918Z   Using cached types_cachetools-7.0.0.20260518-py3-none-any.whl.metadata (1.8 kB)
+2026-05-29T00:36:56.6166798Z Collecting types-requests<3.0.0,>=2.28.0
+2026-05-29T00:36:56.6683309Z   Downloading types_requests-2.33.0.20260518-py3-none-any.whl.metadata (2.2 kB)
+2026-05-29T00:36:56.6881354Z Collecting types-psutil<8.0.0,>=5.9.0
+2026-05-29T00:36:56.6929896Z   Downloading types_psutil-7.2.2.20260518-py3-none-any.whl.metadata (1.7 kB)
+2026-05-29T00:36:56.7110582Z Collecting urllib3>=2 (from types-requests<3.0.0,>=2.28.0)
+2026-05-29T00:36:56.7122071Z   Using cached urllib3-2.7.0-py3-none-any.whl.metadata (6.9 kB)
+2026-05-29T00:36:56.7161438Z Using cached types_cachetools-7.0.0.20260518-py3-none-any.whl (9.5 kB)
+2026-05-29T00:36:56.7208066Z Downloading types_requests-2.33.0.20260518-py3-none-any.whl (21 kB)
+2026-05-29T00:36:56.7310296Z Downloading types_psutil-7.2.2.20260518-py3-none-any.whl (32 kB)
+2026-05-29T00:36:56.7366885Z Using cached urllib3-2.7.0-py3-none-any.whl (131 kB)
+2026-05-29T00:36:56.7550423Z Installing collected packages: urllib3, types-psutil, types-cachetools, types-requests
+2026-05-29T00:36:56.8505547Z 
+2026-05-29T00:36:56.8521171Z Successfully installed types-cachetools-7.0.0.20260518 types-psutil-7.2.2.20260518 types-requests-2.33.0.20260518 urllib3-2.7.0
+2026-05-29T00:36:57.3593811Z Collecting cffi<3.0.0,>=1.15.0 (from -r requirements-base.txt (line 16))
+2026-05-29T00:36:57.3607592Z   Using cached cffi-2.0.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (2.6 kB)
+2026-05-29T00:36:57.4075465Z Collecting coincurve<22.0.0,>=18.0.0 (from -r requirements-base.txt (line 17))
+2026-05-29T00:36:57.4087428Z   Using cached coincurve-21.0.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.0 kB)
+2026-05-29T00:36:57.5580631Z Collecting cryptography<46.0.0,>=43.0.0 (from -r requirements-base.txt (line 18))
+2026-05-29T00:36:57.5593398Z   Using cached cryptography-45.0.7-cp311-abi3-manylinux_2_34_x86_64.whl.metadata (5.7 kB)
+2026-05-29T00:36:57.5795672Z Collecting PyNaCl<2.0.0,>=1.5.0 (from -r requirements-base.txt (line 19))
+2026-05-29T00:36:57.5807171Z   Using cached pynacl-1.6.2-cp38-abi3-manylinux_2_34_x86_64.whl.metadata (10.0 kB)
+2026-05-29T00:36:57.6344922Z Collecting gmpy2<5.0.0,>=2.1.0 (from -r requirements-base.txt (line 20))
+2026-05-29T00:36:57.6357071Z   Using cached gmpy2-2.3.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.5 kB)
+2026-05-29T00:36:57.6982056Z Collecting pycryptodome<5.0.0,>=3.19.0 (from -r requirements-base.txt (line 21))
+2026-05-29T00:36:57.6995026Z   Using cached pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (3.4 kB)
+2026-05-29T00:36:57.7585618Z Collecting psutil<8.0.0,>=5.9.0 (from -r requirements-base.txt (line 24))
+2026-05-29T00:36:57.7598191Z   Using cached psutil-7.2.2-cp36-abi3-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl.metadata (22 kB)
+2026-05-29T00:36:57.9274440Z Collecting numpy<3.0.0,>=1.24.0 (from -r requirements-base.txt (line 25))
+2026-05-29T00:36:57.9287900Z   Using cached numpy-2.4.6-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (6.6 kB)
+2026-05-29T00:36:57.9426570Z Collecting cachetools<9.0.0,>=5.3.0 (from -r requirements-base.txt (line 28))
+2026-05-29T00:36:57.9438405Z   Using cached cachetools-7.1.4-py3-none-any.whl.metadata (5.5 kB)
+2026-05-29T00:36:57.9515354Z Collecting pybloom-live<5.0.0,>=2.2.0 (from -r requirements-base.txt (line 29))
+2026-05-29T00:36:57.9516971Z   Using cached pybloom_live-4.0.0-py3-none-any.whl
+2026-05-29T00:36:57.9618898Z Collecting bech32<2.0.0,>=1.2.0 (from -r requirements-base.txt (line 30))
+2026-05-29T00:36:57.9630490Z   Using cached bech32-1.2.0-py3-none-any.whl.metadata (1.1 kB)
+2026-05-29T00:36:58.1930890Z Collecting bitarray<4.0.0,>=2.6.0 (from -r requirements-base.txt (line 31))
+2026-05-29T00:36:58.1945250Z   Using cached bitarray-3.8.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (34 kB)
+2026-05-29T00:36:58.2181187Z Collecting chardet<6.0.0,>=5.0.0 (from -r requirements-base.txt (line 32))
+2026-05-29T00:36:58.2192776Z   Using cached chardet-5.2.0-py3-none-any.whl.metadata (3.4 kB)
+2026-05-29T00:36:58.2365315Z Collecting requests<3.0.0,>=2.28.0 (from -r requirements-base.txt (line 35))
+2026-05-29T00:36:58.2377106Z   Using cached requests-2.34.2-py3-none-any.whl.metadata (4.8 kB)
+2026-05-29T00:36:58.2465033Z Collecting ecdsa<1.0.0,>=0.18.0 (from -r requirements-base.txt (line 38))
+2026-05-29T00:36:58.2476741Z   Using cached ecdsa-0.19.2-py2.py3-none-any.whl.metadata (29 kB)
+2026-05-29T00:36:58.2859527Z Collecting setproctitle<2.0.0,>=1.3.0 (from -r requirements-base.txt (line 39))
+2026-05-29T00:36:58.2871933Z   Using cached setproctitle-1.3.7-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (10 kB)
+2026-05-29T00:36:58.3051092Z Collecting jsonschema<5.0.0,>=4.0.0 (from -r requirements-base.txt (line 42))
+2026-05-29T00:36:58.3062924Z   Using cached jsonschema-4.26.0-py3-none-any.whl.metadata (7.6 kB)
+2026-05-29T00:36:58.3327177Z Collecting rich<16.0.0,>=13.0 (from -r requirements-base.txt (line 45))
+2026-05-29T00:36:58.3338944Z   Using cached rich-15.0.0-py3-none-any.whl.metadata (18 kB)
+2026-05-29T00:36:58.3427681Z Collecting pycparser (from cffi<3.0.0,>=1.15.0->-r requirements-base.txt (line 16))
+2026-05-29T00:36:58.3439473Z   Using cached pycparser-3.0-py3-none-any.whl.metadata (8.2 kB)
+2026-05-29T00:36:58.4192703Z Collecting xxhash>=3.0.0 (from pybloom-live<5.0.0,>=2.2.0->-r requirements-base.txt (line 29))
+2026-05-29T00:36:58.4205890Z   Using cached xxhash-3.7.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (13 kB)
+2026-05-29T00:36:58.5010729Z Collecting charset_normalizer<4,>=2 (from requests<3.0.0,>=2.28.0->-r requirements-base.txt (line 35))
+2026-05-29T00:36:58.5024758Z   Using cached charset_normalizer-3.4.7-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (40 kB)
+2026-05-29T00:36:58.5157162Z Collecting idna<4,>=2.5 (from requests<3.0.0,>=2.28.0->-r requirements-base.txt (line 35))
+2026-05-29T00:36:58.5673056Z   Downloading idna-3.17-py3-none-any.whl.metadata (6.4 kB)
+2026-05-29T00:36:58.5722897Z Requirement already satisfied: urllib3<3,>=1.26 in /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages (from requests<3.0.0,>=2.28.0->-r requirements-base.txt (line 35)) (2.7.0)
+2026-05-29T00:36:58.5834127Z Collecting certifi>=2023.5.7 (from requests<3.0.0,>=2.28.0->-r requirements-base.txt (line 35))
+2026-05-29T00:36:58.5846209Z   Using cached certifi-2026.5.20-py3-none-any.whl.metadata (2.5 kB)
+2026-05-29T00:36:58.5934092Z Collecting six>=1.9.0 (from ecdsa<1.0.0,>=0.18.0->-r requirements-base.txt (line 38))
+2026-05-29T00:36:58.5946955Z   Using cached six-1.17.0-py2.py3-none-any.whl.metadata (1.7 kB)
+2026-05-29T00:36:58.6046148Z Collecting attrs>=22.2.0 (from jsonschema<5.0.0,>=4.0.0->-r requirements-base.txt (line 42))
+2026-05-29T00:36:58.6057912Z   Using cached attrs-26.1.0-py3-none-any.whl.metadata (8.8 kB)
+2026-05-29T00:36:58.6146159Z Collecting jsonschema-specifications>=2023.03.6 (from jsonschema<5.0.0,>=4.0.0->-r requirements-base.txt (line 42))
+2026-05-29T00:36:58.6158985Z   Using cached jsonschema_specifications-2025.9.1-py3-none-any.whl.metadata (2.9 kB)
+2026-05-29T00:36:58.6315344Z Collecting referencing>=0.28.4 (from jsonschema<5.0.0,>=4.0.0->-r requirements-base.txt (line 42))
+2026-05-29T00:36:58.6327191Z   Using cached referencing-0.37.0-py3-none-any.whl.metadata (2.8 kB)
+2026-05-29T00:36:58.8967739Z Collecting rpds-py>=0.25.0 (from jsonschema<5.0.0,>=4.0.0->-r requirements-base.txt (line 42))
+2026-05-29T00:36:58.9001020Z   Downloading rpds_py-2026.5.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.1 kB)
+2026-05-29T00:36:58.9131619Z Collecting markdown-it-py>=2.2.0 (from rich<16.0.0,>=13.0->-r requirements-base.txt (line 45))
+2026-05-29T00:36:58.9143164Z   Using cached markdown_it_py-4.2.0-py3-none-any.whl.metadata (7.4 kB)
+2026-05-29T00:36:58.9298384Z Collecting pygments<3.0.0,>=2.13.0 (from rich<16.0.0,>=13.0->-r requirements-base.txt (line 45))
+2026-05-29T00:36:58.9309771Z   Using cached pygments-2.20.0-py3-none-any.whl.metadata (2.5 kB)
+2026-05-29T00:36:58.9424935Z Collecting mdurl~=0.1 (from markdown-it-py>=2.2.0->rich<16.0.0,>=13.0->-r requirements-base.txt (line 45))
+2026-05-29T00:36:58.9435830Z   Using cached mdurl-0.1.2-py3-none-any.whl.metadata (1.6 kB)
+2026-05-29T00:36:58.9475516Z Requirement already satisfied: typing-extensions>=4.4.0 in /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages (from referencing>=0.28.4->jsonschema<5.0.0,>=4.0.0->-r requirements-base.txt (line 42)) (4.15.0)
+2026-05-29T00:36:58.9513571Z Using cached cffi-2.0.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (219 kB)
+2026-05-29T00:36:58.9525638Z Using cached coincurve-21.0.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (1.6 MB)
+2026-05-29T00:36:58.9543316Z Using cached cryptography-45.0.7-cp311-abi3-manylinux_2_34_x86_64.whl (4.5 MB)
+2026-05-29T00:36:58.9573714Z Using cached pynacl-1.6.2-cp38-abi3-manylinux_2_34_x86_64.whl (1.4 MB)
+2026-05-29T00:36:58.9590742Z Using cached gmpy2-2.3.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (1.8 MB)
+2026-05-29T00:36:58.9608787Z Using cached pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.3 MB)
+2026-05-29T00:36:58.9628429Z Using cached psutil-7.2.2-cp36-abi3-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl (155 kB)
+2026-05-29T00:36:58.9639890Z Using cached numpy-2.4.6-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (16.6 MB)
+2026-05-29T00:36:58.9723528Z Using cached cachetools-7.1.4-py3-none-any.whl (16 kB)
+2026-05-29T00:36:58.9733302Z Using cached bech32-1.2.0-py3-none-any.whl (4.6 kB)
+2026-05-29T00:36:58.9744302Z Using cached bitarray-3.8.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (343 kB)
+2026-05-29T00:36:58.9756508Z Using cached chardet-5.2.0-py3-none-any.whl (199 kB)
+2026-05-29T00:36:58.9768299Z Using cached requests-2.34.2-py3-none-any.whl (73 kB)
+2026-05-29T00:36:58.9779971Z Using cached ecdsa-0.19.2-py2.py3-none-any.whl (150 kB)
+2026-05-29T00:36:58.9791909Z Using cached setproctitle-1.3.7-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (32 kB)
+2026-05-29T00:36:58.9803109Z Using cached jsonschema-4.26.0-py3-none-any.whl (90 kB)
+2026-05-29T00:36:58.9814466Z Using cached rich-15.0.0-py3-none-any.whl (310 kB)
+2026-05-29T00:36:58.9828152Z Using cached charset_normalizer-3.4.7-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (216 kB)
+2026-05-29T00:36:58.9878011Z Downloading idna-3.17-py3-none-any.whl (65 kB)
+2026-05-29T00:36:59.0013221Z Using cached pygments-2.20.0-py3-none-any.whl (1.2 MB)
+2026-05-29T00:36:59.0028480Z Using cached attrs-26.1.0-py3-none-any.whl (67 kB)
+2026-05-29T00:36:59.0040016Z Using cached certifi-2026.5.20-py3-none-any.whl (134 kB)
+2026-05-29T00:36:59.0051919Z Using cached jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+2026-05-29T00:36:59.0063512Z Using cached markdown_it_py-4.2.0-py3-none-any.whl (91 kB)
+2026-05-29T00:36:59.0074836Z Using cached mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+2026-05-29T00:36:59.0086201Z Using cached referencing-0.37.0-py3-none-any.whl (26 kB)
+2026-05-29T00:36:59.0117986Z Downloading rpds_py-2026.5.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (376 kB)
+2026-05-29T00:36:59.0257841Z Using cached six-1.17.0-py2.py3-none-any.whl (11 kB)
+2026-05-29T00:36:59.0269932Z Using cached xxhash-3.7.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (193 kB)
+2026-05-29T00:36:59.0281954Z Using cached pycparser-3.0-py3-none-any.whl (48 kB)
+2026-05-29T00:36:59.1428076Z Installing collected packages: bitarray, xxhash, six, setproctitle, rpds-py, pygments, pycryptodome, pycparser, psutil, numpy, mdurl, idna, gmpy2, coincurve, charset_normalizer, chardet, certifi, cachetools, bech32, attrs, requests, referencing, pybloom-live, markdown-it-py, ecdsa, cffi, rich, PyNaCl, jsonschema-specifications, cryptography, jsonschema
+2026-05-29T00:37:03.8531451Z 
+2026-05-29T00:37:03.8572829Z Successfully installed PyNaCl-1.6.2 attrs-26.1.0 bech32-1.2.0 bitarray-3.8.1 cachetools-7.1.4 certifi-2026.5.20 cffi-2.0.0 chardet-5.2.0 charset_normalizer-3.4.7 coincurve-21.0.0 cryptography-45.0.7 ecdsa-0.19.2 gmpy2-2.3.0 idna-3.17 jsonschema-4.26.0 jsonschema-specifications-2025.9.1 markdown-it-py-4.2.0 mdurl-0.1.2 numpy-2.4.6 psutil-7.2.2 pybloom-live-4.0.0 pycparser-3.0 pycryptodome-3.23.0 pygments-2.20.0 referencing-0.37.0 requests-2.34.2 rich-15.0.0 rpds-py-2026.5.1 setproctitle-1.3.7 six-1.17.0 xxhash-3.7.0
+2026-05-29T00:37:03.9466334Z ##[group]Run ruff format --check src/ tests/ scripts/ benchmarks/ tools/
+2026-05-29T00:37:03.9466875Z [36;1mruff format --check src/ tests/ scripts/ benchmarks/ tools/[0m
+2026-05-29T00:37:03.9495044Z shell: /usr/bin/bash -e {0}
+2026-05-29T00:37:03.9495297Z env:
+2026-05-29T00:37:03.9495568Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-05-29T00:37:03.9496022Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib/pkgconfig
+2026-05-29T00:37:03.9496464Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-05-29T00:37:03.9496855Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-05-29T00:37:03.9497450Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-05-29T00:37:03.9497970Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib
+2026-05-29T00:37:03.9498305Z ##[endgroup]
+2026-05-29T00:37:04.0861864Z 497 files already formatted
+2026-05-29T00:37:04.0902847Z ##[group]Run ruff check src/ tests/ scripts/ benchmarks/ tools/
+2026-05-29T00:37:04.0903372Z [36;1mruff check src/ tests/ scripts/ benchmarks/ tools/[0m
+2026-05-29T00:37:04.0930998Z shell: /usr/bin/bash -e {0}
+2026-05-29T00:37:04.0931268Z env:
+2026-05-29T00:37:04.0931549Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-05-29T00:37:04.0932022Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib/pkgconfig
+2026-05-29T00:37:04.0932838Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-05-29T00:37:04.0933257Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-05-29T00:37:04.0933669Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-05-29T00:37:04.0934088Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib
+2026-05-29T00:37:04.0934438Z ##[endgroup]
+2026-05-29T00:37:04.2337077Z F821 Undefined name `Any`
+2026-05-29T00:37:04.2337650Z    --> src/gpu/multi_format_multi_gpu_engine.py:129:64
+2026-05-29T00:37:04.2338277Z     |
+2026-05-29T00:37:04.2338921Z 128 |         # 创建包装回调函数
+2026-05-29T00:37:04.2339530Z 129 |         def wrapped_callback(device_idx: int, match: dict[str, Any]) -> None:
+2026-05-29T00:37:04.2340291Z     |                                                                ^^^
+2026-05-29T00:37:04.2341010Z 130 |             """包装回调：添加多格式检查."""
+2026-05-29T00:37:04.2341609Z 131 |             matched_address = match.get("address", "")
+2026-05-29T00:37:04.2342354Z     |
+2026-05-29T00:37:04.2342554Z 
+2026-05-29T00:37:04.2342723Z Found 7 errors (6 fixed, 1 remaining).
+2026-05-29T00:37:04.2365334Z ##[error]Process completed with exit code 1.
+2026-05-29T00:37:04.2496484Z Post job cleanup.
+2026-05-29T00:37:04.3332685Z [command]/usr/bin/git version
+2026-05-29T00:37:04.3400737Z git version 2.54.0
+2026-05-29T00:37:04.3439824Z Temporarily overriding HOME='/home/runner/work/_temp/4da9a62f-f0a1-418d-a4a4-4daf3a46e203' before making global git config changes
+2026-05-29T00:37:04.3441112Z Adding repository directory to the temporary git global config as a safe directory
+2026-05-29T00:37:04.3445349Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/btc-collision-engine/btc-collision-engine
+2026-05-29T00:37:04.3476015Z Removing SSH command configuration
+2026-05-29T00:37:04.3482590Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-05-29T00:37:04.3516730Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-05-29T00:37:04.3738511Z Removing HTTP extra header
+2026-05-29T00:37:04.3745356Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-05-29T00:37:04.3779842Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-05-29T00:37:04.4017014Z Removing includeIf entries pointing to credentials config files
+2026-05-29T00:37:04.4025445Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-05-29T00:37:04.4050275Z includeif.gitdir:/home/runner/work/btc-collision-engine/btc-collision-engine/.git.path
+2026-05-29T00:37:04.4051794Z includeif.gitdir:/home/runner/work/btc-collision-engine/btc-collision-engine/.git/worktrees/*.path
+2026-05-29T00:37:04.4053565Z includeif.gitdir:/github/workspace/.git.path
+2026-05-29T00:37:04.4054538Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-05-29T00:37:04.4060286Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/btc-collision-engine/btc-collision-engine/.git.path
+2026-05-29T00:37:04.4081916Z /home/runner/work/_temp/git-credentials-5c1e4d45-eed5-4e50-aae7-de3f4f9258d6.config
+2026-05-29T00:37:04.4093789Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/btc-collision-engine/btc-collision-engine/.git.path /home/runner/work/_temp/git-credentials-5c1e4d45-eed5-4e50-aae7-de3f4f9258d6.config
+2026-05-29T00:37:04.4128674Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/btc-collision-engine/btc-collision-engine/.git/worktrees/*.path
+2026-05-29T00:37:04.4152627Z /home/runner/work/_temp/git-credentials-5c1e4d45-eed5-4e50-aae7-de3f4f9258d6.config
+2026-05-29T00:37:04.4165916Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/btc-collision-engine/btc-collision-engine/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-5c1e4d45-eed5-4e50-aae7-de3f4f9258d6.config
+2026-05-29T00:37:04.4203029Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+2026-05-29T00:37:04.4225515Z /github/runner_temp/git-credentials-5c1e4d45-eed5-4e50-aae7-de3f4f9258d6.config
+2026-05-29T00:37:04.4254583Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-5c1e4d45-eed5-4e50-aae7-de3f4f9258d6.config
+2026-05-29T00:37:04.4272738Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-05-29T00:37:04.4294549Z /github/runner_temp/git-credentials-5c1e4d45-eed5-4e50-aae7-de3f4f9258d6.config
+2026-05-29T00:37:04.4304065Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-5c1e4d45-eed5-4e50-aae7-de3f4f9258d6.config
+2026-05-29T00:37:04.4336440Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-05-29T00:37:04.4569127Z Removing credentials config '/home/runner/work/_temp/git-credentials-5c1e4d45-eed5-4e50-aae7-de3f4f9258d6.config'
+2026-05-29T00:37:04.4707122Z Cleaning up orphan processes

@@ -264,7 +264,7 @@ class RandomSearchMode(BaseSearchMode):
             try:
                 seed = self._seed_queue.get(timeout=1.0)
                 self._seed_used_count += 1
-                return seed
+                return seed  # type: ignore[no-any-return]
             except queue.Empty:
                 logger.debug("种子队列为空，等待补充...")
                 continue
@@ -435,7 +435,7 @@ class RandomSearchMode(BaseSearchMode):
         if hasattr(engine, "_async_executor") and engine._async_executor:
             executor = engine._async_executor
             if hasattr(executor, "_detect_gpu_model"):
-                return executor._detect_gpu_model()
+                return executor._detect_gpu_model()  # type: ignore[no-any-return]
         return "default"
 
     def _check_engine_availability(self, engine: Any) -> bool:
@@ -519,7 +519,7 @@ class RandomSearchMode(BaseSearchMode):
             f"GPU batch {batch_num}: 异常 (连续第{consecutive_errors}次), 退避 {backoff:.2f}s",
         )
         time.sleep(backoff)
-        return consecutive_errors
+        return consecutive_errors  # type: ignore[no-any-return]
 
     # ── _execute_async 辅助方法（降低 C901） ──────────────────────
 

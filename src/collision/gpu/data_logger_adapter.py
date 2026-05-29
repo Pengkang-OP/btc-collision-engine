@@ -136,7 +136,7 @@ class DataLoggerAdapter:
 
         try:
             if hasattr(self._logger, "get_statistics"):
-                return self._logger.get_statistics()
+                return self._logger.get_statistics()  # type: ignore[no-any-return]
             return {"status": "no_stats_method"}
         except Exception as e:
             logger.error("获取数据日志统计失败: %s", e)

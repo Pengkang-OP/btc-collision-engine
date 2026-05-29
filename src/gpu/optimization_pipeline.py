@@ -129,7 +129,7 @@ class PerformanceOptimizationPipeline:
         results = suite.run_all_benchmarks(iterations)
         summary = suite.get_summary(results)
         self._logger.info("\n" + summary)
-        return results
+        return results  # type: ignore[no-any-return]
 
     # ------------------------------------------------------------------
     # 自动调优
@@ -181,7 +181,7 @@ class PerformanceOptimizationPipeline:
         self._logger.info(
             f"调优完成！最优 batch_size: {optimal_size}, 预期吞吐量: {throughput_str} keys/s",
         )
-        return results
+        return results  # type: ignore[no-any-return]
 
     # ------------------------------------------------------------------
     # 报告生成
@@ -229,7 +229,7 @@ class PerformanceOptimizationPipeline:
                 ),
                 output_dir=output_dir,
             )
-            return report_path
+            return report_path  # type: ignore[no-any-return]
         except (ImportError, AttributeError, OSError) as exc:
             self._logger.error("生成性能报告失败: %s", exc)
             return ""

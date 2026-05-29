@@ -278,7 +278,7 @@ class AsyncGPUExecutor(_GPUInfoMixin, _ResultCollectorMixin, _SyncFallbackMixin)
         )
 
     def get_actual_batch_size(self) -> int:
-        return getattr(self, "_actual_batch_size", self.max_batch_size)
+        return getattr(self, "_actual_batch_size", self.max_batch_size)  # type: ignore[no-any-return]
 
     # ------------------------------------------------------------------
     # 预取（兼容旧 API 入口，PRNG 模式仅缓存 32 字节种子）

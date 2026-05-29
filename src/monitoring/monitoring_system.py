@@ -541,13 +541,13 @@ class DataStorage:
         """
         if self._data_logger is not None:
             try:
-                return self._data_logger.get_current_data()
+                return self._data_logger.get_current_data()  # type: ignore[no-any-return]
             except Exception as e:
                 logger.error("DataLogger读取当前数据失败: %s", e)
         try:
             if pathlib.Path(self.current_data_file).exists():
                 with pathlib.Path(self.current_data_file).open("rb") as f:
-                    return fast_load(f)
+                    return fast_load(f)  # type: ignore[no-any-return]
         except Exception as e:
             logger.error("读取当前数据失败: %s", e)
         return None
@@ -559,7 +559,7 @@ class DataStorage:
         """
         # P0委托DataLoader（其恢复算法更强）
         if self._data_logger is not None:
-            return self._data_logger._load_history_with_recovery()
+            return self._data_logger._load_history_with_recovery()  # type: ignore[no-any-return]
 
         if not pathlib.Path(self.history_data_file).exists():
             return []
@@ -635,7 +635,7 @@ class DataStorage:
         """
         if self._data_logger is not None:
             try:
-                return self._data_logger.get_history_data()
+                return self._data_logger.get_history_data()  # type: ignore[no-any-return]
             except Exception as e:
                 logger.error("DataLogger读取历史数据失败: %s", e)
         return self._load_history_with_recovery()
@@ -647,12 +647,12 @@ class DataStorage:
         """
         if self._data_logger is not None:
             try:
-                return self._data_logger.get_error_logs()
+                return self._data_logger.get_error_logs()  # type: ignore[no-any-return]
             except Exception as e:
                 logger.error("DataLogger读取错误日志失败: %s", e)
         try:
             with pathlib.Path(self.error_log_file).open("rb") as f:
-                return fast_load(f)
+                return fast_load(f)  # type: ignore[no-any-return]
         except Exception as e:
             logger.error("读取错误日志失败: %s", e)
             return []

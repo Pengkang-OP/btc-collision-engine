@@ -1029,7 +1029,7 @@ class DataLogger:
                 # 新格式（P0 schema_version）
                 version = data.get("schema_version", "unknown")
                 self.logger.debug("加载历史数据 (schema_version=%s)", version)
-                return data["data"]
+                return data["data"]  # type: ignore[no-any-return]
             self.logger.warning("历史数据格式错误，重置为空列表")
             return []
         except json.JSONDecodeError as e:
@@ -1136,7 +1136,7 @@ class DataLogger:
         try:
             if pathlib.Path(self.error_log_file).exists():
                 with pathlib.Path(self.error_log_file).open("rb") as f:
-                    return fast_load(f)
+                    return fast_load(f)  # type: ignore[no-any-return]
         except Exception as e:
             self.logger.error("读取错误日志失败: %s", e)
         return []

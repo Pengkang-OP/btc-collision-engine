@@ -140,7 +140,7 @@ class GPUAutoTuner:
             if hw_kps and cur_kps and cur_kps >= hw_kps * 0.9:
                 return current_size
 
-        return hw_size
+        return hw_size  # type: ignore[no-any-return]
 
     @property
     def tuned_params(self) -> dict[str, Any] | None:

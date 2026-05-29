@@ -358,7 +358,7 @@ class BatchCollisionProcessor:
         ):
             return address_generator.batch_generate(
                 private_keys,
-            )
+            )  # type: ignore[no-any-return]
 
         # Otherwise generate one by one
         addresses = []

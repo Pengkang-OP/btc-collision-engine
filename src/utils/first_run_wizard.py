@@ -120,7 +120,7 @@ class FirstRunWizard:
             with suppress(ValueError):
                 idx = int(raw) - 1
                 if 0 <= idx < len(options):
-                    return options[idx]
+                    return options[idx]  # type: ignore[no-any-return]
             print(f"  无效输入，请输入 1 到 {len(options)} 之间的数字")
 
     @staticmethod

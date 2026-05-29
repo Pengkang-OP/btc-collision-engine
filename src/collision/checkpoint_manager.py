@@ -151,7 +151,7 @@ class CheckpointManager:
                     raise CRC32MismatchError(
                         "CRC32 checksum mismatch",
                     )
-            return data
+            return data  # type: ignore[no-any-return]
         except (
             json.JSONDecodeError,
             UnicodeDecodeError,

@@ -45,4 +45,4 @@ class Translator:
         return self._translations.get(
             key,
             default or key,
-        )
+        )  # type: ignore[no-any-return]

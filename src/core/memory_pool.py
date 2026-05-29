@@ -460,7 +460,7 @@ class ByteArrayPool:
 
     def acquire(self) -> bytearray:
         """Acquire a bytearray object."""
-        return self._pool.acquire()
+        return self._pool.acquire()  # type: ignore[no-any-return]
 
     def release(self, buffer: bytearray) -> None:
         """Return bytearray to pool.

@@ -451,7 +451,7 @@ class GPUProfileLoader:
 
         # 查找"default"配置
         if "default" in vendor_data:
-            return vendor_data["default"]
+            return vendor_data["default"]  # type: ignore[no-any-return]
 
         return None
 

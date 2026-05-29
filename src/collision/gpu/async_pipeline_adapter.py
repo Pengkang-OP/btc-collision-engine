@@ -175,7 +175,7 @@ class AsyncPipelineAdapter(IAsyncExecutionPipeline):
             return []
 
         try:
-            return self._pipeline.flush_pending()
+            return self._pipeline.flush_pending()  # type: ignore[no-any-return]
         except Exception as e:
             logger.error("刷写待处理结果失败: %s", e)
             return []
@@ -191,7 +191,7 @@ class AsyncPipelineAdapter(IAsyncExecutionPipeline):
             return {"status": "not_initialized"}
 
         try:
-            return self._pipeline.get_stats()
+            return self._pipeline.get_stats()  # type: ignore[no-any-return]
         except Exception as e:
             logger.error("获取异步统计失败: %s", e)
             return {"status": "error", "message": str(e)}

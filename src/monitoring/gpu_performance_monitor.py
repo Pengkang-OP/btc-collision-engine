@@ -720,13 +720,13 @@ class GPUPerformanceMonitor:
 
         # P50（中位数）: 最高鲁棒性，偶发高峰和偶发低谷均不影响基准
         median_idx = len(throughputs) // 2
-        return throughputs[median_idx]
+        return throughputs[median_idx]  # type: ignore[no-any-return]
 
     def get_current_throughput(self) -> float:
         """获取当前吞吐量(keys/秒)."""
         with self._lock:
             if self._kernel_metrics:
-                return self._kernel_metrics[-1].keys_per_second
+                return self._kernel_metrics[-1].keys_per_second  # type: ignore[no-any-return]
         return 0.0
 
     def get_average_throughput(self, window_seconds: float = 60.0) -> float:
@@ -750,7 +750,7 @@ class GPUPerformanceMonitor:
                 return 0.0
 
             total_throughput = sum(m.keys_per_second for m in recent_metrics)
-            return total_throughput / len(recent_metrics)
+            return total_throughput / len(recent_metrics)  # type: ignore[no-any-return]
 
     def get_memory_usage(self) -> dict[str, float]:
         """获取显存使用情况.

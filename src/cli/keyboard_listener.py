@@ -30,7 +30,7 @@ if _is_windows:
             if msvcrt.kbhit():  # type: ignore[attr-defined]
                 ch = msvcrt.getch()  # type: ignore[attr-defined]
                 try:
-                    return ch.decode("utf-8", errors="replace")
+                    return ch.decode("utf-8", errors="replace")  # type: ignore[no-any-return]
                 except (UnicodeDecodeError, AttributeError):
                     return ch.decode("ascii", errors="replace") if isinstance(ch, bytes) else str(ch)
         except (ImportError, OSError) as e:

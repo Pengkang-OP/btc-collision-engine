@@ -1040,7 +1040,7 @@ class GPUKernel(GPUKernelProtocol):
             self.device.queue,
             self._match_flags[:num_keys],  # type: ignore[index]
             self._match_buf,
-        )
+        )  # type: ignore[no-any-return]
 
     def _wait_for_completion(self, read_event: Any, timeout_seconds: float = 30) -> bool:
         """等待GPU执行完成."""

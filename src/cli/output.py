@@ -321,7 +321,7 @@ class CLIOutput:
                 if con is not None:
                     w = con.width
                     if w and w > 40:
-                        return max(56, min(w - 4, 100))
+                        return max(56, min(w - 4, 100))  # type: ignore[no-any-return]
         except Exception:
             logger.debug("Failed to create adaptive console, using fallback")
         return None

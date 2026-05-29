@@ -355,7 +355,7 @@ class PerformanceMonitoringPipeline(IMonitoringPipeline):
             if self.engine and hasattr(self.engine, "get_device_info"):
                 info = self.engine.get_device_info()
                 if isinstance(info, dict) and "vendor" in info:
-                    return info["vendor"]
+                    return info["vendor"]  # type: ignore[no-any-return]
         except (AttributeError, RuntimeError, TypeError):
             pass  # device_info 方案也失败，返回 unknown
 

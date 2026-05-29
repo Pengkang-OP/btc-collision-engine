@@ -127,7 +127,7 @@ class GPUEngineFacade:
 
         """
         if self.device is not None:
-            return cast("Any", self.device).to_dict()
+            return cast("Any", self.device).to_dict()  # type: ignore[no-any-return]
         return {"status": "not_initialized"}
 
     def is_initialized(self) -> bool:

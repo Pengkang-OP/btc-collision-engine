@@ -495,7 +495,7 @@ class EllipticCurve:
             pow(point.x, 3, self.curve.P) + self.curve.A * point.x + self.curve.B
         ) % self.curve.P
 
-        return left_side == right_side
+        return left_side == right_side  # type: ignore[no-any-return]
 
     def _validate_scalar_multiply(self, k: int, point: "ECPoint") -> None:
         """验证标量乘法输入参数.

@@ -1,0 +1,630 @@
+﻿ï»¿2026-05-28T23:19:23.4360494Z Current runner version: '2.334.0'
+2026-05-28T23:19:23.4396001Z ##[group]Runner Image Provisioner
+2026-05-28T23:19:23.4397157Z Hosted Compute Agent
+2026-05-28T23:19:23.4398085Z Version: 20260520.533
+2026-05-28T23:19:23.4399223Z Commit: 189110e25284a9812c124fd27b339e2fb4f2f9db
+2026-05-28T23:19:23.4400366Z Build Date: 2026-05-20T17:44:04Z
+2026-05-28T23:19:23.4401575Z Worker ID: {b12af7e3-4608-46be-b612-061dc15644b8}
+2026-05-28T23:19:23.4402995Z Azure Region: centralus
+2026-05-28T23:19:23.4403905Z ##[endgroup]
+2026-05-28T23:19:23.4406084Z ##[group]Operating System
+2026-05-28T23:19:23.4407122Z Ubuntu
+2026-05-28T23:19:23.4408012Z 24.04.4
+2026-05-28T23:19:23.4408834Z LTS
+2026-05-28T23:19:23.4409612Z ##[endgroup]
+2026-05-28T23:19:23.4410512Z ##[group]Runner Image
+2026-05-28T23:19:23.4411406Z Image: ubuntu-24.04
+2026-05-28T23:19:23.4412447Z Version: 20260525.161.1
+2026-05-28T23:19:23.4414443Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260525.161/images/ubuntu/Ubuntu2404-Readme.md
+2026-05-28T23:19:23.4416962Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260525.161
+2026-05-28T23:19:23.4418472Z ##[endgroup]
+2026-05-28T23:19:23.4420297Z ##[group]GITHUB_TOKEN Permissions
+2026-05-28T23:19:23.4423300Z Contents: read
+2026-05-28T23:19:23.4424583Z Metadata: read
+2026-05-28T23:19:23.4425519Z Packages: read
+2026-05-28T23:19:23.4426367Z ##[endgroup]
+2026-05-28T23:19:23.4429486Z Secret source: Actions
+2026-05-28T23:19:23.4431290Z Prepare workflow directory
+2026-05-28T23:19:23.4775279Z Prepare all required actions
+2026-05-28T23:19:23.4828315Z Getting action download info
+2026-05-28T23:19:23.8018144Z Download action repository 'actions/checkout@v6' (SHA:de0fac2e4500dabe0009e67214ff5f5447ce83dd)
+2026-05-28T23:19:23.8933065Z Download action repository 'actions/setup-python@v6' (SHA:a309ff8b426b58ec0e2a45f0f869d46889d02405)
+2026-05-28T23:19:24.0808815Z Complete job name: éæåæ
+2026-05-28T23:19:24.1515901Z ##[group]Run actions/checkout@v6
+2026-05-28T23:19:24.1516717Z with:
+2026-05-28T23:19:24.1517229Z   repository: Pengkang-OP/btc-collision-engine
+2026-05-28T23:19:24.1522357Z   token: ***
+2026-05-28T23:19:24.1522794Z   ssh-strict: true
+2026-05-28T23:19:24.1523236Z   ssh-user: git
+2026-05-28T23:19:24.1523681Z   persist-credentials: true
+2026-05-28T23:19:24.1524166Z   clean: true
+2026-05-28T23:19:24.1524615Z   sparse-checkout-cone-mode: true
+2026-05-28T23:19:24.1525135Z   fetch-depth: 1
+2026-05-28T23:19:24.1525560Z   fetch-tags: false
+2026-05-28T23:19:24.1525997Z   show-progress: true
+2026-05-28T23:19:24.1526447Z   lfs: false
+2026-05-28T23:19:24.1526900Z   submodules: false
+2026-05-28T23:19:24.1527350Z   set-safe-directory: true
+2026-05-28T23:19:24.1528038Z ##[endgroup]
+2026-05-28T23:19:24.2508566Z Syncing repository: Pengkang-OP/btc-collision-engine
+2026-05-28T23:19:24.2510545Z ##[group]Getting Git version info
+2026-05-28T23:19:24.2511465Z Working directory is '/home/runner/work/btc-collision-engine/btc-collision-engine'
+2026-05-28T23:19:24.2512873Z [command]/usr/bin/git version
+2026-05-28T23:19:24.2546381Z git version 2.54.0
+2026-05-28T23:19:24.2604255Z ##[endgroup]
+2026-05-28T23:19:24.2615319Z Temporarily overriding HOME='/home/runner/work/_temp/ec0ba9f6-7205-4005-94bc-de8d0f4c8d81' before making global git config changes
+2026-05-28T23:19:24.2617583Z Adding repository directory to the temporary git global config as a safe directory
+2026-05-28T23:19:24.2621594Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/btc-collision-engine/btc-collision-engine
+2026-05-28T23:19:24.2662414Z Deleting the contents of '/home/runner/work/btc-collision-engine/btc-collision-engine'
+2026-05-28T23:19:24.2666172Z ##[group]Initializing the repository
+2026-05-28T23:19:24.2670576Z [command]/usr/bin/git init /home/runner/work/btc-collision-engine/btc-collision-engine
+2026-05-28T23:19:24.2746368Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-05-28T23:19:24.2747553Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-05-28T23:19:24.2748775Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-05-28T23:19:24.2749521Z hint: call:
+2026-05-28T23:19:24.2749925Z hint:
+2026-05-28T23:19:24.2750437Z hint: 	git config --global init.defaultBranch <name>
+2026-05-28T23:19:24.2751065Z hint:
+2026-05-28T23:19:24.2751635Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-05-28T23:19:24.2752816Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-05-28T23:19:24.2753566Z hint:
+2026-05-28T23:19:24.2753991Z hint: 	git branch -m <name>
+2026-05-28T23:19:24.2754468Z hint:
+2026-05-28T23:19:24.2755086Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-05-28T23:19:24.2760698Z Initialized empty Git repository in /home/runner/work/btc-collision-engine/btc-collision-engine/.git/
+2026-05-28T23:19:24.2769126Z [command]/usr/bin/git remote add origin https://github.com/Pengkang-OP/btc-collision-engine
+2026-05-28T23:19:24.2807106Z ##[endgroup]
+2026-05-28T23:19:24.2808228Z ##[group]Disabling automatic garbage collection
+2026-05-28T23:19:24.2810518Z [command]/usr/bin/git config --local gc.auto 0
+2026-05-28T23:19:24.2840020Z ##[endgroup]
+2026-05-28T23:19:24.2841055Z ##[group]Setting up auth
+2026-05-28T23:19:24.2841832Z Removing SSH command configuration
+2026-05-28T23:19:24.2846575Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-05-28T23:19:24.2878883Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-05-28T23:19:24.3175412Z Removing HTTP extra header
+2026-05-28T23:19:24.3180339Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-05-28T23:19:24.3212226Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-05-28T23:19:24.3436835Z Removing includeIf entries pointing to credentials config files
+2026-05-28T23:19:24.3443569Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-05-28T23:19:24.3476179Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-05-28T23:19:24.3708938Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-73b9e53d-0393-4b2b-8362-97b35bb95d36.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-05-28T23:19:24.3746538Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/btc-collision-engine/btc-collision-engine/.git.path /home/runner/work/_temp/git-credentials-73b9e53d-0393-4b2b-8362-97b35bb95d36.config
+2026-05-28T23:19:24.3777710Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/btc-collision-engine/btc-collision-engine/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-73b9e53d-0393-4b2b-8362-97b35bb95d36.config
+2026-05-28T23:19:24.3810581Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-73b9e53d-0393-4b2b-8362-97b35bb95d36.config
+2026-05-28T23:19:24.3840751Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-73b9e53d-0393-4b2b-8362-97b35bb95d36.config
+2026-05-28T23:19:24.3867792Z ##[endgroup]
+2026-05-28T23:19:24.3868737Z ##[group]Fetching the repository
+2026-05-28T23:19:24.3876271Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +022141a90f6cf5e9e2586947ba6b422c17bd5e39:refs/remotes/origin/main
+2026-05-28T23:19:25.6516829Z From https://github.com/Pengkang-OP/btc-collision-engine
+2026-05-28T23:19:25.6518670Z  * [new ref]         022141a90f6cf5e9e2586947ba6b422c17bd5e39 -> origin/main
+2026-05-28T23:19:25.6555990Z [command]/usr/bin/git branch --list --remote origin/main
+2026-05-28T23:19:25.6583722Z   origin/main
+2026-05-28T23:19:25.6593623Z [command]/usr/bin/git rev-parse refs/remotes/origin/main
+2026-05-28T23:19:25.6618372Z 022141a90f6cf5e9e2586947ba6b422c17bd5e39
+2026-05-28T23:19:25.6630901Z ##[endgroup]
+2026-05-28T23:19:25.6632455Z ##[group]Determining the checkout info
+2026-05-28T23:19:25.6633932Z ##[endgroup]
+2026-05-28T23:19:25.6636866Z [command]/usr/bin/git sparse-checkout disable
+2026-05-28T23:19:25.6682680Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-05-28T23:19:25.6712642Z ##[group]Checking out the ref
+2026-05-28T23:19:25.6716884Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-05-28T23:19:25.7692819Z Switched to a new branch 'main'
+2026-05-28T23:19:25.7694230Z branch 'main' set up to track 'origin/main'.
+2026-05-28T23:19:25.7703297Z ##[endgroup]
+2026-05-28T23:19:25.7753500Z [command]/usr/bin/git log -1 --format=%H
+2026-05-28T23:19:25.7772690Z 022141a90f6cf5e9e2586947ba6b422c17bd5e39
+2026-05-28T23:19:25.8122864Z ##[group]Run actions/setup-python@v6
+2026-05-28T23:19:25.8124048Z with:
+2026-05-28T23:19:25.8124862Z   python-version: 3.12
+2026-05-28T23:19:25.8125791Z   cache: pip
+2026-05-28T23:19:25.8126624Z   check-latest: false
+2026-05-28T23:19:25.8138480Z   token: ***
+2026-05-28T23:19:25.8139355Z   update-environment: true
+2026-05-28T23:19:25.8140401Z   allow-prereleases: false
+2026-05-28T23:19:25.8141403Z   freethreaded: false
+2026-05-28T23:19:25.8142514Z ##[endgroup]
+2026-05-28T23:19:25.9416489Z ##[group]Installed versions
+2026-05-28T23:19:25.9500470Z Successfully set up CPython (3.12.13)
+2026-05-28T23:19:25.9508998Z ##[endgroup]
+2026-05-28T23:19:26.0633049Z [command]/opt/hostedtoolcache/Python/3.12.13/x64/bin/pip cache dir
+2026-05-28T23:19:26.3357006Z /home/runner/.cache/pip
+2026-05-28T23:19:26.4891694Z Cache hit for: setup-python-Linux-x64-24.04-Ubuntu-python-3.12.13-pip-34252b5f403f2d000429f7134d5dd910a38a6a19ca836602cf0f83ed432730fd
+2026-05-28T23:19:27.5658444Z Received 84432888 of 84432888 (100.0%), 85.7 MBs/sec
+2026-05-28T23:19:27.5659014Z Cache Size: ~81 MB (84432888 B)
+2026-05-28T23:19:27.5712416Z [command]/usr/bin/tar -xf /home/runner/work/_temp/ccd43934-ad43-4f83-bc59-150d81f73430/cache.tzst -P -C /home/runner/work/btc-collision-engine/btc-collision-engine --use-compress-program unzstd
+2026-05-28T23:19:27.7261192Z Cache restored successfully
+2026-05-28T23:19:27.7303553Z Cache restored from key: setup-python-Linux-x64-24.04-Ubuntu-python-3.12.13-pip-34252b5f403f2d000429f7134d5dd910a38a6a19ca836602cf0f83ed432730fd
+2026-05-28T23:19:27.7504752Z ##[group]Run pip install "ruff>=0.9.0,<2.0.0" "mypy>=1.0.0,<3.0.0"
+2026-05-28T23:19:27.7505318Z [36;1mpip install "ruff>=0.9.0,<2.0.0" "mypy>=1.0.0,<3.0.0"[0m
+2026-05-28T23:19:27.7505888Z [36;1mpip install "types-cachetools>=5.0,<9.0.0" "types-requests>=2.28.0,<3.0.0" "types-psutil>=5.9.0,<8.0.0"[0m
+2026-05-28T23:19:27.7506443Z [36;1mpip install -r requirements-base.txt[0m
+2026-05-28T23:19:27.7540583Z shell: /usr/bin/bash -e {0}
+2026-05-28T23:19:27.7540878Z env:
+2026-05-28T23:19:27.7541174Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-05-28T23:19:27.7541643Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib/pkgconfig
+2026-05-28T23:19:27.7542280Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-05-28T23:19:27.7542700Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-05-28T23:19:27.7543098Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-05-28T23:19:27.7543543Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib
+2026-05-28T23:19:27.7543886Z ##[endgroup]
+2026-05-28T23:19:28.6663593Z Collecting ruff<2.0.0,>=0.9.0
+2026-05-28T23:19:28.7582371Z   Downloading ruff-0.15.15-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (26 kB)
+2026-05-28T23:19:28.8611507Z Collecting mypy<3.0.0,>=1.0.0
+2026-05-28T23:19:28.8624304Z   Using cached mypy-2.1.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.3 kB)
+2026-05-28T23:19:28.8837031Z Collecting typing_extensions>=4.6.0 (from mypy<3.0.0,>=1.0.0)
+2026-05-28T23:19:28.8848659Z   Using cached typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
+2026-05-28T23:19:28.8995876Z Collecting mypy_extensions>=1.0.0 (from mypy<3.0.0,>=1.0.0)
+2026-05-28T23:19:28.9008525Z   Using cached mypy_extensions-1.1.0-py3-none-any.whl.metadata (1.1 kB)
+2026-05-28T23:19:28.9177918Z Collecting pathspec>=1.0.0 (from mypy<3.0.0,>=1.0.0)
+2026-05-28T23:19:28.9189610Z   Using cached pathspec-1.1.1-py3-none-any.whl.metadata (14 kB)
+2026-05-28T23:19:29.0160716Z Collecting librt>=0.11.0 (from mypy<3.0.0,>=1.0.0)
+2026-05-28T23:19:29.0174470Z   Using cached librt-0.11.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (1.3 kB)
+2026-05-28T23:19:29.0456479Z Collecting ast-serialize<1.0.0,>=0.3.0 (from mypy<3.0.0,>=1.0.0)
+2026-05-28T23:19:29.0468782Z   Using cached ast_serialize-0.5.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (1.3 kB)
+2026-05-28T23:19:29.0654842Z Downloading ruff-0.15.15-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (11.4 MB)
+2026-05-28T23:19:29.2611113Z    ââââââââââââââââââââââââââââââââââââââââ 11.4/11.4 MB 73.3 MB/s  0:00:00
+2026-05-28T23:19:29.2624834Z Using cached mypy-2.1.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (15.1 MB)
+2026-05-28T23:19:29.2695261Z Using cached ast_serialize-0.5.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (1.3 MB)
+2026-05-28T23:19:29.2710250Z Using cached librt-0.11.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (513 kB)
+2026-05-28T23:19:29.2722402Z Using cached mypy_extensions-1.1.0-py3-none-any.whl (5.0 kB)
+2026-05-28T23:19:29.2733758Z Using cached pathspec-1.1.1-py3-none-any.whl (57 kB)
+2026-05-28T23:19:29.2745994Z Using cached typing_extensions-4.15.0-py3-none-any.whl (44 kB)
+2026-05-28T23:19:29.3403244Z Installing collected packages: typing_extensions, ruff, pathspec, mypy_extensions, librt, ast-serialize, mypy
+2026-05-28T23:19:31.1453786Z 
+2026-05-28T23:19:31.1472872Z Successfully installed ast-serialize-0.5.0 librt-0.11.0 mypy-2.1.0 mypy_extensions-1.1.0 pathspec-1.1.1 ruff-0.15.15 typing_extensions-4.15.0
+2026-05-28T23:19:31.6313035Z Collecting types-cachetools<9.0.0,>=5.0
+2026-05-28T23:19:31.6326032Z   Using cached types_cachetools-7.0.0.20260518-py3-none-any.whl.metadata (1.8 kB)
+2026-05-28T23:19:31.6806985Z Collecting types-requests<3.0.0,>=2.28.0
+2026-05-28T23:19:31.7673008Z   Downloading types_requests-2.33.0.20260518-py3-none-any.whl.metadata (2.2 kB)
+2026-05-28T23:19:31.7997641Z Collecting types-psutil<8.0.0,>=5.9.0
+2026-05-28T23:19:31.8191076Z   Downloading types_psutil-7.2.2.20260518-py3-none-any.whl.metadata (1.7 kB)
+2026-05-28T23:19:31.8480248Z Collecting urllib3>=2 (from types-requests<3.0.0,>=2.28.0)
+2026-05-28T23:19:31.8491944Z   Using cached urllib3-2.7.0-py3-none-any.whl.metadata (6.9 kB)
+2026-05-28T23:19:31.8530660Z Using cached types_cachetools-7.0.0.20260518-py3-none-any.whl (9.5 kB)
+2026-05-28T23:19:31.8686550Z Downloading types_requests-2.33.0.20260518-py3-none-any.whl (21 kB)
+2026-05-28T23:19:31.8975769Z Downloading types_psutil-7.2.2.20260518-py3-none-any.whl (32 kB)
+2026-05-28T23:19:31.9064139Z Using cached urllib3-2.7.0-py3-none-any.whl (131 kB)
+2026-05-28T23:19:31.9238178Z Installing collected packages: urllib3, types-psutil, types-cachetools, types-requests
+2026-05-28T23:19:32.0190749Z 
+2026-05-28T23:19:32.0206675Z Successfully installed types-cachetools-7.0.0.20260518 types-psutil-7.2.2.20260518 types-requests-2.33.0.20260518 urllib3-2.7.0
+2026-05-28T23:19:32.5560938Z Collecting cffi<3.0.0,>=1.15.0 (from -r requirements-base.txt (line 16))
+2026-05-28T23:19:32.5575715Z   Using cached cffi-2.0.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (2.6 kB)
+2026-05-28T23:19:32.6142224Z Collecting coincurve<22.0.0,>=18.0.0 (from -r requirements-base.txt (line 17))
+2026-05-28T23:19:32.6154338Z   Using cached coincurve-21.0.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.0 kB)
+2026-05-28T23:19:32.7668834Z Collecting cryptography<46.0.0,>=43.0.0 (from -r requirements-base.txt (line 18))
+2026-05-28T23:19:32.7682201Z   Using cached cryptography-45.0.7-cp311-abi3-manylinux_2_34_x86_64.whl.metadata (5.7 kB)
+2026-05-28T23:19:32.7993545Z Collecting PyNaCl<2.0.0,>=1.5.0 (from -r requirements-base.txt (line 19))
+2026-05-28T23:19:32.8007255Z   Using cached pynacl-1.6.2-cp38-abi3-manylinux_2_34_x86_64.whl.metadata (10.0 kB)
+2026-05-28T23:19:32.8622820Z Collecting gmpy2<5.0.0,>=2.1.0 (from -r requirements-base.txt (line 20))
+2026-05-28T23:19:32.8635457Z   Using cached gmpy2-2.3.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.5 kB)
+2026-05-28T23:19:32.9361691Z Collecting pycryptodome<5.0.0,>=3.19.0 (from -r requirements-base.txt (line 21))
+2026-05-28T23:19:32.9374088Z   Using cached pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (3.4 kB)
+2026-05-28T23:19:33.0019101Z Collecting psutil<8.0.0,>=5.9.0 (from -r requirements-base.txt (line 24))
+2026-05-28T23:19:33.0031807Z   Using cached psutil-7.2.2-cp36-abi3-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl.metadata (22 kB)
+2026-05-28T23:19:33.1709626Z Collecting numpy<3.0.0,>=1.24.0 (from -r requirements-base.txt (line 25))
+2026-05-28T23:19:33.1723085Z   Using cached numpy-2.4.6-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (6.6 kB)
+2026-05-28T23:19:33.1976835Z Collecting cachetools<9.0.0,>=5.3.0 (from -r requirements-base.txt (line 28))
+2026-05-28T23:19:33.1988483Z   Using cached cachetools-7.1.4-py3-none-any.whl.metadata (5.5 kB)
+2026-05-28T23:19:33.2198815Z Collecting pybloom-live<5.0.0,>=2.2.0 (from -r requirements-base.txt (line 29))
+2026-05-28T23:19:33.2199812Z   Using cached pybloom_live-4.0.0-py3-none-any.whl
+2026-05-28T23:19:33.2418477Z Collecting bech32<2.0.0,>=1.2.0 (from -r requirements-base.txt (line 30))
+2026-05-28T23:19:33.2429469Z   Using cached bech32-1.2.0-py3-none-any.whl.metadata (1.1 kB)
+2026-05-28T23:19:33.4755996Z Collecting bitarray<4.0.0,>=2.6.0 (from -r requirements-base.txt (line 31))
+2026-05-28T23:19:33.4769296Z   Using cached bitarray-3.8.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (34 kB)
+2026-05-28T23:19:33.5112743Z Collecting chardet<6.0.0,>=5.0.0 (from -r requirements-base.txt (line 32))
+2026-05-28T23:19:33.5124289Z   Using cached chardet-5.2.0-py3-none-any.whl.metadata (3.4 kB)
+2026-05-28T23:19:33.5405096Z Collecting requests<3.0.0,>=2.28.0 (from -r requirements-base.txt (line 35))
+2026-05-28T23:19:33.5416108Z   Using cached requests-2.34.2-py3-none-any.whl.metadata (4.8 kB)
+2026-05-28T23:19:33.5639017Z Collecting ecdsa<1.0.0,>=0.18.0 (from -r requirements-base.txt (line 38))
+2026-05-28T23:19:33.5649851Z   Using cached ecdsa-0.19.2-py2.py3-none-any.whl.metadata (29 kB)
+2026-05-28T23:19:33.6139402Z Collecting setproctitle<2.0.0,>=1.3.0 (from -r requirements-base.txt (line 39))
+2026-05-28T23:19:33.6151636Z   Using cached setproctitle-1.3.7-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (10 kB)
+2026-05-28T23:19:33.6450222Z Collecting jsonschema<5.0.0,>=4.0.0 (from -r requirements-base.txt (line 42))
+2026-05-28T23:19:33.6461960Z   Using cached jsonschema-4.26.0-py3-none-any.whl.metadata (7.6 kB)
+2026-05-28T23:19:33.6826724Z Collecting rich<16.0.0,>=13.0 (from -r requirements-base.txt (line 45))
+2026-05-28T23:19:33.6838521Z   Using cached rich-15.0.0-py3-none-any.whl.metadata (18 kB)
+2026-05-28T23:19:33.7054692Z Collecting pycparser (from cffi<3.0.0,>=1.15.0->-r requirements-base.txt (line 16))
+2026-05-28T23:19:33.7066437Z   Using cached pycparser-3.0-py3-none-any.whl.metadata (8.2 kB)
+2026-05-28T23:19:33.7897547Z Collecting xxhash>=3.0.0 (from pybloom-live<5.0.0,>=2.2.0->-r requirements-base.txt (line 29))
+2026-05-28T23:19:33.7910841Z   Using cached xxhash-3.7.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (13 kB)
+2026-05-28T23:19:33.8793019Z Collecting charset_normalizer<4,>=2 (from requests<3.0.0,>=2.28.0->-r requirements-base.txt (line 35))
+2026-05-28T23:19:33.8805926Z   Using cached charset_normalizer-3.4.7-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (40 kB)
+2026-05-28T23:19:33.9086007Z Collecting idna<4,>=2.5 (from requests<3.0.0,>=2.28.0->-r requirements-base.txt (line 35))
+2026-05-28T23:19:33.9904988Z   Downloading idna-3.17-py3-none-any.whl.metadata (6.4 kB)
+2026-05-28T23:19:33.9948185Z Requirement already satisfied: urllib3<3,>=1.26 in /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages (from requests<3.0.0,>=2.28.0->-r requirements-base.txt (line 35)) (2.7.0)
+2026-05-28T23:19:34.0180151Z Collecting certifi>=2023.5.7 (from requests<3.0.0,>=2.28.0->-r requirements-base.txt (line 35))
+2026-05-28T23:19:34.0191468Z   Using cached certifi-2026.5.20-py3-none-any.whl.metadata (2.5 kB)
+2026-05-28T23:19:34.0418812Z Collecting six>=1.9.0 (from ecdsa<1.0.0,>=0.18.0->-r requirements-base.txt (line 38))
+2026-05-28T23:19:34.0431024Z   Using cached six-1.17.0-py2.py3-none-any.whl.metadata (1.7 kB)
+2026-05-28T23:19:34.0654588Z Collecting attrs>=22.2.0 (from jsonschema<5.0.0,>=4.0.0->-r requirements-base.txt (line 42))
+2026-05-28T23:19:34.0665446Z   Using cached attrs-26.1.0-py3-none-any.whl.metadata (8.8 kB)
+2026-05-28T23:19:34.0875817Z Collecting jsonschema-specifications>=2023.03.6 (from jsonschema<5.0.0,>=4.0.0->-r requirements-base.txt (line 42))
+2026-05-28T23:19:34.0888594Z   Using cached jsonschema_specifications-2025.9.1-py3-none-any.whl.metadata (2.9 kB)
+2026-05-28T23:19:34.1178813Z Collecting referencing>=0.28.4 (from jsonschema<5.0.0,>=4.0.0->-r requirements-base.txt (line 42))
+2026-05-28T23:19:34.1190858Z   Using cached referencing-0.37.0-py3-none-any.whl.metadata (2.8 kB)
+2026-05-28T23:19:34.4240954Z Collecting rpds-py>=0.25.0 (from jsonschema<5.0.0,>=4.0.0->-r requirements-base.txt (line 42))
+2026-05-28T23:19:34.4378086Z   Downloading rpds_py-2026.5.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.1 kB)
+2026-05-28T23:19:34.4633292Z Collecting markdown-it-py>=2.2.0 (from rich<16.0.0,>=13.0->-r requirements-base.txt (line 45))
+2026-05-28T23:19:34.4645430Z   Using cached markdown_it_py-4.2.0-py3-none-any.whl.metadata (7.4 kB)
+2026-05-28T23:19:34.4920311Z Collecting pygments<3.0.0,>=2.13.0 (from rich<16.0.0,>=13.0->-r requirements-base.txt (line 45))
+2026-05-28T23:19:34.4932355Z   Using cached pygments-2.20.0-py3-none-any.whl.metadata (2.5 kB)
+2026-05-28T23:19:34.5173313Z Collecting mdurl~=0.1 (from markdown-it-py>=2.2.0->rich<16.0.0,>=13.0->-r requirements-base.txt (line 45))
+2026-05-28T23:19:34.5184800Z   Using cached mdurl-0.1.2-py3-none-any.whl.metadata (1.6 kB)
+2026-05-28T23:19:34.5222925Z Requirement already satisfied: typing-extensions>=4.4.0 in /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages (from referencing>=0.28.4->jsonschema<5.0.0,>=4.0.0->-r requirements-base.txt (line 42)) (4.15.0)
+2026-05-28T23:19:34.5261232Z Using cached cffi-2.0.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (219 kB)
+2026-05-28T23:19:34.5273810Z Using cached coincurve-21.0.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (1.6 MB)
+2026-05-28T23:19:34.5290318Z Using cached cryptography-45.0.7-cp311-abi3-manylinux_2_34_x86_64.whl (4.5 MB)
+2026-05-28T23:19:34.5316325Z Using cached pynacl-1.6.2-cp38-abi3-manylinux_2_34_x86_64.whl (1.4 MB)
+2026-05-28T23:19:34.5332708Z Using cached gmpy2-2.3.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (1.8 MB)
+2026-05-28T23:19:34.5349899Z Using cached pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.3 MB)
+2026-05-28T23:19:34.5368823Z Using cached psutil-7.2.2-cp36-abi3-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl (155 kB)
+2026-05-28T23:19:34.5380938Z Using cached numpy-2.4.6-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (16.6 MB)
+2026-05-28T23:19:34.5445795Z Using cached cachetools-7.1.4-py3-none-any.whl (16 kB)
+2026-05-28T23:19:34.5456817Z Using cached bech32-1.2.0-py3-none-any.whl (4.6 kB)
+2026-05-28T23:19:34.5468374Z Using cached bitarray-3.8.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (343 kB)
+2026-05-28T23:19:34.5480175Z Using cached chardet-5.2.0-py3-none-any.whl (199 kB)
+2026-05-28T23:19:34.5491664Z Using cached requests-2.34.2-py3-none-any.whl (73 kB)
+2026-05-28T23:19:34.5503474Z Using cached ecdsa-0.19.2-py2.py3-none-any.whl (150 kB)
+2026-05-28T23:19:34.5514962Z Using cached setproctitle-1.3.7-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (32 kB)
+2026-05-28T23:19:34.5525776Z Using cached jsonschema-4.26.0-py3-none-any.whl (90 kB)
+2026-05-28T23:19:34.5537011Z Using cached rich-15.0.0-py3-none-any.whl (310 kB)
+2026-05-28T23:19:34.5549859Z Using cached charset_normalizer-3.4.7-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (216 kB)
+2026-05-28T23:19:34.5686774Z Downloading idna-3.17-py3-none-any.whl (65 kB)
+2026-05-28T23:19:34.5894034Z Using cached pygments-2.20.0-py3-none-any.whl (1.2 MB)
+2026-05-28T23:19:34.5908993Z Using cached attrs-26.1.0-py3-none-any.whl (67 kB)
+2026-05-28T23:19:34.5920180Z Using cached certifi-2026.5.20-py3-none-any.whl (134 kB)
+2026-05-28T23:19:34.5931452Z Using cached jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+2026-05-28T23:19:34.5942612Z Using cached markdown_it_py-4.2.0-py3-none-any.whl (91 kB)
+2026-05-28T23:19:34.5953831Z Using cached mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+2026-05-28T23:19:34.5964761Z Using cached referencing-0.37.0-py3-none-any.whl (26 kB)
+2026-05-28T23:19:34.6106502Z Downloading rpds_py-2026.5.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (376 kB)
+2026-05-28T23:19:34.6621278Z Using cached six-1.17.0-py2.py3-none-any.whl (11 kB)
+2026-05-28T23:19:34.6632905Z Using cached xxhash-3.7.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (193 kB)
+2026-05-28T23:19:34.6644665Z Using cached pycparser-3.0-py3-none-any.whl (48 kB)
+2026-05-28T23:19:34.7771012Z Installing collected packages: bitarray, xxhash, six, setproctitle, rpds-py, pygments, pycryptodome, pycparser, psutil, numpy, mdurl, idna, gmpy2, coincurve, charset_normalizer, chardet, certifi, cachetools, bech32, attrs, requests, referencing, pybloom-live, markdown-it-py, ecdsa, cffi, rich, PyNaCl, jsonschema-specifications, cryptography, jsonschema
+2026-05-28T23:19:39.5168554Z 
+2026-05-28T23:19:39.5204390Z Successfully installed PyNaCl-1.6.2 attrs-26.1.0 bech32-1.2.0 bitarray-3.8.1 cachetools-7.1.4 certifi-2026.5.20 cffi-2.0.0 chardet-5.2.0 charset_normalizer-3.4.7 coincurve-21.0.0 cryptography-45.0.7 ecdsa-0.19.2 gmpy2-2.3.0 idna-3.17 jsonschema-4.26.0 jsonschema-specifications-2025.9.1 markdown-it-py-4.2.0 mdurl-0.1.2 numpy-2.4.6 psutil-7.2.2 pybloom-live-4.0.0 pycparser-3.0 pycryptodome-3.23.0 pygments-2.20.0 referencing-0.37.0 requests-2.34.2 rich-15.0.0 rpds-py-2026.5.1 setproctitle-1.3.7 six-1.17.0 xxhash-3.7.0
+2026-05-28T23:19:39.6158431Z ##[group]Run ruff format --check src/ tests/ scripts/ benchmarks/ tools/
+2026-05-28T23:19:39.6158962Z [36;1mruff format --check src/ tests/ scripts/ benchmarks/ tools/[0m
+2026-05-28T23:19:39.6188299Z shell: /usr/bin/bash -e {0}
+2026-05-28T23:19:39.6188567Z env:
+2026-05-28T23:19:39.6188844Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-05-28T23:19:39.6189291Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib/pkgconfig
+2026-05-28T23:19:39.6189715Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-05-28T23:19:39.6190114Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-05-28T23:19:39.6190488Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-05-28T23:19:39.6190883Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib
+2026-05-28T23:19:39.6191213Z ##[endgroup]
+2026-05-28T23:19:39.7450707Z 497 files already formatted
+2026-05-28T23:19:39.7489925Z ##[group]Run ruff check src/ tests/ scripts/ benchmarks/ tools/
+2026-05-28T23:19:39.7490534Z [36;1mruff check src/ tests/ scripts/ benchmarks/ tools/[0m
+2026-05-28T23:19:39.7519267Z shell: /usr/bin/bash -e {0}
+2026-05-28T23:19:39.7519536Z env:
+2026-05-28T23:19:39.7519811Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-05-28T23:19:39.7520249Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib/pkgconfig
+2026-05-28T23:19:39.7520678Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-05-28T23:19:39.7521066Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-05-28T23:19:39.7521447Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-05-28T23:19:39.7521822Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib
+2026-05-28T23:19:39.7522377Z ##[endgroup]
+2026-05-28T23:19:39.8887377Z Found 6 errors (6 fixed, 0 remaining).
+2026-05-28T23:19:39.8931783Z ##[group]Run mypy src/ --config-file pyproject.toml
+2026-05-28T23:19:39.8932453Z [36;1mmypy src/ --config-file pyproject.toml[0m
+2026-05-28T23:19:39.8961118Z shell: /usr/bin/bash -e {0}
+2026-05-28T23:19:39.8961385Z env:
+2026-05-28T23:19:39.8961657Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-05-28T23:19:39.8962397Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib/pkgconfig
+2026-05-28T23:19:39.8962835Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-05-28T23:19:39.8963230Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-05-28T23:19:39.8963608Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+2026-05-28T23:19:39.8963981Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib
+2026-05-28T23:19:39.8964307Z ##[endgroup]
+2026-05-28T23:19:43.5609317Z src/gpu/kernel_protocol.py:184: error: Too many arguments for "GPUKernelProtocol"  [call-arg]
+2026-05-28T23:19:43.5610567Z src/gpu/kernel_protocol.py:184: error: Unexpected keyword argument "max_batch_size" for "GPUKernelProtocol"  [call-arg]
+2026-05-28T23:19:43.5611371Z src/gpu/kernel_protocol.py:184: error: Unexpected keyword argument "program" for "GPUKernelProtocol"  [call-arg]
+2026-05-28T23:19:43.5762762Z src/gpu/executor_types.py:126: error: Need type annotation for "matches"  [var-annotated]
+2026-05-28T23:19:43.5763838Z src/gpu/executor_types.py:126: error: Argument 1 to "dict" has incompatible type "tuple[bytes, list[dict[Any, Any]]]"; expected "Iterable[tuple[Never, Never]]"  [arg-type]
+2026-05-28T23:19:43.5764870Z src/gpu/executor_types.py:126: error: Argument 1 to "dict" has incompatible type "tuple[bytes, list[dict[Any, Any]]]"; expected "Iterable[tuple[Any, Any]]"  [arg-type]
+2026-05-28T23:19:43.8669197Z src/utils/fast_json.py:16: error: Argument 2 to "dump" has incompatible type "BinaryIO"; expected "SupportsWrite[str]"  [arg-type]
+2026-05-28T23:19:43.8670243Z src/utils/fast_json.py:16: note: Following member(s) of "BinaryIO" have conflicts:
+2026-05-28T23:19:43.8670868Z src/utils/fast_json.py:16: note:     Expected:
+2026-05-28T23:19:43.8671492Z src/utils/fast_json.py:16: note:         def write(self, str, /) -> object
+2026-05-28T23:19:43.8672324Z src/utils/fast_json.py:16: note:     Got:
+2026-05-28T23:19:43.8672748Z src/utils/fast_json.py:16: note:         @overload
+2026-05-28T23:19:43.8673319Z src/utils/fast_json.py:16: note:         def write(self, Buffer, /) -> int
+2026-05-28T23:19:43.8673908Z src/utils/fast_json.py:16: note:         @overload
+2026-05-28T23:19:43.8674515Z src/utils/fast_json.py:16: note:         def write(self, bytes, /) -> int
+2026-05-28T23:19:43.9990821Z src/gpu/metrics.py:265: error: Incompatible types in assignment (expression has type "float", variable has type "int")  [assignment]
+2026-05-28T23:19:44.6019135Z src/start_menu/_shared.py:32: error: Incompatible types in assignment (expression has type "None", variable has type "Console")  [assignment]
+2026-05-28T23:19:44.6020729Z src/start_menu/_shared.py:34: error: Incompatible types in assignment (expression has type "None", variable has type "Console")  [assignment]
+2026-05-28T23:19:45.9935263Z src/utils/timeout.py:55: error: Module has no attribute "windll"  [attr-defined]
+2026-05-28T23:19:46.0017291Z src/utils/platform_check.py:132: error: Module has no attribute "windll"  [attr-defined]
+2026-05-28T23:19:46.0144885Z src/utils/performance_monitor.py:213: error: Value of type "dict[Any, Any] | None" is not indexable  [index]
+2026-05-28T23:19:46.0146044Z src/utils/performance_monitor.py:222: error: Value of type "dict[Any, Any] | None" is not indexable  [index]
+2026-05-28T23:19:46.0147108Z src/utils/performance_monitor.py:342: error: Value of type "dict[Any, Any] | None" is not indexable  [index]
+2026-05-28T23:19:46.0148154Z src/utils/performance_monitor.py:347: error: Value of type "dict[Any, Any] | None" is not indexable  [index]
+2026-05-28T23:19:46.0902929Z src/utils/error_recovery.py:257: error: Incompatible return value type (got "_Wrapped[[VarArg(Any), KwArg(Any)], Any, [VarArg(Any), KwArg(Any)], Any]", expected "F")  [return-value]
+2026-05-28T23:19:46.0905046Z src/utils/error_recovery.py:715: error: Argument 1 to "record_retry" of "ErrorRecoveryManager" has incompatible type "RecoverableErrorCategory | None"; expected "RecoverableErrorCategory"  [arg-type]
+2026-05-28T23:19:46.0906996Z src/utils/error_recovery.py:741: error: Incompatible return value type (got "_Wrapped[[VarArg(Any), KwArg(Any)], Any, [VarArg(Any), KwArg(Any)], Any]", expected "F")  [return-value]
+2026-05-28T23:19:46.1585790Z src/monitoring/data_logger.py:170: error: Argument 2 to "fast_dump" has incompatible type "TextIOWrapper[_WrappedBuffer]"; expected "BinaryIO"  [arg-type]
+2026-05-28T23:19:46.1587375Z src/monitoring/data_logger.py:198: error: Argument 2 to "fast_dump" has incompatible type "TextIOWrapper[_WrappedBuffer]"; expected "BinaryIO"  [arg-type]
+2026-05-28T23:19:46.1588915Z src/monitoring/data_logger.py:209: error: Argument 2 to "fast_dump" has incompatible type "TextIOWrapper[_WrappedBuffer]"; expected "BinaryIO"  [arg-type]
+2026-05-28T23:19:46.1590440Z src/monitoring/data_logger.py:214: error: Argument 2 to "fast_dump" has incompatible type "TextIOWrapper[_WrappedBuffer]"; expected "BinaryIO"  [arg-type]
+2026-05-28T23:19:46.1592312Z src/monitoring/data_logger.py:329: error: Argument 1 to "append" of "deque" has incompatible type "dict[str, object]"; expected "dict[str, float | int | str]"  [arg-type]
+2026-05-28T23:19:46.1593775Z src/monitoring/data_logger.py:500: error: Function is missing a type annotation for one or more parameters  [no-untyped-def]
+2026-05-28T23:19:46.1595048Z src/monitoring/data_logger.py:506: error: Function is missing a type annotation for one or more parameters  [no-untyped-def]
+2026-05-28T23:19:46.1596312Z src/monitoring/data_logger.py:509: error: Function is missing a type annotation for one or more parameters  [no-untyped-def]
+2026-05-28T23:19:46.1597759Z src/monitoring/data_logger.py:682: error: Argument 2 to "fast_dump" has incompatible type "TextIOWrapper[_WrappedBuffer]"; expected "BinaryIO"  [arg-type]
+2026-05-28T23:19:46.1599319Z src/monitoring/data_logger.py:993: error: Argument 2 to "fast_dump" has incompatible type "TextIOWrapper[_WrappedBuffer]"; expected "BinaryIO"  [arg-type]
+2026-05-28T23:19:46.1600928Z src/monitoring/data_logger.py:1254: error: Argument 2 to "fast_dump" has incompatible type "TextIOWrapper[_WrappedBuffer]"; expected "BinaryIO"  [arg-type]
+2026-05-28T23:19:46.1602514Z src/monitoring/data_logger.py:1414: error: Function is missing a return type annotation  [no-untyped-def]
+2026-05-28T23:19:46.1603607Z src/monitoring/data_logger.py:1414: note: Use "-> None" if function does not return a value
+2026-05-28T23:19:46.1604904Z src/monitoring/data_logger.py:1490: error: Argument 2 to "fast_dump" has incompatible type "TextIOWrapper[_WrappedBuffer]"; expected "BinaryIO"  [arg-type]
+2026-05-28T23:19:46.1606629Z src/monitoring/data_logger.py:1502: error: Argument 2 to "fast_dump" has incompatible type "TextIOWrapper[_WrappedBuffer]"; expected "BinaryIO"  [arg-type]
+2026-05-28T23:19:46.1771027Z src/monitoring/alert_system.py:615: error: Argument 2 to "fast_dump" has incompatible type "TextIOWrapper[_WrappedBuffer]"; expected "BinaryIO"  [arg-type]
+2026-05-28T23:19:46.1773320Z src/monitoring/alert_system.py:627: error: Argument 1 to "fast_load" has incompatible type "TextIOWrapper[_WrappedBuffer]"; expected "BinaryIO"  [arg-type]
+2026-05-28T23:19:46.4761650Z src/gpu/async_executor/_error_utils.py:80: error: Exception type must be derived from BaseException (or be a tuple of exception classes)  [misc]
+2026-05-28T23:19:46.4857894Z src/gpu/async_executor/_collector.py:73: error: "_CollectorHost" has no attribute "_result_collector_worker"  [attr-defined]
+2026-05-28T23:19:46.4858713Z src/gpu/async_executor/_collector.py:77: error: Item "None" of "Thread | None" has no attribute "start"  [union-attr]
+2026-05-28T23:19:46.4859472Z src/gpu/async_executor/_collector.py:121: error: Module has no attribute "event_info"; maybe "device_info"?  [attr-defined]
+2026-05-28T23:19:46.5180053Z src/core/secure_key_manager.py:37: error: Name "HAS_CRYPTOGRAPHY" already defined on line 35  [no-redef]
+2026-05-28T23:19:46.5180776Z src/core/secure_key_manager.py:44: error: Name "HAS_PYNACL" already defined on line 42  [no-redef]
+2026-05-28T23:19:46.5181452Z src/core/secure_key_manager.py:125: error: Attribute "_backend" already defined on line 121  [no-redef]
+2026-05-28T23:19:46.5182340Z src/core/secure_key_manager.py:232: error: Module has no attribute "WinDLL"  [attr-defined]
+2026-05-28T23:19:46.5972623Z src/collision/targets/matcher.py:105: error: Need type annotation for "_trie" (hint: "_trie: dict[<type>, <type>] = ...")  [var-annotated]
+2026-05-28T23:19:46.6111568Z src/collision/targets/cache.py:65: error: Non-overlapping identity check (left operand type: "type[LRUCache[_KT@LRUCache, _VT@LRUCache]]", right operand type: "type[dict[_KT@dict, _VT@dict]]")  [comparison-overlap]
+2026-05-28T23:19:46.6113245Z src/collision/targets/cache.py:68: error: Non-overlapping identity check (left operand type: "type[TTLCache[_KT2, _VT2, float]]", right operand type: "type[dict[_KT@dict, _VT@dict]]")  [comparison-overlap]
+2026-05-28T23:19:46.6208320Z src/cli/progress.py:202: error: Incompatible types in assignment (expression has type "Table", variable has type "Group")  [assignment]
+2026-05-28T23:19:46.6379354Z src/cli/output.py:146: error: "type" has no attribute "assemble"  [attr-defined]
+2026-05-28T23:19:46.6380233Z src/cli/output.py:153: error: "type" has no attribute "assemble"  [attr-defined]
+2026-05-28T23:19:46.6381017Z src/cli/output.py:160: error: "type" has no attribute "assemble"  [attr-defined]
+2026-05-28T23:19:46.6381790Z src/cli/output.py:168: error: "type" has no attribute "assemble"  [attr-defined]
+2026-05-28T23:19:46.6382814Z src/cli/output.py:181: error: "type" has no attribute "assemble"  [attr-defined]
+2026-05-28T23:19:46.6452301Z src/cli/keyboard_listener.py:30: error: Module has no attribute "kbhit"  [attr-defined]
+2026-05-28T23:19:46.6453367Z src/cli/keyboard_listener.py:31: error: Module has no attribute "getch"  [attr-defined]
+2026-05-28T23:19:46.6673424Z src/automation/data_analysis.py:237: error: Argument 1 to "fast_load" has incompatible type "TextIOWrapper[_WrappedBuffer]"; expected "BinaryIO"  [arg-type]
+2026-05-28T23:19:46.7099309Z src/gpu/search_modes/base_search.py:133: error: "GPUEngineProtocol" has no attribute "_batch_size"; maybe "batch_size" or "_batch_size_lock"?  [attr-defined]
+2026-05-28T23:19:46.7100985Z src/gpu/search_modes/base_search.py:135: error: "GPUEngineProtocol" has no attribute "_batch_size"; maybe "batch_size" or "_batch_size_lock"?  [attr-defined]
+2026-05-28T23:19:46.7102773Z src/gpu/search_modes/base_search.py:136: error: "GPUEngineProtocol" has no attribute "_batch_size"; maybe "batch_size" or "_batch_size_lock"?  [attr-defined]
+2026-05-28T23:19:46.7580044Z src/monitoring/enhanced_monitoring.py:49: error: Incompatible types in assignment (expression has type "None", variable has type "DataLogger")  [assignment]
+2026-05-28T23:19:46.7581841Z src/monitoring/enhanced_monitoring.py:100: error: Incompatible types in assignment (expression has type "dict[Never, Never]", variable has type "None")  [assignment]
+2026-05-28T23:19:46.7584145Z src/monitoring/enhanced_monitoring.py:101: error: Incompatible types in assignment (expression has type "dict[Never, Never]", variable has type "None")  [assignment]
+2026-05-28T23:19:46.7585899Z src/monitoring/enhanced_monitoring.py:103: error: Incompatible types in assignment (expression has type "dict[Never, Never]", variable has type "None")  [assignment]
+2026-05-28T23:19:46.7587684Z src/monitoring/enhanced_monitoring.py:104: error: Incompatible types in assignment (expression has type "dict[Never, Never]", variable has type "None")  [assignment]
+2026-05-28T23:19:46.8049344Z src/monitoring/monitoring_system.py:109: error: Function is missing a return type annotation  [no-untyped-def]
+2026-05-28T23:19:46.8050567Z src/monitoring/monitoring_system.py:109: note: Use "-> None" if function does not return a value
+2026-05-28T23:19:46.8052424Z src/monitoring/monitoring_system.py:243: error: Argument 2 to "fast_dump" has incompatible type "TextIOWrapper[_WrappedBuffer]"; expected "BinaryIO"  [arg-type]
+2026-05-28T23:19:46.8054159Z src/monitoring/monitoring_system.py:248: error: Argument 2 to "fast_dump" has incompatible type "TextIOWrapper[_WrappedBuffer]"; expected "BinaryIO"  [arg-type]
+2026-05-28T23:19:46.8055761Z src/monitoring/monitoring_system.py:274: error: Argument 2 to "fast_dump" has incompatible type "TextIOWrapper[_WrappedBuffer]"; expected "BinaryIO"  [arg-type]
+2026-05-28T23:19:46.8057245Z src/monitoring/monitoring_system.py:503: error: "append" of "list" does not return a value (it only ever returns None)  [func-returns-value]
+2026-05-28T23:19:46.8058772Z src/monitoring/monitoring_system.py:513: error: Argument 2 to "fast_dump" has incompatible type "TextIOWrapper[_WrappedBuffer]"; expected "BinaryIO"  [arg-type]
+2026-05-28T23:19:46.8060493Z src/monitoring/monitoring_system.py:1074: error: Argument 2 to "fast_dump" has incompatible type "TextIOWrapper[_WrappedBuffer]"; expected "BinaryIO"  [arg-type]
+2026-05-28T23:19:46.8061913Z src/monitoring/monitoring_system.py:1280: error: Function is missing a return type annotation  [no-untyped-def]
+2026-05-28T23:19:46.8063386Z src/monitoring/monitoring_system.py:1287: error: Function is missing a return type annotation  [no-untyped-def]
+2026-05-28T23:19:46.8064460Z src/monitoring/monitoring_system.py:1287: note: Use "-> None" if function does not return a value
+2026-05-28T23:19:46.8065564Z src/monitoring/monitoring_system.py:1292: error: Function is missing a return type annotation  [no-untyped-def]
+2026-05-28T23:19:46.8066656Z src/monitoring/monitoring_system.py:1292: note: Use "-> None" if function does not return a value
+2026-05-28T23:19:46.8067727Z src/monitoring/monitoring_system.py:1336: error: Function is missing a return type annotation  [no-untyped-def]
+2026-05-28T23:19:46.8068821Z src/monitoring/monitoring_system.py:1336: note: Use "-> None" if function does not return a value
+2026-05-28T23:19:46.9056056Z src/gpu/device.py:29: error: Name "cl" already defined (by an import)  [no-redef]
+2026-05-28T23:19:46.9057191Z src/gpu/device.py:724: error: Incompatible types in assignment (expression has type "Context", variable has type "None")  [assignment]
+2026-05-28T23:19:46.9058389Z src/gpu/device.py:724: error: List item 0 has incompatible type "None"; expected "Device"  [list-item]
+2026-05-28T23:19:46.9059566Z src/gpu/device.py:762: error: Incompatible types in assignment (expression has type "CommandQueue", variable has type "None")  [assignment]
+2026-05-28T23:19:46.9060852Z src/gpu/device.py:763: error: Argument 1 to "CommandQueue" has incompatible type "None"; expected "Context"  [arg-type]
+2026-05-28T23:19:46.9062334Z src/gpu/device.py:765: error: Variable "pyopencl.command_queue_properties" is not valid as a type  [valid-type]
+2026-05-28T23:19:46.9063639Z src/gpu/device.py:765: note: See https://mypy.readthedocs.io/en/stable/common_issues.html#variables-vs-type-aliases
+2026-05-28T23:19:46.9065034Z src/gpu/device.py:773: error: Incompatible types in assignment (expression has type "CommandQueue", variable has type "None")  [assignment]
+2026-05-28T23:19:46.9066866Z src/gpu/device.py:774: error: Argument 1 to "CommandQueue" has incompatible type "None"; expected "Context"  [arg-type]
+2026-05-28T23:19:46.9068040Z src/gpu/device.py:776: error: Variable "pyopencl.command_queue_properties" is not valid as a type  [valid-type]
+2026-05-28T23:19:46.9069240Z src/gpu/device.py:776: note: See https://mypy.readthedocs.io/en/stable/common_issues.html#variables-vs-type-aliases
+2026-05-28T23:19:46.9070602Z src/gpu/device.py:778: error: Incompatible types in assignment (expression has type "CommandQueue", variable has type "None")  [assignment]
+2026-05-28T23:19:46.9071939Z src/gpu/device.py:779: error: Argument 1 to "CommandQueue" has incompatible type "None"; expected "Context"  [arg-type]
+2026-05-28T23:19:46.9073860Z src/gpu/device.py:781: error: Variable "pyopencl.command_queue_properties" is not valid as a type  [valid-type]
+2026-05-28T23:19:46.9075142Z src/gpu/device.py:781: note: See https://mypy.readthedocs.io/en/stable/common_issues.html#variables-vs-type-aliases
+2026-05-28T23:19:46.9076490Z src/gpu/device.py:788: error: Incompatible types in assignment (expression has type "CommandQueue", variable has type "None")  [assignment]
+2026-05-28T23:19:46.9077802Z src/gpu/device.py:789: error: Argument 1 to "CommandQueue" has incompatible type "None"; expected "Context"  [arg-type]
+2026-05-28T23:19:46.9079132Z src/gpu/device.py:858: error: Incompatible types in assignment (expression has type "str | None", variable has type "None")  [assignment]
+2026-05-28T23:19:46.9472573Z src/gpu/async_executor/_sync.py:74: error: "_SyncFallbackMixin" has no attribute "device"  [attr-defined]
+2026-05-28T23:19:46.9473712Z src/gpu/async_executor/_sync.py:77: error: "_SyncFallbackMixin" has no attribute "buffer_a"  [attr-defined]
+2026-05-28T23:19:46.9474793Z src/gpu/async_executor/_sync.py:77: error: "_SyncFallbackMixin" has no attribute "buffer_b"  [attr-defined]
+2026-05-28T23:19:46.9475840Z src/gpu/async_executor/_sync.py:81: error: "_SyncFallbackMixin" has no attribute "device"  [attr-defined]
+2026-05-28T23:19:46.9476884Z src/gpu/async_executor/_sync.py:110: error: "_SyncFallbackMixin" has no attribute "device"  [attr-defined]
+2026-05-28T23:19:46.9477942Z src/gpu/async_executor/_sync.py:119: error: "_SyncFallbackMixin" has no attribute "precomp_buffer"  [attr-defined]
+2026-05-28T23:19:46.9479028Z src/gpu/async_executor/_sync.py:128: error: "_SyncFallbackMixin" has no attribute "device"  [attr-defined]
+2026-05-28T23:19:46.9480077Z src/gpu/async_executor/_sync.py:129: error: "_SyncFallbackMixin" has no attribute "device"  [attr-defined]
+2026-05-28T23:19:46.9481370Z src/gpu/async_executor/_sync.py:156: error: "_SyncFallbackMixin" has no attribute "sync_fallbacks"; maybe "_track_sync_fallback"?  [attr-defined]
+2026-05-28T23:19:46.9484461Z src/gpu/async_executor/_sync.py:170: error: "_SyncFallbackMixin" has no attribute "sync_fallbacks"; maybe "_track_sync_fallback"?  [attr-defined]
+2026-05-28T23:19:46.9485761Z src/gpu/async_executor/_sync.py:180: error: Cannot determine type of "_consecutive_sync_fallbacks"  [has-type]
+2026-05-28T23:19:46.9486892Z src/gpu/async_executor/_sync.py:182: error: Cannot determine type of "_consecutive_sync_fallbacks"  [has-type]
+2026-05-28T23:19:46.9487981Z src/gpu/async_executor/_sync.py:183: error: Cannot determine type of "_async_mode_disabled"  [has-type]
+2026-05-28T23:19:46.9489046Z src/gpu/async_executor/_sync.py:187: error: Cannot determine type of "_consecutive_sync_fallbacks"  [has-type]
+2026-05-28T23:19:46.9490150Z src/gpu/async_executor/_sync.py:203: error: Cannot determine type of "_last_async_attempt_time"  [has-type]
+2026-05-28T23:19:46.9491283Z src/gpu/async_executor/_sync.py:211: error: "_SyncFallbackMixin" has no attribute "async_executions"  [attr-defined]
+2026-05-28T23:19:46.9492869Z src/gpu/async_executor/_sync.py:248: error: "_SyncFallbackMixin" has no attribute "sync_fallbacks"; maybe "_track_sync_fallback"?  [attr-defined]
+2026-05-28T23:19:46.9494190Z src/gpu/async_executor/_sync.py:276: error: "_SyncFallbackMixin" has no attribute "device"  [attr-defined]
+2026-05-28T23:19:46.9495821Z src/gpu/async_executor/_sync.py:315: error: Need type annotation for "_seed_buffer_pool" (hint: "_seed_buffer_pool: list[<type>] = ...")  [var-annotated]
+2026-05-28T23:19:46.9497222Z src/gpu/async_executor/_sync.py:320: error: "_SyncFallbackMixin" has no attribute "precomp_buffer"  [attr-defined]
+2026-05-28T23:19:46.9498361Z src/gpu/async_executor/_sync.py:331: error: "_SyncFallbackMixin" has no attribute "device"  [attr-defined]
+2026-05-28T23:19:46.9499451Z src/gpu/async_executor/_sync.py:332: error: "_SyncFallbackMixin" has no attribute "device"  [attr-defined]
+2026-05-28T23:19:46.9500477Z src/gpu/async_executor/_sync.py:349: error: Cannot determine type of "pending_event"  [has-type]
+2026-05-28T23:19:46.9501859Z src/gpu/async_executor/_sync.py:349: note: Error code "has-type" not covered by "type: ignore[attr-defined]" comment
+2026-05-28T23:19:46.9503285Z src/gpu/async_executor/_sync.py:351: error: Cannot determine type of "pending_event"  [has-type]
+2026-05-28T23:19:46.9504599Z src/gpu/async_executor/_sync.py:351: note: Error code "has-type" not covered by "type: ignore[attr-defined]" comment
+2026-05-28T23:19:46.9505882Z src/gpu/async_executor/_sync.py:359: error: Function is missing a type annotation for one or more parameters  [no-untyped-def]
+2026-05-28T23:19:46.9507089Z src/gpu/async_executor/_sync.py:383: error: "_SyncFallbackMixin" has no attribute "device"  [attr-defined]
+2026-05-28T23:19:46.9508185Z src/gpu/async_executor/_sync.py:388: error: "_SyncFallbackMixin" has no attribute "device"  [attr-defined]
+2026-05-28T23:19:46.9509453Z src/gpu/async_executor/_sync.py:410: error: Need type annotation for "_buffer_pool" (hint: "_buffer_pool: list[<type>] = ...")  [var-annotated]
+2026-05-28T23:19:46.9510740Z src/gpu/async_executor/_sync.py:412: error: "_SyncFallbackMixin" has no attribute "buffer_a"  [attr-defined]
+2026-05-28T23:19:46.9511888Z src/gpu/async_executor/_sync.py:412: error: "_SyncFallbackMixin" has no attribute "buffer_b"  [attr-defined]
+2026-05-28T23:19:47.0004027Z src/core/crypto_backend.py:461: error: No overload variant of "bytes" matches argument type "PublicKey"  [call-overload]
+2026-05-28T23:19:47.0005154Z src/core/crypto_backend.py:461: note: Possible overload variants:
+2026-05-28T23:19:47.0006157Z src/core/crypto_backend.py:461: note:     def bytes(Iterable[SupportsIndex] | SupportsIndex | SupportsBytes | Buffer, /) -> bytes
+2026-05-28T23:19:47.0007288Z src/core/crypto_backend.py:461: note:     def bytes(str, /, encoding: str, errors: str = ...) -> bytes
+2026-05-28T23:19:47.0008096Z src/core/crypto_backend.py:461: note:     def bytes() -> bytes
+2026-05-28T23:19:47.1076728Z src/gpu/search_modes/random_search.py:367: error: Argument 1 to "_execute_gpu_batch" of "GPUEngineProtocol" has incompatible type "bytes"; expected "int"  [arg-type]
+2026-05-28T23:19:47.1078518Z src/gpu/search_modes/random_search.py:369: error: Argument 3 to "_execute_gpu_batch" of "GPUEngineProtocol" has incompatible type "int"; expected "bytes"  [arg-type]
+2026-05-28T23:19:47.1080071Z src/gpu/search_modes/random_search.py:387: error: Too many arguments for "_check_and_report_progress" of "GPUEngineProtocol"  [call-arg]
+2026-05-28T23:19:47.1081409Z src/gpu/search_modes/random_search.py:504: error: Function is missing a type annotation for one or more parameters  [no-untyped-def]
+2026-05-28T23:19:47.1083090Z src/gpu/search_modes/random_search.py:504: note: Error code "no-untyped-def" not covered by "type: ignore[override]" comment
+2026-05-28T23:19:47.2106615Z src/gpu/async_executor/_executor.py:162: error: Incompatible types in assignment (expression has type "Thread | None", base class "_ResultCollectorMixin" defined the type as "Thread")  [assignment]
+2026-05-28T23:19:47.2108681Z src/gpu/async_executor/_executor.py:414: error: Incompatible return value type (got "tuple[list[dict[Any, Any]], float]", expected "tuple[list[tuple[bytes, list[dict[Any, Any]]]], float]")  [return-value]
+2026-05-28T23:19:47.2978093Z src/gpu/kernel_impl.py:105: error: Function is missing a return type annotation  [no-untyped-def]
+2026-05-28T23:19:47.2979697Z src/gpu/kernel_impl.py:105: error: Function is missing a type annotation for one or more parameters  [no-untyped-def]
+2026-05-28T23:19:47.2981523Z src/gpu/kernel_impl.py:136: error: Incompatible types in assignment (expression has type "tuple[tuple[str, tuple[()]], tuple[str, tuple[str]], tuple[str, tuple[str, str, str]], tuple[str, tuple[str, str, str]]]", variable has type "list[Any] | None")  [assignment]
+2026-05-28T23:19:47.2983678Z src/gpu/kernel_impl.py:142: error: Argument 1 to "len" has incompatible type "list[Any] | None"; expected "Sized"  [arg-type]
+2026-05-28T23:19:47.2984712Z src/gpu/kernel_impl.py:143: error: Value of type "list[Any] | None" is not indexable  [index]
+2026-05-28T23:19:47.2985610Z src/gpu/kernel_impl.py:283: error: "None" has no attribute "local_mem_size"  [attr-defined]
+2026-05-28T23:19:47.2987634Z src/gpu/kernel_impl.py:394: error: Incompatible types in assignment (expression has type "list[tuple[str, list[str]]]", variable has type "tuple[tuple[str, tuple[()]], tuple[str, tuple[str]], tuple[str, tuple[str, str, str]], tuple[str, tuple[str, str, str]]]")  [assignment]
+2026-05-28T23:19:47.2990335Z src/gpu/kernel_impl.py:407: error: Argument "strategies" to "compile_kernel_with_retry" has incompatible type "tuple[tuple[str, tuple[()]], tuple[str, tuple[str]], tuple[str, tuple[str, str, str]], tuple[str, tuple[str, str, str]]]"; expected "list[Any] | None"  [arg-type]
+2026-05-28T23:19:47.2992360Z src/gpu/kernel_impl.py:452: error: Function is missing a return type annotation  [no-untyped-def]
+2026-05-28T23:19:47.2993288Z src/gpu/kernel_impl.py:452: note: Use "-> None" if function does not return a value
+2026-05-28T23:19:47.2994547Z src/gpu/kernel_impl.py:506: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+2026-05-28T23:19:47.2995752Z src/gpu/kernel_impl.py:632: error: Too many arguments for "Program"  [call-arg]
+2026-05-28T23:19:47.2996661Z src/gpu/kernel_impl.py:695: error: Function is missing a return type annotation  [no-untyped-def]
+2026-05-28T23:19:47.2997587Z src/gpu/kernel_impl.py:695: note: Use "-> None" if function does not return a value
+2026-05-28T23:19:47.2998512Z src/gpu/kernel_impl.py:748: error: Function is missing a return type annotation  [no-untyped-def]
+2026-05-28T23:19:47.2999414Z src/gpu/kernel_impl.py:748: note: Use "-> None" if function does not return a value
+2026-05-28T23:19:47.3000170Z src/gpu/kernel_impl.py:1005: error: "None" not callable  [misc]
+2026-05-28T23:19:47.3000842Z src/gpu/kernel_impl.py:1024: error: "None" not callable  [misc]
+2026-05-28T23:19:47.3001602Z src/gpu/kernel_impl.py:1041: error: Value of type "None" is not indexable  [index]
+2026-05-28T23:19:47.3002952Z src/gpu/kernel_impl.py:1045: error: Function is missing a type annotation for one or more parameters  [no-untyped-def]
+2026-05-28T23:19:47.3004053Z src/gpu/kernel_impl.py:1052: error: Function is missing a return type annotation  [no-untyped-def]
+2026-05-28T23:19:47.3004978Z src/gpu/kernel_impl.py:1052: note: Use "-> None" if function does not return a value
+2026-05-28T23:19:47.3006007Z src/gpu/kernel_impl.py:1104: error: Function is missing a type annotation for one or more parameters  [no-untyped-def]
+2026-05-28T23:19:47.3007014Z src/gpu/kernel_impl.py:1189: error: Value of type "None" is not indexable  [index]
+2026-05-28T23:19:47.3008234Z src/gpu/kernel_impl.py:1324: error: Incompatible types in assignment (expression has type "None", variable has type "AsyncFileHandler")  [assignment]
+2026-05-28T23:19:47.3079197Z src/core/simd_optimizer.py:405: error: "P2PKHAddressGenerator" has no attribute "generate_from_private_key"; maybe "generate_private_key"?  [attr-defined]
+2026-05-28T23:19:47.3374852Z src/collision/multiprocess_engine.py:167: error: "P2PKHAddressGenerator" has no attribute "generate_from_private_key"; maybe "generate_private_key"?  [attr-defined]
+2026-05-28T23:19:47.3672771Z src/gpu/search_mode_coordinator.py:94: error: Function is missing a type annotation for one or more parameters  [no-untyped-def]
+2026-05-28T23:19:47.3674543Z src/gpu/search_mode_coordinator.py:147: error: Function is missing a type annotation for one or more parameters  [no-untyped-def]
+2026-05-28T23:19:47.4140964Z src/utils/performance_benchmark.py:172: error: Unexpected keyword argument "num_workers" for "MultiProcessCollisionEngine"  [call-arg]
+2026-05-28T23:19:47.4142686Z src/utils/performance_benchmark.py:172: note: "MultiProcessCollisionEngine" defined in "src.collision.multiprocess_engine"
+2026-05-28T23:19:47.4144085Z src/utils/performance_benchmark.py:172: error: Unexpected keyword argument "batch_size" for "MultiProcessCollisionEngine"  [call-arg]
+2026-05-28T23:19:47.4145550Z src/utils/performance_benchmark.py:172: error: Unexpected keyword argument "target_addresses" for "MultiProcessCollisionEngine"  [call-arg]
+2026-05-28T23:19:47.4147510Z src/utils/performance_benchmark.py:205: error: Missing positional argument "private_key_bytes" in call to "submit_task" of "MultiProcessCollisionEngine"  [call-arg]
+2026-05-28T23:19:47.4149076Z src/utils/performance_benchmark.py:219: error: "MultiProcessCollisionEngine" has no attribute "cleanup"  [attr-defined]
+2026-05-28T23:19:47.4387350Z src/gpu/device_manager.py:165: error: "_prepare_targets" of "GPUDeviceManager" does not return a value (it only ever returns None)  [func-returns-value]
+2026-05-28T23:19:47.4388533Z src/gpu/device_manager.py:165: error: "None" object is not iterable  [misc]
+2026-05-28T23:19:47.4389390Z src/gpu/device_manager.py:166: error: Cannot determine type of "target_hash160s"  [has-type]
+2026-05-28T23:19:47.4390298Z src/gpu/device_manager.py:167: error: Cannot determine type of "target_list"  [has-type]
+2026-05-28T23:19:47.4391190Z src/gpu/device_manager.py:194: error: Cannot determine type of "target_hash160s"  [has-type]
+2026-05-28T23:19:47.4392429Z src/gpu/device_manager.py:196: error: Cannot determine type of "target_hash160s"  [has-type]
+2026-05-28T23:19:47.4393329Z src/gpu/device_manager.py:197: error: Cannot determine type of "target_list"  [has-type]
+2026-05-28T23:19:47.4394196Z src/gpu/device_manager.py:607: error: No return value expected  [return-value]
+2026-05-28T23:19:47.5045400Z src/collision/key_collision_engine.py:479: error: Argument 1 to "generate_address" of "P2PKHAddressGenerator" has incompatible type "memoryview[int]"; expected "bytes | None"  [arg-type]
+2026-05-28T23:19:47.5047156Z src/collision/key_collision_engine.py:861: error: Function is missing a type annotation for one or more parameters  [no-untyped-def]
+2026-05-28T23:19:47.5048672Z src/collision/key_collision_engine.py:1196: error: Argument 1 to "_worker_process_key" of "KeyCollisionEngine" has incompatible type "memoryview[int]"; expected "bytes"  [arg-type]
+2026-05-28T23:19:47.5050293Z src/collision/key_collision_engine.py:1478: error: Function is missing a type annotation for one or more parameters  [no-untyped-def]
+2026-05-28T23:19:47.5051603Z src/collision/key_collision_engine.py:1694: error: "CollisionStats" has no attribute "_progress_percent"  [attr-defined]
+2026-05-28T23:19:47.5053046Z src/collision/key_collision_engine.py:2142: error: Function is missing a return type annotation  [no-untyped-def]
+2026-05-28T23:19:47.5054141Z src/collision/key_collision_engine.py:2147: error: Function is missing a return type annotation  [no-untyped-def]
+2026-05-28T23:19:47.5055360Z src/collision/key_collision_engine.py:2155: error: Function is missing a type annotation for one or more parameters  [no-untyped-def]
+2026-05-28T23:19:47.5226287Z src/automation/auto_test.py:298: error: Cannot instantiate abstract class "CryptoBackend" with abstract attributes "generate_public_key", "is_available", "is_constant_time", "name" and "scalar_multiply"  [abstract]
+2026-05-28T23:19:47.5228045Z src/automation/auto_test.py:299: error: "CryptoBackend" has no attribute "get_available_backends"  [attr-defined]
+2026-05-28T23:19:47.5229197Z src/automation/auto_test.py:300: error: "CryptoBackend" has no attribute "get_current_backend"  [attr-defined]
+2026-05-28T23:19:47.5821852Z src/collision/gpu/core.py:171: error: Incompatible types in assignment (expression has type "CollisionStats", variable has type "None")  [assignment]
+2026-05-28T23:19:47.5823709Z src/collision/gpu/core.py:191: error: Incompatible types in assignment (expression has type "CheckpointManager", variable has type "None")  [assignment]
+2026-05-28T23:19:47.5825357Z src/collision/gpu/core.py:212: error: Incompatible types in assignment (expression has type "DeduplicationFilter", variable has type "None")  [assignment]
+2026-05-28T23:19:47.5831133Z src/collision/gpu/engine.py:535: error: Cannot instantiate abstract class "CollisionCore" with abstract attributes "on_batch_complete", "pause", ... and "stop" (3 methods suppressed)  [abstract]
+2026-05-28T23:19:47.5834216Z src/collision/gpu/engine.py:535: note: The following methods were marked implicitly abstract because they have empty function bodies: "on_batch_complete", "pause", ... and "stop" (3 methods suppressed). If they are not meant to be abstract, explicitly `return` or `return None`.
+2026-05-28T23:19:47.5836666Z src/collision/gpu/engine.py:566: error: Argument "engine" to "GPUEngineMonitor" has incompatible type "GPUCollisionEngine"; expected "GPUEngineProtocol | None"  [arg-type]
+2026-05-28T23:19:47.5838191Z src/collision/gpu/engine.py:566: note: "GPUCollisionEngine" is missing following "GPUEngineProtocol" protocol member:
+2026-05-28T23:19:47.5839114Z src/collision/gpu/engine.py:566: note:     _recovery_manager
+2026-05-28T23:19:47.5839942Z src/collision/gpu/engine.py:566: note: Following member(s) of "GPUCollisionEngine" have conflicts:
+2026-05-28T23:19:47.5840745Z src/collision/gpu/engine.py:566: note:     Expected:
+2026-05-28T23:19:47.5841477Z src/collision/gpu/engine.py:566: note:         def _check_and_report_progress(self) -> None
+2026-05-28T23:19:47.5842441Z src/collision/gpu/engine.py:566: note:     Got:
+2026-05-28T23:19:47.5843328Z src/collision/gpu/engine.py:566: note:         def _check_and_report_progress(self, batch_count: int, current_batch_size: int) -> None
+2026-05-28T23:19:47.5844231Z src/collision/gpu/engine.py:566: note:     Expected:
+2026-05-28T23:19:47.5845113Z src/collision/gpu/engine.py:566: note:         def _execute_gpu_batch(self, batch_start: int, batch_size: int, batch_seed: bytes) -> Any
+2026-05-28T23:19:47.5845977Z src/collision/gpu/engine.py:566: note:     Got:
+2026-05-28T23:19:47.5846952Z src/collision/gpu/engine.py:566: note:         def _execute_gpu_batch(self, seed: bytes, batch_size: int, batch_num: int) -> tuple[list[dict[str, int]], float]
+2026-05-28T23:19:47.5848111Z src/collision/gpu/engine.py:566: note:     <2 more conflict(s) not shown>
+2026-05-28T23:19:47.5849405Z src/collision/gpu/engine.py:586: error: Incompatible types in assignment (expression has type "EnhancedMonitoringAdapter", variable has type "None")  [assignment]
+2026-05-28T23:19:47.5850785Z src/collision/gpu/engine.py:589: error: "None" has no attribute "subscribe_to"  [attr-defined]
+2026-05-28T23:19:47.5852325Z src/collision/gpu/engine.py:594: error: Incompatible types in assignment (expression has type "DataLoggerAdapter", variable has type "None")  [assignment]
+2026-05-28T23:19:47.5853625Z src/collision/gpu/engine.py:595: error: "None" has no attribute "subscribe_to"  [attr-defined]
+2026-05-28T23:19:47.5855013Z src/collision/gpu/engine.py:668: error: Argument 1 to "SearchModeCoordinator" has incompatible type "GPUCollisionEngine"; expected "GPUEngineProtocol"  [arg-type]
+2026-05-28T23:19:47.5856549Z src/collision/gpu/engine.py:668: note: "GPUCollisionEngine" is missing following "GPUEngineProtocol" protocol member:
+2026-05-28T23:19:47.5857538Z src/collision/gpu/engine.py:668: note:     _recovery_manager
+2026-05-28T23:19:47.5858375Z src/collision/gpu/engine.py:668: note: Following member(s) of "GPUCollisionEngine" have conflicts:
+2026-05-28T23:19:47.5859183Z src/collision/gpu/engine.py:668: note:     Expected:
+2026-05-28T23:19:47.5859911Z src/collision/gpu/engine.py:668: note:         def _check_and_report_progress(self) -> None
+2026-05-28T23:19:47.5860666Z src/collision/gpu/engine.py:668: note:     Got:
+2026-05-28T23:19:47.5861897Z src/collision/gpu/engine.py:668: note:         def _check_and_report_progress(self, batch_count: int, current_batch_size: int) -> None
+2026-05-28T23:19:47.5863157Z src/collision/gpu/engine.py:668: note:     Expected:
+2026-05-28T23:19:47.5864095Z src/collision/gpu/engine.py:668: note:         def _execute_gpu_batch(self, batch_start: int, batch_size: int, batch_seed: bytes) -> Any
+2026-05-28T23:19:47.5865034Z src/collision/gpu/engine.py:668: note:     Got:
+2026-05-28T23:19:47.5866063Z src/collision/gpu/engine.py:668: note:         def _execute_gpu_batch(self, seed: bytes, batch_size: int, batch_num: int) -> tuple[list[dict[str, int]], float]
+2026-05-28T23:19:47.5867238Z src/collision/gpu/engine.py:668: note:     <2 more conflict(s) not shown>
+2026-05-28T23:19:47.5868633Z src/collision/gpu/engine.py:780: error: Function is missing a type annotation for one or more parameters  [no-untyped-def]
+2026-05-28T23:19:47.5870015Z src/collision/gpu/engine.py:1010: error: Function is missing a type annotation for one or more parameters  [no-untyped-def]
+2026-05-28T23:19:47.5871238Z src/collision/gpu/engine.py:1225: error: Function is missing a return type annotation  [no-untyped-def]
+2026-05-28T23:19:47.5872550Z src/collision/gpu/engine.py:1245: error: Function is missing a return type annotation  [no-untyped-def]
+2026-05-28T23:19:47.5873630Z src/collision/gpu/engine.py:1251: error: Function is missing a return type annotation  [no-untyped-def]
+2026-05-28T23:19:47.5874713Z src/collision/gpu/engine.py:1257: error: Function is missing a return type annotation  [no-untyped-def]
+2026-05-28T23:19:47.5875763Z src/collision/gpu/engine.py:1304: error: Function is missing a return type annotation  [no-untyped-def]
+2026-05-28T23:19:47.5876836Z src/collision/gpu/engine.py:1310: error: Function is missing a return type annotation  [no-untyped-def]
+2026-05-28T23:19:47.5877891Z src/collision/gpu/engine.py:1336: error: Function is missing a return type annotation  [no-untyped-def]
+2026-05-28T23:19:47.6051841Z src/automation/loop_controller.py:341: error: Argument 2 to "fast_dump" has incompatible type "TextIOWrapper[_WrappedBuffer]"; expected "BinaryIO"  [arg-type]
+2026-05-28T23:19:47.6258173Z src/gpu/worker.py:31: error: Module "src.collision.delta_stats" has no attribute "ThreadLocalDeltaStats"  [attr-defined]
+2026-05-28T23:19:47.6259467Z src/gpu/worker.py:33: error: Module "src.cli.stats_performance_monitor" has no attribute "profile_stats_update"  [attr-defined]
+2026-05-28T23:19:47.6260999Z src/gpu/worker.py:229: error: Incompatible types in assignment (expression has type "GPUCollisionEngine", variable has type "GPUEngineProtocol | None")  [assignment]
+2026-05-28T23:19:47.6262500Z src/gpu/worker.py:232: error: Redundant cast to "int | None"  [redundant-cast]
+2026-05-28T23:19:47.6338487Z src/gpu/facade.py:197: error: Incompatible types in assignment (expression has type "GPUDevice", variable has type "None")  [assignment]
+2026-05-28T23:19:47.6339773Z src/gpu/facade.py:198: error: "None" has no attribute "initialize"  [attr-defined]
+2026-05-28T23:19:47.6341001Z src/gpu/facade.py:210: error: Incompatible types in assignment (expression has type "GPUCollisionEngine", variable has type "None")  [assignment]
+2026-05-28T23:19:47.6342394Z src/gpu/facade.py:255: error: "None" has no attribute "targets"  [attr-defined]
+2026-05-28T23:19:47.6343190Z src/gpu/facade.py:259: error: "None" has no attribute "batch_size"  [attr-defined]
+2026-05-28T23:19:47.6343972Z src/gpu/facade.py:261: error: "None" has no attribute "start"  [attr-defined]
+2026-05-28T23:19:47.6344918Z src/gpu/facade.py:385: error: "bool" is invalid as return type for "__exit__" that always returns False  [exit-return]
+2026-05-28T23:19:47.6345968Z src/gpu/facade.py:385: note: Use "typing.Literal[False]" as the return type or change it to "None"
+2026-05-28T23:19:47.6347104Z src/gpu/facade.py:385: note: If return type of "__exit__" implies that it may return True, the context manager may swallow exceptions
+2026-05-28T23:19:47.6449289Z src/gpu/config.py:60: error: Argument 1 to "fast_load" has incompatible type "TextIOWrapper[_WrappedBuffer]"; expected "BinaryIO"  [arg-type]
+2026-05-28T23:19:47.6450830Z src/gpu/config.py:223: error: Argument 1 to "fast_load" has incompatible type "TextIOWrapper[_WrappedBuffer]"; expected "BinaryIO"  [arg-type]
+2026-05-28T23:19:47.6452823Z src/gpu/config.py:230: error: Argument 2 to "fast_dump" has incompatible type "TextIOWrapper[_WrappedBuffer]"; expected "BinaryIO"  [arg-type]
+2026-05-28T23:19:47.6905300Z src/gpu/multi_gpu_engine.py:1113: error: Function is missing a return type annotation  [no-untyped-def]
+2026-05-28T23:19:47.6906327Z src/gpu/multi_gpu_engine.py:1113: error: Function is missing a type annotation for one or more parameters  [no-untyped-def]
+2026-05-28T23:19:47.6907399Z src/gpu/multi_gpu_engine.py:1270: error: Function is missing a return type annotation  [no-untyped-def]
+2026-05-28T23:19:47.6908007Z src/gpu/multi_gpu_engine.py:1270: note: Use "-> None" if function does not return a value
+2026-05-28T23:19:47.7068962Z src/gpu/multi_format_multi_gpu_engine.py:129: error: Function is missing a type annotation  [no-untyped-def]
+2026-05-28T23:19:47.7259673Z src/cli/engine_runner.py:140: error: Incompatible types in assignment (expression has type "list[str]", variable has type "set[str]")  [assignment]
+2026-05-28T23:19:47.7260732Z src/cli/engine_runner.py:146: error: Incompatible types in assignment (expression has type "GPUFacade", variable has type "MultiGPUCollisionEngine")  [assignment]
+2026-05-28T23:19:47.7261801Z src/cli/engine_runner.py:164: error: Incompatible types in assignment (expression has type "KeyCollisionEngine", variable has type "MultiGPUCollisionEngine")  [assignment]
+2026-05-28T23:19:47.7263071Z src/cli/engine_runner.py:213: error: Missing positional argument "targets" in call to "start" of "MultiGPUCollisionEngine"  [call-arg]
+2026-05-28T23:19:47.8339666Z Found 216 errors in 45 files (checked 228 source files)
+2026-05-28T23:19:47.8585772Z ##[error]Process completed with exit code 1.
+2026-05-28T23:19:47.8713869Z Post job cleanup.
+2026-05-28T23:19:47.9593849Z [command]/usr/bin/git version
+2026-05-28T23:19:47.9663729Z git version 2.54.0
+2026-05-28T23:19:47.9701410Z Temporarily overriding HOME='/home/runner/work/_temp/66bc094f-6148-451e-b795-9fdf55b0b52a' before making global git config changes
+2026-05-28T23:19:47.9702910Z Adding repository directory to the temporary git global config as a safe directory
+2026-05-28T23:19:47.9707745Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/btc-collision-engine/btc-collision-engine
+2026-05-28T23:19:47.9971840Z Removing SSH command configuration
+2026-05-28T23:19:47.9979885Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-05-28T23:19:48.0018439Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-05-28T23:19:48.0254248Z Removing HTTP extra header
+2026-05-28T23:19:48.0258719Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-05-28T23:19:48.0292930Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-05-28T23:19:48.0524863Z Removing includeIf entries pointing to credentials config files
+2026-05-28T23:19:48.0531170Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-05-28T23:19:48.2393345Z includeif.gitdir:/home/runner/work/btc-collision-engine/btc-collision-engine/.git.path
+2026-05-28T23:19:48.2394749Z includeif.gitdir:/home/runner/work/btc-collision-engine/btc-collision-engine/.git/worktrees/*.path
+2026-05-28T23:19:48.2395766Z includeif.gitdir:/github/workspace/.git.path
+2026-05-28T23:19:48.2396611Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-05-28T23:19:48.2399494Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/btc-collision-engine/btc-collision-engine/.git.path
+2026-05-28T23:19:48.2426726Z /home/runner/work/_temp/git-credentials-73b9e53d-0393-4b2b-8362-97b35bb95d36.config
+2026-05-28T23:19:48.2437067Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/btc-collision-engine/btc-collision-engine/.git.path /home/runner/work/_temp/git-credentials-73b9e53d-0393-4b2b-8362-97b35bb95d36.config
+2026-05-28T23:19:48.2476311Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/btc-collision-engine/btc-collision-engine/.git/worktrees/*.path
+2026-05-28T23:19:48.2499554Z /home/runner/work/_temp/git-credentials-73b9e53d-0393-4b2b-8362-97b35bb95d36.config
+2026-05-28T23:19:48.2508514Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/btc-collision-engine/btc-collision-engine/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-73b9e53d-0393-4b2b-8362-97b35bb95d36.config
+2026-05-28T23:19:48.2541361Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+2026-05-28T23:19:48.2565385Z /github/runner_temp/git-credentials-73b9e53d-0393-4b2b-8362-97b35bb95d36.config
+2026-05-28T23:19:48.2573242Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-73b9e53d-0393-4b2b-8362-97b35bb95d36.config
+2026-05-28T23:19:48.2613147Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-05-28T23:19:48.2629189Z /github/runner_temp/git-credentials-73b9e53d-0393-4b2b-8362-97b35bb95d36.config
+2026-05-28T23:19:48.2638714Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-73b9e53d-0393-4b2b-8362-97b35bb95d36.config
+2026-05-28T23:19:48.2674061Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-05-28T23:19:48.2904705Z Removing credentials config '/home/runner/work/_temp/git-credentials-73b9e53d-0393-4b2b-8362-97b35bb95d36.config'
+2026-05-28T23:19:48.3043232Z Cleaning up orphan processes
+

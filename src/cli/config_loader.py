@@ -55,7 +55,7 @@ class ConfigLoader:
             logger.error("Config file not found: %s", path)
             return {}
         with Path(path).open() as f:
-            return json.load(f)
+            return json.load(f)  # type: ignore[no-any-return]
 
     def merge(self, base: dict, override: dict) -> dict:
         """Merge configurations, override taking precedence."""

@@ -129,5 +129,5 @@ def has_admin_privileges() -> bool:
     if is_windows():
         import ctypes
 
-        return ctypes.windll.shell32.IsUserAnAdmin() != 0  # type: ignore[attr-defined]
+        return ctypes.windll.shell32.IsUserAnAdmin() != 0  # type: ignore[attr-defined, no-any-return]
     return os.geteuid() == 0  # type: ignore[attr-defined]  # Unix-only

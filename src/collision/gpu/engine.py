@@ -1257,13 +1257,13 @@ class GPUCollisionEngine(BaseCollisionEngine):
         """同步执行版本."""
         if self._random_search_mode is None:
             raise RuntimeError("_random_search_mode not set for sync")
-        return self._random_search_mode._execute_sync()
+        return self._random_search_mode._execute_sync()  # type: ignore[no-any-return]
 
     def _random_search_async(self) -> None:
         """异步执行版本(双缓冲优化)."""
         if self._random_search_mode is None:
             raise RuntimeError("_random_search_mode not set for async")
-        return self._random_search_mode._execute_async()
+        return self._random_search_mode._execute_async()  # type: ignore[no-any-return]
 
     def _calculate_key_gen_timeout(self, batch_size: int) -> float:
         """异步私钥生成超时计算."""
@@ -1310,13 +1310,13 @@ class GPUCollisionEngine(BaseCollisionEngine):
         """范围扫描模式."""
         if self._range_scan_mode is None:
             raise RuntimeError("GPUCollisionEngine._range_scan_mode is None when calling _range_scan()")
-        return self._range_scan_mode.execute(start, end)
+        return self._range_scan_mode.execute(start, end)  # type: ignore[no-any-return]
 
     def _brute_force(self, start: int) -> None:
         """暴力穷举模式."""
         if self._brute_force_mode is None:
             raise RuntimeError("_brute_force_mode not set")
-        return self._brute_force_mode.execute(start)
+        return self._brute_force_mode.execute(start)  # type: ignore[no-any-return]
 
     def _execute_batch_loop(
         self,
@@ -1461,7 +1461,7 @@ class GPUCollisionEngine(BaseCollisionEngine):
             include_recommendations=include_recommendations,
             include_comparison=include_comparison,
             output_dir=output_dir,
-        )
+        )  # type: ignore[no-any-return]
 
     # ========== Intel 特定优化 (向后兼容存根) ==========
 

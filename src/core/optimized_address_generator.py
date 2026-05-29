@@ -103,8 +103,8 @@ class OptimizedP2PKHAddressGenerator(P2PKHAddressGenerator):
 
             if compressed:
                 prefix = b"\x02" if int(public_point.y) % 2 == 0 else b"\x03"
-                return prefix + public_point.x.to_bytes(32, "big")
-            return b"\x04" + public_point.x.to_bytes(32, "big") + public_point.y.to_bytes(32, "big")
+                return prefix + public_point.x.to_bytes(32, "big")  # type: ignore[no-any-return]
+            return b"\x04" + public_point.x.to_bytes(32, "big") + public_point.y.to_bytes(32, "big")  # type: ignore[no-any-return]
 
         # Final fallback: parent implementation (crypto_backend or pure Python EC)
         return super().private_key_to_public_key(private_key, compressed)

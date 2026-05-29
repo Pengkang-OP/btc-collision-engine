@@ -508,7 +508,7 @@ class GPUPerformanceOptimizer:
                 f"激进增长: *{growth_ratio:.2f}",
             )
             return growth_ratio
-        return strategy.get("growth_ratio", 1.20)
+        return strategy.get("growth_ratio", 1.20)  # type: ignore[no-any-return]
 
     def _analyze_try_recover(
         self,

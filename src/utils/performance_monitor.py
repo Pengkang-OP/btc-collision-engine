@@ -219,7 +219,7 @@ def get_performance_tracker() -> PerformanceTracker:
 def is_performance_monitoring_enabled() -> bool:
     """检查性能监控是否启用."""
     config = _get_tracker_config()
-    return config["enabled"]  # type: ignore[index]
+    return config["enabled"]  # type: ignore[index, no-any-return]
 
 
 class EnhancedPerformanceMonitor:

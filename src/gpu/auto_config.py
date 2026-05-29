@@ -120,7 +120,7 @@ def _get_memory_gb(device: dict) -> float:
         else:
             logger.warning("无法获取GPU显存信息(global_mem_gb和global_mem_size均为0)")
 
-    return memory_gb
+    return memory_gb  # type: ignore[no-any-return]
 
 
 class GPUAutoConfigurator:

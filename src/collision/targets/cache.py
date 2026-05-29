@@ -108,7 +108,7 @@ class AddressCache:
                     if self.enable_stats:
                         self.hits += 1
                     logger.debug(f"缓存命中: {key[:10]}...")
-                    return value
+                    return value  # type: ignore[no-any-return]
                 if self.enable_stats:
                     self.misses += 1
                 logger.debug(f"缓存未命中: {key[:10]}...")
