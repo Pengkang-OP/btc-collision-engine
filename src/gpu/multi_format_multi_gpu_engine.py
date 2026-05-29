@@ -22,6 +22,7 @@
 """
 
 from collections.abc import Callable
+from typing import Any
 
 from ..collision.targets.format_aware_manager import FormatAwareTargetManager
 from ..core.multi_format_generator import AddressFormat, MultiFormatAddressGenerator
