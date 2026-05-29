@@ -1007,7 +1007,12 @@ class GPUCollisionEngine(BaseCollisionEngine):
         """进入上下文管理器."""
         return self
 
-    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: type[BaseException] | None) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: type[BaseException] | None,
+    ) -> None:
         """退出上下文管理器，停止引擎."""
         self.stop()
 
