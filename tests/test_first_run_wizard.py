@@ -189,9 +189,8 @@ class TestFirstRunWizardInteraction:
 
     def test_prompt_keyboard_interrupt(self):
         """测试键盘中断."""
-        with patch("builtins.input", side_effect=KeyboardInterrupt):
-            with pytest.raises(SystemExit):
-                FirstRunWizard._prompt("测试提示")
+        with patch("builtins.input", side_effect=KeyboardInterrupt), pytest.raises(SystemExit):
+            FirstRunWizard._prompt("测试提示")
 
     def test_prompt_eof_error(self):
         """测试EOF错误."""

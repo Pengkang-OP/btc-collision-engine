@@ -154,19 +154,13 @@ convention = "google"
 #          16 exemptions removed. 16 files remain with D exemptions.
 # Next: Fix remaining files and remove exemptions one by one.
 # ALL src/ D exemptions have been resolved. See Phase 3 summary.
-"src/web/dashboard.py" = ["E501"] # HTML/Jinja2 模板字符串
-"src/monitoring/alert_notifications.py" = ["E501"] # HTML 邮件模板字符串
-"src/utils/ui_tutorial.py" = ["E501"] # 长行 UI 字符串/格式化提示文本
-"src/collision/targets/validator.py" = ["E501"] # doctest 示例 + 中文注释
 "scripts/**/*.py" = [
     "E501",
     "E402",
     "T201",
     "D",
 ] # 脚本：sys.path.insert + 可读性长行 + print合法。D (pydocstyle) 暂不强制
-"scripts/_batch_p1.py" = ["E501"] # 嵌入式源码字符串补丁脚本
-"scripts/extract_opencl_kernels.py" = ["E501"] # 文档字符串含 markdown 代码示例
-"benchmarks/**/*.py" = ["E501", "E402", "T201", "D"] # 基准测试：格式化非关键，允许 print。D (pydocstyle) 暂不强制
+"benchmarks/**/*.py" = ["T201", "D"] # 基准测试：允许 print + D 暂不强制（E501/E402 已零违规移除）
 "tests/**/*.py" = [
     "T201",   # 测试代码：print 调试输出合法
     "N806",   # Mock/数学变量名大写合法（MockDeviceManager, G, bpMB 等）
