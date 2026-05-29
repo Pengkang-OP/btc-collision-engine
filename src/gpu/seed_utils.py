@@ -6,12 +6,14 @@
 v4.2.3 M5: 从 engine.py 提取为独立工具模块，统一端序转换逻辑。
 """
 
+from typing import Any
+
 import numpy as np
 
 __all__ = ["seed_bytes_to_u32_be_array"]
 
 
-def seed_bytes_to_u32_be_array(seed: bytes) -> "np.ndarray":
+def seed_bytes_to_u32_be_array(seed: bytes) -> "np.ndarray[Any, Any]":
     """将 32 字节 seed 按 big-endian 拆成 8*uint32，再转成本机端序.
 
     比特币私钥为 256-bit big-endian 整数，GPU Kernel 期望 native-endian uint32 数组。

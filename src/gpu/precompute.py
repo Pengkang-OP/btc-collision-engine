@@ -5,7 +5,7 @@
 小端序存储：d[0]=LSB, d[7]=MSB，与内核 uint256_t 的 uint d[8] 一致。
 """
 
-from typing import cast
+from typing import Any, cast
 
 import numpy as np
 
@@ -70,7 +70,7 @@ def _point_add(p1: tuple[int, int] | None, p2: tuple[int, int] | None) -> tuple[
     return (x3, y3)
 
 
-def _int_to_uint32_le(value: int) -> np.ndarray:
+def _int_to_uint32_le(value: int) -> np.ndarray[Any, Any]:
     """将 256-bit 整数转为 8 个 uint32 小端序数组.
 
     小端序：limb[0] 为最低有效 32 位，limb[7] 为最高有效 32 位。
@@ -90,7 +90,7 @@ def _int_to_uint32_le(value: int) -> np.ndarray:
     return limbs
 
 
-def generate_secp256k1_precomp_table() -> np.ndarray:
+def generate_secp256k1_precomp_table() -> np.ndarray[Any, Any]:
     """计算 secp256k1 基点 G 的倍数表 [1G, 2G, 3G, ..., 31G].
 
     Returns:
@@ -189,10 +189,10 @@ def generate_secp256k1_precomp_table() -> np.ndarray:
 
 
 # 模块级缓存（避免重复计算）
-_cached_table: np.ndarray | None = None
+_cached_table: "np.ndarray[Any, Any] | None" = None
 
 
-def get_precomp_table() -> np.ndarray:
+def get_precomp_table() -> np.ndarray[Any, Any]:
     """获取预计算表（带缓存，模块首次调用时计算一次）.
 
     Returns:

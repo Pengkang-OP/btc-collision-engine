@@ -13,10 +13,12 @@ try:
 
     _has_rich = True
 except ImportError:
-    _RichConsole = None
-    _RichPanel = None
-    _RichText = None
+    _RichConsole = None  # type: ignore[assignment,misc]
+    _RichPanel = None  # type: ignore[assignment,misc]
+    _RichText = None  # type: ignore[assignment,misc]
     _has_rich = False
+
+_console: "Console | None" = None  # type: ignore[name-defined]
 
 if _has_rich:
     try:
@@ -31,7 +33,7 @@ if _has_rich:
     except Exception:
         _console = None
 else:
-    _console = None
+    _console = None  # noqa: F823
 
 
 def _venv_python() -> str:

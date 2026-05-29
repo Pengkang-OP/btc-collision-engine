@@ -22,7 +22,7 @@ try:
     from watchdog.events import FileSystemEvent, FileSystemEventHandler
     from watchdog.observers import Observer
 
-    class _WatchdogHandler(FileSystemEventHandler):  # type: ignore[misc]
+    class _WatchdogHandler(FileSystemEventHandler):
         """watchdog 文件变更处理器."""
 
         def __init__(self, callback: Callable[[], None], watched_path: str):

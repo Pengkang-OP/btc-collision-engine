@@ -61,12 +61,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tini \
     # OpenCL运行时（GPU模式需要）
     ocl-icd-libopencl1 \
-    # GPU驱动 - 默认启用 NVIDIA（最常见场景）
-    nvidia-opencl-icd \
+    # GPU驱动 - 使用 Mesa OpenCL（CPU/便携实现）
+    # 如需 NVIDIA GPU 加速，在 ubuntu 24.04 上请使用: nvidia-opencl-icd-545
+    mesa-opencl-icd \
     # AMD: 取消注释下一行
     # mesa-opencl-icd \
-    # Intel: 取消注释下一行
-    # intel-opencl-icd \
     # 数学库
     libgmp10 \
     libmpfr6 \

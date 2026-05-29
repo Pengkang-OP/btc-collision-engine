@@ -52,7 +52,7 @@ def _terminate_thread(thread_handle: int, exit_code: int = 0) -> bool:
     if os.name != "nt":
         return False
     try:
-        kernel32 = ctypes.windll.kernel32
+        kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined]
         result = kernel32.TerminateThread(
             ctypes.c_void_p(thread_handle),
             ctypes.c_ulong(exit_code),
@@ -180,7 +180,7 @@ def _execute_with_sigalrm_timeout(
                 )
 
             old_handler = signal.signal(sigalrm, _timeout_handler)
-            setitimer(signal.ITIMER_REAL, timeout)  # type: ignore[attr-defined]  # Unix-only
+            setitimer(signal.ITIMER_REAL, timeout)  # Unix-only
             try:
                 func(*args, **kwargs)
                 return True
@@ -199,9 +199,9 @@ def _execute_with_sigalrm_timeout(
                 )
                 return False
             finally:
-                setitimer(signal.ITIMER_REAL, 0.0)  # type: ignore[attr-defined]  # Unix-only
+                setitimer(signal.ITIMER_REAL, 0.0)  # Unix-only
                 signal.signal(  # Unix-only
-                    signal.SIGALRM,  # type: ignore[attr-defined]  # Unix-only
+                    signal.SIGALRM,
                     old_handler,
                 )
         except (ValueError, OSError, AttributeError) as e:

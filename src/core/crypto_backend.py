@@ -427,7 +427,7 @@ class CoincurveBackend(CryptoBackend):
 
         # Generate public key using coincurve
         private_key_obj = coincurve.PrivateKey(private_key)
-        return private_key_obj.public_key.format(compressed=compressed)  # type: ignore[no-any-return]
+        return private_key_obj.public_key.format(compressed=compressed)
 
     def scalar_multiply(
         self,
@@ -458,7 +458,7 @@ class CoincurveBackend(CryptoBackend):
             # Format result as uncompressed public key bytes
             # (0x04 + x + y)
             result_bytes = (
-                result.format(compressed=False) if hasattr(result, "format") else bytes(result)
+                result.format(compressed=False) if hasattr(result, "format") else bytes(result.format())
             )
             if result_bytes[0] == 0x04 and len(result_bytes) >= 65:
                 rx = int.from_bytes(result_bytes[1:33], "big")
