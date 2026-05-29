@@ -17,6 +17,8 @@ Note:
     is suitable for CPU-only environments or as fallback.
 """
 
+from __future__ import annotations
+
 __all__ = [
     "MultiProcessCollisionEngine",
 ]
