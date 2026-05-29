@@ -375,7 +375,7 @@ class TestDispatchUtilityCommands:
 
     def test_dispatches_to_info(self):
         """调度到信息命令：sys.exit 被 mock 后函数继续执行，验证 _cmd_examples 被调用即可."""
-        from src.cli.commands import _dispatch_utility_commands
+        from src.cli.commands import dispatch_utility_commands
 
         args = Mock()
         args.examples = True
@@ -393,12 +393,12 @@ class TestDispatchUtilityCommands:
             patch("src.cli.commands._cmd_examples") as mock_cmd,
             patch.object(sys, "exit") as mock_exit,
         ):
-            _dispatch_utility_commands(args)
+            result = dispatch_utility_commands(args)
         mock_cmd.assert_called_once()
         mock_exit.assert_called_once_with(0)
 
     def test_no_match_returns_false(self):
-        from src.cli.commands import _dispatch_utility_commands
+        from src.cli.commands import dispatch_utility_commands
 
         args = Mock()
         args.examples = False
@@ -414,5 +414,5 @@ class TestDispatchUtilityCommands:
         args.migrate_config = False
         # 需要 mock Path 来绕过首次运行检测
         with patch("src.cli.commands.Path", wraps=Path) as mock_path:  # noqa: F841
-            result = _dispatch_utility_commands(args)
+            result = dispatch_utility_commands(args)
         assert result is False

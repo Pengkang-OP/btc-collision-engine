@@ -5,7 +5,7 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
-## [5.0.2] — 2026-05-29
+## [5.1.0] — 2026-05-29
 
 ### Added
 
@@ -44,6 +44,15 @@
   - `check_untyped_defs = true`: 0 错误通过 228 源文件
   - `disallow_untyped_calls = true`: 0 错误通过 228 源文件
   - **最终状态**: `strict = true, check_untyped_defs = true, disallow_untyped_calls = true, disallow_any_generics = true, warn_unused_ignores = true` — **全部启用，0 个 override blocks**
+- **P2-23 Phase 2+3: 启用剩余 mypy strict 覆盖** (cd7ff0fe):
+  - `warn_return_any = true`: 0 错误通过 228 源文件
+  - `disallow_incomplete_defs = true`: 0 错误通过 228 源文件
+  - **至此 mypy 已达到 `strict=true` 所有子选项全覆盖，零 override blocks**
+- **CI 管道可靠性提升** (596c65ae):
+  - coincurve 安装使用 `--no-binary` 强制源码编译，确保链接系统 `libsecp256k1-dev`
+  - 安装步骤添加 `pkg-config` 依赖
+  - 安装后添加 coincurve 导入验证步骤，失败时提前阻断
+  - 同步修复所有 3 个 CI job（test / extended-tests / benchmark）的 coincurve 安装步骤
 
 ## [5.0.1] — 2026-05-28
 

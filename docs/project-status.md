@@ -1,6 +1,6 @@
 # BTC私钥碰撞项目状态总览
 
-**版本**: v5.0.2
+**版本**: v5.1.0
 
 > **面向**: 用户/开发者
 
@@ -83,7 +83,7 @@
 - [[DONE] 项目成就](#-项目成就)
 
 **更新日期**: 2026-05-29
-**项目状态**: [OK] 生产就绪 (v5.0.2)
+**项目状态**: [OK] 生产就绪 (v5.1.0)
 **测试覆盖率**: 97%+
 
 ---
@@ -344,7 +344,7 @@ $ python run_real_collision_test.py 10 2
 
 - [OK] 测试套件 142/142 全部通过
 
-**v5.0.2 - mypy 完全 Strict + 测试修复** [OK] (当前)
+**v5.1.0 - mypy 完全 Strict + 测试修复 + CI 可靠性** [OK] (当前)
 
 - [OK] 7-Step 项目质量提升计划全部完成（mypy 从 370 错误 → 零错误，6 个 override blocks → 0 个）
 - [OK] 最终 mypy 配置: `strict = true, check_untyped_defs = true, disallow_untyped_calls = true, disallow_any_generics = true, warn_unused_ignores = true`

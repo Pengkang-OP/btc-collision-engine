@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "btc-collision-engine"
-version = "5.0.1"
+version = "5.1.0"
 description = "比特币私钥碰撞引擎，支持CPU和GPU加速，多格式地址支持，用于学习和研究比特币地址碰撞"
 readme = "README.md"
 requires-python = ">=3.12"
