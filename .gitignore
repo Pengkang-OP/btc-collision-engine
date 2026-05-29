@@ -64,6 +64,9 @@ single_gpu_*.txt
 public_api_report.txt
 pytest_err_*.txt
 test_ci_*.txt
+ci_*.txt
+ci_*.json
+mypy_errors.txt
 
 # === Test Results / Logs ===
 test_results/
