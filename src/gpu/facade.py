@@ -194,7 +194,7 @@ class GPUFacade:
             # 创建GPU设备
             from .device import GPUDevice
 
-            self._gpu_device = GPUDevice()  # __init__() takes no args  # type: ignore[assignment]
+            self._gpu_device = GPUDevice()  # type: ignore[assignment]  # __init__() takes no args
             self._gpu_device.initialize(device_index=device_index)  # type: ignore[attr-defined]
 
             # 创建碰撞引擎 (使用已保存的 targets)

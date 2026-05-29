@@ -401,9 +401,9 @@ class NumpyOptimizedAddressGenerator:
         """
         # Use list comprehension optimization
         # (10-20% faster than for loop)
-        addresses = [
+        addresses = [  # type: ignore[attr-defined]
             self.base_generator.generate_from_private_key(pk, compressed)
-            for pk in private_keys  # type: ignore[attr-defined]
+            for pk in private_keys
         ]
 
         return addresses

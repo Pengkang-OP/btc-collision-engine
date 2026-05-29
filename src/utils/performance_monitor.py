@@ -210,7 +210,7 @@ def get_performance_tracker() -> PerformanceTracker:
         with _tracker_lock:
             if _global_tracker is None:  # 双重检查
                 _global_tracker = PerformanceTracker(
-                    max_records=config["max_records"],
+                    max_records=config["max_records"],  # type: ignore[index]
                 )
 
     return _global_tracker
@@ -219,7 +219,7 @@ def get_performance_tracker() -> PerformanceTracker:
 def is_performance_monitoring_enabled() -> bool:
     """检查性能监控是否启用."""
     config = _get_tracker_config()
-    return config["enabled"]
+    return config["enabled"]  # type: ignore[index]
 
 
 class EnhancedPerformanceMonitor:
@@ -339,12 +339,12 @@ class EnhancedPerformanceMonitor:
 
                     # 检查是否为慢操作并告警
                     config = _get_tracker_config()
-                    if config["track_slow_operations"] and elapsed_ms > config["slow_threshold_ms"]:
+                    if config["track_slow_operations"] and elapsed_ms > config["slow_threshold_ms"]:  # type: ignore[index]
                         self.logger.warning(
                             "[Performance] 慢操作检测: %s 耗时 %.2fms > %sms",
                             self.operation,
                             elapsed_ms,
-                            config["slow_threshold_ms"],
+                            config["slow_threshold_ms"],  # type: ignore[index]
                         )
                 except Exception as track_error:
                     # 追踪失败不应影响业务，静默失败

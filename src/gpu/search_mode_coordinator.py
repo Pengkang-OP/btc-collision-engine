@@ -91,7 +91,7 @@ class SearchModeCoordinator:
         """获取可用的搜索模式列表."""
         return list(self._modes.keys())
 
-    def start(self, mode: str, resume: bool = False, **kwargs) -> None:
+    def start(self, mode: str, resume: bool = False, **kwargs: Any) -> None:
         """启动指定的搜索模式.
 
         Args:
@@ -144,7 +144,7 @@ class SearchModeCoordinator:
         else:
             self.logger.warning("检查点管理器未启用，无法恢复")
 
-    def switch_mode(self, new_mode: str, **kwargs) -> None:
+    def switch_mode(self, new_mode: str, **kwargs: Any) -> None:
         """切换到新的搜索模式.
 
         Args:

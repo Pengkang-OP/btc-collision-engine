@@ -482,14 +482,14 @@ class GPUKernel(GPUKernelProtocol):
         # 清空匹配结果缓冲区
         cl.enqueue_fill_buffer(
             self.device.queue,
-            self._match_buf,
+            self._match_buf,  # type: ignore[arg-type]
             np.int32(0),
             0,
             num_keys * 4,
         )
 
         # 执行GPU batch计算
-        self._batch_kernel(
+        self._batch_kernel(  # type: ignore[misc]
             self.device.queue,
             (num_keys,),
             None,
@@ -533,14 +533,14 @@ class GPUKernel(GPUKernelProtocol):
             # 清空匹配结果缓冲区
             cl.enqueue_fill_buffer(
                 self.device.queue,
-                self._match_buf,
+                self._match_buf,  # type: ignore[arg-type]
                 np.int32(0),
                 0,
                 num_keys * 4,
             )
 
             # 执行GPU batch计算
-            self._batch_kernel(
+            self._batch_kernel(  # type: ignore[misc]
                 self.device.queue,
                 (num_keys,),
                 None,
@@ -771,13 +771,13 @@ class GPUKernel(GPUKernelProtocol):
         # 节省显存: max_batch_size * 32 字节（例: 1M keys 节省约32MB）
         if memory_pool:
             # 内存池不支持如此小的分配，直接创建
-            self._seed_buf = cl.Buffer(
+            self._seed_buf = cl.Buffer(  # type: ignore[assignment]
                 self.device.context,
                 cl.mem_flags.READ_ONLY,
                 size=32,  # 固定32字节
             )
         else:
-            self._seed_buf = cl.Buffer(
+            self._seed_buf = cl.Buffer(  # type: ignore[assignment]
                 self.device.context,
                 cl.mem_flags.READ_ONLY,
                 size=32,  # 固定32字节
@@ -801,7 +801,7 @@ class GPUKernel(GPUKernelProtocol):
             logger.debug("使用内存池分配匹配缓冲区: %s字节", match_buf_size)
         else:
             # 直接分配（回退模式）
-            self._match_buf = cl.Buffer(
+            self._match_buf = cl.Buffer(  # type: ignore[assignment]
                 self.device.context,
                 cl.mem_flags.WRITE_ONLY,
                 size=match_buf_size,
@@ -812,14 +812,14 @@ class GPUKernel(GPUKernelProtocol):
         self._buffer_tracker.track_buffer("_match_buf", self._match_buf, match_buf_size)
 
         # 预分配主机内存
-        self._match_flags = np.zeros(self.max_batch_size, dtype=np.int32)
+        self._match_flags = np.zeros(self.max_batch_size, dtype=np.int32)  # type: ignore[assignment]
 
         # 预计算表常量缓冲区（双重检查：属性 + tracker，防竞态重复分配）
         if self._precomp_buf is None and not self._buffer_tracker.is_tracked("_precomp_buf"):
             from .precompute import get_precomp_table
 
             precomp_data = get_precomp_table()
-            self._precomp_buf = cl.Buffer(
+            self._precomp_buf = cl.Buffer(  # type: ignore[assignment]
                 self.device.context,
                 cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR,
                 hostbuf=precomp_data,
@@ -1042,7 +1042,7 @@ class GPUKernel(GPUKernelProtocol):
             self._match_buf,
         )
 
-    def _wait_for_completion(self, read_event, timeout_seconds: float = 30) -> bool:
+    def _wait_for_completion(self, read_event: Any, timeout_seconds: float = 30) -> bool:
         """等待GPU执行完成."""
         import time
 
@@ -1101,7 +1101,7 @@ class GPUKernel(GPUKernelProtocol):
                     buf.release()
             setattr(self, buf_attr, None)
 
-    def _collect_matches(self, match_view, num_keys: int) -> list:
+    def _collect_matches(self, match_view: Any, num_keys: int) -> list:
         """收集匹配结果."""
         matches = []
         for i in range(num_keys):

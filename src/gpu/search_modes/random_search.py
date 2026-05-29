@@ -501,7 +501,7 @@ class RandomSearchMode(BaseSearchMode):
         # 性能记录
         batch_optimizer.record_performance(batch_size, execution_time_ms, speed)
 
-    def _handle_batch_error(  # type: ignore[override]
+    def _handle_batch_error(  # type: ignore[override, no-untyped-def]
         self,
         e,
         engine,

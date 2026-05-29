@@ -356,7 +356,7 @@ class _SyncFallbackMixin:
                 self._log_cleanup(logging.WARNING, f"等待待处理事件完成失败: {type(e).__name__}: {e}")
             self.pending_event = None  # type: ignore[attr-defined]  # from other mixin
 
-    def _release_buffer_safe(self, name: str, getter, setter) -> None:
+    def _release_buffer_safe(self, name: str, getter: Any, setter: Any) -> None:
         """安全地释放缓冲区资源。."""
         buf = getter()
         if buf is not None:

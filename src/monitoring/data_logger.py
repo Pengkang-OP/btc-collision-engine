@@ -497,16 +497,16 @@ class DataLogger:
             else:
                 self.logger.debug("set_dedup_stats: engine数据未初始化，跳过去重统计设置")
 
-    def log_match(self, event) -> None:
+    def log_match(self, event: Any) -> None:
         """Alias for record_match_event, called from event bus."""
         # Extract address from event object
         addr = getattr(event, "address", "") or getattr(event, "target_address", "")
         self.record_match_event(addr)
 
-    def log_progress(self, event) -> None:
+    def log_progress(self, event: Any) -> None:
         """Called from event bus on progress events."""
 
-    def log_error(self, event) -> None:
+    def log_error(self, event: Any) -> None:
         """Called from event bus on error events."""
         error_type = getattr(event, "error_type", "unknown_error")
         msg = getattr(event, "error_message", "") or str(getattr(event, "exception", ""))
