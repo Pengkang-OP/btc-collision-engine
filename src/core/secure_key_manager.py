@@ -229,7 +229,7 @@ class SecureKeyManager:
         """
         try:
             # Load kernel32.dll
-            kernel32 = ctypes.WinDLL("kernel32.dll")  # type: ignore[attr-defined]
+            kernel32 = ctypes.WinDLL("kernel32.dll")
 
             # Configure VirtualLock function signature
             # BOOL VirtualLock(LPVOID lpAddress, SIZE_T dwSize);
@@ -292,7 +292,7 @@ class SecureKeyManager:
                 if result:
                     self._memory_locked = True
                     return True
-                error_code = ctypes.get_last_error()  # type: ignore[attr-defined]  # Windows-only
+                error_code = ctypes.get_last_error()# Windows-only
                 logger.warning(
                     "Windows VirtualLock failed, error code: %s",
                     error_code,

@@ -13,9 +13,9 @@ try:
 
     _has_rich = True
 except ImportError:
-    _RichConsole = None  # type: ignore[assignment, misc]
-    _RichPanel = None  # type: ignore[assignment, misc]
-    _RichText = None  # type: ignore[assignment, misc]
+    _RichConsole = None
+    _RichPanel = None
+    _RichText = None
     _has_rich = False
 
 if _has_rich:
@@ -29,9 +29,9 @@ if _has_rich:
         assert _RichConsole is not None
         _console = _RichConsole()
     except Exception:
-        _console = None  # type: ignore[assignment]
+        _console = None
 else:
-    _console = None  # type: ignore[assignment]
+    _console = None
 
 
 def _venv_python() -> str:

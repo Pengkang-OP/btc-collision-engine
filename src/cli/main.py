@@ -101,7 +101,7 @@ def load_targets(args: Any) -> set[str]:
             _print_load_result(output, len(targets), total_dropped, dropped)
     else:
         # resolve_multiple returns dict[str,str] (input→resolved), extract values as set
-        resolved = resolver.resolve_multiple(args.targets)  # type: ignore[arg-type]
+        resolved = resolver.resolve_multiple(args.targets)
         targets = {v for v in resolved.values() if v is not None}
         dropped_inputs = [k for k, v in resolved.items() if v is None]
         if not targets:

@@ -18,10 +18,10 @@ if TYPE_CHECKING:
     from rich.table import Table as _RichTable
     from rich.text import Text as _RichText
 
-    Console: type = _RichConsole  # type: ignore[misc]  # in TYPE_CHECKING block
-    Panel: type = _RichPanel  # type: ignore[misc]
-    Table: type = _RichTable  # type: ignore[misc]
-    Text: type = _RichText  # type: ignore[misc]
+    Console: type = _RichConsole# in TYPE_CHECKING block
+    Panel: type = _RichPanel
+    Table: type = _RichTable
+    Text: type = _RichText
 else:
     try:
         from rich.console import Console as _RichConsole

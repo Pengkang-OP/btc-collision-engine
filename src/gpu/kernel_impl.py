@@ -812,7 +812,7 @@ class GPUKernel(GPUKernelProtocol):
         self._buffer_tracker.track_buffer("_match_buf", self._match_buf, match_buf_size)
 
         # 预分配主机内存
-        self._match_flags = np.zeros(self.max_batch_size, dtype=np.int32)  # type: ignore[assignment]
+        self._match_flags = np.zeros(self.max_batch_size, dtype=np.int32)
 
         # 预计算表常量缓冲区（双重检查：属性 + tracker，防竞态重复分配）
         if self._precomp_buf is None and not self._buffer_tracker.is_tracked("_precomp_buf"):

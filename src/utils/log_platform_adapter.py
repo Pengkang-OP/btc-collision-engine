@@ -126,7 +126,7 @@ class PlatformAdapter:
             try:
                 import ctypes
 
-                kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined]  # Windows-only
+                kernel32 = ctypes.windll.kernel32# Windows-only
                 cp = kernel32.GetConsoleOutputCP()
                 return f"cp{cp}"
             except (OSError, AttributeError):
@@ -144,7 +144,7 @@ class PlatformAdapter:
         """
         if self.platform_name == "Windows":
             try:
-                return cast("bool", ctypes.windll.shell32.IsUserAnAdmin() != 0)  # type: ignore[attr-defined]  # Windows ctypes API
+                return cast("bool", ctypes.windll.shell32.IsUserAnAdmin() != 0)# Windows ctypes API
             except (OSError, AttributeError):
                 return False
         else:
@@ -165,7 +165,7 @@ class PlatformAdapter:
             try:
                 import ctypes
 
-                kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined]  # Windows-only
+                kernel32 = ctypes.windll.kernel32# Windows-only
                 return cast(
                     "int",
                     kernel32.GetPriorityClass(kernel32.GetCurrentProcess()),
@@ -196,7 +196,7 @@ class PlatformAdapter:
             try:
                 import ctypes
 
-                kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined]  # Windows-only
+                kernel32 = ctypes.windll.kernel32# Windows-only
                 return cast(
                     "bool",
                     kernel32.SetPriorityClass(kernel32.GetCurrentProcess(), priority) != 0,

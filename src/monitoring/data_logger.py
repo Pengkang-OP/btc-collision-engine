@@ -612,7 +612,7 @@ class DataLogger:
             errors.append(error_record)
             # 手动限制错误列表长度（_error_rotator.max_count）
             # 注意：LogRotator.rotate() 用于文件轮转，不适用于内存列表
-            max_errors = self._error_rotator._max_count or 1000  # type: ignore[attr-defined]
+            max_errors = self._error_rotator._max_count or 1000
             if len(errors) > max_errors:
                 errors = errors[-max_errors:]
 
@@ -1651,7 +1651,7 @@ class DataLogger:
                 errors.extend(pending_errors)
                 # 手动限制错误列表长度（_error_rotator.max_count）
                 # 注意：LogRotator.rotate() 用于文件轮转，不适用于内存列表
-                max_errors = self._error_rotator._max_count or 1000  # type: ignore[attr-defined]
+                max_errors = self._error_rotator._max_count or 1000
                 if len(errors) > max_errors:
                     errors = errors[-max_errors:]
                 self._atomic_write_json(self.error_log_file, errors)

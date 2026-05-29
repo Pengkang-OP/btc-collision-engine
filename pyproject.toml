@@ -97,7 +97,7 @@ python_version = "3.12" # 与 CI type-check job 使用的 Python 版本一致
 ignore_missing_imports = true
 warn_unused_configs = true
 # 以下为 strict=true 的显式覆写（因项目特殊情况保留）
-warn_unused_ignores = false  # Phase2 遗留大量 type:ignore，暂不清理
+warn_unused_ignores = true
 check_untyped_defs = false   # 部分第三方库调用的函数无类型注解
 disallow_untyped_calls = false # 允许调用未类型化函数
 disallow_any_generics = true
@@ -109,15 +109,7 @@ exclude = [
 ]
 mypy_path = ["src/gpu/pyopencl_stubs"] # pyopencl stub 文件路径
 
-[[tool.mypy.overrides]]
-module = "src.web.dashboard"
-# Flask 路由装饰器（@app.route、@require_auth 等）无类型注解
-disable_error_code = ["untyped-decorator"]
 
-[[tool.mypy.overrides]]
-module = "src.config.config_watcher"
-# watchdog.FileSystemEventHandler 为 Any 类型，子类化触发 misc
-disable_error_code = ["misc"]
 
 [tool.ruff]
 line-length = 105 # 略高于标准100以容纳中文日志/长变量名

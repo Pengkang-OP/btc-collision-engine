@@ -153,7 +153,7 @@ class SingleGPUWorker(threading.Thread):
         # 增量统计器（线程本地，减少锁竞争）- 根据配置启用
         self._delta_stats: Any | None = None
         if _delta_stats_available:
-            self._delta_stats = ThreadLocalDeltaStats()  # type: ignore[attr-defined]  # conditional import guard
+            self._delta_stats = ThreadLocalDeltaStats()# conditional import guard
             logger.debug("GPU %s: 增量统计器已启用", device_idx)
 
         # GPU引擎实例
@@ -465,7 +465,7 @@ class SingleGPUWorker(threading.Thread):
 
     # 根据配置条件应用性能监控装饰器
     if _monitor_available:
-        _update_stats = profile_stats_update(_update_stats)  # type: ignore[attr-defined]  # conditional import guard
+        _update_stats = profile_stats_update(_update_stats)# conditional import guard
 
     def _cleanup(self) -> None:
         """清理资源."""

@@ -796,9 +796,9 @@ class AnomalyDetector:
             _perf = d.get("performance", {})
             perf: dict[str, Any] = _perf if isinstance(_perf, dict) else {}
             if perf:
-                speeds.append(perf.get("speed", 0))  # type: ignore[arg-type]
-                cpu_usages.append(perf.get("cpu_usage", 0))  # type: ignore[arg-type]
-                memory_usages.append(perf.get("memory_usage", 0))  # type: ignore[arg-type]
+                speeds.append(perf.get("speed", 0))
+                cpu_usages.append(perf.get("cpu_usage", 0))
+                memory_usages.append(perf.get("memory_usage", 0))
 
         speed_avg = statistics.mean(speeds) if speeds else 0
         speed_std = statistics.stdev(speeds) if len(speeds) > 1 else 0
@@ -945,7 +945,7 @@ class MonitoringAlertAdapter:
         }
         for key, mapped_key in mapping.items():
             if key in anomaly:
-                metrics[mapped_key] = anomaly[key]  # type: ignore[arg-type]
+                metrics[mapped_key] = anomaly[key]
         return metrics
 
 
@@ -1155,9 +1155,9 @@ class ReportGenerator:
             _perf = d.get("performance", {})
             perf: dict[str, Any] = _perf if isinstance(_perf, dict) else {}
             if perf:
-                speeds.append(perf.get("speed", 0))  # type: ignore[arg-type]
-                cpu_usages.append(perf.get("cpu_usage", 0))  # type: ignore[arg-type]
-                memory_usages.append(perf.get("memory_usage", 0))  # type: ignore[arg-type]
+                speeds.append(perf.get("speed", 0))
+                cpu_usages.append(perf.get("cpu_usage", 0))
+                memory_usages.append(perf.get("memory_usage", 0))
 
         speed_avg = statistics.mean(speeds) if speeds else 0
         cpu_avg = statistics.mean(cpu_usages) if cpu_usages else 0

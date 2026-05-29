@@ -910,7 +910,7 @@ class MultiGPUCollisionEngine:
 
         """
         if self._monitor_enabled:
-            return self.data_monitor.get_stats()  # type: ignore[no-any-return]
+            return self.data_monitor.get_stats()
         return {"enabled": False}
 
     def get_monitor_issues(
@@ -931,7 +931,7 @@ class MultiGPUCollisionEngine:
 
         """
         if self._monitor_enabled:
-            return self.data_monitor.get_issues(severity=severity, device_idx=device_idx, limit=limit)  # type: ignore[no-any-return]
+            return self.data_monitor.get_issues(severity=severity, device_idx=device_idx, limit=limit)
 
         return []
 

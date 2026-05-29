@@ -769,7 +769,7 @@ def create_app(data_dir: Path | None = None, debug: bool = False) -> "Flask":
     except ImportError:
         version = "1.0.0"
 
-    @app.route("/")
+    @app.route("/")  # type: ignore[untyped-decorator]
     @require_auth
     def index() -> Any:
         """仪表板主页."""
@@ -801,14 +801,14 @@ def create_app(data_dir: Path | None = None, debug: bool = False) -> "Flask":
             generated_at=time.strftime("%Y-%m-%d %H:%M:%S"),
         )
 
-    @app.route(f"{API_PREFIX}/status")
+    @app.route(f"{API_PREFIX}/status")  # type: ignore[untyped-decorator]
     @rate_limit
     @require_auth
     def api_status() -> Any:
         """API: 当前运行状态."""
         return jsonify(get_current_stats(data_logs_dir))
 
-    @app.route(f"{API_PREFIX}/history")
+    @app.route(f"{API_PREFIX}/history")  # type: ignore[untyped-decorator]
     @rate_limit
     @require_auth
     def api_history() -> Any:
@@ -821,7 +821,7 @@ def create_app(data_dir: Path | None = None, debug: bool = False) -> "Flask":
         limit = min(limit, 200)
         return jsonify(get_history(data_logs_dir, limit=limit))
 
-    @app.route(f"{API_PREFIX}/errors")
+    @app.route(f"{API_PREFIX}/errors")  # type: ignore[untyped-decorator]
     @rate_limit
     @require_auth
     def api_errors() -> Any:
@@ -834,7 +834,7 @@ def create_app(data_dir: Path | None = None, debug: bool = False) -> "Flask":
         limit = min(limit, 200)
         return jsonify(get_errors(data_logs_dir, limit=limit))
 
-    @app.route(f"{API_PREFIX}/report")
+    @app.route(f"{API_PREFIX}/report")  # type: ignore[untyped-decorator]
     @rate_limit
     @require_auth
     def api_report() -> Any:
@@ -865,7 +865,7 @@ def create_app(data_dir: Path | None = None, debug: bool = False) -> "Flask":
             },
         )
 
-    @app.route(f"{API_PREFIX}/security-audit")
+    @app.route(f"{API_PREFIX}/security-audit")  # type: ignore[untyped-decorator]
     @rate_limit
     @require_auth
     def api_security_audit() -> Any:
@@ -879,12 +879,12 @@ def create_app(data_dir: Path | None = None, debug: bool = False) -> "Flask":
         audit_data = get_security_audit_data(data_logs_dir)
         return jsonify(audit_data)
 
-    @app.route("/health")
+    @app.route("/health")  # type: ignore[untyped-decorator]
     def health() -> Any:
         """健康检查端点."""
         return jsonify({"status": "ok", "timestamp": time.time()})
 
-    @app.route("/api/<path:subpath>")
+    @app.route("/api/<path:subpath>")  # type: ignore[untyped-decorator]
     def api_redirect(subpath: str) -> Any:
         """旧 /api/* 路径自动 301 重定向至 /api/v1/*."""
         return redirect(f"{API_PREFIX}/{subpath}"), 301

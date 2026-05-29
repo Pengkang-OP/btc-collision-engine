@@ -224,7 +224,7 @@ class SecureKeyGenerator:
             try:
                 # 1. Generate 32-byte random via CSPRNG,
                 #    store in mutable bytearray (supports clearing)
-                private_key = bytearray(  # type: ignore[arg-type]
+                private_key = bytearray(
                     secrets.token_bytes(32),
                 )
 

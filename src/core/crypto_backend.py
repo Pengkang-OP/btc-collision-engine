@@ -451,14 +451,14 @@ class CoincurveBackend(CryptoBackend):
         pubkey_bytes = b"\x04" + point_x.to_bytes(32, "big") + point_y.to_bytes(32, "big")
 
         try:
-            pubkey = coincurve.PublicKey(pubkey_bytes)  # type: ignore[arg-type]
+            pubkey = coincurve.PublicKey(pubkey_bytes)
             # coincurve.PublicKey.multiply returns PublicKey object
             result = pubkey.multiply(k.to_bytes(32, "big"))
 
             # Format result as uncompressed public key bytes
             # (0x04 + x + y)
             result_bytes = (
-                result.format(compressed=False) if hasattr(result, "format") else bytes(result)  # type: ignore[call-overload]
+                result.format(compressed=False) if hasattr(result, "format") else bytes(result)
             )
             if result_bytes[0] == 0x04 and len(result_bytes) >= 65:
                 rx = int.from_bytes(result_bytes[1:33], "big")

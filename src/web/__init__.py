@@ -23,10 +23,10 @@ def create_app(data_dir: Path | None = None, debug: bool = False) -> object:
         ImportError: If Flask is not installed.
     """
     try:
-        from .dashboard import create_app as _app  # type: ignore[reportUnknownVariableType]
+        from .dashboard import create_app as _app
     except ImportError as e:
         raise ImportError("Flask is not installed. Install with: pip install flask") from e
-    return _app(data_dir, debug)  # type: ignore[reportUnknownVariableType]
+    return _app(data_dir, debug)
 
 
 def run_dashboard(

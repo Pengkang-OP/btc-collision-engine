@@ -199,7 +199,7 @@ class LiveStatsDisplay:
                 hit_alert = Text(f"  Matches Found: {matches}  ", style="bold yellow on red")
                 content = Group(table, hit_alert)
             else:
-                content = table  # type: ignore[assignment]
+                content = table
 
             panel = Panel(
                 content,
