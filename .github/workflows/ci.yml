@@ -239,7 +239,7 @@ jobs:
 
       - name: 上传覆盖率报告
         if: always()
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         with:
           files: ./coverage.xml
           flags: unittests
