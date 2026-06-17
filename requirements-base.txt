@@ -29,7 +29,7 @@ cachetools>=5.3.0,<9.0.0      # LRU/TTL 缓存，加速地址解析（评估完�
 pybloom-live>=2.2.0,<5.0.0    # Bloom 过滤器，大规模地址去重
 bech32>=1.2.0,<2.0.0          # Bech32 地址解析（工具脚本备用；核心引擎使用内置 bech32_codec）
 bitarray>=2.6.0,<4.0.0        # Bloom 过滤器底层位数组
-chardet>=5.0.0,<6.0.0         # 文件编码自动检测
+chardet>=5.0.0,<8.0.0         # 文件编码自动检测
 
 # 网络通信
 requests>=2.28.0,<3.0.0       # HTTP 请求，告警通知 Webhook
