@@ -28,7 +28,7 @@ jobs:
         python-version: ["3.12", "3.13"]
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: 设置 Python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
@@ -81,7 +81,7 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: 设置 Python
         uses: actions/setup-python@v6
@@ -116,7 +116,7 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: 设置 Python
         uses: actions/setup-python@v6
@@ -179,7 +179,7 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: 设置 Python
         uses: actions/setup-python@v6
