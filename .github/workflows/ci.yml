@@ -408,7 +408,7 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Markdown 规范检查
-        uses: DavidAnson/markdownlint-cli2-action@v15
+        uses: DavidAnson/markdownlint-cli2-action@v24
         with:
           globs: |
             **/*.md
